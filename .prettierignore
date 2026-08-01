@@ -1,0 +1,7 @@
+dist
+dev-dist
+coverage
+node_modules
+.agents
+package-lock.json
+workouts_corrected.csv

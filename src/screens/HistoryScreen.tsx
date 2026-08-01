@@ -24,9 +24,9 @@ export function HistoryScreen() {
   const [error, setError] = useState<string | null>(null)
 
   const [expanded, setExpanded] = useState<string | null>(null)
-  const [setsByWorkout, setSetsByWorkout] = useState<
-    Record<string, SetWithExercise[]>
-  >({})
+  const [setsByWorkout, setSetsByWorkout] = useState<Record<string, SetWithExercise[]>>(
+    {},
+  )
 
   const fetchPage = useCallback(async (offset: number) => {
     const { data, error: pageError } = await supabase

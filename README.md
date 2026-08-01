@@ -32,11 +32,11 @@ level security), Tailwind, deployed on Vercel.
 
 ### Data model
 
-| table | columns |
-| --- | --- |
-| `profiles` | `id` → `auth.users(id)`, `display_name`, `created_at` |
-| `exercises` | `id`, `name`, `muscle_group`, `equipment`, `is_custom`, `owner_id` |
-| `workouts` | `id`, `user_id`, `name`, `started_at`, `ended_at` |
+| table          | columns                                                                                                                        |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| `profiles`     | `id` → `auth.users(id)`, `display_name`, `created_at`                                                                          |
+| `exercises`    | `id`, `name`, `muscle_group`, `equipment`, `is_custom`, `owner_id`                                                             |
+| `workouts`     | `id`, `user_id`, `name`, `started_at`, `ended_at`                                                                              |
 | `workout_sets` | `id`, `workout_id`, `exercise_id`, `set_number`, `weight_kg`, `reps`, `rpe`, `duration_seconds`, `distance_meters`, `set_type` |
 
 Weight is stored in kilograms, always. The lbs/kg switch in the app header is
@@ -55,11 +55,11 @@ exact.
 
 Copy `.env.example` to `.env.local` and fill it in:
 
-| variable | where it is used | notes |
-| --- | --- | --- |
-| `VITE_SUPABASE_URL` | client | Project Settings → API → Project URL |
-| `VITE_SUPABASE_ANON_KEY` | client | anon/public key. Safe to ship; RLS protects the data. |
-| `SUPABASE_URL` | import script only | same URL, without the `VITE_` prefix |
+| variable                    | where it is used   | notes                                                                                                |
+| --------------------------- | ------------------ | ---------------------------------------------------------------------------------------------------- |
+| `VITE_SUPABASE_URL`         | client             | Project Settings → API → Project URL                                                                 |
+| `VITE_SUPABASE_ANON_KEY`    | client             | anon/public key. Safe to ship; RLS protects the data.                                                |
+| `SUPABASE_URL`              | import script only | same URL, without the `VITE_` prefix                                                                 |
 | `SUPABASE_SERVICE_ROLE_KEY` | import script only | **bypasses RLS.** Never prefix it with `VITE_`, never commit it, never put it in the Vercel project. |
 
 Anything named `VITE_*` is inlined into the browser bundle. The service-role
@@ -72,8 +72,53 @@ npm install
 npm run dev          # http://localhost:5173
 ```
 
-Other scripts: `npm run build` (typecheck + production build),
-`npm run preview` (serve the build), `npm run typecheck`.
+| script                            | what it does                                         |
+| --------------------------------- | ---------------------------------------------------- |
+| `npm run dev`                     | Vite dev server                                      |
+| `npm run build`                   | typecheck, then production build                     |
+| `npm run preview`                 | serve the built app                                  |
+| `npm run typecheck`               | `tsc --noEmit`                                       |
+| `npm run lint`                    | ESLint (React hooks rules, plus the RTL guard below) |
+| `npm run format` / `format:check` | Prettier                                             |
+| `npm test` / `test:watch`         | Vitest                                               |
+
+`.github/workflows/ci.yml` runs lint, format check, typecheck, tests and a
+build on every pull request. The build step passes placeholder Supabase
+credentials on purpose: with none set, the app stops at the "not configured"
+screen and the authenticated screens are tree-shaken out, so a build error in
+them would never surface.
+
+### Tests
+
+49 tests, no database or network needed:
+
+- **`src/lib/units.test.ts`** — kg storage round-trips, display rounding to
+  0.5 lb / 0.25 kg, formatting.
+- **`src/lib/epley.test.ts`** — the 1RM formula, and the exclusions (warmups,
+  sets missing weight or reps).
+- **`scripts/import_hevy.test.ts`** — runs the importer's real transforms over
+  the checked-in CSV: date parsing across CDT/CST and the spring-forward day,
+  131 + 3 exercise coverage, every name mapped to one of the eleven allowed
+  muscle groups, unit conversions, and the errors it raises rather than
+  importing something wrong.
+- **`src/components/SetEntry.test.tsx`** — the set-entry form: auto-fill from
+  the previous session (including the case where the fetch resolves after the
+  first render), unit conversion of a typed draft, validation messages, and the
+  steppers.
+
+### Layout rule enforcement
+
+ESLint fails on physical direction utilities in `className` (`ml-`, `pl-`,
+`left-`, `text-left`, …). Use the logical equivalents — `ms-`, `ps-`, `start-`,
+`text-start`. This app is meant to grow an Arabic RTL locale, and the rule is
+there so that stays true without anyone remembering it.
+
+### Supabase tooling for Claude Code
+
+`.mcp.json` registers the Supabase MCP server for this project. After cloning,
+run `/mcp` inside Claude Code, select **supabase**, and authenticate — the
+config carries no credentials. Supabase agent skills are vendored in
+`.agents/skills/` (symlinked from `.claude/skills/`).
 
 ## 4. Seed your history — sign in first, then import
 
@@ -134,8 +179,8 @@ imported by the client bundle.
    service-role key — the import is a local, one-time script.
 3. Deploy. `vercel.json` rewrites all routes to `index.html` so the SPA handles
    its own routing.
-4. On the deployed URL: iOS Safari → Share → *Add to Home Screen*; Android
-   Chrome → menu → *Install app*. It launches standalone with its own icon.
+4. On the deployed URL: iOS Safari → Share → _Add to Home Screen_; Android
+   Chrome → menu → _Install app_. It launches standalone with its own icon.
 
 ## Notes
 

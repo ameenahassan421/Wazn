@@ -41,10 +41,9 @@ export function LogScreen({ userId }: { userId: string }) {
     [exercises],
   )
 
+  // No synchronous setState here: the effect below calls it on mount, where a
+  // state update before the first await would cause a cascading render.
   const load = useCallback(async () => {
-    setLoading(true)
-    setError(null)
-
     const [catalogue, usageRows, open, anyWorkout] = await Promise.all([
       supabase.from('exercises').select('*').order('name'),
       supabase.rpc('exercise_usage'),
@@ -97,16 +96,16 @@ export function LogScreen({ userId }: { userId: string }) {
   }, [])
 
   useEffect(() => {
-    void load()
+    void (async () => {
+      await load()
+    })()
   }, [load])
 
   // Previous session for the exercise being logged, excluding this workout.
+  // Nothing is cleared when no exercise is selected: the data is consumed only
+  // when previousFor matches the current exercise, so a stale list is inert.
   useEffect(() => {
-    if (!current) {
-      setPreviousSession([])
-      setPreviousFor(null)
-      return
-    }
+    if (!current) return
     const exerciseId = current.id
     let active = true
     void supabase
@@ -180,8 +179,7 @@ export function LogScreen({ userId }: { userId: string }) {
   }): Promise<boolean> {
     if (!workout || !current) return false
 
-    const setNumber =
-      sets.filter((s) => s.exercise_id === current.id).length + 1
+    const setNumber = sets.filter((s) => s.exercise_id === current.id).length + 1
 
     setSaving(true)
     setError(null)
@@ -345,7 +343,10 @@ export function LogScreen({ userId }: { userId: string }) {
 
 function ErrorNote({ message }: { message: string }) {
   return (
-    <p role="alert" className="rounded-lg border border-accent px-3 py-2 text-sm text-accent">
+    <p
+      role="alert"
+      className="rounded-lg border border-accent px-3 py-2 text-sm text-accent"
+    >
       {message}
     </p>
   )
