@@ -249,16 +249,28 @@ verbatim, so they survive even if this file isn't read.**
 
 > Claude Code: keep this section current. It is the project's memory.
 
-- **Active stage:** 0 — Foundation fix
-- **Done:** repo scaffolded; schema + RLS + 3 RPCs migrated; OTP auth
-  configured and proven (owner address only); Vercel deployed
-  (workout-theta-plum.vercel.app); CI green; workouts_corrected.csv in
-  repo (deadlift patch NOT yet applied).
-- **Not done:** 0A–0F, all of it.
-- **Row counts (verified live at session start):** exercises 0,
-  workout_sets 0, profiles 2, **workouts 1** — corrected from 0. The one
-  row is an empty 7-second workout from the browser sign-in test; see
-  `DECISIONS.md`. Not deleted (real user data, §2.6).
-- **Next action:** 0A (patch deadlift), then 0B (run import).
-- **Blocked on Ameen:** nothing for Stage 0. Upcoming: domain purchase before Stage 2 (item 2A).
-- **Last updated:** 2026-08-01 by planning session (chat).
+- **Active stage:** 0 — Foundation fix. **All items complete; GATE 0 awaiting
+  Ameen.** Do not start Stage 1.
+- **Stage 0 punch list:**
+  - [x] **0A** Deadlift ×2 — 10 rows, top sets 125/135 → 250/270 lb
+  - [x] **0B** Import — 134 exercises, 149 workouts, 3,197 sets, RPCs verified
+  - [x] **0C** Renamed to Wazn — manifest, title, both wordmarks, README, package
+  - [x] **0D** Thumbnails — 110/134 matched, 908 KB, initial tiles for the rest
+  - [x] **0E** Design system — touch targets 48px, logged sets 24px, tokens only
+  - [x] **0F** Audit — `set_type` widened for drop sets; findings in DECISIONS.md
+- **Row counts (verified live after import):** exercises 134, workouts **150**,
+  workout_sets 3,197, profiles 2.
+  - 150, not 149: one empty 7-second workout predates the import (browser
+    sign-in test). Inert, not deleted — real user data, see `DECISIONS.md`.
+    Ameen's call whether it goes.
+- **Migrations applied live:** `0002_exercise_images.sql`,
+  `0003_set_type_drop.sql`.
+- **Next action:** GATE 0 acceptance — Ameen signs in at the production URL as
+  **ameen.hassan421@gmail.com** (the only address that receives a code until
+  2A), checks the picker/History/Progress, then logs one real gym session.
+- **Blocked on Ameen:** GATE 0 sign-off. Upcoming: domain purchase before
+  Stage 2 (item 2A).
+- **Known and accepted for now:** only ameen.hassan421@gmail.com can sign in;
+  supersets have no column (Stage 1 design decision, 335 CSV rows waiting);
+  `mailer_otp_exp` is 3600s, worth tightening at 2A.
+- **Last updated:** 2026-08-01 by Claude Code (Stage 0 build session).
