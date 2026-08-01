@@ -9,6 +9,7 @@ import {
   formatWorkoutDate,
 } from '../lib/format'
 import type { Workout, WorkoutSet } from '../lib/types'
+import { EditSetDialog } from '../components/EditSetDialog'
 
 const PAGE_SIZE = 30
 
@@ -24,6 +25,8 @@ export function HistoryScreen() {
   const [error, setError] = useState<string | null>(null)
 
   const [expanded, setExpanded] = useState<string | null>(null)
+  const [editing, setEditing] = useState<SetWithExercise | null>(null)
+  const [busy, setBusy] = useState(false)
   const [setsByWorkout, setSetsByWorkout] = useState<Record<string, SetWithExercise[]>>(
     {},
   )
@@ -41,6 +44,52 @@ export function HistoryScreen() {
     }
     return (data ?? []) as Workout[]
   }, [])
+
+  /**
+   * Editing history writes straight through — there is no draft state to keep
+   * in sync, and a correction is a single field. The local copy is patched
+   * rather than refetched so an open workout does not collapse under you.
+   */
+  async function saveSet(
+    set: SetWithExercise,
+    weightKg: number | null,
+    reps: number | null,
+  ) {
+    setBusy(true)
+    const { error: updateError } = await supabase
+      .from('workout_sets')
+      .update({ weight_kg: weightKg, reps })
+      .eq('id', set.id)
+    setBusy(false)
+    if (updateError) {
+      setError(describeError('Saving the correction', updateError))
+      return
+    }
+    setSetsByWorkout((prev) => ({
+      ...prev,
+      [set.workout_id]: (prev[set.workout_id] ?? []).map((s) =>
+        s.id === set.id ? { ...s, weight_kg: weightKg, reps } : s,
+      ),
+    }))
+    setEditing(null)
+  }
+
+  async function removeSet(set: SetWithExercise) {
+    setBusy(true)
+    const { error: deleteError } = await supabase
+      .from('workout_sets')
+      .delete()
+      .eq('id', set.id)
+    setBusy(false)
+    if (deleteError) {
+      setError(describeError('Deleting the set', deleteError))
+      return
+    }
+    setSetsByWorkout((prev) => ({
+      ...prev,
+      [set.workout_id]: (prev[set.workout_id] ?? []).filter((s) => s.id !== set.id),
+    }))
+  }
 
   useEffect(() => {
     let active = true
@@ -144,7 +193,12 @@ export function HistoryScreen() {
                         This workout has no sets recorded.
                       </p>
                     ) : (
-                      <ExerciseBreakdown sets={sets} unit={unit} />
+                      <ExerciseBreakdown
+                        sets={sets}
+                        unit={unit}
+                        onEditSet={setEditing}
+                        onDeleteSet={(s) => void removeSet(s)}
+                      />
                     )}
                   </div>
                 )}
@@ -164,6 +218,18 @@ export function HistoryScreen() {
           {loadingMore ? 'Loading…' : 'Load older workouts'}
         </button>
       )}
+
+      {editing && (
+        <EditSetDialog
+          exerciseName={editing.exercises?.name ?? 'Exercise'}
+          weightKg={editing.weight_kg}
+          reps={editing.reps}
+          unit={unit}
+          busy={busy}
+          onSave={(w, r) => void saveSet(editing, w, r)}
+          onCancel={() => setEditing(null)}
+        />
+      )}
     </div>
   )
 }
@@ -171,9 +237,13 @@ export function HistoryScreen() {
 function ExerciseBreakdown({
   sets,
   unit,
+  onEditSet,
+  onDeleteSet,
 }: {
   sets: SetWithExercise[]
   unit: 'lbs' | 'kg'
+  onEditSet: (set: SetWithExercise) => void
+  onDeleteSet: (set: SetWithExercise) => void
 }) {
   const order: string[] = []
   const grouped = new Map<string, SetWithExercise[]>()
@@ -193,12 +263,28 @@ function ExerciseBreakdown({
           <p className="text-sm font-semibold">{name}</p>
           <ul className="mt-1 flex flex-col gap-0.5">
             {grouped.get(name)!.map((set, index) => (
-              <li key={set.id} className="tnum flex items-baseline gap-3 text-base">
+              <li key={set.id} className="tnum flex items-center gap-3 text-base">
                 <span className="w-5 text-xs text-muted">{index + 1}</span>
                 <span className="flex-1">{describeSet(set, unit)}</span>
                 {set.set_type !== 'normal' && (
                   <span className="text-xs text-muted">{set.set_type}</span>
                 )}
+                <button
+                  type="button"
+                  onClick={() => onEditSet(set)}
+                  aria-label={`Edit set ${index + 1} of ${name}`}
+                  className="h-12 w-12 rounded-md text-xs text-muted"
+                >
+                  Edit
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onDeleteSet(set)}
+                  aria-label={`Delete set ${index + 1} of ${name}`}
+                  className="h-12 w-10 rounded-md text-xs text-muted"
+                >
+                  ×
+                </button>
               </li>
             ))}
           </ul>

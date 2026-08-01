@@ -261,3 +261,48 @@ justify that risk.
 
 Verified against the live database: create → add exercise → add sets → delete
 leaves zero orphaned `routine_exercises` or `routine_sets`.
+
+## 2026-08-01 — Stage 1: supersets live on the set, and alternate by who is behind
+
+The group id is on `workout_sets.superset_group`, not on the routine. A
+superset is a property of how sets were performed on a given day — the same
+pair may not be supersetted next week — and putting it on the set is what let
+the Hevy history backfill straight in.
+
+**Alternating picks whoever has the fewest sets logged, not the next in
+order.** The real case is doing two sets of A before remembering B; ordering by
+position would strand B, while "who is behind" catches up correctly. It also
+generalises to three-way giant sets for free.
+
+**Rest moved from `SetEntry` to `LogScreen`.** Whether to rest now depends on
+the group: a superset rests once per _round_, not between its exercises — that
+is the entire point of one. Mid-round it advances to the partner and starts
+nothing. `SetEntry` cannot know that; `LogScreen` holds the sets.
+
+**Grouping stamps existing sets too.** Tapping Superset on an exercise that
+already has sets this workout updates those rows as well, or History would show
+half a superset.
+
+An empty `superset_id` in the CSV parses to null, never 0. Zero is a real group
+id in the export, and collapsing to it would make every unsupersetted set look
+grouped together.
+
+Backfill verified: 335 rows across 3 groups, matching the CSV exactly. Totals
+unchanged at 3,201 sets and 152 workouts, RPE still on 387, and Ameen's four
+August sets came through untouched — the import is keyed on
+`(user, started_at)` and his workouts are not in the CSV.
+
+## 2026-08-01 — Stage 1: editing past workouts is weight and reps only
+
+Corrections write straight through, with the local copy patched rather than
+refetched so an expanded workout does not collapse under you mid-edit.
+
+Scope is deliberately small: weight, reps, and deleting a set. Changing an
+exercise or a set type after the fact is rewriting what happened rather than
+fixing a typo, and every chart and PR in the app is built from these rows. A
+dialog is acceptable here because this is History — §2.1 protects the logging
+flow, and nothing is being interrupted mid-set.
+
+RLS already covered it: `workout_sets` has owner-scoped policies for all four
+commands, so no migration was needed and the client cannot touch another user's
+history.
