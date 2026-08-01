@@ -118,7 +118,27 @@ there so that stays true without anyone remembering it.
 `.mcp.json` registers the Supabase MCP server for this project. After cloning,
 run `/mcp` inside Claude Code, select **supabase**, and authenticate — the
 config carries no credentials. Supabase agent skills are vendored in
-`.agents/skills/` (symlinked from `.claude/skills/`).
+`.agents/skills/` (symlinked from `.claude/skills/`), and `CLAUDE.md` carries
+the project's working rules.
+
+Project configuration that would otherwise be dashboard click-through is
+scriptable:
+
+```bash
+npm run supabase:admin -- show                  # current auth config
+npm run supabase:admin -- set-site-url <url>    # site URL + redirect allow list
+npm run supabase:admin -- set-smtp              # from SMTP_* in .env
+npm run supabase:admin -- set-templates         # push the {{ .Token }} templates
+```
+
+The email templates live in `supabase/email_templates/`. They must contain
+`{{ .Token }}` — the app verifies a typed 6-digit code and never follows a
+link — and the script refuses to push one that doesn't. Supabase ignores
+template writes until custom SMTP is configured, so run `set-smtp` first.
+
+Both commands need `SUPABASE_ACCESS_TOKEN` and network access to
+`api.supabase.com`; see [`docs/agent-setup.md`](docs/agent-setup.md) for what a
+sandboxed session needs in order to do this work for you.
 
 ## 4. Seed your history — sign in first, then import
 

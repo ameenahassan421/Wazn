@@ -11,6 +11,7 @@
     "import:hevy": "tsx scripts/import_hevy.ts",
     "lint": "eslint .",
     "preview": "vite preview",
+    "supabase:admin": "tsx scripts/supabase_admin.ts",
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit"
