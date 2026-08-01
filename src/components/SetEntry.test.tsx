@@ -14,6 +14,7 @@ const exercise: Exercise = {
   is_custom: false,
   owner_id: null,
   image_url: null,
+  default_rest_seconds: null,
 }
 
 const previousSession: PreviousSessionRow[] = [
@@ -88,6 +89,7 @@ describe('SetEntry auto-fill', () => {
         duration_seconds: null,
         distance_meters: null,
         set_type: 'normal',
+        superset_group: null,
       },
     ]
     const { weight, reps } = setup({ previousSession, setsThisWorkout: logged })
@@ -134,7 +136,12 @@ describe('SetEntry validation', () => {
     await user.type(reps(), '9')
     await user.click(screen.getByRole('button', { name: /Log set/ }))
 
-    expect(onAddSet).toHaveBeenCalledWith({ weightKg: null, reps: 9 })
+    expect(onAddSet).toHaveBeenCalledWith({
+      weightKg: null,
+      reps: 9,
+      setType: 'normal',
+      rpe: null,
+    })
   })
 
   it('stores the typed display weight as kilograms', async () => {
@@ -145,7 +152,12 @@ describe('SetEntry validation', () => {
     await user.type(reps(), '5')
     await user.click(screen.getByRole('button', { name: /Log set/ }))
 
-    expect(onAddSet).toHaveBeenCalledWith({ weightKg: 61.23, reps: 5 })
+    expect(onAddSet).toHaveBeenCalledWith({
+      weightKg: 61.23,
+      reps: 5,
+      setType: 'normal',
+      rpe: null,
+    })
   })
 
   it('keeps the values after logging so the next set is pre-filled', async () => {
@@ -182,5 +194,76 @@ describe('SetEntry steppers', () => {
 
     await user.click(screen.getByLabelText('Decrease reps'))
     expect(reps().value).toBe('')
+  })
+})
+
+describe('SetEntry set type and RPE', () => {
+  it('cycles set type normal → warmup → failure → drop and back', async () => {
+    const user = userEvent.setup()
+    setup()
+    const button = () => screen.getByRole('button', { name: /Tap to change/ })
+
+    expect(button()).toHaveTextContent('Set')
+    await user.click(button())
+    expect(button()).toHaveTextContent('W')
+    await user.click(button())
+    expect(button()).toHaveTextContent('F')
+    await user.click(button())
+    expect(button()).toHaveTextContent('D')
+    await user.click(button())
+    expect(button()).toHaveTextContent('Set')
+  })
+
+  it('sends the chosen set type with the set', async () => {
+    const user = userEvent.setup()
+    const { onAddSet, reps } = setup()
+
+    await user.click(screen.getByRole('button', { name: /Tap to change/ }))
+    await user.type(reps(), '10')
+    await user.click(screen.getByRole('button', { name: /Log set/ }))
+
+    expect(onAddSet).toHaveBeenCalledWith(
+      expect.objectContaining({ setType: 'warmup', reps: 10 }),
+    )
+  })
+
+  it('keeps warmup selected for the next set but resets failure', async () => {
+    // A warm-up is usually followed by another warm-up; a set to failure is
+    // the last one you do. Sticky failure would mislabel the next session.
+    const user = userEvent.setup()
+    const { reps } = setup()
+    const type = () => screen.getByRole('button', { name: /Tap to change/ })
+
+    await user.click(type()) // warmup
+    await user.type(reps(), '10')
+    await user.click(screen.getByRole('button', { name: /Log set/ }))
+    expect(type()).toHaveTextContent('W')
+
+    await user.click(type()) // failure
+    await user.click(screen.getByRole('button', { name: /Log set/ }))
+    expect(type()).toHaveTextContent('Set')
+  })
+
+  it('starts RPE at 8 and clears after the last step', async () => {
+    const user = userEvent.setup()
+    setup()
+    const rpe = () => screen.getByRole('button', { name: /RPE/ })
+
+    expect(rpe()).toHaveTextContent('RPE')
+    await user.click(rpe())
+    expect(rpe()).toHaveTextContent('8')
+  })
+
+  it('does not carry RPE to the next set', async () => {
+    const user = userEvent.setup()
+    const { onAddSet, reps } = setup()
+
+    await user.click(screen.getByRole('button', { name: /RPE/ }))
+    await user.type(reps(), '5')
+    await user.click(screen.getByRole('button', { name: /Log set/ }))
+    expect(onAddSet).toHaveBeenCalledWith(expect.objectContaining({ rpe: 8 }))
+
+    await user.click(screen.getByRole('button', { name: /Log set/ }))
+    expect(onAddSet).toHaveBeenLastCalledWith(expect.objectContaining({ rpe: null }))
   })
 })

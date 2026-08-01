@@ -189,3 +189,75 @@ is a covering index or a materialised summary, not a rewrite.
 **`mailer_otp_exp` is 3600s.** A one-hour sign-in code is generous. Worth
 tightening to ~600s at Stage 2A when auth is being touched anyway — not now,
 since §2.8 puts auth changes outside this stage.
+
+## 2026-08-01 — Timezone flag resolved: the report was wrong, not the app
+
+STATUS flagged that a Gate 0 line showed the bench series ending `2026-07-14`
+when the last CSV session is `07-13`, and asked whether that was a UTC query or
+a display bug. It was neither.
+
+The chain is correct end to end:
+
+| stage                       | value                   |
+| --------------------------- | ----------------------- |
+| CSV (America/Chicago)       | `Jul 19, 2026, 7:01 PM` |
+| stored in Postgres          | `2026-07-20 00:01Z`     |
+| rendered in America/Chicago | `2026-07-19 07:01 PM`   |
+
+An evening Chicago session crosses midnight UTC, which is correct — a
+`timestamptz` stores an instant, not a wall clock. The app renders with
+`Intl.DateTimeFormat(undefined, …)`, which uses the viewer's zone, so it comes
+back as the right day.
+
+The `07-14` came from the ad-hoc reporting script I ran during 0F, which did
+`started_at[:10]` — string-truncating the UTC ISO, so every evening session
+appeared a day late. The bug was in the measurement, not the thing measured.
+
+Worth keeping as a habit: when a number looks off by exactly one unit at a
+boundary, suspect the instrument first.
+
+One real consequence to remember: a user who travels across zones sees
+historical workouts shift by up to a day, because the instant is fixed and the
+wall clock is not. That is correct behaviour for `timestamptz` and only becomes
+a product question if Stage 5's Egypt users log while travelling.
+
+## 2026-08-01 — Stage 1: routines live on the Log screen, not a fourth tab
+
+`CLAUDE.md` fixes the app at three screens with no router. Routines are the
+biggest thing Stage 1 adds, and the obvious move is a fourth tab.
+
+Didn't. A routine is not a place you go — it is how you _start_ a workout. It
+belongs on the idle Log screen, above "Start workout", so the thing you tap to
+begin is on the screen you were already looking at. A fourth tab would mean
+navigating away from Log in order to start logging.
+
+The editor is a view within Log (`view === 'routine'`), same as the picker and
+the summary. Three tabs, no router, unchanged.
+
+### Routines prescribe reps, not weight
+
+Stage 1 says sets are "pre-filled from last performance". A routine that
+hard-codes 60 kg is wrong the week after you progress and then lies to you
+mid-workout. Reps are prescribed because 5×5 and 3×12 are genuinely different
+routines; weight comes from what you actually lifted last time, which the
+existing `previous_session` RPC already provides.
+
+### Starting a routine does not pre-insert sets
+
+A routine says what to do; a `workout_sets` row means it was done. Pre-inserting
+planned sets would put lifts in History that never happened if the session gets
+cut short — and History is the thing the charts are built from.
+
+Instead the planned exercise order is held in memory and surfaces as a "Next"
+button. The workout stays freestyle: you can deviate at any point, and the
+picker is always one tap away. The routine guides, it does not constrain.
+
+### Saving replaces children rather than diffing them
+
+A routine is a handful of rows and `on delete cascade` makes the delete one
+statement. Diffing positions correctly is the kind of code that silently
+reorders someone's workout six months later, and there is no payoff here to
+justify that risk.
+
+Verified against the live database: create → add exercise → add sets → delete
+leaves zero orphaned `routine_exercises` or `routine_sets`.

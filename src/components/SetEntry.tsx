@@ -1,11 +1,18 @@
 import { useMemo, useState } from 'react'
-import type { Exercise, PreviousSessionRow, WorkoutSet } from '../lib/types'
+import type { Exercise, PreviousSessionRow, SetType, WorkoutSet } from '../lib/types'
+import { SET_TYPE_CYCLE, SET_TYPE_LABEL, SET_TYPE_NAME } from '../lib/types'
 import { formatRelativeDay } from '../lib/format'
 import { formatWeight, fromDisplayWeight } from '../lib/units'
 import type { Unit } from '../lib/units'
+import type { RestTimer } from '../lib/use-rest-timer'
+import { RestTimerBar } from './RestTimer'
+import { LoadHelper } from './LoadHelper'
 
 /** Stepper increments, in the unit on screen. */
 const WEIGHT_STEP: Record<Unit, number> = { lbs: 5, kg: 2.5 }
+
+/** One tap steps through these; 10 is "all out". Null clears it. */
+const RPE_CHOICES = [6, 7, 7.5, 8, 8.5, 9, 9.5, 10] as const
 
 interface Draft {
   weight: string
@@ -50,6 +57,8 @@ export function SetEntry({
   saving,
   onAddSet,
   onBack,
+  timer,
+  restSeconds,
 }: {
   exercise: Exercise
   unit: Unit
@@ -57,11 +66,21 @@ export function SetEntry({
   previousSession: PreviousSessionRow[]
   previousLoading: boolean
   saving: boolean
-  onAddSet: (values: { weightKg: number | null; reps: number }) => Promise<boolean>
+  onAddSet: (values: {
+    weightKg: number | null
+    reps: number
+    setType: SetType
+    rpe: number | null
+  }) => Promise<boolean>
   onBack: () => void
+  /** Optional so existing tests and any non-workout use keep working. */
+  timer?: RestTimer
+  restSeconds?: number
 }) {
   const [draft, setDraft] = useState<Draft>({ weight: '', reps: '' })
   const [error, setError] = useState<string | null>(null)
+  const [setType, setSetType] = useState<SetType>('normal')
+  const [rpe, setRpe] = useState<number | null>(null)
   // Which exercise the draft was seeded from, and the unit it is written in.
   // Both are adjusted during render rather than in an effect: an effect would
   // paint one frame with the wrong values first.
@@ -140,10 +159,36 @@ export function SetEntry({
     }
 
     setError(null)
-    const ok = await onAddSet({ weightKg, reps })
+    const ok = await onAddSet({ weightKg, reps, setType, rpe })
     if (!ok) return
-    // Values stay put so the next set is pre-filled with what was just logged.
+
+    // Rest starts on a logged set, not on a tap — a timer that runs when the
+    // save failed would count down against a set that does not exist.
+    // Warm-ups do not start one: nobody rests two minutes after an empty bar.
+    if (timer && setType !== 'warmup') timer.start(restSeconds ?? 120)
+
+    // A set type is a property of one set, not a mode. Failure and drop sets
+    // are the exception in a session, so they do not stick to the next one.
+    if (setType === 'failure' || setType === 'drop') setSetType('normal')
+
+    // Weight and reps stay put so the next set is pre-filled with what was
+    // just logged; RPE does not, because it is a judgement about one set.
+    setRpe(null)
   }
+
+  function cycleSetType() {
+    const i = SET_TYPE_CYCLE.indexOf(setType)
+    setSetType(SET_TYPE_CYCLE[(i + 1) % SET_TYPE_CYCLE.length])
+  }
+
+  function cycleRpe() {
+    if (rpe === null) return setRpe(RPE_CHOICES[3])
+    const i = RPE_CHOICES.indexOf(rpe as (typeof RPE_CHOICES)[number])
+    if (i === -1 || i === RPE_CHOICES.length - 1) return setRpe(null)
+    setRpe(RPE_CHOICES[i + 1])
+  }
+
+  const typedWeight = Number.parseFloat(draft.weight)
 
   return (
     <section className="flex flex-col gap-3 pb-4">
@@ -180,6 +225,8 @@ export function SetEntry({
         )}
       </div>
 
+      {timer && <RestTimerBar timer={timer} />}
+
       {setsThisWorkout.length > 0 && (
         <ul className="divide-y divide-line rounded-lg border border-line">
           {setsThisWorkout.map((set) => (
@@ -193,6 +240,17 @@ export function SetEntry({
               </span>
               <span className="tnum text-2xl font-semibold">{set.reps ?? '—'}</span>
               <span className="text-sm text-muted">reps</span>
+              {set.set_type !== 'normal' && (
+                <span
+                  title={SET_TYPE_NAME[set.set_type]}
+                  className="rounded border border-line px-1 text-xs text-muted"
+                >
+                  {SET_TYPE_LABEL[set.set_type]}
+                </span>
+              )}
+              {set.rpe !== null && (
+                <span className="tnum text-xs text-muted">@{set.rpe}</span>
+              )}
             </li>
           ))}
         </ul>
@@ -240,6 +298,39 @@ export function SetEntry({
           </div>
           <StepperButton label="Increase reps" onPress={() => stepReps(1)} />
         </div>
+      </div>
+
+      <LoadHelper
+        weight={Number.isFinite(typedWeight) ? typedWeight : null}
+        unit={unit}
+      />
+
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          onClick={cycleSetType}
+          aria-label={`${SET_TYPE_NAME[setType]}. Tap to change.`}
+          className={`h-12 min-w-14 rounded-md border px-3 text-sm font-semibold ${
+            setType === 'normal'
+              ? 'border-line text-muted'
+              : 'border-accent text-accent'
+          }`}
+        >
+          {setType === 'normal' ? 'Set' : SET_TYPE_LABEL[setType]}
+        </button>
+
+        <button
+          type="button"
+          onClick={cycleRpe}
+          aria-label={rpe === null ? 'Add RPE' : `RPE ${rpe}. Tap to change.`}
+          className={`tnum h-12 min-w-14 rounded-md border px-3 text-sm font-semibold ${
+            rpe === null ? 'border-line text-muted' : 'border-accent text-accent'
+          }`}
+        >
+          {rpe === null ? 'RPE' : rpe}
+        </button>
+
+        <span className="ms-auto text-xs text-muted">{SET_TYPE_NAME[setType]}</span>
       </div>
 
       {error && (

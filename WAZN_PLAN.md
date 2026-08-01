@@ -10,8 +10,9 @@
 ## 1. What Wazn is
 
 Wazn (Arabic: وزن, "weight") is a mobile-first strength-training PWA
-being built toward functional parity with Hevy, then monetized in the
-Egyptian market. Owner: Ameen Hassan (ameen.hassan421@gmail.com is the
+being built toward functional parity with Hevy, then monetized globally
+with regional pricing. Egypt is the first test market, not the only
+market: US/global users pay a USD tier, Egyptian users an EGP tier. Owner: Ameen Hassan (ameen.hassan421@gmail.com is the
 working test account). Claude Code builds it; Ameen reviews at phase
 gates and tests in a real gym.
 
@@ -47,8 +48,12 @@ start`, etc.), `dir="ltr"` on root. Arabic RTL lands in Stage 5 and
 
 ## 3. The economics this is built against
 
-Egypt pricing that converts: ~EGP 50–100/mo (≈ $1–2). Fitness free-to-
-paid conversion: 2–5%. Therefore:
+Regional pricing (the Spotify/Netflix playbook): USD ~$3–4/mo globally
+(at or under Hevy Pro), EGP 50–100/mo (≈ $1–2) in Egypt. Hevy cannot
+add an EGP tier without arbitrage against its global base; Wazn ships
+with tiers from day one. Fitness free-to-paid conversion: 2–5%. The
+table below assumes worst-case all-EGP ARPU; every USD payer (Minnesota
+friends, diaspora) shrinks the required user count:
 
 | Monthly income target | Paying users (~$1.50 ARPU) | Actives needed (3% conv.) |
 | --------------------- | -------------------------- | ------------------------- |
@@ -113,7 +118,14 @@ sound, countdown visible inside the logging flow). Set types in UI
 (normal/warmup/failure/drop, one tap to cycle; warmups stay excluded
 from PRs/charts). Optional one-tap RPE. Supersets (grouped exercises,
 alternating logging, shared rest timer). Edit past workouts. Finish
-summary (duration, volume, sets, PRs hit).
+summary (duration, volume, sets, PRs hit) with a shareable summary
+card: client-side canvas render (volume, duration, PRs, Wazn wordmark)
+into the native share sheet — the only organic growth surface until
+Stage 3. Plus three zero-cost utilities (pure client-side math, no
+schema): plate calculator (target weight → per-side plate breakdown),
+warm-up ramp suggestions (40/60/80% of working weight), and workout
+duration + weekly streak counter (duration already stored; streak is
+one query).
 
 **GATE 1:** Ameen builds his 4-day upper/lower split as routines and
 replaces Hevy completely for **two full weeks**, zero fallbacks. Every
@@ -131,6 +143,14 @@ moment he misses Hevy gets written down and becomes backlog.
   during Stages 0–1 only ameen.hassan421@gmail.com can sign in
   (onboarding@resend.dev delivers solely to the Resend owner) — this
   is fine and expected for solo testing.
+
+- **2B (near-zero cost — data already in hand).** Exercise
+  instructions: import the step-by-step instruction text from
+  free-exercise-db (same dataset as the thumbnails) for every matched
+  exercise; render on the exercise detail page. Notes: add nullable
+  note fields for workouts and per-exercise ("seat position 4"), and
+  backfill from the Hevy CSV's `exercise_notes` column that the
+  original import ignored.
 
 Then the insight features: Exercise detail page (history, records: best weight / best est-1RM /
 best session volume, image, notes). PR detection computed on log,
@@ -176,7 +196,9 @@ logged workout → progress review without hitting English.
 
 ### Stage 6 — Monetize
 
-Wazn Pro via Paymob (cards + mobile wallets), EGP pricing. Free =
+Wazn Pro with regional pricing: USD ~$3–4/mo globally (Stripe or
+Play billing), EGP 50–100/mo in Egypt via Paymob (cards + mobile
+wallets). Free =
 unlimited logging + basic 1RM chart + 4 routines. Pro = unlimited
 routines, advanced analytics, body measurements, no ads. Ads on free
 tier per §2.3 only. Rewarded video unlocks premium analytics for 24h.
@@ -201,7 +223,7 @@ the Play listing.
 
 ### Parked indefinitely
 
-Comments, coaching marketplace, plate calculator, Apple Watch /
+Comments, coaching marketplace, Apple Watch /
 HealthKit, iOS App Store (revisit only if Egypt iOS demand proves
 itself), any feature not listed above.
 
@@ -249,28 +271,21 @@ verbatim, so they survive even if this file isn't read.**
 
 > Claude Code: keep this section current. It is the project's memory.
 
-- **Active stage:** 0 — Foundation fix. **All items complete; GATE 0 awaiting
-  Ameen.** Do not start Stage 1.
-- **Stage 0 punch list:**
-  - [x] **0A** Deadlift ×2 — 10 rows, top sets 125/135 → 250/270 lb
-  - [x] **0B** Import — 134 exercises, 149 workouts, 3,197 sets, RPCs verified
-  - [x] **0C** Renamed to Wazn — manifest, title, both wordmarks, README, package
-  - [x] **0D** Thumbnails — 110/134 matched, 908 KB, initial tiles for the rest
-  - [x] **0E** Design system — touch targets 48px, logged sets 24px, tokens only
-  - [x] **0F** Audit — `set_type` widened for drop sets; findings in DECISIONS.md
-- **Row counts (verified live after import):** exercises 134, workouts **150**,
-  workout_sets 3,197, profiles 2.
-  - 150, not 149: one empty 7-second workout predates the import (browser
-    sign-in test). Inert, not deleted — real user data, see `DECISIONS.md`.
-    Ameen's call whether it goes.
-- **Migrations applied live:** `0002_exercise_images.sql`,
-  `0003_set_type_drop.sql`.
-- **Next action:** GATE 0 acceptance — Ameen signs in at the production URL as
-  **ameen.hassan421@gmail.com** (the only address that receives a code until
-  2A), checks the picker/History/Progress, then logs one real gym session.
-- **Blocked on Ameen:** GATE 0 sign-off. Upcoming: domain purchase before
-  Stage 2 (item 2A).
-- **Known and accepted for now:** only ameen.hassan421@gmail.com can sign in;
-  supersets have no column (Stage 1 design decision, 335 CSV rows waiting);
-  `mailer_otp_exp` is 3600s, worth tightening at 2A.
-- **Last updated:** 2026-08-01 by Claude Code (Stage 0 build session).
+- **Active stage:** 1 — The active workout. Gate 0 approved 2026-08-01.
+- **Stage 1 progress:**
+  - [x] Schema — routines, supersets, per-lift rest, streak RPC (mig. 0004)
+  - [x] Set types in UI (normal/warmup/failure/drop, one tap) + one-tap RPE
+  - [x] Rest timer — deadline-based, adjustable, vibration + beep, in-flow
+  - [x] Plate calculator, warm-up ramp, weekly streak
+  - [x] Finish summary + PR detection (mig. 0005) + canvas share card
+  - [x] Routines — create/edit/duplicate/delete, start workout, "Next" hint
+  - [ ] **Supersets** — column and index exist; no UI, no CSV backfill yet
+  - [ ] **Edit past workouts** — not started
+- **Migrations live:** 0002, 0003, 0004, 0005.
+- **Tests:** 81 passing (was 49 at Gate 0).
+- **Next action:** supersets UI + backfill the 335 CSV superset rows, then
+  editing past workouts. Both are the remainder of Stage 1.
+- **Open decision for Ameen:** the stray empty 7-second workout (`e2587335`)
+  still shows as a blank row in History.
+- **Blocked on Ameen:** nothing. Upcoming: domain purchase before Stage 2 (2A).
+- **Last updated:** 2026-08-01 by Claude Code (Stage 1, partial).
