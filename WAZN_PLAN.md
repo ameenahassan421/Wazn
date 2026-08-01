@@ -271,21 +271,29 @@ verbatim, so they survive even if this file isn't read.**
 
 > Claude Code: keep this section current. It is the project's memory.
 
-- **Active stage:** 1 — The active workout. Gate 0 approved 2026-08-01.
-- **Stage 1 progress:**
-  - [x] Schema — routines, supersets, per-lift rest, streak RPC (mig. 0004)
-  - [x] Set types in UI (normal/warmup/failure/drop, one tap) + one-tap RPE
+- **Active stage:** 1 — The active workout. **All build items complete;
+  GATE 1 awaiting Ameen.** Do not start Stage 2.
+- **Stage 1 punch list:**
+  - [x] Routines — create/edit/duplicate/delete, start workout, "Next" hint,
+        reps prescribed and weight pre-filled from last performance
   - [x] Rest timer — deadline-based, adjustable, vibration + beep, in-flow
-  - [x] Plate calculator, warm-up ramp, weekly streak
-  - [x] Finish summary + PR detection (mig. 0005) + canvas share card
-  - [x] Routines — create/edit/duplicate/delete, start workout, "Next" hint
-  - [ ] **Supersets** — column and index exist; no UI, no CSV backfill yet
-  - [ ] **Edit past workouts** — not started
+  - [x] Set types in UI (normal/warmup/failure/drop) + optional one-tap RPE
+  - [x] Supersets — grouped, alternating by who is behind, one rest per round
+  - [x] Edit past workouts — weight, reps, delete, from History
+  - [x] Finish summary — duration, volume, sets, PRs, canvas share card
+  - [x] Plate calculator, warm-up ramp, duration + weekly streak
 - **Migrations live:** 0002, 0003, 0004, 0005.
-- **Tests:** 81 passing (was 49 at Gate 0).
-- **Next action:** supersets UI + backfill the 335 CSV superset rows, then
-  editing past workouts. Both are the remainder of Stage 1.
+- **Tests:** 95 passing (49 at Gate 0).
+- **Data:** exercises 134, workouts 152, workout_sets 3,201, of which 335
+  now carry a superset group (backfilled from the CSV the import had been
+  dropping). RPE on 387.
+- **Next action:** GATE 1 — Ameen builds his 4-day upper/lower split as
+  routines and replaces Hevy for two full weeks with zero fallbacks. Every
+  moment he misses Hevy gets written down and becomes backlog.
 - **Open decision for Ameen:** the stray empty 7-second workout (`e2587335`)
-  still shows as a blank row in History.
-- **Blocked on Ameen:** nothing. Upcoming: domain purchase before Stage 2 (2A).
-- **Last updated:** 2026-08-01 by Claude Code (Stage 1, partial).
+  still shows as a blank row in History — it can now be removed in-app by
+  deleting it, or say the word and it goes server-side.
+- **Blocked on Ameen:** GATE 1 sign-off. Upcoming: domain purchase before
+  Stage 2 (item 2A) — nobody but ameen.hassan421@gmail.com can sign in until
+  then, which is expected.
+- **Last updated:** 2026-08-01 by Claude Code (Stage 1 complete).
