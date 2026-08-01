@@ -3,6 +3,7 @@
  *
  *   npm run supabase:admin -- show
  *   npm run supabase:admin -- set-site-url https://workout-theta-plum.vercel.app
+ *   npm run supabase:admin -- set-otp-length 6
  *   npm run supabase:admin -- set-smtp
  *   npm run supabase:admin -- set-templates
  *
@@ -45,6 +46,9 @@ const INTERESTING = [
   'mailer_templates_confirmation_content',
   'mailer_templates_magic_link_content',
 ]
+
+/** The app's input is six boxes wide. See the OTP length rule in CLAUDE.md. */
+const DEFAULT_OTP_LENGTH = 6
 
 class AdminError extends Error {}
 
@@ -217,6 +221,30 @@ async function setTemplates() {
   }
 }
 
+/**
+ * The app prompts for a 6-digit code, so the project has to mint one that
+ * length. A project created through the dashboard defaults to 8, which fails
+ * silently: the email carries an 8-digit token, the input accepts 6, and the
+ * verify call never matches.
+ */
+async function setOtpLength(raw: string | undefined) {
+  const length = Number(raw ?? DEFAULT_OTP_LENGTH)
+  if (!Number.isInteger(length) || length < 6 || length > 10) {
+    fail(`Usage: set-otp-length [6-10] (default ${DEFAULT_OTP_LENGTH}). Got "${raw}".`)
+  }
+
+  await request('PATCH', '/config/auth', { mailer_otp_length: length })
+
+  const auth = await request('GET', '/config/auth')
+  const applied = auth.mailer_otp_length
+  if (applied !== length) {
+    fail(
+      `mailer_otp_length is ${JSON.stringify(applied)} after the write, expected ${length}.`,
+    )
+  }
+  console.log(`mailer_otp_length set to ${length} (verified)`)
+}
+
 async function main() {
   const [command, ...rest] = process.argv.slice(2)
 
@@ -229,10 +257,12 @@ async function main() {
       return setSmtp()
     case 'set-templates':
       return setTemplates()
+    case 'set-otp-length':
+      return setOtpLength(rest[0])
     default:
       fail(
         `Unknown command ${command ? `"${command}"` : ''}. ` +
-          'Use: show | set-site-url <url> | set-smtp | set-templates',
+          'Use: show | set-site-url <url> | set-smtp | set-templates | set-otp-length [6-10]',
       )
   }
 }

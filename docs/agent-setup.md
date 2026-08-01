@@ -110,11 +110,30 @@ do, because they are committed.
 ```bash
 npm run supabase:admin -- show                     # current auth config
 npm run supabase:admin -- set-site-url <url>       # + redirect allow list
+npm run supabase:admin -- set-otp-length 6         # the app's input is six wide
 npm run supabase:admin -- set-smtp                 # from SMTP_* env vars
 npm run supabase:admin -- set-templates            # pushes the {{ .Token }} templates
 ```
 
 `set-templates` reads `supabase/email_templates/*.html`, refuses to push a
 template missing `{{ .Token }}`, and reads the config back to confirm the change
-landed. Supabase silently ignores template writes until custom SMTP is
-configured, so run `set-smtp` first.
+landed.
+
+Run `set-smtp` before it. On a free-tier project still using the default email
+provider, the template write is rejected outright:
+
+```
+PATCH /config/auth failed — 400 {"message":"Email template modification is not
+available for free tier projects using the default email provider. Please
+upgrade your plan or configure a custom SMTP provider."}
+```
+
+That is a clean failure, so a missing template is never mistaken for a pushed
+one — but it does mean custom SMTP is a hard prerequisite, not an ordering
+preference. Without `SMTP_*` in the environment there is no way to land the
+templates, and without the templates there is no `{{ .Token }}`, so sign-in
+cannot work at all.
+
+`set-otp-length` exists because a dashboard-created project defaults to 8. That
+one fails silently in the worst way: the email carries an 8-digit token, the
+app's input takes 6, and the verify call simply never matches.
