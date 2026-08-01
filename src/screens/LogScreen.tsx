@@ -7,6 +7,7 @@ import type {
   Exercise,
   ExerciseUsageRow,
   PreviousSessionRow,
+  Routine,
   SetType,
   WeeklyStreakRow,
   Workout,
@@ -16,10 +17,20 @@ import { ExercisePicker } from '../components/ExercisePicker'
 import { SetEntry } from '../components/SetEntry'
 import { useRestTimer, DEFAULT_REST_SECONDS } from '../lib/use-rest-timer'
 import { FinishSummary } from '../components/FinishSummary'
+import { RoutineList } from '../components/RoutineList'
+import { RoutineEditor } from '../components/RoutineEditor'
+import {
+  listRoutines,
+  loadRoutine,
+  saveRoutine,
+  duplicateRoutine,
+  deleteRoutine,
+} from '../lib/routines'
+import type { RoutineDetail, RoutineDraft } from '../lib/routines'
 import { summarise } from '../lib/summary'
 import type { WorkoutSummary } from '../lib/summary'
 
-type View = 'overview' | 'picker' | 'entry' | 'summary'
+type View = 'overview' | 'picker' | 'entry' | 'summary' | 'routine'
 
 interface ExerciseBestRow {
   exercise_id: string
@@ -35,6 +46,12 @@ export function LogScreen({ userId }: { userId: string }) {
   const [summary, setSummary] = useState<WorkoutSummary | null>(null)
   const [summaryDate, setSummaryDate] = useState('')
   const [streak, setStreak] = useState<WeeklyStreakRow | null>(null)
+  const [routines, setRoutines] = useState<Routine[]>([])
+  const [editing, setEditing] = useState<RoutineDetail | null>(null)
+  const [routineBusy, setRoutineBusy] = useState<string | null>(null)
+  // Exercise ids the active routine planned, in order. Drives the "next up"
+  // hint; the workout itself stays freestyle, so you can deviate at any point.
+  const [planned, setPlanned] = useState<string[]>([])
 
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -88,6 +105,13 @@ export function LogScreen({ userId }: { userId: string }) {
 
     // A failed streak must not block the screen — it is decoration, not data.
     setStreak(((streakRows.data ?? []) as WeeklyStreakRow[])[0] ?? null)
+    // Routines are only needed on the idle screen; a failure there must not
+    // stop an in-progress workout from loading.
+    try {
+      setRoutines(await listRoutines())
+    } catch {
+      setRoutines([])
+    }
     setExercises((catalogue.data ?? []) as Exercise[])
     setUsage(
       new Map(
@@ -154,6 +178,100 @@ export function LogScreen({ userId }: { userId: string }) {
     }
   }, [current, workout?.id])
 
+  /**
+   * Start a workout from a routine: create it, then seed the exercise order.
+   * Sets are NOT pre-inserted — a routine says what to do, and a set row means
+   * it was done. Pre-inserting would put lifts in History that never happened
+   * if the session is cut short.
+   */
+  async function startFromRoutine(routine: Routine) {
+    setRoutineBusy(routine.id)
+    setError(null)
+    try {
+      const detail = await loadRoutine(routine.id)
+      const { data, error: insertError } = await supabase
+        .from('workouts')
+        .insert({
+          user_id: userId,
+          started_at: new Date().toISOString(),
+          name: routine.name,
+          routine_id: routine.id,
+        })
+        .select()
+        .single()
+      if (insertError) throw insertError
+
+      setWorkout(data as Workout)
+      setSets([])
+      setHasHistory(true)
+      setPlanned(detail?.exercises.map((e) => e.exercise_id) ?? [])
+
+      // Jump straight into the first exercise: the point of a routine is that
+      // you already know what you are doing.
+      const firstId = detail?.exercises[0]?.exercise_id
+      const first = firstId ? exercisesById.get(firstId) : undefined
+      if (first) {
+        setCurrent(first)
+        setView('entry')
+      } else {
+        setView('picker')
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not start that routine.')
+    } finally {
+      setRoutineBusy(null)
+    }
+  }
+
+  async function persistRoutine(draft: RoutineDraft) {
+    setSaving(true)
+    setError(null)
+    try {
+      await saveRoutine(userId, draft, editing?.id)
+      setRoutines(await listRoutines())
+      setEditing(null)
+      setView('overview')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not save the routine.')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  async function onEditRoutine(routine: Routine) {
+    setError(null)
+    try {
+      setEditing(await loadRoutine(routine.id))
+      setView('routine')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not open that routine.')
+    }
+  }
+
+  async function onDuplicateRoutine(routine: Routine) {
+    setRoutineBusy(routine.id)
+    try {
+      await duplicateRoutine(userId, routine.id)
+      setRoutines(await listRoutines())
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not duplicate that routine.')
+    } finally {
+      setRoutineBusy(null)
+    }
+  }
+
+  async function onDeleteRoutine(routine: Routine) {
+    setRoutineBusy(routine.id)
+    try {
+      await deleteRoutine(routine.id)
+      setRoutines(await listRoutines())
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not delete that routine.')
+    } finally {
+      setRoutineBusy(null)
+    }
+  }
+
   async function startWorkout() {
     setSaving(true)
     setError(null)
@@ -171,6 +289,7 @@ export function LogScreen({ userId }: { userId: string }) {
     setWorkout(data as Workout)
     setSets([])
     setHasHistory(true)
+    setPlanned([])
     setView('picker')
   }
 
@@ -212,6 +331,7 @@ export function LogScreen({ userId }: { userId: string }) {
     setWorkout(null)
     setSets([])
     setCurrent(null)
+    setPlanned([])
     setView('summary')
     void load()
   }
@@ -257,6 +377,15 @@ export function LogScreen({ userId }: { userId: string }) {
     return true
   }
 
+  // The next planned exercise with no sets logged yet. A routine guides; it
+  // does not constrain — the picker is still one tap away at all times.
+  const nextUp = useMemo(() => {
+    if (planned.length === 0) return null
+    const done = new Set(sets.map((s) => s.exercise_id))
+    const id = planned.find((exerciseId) => !done.has(exerciseId))
+    return id ? (exercisesById.get(id) ?? null) : null
+  }, [planned, sets, exercisesById])
+
   const grouped = useMemo(() => {
     const order: string[] = []
     const byExercise = new Map<string, WorkoutSet[]>()
@@ -276,6 +405,24 @@ export function LogScreen({ userId }: { userId: string }) {
 
   // The summary lands here: finishing clears `workout`, so this has to come
   // before the empty state or the summary would never be shown.
+  if (view === 'routine') {
+    return (
+      <div className="py-3">
+        {error && <ErrorNote message={error} />}
+        <RoutineEditor
+          routine={editing}
+          exercises={exercises}
+          saving={saving}
+          onSave={(draft) => void persistRoutine(draft)}
+          onCancel={() => {
+            setEditing(null)
+            setView('overview')
+          }}
+        />
+      </div>
+    )
+  }
+
   if (view === 'summary' && summary) {
     return (
       <div className="py-3">
@@ -305,6 +452,19 @@ export function LogScreen({ userId }: { userId: string }) {
         >
           {hasHistory ? 'Start workout' : 'Start your first workout'}
         </button>
+        <RoutineList
+          routines={routines}
+          busyId={routineBusy}
+          onStart={(r) => void startFromRoutine(r)}
+          onEdit={(r) => void onEditRoutine(r)}
+          onDuplicate={(r) => void onDuplicateRoutine(r)}
+          onDelete={(r) => void onDeleteRoutine(r)}
+          onNew={() => {
+            setEditing(null)
+            setView('routine')
+          }}
+        />
+
         {streak && streak.weeks > 0 && (
           <p className="text-sm text-muted">
             <span className="tnum font-semibold text-text">{streak.weeks}</span>
@@ -377,6 +537,22 @@ export function LogScreen({ userId }: { userId: string }) {
           >
             Add exercise
           </button>
+
+          {nextUp && (
+            <button
+              type="button"
+              onClick={() => {
+                setCurrent(nextUp)
+                setView('entry')
+              }}
+              className="flex h-14 w-full items-center gap-3 rounded-lg border border-line bg-surface px-3 text-start"
+            >
+              <span className="text-xs text-muted">Next</span>
+              <span className="flex-1 truncate text-base font-semibold">
+                {nextUp.name}
+              </span>
+            </button>
+          )}
 
           {grouped.length === 0 ? (
             <p className="text-sm text-muted">

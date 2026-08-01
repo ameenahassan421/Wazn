@@ -220,3 +220,44 @@ One real consequence to remember: a user who travels across zones sees
 historical workouts shift by up to a day, because the instant is fixed and the
 wall clock is not. That is correct behaviour for `timestamptz` and only becomes
 a product question if Stage 5's Egypt users log while travelling.
+
+## 2026-08-01 — Stage 1: routines live on the Log screen, not a fourth tab
+
+`CLAUDE.md` fixes the app at three screens with no router. Routines are the
+biggest thing Stage 1 adds, and the obvious move is a fourth tab.
+
+Didn't. A routine is not a place you go — it is how you _start_ a workout. It
+belongs on the idle Log screen, above "Start workout", so the thing you tap to
+begin is on the screen you were already looking at. A fourth tab would mean
+navigating away from Log in order to start logging.
+
+The editor is a view within Log (`view === 'routine'`), same as the picker and
+the summary. Three tabs, no router, unchanged.
+
+### Routines prescribe reps, not weight
+
+Stage 1 says sets are "pre-filled from last performance". A routine that
+hard-codes 60 kg is wrong the week after you progress and then lies to you
+mid-workout. Reps are prescribed because 5×5 and 3×12 are genuinely different
+routines; weight comes from what you actually lifted last time, which the
+existing `previous_session` RPC already provides.
+
+### Starting a routine does not pre-insert sets
+
+A routine says what to do; a `workout_sets` row means it was done. Pre-inserting
+planned sets would put lifts in History that never happened if the session gets
+cut short — and History is the thing the charts are built from.
+
+Instead the planned exercise order is held in memory and surfaces as a "Next"
+button. The workout stays freestyle: you can deviate at any point, and the
+picker is always one tap away. The routine guides, it does not constrain.
+
+### Saving replaces children rather than diffing them
+
+A routine is a handful of rows and `on delete cascade` makes the delete one
+statement. Diffing positions correctly is the kind of code that silently
+reorders someone's workout six months later, and there is no payoff here to
+justify that risk.
+
+Verified against the live database: create → add exercise → add sets → delete
+leaves zero orphaned `routine_exercises` or `routine_sets`.
