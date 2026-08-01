@@ -27,6 +27,13 @@ import {
   deleteRoutine,
 } from '../lib/routines'
 import type { RoutineDetail, RoutineDraft } from '../lib/routines'
+import {
+  groupsFromSets,
+  groupOf,
+  nextGroupId,
+  nextInGroup,
+  roundComplete,
+} from '../lib/supersets'
 import { summarise } from '../lib/summary'
 import type { WorkoutSummary } from '../lib/summary'
 
@@ -52,6 +59,9 @@ export function LogScreen({ userId }: { userId: string }) {
   // Exercise ids the active routine planned, in order. Drives the "next up"
   // hint; the workout itself stays freestyle, so you can deviate at any point.
   const [planned, setPlanned] = useState<string[]>([])
+  // Group id to stamp on the next set, set when starting a superset from the
+  // overview and cleared once it lands on a row.
+  const [pendingGroup, setPendingGroup] = useState<number | null>(null)
 
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -223,6 +233,37 @@ export function LogScreen({ userId }: { userId: string }) {
     }
   }
 
+  /**
+   * Group the current exercise, then pick a partner. Existing sets for this
+   * exercise are stamped too, so the group covers the whole workout rather
+   * than only what comes next — otherwise History would show half a superset.
+   */
+  async function beginSuperset() {
+    if (!workout || !current) return
+    const existing = groupOf(sets, current.id)
+    const group = existing ?? nextGroupId(sets)
+
+    if (existing === null) {
+      const ids = sets.filter((s) => s.exercise_id === current.id).map((s) => s.id)
+      if (ids.length > 0) {
+        const { error: updateError } = await supabase
+          .from('workout_sets')
+          .update({ superset_group: group })
+          .in('id', ids)
+        if (updateError) {
+          setError(describeError('Grouping the superset', updateError))
+          return
+        }
+        setSets((prev) =>
+          prev.map((s) => (ids.includes(s.id) ? { ...s, superset_group: group } : s)),
+        )
+      }
+    }
+
+    setPendingGroup(group)
+    setView('picker')
+  }
+
   async function persistRoutine(draft: RoutineDraft) {
     setSaving(true)
     setError(null)
@@ -350,6 +391,8 @@ export function LogScreen({ userId }: { userId: string }) {
     if (!workout || !current) return false
 
     const setNumber = sets.filter((s) => s.exercise_id === current.id).length + 1
+    // Keep the exercise in whatever group it is already part of this workout.
+    const supersetGroup = groupOf(sets, current.id) ?? pendingGroup
 
     setSaving(true)
     setError(null)
@@ -363,6 +406,7 @@ export function LogScreen({ userId }: { userId: string }) {
         reps,
         set_type: setType,
         rpe,
+        superset_group: supersetGroup,
       })
       .select()
       .single()
@@ -373,7 +417,31 @@ export function LogScreen({ userId }: { userId: string }) {
       return false
     }
 
-    setSets((prev) => [...prev, data as WorkoutSet])
+    const nextSets = [...sets, data as WorkoutSet]
+    setSets(nextSets)
+    setPendingGroup(null)
+
+    // Supersets rest once per round, not between their exercises — that is
+    // the point of one. Advance to whoever is behind instead.
+    // Rest starts on a logged set, never on a tap: a failed save must not
+    // leave a timer counting against a set that does not exist. Warm-ups start
+    // nothing — nobody rests two minutes after an empty bar.
+    const rest = current.default_rest_seconds ?? DEFAULT_REST_SECONDS
+    if (supersetGroup !== null) {
+      const members = groupsFromSets(nextSets).get(supersetGroup) ?? []
+      const advanceTo = nextInGroup(nextSets, members, current.id)
+      if (advanceTo) {
+        // Mid-round: move to whoever is behind and do NOT rest. Resting
+        // between a superset's exercises is exactly what it is not.
+        const target = exercisesById.get(advanceTo)
+        if (target) setCurrent(target)
+        return true
+      }
+      if (setType !== 'warmup' && roundComplete(nextSets, members)) timer.start(rest)
+      return true
+    }
+
+    if (setType !== 'warmup') timer.start(rest)
     return true
   }
 
@@ -520,7 +588,8 @@ export function LogScreen({ userId }: { userId: string }) {
           saving={saving}
           onAddSet={addSet}
           timer={timer}
-          restSeconds={current.default_rest_seconds ?? DEFAULT_REST_SECONDS}
+          supersetGroup={groupOf(sets, current.id) ?? pendingGroup}
+          onSuperset={() => void beginSuperset()}
           onBack={() => {
             setCurrent(null)
             setView('overview')
