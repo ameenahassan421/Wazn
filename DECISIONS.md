@@ -189,3 +189,34 @@ is a covering index or a materialised summary, not a rewrite.
 **`mailer_otp_exp` is 3600s.** A one-hour sign-in code is generous. Worth
 tightening to ~600s at Stage 2A when auth is being touched anyway — not now,
 since §2.8 puts auth changes outside this stage.
+
+## 2026-08-01 — Timezone flag resolved: the report was wrong, not the app
+
+STATUS flagged that a Gate 0 line showed the bench series ending `2026-07-14`
+when the last CSV session is `07-13`, and asked whether that was a UTC query or
+a display bug. It was neither.
+
+The chain is correct end to end:
+
+| stage                       | value                   |
+| --------------------------- | ----------------------- |
+| CSV (America/Chicago)       | `Jul 19, 2026, 7:01 PM` |
+| stored in Postgres          | `2026-07-20 00:01Z`     |
+| rendered in America/Chicago | `2026-07-19 07:01 PM`   |
+
+An evening Chicago session crosses midnight UTC, which is correct — a
+`timestamptz` stores an instant, not a wall clock. The app renders with
+`Intl.DateTimeFormat(undefined, …)`, which uses the viewer's zone, so it comes
+back as the right day.
+
+The `07-14` came from the ad-hoc reporting script I ran during 0F, which did
+`started_at[:10]` — string-truncating the UTC ISO, so every evening session
+appeared a day late. The bug was in the measurement, not the thing measured.
+
+Worth keeping as a habit: when a number looks off by exactly one unit at a
+boundary, suspect the instrument first.
+
+One real consequence to remember: a user who travels across zones sees
+historical workouts shift by up to a day, because the instant is fixed and the
+wall clock is not. That is correct behaviour for `timestamptz` and only becomes
+a product question if Stage 5's Egypt users log while travelling.
