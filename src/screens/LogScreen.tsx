@@ -7,16 +7,21 @@ import type {
   Exercise,
   ExerciseUsageRow,
   PreviousSessionRow,
+  SetType,
   Workout,
   WorkoutSet,
 } from '../lib/types'
 import { ExercisePicker } from '../components/ExercisePicker'
 import { SetEntry } from '../components/SetEntry'
+import { useRestTimer, DEFAULT_REST_SECONDS } from '../lib/use-rest-timer'
 
 type View = 'overview' | 'picker' | 'entry'
 
 export function LogScreen({ userId }: { userId: string }) {
   const { unit } = useUnit()
+  // Owned by the screen, not by SetEntry: leaving the exercise to pick the
+  // next one must not cancel the rest you are still taking.
+  const timer = useRestTimer()
 
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -173,9 +178,13 @@ export function LogScreen({ userId }: { userId: string }) {
   async function addSet({
     weightKg,
     reps,
+    setType,
+    rpe,
   }: {
     weightKg: number | null
     reps: number
+    setType: SetType
+    rpe: number | null
   }): Promise<boolean> {
     if (!workout || !current) return false
 
@@ -191,7 +200,8 @@ export function LogScreen({ userId }: { userId: string }) {
         set_number: setNumber,
         weight_kg: weightKg,
         reps,
-        set_type: 'normal',
+        set_type: setType,
+        rpe,
       })
       .select()
       .single()
@@ -283,6 +293,8 @@ export function LogScreen({ userId }: { userId: string }) {
           previousLoading={previousFor !== current.id}
           saving={saving}
           onAddSet={addSet}
+          timer={timer}
+          restSeconds={current.default_rest_seconds ?? DEFAULT_REST_SECONDS}
           onBack={() => {
             setCurrent(null)
             setView('overview')
