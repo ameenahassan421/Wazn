@@ -20,6 +20,8 @@ export interface Exercise {
   equipment: string
   is_custom: boolean
   owner_id: string | null
+  /** Null when no confident free-exercise-db match; renders an initial tile. */
+  image_url: string | null
 }
 
 export interface Workout {

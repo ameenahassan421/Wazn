@@ -38,3 +38,63 @@ actually sign into to verify GATE 0.
 The `ameenahassan421` profile is left empty. Note for Stage 2A: once a real
 sending domain exists, both addresses will work, and there will be two accounts
 where one is expected. Worth a cleanup decision then, not now.
+
+## 2026-08-01 — 0D: name similarity alone picks the wrong exercise
+
+The plan says map Hevy names to free-exercise-db. A plain fuzzy match on names
+produced confidently wrong images, which is worse than none — the picker is
+scanned at a glance mid-workout, and a wrong thumbnail actively misleads.
+
+Three failures found by printing every match and reading them, not by trusting
+the score:
+
+| our name                    | matched                     | why it was wrong          |
+| --------------------------- | --------------------------- | ------------------------- |
+| `Back Extension (Machine)`  | _Machine Triceps Extension_ | different muscle entirely |
+| `Seated Cable Row - V Grip` | _Upright Cable Row_         | scored a perfect **1.00** |
+| `Chest Fly (Machine)`       | _Leverage Chest Press_      | press, not fly            |
+
+Three fixes, in the matcher:
+
+1. **Muscle-group gate.** Candidates whose `primaryMuscles` don't map to our
+   `muscle_group` are rejected outright. Sharing tokens is not sharing a muscle.
+2. **`seated`/`standing` removed from the stopword list, plurals stemmed.**
+   `seated` was being discarded as noise — the only word separating a seated
+   row from an upright row. With it kept and `Rows`→`Row` stemmed, the correct
+   _Seated Cable Rows_ wins at 1.00.
+3. **Floor raised 0.55 → 0.60.** Everything that landed in 0.55–0.59 was wrong
+   on inspection. Below the floor, `image_url` stays null and the tile renders.
+
+Plus a five-entry `ALIASES` table for vocabulary the source database simply
+does not share — "Chest Fly" and "Butterfly" have zero tokens in common, so no
+similarity metric will ever bridge them.
+
+Result: 110 of 134 matched, and all fifteen most-used lifts verified correct by
+hand. The 24 unmatched render initial tiles. `--explain` prints every match so
+this stays auditable.
+
+## 2026-08-01 — 0D: thumbnails are .jpg, resized to 240px
+
+Two costs the plan didn't mention, both real:
+
+**Precache.** `vite-plugin-pwa` globs `**/*.{js,css,html,svg,png,ico,woff2}`.
+Had these been `.png` they'd have been pulled into the install, putting
+megabytes in front of first paint on the hot path. `.jpg` sits outside that
+glob and loads lazily instead. Verified: precache still 12 entries / 755 KiB.
+
+**Bandwidth.** Sources are 850×567, ~63 KB each — 7.0 MB across 110 files for
+images rendered in a 48px slot. Resized to 240px at q72 (mozjpeg): **908 KB
+total, 6 KB average**, an 87% cut. This app is aimed at Egyptian mobile data,
+where a picker that pulls a megabyte on open is a cost a real user pays. Added
+`sharp` as a devDependency for this; it never ships to the client.
+
+## 2026-08-01 — 0D: initial tiles are neutral, not colour-coded
+
+The plan asks for a "muscle-group colored initial tile". §2.4 allows exactly
+one accent colour. Coding eleven muscle groups needs eleven hues and breaks
+that rule the moment it ships.
+
+Kept the rule. Tiles use the exercise's initial plus one of five fixed neutral
+steps, chosen by a hash of the muscle group so a given muscle always looks the
+same. Distinction without a palette. If real use shows the tiles are too hard
+to tell apart, the answer is a muscle-group label, not colour.

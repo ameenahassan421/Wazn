@@ -1,5 +1,6 @@
 import { useMemo, useRef, useState } from 'react'
 import type { Exercise, ExerciseUsageRow } from '../lib/types'
+import { ExerciseThumb } from './ExerciseThumb'
 
 /**
  * Recently used first, then most used, then everything else alphabetically.
@@ -89,8 +90,9 @@ export function ExercisePicker({
               <button
                 type="button"
                 onClick={() => onPick(exercise)}
-                className="flex h-14 w-full items-center gap-3 text-start"
+                className="flex h-16 w-full items-center gap-3 text-start"
               >
+                <ExerciseThumb exercise={exercise} />
                 <span className="flex-1 truncate text-base">{exercise.name}</span>
                 <span className="text-xs text-muted">{exercise.muscle_group}</span>
               </button>

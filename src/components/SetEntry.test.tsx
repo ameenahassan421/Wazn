@@ -13,6 +13,7 @@ const exercise: Exercise = {
   equipment: 'barbell',
   is_custom: false,
   owner_id: null,
+  image_url: null,
 }
 
 const previousSession: PreviousSessionRow[] = [
