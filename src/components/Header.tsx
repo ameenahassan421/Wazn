@@ -14,14 +14,14 @@ export function Header() {
             type="button"
             onClick={toggleUnit}
             aria-label={`Weight unit: ${unit}. Tap to switch.`}
-            className="tnum h-11 min-w-14 rounded-md border border-line px-3 text-sm font-semibold text-text"
+            className="tnum h-12 min-w-14 rounded-md border border-line px-3 text-sm font-semibold text-text"
           >
             {unit}
           </button>
           <button
             type="button"
             onClick={() => void supabase.auth.signOut()}
-            className="h-11 rounded-md px-3 text-sm text-muted"
+            className="h-12 rounded-md px-3 text-sm text-muted"
           >
             Sign out
           </button>

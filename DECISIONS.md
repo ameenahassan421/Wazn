@@ -98,3 +98,37 @@ Kept the rule. Tiles use the exercise's initial plus one of five fixed neutral
 steps, chosen by a hash of the muscle group so a given muscle always looks the
 same. Distinction without a palette. If real use shows the tiles are too hard
 to tell apart, the answer is a muscle-group label, not colour.
+
+The four extra steps are `--color-tile-1..4` in `index.css`, not inline hex, so
+they are part of the design system rather than magic numbers in a component.
+
+## 2026-08-01 — 0E: what the audit actually found
+
+Most of §2.4 was already honoured — dark-only, near-black `#0b0b0c`, off-white
+`#ececee`, one amber accent, one typeface, and no gradients, shadows, or emoji
+anywhere in `src/`. Three real violations:
+
+**Touch targets.** Four interactive controls were `h-11` (44px) against a 48px
+minimum: the unit toggle, sign out, "Done" in SetEntry, and "Finish" in
+LogScreen. All raised to `h-12`. The set-list `<li>` is also 44px but is not a
+touch target, so it stays.
+
+**Numbers in the logging flow.** Sets already logged in the current workout
+rendered at `text-lg` (18px) — these are read mid-workout, between sets, at
+arm's length. Raised to `text-2xl` (24px), with the row to `h-14` to fit.
+
+**Off-token colour.** Promoted the tile steps to theme tokens (above), leaving
+zero inline hex values in `src/`.
+
+### One deliberate miss
+
+`previousSummary` — the previous session shown inline while logging — is
+`text-xl` (20px), under the 24px rule. It is a multi-set string like
+`60 kg × 8 · 60 kg × 6 · 55 kg × 6`, not a single figure. At 24px it wraps to
+three lines and pushes the weight input below the fold on a phone.
+
+§2.1 says the logging flow is sacred and §2.3's ordering puts it above
+typography, so the flow wins. 14px → 20px is still a large readability gain.
+If the previous session needs to be bigger, the fix is showing only the top set
+as a single figure — an information change, not a font-size change, and out of
+scope for 0E.

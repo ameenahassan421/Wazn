@@ -16,10 +16,10 @@ import type { Exercise } from '../lib/types'
  */
 const TONES = [
   'bg-surface',
-  'bg-[#17171a]',
-  'bg-[#1d1d21]',
-  'bg-[#232328]',
-  'bg-[#292930]',
+  'bg-tile-1',
+  'bg-tile-2',
+  'bg-tile-3',
+  'bg-tile-4',
 ] as const
 
 /** Stable per-group tone so the same muscle always looks the same. */
