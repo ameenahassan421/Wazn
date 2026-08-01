@@ -7,7 +7,7 @@ export function Header() {
   return (
     <header className="sticky top-0 z-20 border-b border-line bg-ink/95 backdrop-blur-sm">
       <div className="mx-auto flex h-14 w-full max-w-[430px] items-center gap-2 px-4">
-        <h1 className="text-base font-semibold tracking-tight">Workout</h1>
+        <h1 className="text-base font-semibold tracking-tight">Wazn</h1>
 
         <div className="ms-auto flex items-center gap-1">
           <button

@@ -11,8 +11,8 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['icon.svg', 'icon-192.png', 'icon-512.png'],
       manifest: {
-        name: 'Workout',
-        short_name: 'Workout',
+        name: 'Wazn',
+        short_name: 'Wazn',
         description: 'Strength training log',
         dir: 'ltr',
         lang: 'en',
