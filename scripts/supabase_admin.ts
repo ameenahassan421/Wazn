@@ -179,12 +179,20 @@ async function setSmtp() {
     )
   }
 
+  // The API wants smtp_port as a string and rejects a number outright:
+  //   400 smtp_port: Invalid input: expected string, received number
+  // Validate it parses, then send the original string.
+  if (!/^\d+$/.test(required.smtp_port ?? '')) {
+    fail(`SMTP_PORT must be a number, got "${required.smtp_port}". Resend uses 465.`)
+  }
+
   await request('PATCH', '/config/auth', {
     ...required,
-    smtp_port: Number(required.smtp_port),
     smtp_sender_name: process.env.SMTP_SENDER_NAME ?? 'Workout',
   })
-  console.log(`SMTP set to ${required.smtp_host} as ${required.smtp_admin_email}`)
+  console.log(
+    `SMTP set to ${required.smtp_host}:${required.smtp_port} as ${required.smtp_admin_email}`,
+  )
 }
 
 async function setTemplates() {
