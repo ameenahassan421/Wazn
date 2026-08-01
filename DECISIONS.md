@@ -132,3 +132,60 @@ typography, so the flow wins. 14px → 20px is still a large readability gain.
 If the previous session needs to be bigger, the fix is showing only the top set
 as a single figure — an information change, not a font-size change, and out of
 scope for 0E.
+
+## 2026-08-01 — 0F audit: what won't hold, and what will
+
+### Fixed now
+
+**`set_type` would have rejected drop sets.** The CHECK constraint allowed
+`normal | warmup | failure`. Stage 1 cycles `normal/warmup/failure/drop` in the
+UI, so the first drop set logged would have failed at the database with a
+constraint violation — mid-workout, on the hot path, for a feature that looks
+purely cosmetic in the UI. Migration `0003` widens it. Not a feature, just a
+constraint that was already wrong.
+
+**A missed rename, caught by rendering the app.** `AuthScreen` had its own
+`Workout` wordmark that the 0C grep missed, because it reads
+`<h1 ...>Workout</h1>` with attributes between. Screenshotting the production
+build against a real Supabase URL surfaced it in seconds. Worth repeating at
+future gates: grep proves absence in files you thought to search, a screenshot
+proves what a user sees.
+
+### Verified sound
+
+- **Import fidelity is exact.** 3,197 sets, 149 workouts, 134 exercises; RPE
+  preserved on 387 rows, 62 warmups and 1 failure carried through, 369
+  bodyweight sets with null weight. Nothing silently coerced.
+- **All three RPCs return real data** and the bench series spans 2025-10-26 →
+  2026-07-14 with no July cliff (+16 lb across the boundary, continuous).
+- **`exercise_usage` runs in 3 ms** over the full set — a hash aggregate with
+  sequential scans, which is correct at this size.
+- **Dates render in the viewer's timezone** (`Intl.DateTimeFormat(undefined)`),
+  so Chicago-sourced timestamps show the right day. Correct by construction.
+- **RLS is enforced server-side** on all four tables, owner-scoped, with
+  `exercises` readable by any authenticated user when `owner_id is null`.
+- **Progress stays lazy.** recharts is 389 kB in its own chunk; the entry
+  bundle is 364 kB and the precache 12 entries / 755 KiB even with 110
+  thumbnails on disk.
+
+### Findings recorded, deliberately not acted on
+
+**Supersets have no column, and the CSV has 335 rows of superset data** across
+3 groups. The import drops `superset_id` because there is nowhere to put it.
+Not fixed here: how supersets are modelled (a group id on the set? a join
+table? ordering semantics?) is a Stage 1 design decision, and guessing it now
+risks a migration that has to be undone. No data is lost — the CSV is in the
+repo and the import is idempotent, so a re-run after Stage 1 lands backfills
+the history.
+
+**`exercise_notes` exists on 4 rows** and has no column. Negligible; same
+reasoning.
+
+**`exercise_usage` will not scale as written.** It aggregates every set the
+caller can see on each Log-screen mount. Fine at 3,197 rows and one user;
+at Stage 3 with many users it is a full scan per open. The fix when it matters
+is a covering index or a materialised summary, not a rewrite.
+
+**`mailer_otp_exp` is 3600s.** A one-hour sign-in code is generous. Worth
+tightening to ~600s at Stage 2A when auth is being touched anyway — not now,
+since §2.8 puts auth changes outside this stage.
