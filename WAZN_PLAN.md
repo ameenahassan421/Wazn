@@ -271,27 +271,21 @@ verbatim, so they survive even if this file isn't read.**
 
 > Claude Code: keep this section current. It is the project's memory.
 
-- **Active stage:** 1 — The active workout. Gate 0 approved by Ameen
-  (2026-08-01, "carry on to next stage").
-- **Gate 0 outcome:** build items all passed. Ameen signed in at production
-  and logged 4 real sets (110 lb x 8 x3, 65 lb x 12) across 2 workouts,
-  so sign-in, picker, and logging are proven end-to-end on a real device.
-  The remaining gate line — a full gym session — is his to do whenever;
-  it does not block Stage 1.
-- **Timezone flag RESOLVED — the app was never wrong.** CSV
-  `Jul 19, 2026, 7:01 PM` stores as `2026-07-20 00:01Z` and renders back as
-  `2026-07-19 07:01 PM` in America/Chicago. Exact. The `07-14` in the Gate 0
-  report was an artifact of the _reporting script_ truncating a UTC string,
-  not a query or display bug. See `DECISIONS.md`.
-- **Row counts (verified live):** exercises 134, workouts **152**,
-  workout_sets **3,201**, profiles 2.
-  - 152 = 149 imported + 3 from Ameen's testing (one empty 7-second one from
-    the first sign-in, two real). 3,201 = 3,197 imported + 4 logged.
-- **Open decision for Ameen:** the stray empty 7-second workout
-  (`e2587335`) still shows as a blank row in History. Say the word and it goes.
-- **Migrations applied live:** `0002_exercise_images.sql`,
-  `0003_set_type_drop.sql`.
-- **Next action:** Stage 1 build.
-- **Blocked on Ameen:** nothing for Stage 1. Upcoming: domain purchase before
-  Stage 2 (item 2A).
-- **Last updated:** 2026-08-01 by Claude Code (Stage 1 start).
+- **Active stage:** 1 — The active workout. Gate 0 approved 2026-08-01.
+- **Stage 1 progress:**
+  - [x] Schema — routines, supersets, per-lift rest, streak RPC (mig. 0004)
+  - [x] Set types in UI (normal/warmup/failure/drop, one tap) + one-tap RPE
+  - [x] Rest timer — deadline-based, adjustable, vibration + beep, in-flow
+  - [x] Plate calculator, warm-up ramp, weekly streak
+  - [x] Finish summary + PR detection (mig. 0005) + canvas share card
+  - [x] Routines — create/edit/duplicate/delete, start workout, "Next" hint
+  - [ ] **Supersets** — column and index exist; no UI, no CSV backfill yet
+  - [ ] **Edit past workouts** — not started
+- **Migrations live:** 0002, 0003, 0004, 0005.
+- **Tests:** 81 passing (was 49 at Gate 0).
+- **Next action:** supersets UI + backfill the 335 CSV superset rows, then
+  editing past workouts. Both are the remainder of Stage 1.
+- **Open decision for Ameen:** the stray empty 7-second workout (`e2587335`)
+  still shows as a blank row in History.
+- **Blocked on Ameen:** nothing. Upcoming: domain purchase before Stage 2 (2A).
+- **Last updated:** 2026-08-01 by Claude Code (Stage 1, partial).
