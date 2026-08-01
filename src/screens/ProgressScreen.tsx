@@ -26,10 +26,14 @@ export function ProgressScreen() {
   const [exercises, setExercises] = useState<Exercise[]>([])
   const [usage, setUsage] = useState<Map<string, ExerciseUsageRow>>(new Map())
   const [selected, setSelected] = useState<Exercise | null>(null)
-  const [points, setPoints] = useState<OneRepMaxPoint[]>([])
+  // The series carries the exercise it belongs to, so switching exercises does
+  // not need an effect to clear the old points — they simply stop matching.
+  const [series, setSeries] = useState<{
+    exerciseId: string
+    points: OneRepMaxPoint[]
+  } | null>(null)
 
   const [loading, setLoading] = useState(true)
-  const [loadingChart, setLoadingChart] = useState(false)
   const [picking, setPicking] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -76,29 +80,31 @@ export function ProgressScreen() {
   }, [])
 
   useEffect(() => {
-    if (!selected) {
-      setPoints([])
-      return
-    }
+    if (!selected) return
+    const exerciseId = selected.id
     let active = true
-    setLoadingChart(true)
     void supabase
-      .rpc('exercise_1rm_history', { p_exercise_id: selected.id })
+      .rpc('exercise_1rm_history', { p_exercise_id: exerciseId })
       .then(({ data, error: rpcError }) => {
         if (!active) return
-        setLoadingChart(false)
         if (rpcError) {
           setError(describeError('Loading the trend for that exercise', rpcError))
-          setPoints([])
+          setSeries({ exerciseId, points: [] })
           return
         }
         setError(null)
-        setPoints((data ?? []) as OneRepMaxPoint[])
+        setSeries({ exerciseId, points: (data ?? []) as OneRepMaxPoint[] })
       })
     return () => {
       active = false
     }
   }, [selected])
+
+  const points = useMemo(
+    () => (series && series.exerciseId === selected?.id ? series.points : []),
+    [series, selected?.id],
+  )
+  const loadingChart = selected !== null && series?.exerciseId !== selected.id
 
   const chartData = useMemo(
     () =>
@@ -227,7 +233,9 @@ export function ProgressScreen() {
                     color: '#ececee',
                     fontVariantNumeric: 'tabular-nums',
                   }}
-                  labelFormatter={(value: number) => formatShortDate(new Date(value).toISOString())}
+                  labelFormatter={(value: number) =>
+                    formatShortDate(new Date(value).toISOString())
+                  }
                   formatter={(value: number) => [
                     `${trim(Number(value))} ${unit}`,
                     'est. 1RM',
@@ -249,8 +257,8 @@ export function ProgressScreen() {
           </div>
 
           <p className="text-xs text-muted">
-            Epley estimate from working sets: weight × (1 + reps ÷ 30). Warmups and
-            sets without both weight and reps are excluded.
+            Epley estimate from working sets: weight × (1 + reps ÷ 30). Warmups and sets
+            without both weight and reps are excluded.
           </p>
         </>
       )}

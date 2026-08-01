@@ -105,8 +105,18 @@ function timezoneOffset(timestampMs: number, timeZone: string): number {
 }
 
 const MONTHS = [
-  'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-  'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+  'Jan',
+  'Feb',
+  'Mar',
+  'Apr',
+  'May',
+  'Jun',
+  'Jul',
+  'Aug',
+  'Sep',
+  'Oct',
+  'Nov',
+  'Dec',
 ]
 
 /** "Jul 19, 2026, 7:01 PM" read as America/Chicago -> ISO instant. */
@@ -118,7 +128,9 @@ export function parseHevyDate(value: string): string | null {
     /^([A-Za-z]{3})\s+(\d{1,2}),\s*(\d{4}),\s*(\d{1,2}):(\d{2})\s*(AM|PM)$/i,
   )
   if (!match) {
-    fail(`Unrecognised date "${raw}". Expected the Hevy format "Jul 19, 2026, 7:01 PM".`)
+    fail(
+      `Unrecognised date "${raw}". Expected the Hevy format "Jul 19, 2026, 7:01 PM".`,
+    )
   }
 
   const month = MONTHS.findIndex((m) => m.toLowerCase() === match[1].toLowerCase())
@@ -156,7 +168,11 @@ export function readCsv(path: string): CsvRow[] {
   } catch {
     fail(`Cannot read "${path}". Pass the path with --csv, or run from the repo root.`)
   }
-  const rows = parse(file, { columns: true, skip_empty_lines: true, bom: true }) as CsvRow[]
+  const rows = parse(file, {
+    columns: true,
+    skip_empty_lines: true,
+    bom: true,
+  }) as CsvRow[]
   if (rows.length === 0) fail(`"${path}" has no data rows.`)
   return rows
 }
@@ -262,7 +278,9 @@ function readArgs() {
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
   if (!url) {
-    fail('SUPABASE_URL is not set. Add it to .env (Project Settings > API > Project URL).')
+    fail(
+      'SUPABASE_URL is not set. Add it to .env (Project Settings > API > Project URL).',
+    )
   }
   if (!serviceKey) {
     fail(
@@ -278,7 +296,9 @@ function readArgs() {
     )
   }
   if (!/^[0-9a-f-]{36}$/i.test(userId)) {
-    fail(`"${userId}" is not a user UUID. Copy the id from Supabase > Authentication > Users.`)
+    fail(
+      `"${userId}" is not a user UUID. Copy the id from Supabase > Authentication > Users.`,
+    )
   }
 
   return { userId, csvPath: resolve(process.cwd(), csvPath), url, serviceKey }
@@ -305,7 +325,8 @@ async function main() {
     .from('exercises')
     .select('id, name')
     .is('owner_id', null)
-  if (existingError) fail(`Reading existing exercises failed — ${existingError.message}`)
+  if (existingError)
+    fail(`Reading existing exercises failed — ${existingError.message}`)
 
   const known = new Set((existing ?? []).map((e) => e.name as string))
   const missing = catalogue.filter((e) => !known.has(e.name))

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useMemo, useState } from 'react'
 import type { Exercise, PreviousSessionRow, WorkoutSet } from '../lib/types'
 import { formatRelativeDay } from '../lib/format'
 import { formatWeight, fromDisplayWeight } from '../lib/units'
@@ -62,43 +62,39 @@ export function SetEntry({
 }) {
   const [draft, setDraft] = useState<Draft>({ weight: '', reps: '' })
   const [error, setError] = useState<string | null>(null)
-  const [seeded, setSeeded] = useState(false)
+  // Which exercise the draft was seeded from, and the unit it is written in.
+  // Both are adjusted during render rather than in an effect: an effect would
+  // paint one frame with the wrong values first.
+  const [seededFor, setSeededFor] = useState<string | null>(null)
+  const [draftUnit, setDraftUnit] = useState<Unit>(unit)
 
   const lastLogged = setsThisWorkout.at(-1)
   const lastPrevious = previousSession.at(-1)
 
-  // Seed once per exercise: this workout's last set for it, else last session's.
-  useEffect(() => {
-    setSeeded(false)
+  if (seededFor !== null && seededFor !== exercise.id) {
+    // A different exercise: drop the old draft and seed again below.
+    setSeededFor(null)
     setDraft({ weight: '', reps: '' })
     setError(null)
-  }, [exercise.id])
-
-  useEffect(() => {
-    // Wait for the previous session to arrive, otherwise the first render
-    // would seed from nothing and the auto-fill would never happen.
-    if (seeded || previousLoading) return
+  } else if (seededFor === null && !previousLoading) {
+    // Seed from this workout's last set for the exercise, else the last
+    // session's. Waiting for the fetch matters: seeding from an empty list
+    // would mark the draft done and the auto-fill would never happen.
     const source = lastLogged ?? lastPrevious
-    if (source) {
-      setDraft(draftFromWeight(source.weight_kg, source.reps, unit))
-    }
-    setSeeded(true)
-  }, [seeded, previousLoading, lastLogged, lastPrevious, unit])
-
-  // Flipping the header toggle mid-set converts what is already typed rather
-  // than leaving 135 lbs sitting in a field now labelled kg.
-  const previousUnit = useRef(unit)
-  useEffect(() => {
-    const from = previousUnit.current
-    if (from === unit) return
-    previousUnit.current = unit
+    if (source) setDraft(draftFromWeight(source.weight_kg, source.reps, unit))
+    setSeededFor(exercise.id)
+    setDraftUnit(unit)
+  } else if (draftUnit !== unit) {
+    // Flipping the header toggle mid-set converts what is already typed rather
+    // than leaving 135 lbs sitting in a field now labelled kg.
+    setDraftUnit(unit)
     setDraft((d) => {
       if (d.weight.trim() === '') return d
       const parsed = Number.parseFloat(d.weight)
       if (!Number.isFinite(parsed)) return d
-      return { ...d, weight: formatWeight(fromDisplayWeight(parsed, from), unit) }
+      return { ...d, weight: formatWeight(fromDisplayWeight(parsed, draftUnit), unit) }
     })
-  }, [unit])
+  }
 
   const previousSummary = useMemo(() => {
     const working = previousSession.filter((s) => s.set_type !== 'warmup')

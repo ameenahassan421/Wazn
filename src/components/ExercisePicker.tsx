@@ -79,8 +79,8 @@ export function ExercisePicker({
 
       {results.length === 0 ? (
         <p className="py-8 text-sm text-muted">
-          No exercise matches “{query.trim()}”. Check the spelling — the catalogue
-          uses names like “Bench Press (Barbell)”.
+          No exercise matches “{query.trim()}”. Check the spelling — the catalogue uses
+          names like “Bench Press (Barbell)”.
         </p>
       ) : (
         <ul className="divide-y divide-line">

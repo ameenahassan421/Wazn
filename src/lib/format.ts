@@ -34,9 +34,7 @@ export function formatRelativeDay(iso: string): string {
   const then = new Date(iso)
   const startOfDay = (d: Date) =>
     new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime()
-  const days = Math.round(
-    (startOfDay(new Date()) - startOfDay(then)) / 86_400_000,
-  )
+  const days = Math.round((startOfDay(new Date()) - startOfDay(then)) / 86_400_000)
   if (days <= 0) return 'today'
   if (days === 1) return 'yesterday'
   if (days < 7) return `${days} days ago`
