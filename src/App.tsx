@@ -1,4 +1,5 @@
 import { lazy, Suspense, useState } from 'react'
+import { Analytics } from '@vercel/analytics/react'
 import { supabaseConfigError } from './lib/supabase'
 import { useAuth } from './lib/use-auth'
 import { UnitProvider } from './lib/unit-context'
@@ -50,6 +51,7 @@ export default function App() {
         )}
       </main>
       <TabBar active={tab} onChange={setTab} />
+      <Analytics />
     </UnitProvider>
   )
 }
