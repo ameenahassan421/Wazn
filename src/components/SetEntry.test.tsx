@@ -14,6 +14,7 @@ const exercise: Exercise = {
   is_custom: false,
   owner_id: null,
   image_url: null,
+  default_rest_seconds: null,
 }
 
 const previousSession: PreviousSessionRow[] = [
@@ -88,6 +89,7 @@ describe('SetEntry auto-fill', () => {
         duration_seconds: null,
         distance_meters: null,
         set_type: 'normal',
+        superset_group: null,
       },
     ]
     const { weight, reps } = setup({ previousSession, setsThisWorkout: logged })
