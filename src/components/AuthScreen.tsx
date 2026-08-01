@@ -69,7 +69,7 @@ export function AuthScreen() {
 
   return (
     <main className="mx-auto flex min-h-dvh w-full max-w-[430px] flex-col justify-center px-5 py-10">
-      <h1 className="text-2xl font-semibold tracking-tight">Workout</h1>
+      <h1 className="text-2xl font-semibold tracking-tight">Wazn</h1>
       <p className="mt-1 text-sm text-muted">Sign in with a 6-digit email code.</p>
 
       {step === 'email' ? (

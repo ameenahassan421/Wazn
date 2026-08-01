@@ -256,7 +256,7 @@ export function LogScreen({ userId }: { userId: string }) {
           type="button"
           onClick={() => void finishWorkout()}
           disabled={saving}
-          className="h-11 rounded-md border border-line px-4 text-sm font-semibold disabled:opacity-60"
+          className="h-12 rounded-md border border-line px-4 text-sm font-semibold disabled:opacity-60"
         >
           Finish
         </button>

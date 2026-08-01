@@ -1,7 +1,28 @@
-# Workout — working notes for Claude
+# Wazn — working notes for Claude
+
+> **`WAZN_PLAN.md` is the source of truth for this project.** Read it in full
+> at the start of every session, along with `DECISIONS.md` and the **STATUS**
+> section at the bottom of the plan. Do not begin work until you know which
+> phase is active and what its gate is. This file is the working notes; where
+> the two disagree, the plan wins.
 
 Mobile-first strength-training PWA. The job it does: log a set in under 30
 seconds, one hand, mid-workout. Every decision serves that.
+
+## Non-negotiables carried from WAZN_PLAN.md §2
+
+These are reproduced verbatim so they survive even if the plan is not read.
+
+6. **Critical review is mandatory.** Do not implement specs blindly,
+   including this file. Where a better approach exists (schema, library,
+   UX, query design), implement it and log the deviation with reasoning
+   in `DECISIONS.md`. Ask first only when a change is destructive to
+   existing data or auth.
+7. **Phase gates are hard stops.** Finish a phase, report against its
+   acceptance list, STOP, wait for Ameen's approval. Never start the
+   next phase unprompted.
+8. **Do not rotate or modify API keys.** Key rotation is handled by
+   Ameen separately, before any non-owner user touches the app.
 
 ## Commands
 

@@ -152,7 +152,7 @@ export function SetEntry({
         <button
           type="button"
           onClick={onBack}
-          className="h-11 rounded-md px-2 text-sm text-muted"
+          className="h-12 rounded-md px-2 text-sm text-muted"
         >
           Done
         </button>
@@ -166,7 +166,12 @@ export function SetEntry({
             <p className="text-xs text-muted">
               Previous · {formatRelativeDay(previousSession[0].started_at)}
             </p>
-            <p className="tnum mt-0.5 text-sm">{previousSummary}</p>
+            {/* 20px, not the 24px minimum in the plan's §2.4. This is a
+                multi-set string ("60 kg × 8 · 60 kg × 6 · 55 kg × 6"), not a
+                single figure — at 24px it wraps to three lines and pushes the
+                weight input below the fold. §2.1 (the logging flow is sacred)
+                outranks §2.4, so it stops here. See DECISIONS.md. */}
+            <p className="tnum mt-0.5 text-xl">{previousSummary}</p>
           </>
         ) : (
           <p className="text-xs text-muted">
@@ -178,15 +183,15 @@ export function SetEntry({
       {setsThisWorkout.length > 0 && (
         <ul className="divide-y divide-line rounded-lg border border-line">
           {setsThisWorkout.map((set) => (
-            <li key={set.id} className="flex h-11 items-center gap-3 px-3">
+            <li key={set.id} className="flex h-14 items-center gap-3 px-3">
               <span className="tnum w-6 text-sm text-muted">{set.set_number}</span>
-              <span className="tnum flex-1 text-lg font-semibold">
+              <span className="tnum flex-1 text-2xl font-semibold">
                 {set.weight_kg === null ? 'BW' : formatWeight(set.weight_kg, unit)}
                 <span className="ms-2 text-sm font-normal text-muted">
                   {set.weight_kg === null ? '' : unit}
                 </span>
               </span>
-              <span className="tnum text-lg font-semibold">{set.reps ?? '—'}</span>
+              <span className="tnum text-2xl font-semibold">{set.reps ?? '—'}</span>
               <span className="text-sm text-muted">reps</span>
             </li>
           ))}

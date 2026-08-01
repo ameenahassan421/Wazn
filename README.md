@@ -1,7 +1,10 @@
-# Workout
+# Wazn
 
-A mobile-first strength-training log. One job: get a set recorded in under 30
-seconds, phone in one hand, between sets.
+Wazn (Arabic: وزن, "weight") is a mobile-first strength-training log. One job:
+get a set recorded in under 30 seconds, phone in one hand, between sets.
+
+`WAZN_PLAN.md` is the build plan and source of truth; `DECISIONS.md` records
+deviations from it.
 
 Three screens, nothing else:
 
