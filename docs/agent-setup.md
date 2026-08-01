@@ -32,11 +32,18 @@ Add to the environment's egress allowlist, per what you want automated:
 Configured per environment in Claude Code on the web —
 see https://code.claude.com/docs/en/claude-code-on-the-web.
 
-## 2. Credentials — in environment variables, never in chat
+## 2. Credentials — environment variables, with eyes open
 
-A token pasted into a conversation lives in that transcript. Put these in the
-**environment's** variables instead, and the session reads them from the
-process environment:
+Cloud environments have **no secrets store**. Environment variables are plain
+text, readable by anyone who can use that environment, and the environment
+dialog says not to put credentials there at all.
+
+For a personal environment that only you use, "anyone who uses it" is you, and
+that is a reasonable trade for not pasting a token into a chat transcript.
+For a shared or organization environment it is not — every member's sessions
+can read it.
+
+Either way, prefer a short-lived token and rotate it when the work is done:
 
 | variable                                                              | what it is                                                           | scope                                                  |
 | --------------------------------------------------------------------- | -------------------------------------------------------------------- | ------------------------------------------------------ |
