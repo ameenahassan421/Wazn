@@ -2,26 +2,39 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { describeError, supabase } from '../lib/supabase'
 import { useUnit } from '../lib/unit-context'
 import { formatWeight } from '../lib/units'
-import { formatDuration } from '../lib/format'
+import { formatDuration, formatWorkoutDate } from '../lib/format'
 import type {
   Exercise,
   ExerciseUsageRow,
   PreviousSessionRow,
   SetType,
+  WeeklyStreakRow,
   Workout,
   WorkoutSet,
 } from '../lib/types'
 import { ExercisePicker } from '../components/ExercisePicker'
 import { SetEntry } from '../components/SetEntry'
 import { useRestTimer, DEFAULT_REST_SECONDS } from '../lib/use-rest-timer'
+import { FinishSummary } from '../components/FinishSummary'
+import { summarise } from '../lib/summary'
+import type { WorkoutSummary } from '../lib/summary'
 
-type View = 'overview' | 'picker' | 'entry'
+type View = 'overview' | 'picker' | 'entry' | 'summary'
+
+interface ExerciseBestRow {
+  exercise_id: string
+  best_weight_kg: number | string
+  best_e1rm_kg: number | string
+}
 
 export function LogScreen({ userId }: { userId: string }) {
   const { unit } = useUnit()
   // Owned by the screen, not by SetEntry: leaving the exercise to pick the
   // next one must not cancel the rest you are still taking.
   const timer = useRestTimer()
+  const [summary, setSummary] = useState<WorkoutSummary | null>(null)
+  const [summaryDate, setSummaryDate] = useState('')
+  const [streak, setStreak] = useState<WeeklyStreakRow | null>(null)
 
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -49,7 +62,7 @@ export function LogScreen({ userId }: { userId: string }) {
   // No synchronous setState here: the effect below calls it on mount, where a
   // state update before the first await would cause a cascading render.
   const load = useCallback(async () => {
-    const [catalogue, usageRows, open, anyWorkout] = await Promise.all([
+    const [catalogue, usageRows, open, anyWorkout, streakRows] = await Promise.all([
       supabase.from('exercises').select('*').order('name'),
       supabase.rpc('exercise_usage'),
       supabase
@@ -59,6 +72,11 @@ export function LogScreen({ userId }: { userId: string }) {
         .order('started_at', { ascending: false })
         .limit(1),
       supabase.from('workouts').select('id').limit(1),
+      // Streak is a Monday-based week in the caller's zone; the server cannot
+      // know where the user is, so the browser tells it.
+      supabase.rpc('weekly_streak', {
+        p_timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      }),
     ])
 
     const failure = catalogue.error ?? usageRows.error ?? open.error ?? anyWorkout.error
@@ -68,6 +86,8 @@ export function LogScreen({ userId }: { userId: string }) {
       return
     }
 
+    // A failed streak must not block the screen — it is decoration, not data.
+    setStreak(((streakRows.data ?? []) as WeeklyStreakRow[])[0] ?? null)
     setExercises((catalogue.data ?? []) as Exercise[])
     setUsage(
       new Map(
@@ -158,20 +178,41 @@ export function LogScreen({ userId }: { userId: string }) {
     if (!workout) return
     setSaving(true)
     setError(null)
+    const endedAt = new Date().toISOString()
     const { error: updateError } = await supabase
       .from('workouts')
-      .update({ ended_at: new Date().toISOString() })
+      .update({ ended_at: endedAt })
       .eq('id', workout.id)
-    setSaving(false)
 
     if (updateError) {
+      setSaving(false)
       setError(describeError('Finishing the workout', updateError))
       return
     }
+
+    // Bests EXCLUDING this workout, or every set of a new exercise reports a
+    // PR against itself. One call for the whole workout, after the write, so
+    // a slow summary never delays marking the workout finished.
+    const { data: bestRows } = await supabase.rpc('exercise_bests', {
+      p_exclude_workout: workout.id,
+    })
+    const previousBests = new Map(
+      ((bestRows ?? []) as ExerciseBestRow[]).map((r) => [
+        r.exercise_id,
+        { weightKg: Number(r.best_weight_kg), e1rmKg: Number(r.best_e1rm_kg) },
+      ]),
+    )
+
+    setSummary(
+      summarise(sets, workout.started_at, endedAt, exercisesById, previousBests),
+    )
+    setSummaryDate(formatWorkoutDate(workout.started_at))
+    setSaving(false)
+    timer.stop()
     setWorkout(null)
     setSets([])
     setCurrent(null)
-    setView('overview')
+    setView('summary')
     void load()
   }
 
@@ -233,6 +274,24 @@ export function LogScreen({ userId }: { userId: string }) {
     return <p className="py-10 text-sm text-muted">Loading…</p>
   }
 
+  // The summary lands here: finishing clears `workout`, so this has to come
+  // before the empty state or the summary would never be shown.
+  if (view === 'summary' && summary) {
+    return (
+      <div className="py-3">
+        <FinishSummary
+          summary={summary}
+          unit={unit}
+          dateLabel={summaryDate}
+          onDone={() => {
+            setSummary(null)
+            setView('overview')
+          }}
+        />
+      </div>
+    )
+  }
+
   // Empty state: one button, nothing else.
   if (!workout) {
     return (
@@ -246,6 +305,13 @@ export function LogScreen({ userId }: { userId: string }) {
         >
           {hasHistory ? 'Start workout' : 'Start your first workout'}
         </button>
+        {streak && streak.weeks > 0 && (
+          <p className="text-sm text-muted">
+            <span className="tnum font-semibold text-text">{streak.weeks}</span>
+            {streak.weeks === 1 ? ' week streak' : ' week streak'} ·{' '}
+            <span className="tnum">{streak.current_week_sessions}</span> this week
+          </p>
+        )}
       </div>
     )
   }
