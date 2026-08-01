@@ -32,6 +32,46 @@ Add to the environment's egress allowlist, per what you want automated:
 Configured per environment in Claude Code on the web —
 see https://code.claude.com/docs/en/claude-code-on-the-web.
 
+GitHub (`github.com`, `api.github.com`, `codeload.github.com`,
+`*.githubusercontent.com`) is already reachable without being added — the
+session needs it to clone and push.
+
+Matching is on the exact hostname, not the domain. `api.supabase.com` being
+allowed does not make `supabase.com` allowed; the apex domains of all three
+providers are denied.
+
+### Verifying egress
+
+`curl` against each host — a 401/403/404 is a pass, because it means a real
+server answered:
+
+```bash
+for h in api.supabase.com ttasiwxeqerhsztxjxip.supabase.co \
+         api.vercel.com api.resend.com api.github.com; do
+  printf '%-34s %s\n' "$h" "$(curl -sS -o /dev/null -w '%{http_code}' --max-time 15 "https://$h/")"
+done
+```
+
+`000` means the CONNECT was refused. `curl -sS "$HTTPS_PROXY/__agentproxy/status"`
+records the reason under `recentRelayFailures`.
+
+### Port 5432 does not work, and lies about it
+
+Direct Postgres (`db.<ref>.supabase.co:5432`, or the pooler on 5432/6543) is
+**not** reachable. The proxy tunnels HTTPS on 443 only.
+
+The trap is that it does not fail cleanly. The local proxy answers
+`HTTP/1.1 200 Connection Established` to a CONNECT on _any_ non-443 port, for
+_any_ host, allowlisted or not — `example.com:9999` gets a 200. Only port 443
+is actually policy-checked. Past the fake 200 no bytes flow in either
+direction, nothing is logged to `recentRelayFailures`, and the client hangs
+until it times out. A 200 on a non-443 port is not evidence of anything.
+
+So: no `psql`, no `pg_dump`, no direct-connection string, and no driver that
+opens a raw socket. Reach the database over the data API on 443
+(`<ref>.supabase.co/rest/v1/...`) or the Management API. Adding port 5432 to
+the allowlist does not help; the egress proxy is HTTP CONNECT, not raw TCP.
+
 ## 2. Credentials — in environment variables, never in chat
 
 A token pasted into a conversation lives in that transcript. Put these in the
