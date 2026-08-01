@@ -58,7 +58,8 @@ export function SetEntry({
   onAddSet,
   onBack,
   timer,
-  restSeconds,
+  supersetGroup,
+  onSuperset,
 }: {
   exercise: Exercise
   unit: Unit
@@ -75,7 +76,8 @@ export function SetEntry({
   onBack: () => void
   /** Optional so existing tests and any non-workout use keep working. */
   timer?: RestTimer
-  restSeconds?: number
+  supersetGroup?: number | null
+  onSuperset?: () => void
 }) {
   const [draft, setDraft] = useState<Draft>({ weight: '', reps: '' })
   const [error, setError] = useState<string | null>(null)
@@ -161,11 +163,6 @@ export function SetEntry({
     setError(null)
     const ok = await onAddSet({ weightKg, reps, setType, rpe })
     if (!ok) return
-
-    // Rest starts on a logged set, not on a tap — a timer that runs when the
-    // save failed would count down against a set that does not exist.
-    // Warm-ups do not start one: nobody rests two minutes after an empty bar.
-    if (timer && setType !== 'warmup') timer.start(restSeconds ?? 120)
 
     // A set type is a property of one set, not a mode. Failure and drop sets
     // are the exception in a session, so they do not stick to the next one.
@@ -329,6 +326,20 @@ export function SetEntry({
         >
           {rpe === null ? 'RPE' : rpe}
         </button>
+
+        {onSuperset && (
+          <button
+            type="button"
+            onClick={onSuperset}
+            className={`h-12 rounded-md border px-3 text-sm font-semibold ${
+              supersetGroup != null
+                ? 'border-accent text-accent'
+                : 'border-line text-muted'
+            }`}
+          >
+            {supersetGroup != null ? `SS ${supersetGroup}` : 'Superset'}
+          </button>
+        )}
 
         <span className="ms-auto text-xs text-muted">{SET_TYPE_NAME[setType]}</span>
       </div>

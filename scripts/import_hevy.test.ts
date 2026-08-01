@@ -195,6 +195,7 @@ const blankRow: CsvRow = {
   start_time: 'Jul 19, 2026, 7:01 PM',
   end_time: 'Jul 19, 2026, 8:10 PM',
   exercise_title: 'Bench Press (Barbell)',
+  superset_id: '',
   set_index: '0',
   set_type: 'normal',
   weight_lbs: '',
@@ -207,3 +208,19 @@ const blankRow: CsvRow = {
 function sessionOf(row: CsvRow) {
   return buildSessions([row])[0]
 }
+
+describe('superset_group', () => {
+  const ids = new Map([['Bench Press (Barbell)', 'id-bench']])
+
+  it('carries the export superset id onto the set', () => {
+    const rows = buildSetRows(sessionOf({ ...blankRow, superset_id: '2' }), 'w-1', ids)
+    expect(rows[0].superset_group).toBe(2)
+  })
+
+  it('leaves an unsupersetted set null rather than 0', () => {
+    // 0 is a valid group id in the export, so an empty string must not
+    // collapse to it — every set would look supersetted together.
+    const rows = buildSetRows(sessionOf({ ...blankRow }), 'w-1', ids)
+    expect(rows[0].superset_group).toBeNull()
+  })
+})

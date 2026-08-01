@@ -25,13 +25,14 @@ export const SOURCE_TIMEZONE = 'America/Chicago'
 
 const SET_TYPES = new Set(['normal', 'warmup', 'failure'])
 
-/** Columns used from the export. description, exercise_notes and superset_id
- *  are ignored on purpose — there are no columns for them. */
+/** Columns used from the export. description and exercise_notes are still
+ *  ignored — no columns for them until Stage 2B. */
 export interface CsvRow {
   title: string
   start_time: string
   end_time: string
   exercise_title: string
+  superset_id: string
   set_index: string
   set_type: string
   weight_lbs: string
@@ -66,6 +67,7 @@ export interface SetSeed {
   duration_seconds: number | null
   distance_meters: number | null
   set_type: string
+  superset_group: number | null
 }
 
 export class ImportError extends Error {}
@@ -246,6 +248,10 @@ export function buildSetRows(
     const weightLbs = num(row.weight_lbs)
     const distanceMiles = num(row.distance_miles)
 
+    // Hevy's superset_id is per-export, not per-workout, but it is only ever
+    // compared within one workout so the wider scope is harmless.
+    const supersetGroup = num(row.superset_id)
+
     return {
       workout_id: workoutId,
       exercise_id: exerciseId,
@@ -257,6 +263,7 @@ export function buildSetRows(
       distance_meters:
         distanceMiles === null ? null : Math.round(distanceMiles * MILES_TO_METERS),
       set_type: setType,
+      superset_group: supersetGroup,
     }
   })
 }
