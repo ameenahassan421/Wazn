@@ -7,3 +7,7 @@ dev-dist
 .DS_Store
 *.log
 .vercel
+
+# Font cache for scripts/build_logo.py. The outlines it produces are
+# committed; the font itself is fetched on demand and never shipped.
+scripts/.aref-ruqaa-700.ttf

@@ -38,10 +38,14 @@ export default function App() {
     return <AuthScreen />
   }
 
+  // The Log tab carries the mark; the other two carry their name.
+  const title =
+    tab === 'history' ? 'History' : tab === 'progress' ? 'Progress' : undefined
+
   return (
     <UnitProvider>
-      <Header />
-      <main className="mx-auto w-full max-w-[430px] px-4 pb-24">
+      <Header title={title} />
+      <main className="mx-auto w-full max-w-[430px] px-[18px] pb-28">
         {tab === 'log' && <LogScreen userId={userId} />}
         {tab === 'history' && <HistoryScreen />}
         {tab === 'progress' && (
