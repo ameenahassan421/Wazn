@@ -565,6 +565,7 @@ export function LogScreen({ userId }: { userId: string }) {
           summary={summary}
           unit={unit}
           dateLabel={summaryDate}
+          exercisesById={exercisesById}
           onDone={() => {
             setSummary(null)
             setView('overview')
