@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { describeError, supabase } from '../lib/supabase'
 import { useUnit } from '../lib/unit-context'
 import { formatWeight } from '../lib/units'
-import { formatDuration, formatWorkoutDate } from '../lib/format'
+import { formatDuration, formatRelativeDay, formatWorkoutDate } from '../lib/format'
 import type {
   Exercise,
   ExerciseUsageRow,
@@ -14,6 +14,7 @@ import type {
   WorkoutSet,
 } from '../lib/types'
 import { ExercisePicker } from '../components/ExercisePicker'
+import { ExerciseThumb } from '../components/ExerciseThumb'
 import { SetEntry } from '../components/SetEntry'
 import { useRestTimer, DEFAULT_REST_SECONDS } from '../lib/use-rest-timer'
 import { FinishSummary } from '../components/FinishSummary'
@@ -72,6 +73,12 @@ export function LogScreen({ userId }: { userId: string }) {
   const [workout, setWorkout] = useState<Workout | null>(null)
   const [sets, setSets] = useState<WorkoutSet[]>([])
   const [hasHistory, setHasHistory] = useState(false)
+  // The idle screen answers "what did I do last time" without a tab change.
+  // Only fetched when there is no workout open — mid-session it is noise.
+  const [lastSession, setLastSession] = useState<{
+    startedAt: string
+    sets: WorkoutSet[]
+  } | null>(null)
 
   const [view, setView] = useState<View>('overview')
   const [current, setCurrent] = useState<Exercise | null>(null)
@@ -149,6 +156,32 @@ export function LogScreen({ userId }: { userId: string }) {
       }
     } else {
       setSets([])
+      // Idle screen only. A failure here must not block the screen — like the
+      // streak, it is context, not data you cannot log without.
+      try {
+        const { data: recent } = await supabase
+          .from('workouts')
+          .select('id, started_at')
+          .not('ended_at', 'is', null)
+          .order('started_at', { ascending: false })
+          .limit(1)
+        const last = (recent ?? [])[0] as { id: string; started_at: string } | undefined
+        if (last) {
+          const { data: lastSets } = await supabase
+            .from('workout_sets')
+            .select('*')
+            .eq('workout_id', last.id)
+            .order('set_number')
+          setLastSession({
+            startedAt: last.started_at,
+            sets: (lastSets ?? []) as WorkoutSet[],
+          })
+        } else {
+          setLastSession(null)
+        }
+      } catch {
+        setLastSession(null)
+      }
     }
 
     setLoading(false)
@@ -467,6 +500,40 @@ export function LogScreen({ userId }: { userId: string }) {
     return order.map((id) => ({ exerciseId: id, sets: byExercise.get(id)! }))
   }, [sets])
 
+  // Up to three exercises from the last finished session, in the order they
+  // were performed, each collapsed to its working sets.
+  const lastSummary = useMemo(() => {
+    if (!lastSession) return []
+    const order: string[] = []
+    const byExercise = new Map<string, WorkoutSet[]>()
+    for (const set of lastSession.sets) {
+      if (!byExercise.has(set.exercise_id)) {
+        byExercise.set(set.exercise_id, [])
+        order.push(set.exercise_id)
+      }
+      byExercise.get(set.exercise_id)!.push(set)
+    }
+    return order.slice(0, 3).flatMap((id) => {
+      const exercise = exercisesById.get(id)
+      if (!exercise) return []
+      const rows = byExercise.get(id)!
+      const working = rows.filter((s) => s.set_type !== 'warmup')
+      return [
+        {
+          exercise,
+          summary: (working.length > 0 ? working : rows)
+            .slice(0, 2)
+            .map((s) =>
+              s.weight_kg === null
+                ? `BW × ${s.reps ?? '—'}`
+                : `${formatWeight(s.weight_kg, unit)} × ${s.reps ?? '—'}`,
+            )
+            .join(' · '),
+        },
+      ]
+    })
+  }, [lastSession, exercisesById, unit])
+
   if (loading) {
     return <p className="py-10 text-sm text-muted">Loading…</p>
   }
@@ -507,19 +574,37 @@ export function LogScreen({ userId }: { userId: string }) {
     )
   }
 
-  // Empty state: one button, nothing else.
+  // Empty state: one button, then context. Nothing here is a control you have
+  // to read before you can start lifting.
   if (!workout) {
     return (
-      <div className="flex flex-col gap-4 py-10">
+      <div className="flex flex-col gap-[18px] pt-4">
         {error && <ErrorNote message={error} />}
-        <button
-          type="button"
-          onClick={() => void startWorkout()}
-          disabled={saving}
-          className="h-16 w-full rounded-lg bg-accent text-xl font-bold text-accent-ink disabled:opacity-60"
-        >
-          {hasHistory ? 'Start workout' : 'Start your first workout'}
-        </button>
+        <div>
+          <button
+            type="button"
+            onClick={() => void startWorkout()}
+            disabled={saving}
+            className="btn-base btn-primary h-[66px] w-full text-[19px] disabled:opacity-45"
+          >
+            {hasHistory ? 'Start workout' : 'Start your first workout'}
+          </button>
+
+          {streak && streak.weeks > 0 && (
+            <p className="mt-2.5 flex items-center gap-2 whitespace-nowrap text-[13px] text-muted">
+              <StreakPlates weeks={streak.weeks} />
+              <span>
+                <span className="tnum font-medium text-text">{streak.weeks}</span> week
+                streak ·{' '}
+                <span className="tnum font-medium text-text">
+                  {streak.current_week_sessions}
+                </span>{' '}
+                this week
+              </span>
+            </p>
+          )}
+        </div>
+
         <RoutineList
           routines={routines}
           busyId={routineBusy}
@@ -533,12 +618,26 @@ export function LogScreen({ userId }: { userId: string }) {
           }}
         />
 
-        {streak && streak.weeks > 0 && (
-          <p className="text-sm text-muted">
-            <span className="tnum font-semibold text-text">{streak.weeks}</span>
-            {streak.weeks === 1 ? ' week streak' : ' week streak'} ·{' '}
-            <span className="tnum">{streak.current_week_sessions}</span> this week
-          </p>
+        {lastSummary.length > 0 && lastSession && (
+          <section>
+            <h2 className="kicker mb-2">
+              Last session · {formatRelativeDay(lastSession.startedAt)}
+            </h2>
+            <ul>
+              {lastSummary.map(({ exercise, summary: text }, i) => (
+                <li key={exercise.id}>
+                  {i > 0 && <div className="rule-fade" />}
+                  <div className="flex items-center gap-3 py-2">
+                    <ExerciseThumb exercise={exercise} size={42} />
+                    <span className="min-w-0 flex-1 truncate text-sm">
+                      {exercise.name}
+                    </span>
+                    <span className="tnum shrink-0 text-[13px] text-muted">{text}</span>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </section>
         )}
       </div>
     )
@@ -549,8 +648,14 @@ export function LogScreen({ userId }: { userId: string }) {
       {error && <ErrorNote message={error} />}
 
       <div className="flex items-center gap-3">
-        <div className="flex-1">
-          <p className="text-sm font-semibold">Workout in progress</p>
+        <div className="min-w-0 flex-1">
+          <p className="flex items-center gap-2 text-[15px] font-medium">
+            <span
+              aria-hidden="true"
+              className="inline-block h-[7px] w-[7px] shrink-0 rounded-full bg-accent"
+            />
+            <span className="truncate">{workout.name ?? 'Workout'} · in progress</span>
+          </p>
           <p className="tnum text-xs text-muted">
             {formatDuration(workout.started_at, new Date().toISOString())} ·{' '}
             {sets.length} {sets.length === 1 ? 'set' : 'sets'}
@@ -560,7 +665,7 @@ export function LogScreen({ userId }: { userId: string }) {
           type="button"
           onClick={() => void finishWorkout()}
           disabled={saving}
-          className="h-12 rounded-md border border-line px-4 text-sm font-semibold disabled:opacity-60"
+          className="btn-base btn-secondary h-12 px-4 text-sm disabled:opacity-45"
         >
           Finish
         </button>
@@ -602,7 +707,7 @@ export function LogScreen({ userId }: { userId: string }) {
           <button
             type="button"
             onClick={() => setView('picker')}
-            className="h-16 w-full rounded-lg bg-accent text-xl font-bold text-accent-ink"
+            className="btn-base btn-primary h-[60px] w-full text-[17px]"
           >
             Add exercise
           </button>
@@ -614,11 +719,24 @@ export function LogScreen({ userId }: { userId: string }) {
                 setCurrent(nextUp)
                 setView('entry')
               }}
-              className="flex h-14 w-full items-center gap-3 rounded-lg border border-line bg-surface px-3 text-start"
+              className="flex w-full items-center gap-3 px-3 py-2.5 text-start"
+              style={{
+                border:
+                  '1px dashed color-mix(in srgb, var(--color-accent) 45%, transparent)',
+                borderRadius: 'var(--radius-md)',
+              }}
             >
-              <span className="text-xs text-muted">Next</span>
-              <span className="flex-1 truncate text-base font-semibold">
-                {nextUp.name}
+              <ExerciseThumb exercise={nextUp} size={38} />
+              <span className="min-w-0 flex-1">
+                <span className="block text-[10px] uppercase tracking-[0.1em] text-accent">
+                  Next
+                </span>
+                <span className="block truncate text-sm font-medium">
+                  {nextUp.name}
+                </span>
+              </span>
+              <span aria-hidden="true" className="text-muted">
+                ›
               </span>
             </button>
           )}
@@ -629,33 +747,66 @@ export function LogScreen({ userId }: { userId: string }) {
             </p>
           ) : (
             <ul className="flex flex-col gap-2">
-              {grouped.map(({ exerciseId, sets: exerciseSets }) => (
-                <li key={exerciseId}>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const exercise = exercisesById.get(exerciseId)
-                      if (!exercise) return
-                      setCurrent(exercise)
-                      setView('entry')
-                    }}
-                    className="w-full rounded-lg border border-line px-3 py-2 text-start"
+              {grouped.map(({ exerciseId, sets: exerciseSets }) => {
+                const exercise = exercisesById.get(exerciseId)
+                const group = exerciseSets.find(
+                  (s) => s.superset_group != null,
+                )?.superset_group
+                return (
+                  <li
+                    key={exerciseId}
+                    // Members of one superset share a rail down the inline
+                    // start, so a round reads as one block rather than as
+                    // separate exercises that happen to be adjacent.
+                    style={
+                      group != null
+                        ? {
+                            borderInlineStart: '2px solid var(--color-accent-700)',
+                            paddingInlineStart: 11,
+                          }
+                        : undefined
+                    }
                   >
-                    <span className="block truncate text-sm font-semibold">
-                      {exercisesById.get(exerciseId)?.name ?? 'Exercise'}
-                    </span>
-                    <span className="tnum mt-1 block text-lg">
-                      {exerciseSets
-                        .map((s) =>
-                          s.weight_kg === null
-                            ? `BW × ${s.reps ?? '—'}`
-                            : `${formatWeight(s.weight_kg, unit)} × ${s.reps ?? '—'}`,
-                        )
-                        .join(' · ')}
-                    </span>
-                  </button>
-                </li>
-              ))}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (!exercise) return
+                        setCurrent(exercise)
+                        setView('entry')
+                      }}
+                      className="ring-edge flex w-full items-center gap-3 bg-surface px-3 py-2.5 text-start"
+                      style={{ borderRadius: 'var(--radius-md)' }}
+                    >
+                      {exercise && <ExerciseThumb exercise={exercise} size={40} />}
+                      <span className="min-w-0 flex-1">
+                        <span className="flex items-center gap-2">
+                          <span className="min-w-0 flex-1 truncate text-sm font-medium">
+                            {exercise?.name ?? 'Exercise'}
+                          </span>
+                          {group != null ? (
+                            <span className="tag-accent h-5 shrink-0 px-1.5">
+                              SS {group}
+                            </span>
+                          ) : (
+                            <span className="tnum shrink-0 text-xs text-muted">
+                              {exerciseSets.length}
+                            </span>
+                          )}
+                        </span>
+                        <span className="tnum mt-0.5 block truncate text-[15px] text-text/80">
+                          {exerciseSets
+                            .map((s) =>
+                              s.weight_kg === null
+                                ? `BW × ${s.reps ?? '—'}`
+                                : `${formatWeight(s.weight_kg, unit)} × ${s.reps ?? '—'}`,
+                            )
+                            .join(' · ')}
+                        </span>
+                      </span>
+                    </button>
+                  </li>
+                )
+              })}
             </ul>
           )}
         </>
@@ -664,11 +815,35 @@ export function LogScreen({ userId }: { userId: string }) {
   )
 }
 
+/**
+ * The streak, drawn as a loaded bar rather than as dots.
+ *
+ * Four plates, ascending toward the centre exactly as the wordmark loads
+ * them: the same shape language the logo uses, so the mark and the interface
+ * are made of the same part. Filled plates are weeks completed.
+ */
+function StreakPlates({ weeks }: { weeks: number }) {
+  const HEIGHTS = [7, 10, 13, 16]
+  const shown = Math.min(weeks, HEIGHTS.length)
+  return (
+    <span aria-hidden="true" className="flex shrink-0 items-center gap-[3px]">
+      {HEIGHTS.map((h, i) => (
+        <span
+          key={h}
+          className={i < shown ? 'bg-accent' : 'bg-neutral-800'}
+          style={{ width: 4, height: h, borderRadius: 2 }}
+        />
+      ))}
+    </span>
+  )
+}
+
 function ErrorNote({ message }: { message: string }) {
   return (
     <p
       role="alert"
-      className="rounded-lg border border-accent px-3 py-2 text-sm text-accent"
+      className="ring-edge border border-accent px-3 py-2 text-sm text-accent"
+      style={{ borderRadius: 'var(--radius-md)' }}
     >
       {message}
     </p>
