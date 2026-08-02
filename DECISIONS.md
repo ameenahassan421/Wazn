@@ -306,3 +306,41 @@ flow, and nothing is being interrupted mid-set.
 RLS already covered it: `workout_sets` has owner-scoped policies for all four
 commands, so no migration was needed and the client cannot touch another user's
 history.
+
+## 2026-08-02 — Security advisor: handle_new_user was callable by anon
+
+Supabase's security advisor flagged `public.handle_new_user()` as a
+`SECURITY DEFINER` function with `EXECUTE` held by `PUBLIC`, `anon` and
+`authenticated` — reachable by anonymous callers at
+`/rest/v1/rpc/handle_new_user`. It is meant to fire only as a trigger on
+`auth.users` insert.
+
+Not an active breach: calling a trigger function directly errors, because there
+is no `NEW` record outside a trigger. It is the wrong shape to leave in the
+schema before Stage 3 puts other people's rows in these tables.
+
+Migration `0006` revokes it from `public, anon, authenticated`. `service_role`
+keeps it — server-side only, already bypasses RLS, and not what was flagged.
+
+**The concern was that this touches signup.** Rather than trust the reasoning
+that triggers do not consult `EXECUTE` grants, it was proven on this project
+first: a scratch schema with a `SECURITY DEFINER` trigger function, `EXECUTE`
+revoked from `authenticated`, then an insert performed as `authenticated`. The
+trigger fired and copied the row. Scratch schema dropped afterwards.
+
+After applying: ACL is `postgres=X | service_role=X`, the `on_auth_user_created`
+trigger is still armed (`tgenabled = 'O'`), and both advisor findings are gone.
+
+### Left alone deliberately
+
+`auth_leaked_password_protection` is disabled. Wazn is OTP-only and has no
+passwords, so HaveIBeenPwned checking has nothing to check. Enabling it would
+also be an auth-config change for no benefit.
+
+The performance advisor's three `unindexed_foreign_keys` (`exercises.owner_id`,
+`routine_exercises.exercise_id`, `workouts.routine_id`) and one `unused_index`
+(`routines_user_position_idx`) are all INFO and all left alone. The tables are
+tiny — 134 exercises, 152 workouts — and the unused-index lint fires precisely
+because there are no routines yet. Adding three indexes nothing queries would
+commit the error the other lint is complaining about. Revisit at real
+multi-user volume.
