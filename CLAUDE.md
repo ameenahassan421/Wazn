@@ -67,6 +67,14 @@ Routines/templates, leaderboards, invites, social, offline sync, rest timers,
 custom exercise creation, Arabic strings, payments, a settings screen, per-set
 correction tooling, body-composition analysis.
 
+**Anything AI/LLM.** Stage 8 in the plan describes what would get built and
+how, but it is conditional on the Gate 1 backlog actually asking for it — an
+idea is not evidence. If you do build it: open weights with a genuinely
+permissive licence, the key lives in an Edge Function and never a `VITE_*`
+var, the model never sits on the critical path, and no model output is written
+to the database without the user pressing something. Statistics answer anything
+statistics can answer.
+
 ## Architecture
 
 - `src/screens/` — Log (default), History, Progress. Three, no router.

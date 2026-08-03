@@ -70,6 +70,13 @@ EGP pricing) + rewarded-video temporary unlocks.
 Costs: free tiers now; ~$45/mo (Supabase Pro + Vercel) at real scale;
 $25 one-time Google Play. First revenue realistically 4–5 months out.
 
+This budget is what rules the Stage 8 options in or out. Serverless
+open-weight inference is per-token and small enough to disappear into the
+$45 — a set-parsing call is a few hundred tokens. A self-hosted GPU is a
+few hundred dollars a month, which is not "a line item" at ~$1.50 ARPU,
+it is more than the entire rest of the stack. Any assist feature that
+cannot live inside a per-user monthly ceiling does not ship.
+
 ## 4. Build stages and gates
 
 Each stage = one or more Claude Code work sessions. The **gate** must
@@ -221,11 +228,105 @@ the Play listing.
 
 **GATE 7:** weekly signups compounding without Ameen pushing.
 
+### Stage 8 — Assist (CONDITIONAL — do not build unprompted)
+
+Open-weight AI, and only where it does something arithmetic cannot.
+This stage is **gated on evidence, not on interest**: nothing here gets
+built unless the Gate 1 backlog — the list of moments Ameen missed Hevy
+— actually asks for it. If two weeks off Hevy produce no complaint that
+an assist would answer, this stage does not happen.
+
+**Why open weights.** Licence must be genuinely permissive, not
+"open-ish": Qwen (Apache-2.0) and Kimi K2 (Modified MIT — its only
+condition triggers above 100M MAU or $20M/month, i.e. never for us)
+qualify. Llama and Gemma ship custom licences and do not.
+
+**Where the model runs.** A Supabase Edge Function, calling a
+serverless inference provider. Never the client — the API key follows
+the same rule as the service-role key in `CLAUDE.md`: server-side only,
+never a `VITE_*` var. Self-hosting a GPU is out; it costs more per month
+than the entire rest of the stack (§3). On-device WebGPU is out; the
+market is budget Android in Egypt, and models small enough to run there
+are not good enough to trust.
+
+**Right-sizing is the whole game.** 8A is a parsing task a 3B model
+does perfectly. Using a trillion-parameter model for it buys nothing and
+costs latency you do not have mid-set.
+
+#### 8A — Voice and natural-language set logging
+
+The only assist that makes the core job _faster_ rather than adding a
+thing to look at. Serves §2.1 directly: chalked hands, one thumb, 30
+seconds.
+
+Say "three sets of eight at two-twenty-five" → the browser's built-in
+`SpeechRecognition` transcribes it free and on-device → the text goes to
+a **small Apache-2.0 model** → structured `{weightKg, reps, sets}` lands
+in the existing draft fields.
+
+- The draft is **pre-filled, never written**. Confirmation stays one tap
+  on the existing Log set button. No AI output reaches the database
+  without a human press.
+- Weight parses to the display unit then converts, so the kg-storage
+  rule is untouched.
+- If the parse fails, the model is down, or the phone is offline, the
+  steppers are exactly where they were. Logging never depends on this.
+
+**GATE 8A:** logging a set by voice beats the steppers on wall-clock for
+at least half of attempts, measured over a real week. If it does not, it
+is a demo, and it gets deleted.
+
+#### 8B — Plain-language read of the numbers
+
+Two sentences over the Progress tab: which group has sat under the band,
+which lift has stalled and for how long, what to do about it.
+
+Input is the **output of the existing RPCs** (`muscle_group_weekly_sets`,
+`exercise_best_e1rm`, `session_volume_history`) — never raw sets. That
+keeps the prompt tiny, the cost near zero, and the model unable to
+invent a number it was not handed.
+
+Generated **once a week and cached**, not per screen view.
+
+**GATE 8B:** Ameen reads it and it tells him something the charts did
+not already make obvious. If it just narrates the bars, cut it.
+
+#### 8C — Coaching agent (Pro only, not before Stage 6)
+
+Reads the whole training history and reasons about programming — notices
+the bench stalled when squat volume jumped, proposes a deload, explains
+why. Long-context reasoning over months of data is the one job here that
+genuinely needs a large model, and where a **Kimi K2/K3-class open-weight
+reasoning model** earns its cost.
+
+Paid tier only (§Stage 6). Per-call cost is real and this is the feature
+people would pay for.
+
+**GATE 8C:** a lifter who is not Ameen follows its advice for a month
+and their numbers move.
+
+#### Hard rules for anything in this stage
+
+1. **Never on the critical path.** Every screen works with the model
+   unreachable. Assist is additive or it does not ship.
+2. **No write without confirmation.** AI proposes, the user presses.
+3. **The model is config, not a dependency.** Provider and model id live
+   in one env var. Swapping them is a config change, never a refactor.
+4. **A cost ceiling per user per month**, enforced server-side, before
+   any of this reaches a second user.
+5. **Deterministic first.** If statistics can answer it, statistics
+   answer it. §Stage 2's analytics are not to be replaced by a model.
+
+**GATE 8:** at least one of 8A/8B/8C passed its own gate and is still
+being used a month later.
+
 ### Parked indefinitely
 
 Comments, coaching marketplace, Apple Watch /
 HealthKit, iOS App Store (revisit only if Egypt iOS demand proves
-itself), any feature not listed above.
+itself), AI form-checking from video, AI-generated training programmes
+sold as a product, chat-with-your-data as a general interface, any
+feature not listed above.
 
 ## 5. Data facts that must never be re-derived wrong
 
