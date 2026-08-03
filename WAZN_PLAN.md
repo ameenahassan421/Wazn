@@ -287,7 +287,10 @@ verbatim, so they survive even if this file isn't read.**
   security-invoker RPCs behind the redesigned Progress tab. A sandboxed session
   has no Supabase egress, so Ameen applies it. Until then the three Progress
   sub-tabs show "needs migration 0007" instead of charts; nothing else in the
-  app touches these functions.
+  app touches these functions. **The first version of 0007 would not parse**
+  (`position` is a reserved word); fixed, and the whole chain 0001-0007 has now
+  been applied and the four functions called against a local Postgres 16. See
+  `DECISIONS.md` and `scripts/check_migrations.py`.
 - **Tests:** 113 passing (95 at Gate 1, 49 at Gate 0).
 - **Data:** exercises 134, workouts 152, workout_sets 3,201, of which 335
   now carry a superset group (backfilled from the CSV the import had been
