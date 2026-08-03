@@ -28,7 +28,7 @@ These are reproduced verbatim so they survive even if the plan is not read.
 
 ```bash
 npm run dev          # vite dev server
-npm test             # vitest, 49 tests, no network needed
+npm test             # vitest, 113 tests, no network needed
 npm run lint         # eslint (includes the RTL guard below)
 npm run typecheck    # tsc --noEmit
 npm run build        # typecheck + production build
@@ -37,6 +37,13 @@ npm run format       # prettier
 
 Before pushing: `npm run lint && npm run format:check && npm run typecheck && npm test && npm run build`.
 CI runs exactly that on every PR.
+
+**Touching `supabase/migrations/`?** None of the above reads SQL. Run
+`python3 scripts/check_migrations.py` (needs `pip install pglast`) — it parses
+every migration with the grammar Postgres itself uses. 0007 once shipped with a
+column named `position`, a reserved word, and failed to parse in its entirety.
+A parse check is the floor: a migration that has never been _executed_ is
+unverified, and the PR should say so.
 
 ## Hard rules
 

@@ -444,3 +444,41 @@ Progress stays lazy-loaded — the main bundle is unchanged at 364 kB.
 Lift-balance ratios (deadlift 1.0, squat 0.85, bench 0.75, overhead 0.45) are
 the usual strength standards. The chart says "predicted", not "target": the
 point is to surface a lift that has fallen behind, not to prescribe one.
+
+## 2026-08-03 — Migration 0007 shipped broken: `position` is reserved
+
+`0007` declared `returns table (bucket text, position int, set_count bigint)`.
+`POSITION` is a reserved word in Postgres — it is SQL-standard string-function
+syntax — so the migration failed to parse. Not one statement ran; Ameen got
+`42601: syntax error at or near "position"` in the SQL editor. The ordinal is
+now `bucket_order`.
+
+The client never read that column (`ProgressScreen` uses `bucket` and
+`set_count`), so nothing else changed.
+
+### Why it got through
+
+A sandboxed session has no Supabase egress, so 0007 shipped verified by
+review alone. Types, tests and the build all passed and none of them look at
+SQL. "I could not run it" was recorded honestly in the PR and in STATUS, but
+recording a gap is not the same as closing it.
+
+It was closeable. Postgres installs locally, and the whole chain — 0001
+through 0007, against a stubbed `auth` schema — applies in about a minute.
+Doing that after the fact found the bug immediately and then confirmed the
+four functions return correct values: warm-ups excluded from the histogram and
+from volume, empty rep buckets preserved, a bodyweight set counted for set
+volume but not for load, and Epley picking 90 × 14 over 100 × 8 as the better
+bench estimate.
+
+### What is now in place
+
+`scripts/check_migrations.py` parses every migration with `pglast`, which
+wraps libpg_query — the parser Postgres itself uses. It needs no server and
+catches exactly this class of error.
+
+It is deliberately only a parse check. Executing migrations needs a real
+cluster, and wiring one into CI is a larger change than this fix warrants —
+worth doing when migrations get more frequent, and it is Ameen's call. Until
+then the rule is: a migration that has never been executed is unverified, and
+the honest place to say so is the PR body.

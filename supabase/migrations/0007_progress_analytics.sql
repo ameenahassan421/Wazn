@@ -11,14 +11,18 @@
 
 -- Working-set rep counts for one lift, bucketed the way lifters think about
 -- them. Buckets are returned even when empty so the chart keeps five bars.
+--
+-- The ordinal is `bucket_order`, not `position`: POSITION is a reserved word
+-- in Postgres (it is SQL-standard string function syntax), and using it as a
+-- column name is a parse error rather than a runtime one.
 create or replace function public.exercise_rep_distribution(p_exercise_id uuid)
-returns table (bucket text, position int, set_count bigint)
+returns table (bucket text, bucket_order int, set_count bigint)
 language sql
 stable
 security invoker
 set search_path = public
 as $$
-  with buckets(bucket, position, lo, hi) as (
+  with buckets(bucket, bucket_order, lo, hi) as (
     values ('1–5', 1, 1, 5),
            ('6–8', 2, 6, 8),
            ('9–12', 3, 9, 12),
@@ -26,7 +30,7 @@ as $$
            ('16+', 5, 16, 1000)
   )
   select b.bucket,
-         b.position,
+         b.bucket_order,
          count(s.id) as set_count
   from buckets b
   left join public.workout_sets s
@@ -35,8 +39,8 @@ as $$
    and s.reps is not null
    and s.weight_kg is not null
    and s.reps between b.lo and b.hi
-  group by b.bucket, b.position
-  order by b.position;
+  group by b.bucket, b.bucket_order
+  order by b.bucket_order;
 $$;
 
 -- One row per finished workout: when it happened and how much was moved.
