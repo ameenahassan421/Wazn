@@ -282,18 +282,30 @@ verbatim, so they survive even if this file isn't read.**
   - [x] Edit past workouts — weight, reps, delete, from History
   - [x] Finish summary — duration, volume, sets, PRs, canvas share card
   - [x] Plate calculator, warm-up ramp, duration + weekly streak
-- **Migrations live:** 0002, 0003, 0004, 0005.
-- **Tests:** 95 passing (49 at Gate 0).
+- **Migrations live:** 0002, 0003, 0004, 0005, 0006.
+- **Migration NOT yet applied:** `0007_progress_analytics.sql` — four
+  security-invoker RPCs behind the redesigned Progress tab. A sandboxed session
+  has no Supabase egress, so Ameen applies it. Until then the three Progress
+  sub-tabs show "needs migration 0007" instead of charts; nothing else in the
+  app touches these functions.
+- **Tests:** 113 passing (95 at Gate 1, 49 at Gate 0).
 - **Data:** exercises 134, workouts 152, workout_sets 3,201, of which 335
   now carry a superset group (backfilled from the CSV the import had been
   dropping). RPE on 387.
+- **Visual redesign (2026-08-02, out of stage sequence at Ameen's request):**
+  the وزن wordmark, a refined token system, all three tabs restyled, and
+  Progress expanded into Strength / Volume / Balance sub-tabs. Worked from a
+  supplied handoff built on a stock template; structure taken, identity not —
+  see `DECISIONS.md`. No data model, auth or RLS change.
 - **Next action:** GATE 1 — Ameen builds his 4-day upper/lower split as
   routines and replaces Hevy for two full weeks with zero fallbacks. Every
-  moment he misses Hevy gets written down and becomes backlog.
+  moment he misses Hevy gets written down and becomes backlog. **Apply
+  migration 0007 first** if the Progress tab is wanted during the test.
 - **Open decision for Ameen:** the stray empty 7-second workout (`e2587335`)
   still shows as a blank row in History — it can now be removed in-app by
   deleting it, or say the word and it goes server-side.
 - **Blocked on Ameen:** GATE 1 sign-off. Upcoming: domain purchase before
   Stage 2 (item 2A) — nobody but ameen.hassan421@gmail.com can sign in until
   then, which is expected.
-- **Last updated:** 2026-08-01 by Claude Code (Stage 1 complete).
+- **Last updated:** 2026-08-02 by Claude Code (visual redesign; Stage 1 build
+  items unchanged and still awaiting GATE 1).

@@ -1,27 +1,81 @@
 @import 'tailwindcss';
 
-/* Dark only. Near-black so the screen is readable under gym lighting without
-   flashing white. One accent: amber. */
+/* ─────────────────────────────────────────────────────────────────────────
+   Wazn — the token system.
+
+   Dark only. Near-black so the screen is readable under gym lighting
+   without flashing white. One accent: amber.
+
+   The ground and the neutrals carry a slight warm cast (hue ~60-70) rather
+   than the blue-grey that dark interfaces default to. Two reasons: a cool
+   ground fights a warm accent, and warm near-black under amber reads as
+   unlit iron, which is what the app is about. It is still near-black —
+   WAZN_PLAN §2.4 holds.
+
+   Amber gains the tonal ramp it never had: nine steps on one perceptual
+   lightness scale, so a chart can show depth without introducing a second
+   hue. 100 is lightest, 900 darkest. On this ground: 700-900 for tinted
+   fills and rails, 500 as the base, 100-300 for text sitting on those
+   tints. Accent-on-ground is ~9:1 — unlike the blue-grey system this
+   refines, it is safe for body copy, not only for chrome.
+   ───────────────────────────────────────────────────────────────────── */
 @theme {
-  --color-ink: #0b0b0c;
-  --color-surface: #151517;
-  --color-line: #26262a;
-  --color-text: #ececee;
-  --color-muted: #8a8a92;
+  --color-ink: #0c0b0a;
+  --color-surface: #161513;
+  --color-raised: #1f1d1a;
+  --color-line: #2a2825;
+  --color-text: #ecebe8;
+  --color-muted: #8d8983;
   --color-accent: #f0b429;
   --color-accent-ink: #1a1200;
 
-  /* Neutral steps for exercise tiles. Not a palette: no hue, so the single
-     amber accent stays the only colour in the app. Four steps are enough to
-     tell adjacent rows apart at a glance. */
-  --color-tile-1: #17171a;
-  --color-tile-2: #1d1d21;
-  --color-tile-3: #232328;
-  --color-tile-4: #292930;
+  --color-accent-100: #fdf7e8;
+  --color-accent-200: #fbecc7;
+  --color-accent-300: #f8dc9b;
+  --color-accent-400: #f4ca62;
+  --color-accent-500: #f0b429;
+  --color-accent-600: #c9931f;
+  --color-accent-700: #977018;
+  --color-accent-800: #664c11;
+  --color-accent-900: #3d2f0c;
+
+  --color-neutral-100: #f4f3f0;
+  --color-neutral-200: #e5e3de;
+  --color-neutral-300: #cfccc5;
+  --color-neutral-400: #b2aea6;
+  --color-neutral-500: #938f88;
+  --color-neutral-600: #75716a;
+  --color-neutral-700: #595650;
+  --color-neutral-800: #3f3d38;
+  --color-neutral-900: #292724;
+
+  /* Neutral steps for exercise tiles. No hue, so the single amber accent
+     stays the only colour in the app. Four steps are enough to tell
+     adjacent rows apart at a glance. */
+  --color-tile-1: #171614;
+  --color-tile-2: #1d1c19;
+  --color-tile-3: #23221e;
+  --color-tile-4: #2a2824;
 
   --font-sans:
     Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto,
     'Helvetica Neue', Arial, sans-serif;
+}
+
+/* Radii, dividers and elevation are plain custom properties — consumed by
+   the utilities below rather than by generated Tailwind classes.
+
+   Elevation is a hairline ring, never a drop shadow (§2.4). The system this
+   refines shipped --shadow-md/-lg with real 18px and 40px blurs; both are
+   dropped. A card is separated from the ground by its edge and its fill. */
+:root {
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 14px;
+
+  --divider: rgba(236, 235, 232, 0.14);
+  --divider-solid: rgba(236, 235, 232, 0.08);
+  --ring-hairline: 0 0 0 1px var(--color-line);
 }
 
 html {
@@ -64,4 +118,147 @@ input[type='number'] {
 
 button {
   touch-action: manipulation;
+}
+
+/* Never leave the browser default focus ring. */
+:focus {
+  outline: none;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--color-accent) 30%, transparent);
+}
+
+/* ─── Utilities ────────────────────────────────────────────────────────── */
+
+/* A hairline card edge. One ring, never stacked. */
+@utility ring-edge {
+  box-shadow: var(--ring-hairline);
+}
+
+/* Freestanding rules between list rows fade out at both ends, so a long
+   list reads as one column rather than a stack of boxes. Separators inside
+   a control stay solid — see rule-solid.
+
+   CSS gradients have no logical directions, so this is `to right`. It is
+   safe for the Stage 5 RTL flip regardless: the ramp is symmetric, so the
+   rule renders identically in either direction. */
+@utility rule-fade {
+  height: 1px;
+  border: 0;
+  margin: 0;
+  background: linear-gradient(
+    to right,
+    transparent,
+    var(--divider) 32px,
+    var(--divider) calc(100% - 32px),
+    transparent
+  );
+}
+
+@utility rule-solid {
+  height: 1px;
+  border: 0;
+  margin: 0;
+  background: var(--divider-solid);
+}
+
+/* Section kicker: small, wide-tracked, uppercase, quiet. */
+@utility kicker {
+  font-size: 11px;
+  line-height: 1.2;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--color-text) 55%, transparent);
+}
+
+/* Buttons. Primary is outlined on a 10% tint rather than a solid fill: in a
+   column of controls a solid amber slab shouts over everything near it, and
+   on the hot path the only thing that should shout is the number. Height is
+   set by the caller; §2.4's 48px floor applies. */
+@utility btn-base {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border-radius: var(--radius-md);
+  border: 1px solid transparent;
+  font-weight: 500;
+  line-height: 1.2;
+  cursor: pointer;
+  background: transparent;
+  color: var(--color-text);
+}
+
+@utility btn-primary {
+  border-width: 1.5px;
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+  background: color-mix(in srgb, var(--color-accent) 10%, transparent);
+}
+
+@utility btn-secondary {
+  border-color: var(--divider);
+  color: var(--color-text);
+}
+
+@utility btn-ghost {
+  border-color: transparent;
+  color: var(--color-accent);
+}
+
+@utility btn-quiet {
+  border-color: transparent;
+  color: color-mix(in srgb, var(--color-text) 55%, transparent);
+}
+
+/* Tags. Set-type chips and superset markers. */
+@utility tag-neutral {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  background: var(--color-neutral-800);
+  color: var(--color-neutral-100);
+  font-size: 11px;
+  letter-spacing: 0.02em;
+}
+
+@utility tag-accent {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  background: var(--color-accent-800);
+  color: var(--color-accent-100);
+  font-size: 11px;
+  letter-spacing: 0.02em;
+}
+
+/* The header band. The one gradient in the app, and it earns its place: it
+   separates chrome from content without a border, which would otherwise cut
+   a hard line across the screen directly above the hot path. */
+@utility header-band {
+  background: linear-gradient(180deg, #131210, var(--color-ink));
+}
+
+/* Bottom fade behind the pinned primary action, so content scrolling under
+   it dissolves instead of colliding with the button edge. */
+@utility action-fade {
+  background: linear-gradient(180deg, transparent, var(--color-ink) 26%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

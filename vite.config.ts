@@ -9,7 +9,12 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['icon.svg', 'icon-192.png', 'icon-512.png'],
+      includeAssets: [
+        'icon.svg',
+        'icon-192.png',
+        'icon-512.png',
+        'icon-maskable-512.png',
+      ],
       manifest: {
         name: 'Wazn',
         short_name: 'Wazn',
@@ -20,13 +25,16 @@ export default defineConfig({
         scope: '/',
         display: 'standalone',
         orientation: 'portrait',
-        background_color: '#0b0b0c',
-        theme_color: '#0b0b0c',
+        background_color: '#0c0b0a',
+        theme_color: '#0c0b0a',
         icons: [
           { src: '/icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
           { src: '/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
+          // A separate, inset mark. Reusing the "any" icon here let a
+          // circular mask cut the sleeves off the bar — maskable crops up
+          // to 20% from every edge, and the wordmark runs full width.
           {
-            src: '/icon-512.png',
+            src: '/icon-maskable-512.png',
             sizes: '512x512',
             type: 'image/png',
             purpose: 'maskable',

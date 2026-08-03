@@ -8,12 +8,25 @@ import {
   formatTime,
   formatWorkoutDate,
 } from '../lib/format'
-import type { Workout, WorkoutSet } from '../lib/types'
+import type { Exercise, Workout, WorkoutSet } from '../lib/types'
 import { EditSetDialog } from '../components/EditSetDialog'
+import { ExerciseThumb } from '../components/ExerciseThumb'
 
 const PAGE_SIZE = 30
 
-type SetWithExercise = WorkoutSet & { exercises: { name: string } | null }
+/** The embedded exercise carries enough to draw a thumbnail, not the whole
+ *  row — History pages through hundreds of sets and the rest is unused. */
+type EmbeddedExercise = Pick<
+  Exercise,
+  'id' | 'name' | 'muscle_group' | 'equipment' | 'image_url'
+>
+
+type SetWithExercise = WorkoutSet & { exercises: EmbeddedExercise | null }
+
+/** ExerciseThumb wants a full Exercise; the embed is all History fetches. */
+function thumbExercise(e: EmbeddedExercise): Exercise {
+  return { ...e, is_custom: false, owner_id: null, default_rest_seconds: null }
+}
 
 export function HistoryScreen() {
   const { unit } = useUnit()
@@ -25,6 +38,8 @@ export function HistoryScreen() {
   const [error, setError] = useState<string | null>(null)
 
   const [expanded, setExpanded] = useState<string | null>(null)
+  // Which expanded workout is showing its per-row correction buttons.
+  const [correcting, setCorrecting] = useState<string | null>(null)
   const [editing, setEditing] = useState<SetWithExercise | null>(null)
   const [busy, setBusy] = useState(false)
   const [setsByWorkout, setSetsByWorkout] = useState<Record<string, SetWithExercise[]>>(
@@ -127,7 +142,7 @@ export function HistoryScreen() {
 
     const { data, error: setsError } = await supabase
       .from('workout_sets')
-      .select('*, exercises(name)')
+      .select('*, exercises(id, name, muscle_group, equipment, image_url)')
       .eq('workout_id', workoutId)
       .order('set_number')
 
@@ -148,7 +163,8 @@ export function HistoryScreen() {
       {error && (
         <p
           role="alert"
-          className="rounded-lg border border-accent px-3 py-2 text-sm text-accent"
+          className="border border-accent px-3 py-2 text-sm text-accent"
+          style={{ borderRadius: 'var(--radius-md)' }}
         >
           {error}
         </p>
@@ -159,33 +175,38 @@ export function HistoryScreen() {
           No workouts yet. Log one on the Log tab and it will show up here.
         </p>
       ) : (
-        <ul className="divide-y divide-line">
-          {workouts.map((workout) => {
+        <ul>
+          {workouts.map((workout, i) => {
             const open = expanded === workout.id
             const sets = setsByWorkout[workout.id]
+            const headline = sets?.find((s) => s.exercises)?.exercises ?? null
             return (
               <li key={workout.id}>
+                {i > 0 && <div className="rule-fade" />}
                 <button
                   type="button"
                   onClick={() => void toggle(workout.id)}
                   aria-expanded={open}
-                  className="flex min-h-14 w-full items-center gap-3 py-3 text-start"
+                  className="flex min-h-[56px] w-full items-center gap-3 py-2.5 text-start"
                 >
-                  <span className="flex-1">
-                    <span className="block text-base font-semibold">
+                  {headline && (
+                    <ExerciseThumb exercise={thumbExercise(headline)} size={38} />
+                  )}
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-[15px] font-medium">
                       {workout.name?.trim() || 'Workout'}
                     </span>
-                    <span className="tnum block text-xs text-muted">
+                    <span className="tnum block text-[11px] text-muted">
                       {formatWorkoutDate(workout.started_at)} ·{' '}
                       {formatTime(workout.started_at)} ·{' '}
                       {formatDuration(workout.started_at, workout.ended_at)}
                     </span>
                   </span>
-                  <span className="text-sm text-muted">{open ? '–' : '+'}</span>
+                  <span className="text-sm text-muted">{open ? '−' : '+'}</span>
                 </button>
 
                 {open && (
-                  <div className="pb-3">
+                  <div className="pb-4">
                     {!sets ? (
                       <p className="text-sm text-muted">Loading sets…</p>
                     ) : sets.length === 0 ? (
@@ -193,12 +214,27 @@ export function HistoryScreen() {
                         This workout has no sets recorded.
                       </p>
                     ) : (
-                      <ExerciseBreakdown
-                        sets={sets}
-                        unit={unit}
-                        onEditSet={setEditing}
-                        onDeleteSet={(s) => void removeSet(s)}
-                      />
+                      <>
+                        <ExerciseBreakdown
+                          sets={sets}
+                          unit={unit}
+                          editable={correcting === workout.id}
+                          onEditSet={setEditing}
+                          onDeleteSet={(s) => void removeSet(s)}
+                        />
+                        {/* Correcting a set is rare and destructive; it does
+                            not deserve two buttons on every row of every
+                            session. One entry point per workout reveals them. */}
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setCorrecting(correcting === workout.id ? null : workout.id)
+                          }
+                          className="btn-base btn-secondary mt-3 h-10 px-4 text-sm"
+                        >
+                          {correcting === workout.id ? 'Done editing' : 'Edit sets'}
+                        </button>
+                      </>
                     )}
                   </div>
                 )}
@@ -213,7 +249,7 @@ export function HistoryScreen() {
           type="button"
           onClick={() => void loadMore()}
           disabled={loadingMore}
-          className="h-12 w-full rounded-lg border border-line text-sm font-semibold disabled:opacity-60"
+          className="btn-base btn-secondary mt-2 h-[46px] w-full text-sm disabled:opacity-45"
         >
           {loadingMore ? 'Loading…' : 'Load older workouts'}
         </button>
@@ -237,11 +273,14 @@ export function HistoryScreen() {
 function ExerciseBreakdown({
   sets,
   unit,
+  editable,
   onEditSet,
   onDeleteSet,
 }: {
   sets: SetWithExercise[]
   unit: 'lbs' | 'kg'
+  /** Per-row correction buttons appear only while the workout is being edited. */
+  editable: boolean
   onEditSet: (set: SetWithExercise) => void
   onDeleteSet: (set: SetWithExercise) => void
 }) {
@@ -257,39 +296,54 @@ function ExerciseBreakdown({
   }
 
   return (
-    <div className="flex flex-col gap-3">
-      {order.map((name) => (
-        <div key={name}>
-          <p className="text-sm font-semibold">{name}</p>
-          <ul className="mt-1 flex flex-col gap-0.5">
-            {grouped.get(name)!.map((set, index) => (
-              <li key={set.id} className="tnum flex items-center gap-3 text-base">
-                <span className="w-5 text-xs text-muted">{index + 1}</span>
-                <span className="flex-1">{describeSet(set, unit)}</span>
-                {set.set_type !== 'normal' && (
-                  <span className="text-xs text-muted">{set.set_type}</span>
-                )}
-                <button
-                  type="button"
-                  onClick={() => onEditSet(set)}
-                  aria-label={`Edit set ${index + 1} of ${name}`}
-                  className="h-12 w-12 rounded-md text-xs text-muted"
-                >
-                  Edit
-                </button>
-                <button
-                  type="button"
-                  onClick={() => onDeleteSet(set)}
-                  aria-label={`Delete set ${index + 1} of ${name}`}
-                  className="h-12 w-10 rounded-md text-xs text-muted"
-                >
-                  ×
-                </button>
-              </li>
-            ))}
-          </ul>
-        </div>
-      ))}
+    <div className="flex flex-col gap-3.5">
+      {order.map((name) => {
+        const rows = grouped.get(name)!
+        const exercise = rows.find((s) => s.exercises)?.exercises ?? null
+        return (
+          <div key={name} className="flex gap-3">
+            {exercise && <ExerciseThumb exercise={thumbExercise(exercise)} size={40} />}
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-medium">{name}</p>
+              <ul className="mt-1 flex flex-col">
+                {rows.map((set, index) => (
+                  <li key={set.id} className="tnum flex items-center gap-3 text-sm">
+                    <span className="w-4 shrink-0 text-[11px] text-muted">
+                      {index + 1}
+                    </span>
+                    <span className="flex-1">{describeSet(set, unit)}</span>
+                    {set.set_type !== 'normal' && (
+                      <span className="shrink-0 text-[11px] text-muted">
+                        {set.set_type}
+                      </span>
+                    )}
+                    {editable && (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => onEditSet(set)}
+                          aria-label={`Edit set ${index + 1} of ${name}`}
+                          className="btn-base btn-quiet h-11 w-11 text-xs"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => onDeleteSet(set)}
+                          aria-label={`Delete set ${index + 1} of ${name}`}
+                          className="btn-base btn-quiet h-11 w-9 text-xs"
+                        >
+                          ×
+                        </button>
+                      </>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        )
+      })}
     </div>
   )
 }

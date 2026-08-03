@@ -7,6 +7,7 @@ import type { Unit } from '../lib/units'
 import type { RestTimer } from '../lib/use-rest-timer'
 import { RestTimerBar } from './RestTimer'
 import { LoadHelper } from './LoadHelper'
+import { ExerciseThumb } from './ExerciseThumb'
 
 /** Stepper increments, in the unit on screen. */
 const WEIGHT_STEP: Record<Unit, number> = { lbs: 5, kg: 2.5 }
@@ -41,7 +42,7 @@ function StepperButton({
       onClick={onPress}
       disabled={disabled}
       aria-label={label}
-      className="h-16 w-14 shrink-0 rounded-lg border border-line bg-surface text-2xl font-semibold text-text disabled:opacity-40"
+      className="btn-base btn-secondary h-[62px] w-[58px] shrink-0 bg-surface text-2xl disabled:opacity-45"
     >
       {label.startsWith('Decrease') ? '−' : '+'}
     </button>
@@ -189,23 +190,32 @@ export function SetEntry({
 
   return (
     <section className="flex flex-col gap-3 pb-4">
-      <div className="flex items-center gap-2">
-        <h2 className="flex-1 truncate text-base font-semibold">{exercise.name}</h2>
+      <div className="flex items-center gap-3">
+        <ExerciseThumb exercise={exercise} size={44} />
+        <div className="min-w-0 flex-1">
+          <h2 className="truncate text-base font-medium">{exercise.name}</h2>
+          <p className="truncate text-[11px] text-muted">
+            {exercise.muscle_group} · {exercise.equipment}
+          </p>
+        </div>
         <button
           type="button"
           onClick={onBack}
-          className="h-12 rounded-md px-2 text-sm text-muted"
+          className="btn-base btn-secondary h-12 px-3 text-sm"
         >
           Done
         </button>
       </div>
 
-      <div className="rounded-lg border border-line bg-surface px-3 py-2">
+      <div
+        className="ring-edge bg-surface px-[13px] py-2.5"
+        style={{ borderRadius: 'var(--radius-md)' }}
+      >
         {previousLoading ? (
-          <p className="text-xs text-muted">Loading previous session…</p>
+          <p className="text-[11px] text-muted">Loading previous session…</p>
         ) : previousSession.length > 0 ? (
           <>
-            <p className="text-xs text-muted">
+            <p className="text-[11px] text-muted">
               Previous · {formatRelativeDay(previousSession[0].started_at)}
             </p>
             {/* 20px, not the 24px minimum in the plan's §2.4. This is a
@@ -216,7 +226,7 @@ export function SetEntry({
             <p className="tnum mt-0.5 text-xl">{previousSummary}</p>
           </>
         ) : (
-          <p className="text-xs text-muted">
+          <p className="text-[11px] text-muted">
             First time logging this exercise. No previous session yet.
           </p>
         )}
@@ -225,41 +235,47 @@ export function SetEntry({
       {timer && <RestTimerBar timer={timer} />}
 
       {setsThisWorkout.length > 0 && (
-        <ul className="divide-y divide-line rounded-lg border border-line">
-          {setsThisWorkout.map((set) => (
-            <li key={set.id} className="flex h-14 items-center gap-3 px-3">
-              <span className="tnum w-6 text-sm text-muted">{set.set_number}</span>
-              <span className="tnum flex-1 text-2xl font-semibold">
-                {set.weight_kg === null ? 'BW' : formatWeight(set.weight_kg, unit)}
-                <span className="ms-2 text-sm font-normal text-muted">
-                  {set.weight_kg === null ? '' : unit}
+        <ul
+          className="ring-edge overflow-hidden bg-surface"
+          style={{ borderRadius: 'var(--radius-md)' }}
+        >
+          {setsThisWorkout.map((set, i) => (
+            <li key={set.id}>
+              {i > 0 && <div className="rule-solid mx-[13px]" />}
+              <div className="flex items-center gap-3 px-[13px] py-2.5">
+                <span className="tnum w-5 text-xs text-muted">{set.set_number}</span>
+                {/* 24px, not the 21px the redesign asked for: §2.4 sets the
+                    floor and DECISIONS.md already raised this row once, to be
+                    readable at arm's length between sets. */}
+                <span className="tnum flex-1 text-2xl">
+                  {set.weight_kg === null ? 'BW' : formatWeight(set.weight_kg, unit)}
                 </span>
-              </span>
-              <span className="tnum text-2xl font-semibold">{set.reps ?? '—'}</span>
-              <span className="text-sm text-muted">reps</span>
-              {set.set_type !== 'normal' && (
-                <span
-                  title={SET_TYPE_NAME[set.set_type]}
-                  className="rounded border border-line px-1 text-xs text-muted"
-                >
-                  {SET_TYPE_LABEL[set.set_type]}
-                </span>
-              )}
-              {set.rpe !== null && (
-                <span className="tnum text-xs text-muted">@{set.rpe}</span>
-              )}
+                <span className="tnum text-2xl">{set.reps ?? '—'}</span>
+                <span className="text-xs text-muted">reps</span>
+                {set.set_type !== 'normal' && (
+                  <span
+                    title={SET_TYPE_NAME[set.set_type]}
+                    className="tag-neutral h-6 w-6"
+                  >
+                    {SET_TYPE_LABEL[set.set_type]}
+                  </span>
+                )}
+                {set.rpe !== null && (
+                  <span className="tnum text-[11px] text-muted">@{set.rpe}</span>
+                )}
+              </div>
             </li>
           ))}
         </ul>
       )}
 
       <div className="flex flex-col gap-2">
-        <div className="flex items-center gap-2">
-          <StepperButton label="Decrease weight" onPress={() => stepWeight(-1)} />
-          <div className="flex-1">
-            <label htmlFor="weight" className="text-xs text-muted">
-              Weight ({unit}) · optional
-            </label>
+        <div>
+          <label htmlFor="weight" className="mb-1 block text-[11px] text-muted">
+            Weight ({unit}) · optional
+          </label>
+          <div className="flex items-center gap-2">
+            <StepperButton label="Decrease weight" onPress={() => stepWeight(-1)} />
             <input
               id="weight"
               type="number"
@@ -269,18 +285,19 @@ export function SetEntry({
               value={draft.weight}
               onChange={(e) => setDraft((d) => ({ ...d, weight: e.target.value }))}
               placeholder="BW"
-              className="tnum h-16 w-full rounded-lg border border-line bg-surface px-3 text-start text-3xl font-semibold outline-none placeholder:text-muted focus:border-accent"
+              className="tnum h-[62px] w-full flex-1 border border-line bg-surface px-3 text-start text-[30px] font-medium outline-none placeholder:text-muted focus:border-accent"
+              style={{ borderRadius: 'var(--radius-md)' }}
             />
+            <StepperButton label="Increase weight" onPress={() => stepWeight(1)} />
           </div>
-          <StepperButton label="Increase weight" onPress={() => stepWeight(1)} />
         </div>
 
-        <div className="flex items-center gap-2">
-          <StepperButton label="Decrease reps" onPress={() => stepReps(-1)} />
-          <div className="flex-1">
-            <label htmlFor="reps" className="text-xs text-muted">
-              Reps
-            </label>
+        <div>
+          <label htmlFor="reps" className="mb-1 block text-[11px] text-muted">
+            Reps
+          </label>
+          <div className="flex items-center gap-2">
+            <StepperButton label="Decrease reps" onPress={() => stepReps(-1)} />
             <input
               id="reps"
               type="number"
@@ -290,10 +307,11 @@ export function SetEntry({
               value={draft.reps}
               onChange={(e) => setDraft((d) => ({ ...d, reps: e.target.value }))}
               placeholder="0"
-              className="tnum h-16 w-full rounded-lg border border-line bg-surface px-3 text-start text-3xl font-semibold outline-none placeholder:text-muted focus:border-accent"
+              className="tnum h-[62px] w-full flex-1 border border-line bg-surface px-3 text-start text-[30px] font-medium outline-none placeholder:text-muted focus:border-accent"
+              style={{ borderRadius: 'var(--radius-md)' }}
             />
+            <StepperButton label="Increase reps" onPress={() => stepReps(1)} />
           </div>
-          <StepperButton label="Increase reps" onPress={() => stepReps(1)} />
         </div>
       </div>
 
@@ -307,10 +325,8 @@ export function SetEntry({
           type="button"
           onClick={cycleSetType}
           aria-label={`${SET_TYPE_NAME[setType]}. Tap to change.`}
-          className={`h-12 min-w-14 rounded-md border px-3 text-sm font-semibold ${
-            setType === 'normal'
-              ? 'border-line text-muted'
-              : 'border-accent text-accent'
+          className={`btn-base h-12 min-w-14 px-3 text-sm ${
+            setType === 'normal' ? 'btn-secondary' : 'btn-primary'
           }`}
         >
           {setType === 'normal' ? 'Set' : SET_TYPE_LABEL[setType]}
@@ -320,28 +336,26 @@ export function SetEntry({
           type="button"
           onClick={cycleRpe}
           aria-label={rpe === null ? 'Add RPE' : `RPE ${rpe}. Tap to change.`}
-          className={`tnum h-12 min-w-14 rounded-md border px-3 text-sm font-semibold ${
-            rpe === null ? 'border-line text-muted' : 'border-accent text-accent'
+          className={`btn-base tnum h-12 min-w-14 px-3 text-sm ${
+            rpe === null ? 'btn-secondary' : 'btn-primary'
           }`}
         >
-          {rpe === null ? 'RPE' : rpe}
+          {rpe === null ? 'RPE' : `@${rpe}`}
         </button>
 
         {onSuperset && (
           <button
             type="button"
             onClick={onSuperset}
-            className={`h-12 rounded-md border px-3 text-sm font-semibold ${
-              supersetGroup != null
-                ? 'border-accent text-accent'
-                : 'border-line text-muted'
+            className={`btn-base h-12 px-3 text-sm ${
+              supersetGroup != null ? 'btn-primary' : 'btn-secondary'
             }`}
           >
             {supersetGroup != null ? `SS ${supersetGroup}` : 'Superset'}
           </button>
         )}
 
-        <span className="ms-auto text-xs text-muted">{SET_TYPE_NAME[setType]}</span>
+        <span className="ms-auto text-[11px] text-muted">{SET_TYPE_NAME[setType]}</span>
       </div>
 
       {error && (
@@ -354,7 +368,7 @@ export function SetEntry({
         type="button"
         onClick={() => void submit()}
         disabled={saving}
-        className="h-16 w-full rounded-lg bg-accent text-xl font-bold text-accent-ink disabled:opacity-60"
+        className="btn-base btn-primary mt-1 h-[66px] w-full text-[19px] disabled:opacity-45"
       >
         {saving ? 'Saving…' : `Log set ${setsThisWorkout.length + 1}`}
       </button>

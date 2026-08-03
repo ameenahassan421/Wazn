@@ -344,3 +344,103 @@ tiny — 134 exercises, 152 workouts — and the unused-index lint fires precise
 because there are no routines yet. Adding three indexes nothing queries would
 commit the error the other lint is complaining about. Revisit at real
 multi-user volume.
+
+## 2026-08-02 — Redesign: the template is structure, not identity
+
+Ameen supplied `design_handoff_wazn_redesign`: a logo, a restyle of all three
+tabs onto a system called "Nocturne", and an expansion of Progress into three
+sub-tabs. It is a careful handoff — it reads the repo, cites `CLAUDE.md`, and
+correctly quotes the sub-24px exception already recorded above.
+
+It is also a stock template. `nocturne-styles.css` still carries the source
+deck's own review notes (`review round 7 (Barron)`, `--om-accent-pro`), tokens
+for "slide grounds" and "deck section dividers", and a 48px rule-fade measured
+in "one deck baseline unit". Ameen's read — "a lot of people used this design
+too, let us elevate it using our own context" — was right, so the layout,
+density and component structure are taken and the identity is not.
+
+### The accent stays amber
+
+The template moves to a blurple `#9184d9` on a blue-grey `#161826`, and admits
+in its own notes that this is ~3:1 on the ground — "fine for icons and chrome,
+**not** for paragraph text". The most-tapped control in this app is `Log set N`,
+pressed one-handed, mid-set, under whatever lighting the gym has. Amber on
+near-black is roughly 9:1. §2.4 already said amber; the contrast maths says it
+independently.
+
+What the template got right and Wazn did not have is the **tonal ramp**: one
+hue in nine perceptual steps, so a chart shows depth without a second colour.
+Amber now has that ramp (`--color-accent-100..900`), which is what made the
+three Progress sub-tabs possible without breaking the one-accent rule.
+
+The ground moves from `#0b0b0c` to `#0c0b0a` — still near-black, with a slight
+warm cast so it does not fight the accent. Blue-grey is the tell of a stock
+dark theme; warm near-black under amber reads as unlit iron.
+
+### The plate is the shape language
+
+The logo loads four plates a side. Nothing in the template built on that, so
+it is now the repeating unit: the weekly streak is a plate stack that fills as
+weeks complete, and the rep-range bars step down the accent ramp the way the
+plates step down toward the sleeve. That is the part no other project using
+this template can have.
+
+The handoff's plate geometry put the **tallest plate third from the sleeve**.
+A loaded bar puts the heaviest plate innermost. Fixed, and `scripts/build_logo.py`
+now generates the mark parametrically from the word's own ink box, so the same
+proportions hold at 512px and at 34px.
+
+The word is converted to outlines rather than shipped as live text in Aref
+Ruqaa. A wordmark that depends on a webfont renders as a fallback serif on
+first paint, and the PWA icons must render with no network at all.
+
+### Where §2.4 won over the design
+
+- **Touch targets.** The design specifies a 44px floor and 34px header
+  controls. §2.4 says 48px. The visual density is kept by drawing a 34px chip
+  inside a 48px button, rather than by shrinking the target.
+- **Set figures.** The design drops the set list to 21px. It stays at 24px —
+  §2.4 sets that floor and the entry above already raised this exact row so it
+  reads at arm's length between sets.
+- **Shadows.** `--shadow-md/-lg` carried real 18px and 40px blurs. Dropped; a
+  card is separated by a hairline ring and its fill. The two gradients that
+  survive are the header band and the fade behind a pinned action, both of
+  which replace a hard border rather than decorate.
+
+### Deviations from the design worth naming
+
+- **Exercise tiles keep their stepped tones.** The handoff flattens every
+  fallback tile to one neutral. Telling adjacent rows apart is why the steps
+  exist (see the 0D entry above); they are rebased onto the warm ramp instead.
+- **History corrections are a reveal, not a dialog mode.** The design asked for
+  `EditSetDialog` in "list mode". One `Edit sets` button per expanded workout
+  reveals the existing per-row controls — same result, no second dialog
+  surface, and the write-through save is untouched.
+- **The pinned Log-set button stays in normal flow.** Sticking it over a fade
+  puts it in a fight with the tab bar for the same 60px. The set-entry screen
+  is designed to fit without scrolling, which is the actual requirement.
+
+### Progress needed four RPCs, not two
+
+The handoff identified two functions for the Balance tab. Volume needs data
+too, and Strength's rep histogram is a third. Migration `0007` adds four, all
+`security invoker` like the three in `0001`, with `execute` granted to
+`authenticated` only — the posture `0006` established.
+
+`session_volume_history` returns one row per finished workout; sessions-per-week,
+monthly volume, the workload scatter and the training calendar are all derived
+from that single series on the client (`src/lib/progress.ts`, unit-tested), so
+the Volume tab costs one round trip rather than four.
+
+Every sub-tab degrades to a "needs migration 0007" note rather than an error if
+its function is missing, because **the migration cannot be applied from a
+sandboxed session** — there is no Supabase egress. Ameen applies it.
+
+Charts other than the 1RM line are hand-rolled SVG rather than recharts: the
+design specifies exact bar widths, radii and gridline counts, and recharts is
+already half the bundle. The 1RM line keeps recharts for its tooltip, and
+Progress stays lazy-loaded — the main bundle is unchanged at 364 kB.
+
+Lift-balance ratios (deadlift 1.0, squat 0.85, bench 0.75, overhead 0.45) are
+the usual strength standards. The chart says "predicted", not "target": the
+point is to surface a lift that has fallen behind, not to prescribe one.

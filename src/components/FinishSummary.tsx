@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
 import type { WorkoutSummary } from '../lib/summary'
+import type { Exercise } from '../lib/types'
 import type { Unit } from '../lib/units'
 import { formatWeight } from '../lib/units'
 import { drawShareCard, shareCard } from '../lib/share-card'
+import { ExerciseThumb } from './ExerciseThumb'
 
 /** Seconds → "48 min" / "1h 12m". `formatDuration` in lib/format takes ISO
  *  strings; the summary already holds a duration, so it formats that. */
@@ -22,11 +24,15 @@ export function FinishSummary({
   unit,
   dateLabel,
   onDone,
+  exercisesById,
 }: {
   summary: WorkoutSummary
   unit: Unit
   dateLabel: string
   onDone: () => void
+  /** Only used to put a face on each PR row; optional so tests and any
+   *  caller without the catalogue still render. */
+  exercisesById?: Map<string, Exercise>
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [status, setStatus] = useState<string | null>(null)
@@ -62,41 +68,59 @@ export function FinishSummary({
 
   return (
     <section className="flex flex-col gap-4 pb-6">
-      <h2 className="text-2xl font-semibold tracking-tight">Workout complete</h2>
+      <div>
+        <p className="kicker">{dateLabel}</p>
+        <h2 className="mt-1 text-[30px] font-medium tracking-tight">
+          Workout complete
+        </h2>
+      </div>
 
       <ul className="grid grid-cols-2 gap-3">
         {stats.map(([value, label]) => (
           <li
             key={label}
-            className="rounded-lg border border-line bg-surface px-3 py-3"
+            className="ring-edge bg-surface px-3 py-3"
+            style={{ borderRadius: 'var(--radius-md)' }}
           >
-            <p className="tnum text-3xl font-bold">{value}</p>
-            <p className="text-xs text-muted">{label}</p>
+            <p className="tnum text-[27px] font-medium">{value}</p>
+            <p className="mt-0.5 text-[11px] text-muted">{label}</p>
           </li>
         ))}
       </ul>
 
       {summary.prs.length > 0 && (
-        <div className="rounded-lg border border-accent bg-surface px-3 py-3">
-          <p className="text-sm font-semibold text-accent">
+        <div
+          className="border border-accent bg-surface px-3 py-3"
+          style={{ borderRadius: 'var(--radius-md)' }}
+        >
+          <p className="text-sm font-medium text-accent">
             {summary.prs.length === 1
               ? '1 personal record'
               : `${summary.prs.length} personal records`}
           </p>
-          <ul className="mt-2 flex flex-col gap-1">
-            {summary.prs.map((pr) => (
-              <li key={`${pr.exerciseId}-${pr.kind}`} className="text-sm">
-                <span className="font-semibold">{pr.exerciseName}</span>{' '}
-                <span className="tnum">
-                  {formatWeight(pr.value, unit)} {unit}
-                </span>{' '}
-                <span className="text-muted">
-                  {pr.kind === 'e1rm' ? 'est. 1RM' : 'top set'}
-                  {pr.previousBest !== null &&
-                    ` · was ${formatWeight(pr.previousBest, unit)}`}
-                </span>
-              </li>
-            ))}
+          <ul className="mt-2.5 flex flex-col gap-2.5">
+            {summary.prs.map((pr) => {
+              const exercise = exercisesById?.get(pr.exerciseId)
+              return (
+                <li
+                  key={`${pr.exerciseId}-${pr.kind}`}
+                  className="flex items-center gap-3"
+                >
+                  {exercise && <ExerciseThumb exercise={exercise} size={38} />}
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-[13px] font-medium">
+                      {pr.exerciseName}
+                    </span>
+                    <span className="tnum block text-xs text-muted">
+                      {formatWeight(pr.value, unit)} {unit}{' '}
+                      {pr.kind === 'e1rm' ? 'est. 1RM' : 'top set'}
+                      {pr.previousBest !== null &&
+                        ` · was ${formatWeight(pr.previousBest, unit)}`}
+                    </span>
+                  </span>
+                </li>
+              )
+            })}
           </ul>
         </div>
       )}
@@ -110,14 +134,14 @@ export function FinishSummary({
           type="button"
           onClick={() => void onShare()}
           disabled={sharing}
-          className="h-12 w-full rounded-lg border border-line text-base font-semibold disabled:opacity-60"
+          className="btn-base btn-secondary h-[52px] w-full text-base disabled:opacity-45"
         >
           {sharing ? 'Preparing…' : 'Share'}
         </button>
         <button
           type="button"
           onClick={onDone}
-          className="h-12 w-full rounded-lg bg-accent text-base font-bold text-accent-ink"
+          className="btn-base btn-primary h-[52px] w-full text-base"
         >
           Done
         </button>
