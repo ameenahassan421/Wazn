@@ -482,3 +482,45 @@ cluster, and wiring one into CI is a larger change than this fix warrants —
 worth doing when migrations get more frequent, and it is Ameen's call. Until
 then the rule is: a migration that has never been executed is unverified, and
 the honest place to say so is the PR body.
+
+## 2026-08-03 — Stage 8 (Assist): open-weight AI, conditional on evidence
+
+Ameen asked whether open-source AI could go into Wazn. It can, and §Stage 8
+now records what and how. Three findings shaped it.
+
+**Most "AI features" in a lifting app are not AI.** Plateau detection, deload
+suggestions, 1RM estimation, undertrained muscle groups — all statistics, and
+three of the four already ship. An LLM there swaps arithmetic that is free,
+instant and testable for something slower, costlier and nondeterministic. The
+rule written into the stage: if statistics can answer it, statistics answer it.
+
+**The economics pick the architecture, not preference.** A self-hosted GPU is
+a few hundred dollars a month against a ~$45/mo stack and ~$1.50 ARPU — more
+than everything else combined. On-device WebGPU is free but means a multi-GB
+download on the budget Android phones that are the actual market, and the
+models small enough to run there are not good enough to trust with training
+advice. That leaves serverless open-weight inference behind an Edge Function,
+which is also the only one of the three that keeps the key off the client.
+
+**Licence and model size are separate questions, and Kimi answers them
+differently.** Kimi K2's Modified MIT is the most permissive of the serious
+open-weight options — its one condition triggers above 100M MAU or $20M/month
+revenue. Llama and Gemma ship custom licences that are not open source. But K2
+is ~1T parameters with ~32B active, built for agentic and coding work. The one
+assist worth building first — parsing "three sets of eight at two-twenty-five"
+into a draft — is a task a 3B model does perfectly, and mid-set latency matters
+more than capability. So: a small Apache-2.0 model for 8A, and a K2/K3-class
+model held for 8C, the coaching agent, where long-context reasoning over months
+of history is genuinely the job.
+
+### Why it is conditional rather than scheduled
+
+Voice logging is the only assist that makes the core job _faster_ rather than
+adding something to look at, so it is the one worth building. But whether it is
+wanted is exactly what Gate 1 measures: two weeks off Hevy, with every missed
+moment written down. If "I wish I could just say the set" never appears in that
+list, 8A is a feature built because it was interesting. The gate produces the
+evidence; the stage waits for it.
+
+8A also carries its own kill condition — if voice does not beat the steppers on
+wall-clock for half of attempts over a real week, it is a demo and gets deleted.
