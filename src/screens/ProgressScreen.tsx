@@ -47,12 +47,20 @@ function num(value: number | string | null | undefined): number {
   return Number.isFinite(n) ? n : 0
 }
 
-/** Shown when a Progress RPC is missing — migration 0007 not applied yet. */
+/**
+ * Shown when a Progress RPC does not answer.
+ *
+ * This used to read "Apply migration 0007 and reload", which was correct while
+ * 0007 was unapplied and Ameen was the only user. 0007 and 0008 are live now,
+ * so the only way a reader reaches this text is a genuine fault — and telling a
+ * beta tester in Cairo to apply a migration is telling them the app is broken
+ * in a language that is not theirs to speak.
+ */
 function Unavailable() {
   return (
     <p className="py-8 text-sm text-muted">
-      This chart needs the Progress analytics functions. Apply migration 0007 and
-      reload.
+      This chart is not loading right now. Your workouts are safe — try again in a
+      moment.
     </p>
   )
 }

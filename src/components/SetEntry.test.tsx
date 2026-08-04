@@ -90,6 +90,8 @@ describe('SetEntry auto-fill', () => {
         distance_meters: null,
         set_type: 'normal',
         superset_group: null,
+        pr_weight: false,
+        pr_e1rm: false,
       },
     ]
     const { weight, reps } = setup({ previousSession, setsThisWorkout: logged })
@@ -265,5 +267,61 @@ describe('SetEntry set type and RPE', () => {
 
     await user.click(screen.getByRole('button', { name: /Log set/ }))
     expect(onAddSet).toHaveBeenLastCalledWith(expect.objectContaining({ rpe: null }))
+  })
+})
+
+describe('SetEntry records', () => {
+  function loggedSet(over: Partial<WorkoutSet>): WorkoutSet {
+    return {
+      id: 's',
+      workout_id: 'w-1',
+      exercise_id: exercise.id,
+      set_number: 1,
+      weight_kg: 60,
+      reps: 5,
+      rpe: null,
+      duration_seconds: null,
+      distance_meters: null,
+      set_type: 'normal',
+      superset_group: null,
+      pr_weight: false,
+      pr_e1rm: false,
+      ...over,
+    }
+  }
+
+  it('badges a record set and leaves an ordinary one alone', () => {
+    const { container } = setup({
+      setsThisWorkout: [
+        loggedSet({ id: 's-1', set_number: 1 }),
+        loggedSet({ id: 's-2', set_number: 2, pr_weight: true }),
+      ],
+    })
+    expect(screen.getAllByTitle('Personal record')).toHaveLength(1)
+    expect(container.querySelectorAll('.record-flash')).toHaveLength(1)
+  })
+
+  it('flashes only the set that just landed; earlier records stay tinted', () => {
+    // §2.1: nothing pulls attention mid-workout. A list that re-animates every
+    // record on every render would do exactly that.
+    const { container } = setup({
+      setsThisWorkout: [
+        loggedSet({ id: 's-1', set_number: 1, pr_weight: true }),
+        loggedSet({ id: 's-2', set_number: 2, pr_e1rm: true }),
+      ],
+    })
+    expect(container.querySelectorAll('.record-flash')).toHaveLength(1)
+    expect(container.querySelectorAll('.record-row')).toHaveLength(1)
+  })
+
+  it('does not flash a trailing set that is not a record', () => {
+    const { container } = setup({
+      setsThisWorkout: [
+        loggedSet({ id: 's-1', set_number: 1, pr_weight: true }),
+        loggedSet({ id: 's-2', set_number: 2 }),
+      ],
+    })
+    expect(container.querySelectorAll('.record-flash')).toHaveLength(0)
+    expect(container.querySelectorAll('.record-row')).toHaveLength(1)
   })
 })

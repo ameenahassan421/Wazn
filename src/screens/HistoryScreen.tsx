@@ -9,6 +9,7 @@ import {
   formatWorkoutDate,
 } from '../lib/format'
 import type { Exercise, Workout, WorkoutSet } from '../lib/types'
+import { isRecord } from '../lib/types'
 import { EditSetDialog } from '../components/EditSetDialog'
 import { ExerciseThumb } from '../components/ExerciseThumb'
 import { IconChevronDown } from '../components/icons'
@@ -23,6 +24,20 @@ type EmbeddedExercise = Pick<
 >
 
 type SetWithExercise = WorkoutSet & { exercises: EmbeddedExercise | null }
+
+/** Numerics arrive from PostgREST as strings; convert once, at the edge. */
+interface WorkoutTotalsRow {
+  workout_id: string
+  volume_kg: number | string
+  set_count: number | string
+  record_count: number | string
+}
+
+interface WorkoutTotals {
+  volumeKg: number
+  setCount: number
+  recordCount: number
+}
 
 /** ExerciseThumb wants a full Exercise; the embed is all History fetches. */
 function thumbExercise(e: EmbeddedExercise): Exercise {
@@ -46,6 +61,11 @@ export function HistoryScreen() {
   const [setsByWorkout, setSetsByWorkout] = useState<Record<string, SetWithExercise[]>>(
     {},
   )
+  // Volume, set count and records per workout, so a collapsed row can say what
+  // the session was without expanding it. One call for the whole history —
+  // 154 rows today — rather than one per page, because the user scrolls back
+  // faster than a paged aggregate can keep up.
+  const [totals, setTotals] = useState<Record<string, WorkoutTotals>>({})
 
   const fetchPage = useCallback(async (offset: number) => {
     const { data, error: pageError } = await supabase
@@ -88,6 +108,35 @@ export function HistoryScreen() {
       ),
     }))
     setEditing(null)
+    void refreshRecords(set.workout_id)
+  }
+
+  /**
+   * A correction can promote or demote records anywhere after it — dropping a
+   * typo'd 150 kg to 50 kg hands the record to whatever came next. The
+   * database rebuilds the flags (migration 0009); the client has to go and
+   * look, because the patched local copy still carries the old ones.
+   *
+   * Deliberately after the local patch, not instead of it: the row updates
+   * instantly and the badges settle a moment later. Refetching first would
+   * make a one-field correction feel like a page load.
+   */
+  async function refreshRecords(workoutId: string) {
+    const [{ data: setRows }, totalRows] = await Promise.all([
+      supabase
+        .from('workout_sets')
+        .select('*, exercises(id, name, muscle_group, equipment, image_url)')
+        .eq('workout_id', workoutId)
+        .order('set_number'),
+      loadTotals(),
+    ])
+    if (setRows) {
+      setSetsByWorkout((prev) => ({
+        ...prev,
+        [workoutId]: setRows as SetWithExercise[],
+      }))
+    }
+    setTotals(totalRows)
   }
 
   async function removeSet(set: SetWithExercise) {
@@ -105,24 +154,41 @@ export function HistoryScreen() {
       ...prev,
       [set.workout_id]: (prev[set.workout_id] ?? []).filter((s) => s.id !== set.id),
     }))
+    void refreshRecords(set.workout_id)
   }
+
+  const loadTotals = useCallback(async () => {
+    const { data } = await supabase.rpc('workout_totals')
+    const next: Record<string, WorkoutTotals> = {}
+    for (const row of (data ?? []) as WorkoutTotalsRow[]) {
+      next[row.workout_id] = {
+        volumeKg: Number(row.volume_kg),
+        setCount: Number(row.set_count),
+        recordCount: Number(row.record_count),
+      }
+    }
+    return next
+  }, [])
 
   useEffect(() => {
     let active = true
     void (async () => {
-      const page = await fetchPage(0)
-      if (!active || !page) {
-        setLoading(false)
-        return
+      // Both at once: the totals RPC is independent of the page, and making
+      // the list wait for it would put a spinner in front of the whole screen
+      // for the sake of one line of secondary text.
+      const [page, totalRows] = await Promise.all([fetchPage(0), loadTotals()])
+      if (!active) return
+      if (page) {
+        setWorkouts(page)
+        setDone(page.length < PAGE_SIZE)
       }
-      setWorkouts(page)
-      setDone(page.length < PAGE_SIZE)
+      setTotals(totalRows)
       setLoading(false)
     })()
     return () => {
       active = false
     }
-  }, [fetchPage])
+  }, [fetchPage, loadTotals])
 
   async function loadMore() {
     setLoadingMore(true)
@@ -187,16 +253,47 @@ export function HistoryScreen() {
                   type="button"
                   onClick={() => void toggle(workout.id)}
                   aria-expanded={open}
-                  className="flex min-h-[60px] w-full items-center gap-3 py-2.5 text-start"
+                  className="flex min-h-[68px] w-full items-center gap-3 py-2.5 text-start"
                 >
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate text-base font-medium">
-                      {workout.name?.trim() || 'Workout'}
-                    </span>
-                    <span className="tnum mt-0.5 block text-xs text-muted">
+                    {/* The date leads, in mono, because History is scanned by
+                        when — the name is what you read once you have found
+                        the session. */}
+                    <span className="kicker block">
                       {formatWorkoutDate(workout.started_at)} ·{' '}
-                      {formatTime(workout.started_at)} ·{' '}
+                      {formatTime(workout.started_at)}
+                    </span>
+                    <span className="mt-1 flex items-center gap-2">
+                      <span className="min-w-0 flex-1 truncate text-base font-medium">
+                        {workout.name?.trim() || 'Workout'}
+                      </span>
+                      {totals[workout.id]?.recordCount ? (
+                        <span
+                          className="tag-pr h-[22px] shrink-0"
+                          title={`${totals[workout.id].recordCount} personal record${
+                            totals[workout.id].recordCount === 1 ? '' : 's'
+                          }`}
+                        >
+                          {totals[workout.id].recordCount === 1
+                            ? 'PR'
+                            : `${totals[workout.id].recordCount} PR`}
+                        </span>
+                      ) : null}
+                    </span>
+                    {/* Volume is the number that makes one session comparable
+                        to another, and it was the thing History could not tell
+                        you without expanding every row. */}
+                    <span className="tnum mt-0.5 block text-[13px] text-muted">
                       {formatDuration(workout.started_at, workout.ended_at)}
+                      {totals[workout.id] && (
+                        <>
+                          {' · '}
+                          {formatWeight(totals[workout.id].volumeKg, unit)}
+                          {' · '}
+                          {totals[workout.id].setCount}{' '}
+                          {totals[workout.id].setCount === 1 ? 'set' : 'sets'}
+                        </>
+                      )}
                     </span>
                   </span>
                   <IconChevronDown
@@ -309,11 +406,26 @@ function ExerciseBreakdown({
               <p className="truncate text-sm font-medium">{name}</p>
               <ul className="mt-1 flex flex-col">
                 {rows.map((set, index) => (
-                  <li key={set.id} className="tnum flex items-center gap-3 text-sm">
+                  <li
+                    key={set.id}
+                    className={`tnum flex items-center gap-3 text-sm ${
+                      isRecord(set) ? 'record-row -mx-1.5 rounded-[6px] px-1.5' : ''
+                    }`}
+                  >
                     <span className="w-4 shrink-0 text-[11px] text-muted">
                       {index + 1}
                     </span>
                     <span className="flex-1">{describeSet(set, unit)}</span>
+                    {/* No flash in History — the record already happened. The
+                        persistent tint is the whole point of storing it. */}
+                    {isRecord(set) && (
+                      <span
+                        className="tag-pr h-[20px] shrink-0"
+                        title="Personal record"
+                      >
+                        PR
+                      </span>
+                    )}
                     {set.set_type !== 'normal' && (
                       <span className="shrink-0 text-[11px] text-muted">
                         {set.set_type}

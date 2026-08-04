@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import type { Exercise, PreviousSessionRow, SetType, WorkoutSet } from '../lib/types'
-import { SET_TYPE_CYCLE, SET_TYPE_LABEL, SET_TYPE_NAME } from '../lib/types'
+import { SET_TYPE_CYCLE, SET_TYPE_LABEL, SET_TYPE_NAME, isRecord } from '../lib/types'
 import { formatRelativeDay } from '../lib/format'
 import { formatWeight, fromDisplayWeight } from '../lib/units'
 import type { Unit } from '../lib/units'
@@ -246,7 +246,21 @@ export function SetEntry({
           {setsThisWorkout.map((set, i) => (
             <li key={set.id}>
               {i > 0 && <div className="rule-solid mx-[13px]" />}
-              <div className="flex items-center gap-3 px-[13px] py-2.5">
+              {/* A record flashes once, on the set that just landed, and then
+                  keeps the 7% tint for as long as the row exists. Older
+                  records in the same session are already tinted and must not
+                  re-flash every time a new set is logged — §2.1 forbids
+                  anything that pulls attention mid-workout, and a list that
+                  lights up on every render is exactly that. */}
+              <div
+                className={`flex items-center gap-3 px-[13px] py-2.5 ${
+                  isRecord(set)
+                    ? i === setsThisWorkout.length - 1
+                      ? 'record-flash'
+                      : 'record-row'
+                    : ''
+                }`}
+              >
                 <span className="tnum w-5 font-mono text-[11px] text-muted">
                   {set.set_number}
                 </span>
@@ -258,6 +272,11 @@ export function SetEntry({
                 </span>
                 <span className="tnum text-figure">{set.reps ?? '—'}</span>
                 <span className="text-[11px] text-muted">reps</span>
+                {isRecord(set) && (
+                  <span className="tag-pr h-[22px] shrink-0" title="Personal record">
+                    PR
+                  </span>
+                )}
                 {set.set_type !== 'normal' && (
                   <span
                     title={SET_TYPE_NAME[set.set_type]}
