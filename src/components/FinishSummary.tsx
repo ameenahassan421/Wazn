@@ -93,18 +93,21 @@ export function FinishSummary({
           className="border border-accent bg-surface px-3 py-3"
           style={{ borderRadius: 'var(--radius-md)' }}
         >
-          <p className="text-sm font-medium text-accent">
-            {summary.prs.length === 1
-              ? '1 personal record'
-              : `${summary.prs.length} personal records`}
-          </p>
+          <div className="flex items-center gap-2">
+            <span className="tag-pr h-[22px]">PR</span>
+            <p className="text-sm font-medium text-accent">
+              {summary.prs.length === 1
+                ? '1 personal record'
+                : `${summary.prs.length} personal records`}
+            </p>
+          </div>
           <ul className="mt-2.5 flex flex-col gap-2.5">
             {summary.prs.map((pr) => {
               const exercise = exercisesById?.get(pr.exerciseId)
               return (
                 <li
                   key={`${pr.exerciseId}-${pr.kind}`}
-                  className="flex items-center gap-3"
+                  className="record-row flex items-center gap-3 rounded-[6px] px-2 py-1.5"
                 >
                   {exercise && <ExerciseThumb exercise={exercise} size={38} />}
                   <span className="min-w-0 flex-1">
