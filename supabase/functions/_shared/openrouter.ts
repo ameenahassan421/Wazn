@@ -30,8 +30,16 @@ export class ModelError extends Error {
   }
 }
 
-/** Every request is capped. A runaway generation is a bill, not a bug report. */
-const MAX_TOKENS = 900
+/**
+ * Every request is capped. A runaway generation is a bill, not a bug report.
+ *
+ * 2400, not the 900 this started at. Reasoning models spend tokens thinking
+ * before they answer, and at 900 a live test against real data was cut off
+ * mid-thought — the model was clearly on its way to correct JSON and simply
+ * ran out of room. A cap that truncates the answer is not a cost control, it
+ * is a guaranteed failure that also costs money.
+ */
+const MAX_TOKENS = 2400
 const TIMEOUT_MS = 45_000
 
 async function callOnce(
@@ -84,9 +92,20 @@ async function callOnce(
 /**
  * Ask a model, preferring the free variant.
  *
- * Falls back on 429 (rate limited) and on 402 (the free variant's own credit
- * rule). Anything else is a real failure and is surfaced — retrying a 400
- * against a paid model just pays for the same mistake.
+ * **Any failure of the free attempt falls through to the paid model; only the
+ * paid attempt's failure is terminal.** The first version fell back on 429 and
+ * 402 only, on the reasoning that retrying a 400 against a paid model just pays
+ * for the same mistake. That reasoning was wrong, and a self-test found it in
+ * one call: OpenRouter answers **404** for `moonshotai/kimi-k2.5:free` with
+ * "This model is unavailable for free" — a case where falling back is exactly
+ * right, and the narrow rule turned it into a hard failure of the feature.
+ *
+ * The general principle is the one the narrow rule missed: the free attempt is
+ * an *optimisation*. An optimisation that fails should cost latency, never the
+ * result. Free variants also differ in what they support — several do not
+ * accept `response_format` at all and answer 400 — so "fall back on anything"
+ * is the only rule that survives swapping the free model, which is a thing the
+ * env vars exist to make easy.
  */
 export async function chat({
   freeModel,
@@ -143,9 +162,10 @@ export async function chat({
     lastStatus = response.status
     lastBody = await response.text()
 
-    // 429: rate limited. 402: out of free credit. Both mean "try the paid
-    // one"; everything else means the request itself was wrong.
-    if (response.status !== 429 && response.status !== 402) break
+    // Nothing special-cased. A free attempt that failed for any reason —
+    // rate limit, no credit, slug does not exist, schema unsupported — falls
+    // through to the paid model below. The loop ends naturally after the paid
+    // attempt, which is the last entry.
   }
 
   throw new ModelError(
