@@ -836,7 +836,12 @@ weight 400, and `btn-hero` asks for 600.
 `src/index.css` carried, unlayered:
 
 ```css
-input, button, select { font: inherit; color: inherit; }
+input,
+button,
+select {
+  font: inherit;
+  color: inherit;
+}
 ```
 
 Two compounding problems. `font` is a **shorthand** — it resets `font-weight`
