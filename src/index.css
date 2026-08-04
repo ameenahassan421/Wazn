@@ -240,6 +240,21 @@ button {
   letter-spacing: 0.02em;
 }
 
+/* Exercise photos come from free-exercise-db: bright gym walls, loud reds —
+   every one a different palette, none of them this one. Pulling saturation
+   most of the way out and letting the warm tile show through the blend seats
+   them all in the app's own light instead of leaving a grid of clashing
+   snapshots. Recognition survives; the colour noise does not. */
+@utility thumb-photo {
+  filter: saturate(0.35) brightness(0.9) contrast(1.02);
+}
+
+/* Directional icons point to the inline start; flip when the layout does.
+   Stage 5's RTL locale gets this for free. */
+[dir='rtl'] .icon-start {
+  transform: scaleX(-1);
+}
+
 /* The header band. The one gradient in the app, and it earns its place: it
    separates chrome from content without a border, which would otherwise cut
    a hard line across the screen directly above the hot path. */

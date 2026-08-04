@@ -1,12 +1,18 @@
+import { IconBarbell, IconHistory, IconTrend } from './icons'
+import type { ComponentType } from 'react'
+
 export type Tab = 'log' | 'history' | 'progress'
 
-const TABS: { id: Tab; label: string }[] = [
-  { id: 'log', label: 'Log' },
-  { id: 'history', label: 'History' },
-  { id: 'progress', label: 'Progress' },
+const TABS: { id: Tab; label: string; Icon: ComponentType<{ size?: number }> }[] = [
+  { id: 'log', label: 'Log', Icon: IconBarbell },
+  { id: 'history', label: 'History', Icon: IconHistory },
+  { id: 'progress', label: 'Progress', Icon: IconTrend },
 ]
 
 /**
+ * Icon + label, as every phone app's bottom bar does it: the icons are what
+ * makes three plain words read as navigation rather than as buttons.
+ *
  * The active tab is marked by a rail along the *top* edge rather than a fill
  * or an underline: at the bottom of the screen an underline collides with the
  * home indicator, and a filled tab reads as a button you have not pressed yet.
@@ -25,18 +31,18 @@ export function TabBar({
     >
       <div
         className="mx-auto flex w-full max-w-[430px]"
-        style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 12px)' }}
+        style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 10px)' }}
       >
-        {TABS.map((tab) => {
-          const selected = tab.id === active
+        {TABS.map(({ id, label, Icon }) => {
+          const selected = id === active
           return (
             <button
-              key={tab.id}
+              key={id}
               type="button"
               aria-current={selected ? 'page' : undefined}
-              onClick={() => onChange(tab.id)}
-              className={`h-[54px] flex-1 text-sm ${
-                selected ? 'font-medium text-accent' : 'text-muted'
+              onClick={() => onChange(id)}
+              className={`flex h-[60px] flex-1 flex-col items-center justify-center gap-1 ${
+                selected ? 'text-accent' : 'text-muted'
               }`}
               style={
                 selected
@@ -44,7 +50,12 @@ export function TabBar({
                   : undefined
               }
             >
-              {tab.label}
+              <Icon size={22} />
+              <span
+                className={`text-[11px] leading-none ${selected ? 'font-medium' : ''}`}
+              >
+                {label}
+              </span>
             </button>
           )
         })}

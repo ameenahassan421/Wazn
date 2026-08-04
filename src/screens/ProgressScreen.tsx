@@ -9,6 +9,7 @@ import {
   YAxis,
 } from 'recharts'
 import { describeError, supabase } from '../lib/supabase'
+import { useBackLayer } from '../lib/use-back'
 import { useUnit } from '../lib/unit-context'
 import { toDisplayWeight } from '../lib/units'
 import type { Unit } from '../lib/units'
@@ -74,6 +75,9 @@ export function ProgressScreen() {
 
   const [loading, setLoading] = useState(true)
   const [picking, setPicking] = useState(false)
+  // The picker is a layer: system back returns to the charts, not out of
+  // the app.
+  useBackLayer(picking, () => setPicking(false))
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {

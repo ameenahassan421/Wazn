@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { supabase } from '../lib/supabase'
+import { Wordmark } from './Wordmark'
 
 type Step = 'email' | 'code'
 
@@ -69,8 +70,15 @@ export function AuthScreen() {
 
   return (
     <main className="mx-auto flex min-h-dvh w-full max-w-[430px] flex-col justify-center px-5 py-10">
-      <h1 className="text-2xl font-semibold tracking-tight">Wazn</h1>
-      <p className="mt-1 text-sm text-muted">Sign in with a 6-digit email code.</p>
+      {/* The wordmark, not plain text: the sign-in screen is the first thing
+          anyone sees, and it should look like the app behind it. */}
+      <h1>
+        <Wordmark height={56} className="text-text" />
+      </h1>
+      <p className="mt-4 text-sm text-muted">
+        Log a set in under thirty seconds. Sign in with a 6-digit email code — no
+        password.
+      </p>
 
       {step === 'email' ? (
         <form onSubmit={sendCode} className="mt-8 flex flex-col gap-3">
@@ -92,7 +100,7 @@ export function AuthScreen() {
           <button
             type="submit"
             disabled={busy}
-            className="h-14 w-full rounded-lg bg-accent text-lg font-semibold text-accent-ink disabled:opacity-60"
+            className="btn-base btn-primary h-14 w-full text-lg disabled:opacity-45"
           >
             {busy ? 'Sending…' : 'Send code'}
           </button>
@@ -116,7 +124,7 @@ export function AuthScreen() {
           <button
             type="submit"
             disabled={busy}
-            className="h-14 w-full rounded-lg bg-accent text-lg font-semibold text-accent-ink disabled:opacity-60"
+            className="btn-base btn-primary h-14 w-full text-lg disabled:opacity-45"
           >
             {busy ? 'Verifying…' : 'Verify and sign in'}
           </button>

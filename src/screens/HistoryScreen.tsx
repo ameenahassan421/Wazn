@@ -11,6 +11,7 @@ import {
 import type { Exercise, Workout, WorkoutSet } from '../lib/types'
 import { EditSetDialog } from '../components/EditSetDialog'
 import { ExerciseThumb } from '../components/ExerciseThumb'
+import { IconChevronDown } from '../components/icons'
 
 const PAGE_SIZE = 30
 
@@ -179,7 +180,6 @@ export function HistoryScreen() {
           {workouts.map((workout, i) => {
             const open = expanded === workout.id
             const sets = setsByWorkout[workout.id]
-            const headline = sets?.find((s) => s.exercises)?.exercises ?? null
             return (
               <li key={workout.id}>
                 {i > 0 && <div className="rule-fade" />}
@@ -187,22 +187,24 @@ export function HistoryScreen() {
                   type="button"
                   onClick={() => void toggle(workout.id)}
                   aria-expanded={open}
-                  className="flex min-h-[56px] w-full items-center gap-3 py-2.5 text-start"
+                  className="flex min-h-[60px] w-full items-center gap-3 py-2.5 text-start"
                 >
-                  {headline && (
-                    <ExerciseThumb exercise={thumbExercise(headline)} size={38} />
-                  )}
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate text-[15px] font-medium">
+                    <span className="block truncate text-base font-medium">
                       {workout.name?.trim() || 'Workout'}
                     </span>
-                    <span className="tnum block text-[11px] text-muted">
+                    <span className="tnum mt-0.5 block text-xs text-muted">
                       {formatWorkoutDate(workout.started_at)} ·{' '}
                       {formatTime(workout.started_at)} ·{' '}
                       {formatDuration(workout.started_at, workout.ended_at)}
                     </span>
                   </span>
-                  <span className="text-sm text-muted">{open ? '−' : '+'}</span>
+                  <IconChevronDown
+                    size={18}
+                    className={`shrink-0 text-muted transition-transform ${
+                      open ? 'rotate-180' : ''
+                    }`}
+                  />
                 </button>
 
                 {open && (
@@ -302,7 +304,7 @@ function ExerciseBreakdown({
         const exercise = rows.find((s) => s.exercises)?.exercises ?? null
         return (
           <div key={name} className="flex gap-3">
-            {exercise && <ExerciseThumb exercise={thumbExercise(exercise)} size={40} />}
+            {exercise && <ExerciseThumb exercise={thumbExercise(exercise)} size={48} />}
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-medium">{name}</p>
               <ul className="mt-1 flex flex-col">

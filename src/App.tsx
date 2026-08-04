@@ -2,6 +2,7 @@ import { lazy, Suspense, useState } from 'react'
 import { Analytics } from '@vercel/analytics/react'
 import { supabaseConfigError } from './lib/supabase'
 import { useAuth } from './lib/use-auth'
+import { useBackLayer } from './lib/use-back'
 import { UnitProvider } from './lib/unit-context'
 import { AuthScreen } from './components/AuthScreen'
 import { Header } from './components/Header'
@@ -19,6 +20,9 @@ const ProgressScreen = lazy(() =>
 export default function App() {
   const { loading, userId } = useAuth()
   const [tab, setTab] = useState<Tab>('log')
+  // Android back from History or Progress returns to Log — the home tab —
+  // instead of closing the app, matching what a bottom tab bar promises.
+  useBackLayer(tab !== 'log', () => setTab('log'))
 
   if (supabaseConfigError) {
     return (
