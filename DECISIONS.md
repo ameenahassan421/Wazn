@@ -1008,3 +1008,121 @@ resolve.
 write, §2.6 puts auth changes behind an ask, and Ameen is executing that exact
 surface right now — two writers on one config is how a half-applied SMTP setting
 happens. Flagged instead.
+
+## 2026-08-04 — Stage 2A executed by Ameen; verified against the live config
+
+Reported complete and confirmed by reading the project's auth config rather
+than taking the report at face value — the same discipline that caught 0007
+being already applied this morning:
+
+| setting            | live value                                                               |
+| ------------------ | ------------------------------------------------------------------------ |
+| `site_url`         | `https://www.trywazn.app`                                                |
+| `smtp_sender_name` | `Wazn` (the Stage 0C leftover is finally gone)                           |
+| `smtp_admin_email` | `code@trywazn.app`                                                       |
+| `uri_allow_list`   | four entries: www.trywazn.app and the Vercel origin, each bare and `/**` |
+| OTP                | length 6, expiry 3600 — unchanged, as specified                          |
+
+The acceptance test that actually mattered passed: a sign-in code was
+delivered to an address that is not the Resend account owner. Non-owner
+sign-in is now proven by a delivery rather than assumed, which was the whole
+point of 2A and the last thing blocking a beta cohort.
+
+### One detail worth writing down before it bites
+
+The allow list holds **`www.trywazn.app`**, not the apex `trywazn.app`, and
+Vercel 308s the root to www. That is a sound setup, but it means an auth
+redirect target on the bare apex would be refused. Nothing in the app builds
+one — redirect targets come from `window.location.origin`, which is already
+www by the time any page runs — and a shared apex link keeps its path across
+the 308. Recorded because "why did that one invite link fail" is a bad hour to
+discover a host mismatch, and Block 3's invite links are the first feature to
+put URLs in other people's hands.
+
+## 2026-08-04 — 2C: the privacy boundary is a function signature, not a rule
+
+Plan §2C says prompts carry "numbers and exercise names only — no email, name,
+or user id ever reaches the model API". A rule like that is normally enforced
+by everyone remembering it.
+
+Here it is enforced by construction. The Coach's Notes prompt is built from
+`coach_stats()` and from nothing else, and that function returns a fixed
+`jsonb` shape containing muscle groups, exercise names and integers. There is
+no parameter to widen and no join to a profile. Adding PII to a prompt would
+mean editing a migration, which is a review, not an afternoon.
+
+The same shape answers the identity question. `coach_stats()` **takes no
+arguments** and is `security invoker`, so whose numbers come back is decided by
+RLS against the caller's JWT. The Edge Function could not pass a user id if it
+wanted to. "Identity comes from the JWT" stops being a convention and becomes a
+thing the type system of the database agrees with.
+
+### Why the model never sees a threshold
+
+`coach_stats()` reports weekly sets per muscle group and the same figure four
+weeks earlier. It does not report "you are under the productive band" — the
+10-20 band lives in the static system prompt. Two reasons: a constant in the
+static prefix is cached by the provider across every user and costs nothing to
+re-send, and a number the model is asked to _compare against a constant_ is a
+much smaller ask than a number it is asked to _derive_. Same for plateaus: SQL
+emits `best_e1rm_28d` and `best_e1rm_before` and the model reads the
+difference. It is never asked what a plateau is.
+
+## 2026-08-04 — 2C: BEFORE INSERT, and why the AI functions write as two roles
+
+Two mechanical decisions that are easy to get wrong and hard to notice.
+
+**The Edge Functions hold two Supabase clients.** Reads go through a
+JWT-scoped client, so RLS decides what the caller can see. Writes to
+`coach_notes` and `ai_generations` go through the service role, because
+neither table has an `insert`/`update`/`delete` policy for `authenticated`.
+That is deliberate: a browser that could write `coach_notes` could put any
+text it liked behind the "AI-generated" label, and a browser that could delete
+its own `ai_generations` rows would have no quota at all. Clients read; the
+function writes.
+
+**Quotas are a ledger, not a counter.** `ai_generations` gets one row per
+generation actually paid for, and a quota is a `count(*)` over a trailing
+window. A counter needs something to reset it — a cron, a monthly job, a
+column somebody forgets — and a ledger just ages out. It also answers
+"is the free tier actually carrying this?" for free, because `used_free` is on
+every row.
+
+## 2026-08-04 — 2C: the routine validator is the only part worth testing, so it is the only part that is testable
+
+The generator's Deno code cannot run under vitest. Rather than accept that the
+safety-critical part ships untested, `validatePlan` was extracted to
+`supabase/functions/_shared/validate-plan.ts` — plain TypeScript, no Deno
+APIs, no imports — and the test suite imports it directly. The Edge Function
+calls the same module, so the tested code is the shipped code.
+
+It earns the attention. Everything upstream of it is a model's suggestion and
+everything downstream is an INSERT into somebody's routines. Nine tests cover
+it, and one of them found a real bug before the feature ever ran: `Number(null)`
+is `0`, so a missing `reps` clamped to the minimum and prescribed **one rep**
+instead of falling back to eight. Absence is now checked before conversion.
+
+The validator drops unknown exercises rather than rejecting the plan, and drops
+a day that loses all of them. A four-day plan that is real beats a five-day
+plan with a hallucinated lift in it. Dropped names are returned to the caller
+rather than swallowed, so a model that keeps inventing exercises is visible
+without reading logs.
+
+## 2026-08-04 — 2C: what could not be verified from here, stated plainly
+
+The functions are deployed and were exercised end to end up to the model call:
+both boot, resolve their shared imports, and reject a valid-but-not-a-user
+token with their own message. Everything past that point is unverified,
+because this environment cannot reach `openrouter.ai` and there is no
+`OPENROUTER_API_KEY` yet.
+
+Specifically unproven: that the model returns usable JSON against the real
+schema, that the `:free` slug exists under the name the plan gives it, and
+that the 429 fallback fires. The model ids are environment variables precisely
+so the first two are config fixes rather than deploys.
+
+This is the same class of gap that let migration 0007 ship broken — recorded
+honestly then, and closed the moment egress existed. The difference is that
+this one has a named owner and a named unblock: the key goes in Supabase's
+Edge Function secrets, and the quality bar runs against Ameen's own nine-month
+history before anyone else sees a generated note.

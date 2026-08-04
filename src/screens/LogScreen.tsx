@@ -20,6 +20,7 @@ import { SetEntry } from '../components/SetEntry'
 import { useRestTimer, DEFAULT_REST_SECONDS } from '../lib/use-rest-timer'
 import { FinishSummary } from '../components/FinishSummary'
 import { RoutineList } from '../components/RoutineList'
+import { RoutineGenerator } from '../components/RoutineGenerator'
 import { RoutineEditor } from '../components/RoutineEditor'
 import {
   listRoutines,
@@ -39,7 +40,7 @@ import {
 import { summarise } from '../lib/summary'
 import type { WorkoutSummary } from '../lib/summary'
 
-type View = 'overview' | 'picker' | 'entry' | 'summary' | 'routine'
+type View = 'overview' | 'picker' | 'entry' | 'summary' | 'routine' | 'generate'
 
 interface ExerciseBestRow {
   exercise_id: string
@@ -567,6 +568,18 @@ export function LogScreen({ userId }: { userId: string }) {
 
   // The summary lands here: finishing clears `workout`, so this has to come
   // before the empty state or the summary would never be shown.
+  if (view === 'generate') {
+    return (
+      <RoutineGenerator
+        onBack={() => setView('overview')}
+        onDone={() => {
+          setView('overview')
+          void load()
+        }}
+      />
+    )
+  }
+
   if (view === 'routine') {
     return (
       <div className="py-3">
@@ -644,6 +657,7 @@ export function LogScreen({ userId }: { userId: string }) {
             setEditing(null)
             setView('routine')
           }}
+          onGenerate={() => setView('generate')}
         />
 
         {lastSummary.length > 0 && lastSession && (
