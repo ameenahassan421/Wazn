@@ -1,12 +1,19 @@
-"""Generate the Wazn logo assets: public/icon.svg and the PWA icon PNGs.
+"""Generate the Wazn mark: PWA icons, and the paths module the app renders.
 
     python3 scripts/build_logo.py
 
-Downloads Aref Ruqaa from Google Fonts, converts وزن to outlines, and lays
-out the mark. Run it only when the mark itself changes — the outputs are
-committed, and nothing at runtime depends on the font.
+The mark is the word وزن composed as a barbell — "Loaded Ink", see
+docs/design-philosophy.md. No letter is distorted: none of و ز ن connect,
+so the three letters are set on one axis with و and ن as the two weights,
+and a single ligature stroke at their base — the shaft — fuses them into
+one object, running past both letters like sleeve ends. The ز dot is drawn
+as a plate face. Chalk letters, amber iron.
 
-Requires `fontsTools` and the repo's `sharp` for rasterising:
+Downloads Aref Ruqaa from Google Fonts and converts the glyphs to outlines.
+Run it only when the mark itself changes — the outputs are committed, and
+nothing at runtime depends on the font.
+
+Requires `fontTools` and the repo's `sharp` for rasterising:
     pip install fonttools && npm install
 """
 
@@ -19,7 +26,7 @@ from pathlib import Path
 from fontTools.ttLib import TTFont
 from fontTools.pens.svgPathPen import SVGPathPen
 from fontTools.pens.transformPen import TransformPen
-from fontTools.pens.boundsPen import BoundsPen
+from fontTools.pens.recordingPen import DecomposingRecordingPen
 from fontTools.misc.transform import Transform
 
 CSS = "https://fonts.googleapis.com/css2?family=Aref+Ruqaa:wght@700"
@@ -41,193 +48,233 @@ def font_path():
     return CACHE
 
 
-FONT = font_path()
-WORD = "وزن"  # و ز ن in logical order
-
-font = TTFont(FONT)
+font = TTFont(font_path())
 upem = font["head"].unitsPerEm
 cmap = font.getBestCmap()
 gs = font.getGlyphSet()
-hmtx = font["hmtx"]
-
-names = []
-for ch in WORD:
-    gid = cmap.get(ord(ch))
-    if gid is None:
-        sys.exit(f"no glyph for U+{ord(ch):04X}")
-    names.append(gid)
-
-advances = [hmtx[n][0] for n in names]
-total = sum(advances)
-
-# Right-to-left: the first logical character sits at the right edge.
-placements = []
-x = total
-for name, adv in zip(names, advances):
-    x -= adv
-    placements.append((name, x))
-
-# Measure the real ink box so the mark can be centred on its ink, not on
-# its advance box — Ruqaa's side bearings are generous and asymmetric.
-bp = BoundsPen(gs)
-for name, xoff in placements:
-    gs[name].draw(TransformPen(bp, Transform().translate(xoff, 0)))
-
-xmin, ymin, xmax, ymax = bp.bounds
-
-
-def path_at(font_size, cx, baseline, decimals=2):
-    """Path data for the word at font_size, ink-centred on cx, sitting on baseline."""
-    scale = font_size / upem
-    ink_cx = (xmin + xmax) / 2 * scale
-    pen = SVGPathPen(gs, ntos=lambda v: str(round(v, decimals)))
-    # y flips: font space is y-up, SVG is y-down.
-    base = Transform().translate(cx - ink_cx, baseline).scale(scale, -scale)
-    for name, xoff in placements:
-        gs[name].draw(TransformPen(pen, base.translate(xoff, 0)))
-    return pen.getCommands()
-
-
-def metrics(font_size):
-    scale = font_size / upem
-    return {
-        "width": (xmax - xmin) * scale,
-        "above": ymax * scale,   # height above the baseline
-        "below": -ymin * scale,  # depth below the baseline
-    }
-
-
-OUT = Path(__file__).parent.parent / "public"
-OUT.mkdir(exist_ok=True)
 
 INK = "#0c0b0a"
 TEXT = "#ecebe8"
 ACCENT = "#f0b429"
-DIVIDER = "rgba(236,235,232,0.16)"
-
-# Plates, innermost first. (thickness, height), as multiples of H.
-PLATES = [(0.307, 1.90), (0.266, 1.57), (0.225, 1.25), (0.184, 0.92)]
-PLATE_GAP = 0.082   # between plates
-WORD_GAP = 0.634    # word ink to innermost plate
-OVERHANG = 0.777    # bar past the outermost plate
-BAR_T = 0.143       # bar thickness
 
 
-def loaded_bar(font_size, cx, baseline, plates=4, color=ACCENT, overhang=OVERHANG):
-    """The iron: bar plus a mirrored plate stack, sized off the word."""
-    m = metrics(font_size)
-    h = m["above"]
-    mid = baseline - h * 0.42  # the bar crosses the word, not its baseline
-
-    rects = []
-    edge = m["width"] / 2 + WORD_GAP * h  # inner edge of the innermost plate
-    for thick, tall in PLATES[:plates]:
-        t, ht = thick * h, tall * h
-        for x in (cx + edge, cx - edge - t):
-            rects.append(
-                f'<rect x="{x:.2f}" y="{mid - ht / 2:.2f}" width="{t:.2f}" '
-                f'height="{ht:.2f}" rx="{min(t / 2, 4.5):.2f}"/>'
+def glyph_contours(ch):
+    """Decomposed contours of one glyph with bboxes (font units, y-up).
+    DecomposingRecordingPen matters: the ز dot is a component, and a plain
+    RecordingPen silently drops it."""
+    rec = DecomposingRecordingPen(gs)
+    gs[cmap[ord(ch)]].draw(rec)
+    contours, current = [], []
+    for op, args in rec.value:
+        current.append((op, args))
+        if op in ("closePath", "endPath"):
+            pts = [p for _, a in current for p in a]
+            xs, ys = [p[0] for p in pts], [p[1] for p in pts]
+            contours.append(
+                {"ops": current, "bbox": (min(xs), min(ys), max(xs), max(ys))}
             )
-        edge += t + PLATE_GAP * h
+            current = []
+    return contours
 
-    half = edge - PLATE_GAP * h + overhang * h
-    bar_t = BAR_T * h
-    bar = (
-        f'<rect x="{cx - half:.2f}" y="{mid - bar_t / 2:.2f}" '
-        f'width="{2 * half:.2f}" height="{bar_t:.2f}" rx="{bar_t / 2:.2f}"/>'
+
+WAW = glyph_contours("و")  # one contour: head and tail
+ZAY = glyph_contours("ز")  # dot + body
+NUN = glyph_contours("ن")  # bowl, dot fused into the same contour
+
+ZAY_DOT = min(ZAY, key=lambda c: (c["bbox"][2] - c["bbox"][0]))
+ZAY_BODY = max(ZAY, key=lambda c: (c["bbox"][2] - c["bbox"][0]))
+
+
+def bbox_of(contours):
+    xs0, ys0, xs1, ys1 = zip(*(c["bbox"] for c in contours))
+    return min(xs0), min(ys0), max(xs1), max(ys1)
+
+
+def center(b):
+    return (b[0] + b[2]) / 2, (b[1] + b[3]) / 2
+
+
+def place(contours, cx, cy, s):
+    """Transform putting the contours' bbox centre at (cx, cy), scaled."""
+    bcx, bcy = center(bbox_of(contours))
+    return Transform().translate(cx, cy).scale(s, s).translate(-bcx, -bcy)
+
+
+def compose(end_scale=1.5, zay_scale=0.95, gap=110.0, stroke=40.0, overhang=140.0):
+    """The mark's geometry in font units, y-up.
+
+    Study B geometry with the Study D dot: و and ن centred on one axis
+    (و dropped so its head straddles the bar — its box centre floats high
+    because the tail fills the lower half), ز between them, the shaft
+    running past both ends.
+    """
+    A = 150.0
+
+    wb, zb, nb = bbox_of(WAW), bbox_of([ZAY_BODY]), bbox_of(NUN)
+    w_w = (wb[2] - wb[0]) * end_scale
+    z_w = (zb[2] - zb[0]) * zay_scale
+    n_w = (nb[2] - nb[0]) * end_scale
+
+    # RTL: و rightmost, then ز, then ن.
+    x = 0.0
+    nun_cx = x + n_w / 2
+    x += n_w + gap
+    zay_cx = x + z_w / 2
+    x += z_w + gap
+    waw_cx = x + w_w / 2
+    total = x + w_w
+
+    transforms = {
+        "waw": place(WAW, waw_cx, A - 85, end_scale),
+        "zay": place([ZAY_BODY], zay_cx, A + 60, zay_scale),
+        "nun": place(NUN, nun_cx, A, end_scale),
+    }
+
+    shaft_t = 100.0 + stroke
+    dcx, dcy = center(ZAY_DOT["bbox"])
+    dot_t = Transform().translate(zay_cx, A + 60).scale(zay_scale, zay_scale)
+    dot_t = dot_t.translate(-center(bbox_of([ZAY_BODY]))[0], -center(bbox_of([ZAY_BODY]))[1])
+    dot_x, dot_y = dot_t.transformPoint((dcx, dcy))
+    dot_r = (ZAY_DOT["bbox"][2] - ZAY_DOT["bbox"][0]) / 2 * zay_scale * 1.5
+
+    return {
+        "transforms": transforms,
+        "stroke": stroke,
+        "shaft": {"x0": -overhang, "x1": total + overhang, "y": 30.0, "t": shaft_t},
+        "dot": {"cx": dot_x, "cy": dot_y, "ro": dot_r, "ri": dot_r * 0.44},
+        "total": total,
+    }
+
+
+def geometry(scale=0.1, **kw):
+    """The composed mark scaled and flipped to SVG y-down, origin at top-left.
+
+    Everything is baked into absolute coordinates — the letters path is also
+    consumed as a Path2D on the share-card canvas, where a wrapping transform
+    would be one more thing to keep in sync.
+    """
+    m = compose(**kw)
+
+    # Bounds in font units.
+    xs, ys = [], []
+    for key, cs in (("waw", WAW), ("zay", [ZAY_BODY]), ("nun", NUN)):
+        b = bbox_of(cs)
+        t = m["transforms"][key]
+        for corner in ((b[0], b[1]), (b[2], b[3]), (b[0], b[3]), (b[2], b[1])):
+            px, py = t.transformPoint(corner)
+            xs.append(px)
+            ys.append(py)
+    pad = 60 + m["stroke"]
+    sh = m["shaft"]
+    xs.extend([sh["x0"] - sh["t"] / 2, sh["x1"] + sh["t"] / 2])
+    ys.extend([sh["y"] - sh["t"] / 2, sh["y"] + sh["t"] / 2])
+    d = m["dot"]
+    ys.append(d["cy"] + d["ro"])
+    x0, x1 = min(xs) - pad, max(xs) + pad
+    y0, y1 = min(ys) - pad, max(ys) + pad
+
+    # Font units (y-up) -> mark space (y-down, origin top-left).
+    world = Transform().scale(scale, -scale).translate(-x0, -y1)
+
+    pen = SVGPathPen(gs, ntos=lambda v: str(round(v, 2)))
+    for key, cs in (("waw", WAW), ("zay", [ZAY_BODY]), ("nun", NUN)):
+        draw_t = world.transform(m["transforms"][key])
+        tp = TransformPen(pen, draw_t)
+        for c in cs:
+            for op, args in c["ops"]:
+                getattr(tp, op)(*args)
+
+    sx0, sy = world.transformPoint((sh["x0"], sh["y"]))
+    sx1, _ = world.transformPoint((sh["x1"], sh["y"]))
+    dcx, dcy = world.transformPoint((d["cx"], d["cy"]))
+
+    return {
+        "viewW": (x1 - x0) * scale,
+        "viewH": (y1 - y0) * scale,
+        "letters": pen.getCommands(),
+        "letterStroke": m["stroke"] * scale,
+        "shaft": {"x0": sx0, "x1": sx1, "y": sy, "t": sh["t"] * scale},
+        "dot": {"cx": dcx, "cy": dcy, "ro": d["ro"] * scale, "ri": d["ri"] * scale},
+    }
+
+
+def annulus(dot):
+    """A plate face: two circles, even-odd, so the ground shows through."""
+    c, r, ri = dot, dot["ro"], dot["ri"]
+    return (
+        f"M {c['cx'] - r:.2f} {c['cy']:.2f} "
+        f"a {r:.2f} {r:.2f} 0 1 0 {2 * r:.2f} 0 a {r:.2f} {r:.2f} 0 1 0 {-2 * r:.2f} 0 Z "
+        f"M {c['cx'] - ri:.2f} {c['cy']:.2f} "
+        f"a {ri:.2f} {ri:.2f} 0 1 0 {2 * ri:.2f} 0 a {ri:.2f} {ri:.2f} 0 1 0 {-2 * ri:.2f} 0 Z"
     )
-    # Bar after the plates and after the word: the iron sits in front.
-    return f'<g fill="{color}">{bar}{"".join(rects)}</g>', half, mid
 
 
-def primary():
-    """Stacked lockup: word on the bar, hairline, WAZN. Splash and share card."""
-    fs = 88
-    m = metrics(fs)
-    cx = 200.0
-    baseline = 92.0
-    iron, half, mid = loaded_bar(fs, cx, baseline)
-    top = mid - PLATES[0][1] * m["above"] / 2
-    # Clear the tallest plate before the hairline, or the rule reads as part
-    # of the plate stack.
-    rule_y = mid + PLATES[0][1] * m["above"] / 2 + 22
-    latin_y = rule_y + 32
-    h = latin_y + 10
-    return f"""<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 {top - 14:.0f} 400 {h - top + 14:.0f}" role="img" aria-label="Wazn">
-  <title>Wazn</title>
-  <path d="{path_at(fs, cx, baseline)}" fill="{TEXT}"/>
-  {iron}
-  <rect x="{cx - half * 0.53:.1f}" y="{rule_y:.0f}" width="{half * 1.06:.1f}" height="1" fill="{DIVIDER}"/>
-  <text x="{cx:.0f}" y="{latin_y:.0f}" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="24" font-weight="600" letter-spacing="9" fill="{TEXT}">WAZN</text>
-</svg>
-"""
+def mark_svg(g, letters_color, width=None):
+    """The mark as SVG markup (no outer size — the caller wraps it)."""
+    sh = g["shaft"]
+    return (
+        f'<line x1="{sh["x0"]:.2f}" y1="{sh["y"]:.2f}" x2="{sh["x1"]:.2f}" '
+        f'y2="{sh["y"]:.2f}" stroke="{ACCENT}" stroke-width="{sh["t"]:.2f}" '
+        f'stroke-linecap="round"/>'
+        f'<path d="{g["letters"]}" fill="{letters_color}" stroke="{letters_color}" '
+        f'stroke-width="{g["letterStroke"]:.2f}" stroke-linejoin="round"/>'
+        f'<path d="{annulus(g["dot"])}" fill="{ACCENT}" fill-rule="evenodd"/>'
+    )
 
 
-def nav_mark():
-    """In-app header mark. Three plates a side — at 34px tall the fourth
-    closes the gap between plates and reads as a solid block."""
-    fs = 64
-    m = metrics(fs)
-    cx = 100.0
-    baseline = 64.0
-    iron, half, mid = loaded_bar(fs, cx, baseline, plates=3, color=ACCENT)
-    top = mid - PLATES[0][1] * m["above"] / 2
-    bot = mid + PLATES[0][1] * m["above"] / 2
-    pad = 3
-    return f"""<svg xmlns="http://www.w3.org/2000/svg" viewBox="{cx - half - pad:.1f} {top - pad:.1f} {2 * (half + pad):.1f} {bot - top + 2 * pad:.1f}" role="img" aria-label="Wazn">
-  <title>Wazn</title>
-  <path d="{path_at(fs, cx, baseline)}" fill="currentColor"/>
-  {iron}
-</svg>
-"""
+def app_icon(size=512, pad_ratio=0.86):
+    """Home screen, favicon, PWA manifest: the mark on an ink tile.
 
-
-def app_icon(size=512, pad_ratio=0.78):
-    """Home screen, favicon, PWA manifest. Word + bar only, no Latin.
-
-    Two plates a side and a short overhang: a four-plate bar is a wide,
-    shallow mark, and inside a square tile it shrinks to a thin strip. The
-    compact load fills the square and stays legible at 24px.
-
-    The mark occupies pad_ratio of the tile so it survives a maskable crop,
-    which can take up to 20% off each edge."""
-    fs = 58
-    m = metrics(fs)
+    A tighter set than the wordmark — smaller gaps, short overhang — so the
+    wide mark fills the square instead of shrinking to a strip. pad_ratio
+    0.62 for the maskable variant: the crop can take 20% off each edge."""
+    g = geometry(gap=60, overhang=50, stroke=46, zay_scale=0.9)
     vb = 120.0
-    cx = vb / 2
-    iron, half, mid = loaded_bar(fs, cx, 70.0, plates=2, overhang=0.34)
-    scale = (vb * pad_ratio) / (2 * half)
+    scale = (vb * pad_ratio) / g["viewW"]
+    ox = (vb - g["viewW"] * scale) / 2
+    oy = (vb - g["viewH"] * scale) / 2
     return f"""<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {vb:.0f} {vb:.0f}" width="{size}" height="{size}" role="img" aria-label="Wazn">
   <title>Wazn</title>
   <rect width="{vb:.0f}" height="{vb:.0f}" fill="{INK}"/>
-  <g transform="translate({cx:.1f} {cx:.1f}) scale({scale:.4f}) translate({-cx:.1f} {-mid:.1f})">
-    <path d="{path_at(fs, cx, 70.0)}" fill="{TEXT}"/>
-    {iron}
-  </g>
+  <g transform="translate({ox:.2f} {oy:.2f}) scale({scale:.4f})">{mark_svg(g, TEXT)}</g>
 </svg>
 """
 
 
-def _inner(svg):
-    return svg.split(">", 1)[1].rsplit("</svg>", 1)[0]
+def paths_module():
+    """src/components/wordmark-paths.ts — consumed by Wordmark.tsx and the
+    share card, so the app and the shared image draw the same object."""
+    g = geometry()
+    sh, d = g["shaft"], g["dot"]
+    return f"""// GENERATED by scripts/build_logo.py — do not edit by hand.
+// The Wazn mark: وزن composed as a barbell. Letters take the caller's
+// colour; the shaft and the ز plate face are always accent (the iron).
 
+export const MARK_W = {g["viewW"]:.2f}
+export const MARK_H = {g["viewH"]:.2f}
 
-def preview():
-    p, n, i = primary(), nav_mark(), app_icon()
-    pv = p.split('viewBox="')[1].split('"')[0]
-    nv = n.split('viewBox="')[1].split('"')[0]
-    return f"""<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 440 440" width="880" height="880">
-  <rect width="440" height="440" fill="{INK}"/>
-  <g transform="translate(20,16)"><svg width="400" height="190" viewBox="{pv}">{_inner(p)}</svg></g>
-  <g transform="translate(20,230)" color="{TEXT}"><svg width="150" height="52" viewBox="{nv}">{_inner(n)}</svg></g>
-  <g transform="translate(20,310)" color="{TEXT}"><svg width="98" height="34" viewBox="{nv}">{_inner(n)}</svg></g>
-  <g transform="translate(230,225)"><svg width="96" height="96" viewBox="0 0 120 120">{_inner(i)}</svg></g>
-  <g transform="translate(345,225)"><svg width="48" height="48" viewBox="0 0 120 120">{_inner(i)}</svg></g>
-  <g transform="translate(345,290)"><svg width="24" height="24" viewBox="0 0 120 120">{_inner(i)}</svg></g>
-  <g transform="translate(20,370)" color="{TEXT}"><svg width="53" height="18" viewBox="{nv}">{_inner(n)}</svg></g>
-</svg>
+/** The three letterforms, fill AND stroke with the letter colour. */
+export const LETTERS_D =
+  '{g["letters"]}'
+
+export const LETTER_STROKE = {g["letterStroke"]:.2f}
+
+/** The shaft: a round-capped line behind the letters. */
+export const SHAFT = {{
+  x0: {sh["x0"]:.2f},
+  x1: {sh["x1"]:.2f},
+  y: {sh["y"]:.2f},
+  t: {sh["t"]:.2f},
+}}
+
+/** The ز dot as a plate face: even-odd annulus. */
+export const DOT_D =
+  '{annulus(d)}'
 """
 
+
+OUT = Path(__file__).parent.parent / "public"
+SRC = Path(__file__).parent.parent / "src" / "components"
 
 
 def _render():
@@ -247,7 +294,7 @@ def _render():
         ["node", "-e", f"const sharp=require('sharp'),fs=require('fs');{script}"],
         cwd=root, check=True,
     )
-    for a, _, _ in {(j[0], 0, 0) for j in jobs}:
+    for a in {j[0] for j in jobs}:
         (OUT / a).unlink(missing_ok=True)
 
 
@@ -256,7 +303,5 @@ if __name__ == "__main__":
     (OUT / "icon-any.svg").write_text(app_icon(pad_ratio=0.86))
     (OUT / "icon-maskable.svg").write_text(app_icon(pad_ratio=0.62))
     _render()
-    print("wrote public/icon.svg, icon-192.png, icon-512.png, icon-maskable-512.png")
-    print()
-    print("Nav mark for src/components/Wordmark.tsx:")
-    print(nav_mark())
+    (SRC / "wordmark-paths.ts").write_text(paths_module())
+    print("wrote public icons and src/components/wordmark-paths.ts")

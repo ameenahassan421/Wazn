@@ -1,6 +1,13 @@
 import type { WorkoutSummary } from './summary'
 import type { Unit } from './units'
 import { formatWeight } from './units'
+import {
+  DOT_D,
+  LETTERS_D,
+  LETTER_STROKE,
+  MARK_H,
+  SHAFT,
+} from '../components/wordmark-paths'
 
 /**
  * Renders the post-workout summary to a PNG and hands it to the native share
@@ -58,15 +65,35 @@ export function drawShareCard(
   c.fillStyle = INK
   c.fillRect(0, 0, W, H)
 
-  // Wordmark
+  // The mark itself, not its name in Inter: the share card is the only
+  // organic growth surface, so it carries the actual brand object. Same
+  // paths the Wordmark component renders, via Path2D.
+  const markH = 96
+  const k = markH / MARK_H
+  c.save()
+  c.translate(80, 72)
+  c.scale(k, k)
+  c.strokeStyle = ACCENT
+  c.lineWidth = SHAFT.t
+  c.lineCap = 'round'
+  c.beginPath()
+  c.moveTo(SHAFT.x0, SHAFT.y)
+  c.lineTo(SHAFT.x1, SHAFT.y)
+  c.stroke()
+  const letters = new Path2D(LETTERS_D)
   c.fillStyle = TEXT
-  c.font = 'bold 64px Inter, system-ui, sans-serif'
-  c.textBaseline = 'top'
-  c.fillText('Wazn', 80, 80)
+  c.strokeStyle = TEXT
+  c.lineWidth = LETTER_STROKE
+  c.lineJoin = 'round'
+  c.fill(letters)
+  c.stroke(letters)
+  c.fill(new Path2D(DOT_D), 'evenodd')
+  c.restore()
 
+  c.textBaseline = 'top'
   c.fillStyle = MUTED
   c.font = '36px Inter, system-ui, sans-serif'
-  c.fillText(dateLabel, 80, 164)
+  c.fillText(dateLabel, 80, 72 + markH + 24)
 
   // Three headline numbers. Volume is the one people compare, so it leads.
   const stats: [string, string][] = [

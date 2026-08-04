@@ -608,3 +608,60 @@ superset alternation, kg storage, and the sub-24px `previousSummary`
 exception all carry over exactly. The redesign moved chrome, not the flow.
 Tests went 113 → 117 (the back stack is covered); typecheck, lint, and the
 production build pass.
+
+## 2026-08-04 — The mark: وزن is now the barbell, and the name survived a challenge
+
+Ameen called the logo basic and asked for the Arabic word itself to read as a
+barbell, in calligraphy. Then he asked whether the app should be named
+something else entirely — something U.S. users relate to. Both were treated
+as real reevaluations, not confirmations.
+
+### The naming exercise, and why it ended where it started
+
+Criteria: short in both scripts, meaningful to lifting, pronounceable in
+Cairo and Minnesota, searchable, and free of in-category collisions. Every
+serious candidate was checked against the live fitness market, and the
+checks — not taste — decided:
+
+- **Azm (عزم)**: AzmFit already exists (halal fitness app). Out.
+- **Kilo**: an existing strength-training logger (thekiloapp.com), a gym
+  platform (usekilo.com), and a coaching brand (trainkilo.com). Out.
+- **Atlas**: multiple fitness apps plus fitness-device trademarks. Out.
+- **Benchmark** (Ameen's pick for a round): two same-named workout trackers
+  live on the App Store, one by a developer called "Benchmark Strength".
+  Identical-name ASO is the worst position available. Out.
+- **Hadid (حديد)**: the best cultural fit and the only candidate whose
+  letters connect — but Latin search is owned by the Hadid family. Out.
+- **Giza**: the strongest true rename — clean in fitness, US-legible,
+  proudly Egyptian. Runner-up.
+
+Ameen confirmed: **Wazn stays.** It is the unit of the sport, four letters
+in both scripts, collision-free everywhere we looked, and foreign names
+travel fine when pronounceable (Peloton, Asana). The name was never the
+weak point; the mark was.
+
+### The mark: Loaded Ink
+
+The old mark drew an amber bar _in front of_ the word — strikethrough text
+with clip-art plates. Direction now recorded in `docs/design-philosophy.md`.
+
+A kashida was tried first and killed: none of و ز ن connect, so stretching
+ز into the shaft is fake calligraphy and the render read as "ون". What
+shipped instead keeps every letterform intact: و and ن set on one axis as
+the two weights (و dropped 85 units — its box centres high because the tail
+fills the lower half), ز between them, and a single round-capped ligature
+stroke at the letters' base — the shaft — running past both ends like
+sleeves. The ز dot renders as an amber plate face (even-odd annulus, so
+the ground shows through). Letters take currentColor (chalk); the iron is
+always accent.
+
+Four studies went to Ameen (ligature / through-bar / heavy / two-tone). He
+picked the name, not a study, so per §2.6 the study choice was made here:
+**B's geometry with D's two-tone colour** — the two-tone is already how the
+app's chrome uses colour, and it survives 34px and the 48px launcher tile.
+Reversible in one parameter if he disagrees.
+
+`build_logo.py` was rewritten around the composition and now also generates
+`src/components/wordmark-paths.ts`, consumed by both `Wordmark.tsx` and the
+share card — which previously typed "Wazn" in Inter and now draws the actual
+mark via Path2D. One geometry, three surfaces, no drift.

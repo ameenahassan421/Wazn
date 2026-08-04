@@ -420,5 +420,10 @@ verbatim, so they survive even if this file isn't read.**
 - **Blocked on Ameen:** GATE 1 sign-off. Upcoming: domain purchase before
   Stage 2 (item 2A) — nobody but ameen.hassan421@gmail.com can sign in until
   then, which is expected.
-- **Last updated:** 2026-08-04 by Claude Code (usability reevaluation and
-  navigation fix; Stage 1 build items unchanged and still awaiting GATE 1).
+- **Brand (2026-08-04):** the name was reevaluated at Ameen's request against
+  US-relatable alternatives (Benchmark, Kilo, Atlas, Giza, Hadid — all
+  collision-checked); **Wazn confirmed**. The mark is redrawn: وزن composed
+  as the barbell itself (Loaded Ink, `docs/design-philosophy.md`), one
+  geometry shared by the header, the PWA icons, and the share card.
+- **Last updated:** 2026-08-04 by Claude Code (brand reevaluation: name
+  confirmed, mark redrawn; Stage 1 build items unchanged, awaiting GATE 1).

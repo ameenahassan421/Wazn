@@ -1,13 +1,23 @@
 import type { CSSProperties } from 'react'
+import {
+  DOT_D,
+  LETTERS_D,
+  LETTER_STROKE,
+  MARK_H,
+  MARK_W,
+  SHAFT,
+} from './wordmark-paths'
 
-/** The Wazn mark: وزن with a loaded bar running through it.
+/** The Wazn mark: وزن composed as a barbell — "Loaded Ink".
  *
- * The word is outlines, not live text — Aref Ruqaa is not shipped with the
- * app, and a wordmark that depends on a webfont renders as a fallback serif
- * on first paint. Regenerate with scripts/build_logo.py if the mark changes.
+ * The letters are outlines, not live text — Aref Ruqaa is not shipped with
+ * the app, and a wordmark that depends on a webfont renders as a fallback
+ * serif on first paint. Regenerate with scripts/build_logo.py if the mark
+ * changes; the geometry lives in the generated wordmark-paths.ts.
  *
- * The word takes currentColor so the mark inherits from its container; the
- * iron is always accent. Plates load heaviest-innermost, as a real bar does.
+ * Letters take currentColor (chalk); the shaft and the ز plate face are
+ * always accent (iron). و and ن are the two weights, the ligature stroke at
+ * their base is the bar, running past both like sleeve ends.
  */
 export function Wordmark({
   height = 34,
@@ -20,26 +30,30 @@ export function Wordmark({
 }) {
   return (
     <svg
-      viewBox="-33.1 12.3 266.2 73.5"
+      viewBox={`0 0 ${MARK_W} ${MARK_H}`}
       height={height}
       className={className}
       style={{ width: 'auto', display: 'block', ...style }}
       role="img"
       aria-label="Wazn"
     >
-      <path
-        d="M133.98 46.98V46.91Q135.14 48.32 137.95 48.32Q138.98 48.32 139.81 48.13Q139.94 48.38 140.0 48.58Q140.0 48.64 140.0 48.74Q140.0 48.83 140.0 48.96Q140.0 49.02 140.03 49.06Q140.06 49.09 140.06 49.09V49.15Q138.34 51.07 135.71 52.16Q130.4 54.34 124.9 56.45Q119.39 58.56 114.53 61.25Q113.95 61.63 113.95 62.4Q113.95 63.36 114.98 63.49Q116.83 63.62 118.75 63.81Q120.67 64.0 122.59 64.0Q122.85 64.0 122.91 64.0Q122.98 64.0 123.23 64.0Q124.83 64.0 126.24 63.87Q127.65 63.74 129.06 63.49Q132.26 62.85 134.94 61.02Q137.63 59.2 139.78 56.74Q141.92 54.27 143.33 51.65Q144.29 49.79 144.99 47.52Q145.7 45.25 145.76 42.69V42.3Q145.76 37.89 142.69 34.75Q142.24 34.3 141.5 33.86Q140.77 33.41 139.87 33.41Q139.04 33.41 138.21 34.24Q137.06 35.52 136.29 37.09Q135.52 38.66 134.75 40.32Q134.3 41.22 133.7 42.4Q133.09 43.58 133.09 44.74Q133.09 45.5 133.34 46.02Q133.6 46.53 133.98 46.98ZM112.8 32.7 108.58 28.67Q108.32 28.42 107.97 28.48Q107.62 28.54 107.42 28.8Q106.21 30.4 104.96 31.94Q103.71 33.47 102.43 35.07Q102.05 35.58 102.5 36.03L106.78 40.06Q107.04 40.32 107.36 40.29Q107.68 40.26 107.87 40.0Q108.51 39.23 108.8 38.82Q109.09 38.4 109.41 38.02Q109.73 37.63 110.37 36.86Q111.01 36.1 111.65 35.33Q112.29 34.56 112.93 33.73Q113.25 33.15 112.8 32.7ZM112.16 45.31Q111.14 45.31 110.88 46.14Q109.47 49.22 106.91 50.94Q103.97 52.86 100.42 54.21Q96.86 55.55 93.22 56.7Q91.81 57.15 90.62 57.57Q89.44 57.98 88.54 58.3Q87.65 58.62 86.59 59.07Q85.54 59.52 84.77 60.13Q84.0 60.74 84.0 61.57Q84.0 62.21 84.32 62.53Q85.22 63.36 88.1 63.62Q90.78 63.87 94.43 64.0H95.01Q99.68 64.0 102.85 62.53Q106.02 61.06 108.19 58.56Q109.28 57.22 110.21 55.23Q111.14 53.25 111.9 50.94Q112.67 48.64 113.12 46.59V46.34Q112.99 45.38 112.16 45.31ZM77.09 48.32V48.51Q76.38 49.15 75.62 49.73Q74.85 50.3 73.95 50.82Q72.1 51.9 69.63 52.77Q67.17 53.63 64.29 53.63Q63.46 53.63 62.59 53.57Q61.73 53.5 60.7 53.31Q57.95 52.03 57.95 49.98Q57.95 49.47 58.11 49.02Q58.27 48.58 58.4 48.13L58.34 48.19Q59.04 46.34 59.78 44.54Q60.51 42.75 61.34 41.09L65.25 43.65Q66.02 44.1 66.34 43.39Q67.36 41.6 68.32 39.84Q69.28 38.08 70.3 36.29Q70.5 35.97 70.4 35.68Q70.3 35.39 70.11 35.26L65.06 31.94H64.99L64.1 31.42Q63.84 31.23 63.52 31.33Q63.2 31.42 63.07 31.68L62.18 33.28Q60.45 36.29 58.62 39.94Q56.8 43.58 55.71 46.59Q54.24 50.82 54.24 53.7Q54.24 53.82 54.24 53.92Q54.24 54.02 54.24 54.21Q54.24 54.34 54.27 54.43Q54.3 54.53 54.3 54.66Q54.62 57.54 55.74 59.78Q56.86 62.02 58.91 63.04V62.98Q59.94 63.42 60.99 63.71Q62.05 64.0 63.14 64.0Q64.35 64.0 65.63 63.71Q66.91 63.42 68.32 62.98Q73.82 60.93 77.34 55.87Q78.24 54.59 78.94 53.18Q79.65 51.78 80.22 50.37Q81.12 48.19 81.73 45.82Q82.34 43.46 82.34 40.58Q82.34 36.22 80.29 31.81Q80.1 31.3 79.62 31.3Q79.14 31.3 78.94 31.81L75.42 39.81Q76.0 41.79 76.54 43.78Q77.09 45.76 77.09 48.32Z"
-        fill="currentColor"
+      <line
+        x1={SHAFT.x0}
+        y1={SHAFT.y}
+        x2={SHAFT.x1}
+        y2={SHAFT.y}
+        stroke="var(--color-accent)"
+        strokeWidth={SHAFT.t}
+        strokeLinecap="round"
       />
-      <g fill="var(--color-accent)">
-        <rect x="-30.08" y="46.54" width="260.16" height="5.08" rx="2.54" />
-        <rect x="168.29" y="15.32" width="10.91" height="67.51" rx="4.50" />
-        <rect x="20.80" y="15.32" width="10.91" height="67.51" rx="4.50" />
-        <rect x="182.11" y="21.18" width="9.45" height="55.79" rx="4.50" />
-        <rect x="8.44" y="21.18" width="9.45" height="55.79" rx="4.50" />
-        <rect x="194.48" y="26.87" width="7.99" height="44.42" rx="4.00" />
-        <rect x="-2.47" y="26.87" width="7.99" height="44.42" rx="4.00" />
-      </g>
+      <path
+        d={LETTERS_D}
+        fill="currentColor"
+        stroke="currentColor"
+        strokeWidth={LETTER_STROKE}
+        strokeLinejoin="round"
+      />
+      <path d={DOT_D} fill="var(--color-accent)" fillRule="evenodd" />
     </svg>
   )
 }
