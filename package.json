@@ -9,6 +9,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "import:hevy": "tsx scripts/import_hevy.ts",
+    "import:instructions": "tsx scripts/import_instructions.ts",
     "lint": "eslint .",
     "preview": "vite preview",
     "supabase:admin": "tsx scripts/supabase_admin.ts",

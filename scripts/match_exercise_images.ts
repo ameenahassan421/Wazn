@@ -58,14 +58,21 @@ const ALIASES: Record<string, string> = {
   'Bicycle Crunch': 'Air Bike',
 }
 
-interface FreeExercise {
+/**
+ * Exported so Stage 2B's instruction import can reuse `bestMatch` rather than
+ * writing a second matcher. Two matchers would eventually disagree about which
+ * free-exercise-db entry an exercise is, and the user would get one lift's
+ * photo above another lift's steps. One matcher, both columns.
+ */
+export interface FreeExercise {
   name: string
   equipment: string | null
   primaryMuscles: string[]
   images: string[]
+  instructions?: string[]
 }
 
-interface OurExercise {
+export interface OurExercise {
   id: string
   name: string
   muscle_group: string

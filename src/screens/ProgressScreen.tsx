@@ -17,6 +17,7 @@ import { formatShortDate } from '../lib/format'
 import type { Exercise, ExerciseUsageRow, OneRepMaxPoint } from '../lib/types'
 import { ExercisePicker } from '../components/ExercisePicker'
 import { ExerciseThumb } from '../components/ExerciseThumb'
+import { ExerciseDetail } from '../components/ExerciseDetail'
 import {
   SET_BAND,
   heatStep,
@@ -75,6 +76,7 @@ export function ProgressScreen() {
 
   const [loading, setLoading] = useState(true)
   const [picking, setPicking] = useState(false)
+  const [detail, setDetail] = useState<Exercise | null>(null)
   // The picker is a layer: system back returns to the charts, not out of
   // the app.
   useBackLayer(picking, () => setPicking(false))
@@ -122,6 +124,10 @@ export function ProgressScreen() {
   }, [])
 
   if (loading) return <p className="py-10 text-sm text-muted">Loading…</p>
+
+  if (detail) {
+    return <ExerciseDetail exercise={detail} onBack={() => setDetail(null)} />
+  }
 
   if (picking) {
     return (
@@ -183,6 +189,7 @@ export function ProgressScreen() {
           selected={selected}
           unit={unit}
           onPick={() => setPicking(true)}
+          onOpenDetail={() => selected && setDetail(selected)}
           onError={setError}
         />
       )}
@@ -198,11 +205,13 @@ function StrengthView({
   selected,
   unit,
   onPick,
+  onOpenDetail,
   onError,
 }: {
   selected: Exercise | null
   unit: Unit
   onPick: () => void
+  onOpenDetail: () => void
   onError: (message: string | null) => void
 }) {
   // The series carries the exercise it belongs to, so switching exercises does
@@ -294,21 +303,35 @@ function StrengthView({
 
   return (
     <>
-      <button
-        type="button"
-        onClick={onPick}
-        className="ring-edge flex min-h-14 w-full items-center gap-3 bg-surface px-3 text-start"
+      {/* Two targets, not one: the row's subject is the exercise, so tapping it
+          opens the exercise. Swapping to a different one is its own action and
+          says so. Siblings rather than nested buttons — a button inside a
+          button is invalid and the inner one stops being reachable. */}
+      <div
+        className="ring-edge flex min-h-14 w-full items-center bg-surface ps-3"
         style={{ borderRadius: 'var(--radius-md)' }}
       >
-        {selected && <ExerciseThumb exercise={selected} size={40} />}
-        <span className="min-w-0 flex-1">
-          <span className="block text-[11px] text-muted">Exercise</span>
-          <span className="block truncate text-sm font-medium">
-            {selected?.name ?? 'Pick an exercise'}
+        <button
+          type="button"
+          onClick={selected ? onOpenDetail : onPick}
+          className="flex min-w-0 flex-1 items-center gap-3 py-2 text-start"
+        >
+          {selected && <ExerciseThumb exercise={selected} size={40} />}
+          <span className="min-w-0 flex-1">
+            <span className="block text-[11px] text-muted">Exercise</span>
+            <span className="block truncate text-sm font-medium">
+              {selected?.name ?? 'Pick an exercise'}
+            </span>
           </span>
-        </span>
-        <span className="text-[13px] text-accent">Change</span>
-      </button>
+        </button>
+        <button
+          type="button"
+          onClick={onPick}
+          className="btn-base btn-quiet h-12 shrink-0 px-3 text-[13px] text-accent"
+        >
+          Change
+        </button>
+      </div>
 
       {!selected || loadingChart ? (
         <p className="py-6 text-sm text-muted">

@@ -144,14 +144,30 @@ async function show() {
   console.log(`\n${unknown.length} other keys: ${unknown.join(', ')}`)
 }
 
-async function setSiteUrl(url: string | undefined) {
-  if (!url) fail('Usage: set-site-url <https://your-app.vercel.app>')
-  if (!/^https?:\/\//.test(url)) fail(`"${url}" is not a URL.`)
+/**
+ * The first URL becomes site_url; every URL given is added to the allow list.
+ *
+ * Multiple matters at Stage 2A: cutting over to trywazn.app while the Vercel
+ * URL is still live would otherwise drop the Vercel origin from the allow list
+ * and break sign-in from it mid-migration. Pass both, drop the old one later.
+ */
+async function setSiteUrl(...urls: (string | undefined)[]) {
+  const given = urls.filter((u): u is string => typeof u === 'string' && u !== '')
+  if (given.length === 0) {
+    fail('Usage: set-site-url <https://primary> [https://also-allowed ...]')
+  }
+  for (const url of given) {
+    if (!/^https?:\/\//.test(url)) fail(`"${url}" is not a URL.`)
+    if (url.endsWith('/')) fail(`"${url}" must not end in a slash.`)
+  }
+
+  const allow = [...new Set(given.flatMap((u) => [u, `${u}/**`]))].join(',')
   await request('PATCH', '/config/auth', {
-    site_url: url,
-    uri_allow_list: `${url},${url}/**`,
+    site_url: given[0],
+    uri_allow_list: allow,
   })
-  console.log(`site_url set to ${url}`)
+  console.log(`site_url set to ${given[0]}`)
+  console.log(`uri_allow_list set to ${allow}`)
 }
 
 async function setSmtp() {
@@ -188,7 +204,7 @@ async function setSmtp() {
 
   await request('PATCH', '/config/auth', {
     ...required,
-    smtp_sender_name: process.env.SMTP_SENDER_NAME ?? 'Workout',
+    smtp_sender_name: process.env.SMTP_SENDER_NAME ?? 'Wazn',
   })
   console.log(
     `SMTP set to ${required.smtp_host}:${required.smtp_port} as ${required.smtp_admin_email}`,
@@ -260,7 +276,7 @@ async function main() {
     case 'show':
       return show()
     case 'set-site-url':
-      return setSiteUrl(rest[0])
+      return setSiteUrl(...rest)
     case 'set-smtp':
       return setSmtp()
     case 'set-templates':

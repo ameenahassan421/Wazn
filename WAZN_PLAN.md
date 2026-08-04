@@ -12,9 +12,10 @@
 Wazn (Arabic: وزن, "weight") is a mobile-first strength-training PWA
 being built toward functional parity with Hevy, then monetized globally
 with regional pricing. Egypt is the first test market, not the only
-market: US/global users pay a USD tier, Egyptian users an EGP tier. Owner: Ameen Hassan (ameen.hassan421@gmail.com is the
-working test account). Claude Code builds it; Ameen reviews at phase
-gates and tests in a real gym.
+market: US/global users pay a USD tier, Egyptian users an EGP tier.
+Owner: Ameen Hassan (ameen.hassan421@gmail.com is the working test
+account). Claude Code builds it; Ameen reviews at phase gates and tests
+in a real gym.
 
 Core job, unchanged since day one: **log a set in under 30 seconds,
 one hand, mid-workout.** Every decision is subordinate to this.
@@ -70,19 +71,12 @@ EGP pricing) + rewarded-video temporary unlocks.
 Costs: free tiers now; ~$45/mo (Supabase Pro + Vercel) at real scale;
 $25 one-time Google Play. First revenue realistically 4–5 months out.
 
-This budget is what rules the Stage 8 options in or out. Serverless
-open-weight inference is per-token and small enough to disappear into the
-$45 — a set-parsing call is a few hundred tokens. A self-hosted GPU is a
-few hundred dollars a month, which is not "a line item" at ~$1.50 ARPU,
-it is more than the entire rest of the stack. Any assist feature that
-cannot live inside a per-user monthly ceiling does not ship.
-
 ## 4. Build stages and gates
 
 Each stage = one or more Claude Code work sessions. The **gate** must
 pass before the next stage begins. Gates are evidence, not vibes.
 
-### Stage 0 — Foundation fix (ACTIVE)
+### Stage 0 — Foundation fix
 
 The app exists (repo `ameenahassan421/workout`, deployed on Vercel,
 Supabase healthy) but is empty and misnamed. Punch list:
@@ -138,18 +132,20 @@ one query).
 replaces Hevy completely for **two full weeks**, zero fallbacks. Every
 moment he misses Hevy gets written down and becomes backlog.
 
-### Stage 2 — Insight
+### Stage 2 — Insight (ACTIVE)
 
 - **2A (prerequisite — nobody else can sign in until this is done).**
-  Domain + email: Ameen buys the wazn domain; add it to Vercel as the
-  production alias and to Resend for domain verification (give him the
-  exact DNS records). OTP sender becomes `code@<domain>`, sender name
-  "Wazn". Update Supabase `site_url` and `uri_allow_list` to the new
-  domain. OTP length 6, expiry 3600 unchanged. Verify by receiving a
-  code at an address that is NOT the Resend account owner. Note:
-  during Stages 0–1 only ameen.hassan421@gmail.com can sign in
-  (onboarding@resend.dev delivers solely to the Resend owner) — this
-  is fine and expected for solo testing.
+  Domain + email. Domain is purchased: **trywazn.app** (Porkbun,
+  2026-08-04, WHOIS privacy + auto-renew on). Add it to Vercel as the
+  production alias and to Resend for domain verification (give Ameen
+  the exact DNS records to add at Porkbun). OTP sender becomes
+  `code@trywazn.app`, sender name "Wazn". Update Supabase `site_url`
+  and `uri_allow_list` to the new domain. OTP length 6, expiry 3600
+  unchanged. Verify by receiving a code at an address that is NOT the
+  Resend account owner. Note: during Stages 0–1 only
+  ameen.hassan421@gmail.com can sign in (onboarding@resend.dev
+  delivers solely to the Resend owner) — this is fine and expected for
+  solo testing.
 
 - **2B (near-zero cost — data already in hand).** Exercise
   instructions: import the step-by-step instruction text from
@@ -157,14 +153,52 @@ moment he misses Hevy gets written down and becomes backlog.
   exercise; render on the exercise detail page. Notes: add nullable
   note fields for workouts and per-exercise ("seat position 4"), and
   backfill from the Hevy CSV's `exercise_notes` column that the
-  original import ignored.
+  original import ignored. **See §5 — that column turned out to be
+  empty, and the backfill is a no-op.**
 
-Then the insight features: Exercise detail page (history, records: best weight / best est-1RM /
-best session volume, image, notes). PR detection computed on log,
-celebrated inline (amber flash, no confetti), stored consistently.
-Charts beyond 1RM: session volume over time; weekly sets per muscle
-group vs a 10–20 productive band; rep-range distribution. Custom
-exercises (name, muscle group, equipment; private per existing RLS).
+- **2C — AI layer (Kimi via OpenRouter).** Two features, one rule:
+  deterministic SQL computes all numbers; the model only writes words
+  and generates structures. (a) Coach's Notes on Progress: a Supabase
+  Edge Function aggregates the user's stats (weekly sets per muscle
+  group vs the 10–20 band, trend deltas, PRs, plateaus) into a compact
+  summary and asks the model for 3–5 prioritized insights; cache the
+  result and regenerate only when new workouts land. (b) Routine
+  generator: goal + days/week + equipment in, structured JSON routine
+  out, validated against the exercises table, saved as a normal
+  editable routine, never auto-activated. Implementation: model
+  `moonshotai/kimi-k2.5` on OpenRouter (≈$0.375/M in, $2.025/M out —
+  roughly $0.002 per analysis), key stored as a Supabase secret, called
+  only from the Edge Function, never the client; model id lives in an
+  env var so swapping models is config, not code. Multi-user by
+  construction: the Edge Function derives identity from the caller's
+  JWT (never a user_id parameter) and all stat queries run under RLS.
+  Prompts carry numbers and exercise names only — no email, name, or
+  user id ever reaches the model API. Free-tier quotas from day one
+  (analysis regenerates at most weekly per user; ~3 routine
+  generations/month), unmetered on Pro, rewarded-video unlock as the
+  third path at Stage 6. Output language follows the app locale
+  (Arabic at Stage 5). Built to scale from day one: static system
+  prompt + small per-user stat block (maximizes provider prompt-cache
+  discounts); lazy generation only (regenerate on Progress open after
+  new workouts — never scheduled batch for all users); per-feature
+  model env vars (cheapest capable model for routine gen, better model
+  for Coach's Notes); free `:free` variant during testing with
+  automatic 429 fallback to paid; hard monthly spend cap + alert on the
+  OpenRouter account ($20 during testing, raised deliberately).
+  Deferred with triggers: request queueing only if sustained provider
+  rate-limit hits (~10k+ actives); self-hosting the open weights is
+  the exit option, not the plan — revisit only when the API bill
+  rivals an inference cluster. Show "AI-generated — not medical
+  advice" on both surfaces. Note for Stage 6: AI Coach is the flagship
+  Pro feature (real marginal cost, real willingness to pay).
+
+Then the insight features: Exercise detail page (history, records:
+best weight / best est-1RM / best session volume, image, notes). PR
+detection computed on log, celebrated inline (amber flash, no
+confetti), stored consistently. Charts beyond 1RM: session volume over
+time; weekly sets per muscle group vs a 10–20 productive band;
+rep-range distribution. Custom exercises (name, muscle group,
+equipment; private per existing RLS).
 
 **GATE 2:** 5–10 Minnesota friends onboarded and logging.
 
@@ -205,13 +239,12 @@ logged workout → progress review without hitting English.
 
 Wazn Pro with regional pricing: USD ~$3–4/mo globally (Stripe or
 Play billing), EGP 50–100/mo in Egypt via Paymob (cards + mobile
-wallets). Free =
-unlimited logging + basic 1RM chart + 4 routines. Pro = unlimited
-routines, advanced analytics, body measurements, no ads. Ads on free
-tier per §2.3 only. Rewarded video unlocks premium analytics for 24h.
-**Capacitor Android build** (not TWA — AdMob requires native slots)
-wrapping the same React code; Play Store listing. Web PWA stays
-ad-free by architecture.
+wallets). Free = unlimited logging + basic 1RM chart + 4 routines.
+Pro = unlimited routines, advanced analytics, body measurements, no
+ads. Ads on free tier per §2.3 only. Rewarded video unlocks premium
+analytics for 24h. **Capacitor Android build** (not TWA — AdMob
+requires native slots) wrapping the same React code; Play Store
+listing. Web PWA stays ad-free by architecture.
 
 **GATE 6:** first 10 organic (non-friend) payers, AND free-tier
 retention does not drop vs the Stage 3 baseline after ads switch on.
@@ -228,105 +261,11 @@ the Play listing.
 
 **GATE 7:** weekly signups compounding without Ameen pushing.
 
-### Stage 8 — Assist (CONDITIONAL — do not build unprompted)
-
-Open-weight AI, and only where it does something arithmetic cannot.
-This stage is **gated on evidence, not on interest**: nothing here gets
-built unless the Gate 1 backlog — the list of moments Ameen missed Hevy
-— actually asks for it. If two weeks off Hevy produce no complaint that
-an assist would answer, this stage does not happen.
-
-**Why open weights.** Licence must be genuinely permissive, not
-"open-ish": Qwen (Apache-2.0) and Kimi K2 (Modified MIT — its only
-condition triggers above 100M MAU or $20M/month, i.e. never for us)
-qualify. Llama and Gemma ship custom licences and do not.
-
-**Where the model runs.** A Supabase Edge Function, calling a
-serverless inference provider. Never the client — the API key follows
-the same rule as the service-role key in `CLAUDE.md`: server-side only,
-never a `VITE_*` var. Self-hosting a GPU is out; it costs more per month
-than the entire rest of the stack (§3). On-device WebGPU is out; the
-market is budget Android in Egypt, and models small enough to run there
-are not good enough to trust.
-
-**Right-sizing is the whole game.** 8A is a parsing task a 3B model
-does perfectly. Using a trillion-parameter model for it buys nothing and
-costs latency you do not have mid-set.
-
-#### 8A — Voice and natural-language set logging
-
-The only assist that makes the core job _faster_ rather than adding a
-thing to look at. Serves §2.1 directly: chalked hands, one thumb, 30
-seconds.
-
-Say "three sets of eight at two-twenty-five" → the browser's built-in
-`SpeechRecognition` transcribes it free and on-device → the text goes to
-a **small Apache-2.0 model** → structured `{weightKg, reps, sets}` lands
-in the existing draft fields.
-
-- The draft is **pre-filled, never written**. Confirmation stays one tap
-  on the existing Log set button. No AI output reaches the database
-  without a human press.
-- Weight parses to the display unit then converts, so the kg-storage
-  rule is untouched.
-- If the parse fails, the model is down, or the phone is offline, the
-  steppers are exactly where they were. Logging never depends on this.
-
-**GATE 8A:** logging a set by voice beats the steppers on wall-clock for
-at least half of attempts, measured over a real week. If it does not, it
-is a demo, and it gets deleted.
-
-#### 8B — Plain-language read of the numbers
-
-Two sentences over the Progress tab: which group has sat under the band,
-which lift has stalled and for how long, what to do about it.
-
-Input is the **output of the existing RPCs** (`muscle_group_weekly_sets`,
-`exercise_best_e1rm`, `session_volume_history`) — never raw sets. That
-keeps the prompt tiny, the cost near zero, and the model unable to
-invent a number it was not handed.
-
-Generated **once a week and cached**, not per screen view.
-
-**GATE 8B:** Ameen reads it and it tells him something the charts did
-not already make obvious. If it just narrates the bars, cut it.
-
-#### 8C — Coaching agent (Pro only, not before Stage 6)
-
-Reads the whole training history and reasons about programming — notices
-the bench stalled when squat volume jumped, proposes a deload, explains
-why. Long-context reasoning over months of data is the one job here that
-genuinely needs a large model, and where a **Kimi K2/K3-class open-weight
-reasoning model** earns its cost.
-
-Paid tier only (§Stage 6). Per-call cost is real and this is the feature
-people would pay for.
-
-**GATE 8C:** a lifter who is not Ameen follows its advice for a month
-and their numbers move.
-
-#### Hard rules for anything in this stage
-
-1. **Never on the critical path.** Every screen works with the model
-   unreachable. Assist is additive or it does not ship.
-2. **No write without confirmation.** AI proposes, the user presses.
-3. **The model is config, not a dependency.** Provider and model id live
-   in one env var. Swapping them is a config change, never a refactor.
-4. **A cost ceiling per user per month**, enforced server-side, before
-   any of this reaches a second user.
-5. **Deterministic first.** If statistics can answer it, statistics
-   answer it. §Stage 2's analytics are not to be replaced by a model.
-
-**GATE 8:** at least one of 8A/8B/8C passed its own gate and is still
-being used a month later.
-
 ### Parked indefinitely
 
-Comments, coaching marketplace, Apple Watch /
-HealthKit, iOS App Store (revisit only if Egypt iOS demand proves
-itself), AI form-checking from video, AI-generated training programmes
-sold as a product, chat-with-your-data as a general interface, any
-feature not listed above.
+Comments, coaching marketplace, Apple Watch / HealthKit, iOS App Store
+(revisit only if Egypt iOS demand proves itself), any feature not
+listed above.
 
 ## 5. Data facts that must never be re-derived wrong
 
@@ -343,6 +282,12 @@ feature not listed above.
   charts represent trends, not totals.
 - Warmup sets and sets missing weight or reps are excluded from 1RM
   charts and PRs.
+- **The CSV's `exercise_notes` column is effectively empty.** 4 rows of
+  3,197 carry a value, and two of the four are junk: "Barbeel" (a typo)
+  and "Warmup" (a set type the schema already models). Stage 2B's
+  "backfill notes from the CSV" is a no-op — verified 2026-08-04. The
+  note _fields_ are still worth building, for notes written from here
+  on. Do not build an importer for this column.
 
 ## 6. Session continuity protocol (Claude Code)
 
@@ -372,58 +317,71 @@ verbatim, so they survive even if this file isn't read.**
 
 > Claude Code: keep this section current. It is the project's memory.
 
-- **Active stage:** 1 — The active workout. **All build items complete;
-  GATE 1 awaiting Ameen.** Do not start Stage 2.
-- **Stage 1 punch list:**
-  - [x] Routines — create/edit/duplicate/delete, start workout, "Next" hint,
-        reps prescribed and weight pre-filled from last performance
-  - [x] Rest timer — deadline-based, adjustable, vibration + beep, in-flow
-  - [x] Set types in UI (normal/warmup/failure/drop) + optional one-tap RPE
-  - [x] Supersets — grouped, alternating by who is behind, one rest per round
-  - [x] Edit past workouts — weight, reps, delete, from History
-  - [x] Finish summary — duration, volume, sets, PRs, canvas share card
-  - [x] Plate calculator, warm-up ramp, duration + weekly streak
-- **Migrations live:** 0002, 0003, 0004, 0005, 0006.
-- **Migration NOT yet applied:** `0007_progress_analytics.sql` — four
-  security-invoker RPCs behind the redesigned Progress tab. A sandboxed session
-  has no Supabase egress, so Ameen applies it. Until then the three Progress
-  sub-tabs show "needs migration 0007" instead of charts; nothing else in the
-  app touches these functions. **The first version of 0007 would not parse**
-  (`position` is a reserved word); fixed, and the whole chain 0001-0007 has now
-  been applied and the four functions called against a local Postgres 16. See
-  `DECISIONS.md` and `scripts/check_migrations.py`.
-- **Tests:** 117 passing (95 at Gate 1, 49 at Gate 0).
-- **Data:** exercises 134, workouts 152, workout_sets 3,201, of which 335
-  now carry a superset group (backfilled from the CSV the import had been
-  dropping). RPE on 387.
-- **Visual redesign (2026-08-02, out of stage sequence at Ameen's request):**
-  the وزن wordmark, a refined token system, all three tabs restyled, and
-  Progress expanded into Strength / Volume / Balance sub-tabs. Worked from a
-  supplied handoff built on a stock template; structure taken, identity not —
-  see `DECISIONS.md`. No data model, auth or RLS change.
-- **Usability reevaluation (2026-08-04, after Ameen found the app unusable):**
-  the app never touched browser history, so the Android back gesture closed
-  the installed PWA from anywhere — including mid-workout. Fixed with a
-  back-stack hook (`src/lib/use-back.ts`) plus visible back chevrons on every
-  sub-view; thumbnails raised to 64px in the picker and desaturated to sit in
-  the app's palette; sign out moved behind a menu; two-tap Finish and Delete;
-  live workout duration; tab-bar icons; auth screen brought onto the design
-  system. Deployment reevaluated and unchanged — the failures were app-level,
-  not hosting. Full findings in `DECISIONS.md`. Tests 117.
-- **Next action:** GATE 1 — Ameen builds his 4-day upper/lower split as
-  routines and replaces Hevy for two full weeks with zero fallbacks. Every
-  moment he misses Hevy gets written down and becomes backlog. **Apply
-  migration 0007 first** if the Progress tab is wanted during the test.
-- **Open decision for Ameen:** the stray empty 7-second workout (`e2587335`)
-  still shows as a blank row in History — it can now be removed in-app by
-  deleting it, or say the word and it goes server-side.
-- **Blocked on Ameen:** GATE 1 sign-off. Upcoming: domain purchase before
-  Stage 2 (item 2A) — nobody but ameen.hassan421@gmail.com can sign in until
-  then, which is expected.
-- **Brand (2026-08-04):** the name was reevaluated at Ameen's request against
-  US-relatable alternatives (Benchmark, Kilo, Atlas, Giza, Hadid — all
-  collision-checked); **Wazn confirmed**. The mark is redrawn: وزن composed
-  as the barbell itself (Loaded Ink, `docs/design-philosophy.md`), one
-  geometry shared by the header, the PWA icons, and the share card.
-- **Last updated:** 2026-08-04 by Claude Code (brand reevaluation: name
-  confirmed, mark redrawn; Stage 1 build items unchanged, awaiting GATE 1).
+- **Active stage:** 2 — Insight. Opened by Ameen on 2026-08-04 with
+  "start stage 2".
+- **Gates 0 and 1 were opened by decision, not by evidence.** Neither
+  acceptance list was run: Gate 0 wanted an OTP sign-in on a phone plus
+  one real gym session; Gate 1 wanted two full weeks replacing Hevy
+  with zero fallbacks. Ameen is the approver and chose to advance, so
+  this is recorded rather than presented as a pass. One consequence is
+  concrete: the Gate 1 backlog ("every moment he misses Hevy") does not
+  exist, and that backlog was the evidence 2C's AI layer was meant to
+  be justified by.
+- **Stage 0 build items:** all complete (import, deadlift ×2, Wazn
+  rename, 110/134 thumbnails behind a muscle-group gate, design system,
+  RPCs live).
+- **Stage 1 build items:** all complete — routines, rest timer, set
+  types + RPE, supersets, edit past workouts, finish summary + canvas
+  share card, plate calculator, warm-up ramp, duration + streak.
+- **Stage 2 progress:**
+  - [x] 2A prep — `docs/stage2a-domain-setup.md` carries the exact
+        Porkbun DNS records, the Vercel alias steps, and the Supabase
+        config change. **Execution is Ameen's**: this sandbox has no
+        egress to Supabase, Vercel or Resend, and §2.8 forbids touching
+        keys.
+  - [x] 2B schema — `0008_notes_and_instructions.sql`:
+        `exercises.instructions text[]`, `workouts.notes`, and a
+        per-user `exercise_notes` table. Exercises are a shared library
+        (`owner_id is null`), so a per-user note cannot be a column on
+        that table — see `DECISIONS.md`.
+  - [x] 2B instructions import — `scripts/import_instructions.ts`,
+        reusing the Stage 0D matcher so images and instructions can
+        never disagree about which free-exercise-db entry an exercise
+        maps to.
+  - [x] Exercise detail page — records, notes, instructions, history.
+  - [ ] 2A execution (Ameen).
+  - [ ] 2C — AI layer. **Not started, deliberately.** It needs an
+        OpenRouter key, a deployed Edge Function and egress this
+        sandbox does not have; it is also the item whose justification
+        depended on the Gate 1 backlog.
+  - [ ] PR detection stored consistently; rep-range distribution chart;
+        custom exercises.
+- **Migrations live:** 0002–0006.
+- **Migrations NOT applied:** `0007_progress_analytics.sql` (the three
+  Progress sub-tabs show "needs migration 0007" until it is) and
+  `0008_notes_and_instructions.sql` (new; the exercise detail page
+  degrades to records + history without it). Both parse under
+  `scripts/check_migrations.py`; neither has been executed against
+  production, which leaves them unverified by definition.
+- **Tests:** 128 passing.
+- **Data:** exercises 134, workouts 152, workout_sets 3,201, of which
+  335 carry a superset group. RPE on 387.
+- **Domain:** trywazn.app purchased at Porkbun (2026-08-04, WHOIS
+  privacy + auto-renew). No DNS work done — that is 2A, and it is
+  Ameen's to execute.
+- **Design package:** the full system — mark, tokens, type, controls,
+  ten built screens and six proposed ones — is published as an
+  interactive artifact and is the reference for any new UI.
+- **Open decision for Ameen:** three zero-set workouts from the Aug 1
+  desktop testing still render as blank History rows. Say "delete all
+  my workouts with zero sets" and they go server-side.
+- **Verify during Ameen's test:** workout dates display in local time
+  (an evening CST session must not render as the next day — one report
+  line showed a span ending 2026-07-14 where the last session was
+  07-13, which may be a UTC-based query or a display bug).
+- **Next action:** Ameen executes 2A (DNS at Porkbun, Vercel alias,
+  Resend verification) and applies migrations 0007 and 0008. Then
+  either 2C or the remaining insight features — his call.
+- **Last updated:** 2026-08-04 by Claude Code (plan reconciled to the
+  chat-updated version; Stage 2 started: 2A prep, 2B schema + import,
+  exercise detail page).
