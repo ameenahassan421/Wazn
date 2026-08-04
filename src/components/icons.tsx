@@ -116,3 +116,29 @@ export function IconChevronDown(props: IconProps) {
     </Svg>
   )
 }
+
+/** Two figures: the Friends tab. */
+export function IconPeople(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <circle cx="9" cy="8" r="3.2" />
+      <path d="M3.5 19.5c0-3 2.5-5 5.5-5s5.5 2 5.5 5" />
+      <path d="M16 5.6a3.2 3.2 0 0 1 0 6.3" />
+      <path d="M17.5 14.8c1.9.6 3.2 2.3 3.2 4.7" />
+    </Svg>
+  )
+}
+
+/**
+ * A plate, for a like. Not a heart: this app has one accent and no decorative
+ * illustration, and the plate is already the shape language (see the streak
+ * and the mark). Filled when you have liked it, outlined when you have not.
+ */
+export function IconPlate({ filled, ...props }: IconProps & { filled?: boolean }) {
+  return (
+    <Svg {...props}>
+      <circle cx="12" cy="12" r="8.5" fill={filled ? 'currentColor' : 'none'} />
+      <circle cx="12" cy="12" r="2.6" fill="var(--color-ink)" stroke="currentColor" />
+    </Svg>
+  )
+}

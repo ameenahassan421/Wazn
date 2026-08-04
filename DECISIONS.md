@@ -1126,3 +1126,133 @@ honestly then, and closed the moment egress existed. The difference is that
 this one has a named owner and a named unblock: the key goes in Supabase's
 Edge Function secrets, and the quality bar runs against Ameen's own nine-month
 history before anyone else sees a generated note.
+
+## 2026-08-04 — Stage 3 is a fourth tab, which `CLAUDE.md` said not to build
+
+`CLAUDE.md` fixes the app at three screens with no router, and the Stage 1
+entry above defended that against routines: a routine is not a place you go, it
+is how you start a workout, so it belongs on the Log screen.
+
+A feed is the opposite. It **is** a place you go, with no relationship to the
+set in front of you, and the same test that kept routines on Log is what puts
+the feed somewhere else: hanging it off the Log screen would put other people's
+training on the screen you open mid-set. §2.1 is unambiguous about that.
+
+So: a fourth tab, `Friends`, lazy-loaded like Progress. Still no router —
+`App.tsx` switches on a `Tab` union exactly as before, and the back-stack hook
+already treats any non-Log tab as a layer, so Android back returns to Log for
+free.
+
+Everything in Stage 3 lives on it, in three panels: **Feed**, **This week**
+(the leaderboard) and **You** (visibility, username, follow, invite link). The
+alternative was a settings screen, which §Scope forbids — and the only settings
+Stage 3 introduces are the ones this screen exists to use, so they belong here
+rather than in a screen built to hold them.
+
+## 2026-08-04 — Stage 3: one predicate, and the client never sees it
+
+Plan §Stage 3: visibility "enforced in RLS, never client-side". The threat
+model that phrase implies is not a buggy Wazn client — it is a _different_
+client, holding a valid access token, talking to PostgREST directly. Every
+choice below is against that.
+
+**One function, `private.can_view(target)`.** Policies on `workouts`,
+`workout_sets` and `workout_likes` all reduce to it, so there is exactly one
+definition of "can A see B" to review or change. It takes the viewer from
+`auth.uid()` internally, never as an argument, so it cannot be pointed at
+someone else.
+
+**`social_feed()` and `weekly_leaderboard()` are `security invoker` and contain
+no visibility logic at all.** They select from `workouts`; the policy decides
+what comes back. A second copy of the rule inside the feed is the thing that
+drifts out of step with the first, so there is not one.
+
+**`src/lib/social.ts` contains no `if (visibility === …)`.** It asks for rows.
+The database answers. That is what makes "never client-side" true rather than
+aspirational.
+
+**Discoverability is a weaker question than visibility, and is separate.** You
+have to be able to find someone before you can follow them, so `profiles`
+exposes name and username for anyone not private — but their training stays
+behind `can_view`. A private profile is not findable at all, which is what
+private has to mean or the setting is decoration.
+
+**Following a private profile is refused by the insert policy.** Without that,
+anyone who learned a user id could follow them, and `followers` visibility
+would then hand over their training on the next read.
+
+**In-progress workouts are never visible to anyone, at any setting.** The
+policy requires `ended_at is not null` for other people's rows. Mid-session is
+not a broadcast.
+
+**"No such user" and "that user is private" are the same error message.**
+Distinguishing them turns the follow box into a "does this person use Wazn"
+oracle for private accounts.
+
+### The bug the test found before it shipped
+
+The first version revoked `EXECUTE` on `private.can_view` from `authenticated`,
+following the instinct that a helper should not be callable. Every read of
+`workouts` then failed with `permission denied for function can_view` — because
+a **policy expression is evaluated as the querying role**, so a function the
+caller cannot execute breaks the policy rather than protecting it.
+
+The correct answer is to grant EXECUTE and rely on the _schema_: `private` is
+not in PostgREST's exposed list, so there is no `/rest/v1/rpc/can_view`.
+Verified by asking for it — both helpers return **404** over REST. `anon` holds
+nothing at all.
+
+`supabase/tests/rls_social.sql` found this in the first run, which is the
+entire argument for writing it.
+
+## 2026-08-04 — Stage 3: the RLS test borrows real accounts and gives them back
+
+The proof the plan asks for is "a non-follower cannot read a followers-only
+workout via PostgREST directly". A vitest file cannot show that; the enforcement
+lives in the database.
+
+`supabase/tests/rls_social.sql` switches to the `authenticated` role and sets
+`request.jwt.claims`, which is precisely what PostgREST does before running a
+query — the same code path a foreign client with a valid token travels. Eight
+assertions, each raising on failure:
+
+1. a non-follower reads **0** of A's workouts, and 0 of A's sets
+2. B cannot insert a follow with A as the follower
+3. following reveals exactly the finished workouts, and no in-progress one
+4. switching to private revokes access **without deleting the follow** — the
+   setting has to bite on read, or turning it on does nothing
+5. a private profile is not readable at all
+6. a private profile cannot be followed
+7. `public` reveals the same finished set
+8. B cannot plant a like under A's name, and an empty follow list yields an
+   empty feed
+
+It **parameterises over the accounts that exist** rather than creating auth
+users, because creating and deleting auth users is a change to auth that §2.6
+puts behind an ask. It runs inside a transaction ending in `ROLLBACK`, so the
+borrowing leaves nothing behind — confirmed by re-counting rows afterwards.
+
+The honest limit: it proves the policies, not the HTTP layer above them. What
+was checked over real HTTP is the complement — that `anon` reads nothing from
+`profiles`, `workouts`, `follows`, `invites` or `workout_likes`, and that
+neither private helper is reachable as an RPC.
+
+## 2026-08-04 — Sign out moved to where a hand goes looking for it
+
+The redesign moved sign out behind the header's ⋯ menu, for good reasons that
+still hold: it is destructive-adjacent, it was parked where a thumb rests, and
+it was paying rent on every screen.
+
+Then Ameen went looking for it and could not find it. That is the only evidence
+that matters about whether an affordance is discoverable, and it outranks the
+reasoning that put it there.
+
+It now also sits at the **bottom of the You panel**, which is where a phone
+user's hand goes without being told, and which only exists because Stage 3
+created an account screen to put it on. The ⋯ entry stays — two doors to a
+rarely-used room is not clutter, and removing the one that already works would
+trade one discoverability problem for another.
+
+Two taps, disarming after four seconds, matching Finish and routine Delete.
+Signing out mid-workout loses no data — every set is already in Postgres — but
+it does put a six-digit code between someone and their next set.

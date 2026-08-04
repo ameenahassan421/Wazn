@@ -17,6 +17,13 @@ const ProgressScreen = lazy(() =>
   import('./screens/ProgressScreen').then((m) => ({ default: m.ProgressScreen })),
 )
 
+// Friends is lazy for the same reason Progress is, plus one of its own: a
+// brand-new user has nobody to follow, so the most common first session never
+// downloads this at all.
+const FriendsScreen = lazy(() =>
+  import('./screens/FriendsScreen').then((m) => ({ default: m.FriendsScreen })),
+)
+
 export default function App() {
   const { loading, userId } = useAuth()
   const [tab, setTab] = useState<Tab>('log')
@@ -42,9 +49,15 @@ export default function App() {
     return <AuthScreen />
   }
 
-  // The Log tab carries the mark; the other two carry their name.
+  // The Log tab carries the mark; the others carry their name.
   const title =
-    tab === 'history' ? 'History' : tab === 'progress' ? 'Progress' : undefined
+    tab === 'history'
+      ? 'History'
+      : tab === 'progress'
+        ? 'Progress'
+        : tab === 'friends'
+          ? 'Friends'
+          : undefined
 
   return (
     <UnitProvider>
@@ -55,6 +68,11 @@ export default function App() {
         {tab === 'progress' && (
           <Suspense fallback={<p className="py-10 text-sm text-muted">Loading…</p>}>
             <ProgressScreen />
+          </Suspense>
+        )}
+        {tab === 'friends' && (
+          <Suspense fallback={<p className="py-10 text-sm text-muted">Loading…</p>}>
+            <FriendsScreen userId={userId} />
           </Suspense>
         )}
       </main>
