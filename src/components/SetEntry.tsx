@@ -219,7 +219,7 @@ export function SetEntry({
           <p className="text-[11px] text-muted">Loading previous session…</p>
         ) : previousSession.length > 0 ? (
           <>
-            <p className="text-[11px] text-muted">
+            <p className="kicker">
               Previous · {formatRelativeDay(previousSession[0].started_at)}
             </p>
             {/* 20px, not the 24px minimum in the plan's §2.4. This is a
@@ -227,7 +227,7 @@ export function SetEntry({
                 single figure — at 24px it wraps to three lines and pushes the
                 weight input below the fold. §2.1 (the logging flow is sacred)
                 outranks §2.4, so it stops here. See DECISIONS.md. */}
-            <p className="tnum mt-0.5 text-xl">{previousSummary}</p>
+            <p className="tnum mt-1 text-[19px] font-medium">{previousSummary}</p>
           </>
         ) : (
           <p className="text-[11px] text-muted">
@@ -247,15 +247,17 @@ export function SetEntry({
             <li key={set.id}>
               {i > 0 && <div className="rule-solid mx-[13px]" />}
               <div className="flex items-center gap-3 px-[13px] py-2.5">
-                <span className="tnum w-5 text-xs text-muted">{set.set_number}</span>
+                <span className="tnum w-5 font-mono text-[11px] text-muted">
+                  {set.set_number}
+                </span>
                 {/* 24px, not the 21px the redesign asked for: §2.4 sets the
                     floor and DECISIONS.md already raised this row once, to be
                     readable at arm's length between sets. */}
-                <span className="tnum flex-1 text-2xl">
+                <span className="tnum flex-1 text-figure">
                   {set.weight_kg === null ? 'BW' : formatWeight(set.weight_kg, unit)}
                 </span>
-                <span className="tnum text-2xl">{set.reps ?? '—'}</span>
-                <span className="text-xs text-muted">reps</span>
+                <span className="tnum text-figure">{set.reps ?? '—'}</span>
+                <span className="text-[11px] text-muted">reps</span>
                 {set.set_type !== 'normal' && (
                   <span
                     title={SET_TYPE_NAME[set.set_type]}
@@ -265,7 +267,9 @@ export function SetEntry({
                   </span>
                 )}
                 {set.rpe !== null && (
-                  <span className="tnum text-[11px] text-muted">@{set.rpe}</span>
+                  <span className="tnum font-mono text-[11px] text-muted">
+                    @{set.rpe}
+                  </span>
                 )}
               </div>
             </li>
@@ -372,7 +376,7 @@ export function SetEntry({
         type="button"
         onClick={() => void submit()}
         disabled={saving}
-        className="btn-base btn-primary mt-1 h-[66px] w-full text-[19px] disabled:opacity-45"
+        className="btn-base btn-hero press mt-1 h-[62px] w-full text-[18px] disabled:opacity-45"
       >
         {saving ? 'Saving…' : `Log set ${setsThisWorkout.length + 1}`}
       </button>

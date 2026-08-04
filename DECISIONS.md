@@ -784,3 +784,96 @@ Found while writing the 2A runbook:
    `site_url`, all of them go in the allow list.
 
 Both would have surfaced during 2A as confusing failures rather than as errors.
+
+## 2026-08-04 — Design system v2: IBM Plex is self-hosted, not loaded from Google
+
+The v2 handoff specifies IBM Plex from Google Fonts. It ships from `/fonts/`
+instead. Four reasons, in order of weight:
+
+1. **Stage 4 is offline logging.** A font on a third-party origin cannot be
+   precached with the app, so the first offline launch renders in a fallback
+   face. Self-hosted files go into the service-worker precache with everything
+   else.
+2. **The baseline user is on Egyptian mobile data.** A render-blocking
+   stylesheet on `fonts.googleapis.com`, which then references
+   `fonts.gstatic.com`, costs two DNS lookups and two TLS handshakes before
+   first paint — on the hot path.
+3. It is one fewer third party watching a lifter open the app.
+4. Google Fonts is not reliably reachable on every network.
+
+Cost: 76 KB, precached once. `IBM Plex Sans` is served as a single variable
+file covering 400/500/600 (46 KB) rather than three static cuts; Mono ships
+500 and 600 (15 KB each) because only the kicker and the PR badge use it.
+
+**Latin only.** `IBM Plex Sans Arabic` is in the handoff, but Arabic UI is
+Stage 5 — shipping the Arabic face now would put an unused download in front
+of every user for several stages. It arrives with the strings it is for.
+
+## 2026-08-04 — The hero button tier reverses an earlier call, on purpose
+
+The current system uses outlined-on-tint for primary actions, and
+`DECISIONS.md` records why: a solid amber slab shouts over a column of
+controls, and on the hot path the only thing that should shout is the number.
+
+v2 introduces a solid amber hero tier. The reasoning still holds, which is
+exactly why the handoff pairs it with a rule: **one solid amber button per
+screen, maximum**, on the single action that screen exists for. When nothing
+else on the screen is filled, the fill is not competing with the number — it
+is the thumb's destination, findable without reading. Everything else stays
+outlined.
+
+Applied to: "Log set N" (set entry), "Start workout" (Log idle), "Send code" /
+"Verify and sign in" (auth). Deliberately **not** applied to "Add exercise" on
+the workout overview — that screen's primary interaction is tapping an
+exercise in the list, so a filled Add exercise would outrank the thing it sits
+above.
+
+## 2026-08-04 — `font: inherit` on native controls had been eating every button weight
+
+Found while verifying the hero tier: the button rendered solid amber but at
+weight 400, and `btn-hero` asks for 600.
+
+`src/index.css` carried, unlayered:
+
+```css
+input, button, select { font: inherit; color: inherit; }
+```
+
+Two compounding problems. `font` is a **shorthand** — it resets `font-weight`
+to the inherited value along with everything it does not name. And the rule
+sat **outside any cascade layer**, and unlayered declarations outrank every
+layered one, so it beat Tailwind's `utilities` layer outright.
+
+Consequence: `btn-base`'s `font-weight: 500` had never reached the screen
+since the utility was written. Every button in the app rendered at 400. The
+same applied to `color: inherit`, which overrode `btn-hero`'s `accent-ink`
+and put chalk text on an amber fill — **1.7:1**, unreadable, and a contrast
+failure that would have shipped.
+
+Fixed by moving the rule into `@layer base` and replacing the `font`
+shorthand with longhands. Buttons now render at their intended weight and the
+hero measures **9.97:1**.
+
+Worth keeping in mind generally: in Tailwind v4 every unlayered rule in
+`index.css` silently outranks the whole utility system.
+
+## 2026-08-04 — `pr-row` was renamed to `record-row`
+
+The RTL ESLint guard rejected it, correctly: `pr-row` is indistinguishable
+from Tailwind's `pr-*` padding-right utility, which is exactly the physical
+property the guard exists to catch. Renamed to `record-row` / `record-flash`.
+A class name that reads as a banned utility is a bad name even when the lint
+rule is the only thing that notices.
+
+## 2026-08-04 — What v2 did not change
+
+Worth recording, because it is most of the system: **every colour token in the
+handoff already matched the codebase** — ink, surface, raised, line, text,
+accent, accent-ink, both nine-step ramps, the tile steps. So did the radii,
+the 48px touch floor, the header-band gradient, `rule-fade` / `rule-solid`,
+the thumbnail filter, and `StreakPlates` (4px wide, radius 2, heights
+7/10/13/16, amber filled).
+
+The real diff was type (Inter → IBM Plex, plus a scale with weights bound to
+sizes), the hero tier, the knurl, the inset top-light on elevation, and the
+kicker moving to mono. Everything else was already there.

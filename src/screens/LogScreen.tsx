@@ -613,7 +613,7 @@ export function LogScreen({ userId }: { userId: string }) {
             type="button"
             onClick={() => void startWorkout()}
             disabled={saving}
-            className="btn-base btn-primary h-[66px] w-full text-[19px] disabled:opacity-45"
+            className="btn-base btn-hero press h-[62px] w-full text-[18px] disabled:opacity-45"
           >
             {hasHistory ? 'Start workout' : 'Start your first workout'}
           </button>

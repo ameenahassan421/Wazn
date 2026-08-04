@@ -24,10 +24,16 @@ export function RestTimerBar({ timer }: { timer: Timer }) {
 
   return (
     <div
-      className={`ring-edge relative overflow-hidden bg-surface ${
-        done ? 'border border-accent' : ''
-      }`}
-      style={{ borderRadius: 'var(--radius-md)' }}
+      className="relative overflow-hidden bg-surface"
+      style={{
+        borderRadius: 'var(--radius-md)',
+        // The ring itself turns amber when the rest is up. Adding a border on
+        // top of the hairline instead would inset the content by a pixel and
+        // shuffle the whole row at the moment the timer lands.
+        boxShadow: done
+          ? '0 0 0 1px var(--color-accent), var(--top-light)'
+          : 'var(--ring-hairline)',
+      }}
     >
       {/* Progress drains right-to-left in LTR, start-to-end in RTL. */}
       <div
@@ -35,8 +41,8 @@ export function RestTimerBar({ timer }: { timer: Timer }) {
         className="absolute inset-block-0 inset-inline-start-0 bg-accent-900 transition-[width] duration-300 ease-linear"
         style={{ width: `${pct}%` }}
       />
-      <div className="relative flex min-h-[46px] items-center gap-2 px-3 py-1">
-        <span className="text-[11px] text-muted">{done ? 'Rest done' : 'Rest'}</span>
+      <div className="relative flex min-h-[50px] items-center gap-2 px-3 py-1">
+        <span className="kicker">{done ? 'Rest done' : 'Rest'}</span>
         <span
           className={`tnum text-[23px] font-medium ${done ? 'text-accent' : 'text-text'}`}
           role="timer"

@@ -82,7 +82,7 @@ export function AuthScreen() {
 
       {step === 'email' ? (
         <form onSubmit={sendCode} className="mt-8 flex flex-col gap-3">
-          <label htmlFor="email" className="text-sm text-muted">
+          <label htmlFor="email" className="kicker">
             Email
           </label>
           <input
@@ -100,14 +100,14 @@ export function AuthScreen() {
           <button
             type="submit"
             disabled={busy}
-            className="btn-base btn-primary h-14 w-full text-lg disabled:opacity-45"
+            className="btn-base btn-hero press h-14 w-full text-[18px] disabled:opacity-45"
           >
             {busy ? 'Sending…' : 'Send code'}
           </button>
         </form>
       ) : (
         <form onSubmit={verifyCode} className="mt-8 flex flex-col gap-3">
-          <label htmlFor="code" className="text-sm text-muted">
+          <label htmlFor="code" className="kicker">
             6-digit code
           </label>
           <input
@@ -124,7 +124,7 @@ export function AuthScreen() {
           <button
             type="submit"
             disabled={busy}
-            className="btn-base btn-primary h-14 w-full text-lg disabled:opacity-45"
+            className="btn-base btn-hero press h-14 w-full text-[18px] disabled:opacity-45"
           >
             {busy ? 'Verifying…' : 'Verify and sign in'}
           </button>
