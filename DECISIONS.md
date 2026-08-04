@@ -882,3 +882,460 @@ the thumbnail filter, and `StreakPlates` (4px wide, radius 2, heights
 The real diff was type (Inter → IBM Plex, plus a scale with weights bound to
 sizes), the hero tier, the knurl, the inset top-light on elevation, and the
 kicker moving to mono. Everything else was already there.
+
+## 2026-08-04 — Reconciliation: what STATUS claimed, and what the database says
+
+The Launch Bundle plan arrived with a STATUS block that said "Active stage: 0 —
+GATE 0 open". The repo's own STATUS was a stage ahead of that, and production
+was ahead of both. §6 says trust reality, so §1–§6 were taken from the new plan
+(Launch Bundle, §2.4 v2, Stage 4B, the silent rest timer) and STATUS was rebuilt
+by querying the live database.
+
+**The egress assumption is dead.** Every prior note in this file that says a
+sandboxed session cannot reach Supabase — and there are several, including the
+one that explains how migration 0007 shipped broken — was true then and is false
+now. This environment reaches `api.supabase.com` and `api.resend.com`. It does
+not reach the Vercel app, `trywazn.app`, or `openrouter.ai`. That single change
+is what made the rest of this session possible, and it retires "I could not run
+it" as an acceptable reason for an unexecuted migration.
+
+Drift found, all resolved in favour of reality:
+
+| STATUS said                      | production says                                             |
+| -------------------------------- | ----------------------------------------------------------- |
+| migrations 0007 + 0008 unapplied | **0007 was already live**, in its fixed `bucket_order` form |
+| workouts 152                     | **154** (two logged since, latest 2026-08-03)               |
+| three zero-set test workouts     | **four**                                                    |
+| tests 128                        | 128, confirmed                                              |
+
+The 0007 surprise is worth naming: somebody applied it between sessions and
+nothing recorded that. There is no `supabase_migrations.schema_migrations` table
+on this project — migrations have been applied by pasting into the SQL editor,
+which leaves no trace — so "which migrations are live?" is answered by probing
+for objects rather than by reading a ledger. Creating that ledger was attempted
+and is worth doing; it is the one thing that would have made this an unnecessary
+paragraph.
+
+## 2026-08-04 — 0007 and 0008 applied to production, and verified by execution
+
+Applied over the Management API, both from the repo files rather than from
+memory, so production now matches source exactly. 0007 was re-applied on purpose
+even though its functions existed: `create or replace` is idempotent, and it
+removes any doubt that the live definitions are the ones in the repo.
+
+Verified as Ameen's account, with `set local role authenticated` and his `sub`
+in `request.jwt.claims` — so `security invoker` and RLS were actually in the
+path, not bypassed by the `postgres` role the Management API otherwise runs as:
+
+| exercise              | best set  | best e1RM | best session volume | sets | sessions |
+| --------------------- | --------- | --------- | ------------------- | ---- | -------- |
+| Bench Press (Barbell) | 68.04 kg  | 77.11 kg  | 2,064.77 kg         | 149  | 38       |
+| Deadlift (Barbell)    | 122.47 kg | 134.72 kg | 2,231.67 kg         | 10   | 2        |
+| Squat (Barbell)       | 81.65 kg  | 92.54 kg  | 1,524.00 kg         | 39   | 10       |
+
+122.47 kg is 270 lb, which is the Stage 0A ×2 deadlift correction arriving
+intact at the far end of the chain — CSV patch, import, migration, RPC, RLS.
+
+The negative case was run too: the same call as the _other_ profile
+(`6da348ed`) returns nulls and zeroes. Security invoker holds.
+
+## 2026-08-04 — §2.4 deviation register, decided once
+
+§2.4 is now prose compressed from the design handoff, and prose loses detail.
+Rather than re-litigate each difference every session, here is the whole register
+with the call made once.
+
+**Deviations that stand.**
+
+1. **IBM Plex is self-hosted, not Google Fonts.** Reasons unchanged (offline
+   precache, Egyptian mobile data, one fewer third party, reachability).
+2. **IBM Plex Sans Arabic is not shipped yet.** It arrives with the Stage 5
+   strings it exists for; shipping it now is an unused download on every load.
+3. **`previousSummary` renders at 20px**, under the 24px number floor. Already
+   named in §2.4 as the one recorded exception.
+4. **The hero tier is not applied to "Add exercise"** on the workout overview.
+   §2.4 says at most one solid amber button per screen; it does not say every
+   screen must have one. That screen's primary interaction is tapping an
+   exercise in the list, and a filled Add exercise would outrank it.
+5. **Exercise fallback tiles keep five stepped neutral tones.** The handoff
+   flattens them to one. Telling adjacent rows apart at a glance is the entire
+   job of the tile. Neutrals, so the one-accent rule is untouched.
+6. **`rule-fade` is a gradient and stays.** §2.4 says "exactly ONE gradient
+   exists in the app: the header band", but the handoff itself specifies
+   `rule-fade`, so the prose contradicts its own source. The reading, settled:
+   the rule governs gradients used as **fills**. `rule-fade` is a 1px separator
+   whose ramp exists precisely to avoid the hard border a solid rule would draw.
+   One gradient fill (the header band), one gradient hairline.
+
+**Deviations that were wrong and are now fixed.**
+
+7. **The rest timer beeped.** Stage 1 as originally written said "vibration +
+   sound"; design v2 amends it to SILENT, amber ring and "Rest done", optional
+   haptic only. The `beep()` WebAudio oscillator is deleted. This is the right
+   call independent of the spec: a gym is somebody else's room, and a phone that
+   chirps between sets is a reason to switch the timer off — which costs the
+   whole feature, not just the sound. The haptic stays, already guarded.
+8. **`action-fade` was a third gradient.** Defined in `index.css`, referenced by
+   nothing — the pinned-action layout it was written for was reverted (see the
+   redesign entry above) and the utility outlived it. Deleted.
+
+**Checked and already compliant:** no red anywhere in `src/` (errors are amber
+and outlined), no emoji in UI, no drop shadows, both nine-step ramps present,
+48px touch floor, `record-flash` keyframe present and matching the PR motion
+spec.
+
+## 2026-08-04 — What in the 2A runbook went stale
+
+`docs/stage2a-domain-setup.md` was written when this environment could reach
+nothing. Three of its statements are now false, and one of them would have cost
+Ameen time while he is running the runbook:
+
+- Its opening line says Claude Code has no egress to **Supabase**. It does now.
+  Step 4 (`set-site-url`) is therefore runnable from a session. Steps 1–3
+  (Porkbun, Vercel, Resend DNS) genuinely are not — those hosts are blocked and
+  DNS is Ameen's account anyway.
+- Its closing note says migrations 0007 and 0008 are unapplied. Both are live as
+  of today.
+- It says three zero-set test workouts remain. There are four.
+
+Two things it does not say and should, both now added: production auth config is
+still `smtp_sender_name = 'Workout'` and `smtp_admin_email = onboarding@resend.dev`
+— the Stage 0C rename never reached the live project, only the script's default —
+and `uri_allow_list` will need `trywazn.app/**` before the Block 3 invite links
+resolve.
+
+**Not touched from here.** Changing `smtp_sender_name` is a live auth-config
+write, §2.6 puts auth changes behind an ask, and Ameen is executing that exact
+surface right now — two writers on one config is how a half-applied SMTP setting
+happens. Flagged instead.
+
+## 2026-08-04 — Stage 2A executed by Ameen; verified against the live config
+
+Reported complete and confirmed by reading the project's auth config rather
+than taking the report at face value — the same discipline that caught 0007
+being already applied this morning:
+
+| setting            | live value                                                               |
+| ------------------ | ------------------------------------------------------------------------ |
+| `site_url`         | `https://www.trywazn.app`                                                |
+| `smtp_sender_name` | `Wazn` (the Stage 0C leftover is finally gone)                           |
+| `smtp_admin_email` | `code@trywazn.app`                                                       |
+| `uri_allow_list`   | four entries: www.trywazn.app and the Vercel origin, each bare and `/**` |
+| OTP                | length 6, expiry 3600 — unchanged, as specified                          |
+
+The acceptance test that actually mattered passed: a sign-in code was
+delivered to an address that is not the Resend account owner. Non-owner
+sign-in is now proven by a delivery rather than assumed, which was the whole
+point of 2A and the last thing blocking a beta cohort.
+
+### One detail worth writing down before it bites
+
+The allow list holds **`www.trywazn.app`**, not the apex `trywazn.app`, and
+Vercel 308s the root to www. That is a sound setup, but it means an auth
+redirect target on the bare apex would be refused. Nothing in the app builds
+one — redirect targets come from `window.location.origin`, which is already
+www by the time any page runs — and a shared apex link keeps its path across
+the 308. Recorded because "why did that one invite link fail" is a bad hour to
+discover a host mismatch, and Block 3's invite links are the first feature to
+put URLs in other people's hands.
+
+## 2026-08-04 — 2C: the privacy boundary is a function signature, not a rule
+
+Plan §2C says prompts carry "numbers and exercise names only — no email, name,
+or user id ever reaches the model API". A rule like that is normally enforced
+by everyone remembering it.
+
+Here it is enforced by construction. The Coach's Notes prompt is built from
+`coach_stats()` and from nothing else, and that function returns a fixed
+`jsonb` shape containing muscle groups, exercise names and integers. There is
+no parameter to widen and no join to a profile. Adding PII to a prompt would
+mean editing a migration, which is a review, not an afternoon.
+
+The same shape answers the identity question. `coach_stats()` **takes no
+arguments** and is `security invoker`, so whose numbers come back is decided by
+RLS against the caller's JWT. The Edge Function could not pass a user id if it
+wanted to. "Identity comes from the JWT" stops being a convention and becomes a
+thing the type system of the database agrees with.
+
+### Why the model never sees a threshold
+
+`coach_stats()` reports weekly sets per muscle group and the same figure four
+weeks earlier. It does not report "you are under the productive band" — the
+10-20 band lives in the static system prompt. Two reasons: a constant in the
+static prefix is cached by the provider across every user and costs nothing to
+re-send, and a number the model is asked to _compare against a constant_ is a
+much smaller ask than a number it is asked to _derive_. Same for plateaus: SQL
+emits `best_e1rm_28d` and `best_e1rm_before` and the model reads the
+difference. It is never asked what a plateau is.
+
+## 2026-08-04 — 2C: BEFORE INSERT, and why the AI functions write as two roles
+
+Two mechanical decisions that are easy to get wrong and hard to notice.
+
+**The Edge Functions hold two Supabase clients.** Reads go through a
+JWT-scoped client, so RLS decides what the caller can see. Writes to
+`coach_notes` and `ai_generations` go through the service role, because
+neither table has an `insert`/`update`/`delete` policy for `authenticated`.
+That is deliberate: a browser that could write `coach_notes` could put any
+text it liked behind the "AI-generated" label, and a browser that could delete
+its own `ai_generations` rows would have no quota at all. Clients read; the
+function writes.
+
+**Quotas are a ledger, not a counter.** `ai_generations` gets one row per
+generation actually paid for, and a quota is a `count(*)` over a trailing
+window. A counter needs something to reset it — a cron, a monthly job, a
+column somebody forgets — and a ledger just ages out. It also answers
+"is the free tier actually carrying this?" for free, because `used_free` is on
+every row.
+
+## 2026-08-04 — 2C: the routine validator is the only part worth testing, so it is the only part that is testable
+
+The generator's Deno code cannot run under vitest. Rather than accept that the
+safety-critical part ships untested, `validatePlan` was extracted to
+`supabase/functions/_shared/validate-plan.ts` — plain TypeScript, no Deno
+APIs, no imports — and the test suite imports it directly. The Edge Function
+calls the same module, so the tested code is the shipped code.
+
+It earns the attention. Everything upstream of it is a model's suggestion and
+everything downstream is an INSERT into somebody's routines. Nine tests cover
+it, and one of them found a real bug before the feature ever ran: `Number(null)`
+is `0`, so a missing `reps` clamped to the minimum and prescribed **one rep**
+instead of falling back to eight. Absence is now checked before conversion.
+
+The validator drops unknown exercises rather than rejecting the plan, and drops
+a day that loses all of them. A four-day plan that is real beats a five-day
+plan with a hallucinated lift in it. Dropped names are returned to the caller
+rather than swallowed, so a model that keeps inventing exercises is visible
+without reading logs.
+
+## 2026-08-04 — 2C: what could not be verified from here, stated plainly
+
+The functions are deployed and were exercised end to end up to the model call:
+both boot, resolve their shared imports, and reject a valid-but-not-a-user
+token with their own message. Everything past that point is unverified,
+because this environment cannot reach `openrouter.ai` and there is no
+`OPENROUTER_API_KEY` yet.
+
+Specifically unproven: that the model returns usable JSON against the real
+schema, that the `:free` slug exists under the name the plan gives it, and
+that the 429 fallback fires. The model ids are environment variables precisely
+so the first two are config fixes rather than deploys.
+
+This is the same class of gap that let migration 0007 ship broken — recorded
+honestly then, and closed the moment egress existed. The difference is that
+this one has a named owner and a named unblock: the key goes in Supabase's
+Edge Function secrets, and the quality bar runs against Ameen's own nine-month
+history before anyone else sees a generated note.
+
+## 2026-08-04 — Stage 3 is a fourth tab, which `CLAUDE.md` said not to build
+
+`CLAUDE.md` fixes the app at three screens with no router, and the Stage 1
+entry above defended that against routines: a routine is not a place you go, it
+is how you start a workout, so it belongs on the Log screen.
+
+A feed is the opposite. It **is** a place you go, with no relationship to the
+set in front of you, and the same test that kept routines on Log is what puts
+the feed somewhere else: hanging it off the Log screen would put other people's
+training on the screen you open mid-set. §2.1 is unambiguous about that.
+
+So: a fourth tab, `Friends`, lazy-loaded like Progress. Still no router —
+`App.tsx` switches on a `Tab` union exactly as before, and the back-stack hook
+already treats any non-Log tab as a layer, so Android back returns to Log for
+free.
+
+Everything in Stage 3 lives on it, in three panels: **Feed**, **This week**
+(the leaderboard) and **You** (visibility, username, follow, invite link). The
+alternative was a settings screen, which §Scope forbids — and the only settings
+Stage 3 introduces are the ones this screen exists to use, so they belong here
+rather than in a screen built to hold them.
+
+## 2026-08-04 — Stage 3: one predicate, and the client never sees it
+
+Plan §Stage 3: visibility "enforced in RLS, never client-side". The threat
+model that phrase implies is not a buggy Wazn client — it is a _different_
+client, holding a valid access token, talking to PostgREST directly. Every
+choice below is against that.
+
+**One function, `private.can_view(target)`.** Policies on `workouts`,
+`workout_sets` and `workout_likes` all reduce to it, so there is exactly one
+definition of "can A see B" to review or change. It takes the viewer from
+`auth.uid()` internally, never as an argument, so it cannot be pointed at
+someone else.
+
+**`social_feed()` and `weekly_leaderboard()` are `security invoker` and contain
+no visibility logic at all.** They select from `workouts`; the policy decides
+what comes back. A second copy of the rule inside the feed is the thing that
+drifts out of step with the first, so there is not one.
+
+**`src/lib/social.ts` contains no `if (visibility === …)`.** It asks for rows.
+The database answers. That is what makes "never client-side" true rather than
+aspirational.
+
+**Discoverability is a weaker question than visibility, and is separate.** You
+have to be able to find someone before you can follow them, so `profiles`
+exposes name and username for anyone not private — but their training stays
+behind `can_view`. A private profile is not findable at all, which is what
+private has to mean or the setting is decoration.
+
+**Following a private profile is refused by the insert policy.** Without that,
+anyone who learned a user id could follow them, and `followers` visibility
+would then hand over their training on the next read.
+
+**In-progress workouts are never visible to anyone, at any setting.** The
+policy requires `ended_at is not null` for other people's rows. Mid-session is
+not a broadcast.
+
+**"No such user" and "that user is private" are the same error message.**
+Distinguishing them turns the follow box into a "does this person use Wazn"
+oracle for private accounts.
+
+### The bug the test found before it shipped
+
+The first version revoked `EXECUTE` on `private.can_view` from `authenticated`,
+following the instinct that a helper should not be callable. Every read of
+`workouts` then failed with `permission denied for function can_view` — because
+a **policy expression is evaluated as the querying role**, so a function the
+caller cannot execute breaks the policy rather than protecting it.
+
+The correct answer is to grant EXECUTE and rely on the _schema_: `private` is
+not in PostgREST's exposed list, so there is no `/rest/v1/rpc/can_view`.
+Verified by asking for it — both helpers return **404** over REST. `anon` holds
+nothing at all.
+
+`supabase/tests/rls_social.sql` found this in the first run, which is the
+entire argument for writing it.
+
+## 2026-08-04 — Stage 3: the RLS test borrows real accounts and gives them back
+
+The proof the plan asks for is "a non-follower cannot read a followers-only
+workout via PostgREST directly". A vitest file cannot show that; the enforcement
+lives in the database.
+
+`supabase/tests/rls_social.sql` switches to the `authenticated` role and sets
+`request.jwt.claims`, which is precisely what PostgREST does before running a
+query — the same code path a foreign client with a valid token travels. Eight
+assertions, each raising on failure:
+
+1. a non-follower reads **0** of A's workouts, and 0 of A's sets
+2. B cannot insert a follow with A as the follower
+3. following reveals exactly the finished workouts, and no in-progress one
+4. switching to private revokes access **without deleting the follow** — the
+   setting has to bite on read, or turning it on does nothing
+5. a private profile is not readable at all
+6. a private profile cannot be followed
+7. `public` reveals the same finished set
+8. B cannot plant a like under A's name, and an empty follow list yields an
+   empty feed
+
+It **parameterises over the accounts that exist** rather than creating auth
+users, because creating and deleting auth users is a change to auth that §2.6
+puts behind an ask. It runs inside a transaction ending in `ROLLBACK`, so the
+borrowing leaves nothing behind — confirmed by re-counting rows afterwards.
+
+The honest limit: it proves the policies, not the HTTP layer above them. What
+was checked over real HTTP is the complement — that `anon` reads nothing from
+`profiles`, `workouts`, `follows`, `invites` or `workout_likes`, and that
+neither private helper is reachable as an RPC.
+
+## 2026-08-04 — Sign out moved to where a hand goes looking for it
+
+The redesign moved sign out behind the header's ⋯ menu, for good reasons that
+still hold: it is destructive-adjacent, it was parked where a thumb rests, and
+it was paying rent on every screen.
+
+Then Ameen went looking for it and could not find it. That is the only evidence
+that matters about whether an affordance is discoverable, and it outranks the
+reasoning that put it there.
+
+It now also sits at the **bottom of the You panel**, which is where a phone
+user's hand goes without being told, and which only exists because Stage 3
+created an account screen to put it on. The ⋯ entry stays — two doors to a
+rarely-used room is not clutter, and removing the one that already works would
+trade one discoverability problem for another.
+
+Two taps, disarming after four seconds, matching Finish and routine Delete.
+Signing out mid-workout loses no data — every set is already in Postgres — but
+it does put a six-digit code between someone and their next set.
+
+## 2026-08-04 — Block 3: an invite link without a router
+
+`/join/<code>` has to work, and the app has no router. It still does not have
+one.
+
+`captureInviteFromUrl()` runs in `main.tsx` **before React renders**: it reads
+the path, stashes the code, and rewrites the URL to `/`. By first paint the app
+is at `/` exactly as it always is, and nothing downstream knows an invite ever
+happened except one key in storage.
+
+Two details that are not obvious and would each have cost a debugging session:
+
+**The URL is rewritten even when the code is junk.** A `/join/nonsense` path
+left in the address bar becomes the installed PWA's `start_url` if the visitor
+installs from that page — and then every launch forever is an invite landing.
+
+**The stash is `sessionStorage`, not React state or `localStorage`.** Signing
+in with an OTP means leaving for a mail client and coming back, possibly
+minutes later, possibly in a new tab. React state does not survive that.
+`localStorage` survives too much — it would outlive the intent and silently
+follow somebody weeks later. A session is exactly the lifetime of "I am
+currently accepting this invite".
+
+The code is **peeked** at on the auth screen (to say "Ameen invited you") and
+**spent** on the welcome screen after sign-in. Peeking must not consume, which
+is why those are two functions and why there is a test for it.
+
+### `resolve_invite` is granted to `anon`
+
+Deliberate, and a genuine loosening. The landing page needs to name the inviter
+_before_ there is an account, and that sentence is most of why an invite link
+works at all. The cost is that someone holding a valid code learns a display
+name and a username — precisely what the inviter chose to share by sending the
+link. Enumeration is not the risk: a code is 12 characters from a 36-symbol
+alphabet, about 62 bits, and the function returns nothing for a profile that
+has since gone private.
+
+## 2026-08-04 — Block 3: the wake lock is silent, guarded, and re-acquired
+
+Three things about `useWakeLock` that are the actual feature, not the API call:
+
+**It is released by the browser whenever the page is hidden**, and not
+restored. Without a `visibilitychange` re-acquire, taking one phone call
+mid-workout turns the feature off for the rest of the session — which is worse
+than not having it, because you have stopped expecting the screen to lock.
+
+**Every call is guarded.** iOS Safari only got Screen Wake Lock in 16.4 and
+plenty of budget Android browsers lack it. A missing API is a no-op; a refused
+request (no user gesture, battery saver) is swallowed.
+
+**There is no toast.** §2.1 forbids interrupting the logging flow, and a
+feature whose entire job is to not be noticed should not announce itself.
+
+## 2026-08-04 — Block 3: the install prompt waits for evidence
+
+`beforeinstallprompt` fires whenever Chrome feels like it, which is usually the
+first visit — the single most ignorable moment on the mobile web. The event is
+captured and `preventDefault()`ed so the browser's own infobar does not appear,
+and the offer is held until `hasHistory` is true: at least one workout logged.
+The offer follows evidence that the app is useful, not a page load.
+
+Never during a workout — it is mounted on the idle Log screen only. Dismissal
+is `localStorage`, not session: "no" means no, not "no for ten minutes".
+
+iOS has no `beforeinstallprompt` at all and needs Share → Add to Home Screen by
+hand, so that platform gets one line of instructions instead of a button that
+cannot work. Showing a dead Install button would be worse than showing nothing.
+
+## 2026-08-04 — Block 3: Progress collapses to one sentence at zero data
+
+Every screen had an empty state already. Progress had **four**, stacked: a tab
+strip over three sub-tabs that each said "nothing yet" in different words, plus
+a Coach's Notes card with nothing to read. Individually correct, collectively
+reading as a broken screen rather than an early one.
+
+A brand-new account now gets one sentence naming what will appear and what has
+to happen first. The sub-tabs are still there for everyone with data; the guard
+is `usage.size === 0`, which is exactly "this person has never logged a set".
+
+This is the class of thing the LAUNCH.md second-account pass exists to find,
+and it was found by writing that checklist rather than by using the app —
+which is the argument for writing checklists before you need them.

@@ -21,6 +21,8 @@ function s(exercise_id: string, superset_group: number | null = null): WorkoutSe
     distance_meters: null,
     set_type: 'normal',
     superset_group,
+    pr_weight: false,
+    pr_e1rm: false,
   }
 }
 

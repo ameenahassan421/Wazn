@@ -20,6 +20,10 @@ import { SetEntry } from '../components/SetEntry'
 import { useRestTimer, DEFAULT_REST_SECONDS } from '../lib/use-rest-timer'
 import { FinishSummary } from '../components/FinishSummary'
 import { RoutineList } from '../components/RoutineList'
+import { RoutineGenerator } from '../components/RoutineGenerator'
+import { InstallPrompt } from '../components/InstallPrompt'
+import { Welcome } from '../components/Welcome'
+import { useWakeLock } from '../lib/use-wake-lock'
 import { RoutineEditor } from '../components/RoutineEditor'
 import {
   listRoutines,
@@ -39,7 +43,7 @@ import {
 import { summarise } from '../lib/summary'
 import type { WorkoutSummary } from '../lib/summary'
 
-type View = 'overview' | 'picker' | 'entry' | 'summary' | 'routine'
+type View = 'overview' | 'picker' | 'entry' | 'summary' | 'routine' | 'generate'
 
 interface ExerciseBestRow {
   exercise_id: string
@@ -82,7 +86,16 @@ export function LogScreen({ userId }: { userId: string }) {
   } | null>(null)
 
   const [view, setView] = useState<View>('overview')
+  // Onboarding is shown once, to an account with nothing in it, and can be
+  // dismissed forward into either path. It is state rather than a route
+  // because it is a moment, not a place.
+  const [welcomed, setWelcomed] = useState(false)
   const [current, setCurrent] = useState<Exercise | null>(null)
+
+  // The screen stays on while a workout is open. Racking the bar and finding
+  // a locked phone costs most of the 30-second budget the whole app is built
+  // around. Silent, guarded, and released the moment the workout ends.
+  useWakeLock(workout !== null)
   // Every sub-view is one back layer deep: the system back gesture returns
   // to the overview instead of closing the app. One entry for all of them —
   // picker → entry reuses it, so back never retraces the picking steps.
@@ -567,6 +580,18 @@ export function LogScreen({ userId }: { userId: string }) {
 
   // The summary lands here: finishing clears `workout`, so this has to come
   // before the empty state or the summary would never be shown.
+  if (view === 'generate') {
+    return (
+      <RoutineGenerator
+        onBack={() => setView('overview')}
+        onDone={() => {
+          setView('overview')
+          void load()
+        }}
+      />
+    )
+  }
+
   if (view === 'routine') {
     return (
       <div className="py-3">
@@ -599,6 +624,20 @@ export function LogScreen({ userId }: { userId: string }) {
           }}
         />
       </div>
+    )
+  }
+
+  // A brand-new account: no workouts, no routines, nothing to look at. Shown
+  // once and only here, because this is the screen the app opens on.
+  if (!workout && !welcomed && !hasHistory && routines.length === 0) {
+    return (
+      <Welcome
+        onGenerate={() => {
+          setWelcomed(true)
+          setView('generate')
+        }}
+        onSkip={() => setWelcomed(true)}
+      />
     )
   }
 
@@ -644,7 +683,12 @@ export function LogScreen({ userId }: { userId: string }) {
             setEditing(null)
             setView('routine')
           }}
+          onGenerate={() => setView('generate')}
         />
+
+        {/* Offered only once the app has proved useful — `hasHistory` means
+            at least one workout exists — and never while one is open. */}
+        <InstallPrompt earned={hasHistory} />
 
         {lastSummary.length > 0 && lastSession && (
           <section>

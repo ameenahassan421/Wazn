@@ -1,10 +1,15 @@
 # Stage 2A — trywazn.app
 
-**This is Ameen's to execute.** Claude Code cannot: a sandboxed session has no
-egress to Porkbun, Vercel, Resend or Supabase, and `WAZN_PLAN.md` §2.8 forbids
-touching API keys. Everything below is the exact sequence, in order, with the
-values that are fixed written out and the values that are account-specific
-marked as **copy from the dashboard**.
+**This is Ameen's to execute.** Everything below is the exact sequence, in
+order, with the values that are fixed written out and the values that are
+account-specific marked as **copy from the dashboard**.
+
+> **Corrected 2026-08-04.** This page originally said Claude Code has no egress
+> to Supabase. That is no longer true — a session now reaches
+> `api.supabase.com`, so **step 4 can be run from a session** if you would
+> rather delegate it. Steps 1–3 still cannot be: Porkbun, Vercel and the Resend
+> dashboard are unreachable, and the DNS is your account regardless. §2.8 still
+> forbids touching API keys, so step 5 needs the Resend key from you either way.
 
 Nobody except ameen.hassan421@gmail.com can sign in until this is done. That is
 expected and is the whole reason 2A is a prerequisite.
@@ -102,6 +107,12 @@ Both URLs on purpose. `site_url` becomes the first one; the allow list gets
 both, so sign-in keeps working from the Vercel URL while the domain settles.
 Once trywazn.app has been serving for a few days, re-run with only it.
 
+Live config as of 2026-08-04, so you can see what changes: `site_url` is
+`https://workout-theta-plum.vercel.app`, and `uri_allow_list` is that same URL
+plus its `/**`. The `/**` pattern matters — invite links (Block 3) land on
+`trywazn.app/join/<code>`, and a redirect target outside the allow list is
+refused by Supabase auth rather than followed.
+
 Needs `SUPABASE_ACCESS_TOKEN` and `SUPABASE_PROJECT_REF` in `.env`. Both are
 org-wide — never commit them.
 
@@ -122,6 +133,12 @@ SMTP_SENDER_NAME=Wazn
 npm run supabase:admin -- set-smtp
 npm run supabase:admin -- set-templates
 ```
+
+**This step is also the Stage 0C rename finally landing in production.** The
+live project still has `smtp_sender_name = 'Workout'` and
+`smtp_admin_email = onboarding@resend.dev` — 0C renamed the script's default but
+nobody ever pushed the config, so every sign-in email sent so far has come from
+"Workout". `set-smtp` is what fixes it. Verify with `show` afterwards.
 
 `set-templates` re-uploads `supabase/email_templates/`. Both templates must
 contain `{{ .Token }}` — without it the email arrives with no code in it and
@@ -152,8 +169,7 @@ Checklist:
 
 - Update `WAZN_PLAN.md` STATUS: 2A done, and note that non-owner sign-in is
   confirmed by a real delivery rather than assumed.
-- The three zero-set test workouts are still in History. Now is a reasonable
-  time to clear them.
-- Migrations `0007` and `0008` are still unapplied. `0007` is what makes the
-  Progress tab show charts instead of "Apply migration 0007 and reload";
-  `0008` is what makes the exercise detail page show notes and instructions.
+- **Four** (not three) zero-set test workouts are still in History. Now is a
+  reasonable time to clear them — say the word and they go server-side.
+- ~~Migrations `0007` and `0008` are still unapplied.~~ Both were applied and
+  verified against production on 2026-08-04. Nothing to do here.

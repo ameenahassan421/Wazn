@@ -23,6 +23,7 @@ export function RoutineList({
   onDuplicate,
   onDelete,
   onNew,
+  onGenerate,
 }: {
   routines: Routine[]
   busyId: string | null
@@ -31,6 +32,7 @@ export function RoutineList({
   onDuplicate: (routine: Routine) => void
   onDelete: (routine: Routine) => void
   onNew: () => void
+  onGenerate: () => void
 }) {
   const [actionsFor, setActionsFor] = useState<string | null>(null)
   // Delete needs a second tap; the armed state relaxes on its own.
@@ -47,6 +49,13 @@ export function RoutineList({
         <h2 className="kicker flex-1">Routines</h2>
         <button
           type="button"
+          onClick={onGenerate}
+          className="btn-base btn-secondary h-12 px-4 text-sm"
+        >
+          Generate
+        </button>
+        <button
+          type="button"
           onClick={onNew}
           className="btn-base btn-secondary h-12 px-4 text-sm"
         >
@@ -56,7 +65,8 @@ export function RoutineList({
 
       {routines.length === 0 ? (
         <p className="text-sm text-muted">
-          No routines yet. Build one and your usual session is two taps away.
+          No routines yet. Build one and your usual session is two taps away — or let
+          Generate draft a week for you.
         </p>
       ) : (
         <ul className="flex flex-col gap-2">

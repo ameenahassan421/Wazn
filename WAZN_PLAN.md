@@ -12,10 +12,9 @@
 Wazn (Arabic: وزن, "weight") is a mobile-first strength-training PWA
 being built toward functional parity with Hevy, then monetized globally
 with regional pricing. Egypt is the first test market, not the only
-market: US/global users pay a USD tier, Egyptian users an EGP tier.
-Owner: Ameen Hassan (ameen.hassan421@gmail.com is the working test
-account). Claude Code builds it; Ameen reviews at phase gates and tests
-in a real gym.
+market: US/global users pay a USD tier, Egyptian users an EGP tier. Owner: Ameen Hassan (ameen.hassan421@gmail.com is the
+working test account). Claude Code builds it; Ameen reviews at phase
+gates and tests in a real gym.
 
 Core job, unchanged since day one: **log a set in under 30 seconds,
 one hand, mid-workout.** Every decision is subordinate to this.
@@ -30,9 +29,22 @@ These override anything else in this file or in any prompt:
 3. **Ads never appear during a workout.** Only placements allowed:
    one interstitial max on the post-workout summary screen; rewarded
    video only when user-initiated. (Ads arrive in Stage 6, not before.)
-4. **Design system:** dark only, near-black background, off-white text,
-   single amber accent, numbers min 24px `tabular-nums`, touch targets
-   min 48px, one typeface, no gradients/shadows/emoji-in-UI.
+4. **Design system: v2 "Loaded Ink, refined" (handoff bundle, being
+   implemented as of 2026-08-04).** Dark only — ink `#0C0B0A`, chalk
+   `#ECEBE8`, single amber `#F0B429` with a 9-step ramp; warm neutrals,
+   never blue-grey. IBM Plex family (Sans for UI, Mono for kickers,
+   Sans Arabic for RTL) — one family, three voices. Numbers min 24px
+   `tabular-nums` (one recorded exception: 20px multi-set summary).
+   Touch targets min 48px, hot-path controls 58–66px. Hero button
+   tier: ONE solid amber button per screen, max. Knurl cross-hatch
+   texture in thin bands and the PR badge only, never as a fill.
+   Elevation = 1px hairline ring + 1px inset top light — no drop
+   shadows. Exactly ONE gradient exists in the app: the header band.
+   Errors are amber and outlined, never red. Motion: two easings only
+   (ease-out, linear); press = 80ms dim+settle; PR = amber flash to
+   persistent 7% tint; reduced-motion collapses durations. No emoji
+   in UI. Full tokens and screens: design handoff
+   `Wazn_design_system_v2` / DECISIONS.md.
 5. **CSS logical properties only** (`margin-inline-start`, `text-align:
 start`, etc.), `dir="ltr"` on root. Arabic RTL lands in Stage 5 and
    must be a flip, not a rewrite.
@@ -73,10 +85,28 @@ $25 one-time Google Play. First revenue realistically 4–5 months out.
 
 ## 4. Build stages and gates
 
+**Current launch strategy (decided 2026-08-04): the Launch Bundle.**
+Solo phase-gating is replaced by group beta testing. The app ships to
+the first cohort (Ameen + friends) only when the full single- and
+multi-player experience is built: 2A (any address can sign in),
+migrations applied, 2B, 2C (AI layer — REQUIRED for launch), all of
+Stage 3, and Stage 4's wake-lock. Offline sync is a fast-follow after
+beta starts, not a launch item. Gates 1–3 acceptance collapse into one
+beta-cohort test; every tester's friction reports form the combined
+backlog. Testers are framed explicitly as co-testers ("you're beta
+testers, things will break, tell me everything").
+
+Multi-user is by construction, not a feature to add: each tester signs
+in with their own email via OTP at trywazn.app, gets their own
+profile, and their workouts/routines/notes persist in Postgres under
+row-level security scoped to their account. Verified by RLS tests
+(second-user reads return nothing; cross-user writes are refused).
+App-store publishing happens AFTER beta testing — see Stage 4B.
+
 Each stage = one or more Claude Code work sessions. The **gate** must
 pass before the next stage begins. Gates are evidence, not vibes.
 
-### Stage 0 — Foundation fix
+### Stage 0 — Foundation fix (ACTIVE)
 
 The app exists (repo `ameenahassan421/workout`, deployed on Vercel,
 Supabase healthy) but is empty and misnamed. Punch list:
@@ -114,8 +144,10 @@ everywhere. Then he logs one real gym session in it.
 
 Routines (create/edit/duplicate; start workout from routine; sets
 pre-filled from last performance; freestyle still works). Rest timer
-(auto-start on set log, per-exercise default, adjustable, vibration +
-sound, countdown visible inside the logging flow). Set types in UI
+(auto-start on set log, per-exercise default, adjustable ±15s,
+countdown visible in-flow, survives navigation; done state = amber
+ring + "Rest done" — SILENT, no sound/modal per design v2, optional
+haptic only). Set types in UI
 (normal/warmup/failure/drop, one tap to cycle; warmups stay excluded
 from PRs/charts). Optional one-tap RPE. Supersets (grouped exercises,
 alternating logging, shared rest timer). Edit past workouts. Finish
@@ -132,20 +164,19 @@ one query).
 replaces Hevy completely for **two full weeks**, zero fallbacks. Every
 moment he misses Hevy gets written down and becomes backlog.
 
-### Stage 2 — Insight (ACTIVE)
+### Stage 2 — Insight
 
 - **2A (prerequisite — nobody else can sign in until this is done).**
   Domain + email. Domain is purchased: **trywazn.app** (Porkbun,
   2026-08-04, WHOIS privacy + auto-renew on). Add it to Vercel as the
   production alias and to Resend for domain verification (give Ameen
   the exact DNS records to add at Porkbun). OTP sender becomes
-  `code@trywazn.app`, sender name "Wazn". Update Supabase `site_url`
-  and `uri_allow_list` to the new domain. OTP length 6, expiry 3600
-  unchanged. Verify by receiving a code at an address that is NOT the
-  Resend account owner. Note: during Stages 0–1 only
-  ameen.hassan421@gmail.com can sign in (onboarding@resend.dev
-  delivers solely to the Resend owner) — this is fine and expected for
-  solo testing.
+  `code@trywazn.app`, sender name "Wazn". Update Supabase `site_url` and `uri_allow_list` to the new
+  domain. OTP length 6, expiry 3600 unchanged. Verify by receiving a
+  code at an address that is NOT the Resend account owner. Note:
+  during Stages 0–1 only ameen.hassan421@gmail.com can sign in
+  (onboarding@resend.dev delivers solely to the Resend owner) — this
+  is fine and expected for solo testing.
 
 - **2B (near-zero cost — data already in hand).** Exercise
   instructions: import the step-by-step instruction text from
@@ -154,7 +185,7 @@ moment he misses Hevy gets written down and becomes backlog.
   note fields for workouts and per-exercise ("seat position 4"), and
   backfill from the Hevy CSV's `exercise_notes` column that the
   original import ignored. **See §5 — that column turned out to be
-  empty, and the backfill is a no-op.**
+  effectively empty, and the backfill is a no-op.**
 
 - **2C — AI layer (Kimi via OpenRouter).** Two features, one rule:
   deterministic SQL computes all numbers; the model only writes words
@@ -169,36 +200,35 @@ moment he misses Hevy gets written down and becomes backlog.
   `moonshotai/kimi-k2.5` on OpenRouter (≈$0.375/M in, $2.025/M out —
   roughly $0.002 per analysis), key stored as a Supabase secret, called
   only from the Edge Function, never the client; model id lives in an
-  env var so swapping models is config, not code. Multi-user by
-  construction: the Edge Function derives identity from the caller's
-  JWT (never a user_id parameter) and all stat queries run under RLS.
-  Prompts carry numbers and exercise names only — no email, name, or
-  user id ever reaches the model API. Free-tier quotas from day one
-  (analysis regenerates at most weekly per user; ~3 routine
-  generations/month), unmetered on Pro, rewarded-video unlock as the
-  third path at Stage 6. Output language follows the app locale
-  (Arabic at Stage 5). Built to scale from day one: static system
-  prompt + small per-user stat block (maximizes provider prompt-cache
-  discounts); lazy generation only (regenerate on Progress open after
-  new workouts — never scheduled batch for all users); per-feature
-  model env vars (cheapest capable model for routine gen, better model
-  for Coach's Notes); free `:free` variant during testing with
-  automatic 429 fallback to paid; hard monthly spend cap + alert on the
+  env var so swapping models is config, not code. Multi-user by construction: the Edge Function derives
+  identity from the caller's JWT (never a user_id parameter) and all
+  stat queries run under RLS. Prompts carry numbers and exercise names
+  only — no email, name, or user id ever reaches the model API.
+  Free-tier quotas from day one (analysis regenerates at most weekly
+  per user; ~3 routine generations/month), unmetered on Pro,
+  rewarded-video unlock as the third path at Stage 6. Output language
+  follows the app locale (Arabic at Stage 5). Built to scale from day one: static system prompt + small
+  per-user stat block (maximizes provider prompt-cache discounts);
+  lazy generation only (regenerate on Progress open after new
+  workouts — never scheduled batch for all users); per-feature model
+  env vars (cheapest capable model for routine gen, better model for
+  Coach's Notes); free `:free` variant during testing with automatic
+  429 fallback to paid; hard monthly spend cap + alert on the
   OpenRouter account ($20 during testing, raised deliberately).
   Deferred with triggers: request queueing only if sustained provider
   rate-limit hits (~10k+ actives); self-hosting the open weights is
   the exit option, not the plan — revisit only when the API bill
-  rivals an inference cluster. Show "AI-generated — not medical
-  advice" on both surfaces. Note for Stage 6: AI Coach is the flagship
-  Pro feature (real marginal cost, real willingness to pay).
+  rivals an inference cluster. Show "AI-generated —
+  not medical advice" on both surfaces. Note for
+  Stage 6: AI Coach is the flagship Pro feature (real marginal cost,
+  real willingness to pay).
 
-Then the insight features: Exercise detail page (history, records:
-best weight / best est-1RM / best session volume, image, notes). PR
-detection computed on log, celebrated inline (amber flash, no
-confetti), stored consistently. Charts beyond 1RM: session volume over
-time; weekly sets per muscle group vs a 10–20 productive band;
-rep-range distribution. Custom exercises (name, muscle group,
-equipment; private per existing RLS).
+Then the insight features: Exercise detail page (history, records: best weight / best est-1RM /
+best session volume, image, notes). PR detection computed on log,
+celebrated inline (amber flash, no confetti), stored consistently.
+Charts beyond 1RM: session volume over time; weekly sets per muscle
+group vs a 10–20 productive band; rep-range distribution. Custom
+exercises (name, muscle group, equipment; private per existing RLS).
 
 **GATE 2:** 5–10 Minnesota friends onboarded and logging.
 
@@ -218,16 +248,46 @@ real.** This is pre-decided now to prevent sunk-cost drift.
 
 ### Stage 4 — Reliability (gym reality)
 
-Offline logging (full workout with zero signal, sync on reconnect,
-conflict rule: device wins for own data). PWA polish: install prompt,
-splash, icon, wake-lock during active workout.
+Wake-lock during active workout, install prompt, splash, icon ship in
+the Launch Bundle. Offline logging (full workout with zero signal,
+sync on reconnect, conflict rule: device wins for own data) is the
+fast-follow built WHILE the beta cohort is live — it is the
+highest-risk feature (sync bugs eat data) and tests best against real
+gym dead zones reported by testers.
 
 **GATE 4:** an airplane-mode workout syncs clean on reconnect.
+
+### Stage 4B — App Store + Google Play publishing (after beta testing)
+
+The PWA at trywazn.app stays canonical; stores add discoverability
+and native capabilities. Wrap the same React codebase with Capacitor
+(NOT TWA — AdMob at Stage 6 needs native slots) for BOTH platforms:
+
+- **Google Play:** $25 one-time developer account. Internal testing
+  track first (beta cohort installs from it), then production.
+- **Apple App Store:** $99/year developer account; build/sign in
+  Xcode on Ameen's Mac; TestFlight for the cohort, then App Review.
+  Expect review friction; the PWA is the fallback that keeps users
+  unblocked regardless.
+- **Store prerequisites both platforms:** a public privacy policy URL
+  (hosted at trywazn.app/privacy — must cover Supabase storage,
+  Resend email, and AI processing via OpenRouter), store listing
+  assets (icon, screenshots, descriptions — Arabic + English at
+  Stage 5), data-safety / privacy-nutrition forms.
+- Native-only additions ride these builds later: AdMob (Stage 6),
+  push notifications, health integrations if ever un-parked.
+
+**GATE 4B:** beta cohort retention looks healthy AND LAUNCH.md checks
+pass on a store-installed build on both a real Android device and an
+iPhone.
 
 ### Stage 5 — Egypt-ready
 
 Full Arabic UI + RTL (the logical-properties investment pays off
-here). Arabic exercise names alongside English. kg default for
+here). Head start: design v2 ships a complete RTL screen build with
+draft Arabic copy and IBM Plex Sans Arabic rules (Latin digits for
+weights, Arabic-Indic allowed in prose) — the draft copy REQUIRES
+native-speaker review, which is already part of GATE 5. Arabic exercise names alongside English. kg default for
 Egypt-region users. Ramadan-aware streaks (a missed daytime pattern
 during Ramadan doesn't break streaks; suhoor/iftar-friendly session
 times treated as normal).
@@ -239,12 +299,13 @@ logged workout → progress review without hitting English.
 
 Wazn Pro with regional pricing: USD ~$3–4/mo globally (Stripe or
 Play billing), EGP 50–100/mo in Egypt via Paymob (cards + mobile
-wallets). Free = unlimited logging + basic 1RM chart + 4 routines.
-Pro = unlimited routines, advanced analytics, body measurements, no
-ads. Ads on free tier per §2.3 only. Rewarded video unlocks premium
-analytics for 24h. **Capacitor Android build** (not TWA — AdMob
-requires native slots) wrapping the same React code; Play Store
-listing. Web PWA stays ad-free by architecture.
+wallets). Free =
+unlimited logging + basic 1RM chart + 4 routines. Pro = unlimited
+routines, advanced analytics, body measurements, no ads. Ads on free
+tier per §2.3 only. Rewarded video unlocks premium analytics for 24h.
+**Capacitor Android build** (not TWA — AdMob requires native slots)
+wrapping the same React code; Play Store listing. Web PWA stays
+ad-free by architecture.
 
 **GATE 6:** first 10 organic (non-friend) payers, AND free-tier
 retention does not drop vs the Stage 3 baseline after ads switch on.
@@ -263,9 +324,9 @@ the Play listing.
 
 ### Parked indefinitely
 
-Comments, coaching marketplace, Apple Watch / HealthKit, iOS App Store
-(revisit only if Egypt iOS demand proves itself), any feature not
-listed above.
+Comments, coaching marketplace, Apple Watch / HealthKit (revisit
+after stores are live), any feature not listed above. (iOS App Store
+is no longer parked — it is Stage 4B.)
 
 ## 5. Data facts that must never be re-derived wrong
 
@@ -317,71 +378,43 @@ verbatim, so they survive even if this file isn't read.**
 
 > Claude Code: keep this section current. It is the project's memory.
 
-- **Active stage:** 2 — Insight. Opened by Ameen on 2026-08-04 with
-  "start stage 2".
-- **Gates 0 and 1 were opened by decision, not by evidence.** Neither
-  acceptance list was run: Gate 0 wanted an OTP sign-in on a phone plus
-  one real gym session; Gate 1 wanted two full weeks replacing Hevy
-  with zero fallbacks. Ameen is the approver and chose to advance, so
-  this is recorded rather than presented as a pass. One consequence is
-  concrete: the Gate 1 backlog ("every moment he misses Hevy") does not
-  exist, and that backlog was the evidence 2C's AI layer was meant to
-  be justified by.
-- **Stage 0 build items:** all complete (import, deadlift ×2, Wazn
-  rename, 110/134 thumbnails behind a muscle-group gate, design system,
-  RPCs live).
-- **Stage 1 build items:** all complete — routines, rest timer, set
-  types + RPE, supersets, edit past workouts, finish summary + canvas
-  share card, plate calculator, warm-up ramp, duration + streak.
-- **Stage 2 progress:**
-  - [x] 2A prep — `docs/stage2a-domain-setup.md` carries the exact
-        Porkbun DNS records, the Vercel alias steps, and the Supabase
-        config change. **Execution is Ameen's**: this sandbox has no
-        egress to Supabase, Vercel or Resend, and §2.8 forbids touching
-        keys.
-  - [x] 2B schema — `0008_notes_and_instructions.sql`:
-        `exercises.instructions text[]`, `workouts.notes`, and a
-        per-user `exercise_notes` table. Exercises are a shared library
-        (`owner_id is null`), so a per-user note cannot be a column on
-        that table — see `DECISIONS.md`.
-  - [x] 2B instructions import — `scripts/import_instructions.ts`,
-        reusing the Stage 0D matcher so images and instructions can
-        never disagree about which free-exercise-db entry an exercise
-        maps to.
-  - [x] Exercise detail page — records, notes, instructions, history.
-  - [ ] 2A execution (Ameen).
-  - [ ] 2C — AI layer. **Not started, deliberately.** It needs an
-        OpenRouter key, a deployed Edge Function and egress this
-        sandbox does not have; it is also the item whose justification
-        depended on the Gate 1 backlog.
-  - [ ] PR detection stored consistently; rep-range distribution chart;
-        custom exercises.
-- **Migrations live:** 0002–0006.
-- **Migrations NOT applied:** `0007_progress_analytics.sql` (the three
-  Progress sub-tabs show "needs migration 0007" until it is) and
-  `0008_notes_and_instructions.sql` (new; the exercise detail page
-  degrades to records + history without it). Both parse under
-  `scripts/check_migrations.py`; neither has been executed against
-  production, which leaves them unverified by definition.
-- **Tests:** 128 passing.
-- **Data:** exercises 134, workouts 152, workout_sets 3,201, of which
-  335 carry a superset group. RPE on 387.
-- **Domain:** trywazn.app purchased at Porkbun (2026-08-04, WHOIS
-  privacy + auto-renew). No DNS work done — that is 2A, and it is
-  Ameen's to execute.
-- **Design package:** the full system — mark, tokens, type, controls,
-  ten built screens and six proposed ones — is published as an
-  interactive artifact and is the reference for any new UI.
-- **Open decision for Ameen:** three zero-set workouts from the Aug 1
-  desktop testing still render as blank History rows. Say "delete all
-  my workouts with zero sets" and they go server-side.
-- **Verify during Ameen's test:** workout dates display in local time
-  (an evening CST session must not render as the next day — one report
-  line showed a span ending 2026-07-14 where the last session was
-  07-13, which may be a UTC-based query or a display bug).
-- **Next action:** Ameen executes 2A (DNS at Porkbun, Vercel alias,
-  Resend verification) and applies migrations 0007 and 0008. Then
-  either 2C or the remaining insight features — his call.
-- **Last updated:** 2026-08-04 by Claude Code (plan reconciled to the
-  chat-updated version; Stage 2 started: 2A prep, 2B schema + import,
-  exercise detail page).
+- **Strategy:** Launch Bundle (§4 header). Group beta replaces solo gating; 2C
+  is launch-required; store publishing (4B) follows beta.
+- **The Launch Bundle is BUILT.** Every block is complete. What stands between
+  here and invites is one secret and one testing pass — see the two items in
+  bold below.
+- **Stages 0, 1, 2A, 2B:** complete. 2A verified 2026-08-04 against the live
+  auth config; a code was delivered to a non-Resend-owner address, so any
+  address can sign in. Do not touch SMTP, DNS or URL config again unless
+  something breaks.
+- **2C — AI layer:** built and deployed. `coach-notes` and `generate-routine`
+  are ACTIVE with `verify_jwt`; both boot and reject a non-user token.
+- **Stage 3 — social:** complete. Opt-in profiles, follow by username and
+  invite link, feed with likes, weekly leaderboard. Visibility enforced in
+  RLS through one predicate, `private.can_view`; proved by
+  `supabase/tests/rls_social.sql` (8 assertions, all passing).
+- **Stage 4 launch items:** wake-lock, install prompt, zero-data empty states,
+  invite onboarding — all done. **Offline sync is NOT built** and stays a
+  fast-follow.
+- **Migrations live in production: 0001–0011.** All applied and verified by
+  execution, not by parse.
+- **BLOCKED ON AMEEN — 1: add `OPENROUTER_API_KEY`** in Supabase Dashboard →
+  Project Settings → Edge Functions → Secrets. Never `.env`, never Vercel,
+  never a `VITE_` var. Runbook: `docs/stage2c-ai-setup.md`. Model ids are
+  already set. Nothing needs redeploying after.
+- **BLOCKED ON AMEEN — 2: run `LAUNCH.md`** with a second account on a real
+  phone before any invite goes out.
+- **Quality bar owed:** once the key lands, generate Coach's Notes against
+  Ameen's real nine-month history and put the verbatim output in the PR for
+  review **before any other user can see theirs**.
+- **Egress from this environment:** `api.supabase.com`, `api.resend.com`,
+  GitHub, npm. NOT the Vercel app, `trywazn.app`, or `openrouter.ai`.
+- **Data, live:** exercises 134, workouts 154, workout_sets 3,201 (335
+  supersetted, **491 records**), profiles 2, routines 0.
+- **Tests:** 152 passing, plus the SQL RLS suite.
+- **Open decision for Ameen:** four zero-set workouts from desktop testing
+  still render as blank History rows. Say "delete all my workouts with zero
+  sets" and they go server-side.
+- **Next action:** the two blocked items above. After beta starts: offline
+  sync (Stage 4 fast-follow), then Stage 4B store publishing.
+- **Last updated:** 2026-08-04 by Claude Code (Blocks 1-3 complete).

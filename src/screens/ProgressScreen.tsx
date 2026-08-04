@@ -18,6 +18,7 @@ import type { Exercise, ExerciseUsageRow, OneRepMaxPoint } from '../lib/types'
 import { ExercisePicker } from '../components/ExercisePicker'
 import { ExerciseThumb } from '../components/ExerciseThumb'
 import { ExerciseDetail } from '../components/ExerciseDetail'
+import { CoachNotes } from '../components/CoachNotes'
 import {
   SET_BAND,
   heatStep,
@@ -47,12 +48,20 @@ function num(value: number | string | null | undefined): number {
   return Number.isFinite(n) ? n : 0
 }
 
-/** Shown when a Progress RPC is missing — migration 0007 not applied yet. */
+/**
+ * Shown when a Progress RPC does not answer.
+ *
+ * This used to read "Apply migration 0007 and reload", which was correct while
+ * 0007 was unapplied and Ameen was the only user. 0007 and 0008 are live now,
+ * so the only way a reader reaches this text is a genuine fault — and telling a
+ * beta tester in Cairo to apply a migration is telling them the app is broken
+ * in a language that is not theirs to speak.
+ */
 function Unavailable() {
   return (
     <p className="py-8 text-sm text-muted">
-      This chart needs the Progress analytics functions. Apply migration 0007 and
-      reload.
+      This chart is not loading right now. Your workouts are safe — try again in a
+      moment.
     </p>
   )
 }
@@ -125,6 +134,24 @@ export function ProgressScreen() {
 
   if (loading) return <p className="py-10 text-sm text-muted">Loading…</p>
 
+  // Zero data. Without this, a brand-new user gets a tab strip over three
+  // sub-tabs that each say "nothing yet" in different words, plus a Coach's
+  // Notes card with nothing to read — four empty states stacked, which reads
+  // as a broken screen rather than an early one. One sentence is more honest
+  // and takes less explaining.
+  if (usage.size === 0) {
+    return (
+      <div className="py-10">
+        <p className="kicker mb-2">Progress</p>
+        <p className="text-sm text-muted">
+          Nothing to chart yet. Log a few sessions and this fills in on its own —
+          estimated 1RM per lift, volume over time, and how your weekly sets are spread
+          across muscle groups.
+        </p>
+      </div>
+    )
+  }
+
   if (detail) {
     return <ExerciseDetail exercise={detail} onBack={() => setDetail(null)} />
   }
@@ -183,6 +210,10 @@ export function ProgressScreen() {
           )
         })}
       </div>
+
+      {/* Above the charts, because it is the reading of them. Below the tab
+          bar, because switching tabs must not wait for it. */}
+      <CoachNotes />
 
       {view === 'strength' && (
         <StrengthView

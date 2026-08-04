@@ -28,6 +28,8 @@ function set(over: Partial<WorkoutSet> = {}): WorkoutSet {
     distance_meters: null,
     set_type: 'normal',
     superset_group: null,
+    pr_weight: false,
+    pr_e1rm: false,
     ...over,
   }
 }

@@ -73,6 +73,19 @@ export interface WorkoutSet {
   set_type: SetType
   /** Sets sharing a group within one workout were performed alternating. */
   superset_group: number | null
+  /**
+   * Records, maintained by the database (migration 0009), never by the client.
+   * True means this set beat every earlier qualifying set of the same exercise.
+   * They arrive on the INSERT's own response, so the log screen knows about a
+   * record without a second round trip.
+   */
+  pr_weight: boolean
+  pr_e1rm: boolean
+}
+
+/** Either kind of record. One badge, because the row only has room for one. */
+export function isRecord(set: { pr_weight?: boolean; pr_e1rm?: boolean }): boolean {
+  return Boolean(set.pr_weight) || Boolean(set.pr_e1rm)
 }
 
 export interface Routine {
