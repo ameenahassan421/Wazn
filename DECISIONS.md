@@ -665,3 +665,122 @@ Reversible in one parameter if he disagrees.
 `src/components/wordmark-paths.ts`, consumed by both `Wordmark.tsx` and the
 share card — which previously typed "Wazn" in Inter and now draws the actual
 mark via Path2D. One geometry, three surfaces, no drift.
+
+## 2026-08-04 — The plan was reconciled, not overwritten
+
+Ameen updated `WAZN_PLAN.md` in a chat planning session and pasted the new
+version in. Two substantive changes were real and are now in the file: the AI
+layer moved from a conditional Stage 8 into **Stage 2C**, and the domain
+**trywazn.app** was bought at Porkbun.
+
+The pasted STATUS block said "Active stage: 0 — GATE 0 open". The repo
+contained all of Stage 1 built and passing — routines, rest timer, supersets,
+edit-past-workout, finish summary, 117 tests. §6 says trust reality and fix
+STATUS, so §1–§6 were taken from the pasted version and STATUS was rewritten
+from the code. Writing the pasted STATUS verbatim would have destroyed the
+project's memory of an entire completed stage.
+
+**Stage 8 was dropped**, because the new version has no Stage 8 — its content
+is now 2C. Nothing was lost; the AI work is described in more detail there than
+it was in Stage 8.
+
+Recorded because the two files disagreed and somebody has to be able to see
+which way the disagreement was resolved.
+
+## 2026-08-04 — Gates 0 and 1 were opened by decision, not evidence
+
+Ameen said "start stage 2". Neither gate's acceptance list had been run: Gate 0
+wanted an OTP sign-in on a phone and one real gym session; Gate 1 wanted two
+full weeks replacing Hevy with zero fallbacks. §4 says gates are evidence, not
+vibes. He is the approver and chose to advance, which is his call to make.
+
+The consequence worth naming: **the Gate 1 backlog does not exist.** "Every
+moment he misses Hevy gets written down and becomes backlog" was the mechanism
+by which Stage 2 was supposed to know what to build — and specifically the
+evidence 2C's AI layer was conditional on. Stage 2 is therefore being built
+from the plan's own list rather than from use. That is a weaker footing than
+the plan intended, and it is the reason 2C was not started here.
+
+## 2026-08-04 — 2B's CSV note backfill is a no-op
+
+The plan says to backfill notes from the Hevy CSV's `exercise_notes` column
+"that the original import ignored". Checked before building the importer:
+**4 rows out of 3,197 carry a value, and two of the four are junk** — "Barbeel"
+(a typo) and "Warmup" (a set type the schema already models). The other two are
+equally uninformative.
+
+So no importer was written. The note _fields_ were still built — they are for
+notes Ameen writes from here on, which is the actual value — but there is
+nothing to migrate into them. Added to `WAZN_PLAN.md` §5 so this is not
+re-derived by a future session that reads the plan and goes looking.
+
+## 2026-08-04 — Per-user notes cannot be a column on `exercises`
+
+`exercises` is a shared library: seeded rows have `owner_id is null` and every
+authenticated user can read them (`exercises_select_visible`, 0001). A note
+like "seat position 4" is one person's, so putting it on that row would publish
+it to everyone the moment a second user existed.
+
+`0008` therefore splits the two:
+
+- `exercises.instructions text[]` — a property of the lift. Shared, and
+  writable only by the service role, because there is no insert/update policy
+  on `exercises` for `authenticated`.
+- `public.exercise_notes (user_id, exercise_id, note)` — a property of the
+  person's relationship to the lift. Own-row RLS, primary key on
+  `(user_id, exercise_id)`, and a separate index on `exercise_id` so the
+  cascade from a deleted exercise does not seq-scan it.
+
+A `btrim(note) <> ''` check enforces "an empty note is a deleted note" in the
+database rather than trusting the client, because an empty note card is
+indistinguishable from a real one on screen.
+
+## 2026-08-04 — 0008 was executed, not just parsed
+
+`scripts/check_migrations.py` proves a migration parses. It does not prove it
+runs, and the plan is explicit that an unexecuted migration is unverified.
+
+The whole chain 0001→0008 was run against a real Postgres 16 in this session,
+with `auth.users`, `auth.uid()` and the three Supabase roles stubbed, and then
+exercised with seeded data:
+
+- `exercise_records` returned 58.97 best set, 70.764 best e1RM, 1143.08 best
+  session volume, 3 sets, 1 session — warmups and the null-weight set correctly
+  excluded, matching hand calculation.
+- A second user calling the same function got nulls and zeroes: security
+  invoker + RLS holds.
+- That user's attempt to insert an `exercise_notes` row owned by the first user
+  was refused by the RLS policy.
+- A whitespace-only note was refused by the check constraint.
+
+This is still not proof against production, which has real data and a real
+migration history. It is a great deal more than a parse.
+
+## 2026-08-04 — One matcher for images and instructions
+
+`scripts/import_instructions.ts` imports `bestMatch` from
+`match_exercise_images.ts` rather than matching names again. Two matchers would
+eventually disagree about which free-exercise-db entry an exercise is, and the
+failure mode is one lift's photo above another lift's steps — which reads as
+authoritative and is worse than showing nothing at all. The Stage 0D matcher
+already earned its muscle-group gate the hard way (see the 2026-08-01 entry).
+
+Coverage verified offline against the exercise list rebuilt from the CSV:
+**110/134 exercises get instructions, with 0 matched-but-stepless.** That is
+the same 110 that have thumbnails, which is the point — the same exercises get
+both, and the same 24 get neither.
+
+## 2026-08-04 — Two Stage 0C leftovers in `supabase_admin.ts`
+
+Found while writing the 2A runbook:
+
+1. `smtp_sender_name` defaulted to **`'Workout'`** — the old app name, on the
+   From line of every sign-in email. Stage 0C was supposed to rename everything
+   user-visible; this was missed because it is a fallback, not a literal.
+   Now `'Wazn'`.
+2. `set-site-url` **replaced** `uri_allow_list` with a single URL. Running it
+   for trywazn.app would have silently dropped the Vercel origin and broken
+   sign-in there mid-migration. It now accepts several URLs: the first becomes
+   `site_url`, all of them go in the allow list.
+
+Both would have surfaced during 2A as confusing failures rather than as errors.

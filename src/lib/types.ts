@@ -42,6 +42,14 @@ export interface Exercise {
   image_url: string | null
   /** Per-lift rest default in seconds; null falls back to the app default. */
   default_rest_seconds: number | null
+  /**
+   * Ordered how-to steps from free-exercise-db, filled by
+   * `scripts/import_instructions.ts`. Null for a custom exercise, for an
+   * exercise with no confident match, and everywhere until migration 0008 is
+   * applied — the detail page omits the section rather than showing an
+   * empty one.
+   */
+  instructions?: string[] | null
 }
 
 export interface Workout {
