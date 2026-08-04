@@ -9,6 +9,17 @@
 Mobile-first strength-training PWA. The job it does: log a set in under 30
 seconds, one hand, mid-workout. Every decision serves that.
 
+## Skills first (Ameen, 2026-08-04)
+
+Before starting any task, search the session's available skills and load the
+relevant one with the Skill tool — do the task unassisted only when no skill
+covers it. Known fits: `canvas-design` for any visual/brand/logo work,
+`supabase-postgres-best-practices` before touching anything in
+`supabase/migrations/`, `dataviz` before writing any chart, `frontend-slides`
+/ `pptx` / `docx` / `pdf` for documents. The brand direction for the mark
+lives in `docs/design-philosophy.md` ("Loaded Ink") — read it before
+redrawing any logo asset.
+
 ## Non-negotiables carried from WAZN_PLAN.md §2
 
 These are reproduced verbatim so they survive even if the plan is not read.
