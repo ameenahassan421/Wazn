@@ -36,33 +36,10 @@ function vibrate(pattern: number | number[]) {
   }
 }
 
-/**
- * A short beep via WebAudio. No audio file: a 2 KB asset that must be fetched
- * and decoded before the first rest ends is a worse trade than 20 lines here,
- * and this cannot 404.
- */
-function beep() {
-  try {
-    const Ctor =
-      window.AudioContext ??
-      (window as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext
-    if (!Ctor) return
-    const ctx = new Ctor()
-    const osc = ctx.createOscillator()
-    const gain = ctx.createGain()
-    osc.type = 'sine'
-    osc.frequency.value = 880
-    gain.gain.setValueAtTime(0.0001, ctx.currentTime)
-    gain.gain.exponentialRampToValueAtTime(0.3, ctx.currentTime + 0.01)
-    gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.45)
-    osc.connect(gain).connect(ctx.destination)
-    osc.start()
-    osc.stop(ctx.currentTime + 0.5)
-    osc.onended = () => void ctx.close()
-  } catch {
-    /* audio is a nicety, never a failure */
-  }
-}
+// There is deliberately no sound here. Design v2 amends the rest timer to be
+// SILENT: the done state is an amber ring and "Rest done", with an optional
+// haptic. A gym is somebody else's room, and a phone that chirps between sets
+// is a reason to leave the timer off — which costs the whole feature.
 
 export function useRestTimer(): RestTimer {
   const [endsAt, setEndsAt] = useState<number | null>(null)
@@ -86,7 +63,6 @@ export function useRestTimer(): RestTimer {
       if (endsAt !== null && stamp >= endsAt && !firedRef.current) {
         firedRef.current = true
         vibrate([200, 100, 200])
-        beep()
       }
     }
 

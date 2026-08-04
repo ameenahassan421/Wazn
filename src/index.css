@@ -425,12 +425,6 @@ button {
   background: linear-gradient(180deg, #131210, var(--color-ink));
 }
 
-/* Bottom fade behind the pinned primary action, so content scrolling under
-   it dissolves instead of colliding with the button edge. */
-@utility action-fade {
-  background: linear-gradient(180deg, transparent, var(--color-ink) 26%);
-}
-
 /* ─── Motion ───────────────────────────────────────────────────────────────
    Two curves in the whole app: ease-out and linear. No springs, no shimmer,
    no scroll effects. A plate landing, not a page turning. */

@@ -882,3 +882,129 @@ the thumbnail filter, and `StreakPlates` (4px wide, radius 2, heights
 The real diff was type (Inter → IBM Plex, plus a scale with weights bound to
 sizes), the hero tier, the knurl, the inset top-light on elevation, and the
 kicker moving to mono. Everything else was already there.
+
+## 2026-08-04 — Reconciliation: what STATUS claimed, and what the database says
+
+The Launch Bundle plan arrived with a STATUS block that said "Active stage: 0 —
+GATE 0 open". The repo's own STATUS was a stage ahead of that, and production
+was ahead of both. §6 says trust reality, so §1–§6 were taken from the new plan
+(Launch Bundle, §2.4 v2, Stage 4B, the silent rest timer) and STATUS was rebuilt
+by querying the live database.
+
+**The egress assumption is dead.** Every prior note in this file that says a
+sandboxed session cannot reach Supabase — and there are several, including the
+one that explains how migration 0007 shipped broken — was true then and is false
+now. This environment reaches `api.supabase.com` and `api.resend.com`. It does
+not reach the Vercel app, `trywazn.app`, or `openrouter.ai`. That single change
+is what made the rest of this session possible, and it retires "I could not run
+it" as an acceptable reason for an unexecuted migration.
+
+Drift found, all resolved in favour of reality:
+
+| STATUS said                      | production says                                             |
+| -------------------------------- | ----------------------------------------------------------- |
+| migrations 0007 + 0008 unapplied | **0007 was already live**, in its fixed `bucket_order` form |
+| workouts 152                     | **154** (two logged since, latest 2026-08-03)               |
+| three zero-set test workouts     | **four**                                                    |
+| tests 128                        | 128, confirmed                                              |
+
+The 0007 surprise is worth naming: somebody applied it between sessions and
+nothing recorded that. There is no `supabase_migrations.schema_migrations` table
+on this project — migrations have been applied by pasting into the SQL editor,
+which leaves no trace — so "which migrations are live?" is answered by probing
+for objects rather than by reading a ledger. Creating that ledger was attempted
+and is worth doing; it is the one thing that would have made this an unnecessary
+paragraph.
+
+## 2026-08-04 — 0007 and 0008 applied to production, and verified by execution
+
+Applied over the Management API, both from the repo files rather than from
+memory, so production now matches source exactly. 0007 was re-applied on purpose
+even though its functions existed: `create or replace` is idempotent, and it
+removes any doubt that the live definitions are the ones in the repo.
+
+Verified as Ameen's account, with `set local role authenticated` and his `sub`
+in `request.jwt.claims` — so `security invoker` and RLS were actually in the
+path, not bypassed by the `postgres` role the Management API otherwise runs as:
+
+| exercise              | best set  | best e1RM | best session volume | sets | sessions |
+| --------------------- | --------- | --------- | ------------------- | ---- | -------- |
+| Bench Press (Barbell) | 68.04 kg  | 77.11 kg  | 2,064.77 kg         | 149  | 38       |
+| Deadlift (Barbell)    | 122.47 kg | 134.72 kg | 2,231.67 kg         | 10   | 2        |
+| Squat (Barbell)       | 81.65 kg  | 92.54 kg  | 1,524.00 kg         | 39   | 10       |
+
+122.47 kg is 270 lb, which is the Stage 0A ×2 deadlift correction arriving
+intact at the far end of the chain — CSV patch, import, migration, RPC, RLS.
+
+The negative case was run too: the same call as the _other_ profile
+(`6da348ed`) returns nulls and zeroes. Security invoker holds.
+
+## 2026-08-04 — §2.4 deviation register, decided once
+
+§2.4 is now prose compressed from the design handoff, and prose loses detail.
+Rather than re-litigate each difference every session, here is the whole register
+with the call made once.
+
+**Deviations that stand.**
+
+1. **IBM Plex is self-hosted, not Google Fonts.** Reasons unchanged (offline
+   precache, Egyptian mobile data, one fewer third party, reachability).
+2. **IBM Plex Sans Arabic is not shipped yet.** It arrives with the Stage 5
+   strings it exists for; shipping it now is an unused download on every load.
+3. **`previousSummary` renders at 20px**, under the 24px number floor. Already
+   named in §2.4 as the one recorded exception.
+4. **The hero tier is not applied to "Add exercise"** on the workout overview.
+   §2.4 says at most one solid amber button per screen; it does not say every
+   screen must have one. That screen's primary interaction is tapping an
+   exercise in the list, and a filled Add exercise would outrank it.
+5. **Exercise fallback tiles keep five stepped neutral tones.** The handoff
+   flattens them to one. Telling adjacent rows apart at a glance is the entire
+   job of the tile. Neutrals, so the one-accent rule is untouched.
+6. **`rule-fade` is a gradient and stays.** §2.4 says "exactly ONE gradient
+   exists in the app: the header band", but the handoff itself specifies
+   `rule-fade`, so the prose contradicts its own source. The reading, settled:
+   the rule governs gradients used as **fills**. `rule-fade` is a 1px separator
+   whose ramp exists precisely to avoid the hard border a solid rule would draw.
+   One gradient fill (the header band), one gradient hairline.
+
+**Deviations that were wrong and are now fixed.**
+
+7. **The rest timer beeped.** Stage 1 as originally written said "vibration +
+   sound"; design v2 amends it to SILENT, amber ring and "Rest done", optional
+   haptic only. The `beep()` WebAudio oscillator is deleted. This is the right
+   call independent of the spec: a gym is somebody else's room, and a phone that
+   chirps between sets is a reason to switch the timer off — which costs the
+   whole feature, not just the sound. The haptic stays, already guarded.
+8. **`action-fade` was a third gradient.** Defined in `index.css`, referenced by
+   nothing — the pinned-action layout it was written for was reverted (see the
+   redesign entry above) and the utility outlived it. Deleted.
+
+**Checked and already compliant:** no red anywhere in `src/` (errors are amber
+and outlined), no emoji in UI, no drop shadows, both nine-step ramps present,
+48px touch floor, `record-flash` keyframe present and matching the PR motion
+spec.
+
+## 2026-08-04 — What in the 2A runbook went stale
+
+`docs/stage2a-domain-setup.md` was written when this environment could reach
+nothing. Three of its statements are now false, and one of them would have cost
+Ameen time while he is running the runbook:
+
+- Its opening line says Claude Code has no egress to **Supabase**. It does now.
+  Step 4 (`set-site-url`) is therefore runnable from a session. Steps 1–3
+  (Porkbun, Vercel, Resend DNS) genuinely are not — those hosts are blocked and
+  DNS is Ameen's account anyway.
+- Its closing note says migrations 0007 and 0008 are unapplied. Both are live as
+  of today.
+- It says three zero-set test workouts remain. There are four.
+
+Two things it does not say and should, both now added: production auth config is
+still `smtp_sender_name = 'Workout'` and `smtp_admin_email = onboarding@resend.dev`
+— the Stage 0C rename never reached the live project, only the script's default —
+and `uri_allow_list` will need `trywazn.app/**` before the Block 3 invite links
+resolve.
+
+**Not touched from here.** Changing `smtp_sender_name` is a live auth-config
+write, §2.6 puts auth changes behind an ask, and Ameen is executing that exact
+surface right now — two writers on one config is how a half-applied SMTP setting
+happens. Flagged instead.
