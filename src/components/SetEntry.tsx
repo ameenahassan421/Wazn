@@ -8,6 +8,7 @@ import type { RestTimer } from '../lib/use-rest-timer'
 import { RestTimerBar } from './RestTimer'
 import { LoadHelper } from './LoadHelper'
 import { ExerciseThumb } from './ExerciseThumb'
+import { IconBack } from './icons'
 
 /** Stepper increments, in the unit on screen. */
 const WEIGHT_STEP: Record<Unit, number> = { lbs: 5, kg: 2.5 }
@@ -190,21 +191,24 @@ export function SetEntry({
 
   return (
     <section className="flex flex-col gap-3 pb-4">
-      <div className="flex items-center gap-3">
-        <ExerciseThumb exercise={exercise} size={44} />
-        <div className="min-w-0 flex-1">
-          <h2 className="truncate text-base font-medium">{exercise.name}</h2>
-          <p className="truncate text-[11px] text-muted">
-            {exercise.muscle_group} · {exercise.equipment}
-          </p>
-        </div>
+      <div className="flex items-center gap-2">
+        {/* Back is a chevron at the inline start — where forty years of
+            phone interfaces put it — not a "Done" that reads as submit. */}
         <button
           type="button"
           onClick={onBack}
-          className="btn-base btn-secondary h-12 px-3 text-sm"
+          aria-label="Back to workout"
+          className="btn-base btn-quiet -ms-2 h-12 w-12 shrink-0"
         >
-          Done
+          <IconBack />
         </button>
+        <ExerciseThumb exercise={exercise} size={64} />
+        <div className="min-w-0 flex-1">
+          <h2 className="truncate text-lg font-medium">{exercise.name}</h2>
+          <p className="truncate text-xs text-muted">
+            {exercise.muscle_group} · {exercise.equipment}
+          </p>
+        </div>
       </div>
 
       <div

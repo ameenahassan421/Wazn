@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { describeError, supabase } from '../lib/supabase'
+import { useBackLayer } from '../lib/use-back'
 import { useUnit } from '../lib/unit-context'
 import { formatWeight } from '../lib/units'
 import { formatDuration, formatRelativeDay, formatWorkoutDate } from '../lib/format'
@@ -82,6 +83,31 @@ export function LogScreen({ userId }: { userId: string }) {
 
   const [view, setView] = useState<View>('overview')
   const [current, setCurrent] = useState<Exercise | null>(null)
+  // Every sub-view is one back layer deep: the system back gesture returns
+  // to the overview instead of closing the app. One entry for all of them —
+  // picker → entry reuses it, so back never retraces the picking steps.
+  useBackLayer(view !== 'overview', () => {
+    setEditing(null)
+    setCurrent(null)
+    setSummary(null)
+    setView('overview')
+  })
+  // Two-tap finish: one graze of a button must not end the workout. The
+  // armed state relaxes on its own.
+  const [confirmFinish, setConfirmFinish] = useState(false)
+  useEffect(() => {
+    if (!confirmFinish) return
+    const id = setTimeout(() => setConfirmFinish(false), 4000)
+    return () => clearTimeout(id)
+  }, [confirmFinish])
+  // Re-render each half-minute while a workout is open, so the duration in
+  // the status row moves. The value itself is derived at render time.
+  const [, setDurationTick] = useState(0)
+  useEffect(() => {
+    if (!workout) return
+    const id = setInterval(() => setDurationTick((t) => t + 1), 30_000)
+    return () => clearInterval(id)
+  }, [workout])
   const [previousSession, setPreviousSession] = useState<PreviousSessionRow[]>([])
   // Which exercise the loaded previous session belongs to. Derived rather than
   // a loading flag: a flag set in an effect lands after the child has already
@@ -369,6 +395,7 @@ export function LogScreen({ userId }: { userId: string }) {
 
   async function finishWorkout() {
     if (!workout) return
+    setConfirmFinish(false)
     setSaving(true)
     setError(null)
     const endedAt = new Date().toISOString()
@@ -629,7 +656,7 @@ export function LogScreen({ userId }: { userId: string }) {
                 <li key={exercise.id}>
                   {i > 0 && <div className="rule-fade" />}
                   <div className="flex items-center gap-3 py-2">
-                    <ExerciseThumb exercise={exercise} size={42} />
+                    <ExerciseThumb exercise={exercise} size={48} />
                     <span className="min-w-0 flex-1 truncate text-sm">
                       {exercise.name}
                     </span>
@@ -664,11 +691,16 @@ export function LogScreen({ userId }: { userId: string }) {
         </div>
         <button
           type="button"
-          onClick={() => void finishWorkout()}
+          onClick={() => {
+            if (confirmFinish) void finishWorkout()
+            else setConfirmFinish(true)
+          }}
           disabled={saving}
-          className="btn-base btn-secondary h-12 px-4 text-sm disabled:opacity-45"
+          className={`btn-base h-12 px-4 text-sm disabled:opacity-45 ${
+            confirmFinish ? 'btn-primary' : 'btn-secondary'
+          }`}
         >
-          Finish
+          {confirmFinish ? 'Finish?' : 'Finish'}
         </button>
       </div>
 
@@ -727,7 +759,7 @@ export function LogScreen({ userId }: { userId: string }) {
                 borderRadius: 'var(--radius-md)',
               }}
             >
-              <ExerciseThumb exercise={nextUp} size={38} />
+              <ExerciseThumb exercise={nextUp} size={48} />
               <span className="min-w-0 flex-1">
                 <span className="block text-[10px] uppercase tracking-[0.1em] text-accent">
                   Next
@@ -778,7 +810,7 @@ export function LogScreen({ userId }: { userId: string }) {
                       className="ring-edge flex w-full items-center gap-3 bg-surface px-3 py-2.5 text-start"
                       style={{ borderRadius: 'var(--radius-md)' }}
                     >
-                      {exercise && <ExerciseThumb exercise={exercise} size={40} />}
+                      {exercise && <ExerciseThumb exercise={exercise} size={48} />}
                       <span className="min-w-0 flex-1">
                         <span className="flex items-center gap-2">
                           <span className="min-w-0 flex-1 truncate text-sm font-medium">

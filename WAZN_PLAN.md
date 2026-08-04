@@ -392,7 +392,7 @@ verbatim, so they survive even if this file isn't read.**
   (`position` is a reserved word); fixed, and the whole chain 0001-0007 has now
   been applied and the four functions called against a local Postgres 16. See
   `DECISIONS.md` and `scripts/check_migrations.py`.
-- **Tests:** 113 passing (95 at Gate 1, 49 at Gate 0).
+- **Tests:** 117 passing (95 at Gate 1, 49 at Gate 0).
 - **Data:** exercises 134, workouts 152, workout_sets 3,201, of which 335
   now carry a superset group (backfilled from the CSV the import had been
   dropping). RPE on 387.
@@ -401,6 +401,15 @@ verbatim, so they survive even if this file isn't read.**
   Progress expanded into Strength / Volume / Balance sub-tabs. Worked from a
   supplied handoff built on a stock template; structure taken, identity not —
   see `DECISIONS.md`. No data model, auth or RLS change.
+- **Usability reevaluation (2026-08-04, after Ameen found the app unusable):**
+  the app never touched browser history, so the Android back gesture closed
+  the installed PWA from anywhere — including mid-workout. Fixed with a
+  back-stack hook (`src/lib/use-back.ts`) plus visible back chevrons on every
+  sub-view; thumbnails raised to 64px in the picker and desaturated to sit in
+  the app's palette; sign out moved behind a menu; two-tap Finish and Delete;
+  live workout duration; tab-bar icons; auth screen brought onto the design
+  system. Deployment reevaluated and unchanged — the failures were app-level,
+  not hosting. Full findings in `DECISIONS.md`. Tests 117.
 - **Next action:** GATE 1 — Ameen builds his 4-day upper/lower split as
   routines and replaces Hevy for two full weeks with zero fallbacks. Every
   moment he misses Hevy gets written down and becomes backlog. **Apply
@@ -411,5 +420,5 @@ verbatim, so they survive even if this file isn't read.**
 - **Blocked on Ameen:** GATE 1 sign-off. Upcoming: domain purchase before
   Stage 2 (item 2A) — nobody but ameen.hassan421@gmail.com can sign in until
   then, which is expected.
-- **Last updated:** 2026-08-02 by Claude Code (visual redesign; Stage 1 build
-  items unchanged and still awaiting GATE 1).
+- **Last updated:** 2026-08-04 by Claude Code (usability reevaluation and
+  navigation fix; Stage 1 build items unchanged and still awaiting GATE 1).

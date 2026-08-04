@@ -524,3 +524,87 @@ evidence; the stage waits for it.
 
 8A also carries its own kill condition — if voice does not beat the steppers on
 wall-clock for half of attempts over a real week, it is a demo and gets deleted.
+
+## 2026-08-04 — Usability reevaluation: the app had no back button at all
+
+Ameen tried to use the app and reported it unusable: no back button, images
+too small, the whole thing unprofessional. The reevaluation was done by
+_running the app_ — every screen screenshotted at a phone viewport against a
+stubbed Supabase — rather than by re-reading the code, per the 0F lesson:
+grep proves absence, a screenshot proves what a user sees.
+
+### The core finding: system back closed the app from everywhere
+
+All navigation was plain `useState` — tabs, the picker, set entry, the
+routine editor, dialogs. Nothing ever touched browser history. The manifest
+ships `display: standalone`, so the installed PWA has no browser chrome, and
+the Android back gesture — the one universal "back" a phone user has — popped
+an empty history stack and **closed the app**. From inside a workout. Every
+"unusable" in the report traces to some form of this.
+
+Fix: `src/lib/use-back.ts`, a back-stack hook (`useBackLayer`) that mirrors
+each open UI layer into exactly one `history.pushState` entry, stamped with
+its depth. `popstate` closes every layer deeper than the arriving state;
+closing in-app consumes the entry silently. Registered layers: non-Log tabs
+(back returns to Log, as bottom tab bars promise), the Log sub-views, both
+exercise pickers, the edit-set dialog, the header menu. One entry per
+_layer_, not per view — picker → set entry stays one level deep, so back
+always lands on the workout overview, never retraces picking steps.
+Unit-tested with jsdom's history.
+
+### Visible back affordances
+
+A history entry fixes the gesture; a visible control fixes the confusion.
+Every sub-view now leads with a chevron at the inline start (`IconBack`,
+48px target): the picker (was: a "Cancel" past the keyboard), set entry
+(was: a "Done" that read as submit), the routine editor. Directional icons
+flip under `[dir='rtl']` in CSS, so Stage 5 gets them for free.
+
+### Images: bigger, and seated in the app's own light
+
+Thumbnails went 38–44px → 64px in the picker and set-entry header, 48px
+everywhere else. The real problem was not only size: free-exercise-db
+photos carry loud red gym walls that clash row after row. A `thumb-photo`
+filter (saturate 0.35, brightness 0.9) seats them all in the app's palette —
+recognition survives, the colour noise does not. No re-encoding: the 240px
+sources cover 64px at 3× DPR.
+
+### The rest of what the audit found, all fixed
+
+- **Sign out** was a permanent header text button — a destructive action
+  parked where a thumb rests, on every screen. Moved behind a ⋯ menu (which
+  is itself a back layer). Not a settings screen; one menu item.
+- **Finish** ended the workout on one tap. Now two-tap ("Finish" → "Finish?"),
+  disarming itself after 4s. Same pattern for routine Delete, which was a
+  naked one-tap `×` on the home screen.
+- **Routine rows** carried three permanent text actions (Edit/Copy/×);
+  they read as a settings list. One ⋯ per row expands the actions.
+- **Workout duration** never ticked — `formatDuration` was computed once per
+  render and nothing re-rendered. A 30s interval now keeps it honest.
+- **Tab bar** was three bare words; icons (barbell/clock/trend, inline SVG,
+  no library) make it read as navigation.
+- **History rows** reserved space for a thumbnail that could never load
+  before expansion (it derived from sets fetched _on_ expansion) and used
+  `+`/`−` glyphs as disclosure. Dead thumb dropped, chevron rotates.
+- **Auth screen** said "Wazn" in plain Inter with an off-system filled
+  button — the only screen a new user is guaranteed to see, and the only one
+  not using the design system. Wordmark, system buttons, one line of copy.
+
+### Deployment: reevaluated and deliberately unchanged
+
+Ameen asked whether the app should be deployed differently. No hosting
+change fixes any of the above — the failures were in the app, not the
+delivery. Vercel + PWA stays: it is free, auto-deploys `main`, and the
+installed PWA now handles back correctly. The plan already schedules a
+Capacitor Android build at Stage 6 (AdMob needs native slots); pulling that
+forward would add a build pipeline and Play review latency while GATE 1 is
+still open. Revisit only if gym-reality testing surfaces something a PWA
+cannot do (Stage 4 lists the known candidates).
+
+### What was deliberately not touched
+
+The logging mechanics (§2.1 is sacred): steppers, auto-fill, rest timer,
+superset alternation, kg storage, and the sub-24px `previousSummary`
+exception all carry over exactly. The redesign moved chrome, not the flow.
+Tests went 113 → 117 (the back stack is covered); typecheck, lint, and the
+production build pass.

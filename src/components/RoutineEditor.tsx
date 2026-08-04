@@ -3,6 +3,7 @@ import type { Exercise } from '../lib/types'
 import type { RoutineDetail, RoutineDraft } from '../lib/routines'
 import { ExercisePicker } from './ExercisePicker'
 import { ExerciseThumb } from './ExerciseThumb'
+import { IconBack } from './icons'
 
 /**
  * Build or edit a routine: name, ordered exercises, planned sets per exercise.
@@ -120,17 +121,18 @@ export function RoutineEditor({
 
   return (
     <section className="flex flex-col gap-3 pb-4">
-      <div className="flex items-center gap-2">
-        <h2 className="flex-1 text-base font-semibold">
-          {routine ? 'Edit routine' : 'New routine'}
-        </h2>
+      <div className="flex items-center gap-1">
         <button
           type="button"
           onClick={onCancel}
-          className="h-12 rounded-md px-2 text-sm text-muted"
+          aria-label="Back"
+          className="btn-base btn-quiet -ms-2 h-12 w-12 shrink-0"
         >
-          Cancel
+          <IconBack />
         </button>
+        <h2 className="flex-1 text-base font-semibold">
+          {routine ? 'Edit routine' : 'New routine'}
+        </h2>
       </div>
 
       <div>

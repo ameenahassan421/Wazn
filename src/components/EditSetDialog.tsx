@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { formatWeight, fromDisplayWeight } from '../lib/units'
 import type { Unit } from '../lib/units'
+import { useBackLayer } from '../lib/use-back'
 
 /**
  * Correct one logged set.
@@ -33,6 +34,8 @@ export function EditSetDialog({
     weightKg === null ? '' : formatWeight(weightKg, unit),
   )
   const [repsText, setRepsText] = useState(reps === null ? '' : String(reps))
+  // The system back gesture dismisses the dialog, as it would any sheet.
+  useBackLayer(true, onCancel)
 
   function submit() {
     const parsedWeight = weight.trim() === '' ? null : Number.parseFloat(weight)

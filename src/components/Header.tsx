@@ -1,17 +1,24 @@
+import { useState } from 'react'
 import { useUnit } from '../lib/unit-context'
 import { supabase } from '../lib/supabase'
+import { useBackLayer } from '../lib/use-back'
 import { Wordmark } from './Wordmark'
+import { IconMore } from './icons'
 
 /**
  * The Log tab shows the mark; History and Progress show their name, because
  * on those screens the title is the only thing saying where you are.
  *
- * The controls draw a compact 34px chip inside a 48px button. The design
- * called for 34px controls outright, but §2.4 sets a 48px touch floor and
- * this is a one-handed app — the visual density is kept, the target is not.
+ * Sign out lives behind the overflow menu, not in the header. It was a
+ * permanent text button beside the unit toggle — a destructive action parked
+ * where a thumb rests, tappable mid-workout, and paying rent on every screen
+ * for something used a few times a year.
  */
 export function Header({ title }: { title?: string }) {
   const { unit, toggleUnit } = useUnit()
+  const [menuOpen, setMenuOpen] = useState(false)
+  // The menu is a layer: the system back gesture closes it, not the app.
+  useBackLayer(menuOpen, () => setMenuOpen(false))
 
   return (
     <header className="header-band sticky top-0 z-20">
@@ -34,13 +41,46 @@ export function Header({ title }: { title?: string }) {
               {unit}
             </span>
           </button>
-          <button
-            type="button"
-            onClick={() => void supabase.auth.signOut()}
-            className="btn-base btn-quiet h-12 px-2 text-sm"
-          >
-            Sign out
-          </button>
+
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setMenuOpen((v) => !v)}
+              aria-label="Menu"
+              aria-expanded={menuOpen}
+              className="btn-base btn-quiet h-12 w-12"
+            >
+              <IconMore size={20} />
+            </button>
+
+            {menuOpen && (
+              <>
+                <button
+                  type="button"
+                  aria-label="Close menu"
+                  onClick={() => setMenuOpen(false)}
+                  className="fixed inset-0 z-30 cursor-default"
+                />
+                <div
+                  role="menu"
+                  className="ring-edge absolute end-0 top-full z-40 min-w-[176px] overflow-hidden bg-raised py-1"
+                  style={{ borderRadius: 'var(--radius-md)' }}
+                >
+                  <button
+                    type="button"
+                    role="menuitem"
+                    onClick={() => {
+                      setMenuOpen(false)
+                      void supabase.auth.signOut()
+                    }}
+                    className="flex h-12 w-full items-center px-4 text-start text-sm"
+                  >
+                    Sign out
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
         </div>
       </div>
     </header>

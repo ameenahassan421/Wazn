@@ -1,6 +1,7 @@
 import { useMemo, useRef, useState } from 'react'
 import type { Exercise, ExerciseUsageRow } from '../lib/types'
 import { ExerciseThumb } from './ExerciseThumb'
+import { IconBack } from './icons'
 
 /**
  * Recently used first, then most used, then everything else alphabetically.
@@ -57,7 +58,17 @@ export function ExercisePicker({
 
   return (
     <div className="flex flex-col">
-      <div className="sticky top-14 z-10 flex items-center gap-2 border-b border-line bg-ink py-3">
+      <div className="sticky top-14 z-10 flex items-center gap-1 border-b border-line bg-ink py-3">
+        {/* A real back control where every phone puts one, not a "Cancel"
+            hidden past the keyboard's reach at the end of the row. */}
+        <button
+          type="button"
+          onClick={onCancel}
+          aria-label="Back"
+          className="btn-base btn-quiet -ms-2 h-12 w-12 shrink-0"
+        >
+          <IconBack />
+        </button>
         <input
           ref={inputRef}
           type="search"
@@ -69,13 +80,6 @@ export function ExercisePicker({
           spellCheck={false}
           className="h-12 flex-1 rounded-lg border border-line bg-surface px-3 text-start text-base outline-none placeholder:text-muted focus:border-accent"
         />
-        <button
-          type="button"
-          onClick={onCancel}
-          className="h-12 rounded-lg px-3 text-sm text-muted"
-        >
-          Cancel
-        </button>
       </div>
 
       {results.length === 0 ? (
@@ -90,11 +94,17 @@ export function ExercisePicker({
               <button
                 type="button"
                 onClick={() => onPick(exercise)}
-                className="flex h-16 w-full items-center gap-3 text-start"
+                className="flex min-h-[76px] w-full items-center gap-3 py-1.5 text-start"
               >
-                <ExerciseThumb exercise={exercise} />
-                <span className="flex-1 truncate text-base">{exercise.name}</span>
-                <span className="text-xs text-muted">{exercise.muscle_group}</span>
+                <ExerciseThumb exercise={exercise} size={64} />
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-base font-medium">
+                    {exercise.name}
+                  </span>
+                  <span className="mt-0.5 block text-xs text-muted">
+                    {exercise.muscle_group} · {exercise.equipment}
+                  </span>
+                </span>
               </button>
             </li>
           ))}

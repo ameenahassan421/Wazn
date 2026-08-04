@@ -33,10 +33,10 @@ function toneFor(group: string): string {
 
 export function ExerciseThumb({
   exercise,
-  size = 42,
+  size = 48,
 }: {
   exercise: Exercise
-  /** 44 in the set-entry header, 42 in list rows, 40 in cards, 38 compact. */
+  /** 64 in the picker and set-entry header, 48 in list rows and cards. */
   size?: number
 }) {
   const [failed, setFailed] = useState(false)
@@ -50,7 +50,7 @@ export function ExerciseThumb({
       style={{
         width: size,
         height: size,
-        borderRadius: 'var(--radius-sm)',
+        borderRadius: size >= 56 ? 'var(--radius-md)' : 'var(--radius-sm)',
       }}
       aria-hidden="true"
     >
@@ -70,7 +70,7 @@ export function ExerciseThumb({
           loading="lazy"
           decoding="async"
           onError={() => setFailed(true)}
-          className="absolute inset-0 h-full w-full object-cover"
+          className="thumb-photo absolute inset-0 h-full w-full object-cover"
         />
       )}
     </span>
