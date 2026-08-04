@@ -11,3 +11,7 @@ dev-dist
 # Font cache for scripts/build_logo.py. The outlines it produces are
 # committed; the font itself is fetched on demand and never shipped.
 scripts/.aref-ruqaa-700.ttf
+
+# Impeccable: per-developer hook consent and machine-local Claude settings.
+.impeccable/config.local.json
+.claude/settings.local.json
