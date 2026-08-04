@@ -380,52 +380,41 @@ verbatim, so they survive even if this file isn't read.**
 
 - **Strategy:** Launch Bundle (§4 header). Group beta replaces solo gating; 2C
   is launch-required; store publishing (4B) follows beta.
-- **Active work:** Launch Bundle. Reconciliation, migrations, design-v2
-  remainder and Block 1 are done. Blocks 2 (social) and 3 (hardening) remain.
-- **Gates 0 and 1 were opened by decision, not evidence.** Recorded, not
-  presented as a pass. The Launch Bundle replaces the missing Gate 1 backlog
-  with the beta cohort's reports.
-- **Stages 0 and 1:** all build items complete.
-- **Stage 2:**
-  - [x] **2A — DONE and verified 2026-08-04.** trywazn.app live at Porkbun;
-        Resend domain verified; Vercel serving www with a 308 from the apex;
-        `site_url = https://www.trywazn.app`; allow list holds four entries
-        (www.trywazn.app and the Vercel origin, each bare and `/**`); SMTP
-        sender `code@trywazn.app`, name `Wazn`. **Acceptance passed: a code was
-        delivered to an address that is not the Resend owner.** Any address can
-        now sign in — the launch blocker is closed. Do not touch SMTP, DNS or
-        URL config again unless something breaks.
-  - [x] 2B schema, instructions import, exercise detail page.
-  - [x] PR detection stored per set (0009) and wired to `record-flash`.
-  - [x] **2C built and deployed** — see below. Waiting on one secret.
-  - [ ] Rep-range chart refinements; custom exercises.
-- **Migrations live in production: 0001–0010.** 0007+0008 applied and verified
-  2026-08-04; 0009 (per-set records) applied and backfilled — **491 of 3,201
-  sets are records**; 0010 (AI layer) applied. All verified by execution
-  against production, not by parse.
-- **Edge Functions live:** `coach-notes` and `generate-routine`, both ACTIVE
-  with `verify_jwt`. Both boot and reject a non-user token with their own
-  message. The model call itself is **unverified** — see below.
-- **BLOCKED ON AMEEN — one value:** add `OPENROUTER_API_KEY` in Supabase
-  Dashboard → Project Settings → **Edge Functions → Secrets**. Never `.env`,
-  never Vercel, never a `VITE_` var. Full runbook:
-  `docs/stage2c-ai-setup.md`. Model ids are already set as secrets
-  (`COACH_MODEL`, `COACH_MODEL_FREE`, `ROUTINE_MODEL`, `ROUTINE_MODEL_FREE`).
-  Nothing needs redeploying after the key lands.
-- **Quality bar owed:** once the key is in, generate Coach's Notes against
+- **The Launch Bundle is BUILT.** Every block is complete. What stands between
+  here and invites is one secret and one testing pass — see the two items in
+  bold below.
+- **Stages 0, 1, 2A, 2B:** complete. 2A verified 2026-08-04 against the live
+  auth config; a code was delivered to a non-Resend-owner address, so any
+  address can sign in. Do not touch SMTP, DNS or URL config again unless
+  something breaks.
+- **2C — AI layer:** built and deployed. `coach-notes` and `generate-routine`
+  are ACTIVE with `verify_jwt`; both boot and reject a non-user token.
+- **Stage 3 — social:** complete. Opt-in profiles, follow by username and
+  invite link, feed with likes, weekly leaderboard. Visibility enforced in
+  RLS through one predicate, `private.can_view`; proved by
+  `supabase/tests/rls_social.sql` (8 assertions, all passing).
+- **Stage 4 launch items:** wake-lock, install prompt, zero-data empty states,
+  invite onboarding — all done. **Offline sync is NOT built** and stays a
+  fast-follow.
+- **Migrations live in production: 0001–0011.** All applied and verified by
+  execution, not by parse.
+- **BLOCKED ON AMEEN — 1: add `OPENROUTER_API_KEY`** in Supabase Dashboard →
+  Project Settings → Edge Functions → Secrets. Never `.env`, never Vercel,
+  never a `VITE_` var. Runbook: `docs/stage2c-ai-setup.md`. Model ids are
+  already set. Nothing needs redeploying after.
+- **BLOCKED ON AMEEN — 2: run `LAUNCH.md`** with a second account on a real
+  phone before any invite goes out.
+- **Quality bar owed:** once the key lands, generate Coach's Notes against
   Ameen's real nine-month history and put the verbatim output in the PR for
-  his review **before any other user can see theirs**.
-- **Egress from this environment:** reaches `api.supabase.com`,
-  `api.resend.com`, GitHub, npm. Does NOT reach the Vercel app,
-  `trywazn.app`, or `openrouter.ai`. Older notes assuming no Supabase egress
-  are stale.
+  review **before any other user can see theirs**.
+- **Egress from this environment:** `api.supabase.com`, `api.resend.com`,
+  GitHub, npm. NOT the Vercel app, `trywazn.app`, or `openrouter.ai`.
 - **Data, live:** exercises 134, workouts 154, workout_sets 3,201 (335
-  supersetted, 491 records), profiles 2, routines 0.
-- **Tests:** 142 passing.
+  supersetted, **491 records**), profiles 2, routines 0.
+- **Tests:** 152 passing, plus the SQL RLS suite.
 - **Open decision for Ameen:** four zero-set workouts from desktop testing
   still render as blank History rows. Say "delete all my workouts with zero
   sets" and they go server-side.
-- **Next action:** Block 2 (Stage 3 social), then Block 3 (launch hardening +
-  LAUNCH.md). Offline sync stays a fast-follow — not built now.
-- **Last updated:** 2026-08-04 by Claude Code (Block 1 complete; 2A confirmed
-  against the live auth config).
+- **Next action:** the two blocked items above. After beta starts: offline
+  sync (Stage 4 fast-follow), then Stage 4B store publishing.
+- **Last updated:** 2026-08-04 by Claude Code (Blocks 1-3 complete).

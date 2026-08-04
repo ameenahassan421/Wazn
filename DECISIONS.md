@@ -1256,3 +1256,86 @@ trade one discoverability problem for another.
 Two taps, disarming after four seconds, matching Finish and routine Delete.
 Signing out mid-workout loses no data — every set is already in Postgres — but
 it does put a six-digit code between someone and their next set.
+
+## 2026-08-04 — Block 3: an invite link without a router
+
+`/join/<code>` has to work, and the app has no router. It still does not have
+one.
+
+`captureInviteFromUrl()` runs in `main.tsx` **before React renders**: it reads
+the path, stashes the code, and rewrites the URL to `/`. By first paint the app
+is at `/` exactly as it always is, and nothing downstream knows an invite ever
+happened except one key in storage.
+
+Two details that are not obvious and would each have cost a debugging session:
+
+**The URL is rewritten even when the code is junk.** A `/join/nonsense` path
+left in the address bar becomes the installed PWA's `start_url` if the visitor
+installs from that page — and then every launch forever is an invite landing.
+
+**The stash is `sessionStorage`, not React state or `localStorage`.** Signing
+in with an OTP means leaving for a mail client and coming back, possibly
+minutes later, possibly in a new tab. React state does not survive that.
+`localStorage` survives too much — it would outlive the intent and silently
+follow somebody weeks later. A session is exactly the lifetime of "I am
+currently accepting this invite".
+
+The code is **peeked** at on the auth screen (to say "Ameen invited you") and
+**spent** on the welcome screen after sign-in. Peeking must not consume, which
+is why those are two functions and why there is a test for it.
+
+### `resolve_invite` is granted to `anon`
+
+Deliberate, and a genuine loosening. The landing page needs to name the inviter
+_before_ there is an account, and that sentence is most of why an invite link
+works at all. The cost is that someone holding a valid code learns a display
+name and a username — precisely what the inviter chose to share by sending the
+link. Enumeration is not the risk: a code is 12 characters from a 36-symbol
+alphabet, about 62 bits, and the function returns nothing for a profile that
+has since gone private.
+
+## 2026-08-04 — Block 3: the wake lock is silent, guarded, and re-acquired
+
+Three things about `useWakeLock` that are the actual feature, not the API call:
+
+**It is released by the browser whenever the page is hidden**, and not
+restored. Without a `visibilitychange` re-acquire, taking one phone call
+mid-workout turns the feature off for the rest of the session — which is worse
+than not having it, because you have stopped expecting the screen to lock.
+
+**Every call is guarded.** iOS Safari only got Screen Wake Lock in 16.4 and
+plenty of budget Android browsers lack it. A missing API is a no-op; a refused
+request (no user gesture, battery saver) is swallowed.
+
+**There is no toast.** §2.1 forbids interrupting the logging flow, and a
+feature whose entire job is to not be noticed should not announce itself.
+
+## 2026-08-04 — Block 3: the install prompt waits for evidence
+
+`beforeinstallprompt` fires whenever Chrome feels like it, which is usually the
+first visit — the single most ignorable moment on the mobile web. The event is
+captured and `preventDefault()`ed so the browser's own infobar does not appear,
+and the offer is held until `hasHistory` is true: at least one workout logged.
+The offer follows evidence that the app is useful, not a page load.
+
+Never during a workout — it is mounted on the idle Log screen only. Dismissal
+is `localStorage`, not session: "no" means no, not "no for ten minutes".
+
+iOS has no `beforeinstallprompt` at all and needs Share → Add to Home Screen by
+hand, so that platform gets one line of instructions instead of a button that
+cannot work. Showing a dead Install button would be worse than showing nothing.
+
+## 2026-08-04 — Block 3: Progress collapses to one sentence at zero data
+
+Every screen had an empty state already. Progress had **four**, stacked: a tab
+strip over three sub-tabs that each said "nothing yet" in different words, plus
+a Coach's Notes card with nothing to read. Individually correct, collectively
+reading as a broken screen rather than an early one.
+
+A brand-new account now gets one sentence naming what will appear and what has
+to happen first. The sub-tabs are still there for everyone with data; the guard
+is `usage.size === 0`, which is exactly "this person has never logged a set".
+
+This is the class of thing the LAUNCH.md second-account pass exists to find,
+and it was found by writing that checklist rather than by using the app —
+which is the argument for writing checklists before you need them.

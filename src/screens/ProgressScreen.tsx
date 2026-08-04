@@ -134,6 +134,24 @@ export function ProgressScreen() {
 
   if (loading) return <p className="py-10 text-sm text-muted">Loading…</p>
 
+  // Zero data. Without this, a brand-new user gets a tab strip over three
+  // sub-tabs that each say "nothing yet" in different words, plus a Coach's
+  // Notes card with nothing to read — four empty states stacked, which reads
+  // as a broken screen rather than an early one. One sentence is more honest
+  // and takes less explaining.
+  if (usage.size === 0) {
+    return (
+      <div className="py-10">
+        <p className="kicker mb-2">Progress</p>
+        <p className="text-sm text-muted">
+          Nothing to chart yet. Log a few sessions and this fills in on its own —
+          estimated 1RM per lift, volume over time, and how your weekly sets are spread
+          across muscle groups.
+        </p>
+      </div>
+    )
+  }
+
   if (detail) {
     return <ExerciseDetail exercise={detail} onBack={() => setDetail(null)} />
   }

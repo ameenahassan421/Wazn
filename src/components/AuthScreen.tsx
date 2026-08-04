@@ -1,6 +1,8 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
 import { supabase } from '../lib/supabase'
+import { peekInviteCode } from '../lib/invite'
+import { nameOf, resolveInvite, type Inviter } from '../lib/social'
 import { Wordmark } from './Wordmark'
 
 type Step = 'email' | 'code'
@@ -12,6 +14,24 @@ export function AuthScreen() {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
+  const [inviter, setInviter] = useState<Inviter | null>(null)
+
+  // Naming the person who invited you is most of why an invite link works, and
+  // it has to happen here — before there is an account, let alone a session.
+  // `resolve_invite` is granted to `anon` for exactly this sentence; see
+  // migration 0011. The code is only peeked at, not consumed: it is spent
+  // after sign-in, when there is a session to follow with.
+  useEffect(() => {
+    const code = peekInviteCode()
+    if (!code) return
+    let active = true
+    void resolveInvite(code).then((found) => {
+      if (active) setInviter(found)
+    })
+    return () => {
+      active = false
+    }
+  }, [])
 
   async function sendCode(event: FormEvent) {
     event.preventDefault()
@@ -75,6 +95,7 @@ export function AuthScreen() {
       <h1>
         <Wordmark height={56} className="text-text" />
       </h1>
+      {inviter && <p className="kicker mt-4">{nameOf(inviter)} invited you</p>}
       <p className="mt-4 text-sm text-muted">
         Log a set in under thirty seconds. Sign in with a 6-digit email code — no
         password.

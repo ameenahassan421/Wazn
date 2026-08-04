@@ -419,3 +419,15 @@ $$;
 
 revoke execute on function public.resolve_invite(text) from public;
 grant execute on function public.resolve_invite(text) to authenticated;
+
+-- `anon` too, deliberately. The invite landing page needs to say "Ameen
+-- invited you" *before* the visitor has an account — that sentence is most of
+-- why an invite link works at all, and at that moment there is no session to
+-- authorise with.
+--
+-- What it costs: someone holding a valid code learns a display name and a
+-- username. That is precisely what the inviter chose to share by sending the
+-- link. What it does not allow is enumeration — a code is 12 characters from
+-- a 36-symbol alphabet, about 62 bits, and the function returns nothing for a
+-- code that does not exist or for a profile that has gone private since.
+grant execute on function public.resolve_invite(text) to anon;

@@ -21,6 +21,9 @@ import { useRestTimer, DEFAULT_REST_SECONDS } from '../lib/use-rest-timer'
 import { FinishSummary } from '../components/FinishSummary'
 import { RoutineList } from '../components/RoutineList'
 import { RoutineGenerator } from '../components/RoutineGenerator'
+import { InstallPrompt } from '../components/InstallPrompt'
+import { Welcome } from '../components/Welcome'
+import { useWakeLock } from '../lib/use-wake-lock'
 import { RoutineEditor } from '../components/RoutineEditor'
 import {
   listRoutines,
@@ -83,7 +86,16 @@ export function LogScreen({ userId }: { userId: string }) {
   } | null>(null)
 
   const [view, setView] = useState<View>('overview')
+  // Onboarding is shown once, to an account with nothing in it, and can be
+  // dismissed forward into either path. It is state rather than a route
+  // because it is a moment, not a place.
+  const [welcomed, setWelcomed] = useState(false)
   const [current, setCurrent] = useState<Exercise | null>(null)
+
+  // The screen stays on while a workout is open. Racking the bar and finding
+  // a locked phone costs most of the 30-second budget the whole app is built
+  // around. Silent, guarded, and released the moment the workout ends.
+  useWakeLock(workout !== null)
   // Every sub-view is one back layer deep: the system back gesture returns
   // to the overview instead of closing the app. One entry for all of them —
   // picker → entry reuses it, so back never retraces the picking steps.
@@ -615,6 +627,20 @@ export function LogScreen({ userId }: { userId: string }) {
     )
   }
 
+  // A brand-new account: no workouts, no routines, nothing to look at. Shown
+  // once and only here, because this is the screen the app opens on.
+  if (!workout && !welcomed && !hasHistory && routines.length === 0) {
+    return (
+      <Welcome
+        onGenerate={() => {
+          setWelcomed(true)
+          setView('generate')
+        }}
+        onSkip={() => setWelcomed(true)}
+      />
+    )
+  }
+
   // Empty state: one button, then context. Nothing here is a control you have
   // to read before you can start lifting.
   if (!workout) {
@@ -659,6 +685,10 @@ export function LogScreen({ userId }: { userId: string }) {
           }}
           onGenerate={() => setView('generate')}
         />
+
+        {/* Offered only once the app has proved useful — `hasHistory` means
+            at least one workout exists — and never while one is open. */}
+        <InstallPrompt earned={hasHistory} />
 
         {lastSummary.length > 0 && lastSession && (
           <section>
