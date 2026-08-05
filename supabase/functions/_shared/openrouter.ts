@@ -18,6 +18,17 @@ export interface ChatResult {
   /** The model that actually answered, after any fallback. */
   model: string
   usedFree: boolean
+  /**
+   * Why the model stopped. `'length'` means it hit the token ceiling and the
+   * answer is cut off mid-structure.
+   *
+   * Worth carrying all the way to the caller: a truncated response and a
+   * genuinely malformed one are indistinguishable once parsing fails, and they
+   * need opposite fixes — raise the ceiling versus change the prompt. Twice now
+   * a truncation has been diagnosed as "the model returned junk", so the
+   * provider's own answer to that question is no longer thrown away.
+   */
+  finishReason?: string
 }
 
 export class ModelError extends Error {
@@ -33,13 +44,25 @@ export class ModelError extends Error {
 /**
  * Every request is capped. A runaway generation is a bill, not a bug report.
  *
- * 2400, not the 900 this started at. Reasoning models spend tokens thinking
- * before they answer, and at 900 a live test against real data was cut off
- * mid-thought — the model was clearly on its way to correct JSON and simply
- * ran out of room. A cap that truncates the answer is not a cost control, it
- * is a guaranteed failure that also costs money.
+ * The cap has now been too low twice, and both times the symptom was the same:
+ * a truncated object that no parser can read.
+ *
+ * At 900, a Coach's Notes run against real data was cut off mid-thought. Raised
+ * to 2400, which fixed notes and was assumed to fix everything.
+ *
+ * It did not. On 2026-08-05 a 4-day routine failed repeatedly with "The routine
+ * came back unreadable" while a 3-day routine had succeeded minutes earlier —
+ * the first successful generation the feature ever produced. The difference is
+ * output size, and the cap is shared. A routine is a nested structure of days,
+ * exercises and sets; notes are five short strings. One number cannot serve
+ * both, so the ceiling is now per call.
+ *
+ * The size is what makes this affordable to be generous about: output tokens on
+ * the free model cost nothing, and on the paid fallback a routine is a fraction
+ * of a cent. Truncating a response you have already paid for is the expensive
+ * outcome, not the large ceiling.
  */
-const MAX_TOKENS = 2400
+const DEFAULT_MAX_TOKENS = 2400
 const TIMEOUT_MS = 45_000
 
 /**
@@ -66,6 +89,7 @@ async function callOnce(
   system: string,
   user: string,
   apiKey: string,
+  maxTokens: number,
   jsonSchema?: Record<string, unknown>,
 ): Promise<Response> {
   const controller = new AbortController()
@@ -84,7 +108,7 @@ async function callOnce(
       },
       body: JSON.stringify({
         model,
-        max_tokens: MAX_TOKENS,
+        max_tokens: maxTokens,
         temperature: 0.4,
         messages: [
           // The system prompt is static per feature and goes first, which is
@@ -132,12 +156,15 @@ export async function chat({
   system,
   user,
   jsonSchema,
+  maxTokens = DEFAULT_MAX_TOKENS,
 }: {
   freeModel: string | undefined
   paidModel: string
   system: string
   user: string
   jsonSchema?: Record<string, unknown>
+  /** Raise this for anything whose output is a nested structure. */
+  maxTokens?: number
 }): Promise<ChatResult> {
   const apiKey = Deno.env.get('OPENROUTER_API_KEY')
   if (!apiKey) {
@@ -157,7 +184,14 @@ export async function chat({
   for (const attempt of attempts) {
     let response: Response
     try {
-      response = await callOnce(attempt.model, system, user, apiKey, jsonSchema)
+      response = await callOnce(
+        attempt.model,
+        system,
+        user,
+        apiKey,
+        maxTokens,
+        jsonSchema,
+      )
     } catch (error) {
       // A timeout or a network fault on the free variant is worth one paid
       // retry; on the paid one there is nothing left to try.
@@ -168,7 +202,7 @@ export async function chat({
 
     if (response.ok) {
       const payload = (await response.json()) as {
-        choices?: { message?: { content?: string } }[]
+        choices?: { message?: { content?: string }; finish_reason?: string }[]
       }
       const content = payload.choices?.[0]?.message?.content
       if (!content) {
@@ -176,7 +210,12 @@ export async function chat({
         lastBody = 'the model returned no content'
         continue
       }
-      return { content, model: attempt.model, usedFree: attempt.free }
+      return {
+        content,
+        model: attempt.model,
+        usedFree: attempt.free,
+        finishReason: payload.choices?.[0]?.finish_reason,
+      }
     }
 
     lastStatus = response.status

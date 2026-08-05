@@ -1874,3 +1874,52 @@ Dropping `setup-cli` also removed one of the two actions GitHub warns are still
 on the deprecated Node 20. `actions/checkout@v4` is the remaining one; it is
 being forced onto Node 24 and works, so it is left alone rather than bundled
 into an unrelated fix.
+
+## 2026-08-05 — The token cap was one number for two very different jobs
+
+Within minutes of the parser fix reaching production, `generate-routine`
+produced **the first successful generation in its life** — and then failed
+twice more with the same "The routine came back unreadable" it was supposed to
+have fixed.
+
+The difference between the success and the failures was not the model's mood.
+The success was a **3-day** routine, requested from a stale cached build; the
+failures were **4-day** routines. Output size is the variable, and `MAX_TOKENS`
+was a single shared constant of 2400.
+
+Coach's Notes returns five short strings. A routine returns days containing
+exercises containing sets, and Nemotron is a reasoning model that spends part
+of its budget thinking before it emits any of it. One ceiling could not serve
+both, and the larger job was the one that broke.
+
+`chat()` now takes `maxTokens` per call. Routines get 6000; notes keep 2400.
+Output tokens cost nothing on the free model and a fraction of a cent on the
+paid fallback, so being generous here is cheaper than the alternative: a
+truncated answer wastes the entire request and the whole feature with it.
+
+### The wrong fix, and how it was avoided
+
+The failure had already been diagnosed once as "the free model sometimes
+returns junk", and the proposed remedy was to retry on the paid model when the
+content would not parse. That would have been **wrong, and expensive** — it
+would have paid Kimi to truncate at exactly the same ceiling. Ameen asking
+"paid from where?" is what sent me back to the data instead of shipping it.
+
+Worth generalising: a fallback is the right answer when the _provider_ failed
+and the wrong answer when the _request_ was malformed. Telling those apart is
+the whole job, and it is not free — this one took a ledger query and noticing
+that 3 succeeded where 4 failed.
+
+### Truncation now says it is truncation
+
+The provider answers this question directly with `finish_reason`, and the code
+was throwing that away. A truncated response and a genuinely malformed one are
+indistinguishable once parsing fails, and they need opposite fixes — raise the
+ceiling versus change the prompt. Twice now a truncation has been misdiagnosed
+as garbage output.
+
+`finish_reason` is carried through `ChatResult`, and `generate-routine` checks
+it before parsing, so a cut-off answer says **"That routine was too long to
+finish. Try fewer days"** rather than "came back unreadable". The user gets an
+action instead of a mystery, and the next occurrence is diagnosable from the
+message alone.

@@ -264,6 +264,13 @@ Deno.serve(async (request) => {
         })),
       }),
       jsonSchema: SCHEMA,
+      // A routine is days of exercises of sets — a nested structure, and far
+      // larger than the five short strings Coach's Notes returns. Sharing one
+      // ceiling with notes is what made a 4-day routine fail with "came back
+      // unreadable" on 2026-08-05 while a 3-day one had just succeeded. Output
+      // tokens are free on the free model and a fraction of a cent on the paid
+      // fallback; a truncated answer costs the whole feature.
+      maxTokens: 6000,
     })
 
     // Validated against the real table by the one module in this codebase the
@@ -271,6 +278,16 @@ Deno.serve(async (request) => {
     // model told to copy from a list will still occasionally invent an
     // exercise, and the failure mode of trusting it is a routine containing a
     // lift that does not exist.
+    // A truncated response and a malformed one look identical to a parser and
+    // need opposite fixes, so the provider's own reason is checked first rather
+    // than guessed at later.
+    if (result.finishReason === 'length') {
+      throw new HttpError(
+        'That routine was too long to finish. Try fewer days, or fewer kinds of equipment.',
+        502,
+      )
+    }
+
     const { days: validated, dropped } = validatePlan(
       parsePlan(result.content),
       available,
