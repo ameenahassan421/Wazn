@@ -51,7 +51,8 @@ most 6 words) and a body of 1 to 2 sentences. Rules:
 - If the block is nearly empty, say that plainly and suggest logging a few
   sessions rather than inventing an analysis.
 
-Return JSON only.`
+Output ONLY the JSON object. Do not explain your reasoning, do not think out
+loud, do not write anything before or after the JSON.`
 
 const SCHEMA = {
   type: 'object',
@@ -86,10 +87,21 @@ function parseInsights(raw: string): Insight[] {
   try {
     parsed = JSON.parse(raw)
   } catch {
-    // Some models wrap JSON in a fenced block despite being asked not to.
+    // Models ignore "JSON only" in two different ways, and both were seen in
+    // live testing: a fenced block, and a reasoning preamble with the object
+    // somewhere after it. Take the outermost {...} anywhere in the text.
+    // Not a parser — just the first brace to the last, which is exactly right
+    // for a response that is one object with prose around it.
     const fenced = raw.match(/```(?:json)?\s*([\s\S]*?)```/)
-    if (!fenced) throw new HttpError('The notes came back unreadable.', 502)
-    parsed = JSON.parse(fenced[1])
+    const candidate = fenced
+      ? fenced[1]
+      : raw.slice(raw.indexOf('{'), raw.lastIndexOf('}') + 1)
+    if (!candidate.trim()) throw new HttpError('The notes came back unreadable.', 502)
+    try {
+      parsed = JSON.parse(candidate)
+    } catch {
+      throw new HttpError('The notes came back unreadable.', 502)
+    }
   }
 
   const list = (parsed as { insights?: unknown }).insights

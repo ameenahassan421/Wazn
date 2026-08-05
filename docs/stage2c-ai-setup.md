@@ -59,11 +59,16 @@ for you to read **before any other user can see theirs**.
 | `ROUTINE_MODEL_FREE`             | `moonshotai/kimi-k2.5:free`                                |
 | `OPENROUTER_API_KEY`             | **missing — this is step 2**                               |
 
-**One caveat on the model ids.** This environment cannot reach `openrouter.ai`,
-so the four slugs above are the ones the plan names, not ones verified against
-OpenRouter's live model list. If a call fails with "model not found", the fix
-is to correct the value in the same Secrets screen — that is the whole reason
-model ids are environment variables and not code.
+**The model ids are now fact, not the plan's guess.** `moonshotai/kimi-k2.5:free`
+— which the plan specified — **does not exist**; OpenRouter has no `:free`
+variant of any moonshot model. Four free candidates were tested against the real
+schema and only Nemotron both answered and honoured it.
+
+**⚠️ Buy credits.** The account has never purchased any, so the paid model
+returns `402` and the free model is carrying everything. That works, but it
+means a free-tier rate limit is a _user-visible failure_ instead of a slower
+answer — the fallback the design depends on has nothing to fall back to.
+Roughly **$5** restores it. <https://openrouter.ai/settings/credits>
 
 ## How it behaves before the key lands
 

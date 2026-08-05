@@ -398,15 +398,23 @@ verbatim, so they survive even if this file isn't read.**
   fast-follow.
 - **Migrations live in production: 0001–0011.** All applied and verified by
   execution, not by parse.
-- **BLOCKED ON AMEEN — 1: add `OPENROUTER_API_KEY`** in Supabase Dashboard →
-  Project Settings → Edge Functions → Secrets. Never `.env`, never Vercel,
-  never a `VITE_` var. Runbook: `docs/stage2c-ai-setup.md`. Model ids are
-  already set. Nothing needs redeploying after.
+- **2C is LIVE.** `OPENROUTER_API_KEY` set 2026-08-04; Coach's Notes verified
+  against Ameen's real nine-month history, every figure traceable to
+  `coach_stats()`. The plan's `moonshotai/kimi-k2.5:free` **does not exist** —
+  no moonshot model has a `:free` variant — so the free slug is
+  `nvidia/nemotron-3-super-120b-a12b:free`, chosen by testing four candidates
+  against the real schema. See DECISIONS.md.
+- **BLOCKED ON AMEEN — 1: buy ~$5 of OpenRouter credit.** The account has
+  never purchased any, so the paid model returns 402 and the free model is
+  carrying everything. It works, but a free-tier rate limit is currently a
+  user-visible failure rather than a slower answer — the fallback the design
+  depends on has nothing to fall back to.
+  <https://openrouter.ai/settings/credits>
+- **Rotate the OpenRouter key** once beta is settled: it was shared in a chat
+  session, so treat it as compromised by construction.
 - **BLOCKED ON AMEEN — 2: run `LAUNCH.md`** with a second account on a real
   phone before any invite goes out.
-- **Quality bar owed:** once the key lands, generate Coach's Notes against
-  Ameen's real nine-month history and put the verbatim output in the PR for
-  review **before any other user can see theirs**.
+- **Quality bar: PASSED 2026-08-04**, before any other user could see theirs.
 - **Egress from this environment:** `api.supabase.com`, `api.resend.com`,
   GitHub, npm. NOT the Vercel app, `trywazn.app`, or `openrouter.ai`.
 - **Data, live:** exercises 134, workouts 154, workout_sets 3,201 (335
@@ -417,4 +425,4 @@ verbatim, so they survive even if this file isn't read.**
   sets" and they go server-side.
 - **Next action:** the two blocked items above. After beta starts: offline
   sync (Stage 4 fast-follow), then Stage 4B store publishing.
-- **Last updated:** 2026-08-04 by Claude Code (Blocks 1-3 complete).
+- **Last updated:** 2026-08-04 by Claude Code (2C live and verified end to end).

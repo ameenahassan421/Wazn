@@ -1339,3 +1339,80 @@ is `usage.size === 0`, which is exactly "this person has never logged a set".
 This is the class of thing the LAUNCH.md second-account pass exists to find,
 and it was found by writing that checklist rather than by using the app —
 which is the argument for writing checklists before you need them.
+
+## 2026-08-04 — 2C went live, and a self-test found two things review had not
+
+Ameen supplied the OpenRouter key and asked for the quality bar. The key is set
+as the Supabase secret `OPENROUTER_API_KEY` (Edge Functions → Secrets — never
+`.env`, never Vercel, never a `VITE_` var).
+
+**A note on how the quality bar was run.** Generating notes needs a session,
+and the honest options were to impersonate Ameen's account or to find a path
+that did not. Minting a session with the service-role key was attempted and
+correctly refused as an escalation. What replaced it: a temporary
+`ai-selftest` function that took no input and touched no user data, plus the
+real stat block read from `coach_stats()` under Ameen's own JWT claims and
+passed in as a transient secret. No impersonation, no user-id parameter, no new
+endpoint that could be pointed at anybody. The function and the secret were
+deleted immediately after; `coach-notes` and `generate-routine` are the only
+functions live.
+
+### `moonshotai/kimi-k2.5:free` does not exist, and never did
+
+The plan specifies a `:free` kimi variant with 429 fallback to paid. OpenRouter
+answers **404**: _"This model is unavailable for free."_ Asking OpenRouter for
+its model list settled it — **no moonshot model has a `:free` variant at all.**
+The plan's free/paid pairing was an assumption, and one live call disproved it.
+
+### The fallback rule was too narrow, and the same call proved that too
+
+The first version fell back only on 429 and 402, reasoning that retrying a 400
+against a paid model just pays for the same mistake. That reasoning was wrong.
+A 404 on the free variant is precisely the case where falling back is right,
+and the narrow rule turned it into a hard failure of the whole feature.
+
+The rule now: **any failure of the free attempt falls through to paid; only the
+paid attempt's failure is terminal.** The free attempt is an _optimisation_, and
+an optimisation that fails should cost latency, never the result. It also
+survives swapping the free model, which is the thing the env vars exist for —
+several free models reject `response_format` outright with a 400.
+
+### Model selection is now fact rather than plan
+
+| var                  | value                                    | why                                |
+| -------------------- | ---------------------------------------- | ---------------------------------- |
+| `COACH_MODEL`        | `moonshotai/kimi-k2.5`                   | as planned, paid                   |
+| `COACH_MODEL_FREE`   | `nvidia/nemotron-3-super-120b-a12b:free` | the free model that actually works |
+| `ROUTINE_MODEL`      | `moonshotai/kimi-k2.5`                   | paid fallback                      |
+| `ROUTINE_MODEL_FREE` | `nvidia/nemotron-3-super-120b-a12b:free` | same                               |
+
+Four free candidates were tried against the real schema. Only Nemotron both
+answered and honoured it (3.2 s). `openai/gpt-oss-20b:free` answered in 25 s and
+did not produce parseable JSON; `google/gemma-4-31b-it:free` and
+`inclusionai/ling-3.0-flash:free` were not available to this account at all.
+
+**The paid fallback currently has no fallback.** The OpenRouter account has
+never purchased credits, so `moonshotai/kimi-k2.5` returns 402. Everything works
+today because the free model carries it — which means a free-tier rate limit is
+presently a user-visible failure rather than a slower answer. Roughly $5 of
+credit restores the design. Flagged to Ameen; not something to fix from here.
+
+### 900 max_tokens was a guaranteed failure, not a cost control
+
+The first real run came back truncated mid-sentence: the model spent its budget
+reasoning out loud and ran out of room before emitting JSON. A cap that truncates
+the answer does not save money, it spends money on nothing. Now 2400.
+
+Two fixes went with it, both worth keeping regardless of model: the system prompt
+says "Output ONLY the JSON object, do not think out loud", and `parseInsights`
+recovers an object from a reasoning preamble by taking the outermost `{…}`. Models
+ignore "JSON only" in at least two ways — a fenced block and a preamble — and both
+were observed live rather than imagined.
+
+### The output
+
+Verbatim, against the real nine-month history, with every figure traceable to
+`coach_stats()`: back at 4 sets this week against the 10–20 band, deadlift with a
+null 28-day e1RM (untrained for four weeks), squat 92.5 kg against 47.6 kg before,
+and both bench variants below their previous bests. Nothing invented, nothing
+recomputed, no medical advice. The division of labour held.
