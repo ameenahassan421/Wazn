@@ -20,7 +20,6 @@ import { SetEntry } from '../components/SetEntry'
 import { useRestTimer, DEFAULT_REST_SECONDS } from '../lib/use-rest-timer'
 import { FinishSummary } from '../components/FinishSummary'
 import { RoutineList } from '../components/RoutineList'
-import { RoutineGenerator } from '../components/RoutineGenerator'
 import { InstallPrompt } from '../components/InstallPrompt'
 import { Welcome } from '../components/Welcome'
 import { useWakeLock } from '../lib/use-wake-lock'
@@ -43,7 +42,7 @@ import {
 import { summarise } from '../lib/summary'
 import type { WorkoutSummary } from '../lib/summary'
 
-type View = 'overview' | 'picker' | 'entry' | 'summary' | 'routine' | 'generate'
+type View = 'overview' | 'picker' | 'entry' | 'summary' | 'routine'
 
 interface ExerciseBestRow {
   exercise_id: string
@@ -51,7 +50,15 @@ interface ExerciseBestRow {
   best_e1rm_kg: number | string
 }
 
-export function LogScreen({ userId }: { userId: string }) {
+export function LogScreen({
+  userId,
+  onOpenCoach,
+}: {
+  userId: string
+  /** The routine builder lives on the Coach tab (design v2.1), so Log's
+   *  "Generate" is navigation rather than a view of its own. */
+  onOpenCoach: () => void
+}) {
   const { unit } = useUnit()
   // Owned by the screen, not by SetEntry: leaving the exercise to pick the
   // next one must not cancel the rest you are still taking.
@@ -580,18 +587,6 @@ export function LogScreen({ userId }: { userId: string }) {
 
   // The summary lands here: finishing clears `workout`, so this has to come
   // before the empty state or the summary would never be shown.
-  if (view === 'generate') {
-    return (
-      <RoutineGenerator
-        onBack={() => setView('overview')}
-        onDone={() => {
-          setView('overview')
-          void load()
-        }}
-      />
-    )
-  }
-
   if (view === 'routine') {
     return (
       <div className="py-3">
@@ -634,7 +629,7 @@ export function LogScreen({ userId }: { userId: string }) {
       <Welcome
         onGenerate={() => {
           setWelcomed(true)
-          setView('generate')
+          onOpenCoach()
         }}
         onSkip={() => setWelcomed(true)}
       />
@@ -683,7 +678,7 @@ export function LogScreen({ userId }: { userId: string }) {
             setEditing(null)
             setView('routine')
           }}
-          onGenerate={() => setView('generate')}
+          onGenerate={onOpenCoach}
         />
 
         {/* Offered only once the app has proved useful — `hasHistory` means

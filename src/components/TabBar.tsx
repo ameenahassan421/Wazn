@@ -1,18 +1,19 @@
-import { IconBarbell, IconHistory, IconPeople, IconTrend } from './icons'
+import { IconBarbell, IconHistory, IconPeople, IconStar, IconTrend } from './icons'
 import type { ComponentType } from 'react'
 
-export type Tab = 'log' | 'history' | 'progress' | 'friends'
+export type Tab = 'log' | 'history' | 'progress' | 'coach' | 'friends'
 
 const TABS: { id: Tab; label: string; Icon: ComponentType<{ size?: number }> }[] = [
   { id: 'log', label: 'Log', Icon: IconBarbell },
   { id: 'history', label: 'History', Icon: IconHistory },
   { id: 'progress', label: 'Progress', Icon: IconTrend },
+  { id: 'coach', label: 'Coach', Icon: IconStar },
   { id: 'friends', label: 'Friends', Icon: IconPeople },
 ]
 
 /**
  * Icon + label, as every phone app's bottom bar does it: the icons are what
- * makes four plain words read as navigation rather than as buttons.
+ * makes five plain words read as navigation rather than as buttons.
  *
  * The active tab is marked by a rail along the *top* edge rather than a fill
  * or an underline: at the bottom of the screen an underline collides with the
@@ -51,9 +52,9 @@ export function TabBar({
                   : undefined
               }
             >
-              <Icon size={22} />
+              <Icon size={21} />
               <span
-                className={`text-[11px] leading-none ${selected ? 'font-medium' : ''}`}
+                className={`text-[10px] leading-none whitespace-nowrap ${selected ? 'font-medium' : ''}`}
               >
                 {label}
               </span>

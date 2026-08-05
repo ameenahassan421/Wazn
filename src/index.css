@@ -381,6 +381,24 @@ button {
   letter-spacing: 0.02em;
 }
 
+/* The data chip. Design v2.1: mono 11 in amber-300 on a 7% amber tint, and
+   it carries the exact figures a coach's note came from. It is what makes the
+   AI feel like it read the log — and, less obviously, it is the cheapest
+   honesty check the feature has: a chip that disagrees with the charts is a
+   claim the reader can catch without trusting anything. */
+@utility chip-data {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 5px;
+  padding: 3px 7px;
+  background-color: rgba(240, 180, 41, 0.07);
+  color: var(--color-accent-300);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1.2;
+  font-variant-numeric: tabular-nums;
+}
+
 /* The PR badge. Amber-800 fill with the knurl laid over it at low opacity —
    the only place the texture appears outside a rule, because a record is the
    one thing in the app worth marking as machined. Mono, because it is a

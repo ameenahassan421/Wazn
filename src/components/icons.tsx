@@ -142,3 +142,18 @@ export function IconPlate({ filled, ...props }: IconProps & { filled?: boolean }
     </Svg>
   )
 }
+
+/**
+ * A star, for the Coach tab. Drawn on the same 24 grid at stroke 2 as the
+ * rest of the set — not a filled glyph, so it sits at the same visual weight
+ * as the barbell and the clock beside it.
+ *
+ * Not directional: it does not flip under RTL.
+ */
+export function IconStar(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M12 3.6l2.5 5.3 5.6.8-4.1 4 1 5.7-5-2.7-5 2.7 1-5.7-4.1-4 5.6-.8z" />
+    </Svg>
+  )
+}
