@@ -129,7 +129,6 @@ export function IconPeople(props: IconProps) {
   )
 }
 
-
 /**
  * A star, for the Coach tab. Drawn on the same 24 grid at stroke 2 as the
  * rest of the set — not a filled glyph, so it sits at the same visual weight

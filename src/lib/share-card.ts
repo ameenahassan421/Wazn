@@ -19,30 +19,20 @@ import {
  * Everything here is drawn with primitives already in the browser.
  */
 
+// 4:5, per design v2.1 — the aspect a phone feed gives the most height to,
+// and the one a screenshot of it stays sharp in.
 const W = 1080
-const H = 1080
-const INK = '#0b0b0c'
-const TEXT = '#ececee'
+const H = 1350
+// Pure tokens, matching src/index.css, so the export is pixel-identical to the
+// in-app preview rather than a near-miss rendered by a second set of values.
+const INK = '#0c0b0a'
+const TEXT = '#ecebe8'
 const MUTED = '#8a8a92'
 const ACCENT = '#f0b429'
+const ACCENT_700 = '#b7791f'
 const LINE = '#26262a'
-
-function roundRect(
-  c: CanvasRenderingContext2D,
-  x: number,
-  y: number,
-  w: number,
-  h: number,
-  r: number,
-) {
-  c.beginPath()
-  c.moveTo(x + r, y)
-  c.arcTo(x + w, y, x + w, y + h, r)
-  c.arcTo(x + w, y + h, x, y + h, r)
-  c.arcTo(x, y + h, x, y, r)
-  c.arcTo(x, y, x + w, y, r)
-  c.closePath()
-}
+const FONT = "'IBM Plex Sans', system-ui, sans-serif"
+const MONO = "'IBM Plex Mono', ui-monospace, monospace"
 
 function hms(seconds: number | null): string {
   if (seconds === null) return '—'
@@ -51,11 +41,46 @@ function hms(seconds: number | null): string {
   return h > 0 ? `${h}h ${m}m` : `${m}m`
 }
 
+/**
+ * The knurl, as a canvas fill: cross-hatched amber at plus/minus 45 degrees on
+ * a 5px period, the same geometry as the CSS utility. Drawn rather than
+ * imported so the card has no image dependency and cannot 404.
+ */
+function knurlBand(
+  c: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+): void {
+  c.save()
+  c.beginPath()
+  c.rect(x, y, w, h)
+  c.clip()
+  c.fillStyle = 'rgba(240, 180, 41, 0.16)'
+  c.fillRect(x, y, w, h)
+  c.strokeStyle = 'rgba(240, 180, 41, 0.7)'
+  c.lineWidth = 2
+  const period = 10
+  for (let i = -h; i < w + h; i += period) {
+    c.beginPath()
+    c.moveTo(x + i, y)
+    c.lineTo(x + i + h, y + h)
+    c.stroke()
+    c.beginPath()
+    c.moveTo(x + i + h, y)
+    c.lineTo(x + i, y + h)
+    c.stroke()
+  }
+  c.restore()
+}
+
 export function drawShareCard(
   canvas: HTMLCanvasElement,
   summary: WorkoutSummary,
   unit: Unit,
   dateLabel: string,
+  options: { name?: string; streakWeeks?: number } = {},
 ): void {
   canvas.width = W
   canvas.height = H
@@ -64,14 +89,18 @@ export function drawShareCard(
 
   c.fillStyle = INK
   c.fillRect(0, 0, W, H)
+  c.textBaseline = 'top'
 
-  // The mark itself, not its name in Inter: the share card is the only
-  // organic growth surface, so it carries the actual brand object. Same
-  // paths the Wordmark component renders, via Path2D.
-  const markH = 96
+  const M = 88
+
+  // ── Wordmark ────────────────────────────────────────────────────────────
+  // The mark itself, not its name set in a UI font: this is the only organic
+  // growth surface, so it carries the actual brand object. Same paths the
+  // Wordmark component renders, via Path2D.
+  const markH = 88
   const k = markH / MARK_H
   c.save()
-  c.translate(80, 72)
+  c.translate(M, 96)
   c.scale(k, k)
   c.strokeStyle = ACCENT
   c.lineWidth = SHAFT.t
@@ -90,64 +119,73 @@ export function drawShareCard(
   c.fill(new Path2D(DOT_D), 'evenodd')
   c.restore()
 
-  c.textBaseline = 'top'
+  // ── The hero figure ─────────────────────────────────────────────────────
+  // v2.1: "If a PR fell, the PR replaces volume as the hero number." A record
+  // is the rarer and more interesting fact, and the card exists to be
+  // interesting to somebody who is not the person who lifted it.
+  const topPr = summary.prs[0]
+  const heroValue = topPr
+    ? formatWeight(topPr.value, unit)
+    : formatWeight(summary.totalVolumeKg, unit)
+  const heroKicker = topPr
+    ? `New best · ${topPr.exerciseName}`
+    : `Moved · ${dateLabel} · ${hms(summary.durationSeconds)}`
+
+  let y = 360
+  c.fillStyle = TEXT
+  c.font = `600 168px ${FONT}`
+  c.fillText(heroValue, M, y)
+  y += 200
+
   c.fillStyle = MUTED
-  c.font = '36px Inter, system-ui, sans-serif'
-  c.fillText(dateLabel, 80, 72 + markH + 24)
+  c.font = `500 34px ${MONO}`
+  c.fillText(heroKicker.toUpperCase(), M, y)
+  y += 96
 
-  // Three headline numbers. Volume is the one people compare, so it leads.
+  // ── Knurl divider ───────────────────────────────────────────────────────
+  knurlBand(c, M, y, W - M * 2, 8)
+  y += 88
+
+  // ── Three-stat grid ─────────────────────────────────────────────────────
   const stats: [string, string][] = [
-    [formatWeight(summary.totalVolumeKg, unit), `volume (${unit})`],
-    [hms(summary.durationSeconds), 'duration'],
-    [String(summary.setCount), summary.setCount === 1 ? 'set' : 'sets'],
+    [String(summary.setCount), 'Sets'],
+    [String(summary.prs.length), summary.prs.length === 1 ? 'PR' : 'PRs'],
+    [
+      options.streakWeeks ? `${options.streakWeeks} wk` : hms(summary.durationSeconds),
+      options.streakWeeks ? 'Streak' : 'Duration',
+    ],
   ]
-
-  let y = 300
-  for (const [value, label] of stats) {
+  const colW = (W - M * 2) / 3
+  stats.forEach(([value, label], i) => {
+    const x = M + colW * i
     c.fillStyle = TEXT
-    c.font = 'bold 110px Inter, system-ui, sans-serif'
-    c.fillText(value, 80, y)
+    c.font = `600 76px ${FONT}`
+    c.fillText(value, x, y)
     c.fillStyle = MUTED
-    c.font = '34px Inter, system-ui, sans-serif'
-    c.fillText(label, 84, y + 124)
-    y += 200
-  }
+    c.font = `400 32px ${FONT}`
+    c.fillText(label, x, y + 92)
+  })
 
-  // PRs, if any. Amber is the only colour in the app and this is what it is for.
-  if (summary.prs.length > 0) {
-    const boxY = 900
-    c.strokeStyle = ACCENT
-    c.lineWidth = 3
-    roundRect(c, 80, boxY - 24, W - 160, 128, 16)
-    c.stroke()
+  // ── Footer ──────────────────────────────────────────────────────────────
+  // Name and date on the inline start, the URL on the end. The URL is the only
+  // marketing copy on the plate: quiet here, legible in a feed.
+  const footerY = H - 96
+  c.strokeStyle = LINE
+  c.lineWidth = 2
+  c.beginPath()
+  c.moveTo(M, footerY - 40)
+  c.lineTo(W - M, footerY - 40)
+  c.stroke()
 
-    c.fillStyle = ACCENT
-    c.font = 'bold 40px Inter, system-ui, sans-serif'
-    const headline =
-      summary.prs.length === 1
-        ? '1 personal record'
-        : `${summary.prs.length} personal records`
-    c.fillText(headline, 112, boxY)
+  c.fillStyle = MUTED
+  c.font = `400 30px ${MONO}`
+  const who = [options.name, dateLabel].filter(Boolean).join(' · ').toUpperCase()
+  c.fillText(who, M, footerY)
 
-    c.fillStyle = MUTED
-    c.font = '32px Inter, system-ui, sans-serif'
-    const names = summary.prs
-      .map((p) => p.exerciseName)
-      .slice(0, 2)
-      .join(', ')
-    const more = summary.prs.length > 2 ? ` +${summary.prs.length - 2}` : ''
-    c.fillText(`${names}${more}`, 112, boxY + 56)
-  } else {
-    c.strokeStyle = LINE
-    c.lineWidth = 2
-    c.beginPath()
-    c.moveTo(80, 920)
-    c.lineTo(W - 80, 920)
-    c.stroke()
-    c.fillStyle = MUTED
-    c.font = '32px Inter, system-ui, sans-serif'
-    c.fillText(`${summary.exerciseCount} exercises`, 80, 950)
-  }
+  c.fillStyle = ACCENT_700
+  c.textAlign = 'right'
+  c.fillText('TRYWAZN.APP', W - M, footerY)
+  c.textAlign = 'left'
 }
 
 function canvasToBlob(canvas: HTMLCanvasElement): Promise<Blob | null> {

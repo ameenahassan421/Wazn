@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { Fragment, useEffect, useRef, useState } from 'react'
 import type { WorkoutSummary } from '../lib/summary'
 import type { Exercise } from '../lib/types'
 import type { Unit } from '../lib/units'
@@ -57,13 +57,12 @@ export function FinishSummary({
   }
 
   const stats: [string, string][] = [
-    [formatWeight(summary.totalVolumeKg, unit), `volume (${unit})`],
     [
       summary.durationSeconds === null ? '—' : fromSeconds(summary.durationSeconds),
-      'duration',
+      'Duration',
     ],
-    [String(summary.setCount), summary.setCount === 1 ? 'set' : 'sets'],
-    [String(summary.exerciseCount), 'exercises'],
+    [formatWeight(summary.totalVolumeKg, unit), 'Volume'],
+    [String(summary.setCount), summary.setCount === 1 ? 'Set' : 'Sets'],
   ]
 
   return (
@@ -75,18 +74,32 @@ export function FinishSummary({
         </h2>
       </div>
 
-      <ul className="grid grid-cols-2 gap-3">
-        {stats.map(([value, label]) => (
-          <li
-            key={label}
-            className="ring-edge bg-surface px-3 py-3"
-            style={{ borderRadius: 'var(--radius-md)' }}
-          >
-            <p className="tnum text-[27px] font-medium">{value}</p>
-            <p className="mt-0.5 text-[11px] text-muted">{label}</p>
-          </li>
-        ))}
-      </ul>
+      {/* One receipt card with three rule-split figures, per design v2.1. The
+          2x2 grid this replaced made four numbers of equal weight; the session
+          has three that matter and a fourth that was filler. */}
+      <div
+        className="ring-edge bg-surface px-3 py-3.5"
+        style={{ borderRadius: 'var(--radius-md)' }}
+      >
+        <div className="flex items-stretch">
+          {stats.map(([value, label], i) => (
+            <Fragment key={label}>
+              {i > 0 && (
+                <span
+                  aria-hidden="true"
+                  className="w-px shrink-0 bg-[var(--divider)]"
+                />
+              )}
+              <div className="flex min-w-0 flex-1 flex-col items-center gap-1 px-1">
+                <span className="tnum truncate text-[27px] font-semibold leading-none">
+                  {value}
+                </span>
+                <span className="text-[11px] text-muted">{label}</span>
+              </div>
+            </Fragment>
+          ))}
+        </div>
+      </div>
 
       {summary.prs.length > 0 && (
         <div
@@ -107,7 +120,7 @@ export function FinishSummary({
               return (
                 <li
                   key={`${pr.exerciseId}-${pr.kind}`}
-                  className="record-row flex items-center gap-3 rounded-[6px] px-2 py-1.5"
+                  className="record-flash flex items-center gap-3 rounded-[6px] px-2 py-1.5"
                 >
                   {exercise && <ExerciseThumb exercise={exercise} size={38} />}
                   <span className="min-w-0 flex-1">
@@ -128,8 +141,8 @@ export function FinishSummary({
         </div>
       )}
 
-      {/* Rendered off-screen: the card is 1080x1080 and only ever leaves as a
-          file. Kept in the DOM so toBlob has something to read. */}
+      {/* Rendered off-screen: the card is 1080x1350 (4:5) and only ever leaves
+          as a file. Kept in the DOM so toBlob has something to read. */}
       <canvas ref={canvasRef} className="hidden" aria-hidden="true" />
 
       <div className="flex flex-col gap-2">
@@ -137,14 +150,14 @@ export function FinishSummary({
           type="button"
           onClick={() => void onShare()}
           disabled={sharing}
-          className="btn-base btn-secondary h-[52px] w-full text-base disabled:opacity-45"
+          className="btn-base btn-hero h-[60px] w-full text-[17px] disabled:opacity-45"
         >
-          {sharing ? 'Preparing…' : 'Share'}
+          {sharing ? 'Preparing…' : 'Share card'}
         </button>
         <button
           type="button"
           onClick={onDone}
-          className="btn-base btn-primary h-[52px] w-full text-base"
+          className="btn-base btn-secondary h-12 w-full text-sm"
         >
           Done
         </button>
