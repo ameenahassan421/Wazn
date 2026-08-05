@@ -459,6 +459,10 @@ verbatim, so they survive even if this file isn't read.**
   sets" and they go server-side.
 - **Next action:** the two blocked items above. After beta starts: offline
   sync (Stage 4 fast-follow), then Stage 4B store publishing.
+- **Privacy policy is live at `/privacy`** (2026-08-05), linked from the auth
+  screen. The plan filed this under Stage 4B as a store prerequisite; it was
+  actually overdue from the day 2A let strangers sign in. Standalone HTML, no
+  bundle dependency. **Ameen should read it** — it describes his obligations.
 - **Design v2.1 — DONE (2026-08-05).** All four missing screens built against
   the v2 tokens: Coach tab, Progress dashboard, Friends, Finish + 4:5 share
   card. Tab bar is five items. Bundle committed at `docs/design/`. Six
@@ -466,15 +470,23 @@ verbatim, so they survive even if this file isn't read.**
   call of mine (the like icon). Side effect worth knowing: drawing the volume
   trend to the v2 chart grammar removed the last recharts import, so the
   dependency is gone and **precache fell 914 KiB -> 537 KiB**.
-- **LAUNCH.md is now out of date in one place** — it describes four tabs and
-  the old Progress sub-tabs. Re-read it before the second-account pass.
+- **LAUNCH.md is current again** — the five-tab bar and the new empty states
+  landed with the custom-exercises work. Re-read it before the second-account
+  pass regardless; it is the checklist that would have caught today's defects.
 - **Routine generation was failing in production**, with "The routine came back
   unreadable" on the Coach tab. Cause found and fixed in code: `parsePlan`
   handled a fenced ```json block but not a bare object after a reasoning
   preamble, while `coach-notes` handled both. One shared parser now serves
-  both, with 9 tests. **The fix is not live** — deploying an Edge Function
-  needs Supabase access this session does not have.
+  both, with 9 tests. **The fix is not live until the functions are deployed** —
+  see the Edge Function item above.
 - **Free models are now the default in code, not just in config.** An unset
   `*_MODEL_FREE` secret used to skip the free attempt and go straight to paid.
-- **Last updated:** 2026-08-05 by Claude Code (AI failure diagnosis; free-model
-  default; STATUS reconciled against the live app).
+  Confirmed empirically: every row in `ai_generations` used the free model.
+- **The launch build queue is EMPTY.** Everything the Launch Bundle asks for
+  is built. What stands between here and invites is the Ameen-owned items
+  above. Nothing else should be built before the beta runs — offline sync and
+  Stage 4B are explicitly sequenced _after_ it. The one exception is the work
+  the beta itself surfaces, which on 2026-08-05 alone was four defects.
+- **Last updated:** 2026-08-05 by Claude Code (custom exercises + privacy
+  policy; then the AI failure diagnosis, the profile merge, and STATUS
+  reconciled against production).

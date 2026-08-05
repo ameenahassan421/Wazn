@@ -2,6 +2,7 @@ import { useMemo, useRef, useState } from 'react'
 import type { Exercise, ExerciseUsageRow } from '../lib/types'
 import { ExerciseThumb } from './ExerciseThumb'
 import { IconBack } from './icons'
+import { NewExercise } from './NewExercise'
 
 /**
  * Recently used first, then most used, then everything else alphabetically.
@@ -33,13 +34,18 @@ export function ExercisePicker({
   usage,
   onPick,
   onCancel,
+  onCreated,
 }: {
   exercises: Exercise[]
   usage: Map<string, ExerciseUsageRow>
   onPick: (exercise: Exercise) => void
   onCancel: () => void
+  /** Adds the new exercise to the caller's catalogue. Omit to hide the
+   *  create affordance — Progress, for instance, is a reading surface. */
+  onCreated?: (exercise: Exercise) => void
 }) {
   const [query, setQuery] = useState('')
+  const [creating, setCreating] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
 
   const ordered = useMemo(() => orderExercises(exercises, usage), [exercises, usage])
@@ -55,6 +61,22 @@ export function ExercisePicker({
       return ordered.indexOf(a) - ordered.indexOf(b)
     })
   }, [ordered, query])
+
+  if (creating && onCreated) {
+    return (
+      <NewExercise
+        initialName={query.trim()}
+        onCancel={() => setCreating(false)}
+        onCreated={(exercise) => {
+          setCreating(false)
+          // Straight into logging it. Somebody who just typed a name and two
+          // categories wanted to log a set, not to admire a catalogue entry.
+          onCreated(exercise)
+          onPick(exercise)
+        }}
+      />
+    )
+  }
 
   return (
     <div className="flex flex-col">
@@ -83,10 +105,23 @@ export function ExercisePicker({
       </div>
 
       {results.length === 0 ? (
-        <p className="py-8 text-sm text-muted">
-          No exercise matches “{query.trim()}”. Check the spelling — the catalogue uses
-          names like “Bench Press (Barbell)”.
-        </p>
+        <div className="py-8">
+          <p className="text-sm text-muted">
+            No exercise matches “{query.trim()}”. Check the spelling — the catalogue
+            uses names like “Bench Press (Barbell)”.
+          </p>
+          {/* The moment the gap is felt is the moment to offer the fix: a
+              search that found nothing already IS the name of the thing. */}
+          {onCreated && (
+            <button
+              type="button"
+              onClick={() => setCreating(true)}
+              className="btn-base btn-hero mt-4 h-[60px] w-full text-[17px]"
+            >
+              Add “{query.trim()}”
+            </button>
+          )}
+        </div>
       ) : (
         <ul className="divide-y divide-line">
           {results.map((exercise) => (
@@ -108,6 +143,17 @@ export function ExercisePicker({
               </button>
             </li>
           ))}
+          {onCreated && (
+            <li>
+              <button
+                type="button"
+                onClick={() => setCreating(true)}
+                className="flex min-h-14 w-full items-center py-3 text-start text-sm text-accent"
+              >
+                + New exercise
+              </button>
+            </li>
+          )}
         </ul>
       )}
     </div>

@@ -100,6 +100,15 @@ export function AuthScreen() {
         Log a set in under thirty seconds. Sign in with a 6-digit email code — no
         password.
       </p>
+      {/* On the one screen where somebody hands over an email, and nowhere
+          else. A privacy link buried in a settings menu is a link written for
+          an app store rather than for a reader. */}
+      <p className="mt-2 text-[11px] text-muted">
+        Your training is private by default.{' '}
+        <a href="/privacy" className="text-accent underline underline-offset-2">
+          What Wazn stores
+        </a>
+      </p>
 
       {step === 'email' ? (
         <form onSubmit={sendCode} className="mt-8 flex flex-col gap-3">
