@@ -50,25 +50,36 @@ for you to read **before any other user can see theirs**.
 
 | Thing                            | State                                                      |
 | -------------------------------- | ---------------------------------------------------------- |
-| `coach-notes` Edge Function      | deployed, v1, ACTIVE, `verify_jwt` on                      |
-| `generate-routine` Edge Function | deployed, v1, ACTIVE, `verify_jwt` on                      |
+| `coach-notes` Edge Function      | deployed, ACTIVE, `verify_jwt` on                          |
+| `generate-routine` Edge Function | deployed, ACTIVE, `verify_jwt` on                          |
 | Migration `0010_ai_layer.sql`    | applied — `coach_notes`, `ai_generations`, `coach_stats()` |
 | `COACH_MODEL`                    | `moonshotai/kimi-k2.5`                                     |
-| `COACH_MODEL_FREE`               | `moonshotai/kimi-k2.5:free`                                |
+| `COACH_MODEL_FREE`               | `nvidia/nemotron-3-super-120b-a12b:free`                   |
 | `ROUTINE_MODEL`                  | `moonshotai/kimi-k2.5`                                     |
-| `ROUTINE_MODEL_FREE`             | `moonshotai/kimi-k2.5:free`                                |
-| `OPENROUTER_API_KEY`             | **missing — this is step 2**                               |
+| `ROUTINE_MODEL_FREE`             | `nvidia/nemotron-3-super-120b-a12b:free`                   |
+| `OPENROUTER_API_KEY`             | set 2026-08-04                                             |
+| OpenRouter credit                | $5.00, purchased 2026-08-05                                |
 
-**The model ids are now fact, not the plan's guess.** `moonshotai/kimi-k2.5:free`
-— which the plan specified — **does not exist**; OpenRouter has no `:free`
-variant of any moonshot model. Four free candidates were tested against the real
-schema and only Nemotron both answered and honoured it.
+**There is exactly one AI credential in this project: `OPENROUTER_API_KEY`.**
+Every model is reached through OpenRouter — including Kimi. `moonshotai/kimi-k2.5`
+is an OpenRouter _model slug_, not a second provider, and Moonshot's own API is
+not called from anywhere in this codebase. If a Kimi/Moonshot key ever turns up
+in a chat or a note, it has nothing to plug into here.
 
-**⚠️ Buy credits.** The account has never purchased any, so the paid model
-returns `402` and the free model is carrying everything. That works, but it
-means a free-tier rate limit is a _user-visible failure_ instead of a slower
-answer — the fallback the design depends on has nothing to fall back to.
-Roughly **$5** restores it. <https://openrouter.ai/settings/credits>
+**The model ids are fact, not the plan's guess.** `moonshotai/kimi-k2.5:free` —
+which the plan specified, and which an earlier version of this very table
+listed — **does not exist**; OpenRouter has no `:free` variant of any moonshot
+model. Four free candidates were tested against the real schema and only
+Nemotron both answered and honoured it.
+
+**Free is the default in code, not just in config.** An unset `*_MODEL_FREE`
+used to skip the free attempt entirely and go straight to the paid model;
+`_shared/openrouter.ts` now falls back to the known-good free slug on its own.
+To run a feature on the paid model deliberately, set its `*_MODEL_FREE` equal
+to its `*_MODEL` — equal values skip the free attempt.
+
+**Still worth doing:** no key limit is set on the OpenRouter key, and §2C asks
+for a hard spend cap. Set one at <https://openrouter.ai/settings/keys>.
 
 ## How it behaves before the key lands
 
