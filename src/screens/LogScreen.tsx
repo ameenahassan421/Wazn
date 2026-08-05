@@ -752,6 +752,14 @@ export function LogScreen({
             setView('entry')
           }}
           onCancel={() => setView('overview')}
+          onCreated={(exercise) =>
+            // Into the local catalogue immediately: the picker is about to
+            // hand this exercise straight to set entry, and a reload would
+            // put a round trip in the middle of the hot path.
+            setExercises((prev) =>
+              [...prev, exercise].sort((a, b) => a.name.localeCompare(b.name)),
+            )
+          }
         />
       )}
 

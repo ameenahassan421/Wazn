@@ -53,6 +53,8 @@ that is not there.
       Never a fake data point.
 - [ ] **Coach** — "Log 3 workouts and the coach will have something to say."
       The routine builder still works from day one.
+- [ ] The sign-in screen links to **"What Wazn stores"**, and `/privacy` loads
+      as a plain page rather than dropping you into the app.
 - [ ] **Friends** — "A leaderboard of one. Invite someone to chase.", and an
       Invite button as the screen's primary action.
 - [ ] **Friends → You** (top-right) — visibility set to **Private**, and it
@@ -112,6 +114,10 @@ This is the one that cannot be done at a table.
 - [ ] Start a workout. **The screen stays on** through a full set and a rest
       period — you should never have to unlock the phone to log the next set.
 - [ ] Log a set one-handed in **under 30 seconds** from picking up the phone.
+- [ ] **Add an exercise the catalogue does not have.** Search for something
+      that is not there; the no-results state offers to add it with the name
+      prefilled. It saves and drops you straight into logging it, and it
+      appears in the picker afterwards. A second account must never see it.
 - [ ] The previous session's numbers appear inline while entering.
 - [ ] The rest timer counts down in-flow and **is silent** when it finishes —
       amber ring and "Rest done", no beep. (If it beeps, something regressed.)

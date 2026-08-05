@@ -432,6 +432,10 @@ verbatim, so they survive even if this file isn't read.**
   sets" and they go server-side.
 - **Next action:** the two blocked items above. After beta starts: offline
   sync (Stage 4 fast-follow), then Stage 4B store publishing.
+- **Privacy policy is live at `/privacy`** (2026-08-05), linked from the auth
+  screen. The plan filed this under Stage 4B as a store prerequisite; it was
+  actually overdue from the day 2A let strangers sign in. Standalone HTML, no
+  bundle dependency. **Ameen should read it** — it describes his obligations.
 - **Design v2.1 — DONE (2026-08-05).** All four missing screens built against
   the v2 tokens: Coach tab, Progress dashboard, Friends, Finish + 4:5 share
   card. Tab bar is five items. Bundle committed at `docs/design/`. Six
@@ -441,4 +445,9 @@ verbatim, so they survive even if this file isn't read.**
   dependency is gone and **precache fell 914 KiB -> 537 KiB**.
 - **LAUNCH.md is now out of date in one place** — it describes four tabs and
   the old Progress sub-tabs. Re-read it before the second-account pass.
-- **Last updated:** 2026-08-05 by Claude Code (design v2.1 complete).
+- **The launch build queue is EMPTY.** Everything the Launch Bundle asks for
+  is built. What stands between here and invites is the two items above, both
+  Ameen's. Nothing else should be built before the beta runs — offline sync and
+  Stage 4B are explicitly sequenced _after_ it.
+- **Last updated:** 2026-08-05 by Claude Code (custom exercises + privacy
+  policy; the last two things a beta cohort would have hit immediately).
