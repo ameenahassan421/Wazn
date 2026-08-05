@@ -76,6 +76,39 @@ export function sessionsPerWeek(
   return out
 }
 
+export interface VolumeWeek {
+  start: Date
+  volumeKg: number
+}
+
+/**
+ * Volume per week, oldest first, including empty weeks.
+ *
+ * Weeks rather than the months the old Volume tab used: design v2.1's trend
+ * chart is "one point per week", and a lifter's decisions are weekly. A month
+ * bucket hides the deload that a week bucket shows.
+ */
+export function weeklyVolume(
+  rows: SessionVolumeRow[],
+  weeks = 12,
+  now = new Date(),
+): VolumeWeek[] {
+  const totals = new Map<number, number>()
+  for (const row of rows) {
+    const key = weekStart(new Date(row.started_at)).getTime()
+    totals.set(key, (totals.get(key) ?? 0) + num(row.volume_kg))
+  }
+
+  const current = weekStart(now)
+  const out: VolumeWeek[] = []
+  for (let i = weeks - 1; i >= 0; i -= 1) {
+    const start = new Date(current)
+    start.setDate(start.getDate() - i * 7)
+    out.push({ start, volumeKg: totals.get(start.getTime()) ?? 0 })
+  }
+  return out
+}
+
 export interface MonthBucket {
   start: Date
   volumeKg: number
@@ -195,6 +228,23 @@ export function liftBalance(bests: ExerciseBest[]): BalanceRow[] {
 
 /** The productive weekly range the Balance tab shades behind the bars. */
 export const SET_BAND: [number, number] = [10, 20]
+
+/**
+ * Where a group's weekly sets sit relative to the productive band.
+ *
+ * Three states carried by one hue, per design v2.1: under the band is a
+ * neutral (it is not an error, just quiet), in the band is the accent, and
+ * over it is the darkest step of the same ramp. No red, no green — the ramp
+ * carries the meaning, which is what keeps the one-accent rule intact while
+ * saying three different things.
+ */
+export type BandState = 'under' | 'in' | 'over'
+
+export function bandState(sets: number): BandState {
+  if (sets < SET_BAND[0]) return 'under'
+  if (sets > SET_BAND[1]) return 'over'
+  return 'in'
+}
 
 /** Groups that have sat under the band, worst first. */
 export function underBand(rows: MuscleGroupSets[]): string[] {

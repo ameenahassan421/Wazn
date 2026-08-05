@@ -77,7 +77,7 @@ export default function App() {
         {tab === 'history' && <HistoryScreen />}
         {tab === 'progress' && (
           <Suspense fallback={<p className="py-10 text-sm text-muted">Loading…</p>}>
-            <ProgressScreen />
+            <ProgressScreen onOpenCoach={() => setTab('coach')} />
           </Suspense>
         )}
         {tab === 'coach' && (
