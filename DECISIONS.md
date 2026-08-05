@@ -1778,3 +1778,69 @@ resolve, and App Review checks it.
 Worth doing if `vercel.json` grows: validate it in CI against
 `https://openapi.vercel.sh/vercel.json`. One file, one schema, and it closes the
 gap that a green CI run currently leaves wide open.
+
+## 2026-08-05 — Two gaps closed: config nobody validates, and functions nobody deploys
+
+Both were found the same way — by something breaking in production while every
+check in the repo stayed green. They are the same bug in two places: a thing
+that matters to users, owned by no automation.
+
+### `vercel.json` is now checked, but not against the published schema
+
+The obvious implementation is to fetch `https://openapi.vercel.sh/vercel.json`
+and validate against it. That was the first instinct and it was rejected: it
+makes every CI run depend on a third-party HTTP request, and a check that goes
+red when a network hiccups is a check people learn to re-run instead of read.
+A gate that cries wolf is worse than no gate, because it also erodes trust in
+the gates around it.
+
+`scripts/check_vercel_config.mjs` needs no network and no dependencies, and
+enforces three things:
+
+1. **No comment-style keys, at any depth.** `"//"`, `"#…"`, `_comment`. Caught
+   by shape rather than by position, because the next one will be in `headers`
+   rather than `rewrites`.
+2. **No unknown keys inside `rewrites`/`redirects`/`headers`.** Scoped to the
+   routing arrays on purpose. Top-level keys are numerous and grow with the
+   platform, and a check that fails on a legitimate new one is a check someone
+   deletes rather than fixes.
+3. **The SPA catch-all must be last.** No schema can check this, and it is the
+   more dangerous failure: rewrites are evaluated in order and
+   `/((?!assets/|.*\..*).*)` matches every dotless path, so a rule placed after
+   it never fires. The symptom is `/privacy` quietly rendering the Log screen —
+   and Stage 4B needs that URL to resolve, because App Review opens it.
+
+Both rules were proved against the real regression before shipping: the `"//"`
+key was re-inserted and caught, and the rewrites were reordered and caught.
+
+### Merging now deploys the Edge Functions
+
+Vercel deploys the web app on every push to `main`. Nothing deployed the
+Supabase functions — that was a command a human had to remember. The cost was
+paid today: the fix for a routine generator that had never once succeeded sat
+merged on `main` while production kept serving the broken version, and nothing
+in the system said so. "Merged" and "live" were different words for different
+things, and only one of them was visible.
+
+`.github/workflows/deploy-functions.yml` runs on pushes to `main` that touch
+`supabase/functions/**`, so a docs-only push redeploys nothing, and carries
+`workflow_dispatch` so a deploy can be forced without an empty commit —
+including the first one, which has to be manual because the fix it ships is
+already merged.
+
+Three details worth keeping:
+
+- **`--use-api`** bundles through the Management API rather than Docker, so it
+  works on a plain runner.
+- **No function is named in the command.** Adding a third function should not
+  require editing this file. The CLI skips `_shared` because a leading
+  underscore marks a directory as modules rather than a function.
+- **It prints `functions list` afterwards.** A green deploy step is not proof
+  the intended version is live, and the version number is the fact that settles
+  "did my fix actually ship". Putting it in the run log attaches that answer to
+  the commit instead of to somebody's dashboard.
+
+**One dependency that is not mine to satisfy:** `SUPABASE_ACCESS_TOKEN` must
+exist as a repository secret. Until it does, the workflow runs and fails at the
+deploy step. That is the correct failure — loud, on the commit, and impossible
+to mistake for success — and it is strictly better than the silence it replaces.

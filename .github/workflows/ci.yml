@@ -27,6 +27,13 @@ jobs:
       - name: Typecheck
         run: npm run typecheck
 
+      - name: Check vercel.json
+        # Nothing else in this job reads vercel.json. On 2026-08-05 a comment
+        # key in a rewrite made Vercel reject every deploy, main included, while
+        # this workflow stayed green — production froze on the previous build
+        # and looked healthy the whole time.
+        run: npm run check:vercel
+
       - name: Test
         run: npm test
 
