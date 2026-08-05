@@ -42,16 +42,21 @@ Do this in a private window, signed out, with the second email.
 
 ### Every screen with zero data
 
-Go through all four tabs on this empty account. None of them may look broken,
-and none may show a number that is not there.
+Go through all **five** tabs on this empty account (Log · History · Progress ·
+Coach · Friends). None of them may look broken, and none may show a number
+that is not there.
 
 - [ ] **Log** — one button. No streak line, no routines list clutter.
 - [ ] **History** — "No workouts yet. Log one on the Log tab…"
-- [ ] **Progress** — one sentence: "Nothing to chart yet." **Not** three empty
-      sub-tabs stacked on each other.
-- [ ] **Friends → Feed** — "Nothing here yet. Follow someone on the You tab…"
-- [ ] **Friends → This week** — "A leaderboard needs someone to stand next to."
-- [ ] **Friends → You** — visibility set to **Private**, and it says so.
+- [ ] **Progress** — the week card at zeros, the balance chart showing the
+      knurl target band with **no fills**, and "Log a workout to load the bar."
+      Never a fake data point.
+- [ ] **Coach** — "Log 3 workouts and the coach will have something to say."
+      The routine builder still works from day one.
+- [ ] **Friends** — "A leaderboard of one. Invite someone to chase.", and an
+      Invite button as the screen's primary action.
+- [ ] **Friends → You** (top-right) — visibility set to **Private**, and it
+      says so. Sign out is at the bottom.
 
 ---
 
@@ -71,11 +76,13 @@ Send it to the second account. On that device:
 - [ ] The address bar shows `/`, not `/join/…`.
 - [ ] Sign in. The welcome screen offers **"Follow &lt;your name&gt;"**.
 - [ ] Tap it. It changes to "Following".
-- [ ] Friends → Feed now shows your finished workouts: name, duration,
-      volume, sets, and a **PR** badge on sessions that set records.
-- [ ] Tap the plate icon to like one. The count goes up and **survives a
+- [ ] Friends now shows your finished workouts as stat cards: name and routine,
+      duration / volume / sets, a **PR** badge only when a record fell, and a
+      fact line quoting the best moment.
+- [ ] Tap the heart to like one. The count goes up and **survives a
       reload**.
-- [ ] Friends → This week shows both of you, with your own row tinted.
+- [ ] The leaderboard (knurl crown, top of Friends) shows both of you, with
+      your own row tinted and an amber rank.
 
 ---
 
@@ -114,18 +121,26 @@ This is the one that cannot be done at a table.
       the timer is still honest.
 - [ ] Press the Android back gesture (or the iOS swipe) from inside the
       picker. It returns to the workout, **it does not close the app**.
-- [ ] Finish. The summary shows duration, volume, sets and any PRs.
+- [ ] Finish. The receipt card shows duration, volume and sets rule-split, with
+      PR rows on amber tint.
+- [ ] **Share card** produces a 4:5 image: wordmark, one giant figure (the PR
+      if one fell, otherwise volume), knurl divider, three stats, and
+      TRYWAZN.APP in the footer. No emoji, no photo.
 - [ ] History's top row now shows that session with volume and set count.
 
 ---
 
 ## 5. The AI surfaces
 
-- [ ] Progress → **Coach's notes** shows 3–5 observations that reference your
-      actual lifts and numbers. It says **"AI-generated — not medical advice."**
-- [ ] Reopen Progress. It does **not** regenerate — same text, instantly. It
+- [ ] **Coach** shows 3–5 notes that reference your actual lifts, each with a
+      **data chip** quoting the exact figures. Note #1 carries the knurl band.
+      Footer says **"AI-generated — not medical advice"** and how many
+      regenerates are left.
+- [ ] Reopen Coach. It does **not** regenerate — same text, instantly. It
       should only change after you log something new.
-- [ ] Log → Routines → **Generate**. Pick a goal, days and equipment.
+- [ ] Coach → **Generate routine**. Pick a goal, days and equipment.
+- [ ] The result is a **preview** — nothing is saved until you press Save.
+      Adjust returns you to the form.
 - [ ] The routines that appear contain **only real exercises** you can find in
       the picker. Nothing invented.
 - [ ] Nothing was started automatically — you still have to tap Start.
