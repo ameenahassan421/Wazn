@@ -1,9 +1,12 @@
 # Stage 2C — turning the AI layer on
 
-Everything is built and deployed. **One value is missing**, and it is the only
-thing standing between the current state and working Coach's Notes.
+**This runbook is done.** The key was set on 2026-08-04 and credit purchased on
+2026-08-05; both features have run against real data. It is kept as the record
+of how the layer is wired and where each value lives — read the state table
+below first, and treat the steps that follow as reference for the next time a
+key has to be replaced, not as work outstanding.
 
-## What you need to do
+## How the key gets set (done — kept for rotation)
 
 ### 1. OpenRouter — create the key
 
@@ -97,11 +100,19 @@ without the model. That is the design, not a fallback.
 - **Free-tier quotas:** notes at most once a week per user, routines three per
   month. Enforced in the Edge Function against the `ai_generations` ledger,
   which a client cannot write to or delete from.
-- **The `:free` variant is tried first**, with automatic fallback to the paid
-  model on `429` (rate limited) or `402` (out of free credit). Which one served
-  a request is recorded in `ai_generations.used_free`, so
-  "is the free tier actually carrying this?" is one query.
-- **Every request is capped** at 900 output tokens and 45 seconds.
+- **The free model is tried first**, and **any** failure of that attempt falls
+  through to the paid model — not just `429`/`402`. The narrow rule was tried
+  and was wrong: a free slug that 404s is exactly when falling back is right.
+  Only the paid attempt's failure is terminal. Which model served a request is
+  recorded in `ai_generations.used_free`, so "is the free tier actually
+  carrying this?" is one query. As of 2026-08-05 the answer is yes, every time.
+- **A new account costs nothing.** If `coach_stats()` reports no training in
+  the last 90 days, the function returns the empty state without calling a
+  model or writing a ledger row — so a first-day user cannot spend their weekly
+  regenerate on being told they have no data.
+- **Every request is capped** at 2400 output tokens and 45 seconds. It was 900,
+  which truncated reasoning models mid-answer — a cap that guarantees failure
+  is not a cost control.
 
 ## Checking on it later
 
