@@ -432,4 +432,13 @@ verbatim, so they survive even if this file isn't read.**
   sets" and they go server-side.
 - **Next action:** the two blocked items above. After beta starts: offline
   sync (Stage 4 fast-follow), then Stage 4B store publishing.
-- **Last updated:** 2026-08-04 by Claude Code (2C live and verified end to end).
+- **Design v2.1 — DONE (2026-08-05).** All four missing screens built against
+  the v2 tokens: Coach tab, Progress dashboard, Friends, Finish + 4:5 share
+  card. Tab bar is five items. Bundle committed at `docs/design/`. Six
+  deviations logged in DECISIONS.md, including one that reverses an earlier
+  call of mine (the like icon). Side effect worth knowing: drawing the volume
+  trend to the v2 chart grammar removed the last recharts import, so the
+  dependency is gone and **precache fell 914 KiB -> 537 KiB**.
+- **LAUNCH.md is now out of date in one place** — it describes four tabs and
+  the old Progress sub-tabs. Re-read it before the second-account pass.
+- **Last updated:** 2026-08-05 by Claude Code (design v2.1 complete).

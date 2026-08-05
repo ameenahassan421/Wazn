@@ -1416,3 +1416,80 @@ Verbatim, against the real nine-month history, with every figure traceable to
 null 28-day e1RM (untrained for four weeks), squat 92.5 kg against 47.6 kg before,
 and both bench variants below their previous bests. Nothing invented, nothing
 recomputed, no medical advice. The division of labour held.
+
+## 2026-08-05 — Design v2.1: the four missing screens, and where I departed
+
+The `wazn_v2.1_missing_screens` bundle is now **committed to the repo** at
+`docs/design/`, and §2.4 points at it. It went missing once between sessions
+already; a design reference that lives only in a chat is a design reference
+that has to be re-sent.
+
+Built in the sequence Ameen set: Progress and Finish with the design-v2
+remainder, Coach with Block 1, Friends with Block 2, tab bar to five.
+
+### Followed exactly
+
+The data chip, the priority-#1 knurl band, "no chat surface anywhere", the
+preview-then-save routine flow, the 10–20 knurl target band, three fill states
+from one hue, the leaderboard crown, the fact line, the 4:5 share card with the
+PR replacing volume as the hero, and every empty-state string.
+
+### Deviations, each with a reason
+
+**1. The like is a heart, which reverses my own earlier call.** The first
+Friends build used a plate, reasoning that this app's shape language is plates
+and a heart is borrowed vocabulary. The spec says heart, and the spec is right
+for a reason the earlier note missed: a plate outline at 20px reads as "record"
+or "weight", not as approval, and a like that has to be explained is not one
+tap. The plate icon is deleted rather than left behind.
+
+**2. Friends drops its tab strip; `You` becomes a sub-view.** The spec shows
+leaderboard and feed on one surface with Invite in the header, and says nothing
+about where profile settings live. Keeping them as a third peer tab would have
+contradicted the screen it specifies. They are now behind a `You` control in
+the header — which also keeps sign-out where Ameen went looking for it.
+
+**3. Progress's "this week" volume is computed on the client, not in SQL.** The
+spec calls the card "all three derived, no new tables", and the derivation is a
+filter over `session_volume_history`, which the screen already loads for the
+trend. A dedicated RPC would be a second round trip and a second definition of
+"this week" that could disagree with the streak on the same card.
+
+**4. The strength delta is recent form, not all-time best.** The spec asks for
+a 4-week delta with a **down** arrow. An all-time best can only rise, so a
+delta built on it could never show one. `strength_summary()` therefore compares
+the best of the last 28 days against the best of the 28 days before — which can
+fall, and falling is the signal worth surfacing.
+
+**5. The routine builder offers 3/4/5 days, not the spec's exact chip set for
+equipment.** Full gym / Dumbbells / Home map onto the `equipment` values the
+`exercises` table actually has (`''`, `dumbbell`, `bodyweight`). A chip that
+filters to nothing is worse than a chip that is missing.
+
+**6. The share card gained a `name` and `streakWeeks` option rather than
+reading them itself.** `share-card.ts` is pure drawing with no data access, and
+giving it a Supabase client to fetch a display name would make the one file
+that must never fail mid-share depend on the network.
+
+### What v2.1 cost, and what it paid
+
+`ProgressScreen` lost recharts — the volume trend is now three SVG paths in the
+v2 chart grammar. That was the app's last recharts import, so the dependency is
+uninstalled and **the precache fell from 914 KiB to 537 KiB**. The spec did not
+ask for that; drawing the chart to its grammar simply made the library
+redundant.
+
+## 2026-08-05 — 0013 had to drop before it could create
+
+`create or replace function` cannot widen a function's OUT parameters, so
+adding the fact-line columns to `social_feed` failed with
+`42P13: cannot change return type of existing function`. Dropped and recreated
+in the same migration, with the grant re-established immediately after.
+
+Worth knowing generally: every `returns table (...)` function in this project
+is one column away from that error, and the fix is always drop-then-create
+rather than a second function with a new name.
+
+The RLS suite was re-run afterwards and still passes all eight assertions —
+which is the point of having it, since the function it exercises was replaced
+wholesale.

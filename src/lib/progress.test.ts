@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  bandState,
   heatStep,
   liftBalance,
   monthlyVolume,
@@ -7,6 +8,7 @@ import {
   trainingCalendar,
   underBand,
   weekStart,
+  weeklyVolume,
 } from './progress'
 import type { ExerciseBest, MuscleGroupSets, SessionVolumeRow } from './progress'
 
@@ -176,5 +178,61 @@ describe('underBand', () => {
 
   it('does not flag a group above the band', () => {
     expect(underBand(groups)).not.toContain('back')
+  })
+})
+
+describe('weeklyVolume', () => {
+  const now = new Date('2026-08-05T12:00:00Z')
+
+  it('buckets by week and keeps empty weeks', () => {
+    const rows = [
+      {
+        workout_id: 'a',
+        started_at: '2026-08-04T10:00:00Z',
+        volume_kg: 1000,
+        set_count: 10,
+      },
+      {
+        workout_id: 'b',
+        started_at: '2026-08-05T10:00:00Z',
+        volume_kg: 500,
+        set_count: 5,
+      },
+      {
+        workout_id: 'c',
+        started_at: '2026-07-22T10:00:00Z',
+        volume_kg: 800,
+        set_count: 8,
+      },
+    ]
+    const weeks = weeklyVolume(rows, 4, now)
+    expect(weeks).toHaveLength(4)
+    // Two sessions in the current week sum, not overwrite.
+    expect(weeks.at(-1)!.volumeKg).toBe(1500)
+    // A week with nothing in it is a zero, not a missing point — the gap is
+    // the thing the chart is for.
+    expect(weeks.some((w) => w.volumeKg === 0)).toBe(true)
+  })
+
+  it('parses string numerics from PostgREST', () => {
+    const rows = [
+      {
+        workout_id: 'a',
+        started_at: '2026-08-04T10:00:00Z',
+        volume_kg: '1234.5',
+        set_count: '9',
+      },
+    ]
+    expect(weeklyVolume(rows, 1, now)[0].volumeKg).toBeCloseTo(1234.5)
+  })
+})
+
+describe('bandState', () => {
+  it('splits at the productive band boundaries, inclusive', () => {
+    expect(bandState(0)).toBe('under')
+    expect(bandState(9)).toBe('under')
+    expect(bandState(10)).toBe('in')
+    expect(bandState(20)).toBe('in')
+    expect(bandState(21)).toBe('over')
   })
 })
