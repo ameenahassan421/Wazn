@@ -22,6 +22,7 @@
 import {
   authenticate,
   assertWithinQuota,
+  quotaRemaining,
   CORS_HEADERS,
   HttpError,
   json,
@@ -104,6 +105,97 @@ function parsePlan(raw: string): unknown {
   return parsed
 }
 
+/**
+ * Write a previewed plan into the user's routines.
+ *
+ * Every exercise id is re-checked against the table even though it came from
+ * a preview this function produced — the round trip through a browser is a
+ * place where ids can be edited, and "the client sent it back" is not a
+ * provenance a database write should rely on. RLS would stop it writing to
+ * someone else's routines regardless; this stops it writing a nonsense one to
+ * their own.
+ */
+async function saveRoutines(
+  caller: Awaited<ReturnType<typeof authenticate>>,
+  plan: { name: string; exercises: { id: string; sets: number; reps: number }[] }[],
+): Promise<{ id: string; name: string }[]> {
+  const ids = [...new Set(plan.flatMap((d) => d.exercises.map((e) => e.id)))]
+  const { data: known } = await caller.asUser
+    .from('exercises')
+    .select('id')
+    .in('id', ids)
+  const valid = new Set(((known ?? []) as { id: string }[]).map((e) => e.id))
+
+  const { data: existing } = await caller.asUser
+    .from('routines')
+    .select('position')
+    .order('position', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+  let position = ((existing?.position as number | undefined) ?? -1) + 1
+
+  const created: { id: string; name: string }[] = []
+  for (const day of plan.slice(0, 7)) {
+    const exercises = (day.exercises ?? [])
+      .filter((e) => valid.has(e.id))
+      .slice(0, 12)
+      .map((e) => ({
+        id: e.id,
+        sets: Math.min(Math.max(Math.round(Number(e.sets) || 3), 1), 6),
+        reps: Math.min(Math.max(Math.round(Number(e.reps) || 8), 1), 30),
+      }))
+    if (exercises.length === 0) continue
+
+    const { data: routine, error: routineError } = await caller.asUser
+      .from('routines')
+      .insert({
+        user_id: caller.userId,
+        name:
+          String(day.name ?? 'Day')
+            .trim()
+            .slice(0, 60) || 'Day',
+        position: position++,
+      })
+      .select('id, name')
+      .single()
+    if (routineError || !routine)
+      throw new HttpError('Could not save the routine.', 500)
+
+    const { data: routineExercises, error: reError } = await caller.asUser
+      .from('routine_exercises')
+      .insert(
+        exercises.map((e, index) => ({
+          routine_id: routine.id,
+          exercise_id: e.id,
+          position: index,
+        })),
+      )
+      .select('id, position')
+    if (reError || !routineExercises)
+      throw new HttpError('Could not save the routine.', 500)
+
+    const setRows = routineExercises.flatMap((re) => {
+      const planned = exercises[re.position as number]
+      return Array.from({ length: planned.sets }, (_, i) => ({
+        routine_exercise_id: re.id,
+        set_number: i + 1,
+        reps: planned.reps,
+        set_type: 'normal',
+      }))
+    })
+    const { error: setsError } = await caller.asUser
+      .from('routine_sets')
+      .insert(setRows)
+    if (setsError) throw new HttpError('Could not save the routine.', 500)
+
+    created.push({ id: routine.id as string, name: routine.name as string })
+  }
+
+  if (created.length === 0)
+    throw new HttpError('That routine had nothing to save.', 400)
+  return created
+}
+
 Deno.serve(async (request) => {
   if (request.method === 'OPTIONS') {
     return new Response('ok', { headers: CORS_HEADERS })
@@ -115,6 +207,18 @@ Deno.serve(async (request) => {
       goal?: string
       days?: number
       equipment?: string[]
+      save?: { name: string; exercises: { id: string; sets: number; reps: number }[] }[]
+    }
+
+    // ── Save path ──────────────────────────────────────────────────────────
+    // Design v2.1 makes generation a *preview*: the result opens full-screen
+    // and the user presses Save or Adjust. So the two halves are separate
+    // requests. This one costs no model call and no quota — the generation
+    // that produced the plan already paid for both, and charging again for
+    // pressing Save would make Adjust the expensive choice.
+    if (Array.isArray(body.save)) {
+      const created = await saveRoutines(caller, body.save)
+      return json({ routines: created, saved: true })
     }
 
     // Requirements are validated here rather than trusted into a prompt. The
@@ -185,69 +289,24 @@ Deno.serve(async (request) => {
       )
     }
 
-    // ── Save as ordinary routines ───────────────────────────────────────────
-    // Written as the user, through RLS, into the same tables the routine
-    // editor uses. Never activated: a routine is something you choose to
-    // start, and starting one for someone is the app deciding what their
-    // session is.
-    const { data: existing } = await caller.asUser
-      .from('routines')
-      .select('position')
-      .order('position', { ascending: false })
-      .limit(1)
-      .maybeSingle()
-    let position = ((existing?.position as number | undefined) ?? -1) + 1
-
-    const created: { id: string; name: string }[] = []
-    for (const day of validated) {
-      const { data: routine, error: routineError } = await caller.asUser
-        .from('routines')
-        .insert({ user_id: caller.userId, name: day.name, position: position++ })
-        .select('id, name')
-        .single()
-      if (routineError || !routine) {
-        throw new HttpError('Could not save the routine.', 500)
-      }
-
-      const { data: routineExercises, error: reError } = await caller.asUser
-        .from('routine_exercises')
-        .insert(
-          day.exercises.map((e, index) => ({
-            routine_id: routine.id,
-            exercise_id: e.id,
-            position: index,
-          })),
-        )
-        .select('id, position')
-      if (reError || !routineExercises) {
-        throw new HttpError('Could not save the routine.', 500)
-      }
-
-      const setRows = routineExercises.flatMap((re) => {
-        const planned = day.exercises[re.position as number]
-        return Array.from({ length: planned.sets }, (_, i) => ({
-          routine_exercise_id: re.id,
-          set_number: i + 1,
-          reps: planned.reps,
-          set_type: 'normal',
-        }))
-      })
-      const { error: setsError } = await caller.asUser
-        .from('routine_sets')
-        .insert(setRows)
-      if (setsError) throw new HttpError('Could not save the routine.', 500)
-
-      created.push({ id: routine.id as string, name: routine.name as string })
-    }
-
     await recordGeneration(caller, 'routine', result.model, result.usedFree)
 
+    // Nothing is written yet. The client renders this as a preview and calls
+    // back with `save` if the user keeps it — see the save path above.
+    const nameById = new Map(available.map((e) => [e.id, e.name]))
     return json({
-      routines: created,
+      preview: validated.map((day) => ({
+        name: day.name,
+        exercises: day.exercises.map((e) => ({
+          id: e.id,
+          name: nameById.get(e.id) ?? 'Exercise',
+          sets: e.sets,
+          reps: e.reps,
+        })),
+      })),
       model: result.model,
-      // Surfaced rather than swallowed: if a model keeps inventing exercises,
-      // that is worth being able to see without reading logs.
       droppedExercises: dropped.slice(0, 10),
+      generationsLeft: await quotaRemaining(caller, 'routine'),
     })
   } catch (error) {
     if (error instanceof HttpError) return json({ error: error.message }, error.status)

@@ -90,22 +90,35 @@ export const QUOTAS = {
   routine: { limit: 3, days: 30 },
 } as const
 
-export async function assertWithinQuota(
+/**
+ * How many generations are left in the window.
+ *
+ * Design v2.1 puts this in the Coach footer — "1 regenerate left this week" —
+ * and disables the control at zero. A quota the user cannot see is a quota
+ * they discover by being refused, which reads as a fault rather than a limit.
+ */
+export async function quotaRemaining(
   caller: Caller,
   feature: keyof typeof QUOTAS,
-): Promise<void> {
+): Promise<number> {
   const { limit, days } = QUOTAS[feature]
   const since = new Date(Date.now() - days * 86_400_000).toISOString()
-
   const { count, error } = await caller.asService
     .from('ai_generations')
     .select('id', { count: 'exact', head: true })
     .eq('user_id', caller.userId)
     .eq('feature', feature)
     .gte('created_at', since)
-
   if (error) throw new HttpError('Could not check your usage.', 500)
-  if ((count ?? 0) >= limit) {
+  return Math.max(0, limit - (count ?? 0))
+}
+
+export async function assertWithinQuota(
+  caller: Caller,
+  feature: keyof typeof QUOTAS,
+): Promise<void> {
+  const { limit } = QUOTAS[feature]
+  if ((await quotaRemaining(caller, feature)) <= 0) {
     throw new HttpError(
       feature === 'routine'
         ? `That is ${limit} generated routines this month. You can still build one by hand — it takes about a minute.`

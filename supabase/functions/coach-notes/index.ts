@@ -15,6 +15,7 @@
 import {
   authenticate,
   assertWithinQuota,
+  quotaRemaining,
   CORS_HEADERS,
   HttpError,
   json,
@@ -34,8 +35,17 @@ You are given a block of statistics that has ALREADY been computed. Never
 recompute, re-add, or second-guess a number in it. Never invent a number that
 is not in it.
 
-Write 3 to 5 observations, most important first. Each has a short title (at
-most 6 words) and a body of 1 to 2 sentences. Rules:
+Write 3 to 5 observations, most important first. Each has three parts:
+
+- "title": a headline of at most 8 words.
+- "body": 1 to 2 sentences saying what to do about it.
+- "chip": the exact figures the observation came from, as a terse fragment —
+  for example "chest 22 sets · back 9 · last 4 wk" or "e1RM 156 -> 156 lb" or
+  "quads 6 sets · target 10-20". Copy the numbers from the block verbatim.
+  Never write a number in the chip that is not in the block. No sentence, no
+  verb, under 40 characters.
+
+Rules:
 
 - Ground every observation in a specific number or exercise name from the block.
 - A productive weekly range for a muscle group is 10 to 20 working sets. Say so
@@ -66,10 +76,11 @@ const SCHEMA = {
       items: {
         type: 'object',
         additionalProperties: false,
-        required: ['title', 'body'],
+        required: ['title', 'body', 'chip'],
         properties: {
           title: { type: 'string' },
           body: { type: 'string' },
+          chip: { type: 'string' },
         },
       },
     },
@@ -79,6 +90,16 @@ const SCHEMA = {
 interface Insight {
   title: string
   body: string
+  /**
+   * The figures the observation came from, verbatim from the stat block.
+   *
+   * Design v2.1 calls this "what makes the AI feel like it read the log", and
+   * it is also the cheapest honesty check the feature has: a chip that does
+   * not match the charts is a claim the reader can catch without trusting
+   * anything. Optional in the type because a model may omit it and one
+   * missing chip should not throw away four good notes.
+   */
+  chip?: string
 }
 
 /** Trust nothing a model returns. Shape, types and length are all checked. */
@@ -113,9 +134,17 @@ function parseInsights(raw: string): Insight[] {
   for (const item of list.slice(0, 5)) {
     const title = (item as Insight)?.title
     const body = (item as Insight)?.body
+    const chip = (item as Insight)?.chip
     if (typeof title !== 'string' || typeof body !== 'string') continue
     if (!title.trim() || !body.trim()) continue
-    insights.push({ title: title.trim().slice(0, 80), body: body.trim().slice(0, 400) })
+    insights.push({
+      title: title.trim().slice(0, 80),
+      body: body.trim().slice(0, 400),
+      // A missing chip drops the chip, not the note.
+      ...(typeof chip === 'string' && chip.trim()
+        ? { chip: chip.trim().slice(0, 60) }
+        : {}),
+    })
   }
   if (insights.length === 0) {
     throw new HttpError('The notes came back empty.', 502)
@@ -157,6 +186,7 @@ Deno.serve(async (request) => {
         generatedAt: cached.generated_at,
         model: cached.model,
         cached: true,
+        regeneratesLeft: await quotaRemaining(caller, 'coach_notes'),
       })
     }
 
@@ -194,6 +224,7 @@ Deno.serve(async (request) => {
       generatedAt: new Date().toISOString(),
       model: result.model,
       cached: false,
+      regeneratesLeft: await quotaRemaining(caller, 'coach_notes'),
     })
   } catch (error) {
     if (error instanceof HttpError) return json({ error: error.message }, error.status)

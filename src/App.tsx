@@ -24,6 +24,12 @@ const FriendsScreen = lazy(() =>
   import('./screens/FriendsScreen').then((m) => ({ default: m.FriendsScreen })),
 )
 
+// Coach is lazy for the same reason: a brand-new account has nothing for it to
+// read, so the first session never downloads it.
+const CoachScreen = lazy(() =>
+  import('./screens/CoachScreen').then((m) => ({ default: m.CoachScreen })),
+)
+
 export default function App() {
   const { loading, userId } = useAuth()
   const [tab, setTab] = useState<Tab>('log')
@@ -55,19 +61,30 @@ export default function App() {
       ? 'History'
       : tab === 'progress'
         ? 'Progress'
-        : tab === 'friends'
-          ? 'Friends'
-          : undefined
+        : tab === 'coach'
+          ? 'Coach'
+          : tab === 'friends'
+            ? 'Friends'
+            : undefined
 
   return (
     <UnitProvider>
       <Header title={title} />
       <main className="mx-auto w-full max-w-[430px] px-[18px] pb-28">
-        {tab === 'log' && <LogScreen userId={userId} />}
+        {tab === 'log' && (
+          <LogScreen userId={userId} onOpenCoach={() => setTab('coach')} />
+        )}
         {tab === 'history' && <HistoryScreen />}
         {tab === 'progress' && (
           <Suspense fallback={<p className="py-10 text-sm text-muted">Loading…</p>}>
             <ProgressScreen />
+          </Suspense>
+        )}
+        {tab === 'coach' && (
+          <Suspense fallback={<p className="py-10 text-sm text-muted">Loading…</p>}>
+            {/* Saving generated routines sends you to Log, where routines
+                live — the thing you just made is one tap from being started. */}
+            <CoachScreen onRoutinesSaved={() => setTab('log')} />
           </Suspense>
         )}
         {tab === 'friends' && (

@@ -44,7 +44,14 @@ These override anything else in this file or in any prompt:
    (ease-out, linear); press = 80ms dim+settle; PR = amber flash to
    persistent 7% tint; reduced-motion collapses durations. No emoji
    in UI. Full tokens and screens: design handoff
-   `Wazn_design_system_v2` / DECISIONS.md.
+   `Wazn_design_system_v2` / DECISIONS.md. **Addendum v2.1 (2026-08-04):** four
+   missing screens designed against the same system — Coach tab (AI:
+   notes + routine builder, no chat), Progress dashboard (this-week,
+   muscle-balance chart with knurl target band, volume trend, strength
+   list), Friends (leaderboard + feed + likes), Finish summary + 4:5
+   share card. Tab bar grows to FIVE items: Log · History · Progress ·
+   Coach · Friends. Handoff bundle: `docs/design/v2.1-missing-screens.md`
+   (+ `.html`), committed to the repo so it cannot go missing again.
 5. **CSS logical properties only** (`margin-inline-start`, `text-align:
 start`, etc.), `dir="ltr"` on root. Arabic RTL lands in Stage 5 and
    must be a flip, not a rewrite.

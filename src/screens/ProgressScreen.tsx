@@ -18,7 +18,6 @@ import type { Exercise, ExerciseUsageRow, OneRepMaxPoint } from '../lib/types'
 import { ExercisePicker } from '../components/ExercisePicker'
 import { ExerciseThumb } from '../components/ExerciseThumb'
 import { ExerciseDetail } from '../components/ExerciseDetail'
-import { CoachNotes } from '../components/CoachNotes'
 import {
   SET_BAND,
   heatStep,
@@ -210,10 +209,6 @@ export function ProgressScreen() {
           )
         })}
       </div>
-
-      {/* Above the charts, because it is the reading of them. Below the tab
-          bar, because switching tabs must not wait for it. */}
-      <CoachNotes />
 
       {view === 'strength' && (
         <StrengthView

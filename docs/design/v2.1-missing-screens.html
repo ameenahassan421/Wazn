@@ -1,0 +1,1511 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Wazn · Design v2.1 — Coach, Progress, Friends, Finish</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500&family=IBM+Plex+Sans:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      /* ============ Loaded Ink tokens (v2) ============ */
+      :root {
+        --ink: #0c0b0a;
+        --surface: #161513;
+        --raised: #1f1d1a;
+        --line: #2a2825;
+        --chalk: #ecebe8;
+        --iron: #f0b429;
+        --accent-ink: #1a1200;
+        --a100: #fdf7e8;
+        --a200: #fbecc7;
+        --a300: #f8dc9b;
+        --a400: #f4ca62;
+        --a700: #977018;
+        --a800: #664c11;
+        --a900: #3d2f0c;
+        --n2: #b2aea6;
+        --n3: #8d8983;
+        --n5: #595650;
+        --n6: #3f3d38;
+        --n7: #292724;
+        --tile1: #1d1c19;
+        --tile2: #23221e;
+        --hair: rgba(236, 235, 232, 0.14);
+        --rule: rgba(236, 235, 232, 0.08);
+        --toplight: rgba(236, 235, 232, 0.04);
+        --tint7: rgba(240, 180, 41, 0.07);
+        --tint10: rgba(240, 180, 41, 0.1);
+      }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      html {
+        background: #080807;
+      }
+      body {
+        font-family: 'IBM Plex Sans', system-ui, sans-serif;
+        color: var(--chalk);
+        background: #080807;
+        padding: 64px 40px 120px;
+      }
+      .knurl {
+        background:
+          repeating-linear-gradient(
+            45deg,
+            rgba(240, 180, 41, 0.55) 0 1px,
+            transparent 1px 5px
+          ),
+          repeating-linear-gradient(
+            -45deg,
+            rgba(240, 180, 41, 0.55) 0 1px,
+            transparent 1px 5px
+          );
+      }
+      .mono {
+        font-family: 'IBM Plex Mono', monospace;
+      }
+      .kick {
+        font:
+          500 11px/1 'IBM Plex Mono',
+          monospace;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--n3);
+      }
+      .tnum {
+        font-variant-numeric: tabular-nums;
+      }
+
+      /* ============ doc chrome ============ */
+      .doc-head {
+        max-width: 1200px;
+        margin: 0 auto 56px;
+      }
+      .doc-head h1 {
+        font-size: 34px;
+        font-weight: 600;
+        letter-spacing: -0.01em;
+      }
+      .doc-head .sub {
+        color: var(--n2);
+        font-size: 15px;
+        margin-top: 10px;
+        max-width: 760px;
+        line-height: 1.55;
+      }
+      .doc-head .band {
+        height: 8px;
+        width: 220px;
+        margin-top: 22px;
+        border-radius: 2px;
+      }
+      .sec {
+        max-width: 1200px;
+        margin: 0 auto 96px;
+      }
+      .sec-head {
+        display: flex;
+        align-items: baseline;
+        gap: 14px;
+        margin-bottom: 8px;
+      }
+      .sec-head .no {
+        font:
+          500 12px 'IBM Plex Mono',
+          monospace;
+        color: var(--iron);
+        letter-spacing: 0.14em;
+      }
+      .sec-head h2 {
+        font-size: 22px;
+        font-weight: 600;
+      }
+      .sec-sub {
+        color: var(--n2);
+        font-size: 14px;
+        line-height: 1.6;
+        max-width: 720px;
+        margin-bottom: 30px;
+      }
+      .row {
+        display: flex;
+        gap: 42px;
+        align-items: flex-start;
+        flex-wrap: wrap;
+      }
+      .spec {
+        flex: 1 1 300px;
+        min-width: 280px;
+        max-width: 420px;
+      }
+      .spec h4 {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--chalk);
+        margin: 20px 0 6px;
+      }
+      .spec h4:first-child {
+        margin-top: 2px;
+      }
+      .spec p {
+        font-size: 13px;
+        line-height: 1.6;
+        color: var(--n2);
+        margin-bottom: 8px;
+      }
+      .spec code {
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 11.5px;
+        color: var(--a300);
+        background: var(--n7);
+        padding: 1px 5px;
+        border-radius: 4px;
+      }
+
+      /* ============ phone frame ============ */
+      .phone {
+        width: 390px;
+        flex: 0 0 390px;
+        background: var(--ink);
+        border-radius: 22px;
+        box-shadow:
+          0 0 0 1px var(--line),
+          inset 0 1px 0 var(--toplight);
+        overflow: hidden;
+      }
+      .hdr {
+        background: linear-gradient(180deg, #131210, #0c0b0a);
+        padding: 14px 18px 12px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .hdr .t {
+        font-size: 17px;
+        font-weight: 600;
+      }
+      .hdr .side {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+      }
+      .unit {
+        font: 500 13px/1 'IBM Plex Sans';
+        color: var(--n2);
+        border: 1px solid var(--hair);
+        border-radius: 8px;
+        padding: 9px 12px;
+      }
+      .scr {
+        padding: 14px 18px 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+      .tabbar {
+        display: flex;
+        border-top: 1px solid rgba(236, 235, 232, 0.09);
+        height: 58px;
+      }
+      .tab {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
+        color: var(--n3);
+        font-size: 10.5px;
+        position: relative;
+      }
+      .tab svg {
+        width: 21px;
+        height: 21px;
+        stroke: currentColor;
+        fill: none;
+        stroke-width: 2;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+      .tab.on {
+        color: var(--iron);
+      }
+      .tab.on::before {
+        content: '';
+        position: absolute;
+        inset-block-start: 0;
+        inset-inline: 22%;
+        height: 2px;
+        background: var(--iron);
+      }
+
+      /* ============ shared components ============ */
+      .card {
+        background: var(--surface);
+        border-radius: 8px;
+        box-shadow:
+          0 0 0 1px var(--line),
+          inset 0 1px 0 var(--toplight);
+        padding: 13px;
+      }
+      .hero-btn {
+        height: 62px;
+        border-radius: 8px;
+        background: var(--iron);
+        color: var(--accent-ink);
+        font: 600 18px 'IBM Plex Sans';
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25);
+      }
+      .sec-btn {
+        height: 44px;
+        border-radius: 8px;
+        border: 1px solid var(--hair);
+        color: var(--chalk);
+        font: 500 14px 'IBM Plex Sans';
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .ghost {
+        color: var(--iron);
+        font: 500 13px 'IBM Plex Sans';
+      }
+      .quiet {
+        color: rgba(236, 235, 232, 0.55);
+        font: 400 13px 'IBM Plex Sans';
+      }
+      .chip {
+        height: 44px;
+        min-width: 56px;
+        padding: 0 14px;
+        border-radius: 8px;
+        border: 1px solid var(--hair);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font: 500 13.5px 'IBM Plex Sans';
+        color: var(--n2);
+      }
+      .chip.on {
+        border: 1.5px solid var(--iron);
+        background: var(--tint10);
+        color: var(--iron);
+      }
+      .rule {
+        height: 1px;
+        background: var(--rule);
+      }
+      .rule-fade {
+        height: 1px;
+        background: linear-gradient(
+          90deg,
+          transparent,
+          var(--hair) 32px,
+          var(--hair) calc(100% - 32px),
+          transparent
+        );
+      }
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        height: 22px;
+        padding: 0 7px;
+        border-radius: 5px;
+        background: var(--a800);
+        color: var(--a200);
+        font:
+          600 11px 'IBM Plex Mono',
+          monospace;
+        letter-spacing: 0.08em;
+        position: relative;
+        overflow: hidden;
+      }
+      .badge .k {
+        position: absolute;
+        inset: 0;
+        opacity: 0.5;
+      }
+      .badge span {
+        position: relative;
+      }
+
+      /* ============ 01 COACH ============ */
+      .coach-note {
+        display: flex;
+        gap: 12px;
+        padding: 12px 0;
+      }
+      .coach-note + .coach-note {
+        border-top: 1px solid var(--rule);
+      }
+      .cn-i {
+        font:
+          500 12px 'IBM Plex Mono',
+          monospace;
+        color: var(--iron);
+        padding-top: 3px;
+        width: 18px;
+      }
+      .cn-b h5 {
+        font-size: 15px;
+        font-weight: 600;
+        line-height: 1.35;
+      }
+      .cn-b p {
+        font-size: 13px;
+        color: var(--n2);
+        line-height: 1.5;
+        margin-top: 3px;
+      }
+      .cn-chip {
+        display: inline-flex;
+        margin-top: 8px;
+        font:
+          500 11px 'IBM Plex Mono',
+          monospace;
+        color: var(--a300);
+        background: var(--tint7);
+        border: 1px solid rgba(240, 180, 41, 0.18);
+        border-radius: 5px;
+        padding: 4px 8px;
+        letter-spacing: 0.04em;
+      }
+      .note-1 {
+        position: relative;
+        padding-inline-start: 14px;
+      }
+      .note-1::before {
+        content: '';
+        position: absolute;
+        inset-block: 12px;
+        inset-inline-start: 0;
+        width: 4px;
+        border-radius: 2px;
+        background:
+          repeating-linear-gradient(
+            45deg,
+            rgba(240, 180, 41, 0.7) 0 1px,
+            transparent 1px 4px
+          ),
+          repeating-linear-gradient(
+            -45deg,
+            rgba(240, 180, 41, 0.7) 0 1px,
+            transparent 1px 4px
+          );
+      }
+      .gen-card {
+        border: 1px dashed rgba(240, 180, 41, 0.45);
+        border-radius: 8px;
+        padding: 13px;
+        background: transparent;
+      }
+      .g-row {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-top: 10px;
+      }
+
+      /* ============ 02 PROGRESS ============ */
+      .week {
+        display: flex;
+        gap: 0;
+      }
+      .wk {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+      .wk + .wk {
+        border-inline-start: 1px solid var(--rule);
+        padding-inline-start: 14px;
+      }
+      .wk .v {
+        font: 600 27px/1.05 'IBM Plex Sans';
+        letter-spacing: -0.01em;
+      }
+      .wk .v small {
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--n3);
+        margin-inline-start: 2px;
+      }
+      .plates {
+        display: flex;
+        align-items: flex-end;
+        gap: 3px;
+        height: 16px;
+        margin-top: 5px;
+      }
+      .plates i {
+        width: 4px;
+        border-radius: 2px;
+        background: var(--iron);
+      }
+      .plates i.off {
+        background: var(--n6);
+      }
+      .mg {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 7px 0;
+      }
+      .mg .n {
+        width: 74px;
+        font-size: 13px;
+        color: var(--n2);
+      }
+      .mg .track {
+        flex: 1;
+        height: 14px;
+        border-radius: 4px;
+        background: var(--tile1);
+        position: relative;
+        overflow: hidden;
+      }
+      .mg .band {
+        position: absolute;
+        inset-block: 0;
+        inset-inline-start: 33%;
+        width: 34%;
+        background:
+          repeating-linear-gradient(
+            45deg,
+            rgba(240, 180, 41, 0.28) 0 1px,
+            transparent 1px 5px
+          ),
+          repeating-linear-gradient(
+            -45deg,
+            rgba(240, 180, 41, 0.28) 0 1px,
+            transparent 1px 5px
+          );
+      }
+      .mg .fill {
+        position: absolute;
+        inset-block: 2px;
+        inset-inline-start: 2px;
+        border-radius: 3px;
+        background: var(--n5);
+      }
+      .mg .fill.in {
+        background: var(--iron);
+      }
+      .mg .fill.over {
+        background: var(--a800);
+      }
+      .mg .v {
+        width: 26px;
+        text-align: end;
+        font: 500 13px 'IBM Plex Sans';
+        color: var(--n2);
+      }
+      .focus {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        background: var(--tint7);
+        border: 1px solid rgba(240, 180, 41, 0.18);
+        border-radius: 8px;
+        padding: 10px 12px;
+      }
+      .focus .fk {
+        font:
+          500 11px 'IBM Plex Mono',
+          monospace;
+        letter-spacing: 0.14em;
+        color: var(--iron);
+      }
+      .focus p {
+        font-size: 13px;
+        color: var(--chalk);
+        line-height: 1.45;
+      }
+      .lift {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 11px 0;
+      }
+      .lift + .lift {
+        border-top: 1px solid var(--rule);
+      }
+      .lift .th {
+        width: 40px;
+        height: 40px;
+        border-radius: 4px;
+        background: var(--tile2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font: 500 17px 'IBM Plex Sans';
+        color: rgba(236, 235, 232, 0.55);
+      }
+      .lift .nm {
+        flex: 1;
+        font-size: 14px;
+      }
+      .lift .nm small {
+        display: block;
+        font-size: 11.5px;
+        color: var(--n3);
+        margin-top: 2px;
+      }
+      .lift .rm {
+        font: 500 20px 'IBM Plex Sans';
+        letter-spacing: -0.01em;
+      }
+      .lift .d {
+        font:
+          500 12px 'IBM Plex Mono',
+          monospace;
+        width: 44px;
+        text-align: end;
+      }
+      .d.up {
+        color: var(--iron);
+      }
+      .d.dn {
+        color: var(--n3);
+      }
+      .d.fl {
+        color: var(--n5);
+      }
+
+      /* ============ 03 FRIENDS ============ */
+      .lb-band {
+        height: 6px;
+        border-radius: 3px 3px 0 0;
+        margin: -13px -13px 12px;
+      }
+      .lb {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 9px 0;
+      }
+      .lb + .lb {
+        border-top: 1px solid var(--rule);
+      }
+      .lb .rk {
+        font:
+          500 12px 'IBM Plex Mono',
+          monospace;
+        color: var(--n3);
+        width: 18px;
+      }
+      .lb .nm {
+        flex: 1;
+        font-size: 14px;
+        font-weight: 500;
+      }
+      .lb .vol {
+        font: 500 15px 'IBM Plex Sans';
+      }
+      .lb .s {
+        font-size: 11.5px;
+        color: var(--n3);
+        width: 56px;
+        text-align: end;
+      }
+      .lb.me {
+        background: var(--tint7);
+        border-radius: 6px;
+        margin-inline: -8px;
+        padding-inline: 8px;
+        border-top: none;
+      }
+      .lb.me .rk {
+        color: var(--iron);
+      }
+      .feed-card .fh {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .feed-card .av {
+        width: 40px;
+        height: 40px;
+        border-radius: 8px;
+        background: var(--tile2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font: 500 16px 'IBM Plex Sans';
+        color: rgba(236, 235, 232, 0.55);
+      }
+      .feed-card .who {
+        flex: 1;
+      }
+      .feed-card .who b {
+        font-size: 14px;
+        font-weight: 600;
+        display: block;
+      }
+      .feed-card .who span {
+        font-size: 11.5px;
+        color: var(--n3);
+      }
+      .fstats {
+        display: flex;
+        gap: 0;
+        margin-top: 12px;
+      }
+      .fs {
+        flex: 1;
+      }
+      .fs + .fs {
+        border-inline-start: 1px solid var(--rule);
+        padding-inline-start: 12px;
+      }
+      .fs .v {
+        font: 500 19px 'IBM Plex Sans';
+      }
+      .fs .l {
+        font-size: 10.5px;
+        color: var(--n3);
+        margin-top: 2px;
+        font-family: 'IBM Plex Mono', monospace;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+      }
+      .facts {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-top: 12px;
+        padding-top: 10px;
+        border-top: 1px solid var(--rule);
+      }
+      .like {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font: 500 13px 'IBM Plex Sans';
+        color: var(--n3);
+      }
+      .like.on {
+        color: var(--iron);
+      }
+      .like svg {
+        width: 17px;
+        height: 17px;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 2;
+        stroke-linejoin: round;
+      }
+      .like.on svg {
+        fill: var(--iron);
+        stroke: var(--iron);
+      }
+
+      /* ============ 04 FINISH + SHARE ============ */
+      .fin-big {
+        display: flex;
+        gap: 0;
+        margin-top: 2px;
+      }
+      .share-card {
+        background: var(--ink);
+        border-radius: 14px;
+        box-shadow:
+          0 0 0 1px var(--line),
+          inset 0 1px 0 var(--toplight);
+        padding: 22px;
+        aspect-ratio: 4/5;
+        display: flex;
+        flex-direction: column;
+        width: 330px;
+        margin: 0 auto;
+      }
+      .share-card .wm {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .share-card .wm .bar {
+        width: 5px;
+        height: 20px;
+        background: var(--iron);
+        border-radius: 1px;
+      }
+      .share-card .wm b {
+        font-size: 17px;
+        font-weight: 600;
+        letter-spacing: 0.02em;
+      }
+      .share-card .big {
+        margin-top: auto;
+      }
+      .share-card .big .v {
+        font: 600 56px/1 'IBM Plex Sans';
+        letter-spacing: -0.02em;
+      }
+      .share-card .big .v small {
+        font-size: 20px;
+        color: var(--n3);
+        font-weight: 500;
+      }
+      .share-card .big .l {
+        margin-top: 6px;
+      }
+      .share-kn {
+        height: 8px;
+        border-radius: 2px;
+        margin: 18px 0;
+      }
+      .share-grid {
+        display: flex;
+      }
+      .share-grid .fs .v {
+        font-size: 22px;
+      }
+      .share-foot {
+        margin-top: 16px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .share-foot .u {
+        font:
+          500 11px 'IBM Plex Mono',
+          monospace;
+        color: var(--n3);
+        letter-spacing: 0.1em;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="doc-head">
+      <h1>Wazn · Design v2.1 — the missing screens</h1>
+      <p class="sub">
+        Extends v2 "Loaded Ink, refined" with the four surfaces the launch bundle needs
+        and the handoff never covered: the Coach tab (AI), the Progress dashboard, the
+        Friends tab (feed + leaderboard), and the Finish summary with its shareable
+        card. Every token, radius, motion rule, and voice rule from v2 applies
+        unchanged. The tab bar grows from three items to five.
+      </p>
+      <div class="band knurl"></div>
+    </div>
+
+    <!-- ================= 01 COACH ================= -->
+    <section class="sec">
+      <div class="sec-head">
+        <span class="no">01</span>
+        <h2>Coach — the AI tab</h2>
+      </div>
+      <p class="sec-sub">
+        Two bounded tools, no chat. Coach's Notes reads the lifter's actual numbers back
+        to them with a priority order; the routine builder is a three-question form with
+        one hero action. Amber is earned by priority #1 and the single CTA — nothing
+        else.
+      </p>
+      <div class="row">
+        <div class="phone">
+          <div class="hdr">
+            <span class="t">Coach</span
+            ><span class="side"
+              ><span class="kick" style="color: var(--a700)">Beta</span></span
+            >
+          </div>
+          <div class="scr">
+            <div class="card">
+              <div
+                style="
+                  display: flex;
+                  justify-content: space-between;
+                  align-items: baseline;
+                "
+              >
+                <span class="kick">Coach's notes · as of Aug 4</span>
+                <span class="ghost">Regenerate</span>
+              </div>
+              <div style="margin-top: 4px">
+                <div class="coach-note note-1">
+                  <span class="cn-i">1</span>
+                  <div class="cn-b">
+                    <h5>Your pull is falling behind your push</h5>
+                    <p>
+                      Chest gets more than twice the weekly sets of your back. Two extra
+                      sets of rows per upper day closes it.
+                    </p>
+                    <span class="cn-chip tnum">chest 22 sets · back 9 · last 4 wk</span>
+                  </div>
+                </div>
+                <div class="coach-note">
+                  <span class="cn-i">2</span>
+                  <div class="cn-b">
+                    <h5>Bench has stalled for 5 weeks</h5>
+                    <p>
+                      e1RM flat since Jun 27. Drop to 3×5 at 90% of your best top set
+                      and rebuild.
+                    </p>
+                    <span class="cn-chip tnum">e1RM 156 → 156 lb</span>
+                  </div>
+                </div>
+                <div class="coach-note">
+                  <span class="cn-i">3</span>
+                  <div class="cn-b">
+                    <h5>Legs only trained once last week</h5>
+                    <p>
+                      Your split plans two lower days. One missed lower day costs more
+                      volume than any other session.
+                    </p>
+                    <span class="cn-chip tnum">quads 6 sets · target 10–20</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="gen-card">
+              <span class="kick" style="color: var(--iron)">Build me a routine</span>
+              <div class="g-row">
+                <span class="chip on">Muscle</span><span class="chip">Strength</span
+                ><span class="chip">Both</span>
+              </div>
+              <div class="g-row">
+                <span class="chip">3 days</span><span class="chip on">4 days</span
+                ><span class="chip">5 days</span>
+              </div>
+              <div class="g-row">
+                <span class="chip on">Full gym</span><span class="chip">Dumbbells</span
+                ><span class="chip">Home</span>
+              </div>
+              <div class="hero-btn" style="margin-top: 12px">Generate routine</div>
+            </div>
+            <div style="text-align: center">
+              <span class="kick" style="font-size: 10px"
+                >AI-generated · not medical advice · 1 regenerate left this week</span
+              >
+            </div>
+          </div>
+          <div class="tabbar">
+            <div class="tab">
+              <svg viewBox="0 0 24 24">
+                <path d="M3 12h2m14 0h2M7 8v8M17 8v8M9 12h6" /></svg
+              >Log
+            </div>
+            <div class="tab">
+              <svg viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="9" />
+                <path d="M12 7v5l3 3" /></svg
+              >History
+            </div>
+            <div class="tab">
+              <svg viewBox="0 0 24 24"><path d="M4 17l5-6 4 3 7-9" /></svg>Progress
+            </div>
+            <div class="tab on">
+              <svg viewBox="0 0 24 24">
+                <path
+                  d="M12 3l2.2 4.8L19 9l-4 3.6L16 18l-4-2.6L8 18l1-5.4L5 9l4.8-1.2z"
+                /></svg
+              >Coach
+            </div>
+            <div class="tab">
+              <svg viewBox="0 0 24 24">
+                <circle cx="9" cy="8" r="3" />
+                <path d="M3 20c0-3.3 2.7-5 6-5s6 1.7 6 5" />
+                <circle cx="17.5" cy="9.5" r="2.5" />
+                <path d="M15.5 15.4c2.7.3 5 1.8 5 4.6" /></svg
+              >Friends
+            </div>
+          </div>
+        </div>
+        <div class="spec">
+          <h4>Coach's Notes card</h4>
+          <p>
+            Kicker <code>COACH'S NOTES · AS OF AUG 4</code> + quiet
+            <code>Regenerate</code> (ghost). 3–5 notes: index in 12px mono amber,
+            headline 15/600, support 13/400 <code>--n2</code>, and a <b>data chip</b> —
+            mono 11, amber-300 on 7% tint — quoting the exact numbers the insight came
+            from. The chip is what makes the AI feel like it read the log.
+          </p>
+          <h4>Priority #1 signature</h4>
+          <p>
+            Only the top note carries a 4px vertical <b>knurl band</b> at inline-start.
+            One knurl per screen; severity comes from order, not color.
+          </p>
+          <h4>Routine builder</h4>
+          <p>
+            Dashed amber card (next-up pattern). Three chip rows: goal / days /
+            equipment, single-select, v2 chip states. <code>Generate routine</code> is
+            the screen's one hero button. Result opens as a full-screen preview →
+            <code>Save routine</code> (hero) / <code>Adjust</code> (secondary); saved
+            routines land in the normal Routines list, never auto-activate.
+          </p>
+          <h4>States</h4>
+          <p>
+            Loading: kicker cycles <code>READING YOUR LOG…</code> — no skeleton shimmer.
+            Empty (new user, &lt;3 workouts): "Log 3 workouts and the coach will have
+            something to say." Quota spent: Regenerate goes disabled at 45% opacity,
+            footer says when it resets. Offline/error: amber outlined alert per v2,
+            states what failed and what happens next.
+          </p>
+          <h4>Tab bar</h4>
+          <p>
+            Now five items: Log · History · Progress · Coach (star) · Friends. Active =
+            amber icon+label + 2px top rail. 58–60px unchanged.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= 02 PROGRESS ================= -->
+    <section class="sec">
+      <div class="sec-head">
+        <span class="no">02</span>
+        <h2>Progress — the dashboard</h2>
+      </div>
+      <p class="sec-sub">
+        From one chart to the whole picture: this week, muscle balance against the 10–20
+        productive band, and every lift's trend. The loaded-bar balance chart is the
+        screen's signature — the target band is drawn in knurl, so "in the zone"
+        literally means on the grip.
+      </p>
+      <div class="row">
+        <div class="phone">
+          <div class="hdr">
+            <span class="t">Progress</span
+            ><span class="side"><span class="unit tnum">lbs</span></span>
+          </div>
+          <div class="scr">
+            <div class="card">
+              <span class="kick">This week</span>
+              <div class="week" style="margin-top: 8px">
+                <div class="wk">
+                  <span class="v tnum">4</span
+                  ><span class="kick" style="font-size: 10px">Sessions</span>
+                </div>
+                <div class="wk">
+                  <span class="v tnum">42.1<small>k lb</small></span
+                  ><span class="kick" style="font-size: 10px">Volume</span>
+                </div>
+                <div class="wk">
+                  <span class="v tnum">6<small>wk</small></span>
+                  <div class="plates">
+                    <i style="height: 7px"></i><i style="height: 10px"></i
+                    ><i style="height: 13px"></i><i style="height: 16px"></i>
+                  </div>
+                  <span class="kick" style="font-size: 10px">Streak</span>
+                </div>
+              </div>
+            </div>
+            <div class="card">
+              <div
+                style="
+                  display: flex;
+                  justify-content: space-between;
+                  align-items: baseline;
+                "
+              >
+                <span class="kick">Weekly sets · target band 10–20</span>
+              </div>
+              <div style="margin-top: 6px">
+                <div class="mg">
+                  <span class="n">Chest</span>
+                  <div class="track">
+                    <div class="band"></div>
+                    <div class="fill over" style="width: 72%"></div>
+                  </div>
+                  <span class="v tnum">22</span>
+                </div>
+                <div class="mg">
+                  <span class="n">Back</span>
+                  <div class="track">
+                    <div class="band"></div>
+                    <div class="fill" style="width: 28%"></div>
+                  </div>
+                  <span class="v tnum">9</span>
+                </div>
+                <div class="mg">
+                  <span class="n">Shoulders</span>
+                  <div class="track">
+                    <div class="band"></div>
+                    <div class="fill in" style="width: 44%"></div>
+                  </div>
+                  <span class="v tnum">14</span>
+                </div>
+                <div class="mg">
+                  <span class="n">Quads</span>
+                  <div class="track">
+                    <div class="band"></div>
+                    <div class="fill" style="width: 20%"></div>
+                  </div>
+                  <span class="v tnum">6</span>
+                </div>
+                <div class="mg">
+                  <span class="n">Hamstrings</span>
+                  <div class="track">
+                    <div class="band"></div>
+                    <div class="fill in" style="width: 38%"></div>
+                  </div>
+                  <span class="v tnum">12</span>
+                </div>
+                <div class="mg">
+                  <span class="n">Arms</span>
+                  <div class="track">
+                    <div class="band"></div>
+                    <div class="fill in" style="width: 52%"></div>
+                  </div>
+                  <span class="v tnum">16</span>
+                </div>
+              </div>
+              <div class="focus" style="margin-top: 10px">
+                <span class="fk">Focus</span>
+                <p>Back and quads sit under the band. The coach has a fix →</p>
+              </div>
+            </div>
+            <div class="card">
+              <span class="kick">Volume · last 12 weeks</span>
+              <svg viewBox="0 0 330 90" style="width: 100%; margin-top: 8px">
+                <line
+                  x1="0"
+                  y1="86"
+                  x2="330"
+                  y2="86"
+                  stroke="#2A2825"
+                  stroke-width="1"
+                />
+                <line
+                  x1="0"
+                  y1="48"
+                  x2="330"
+                  y2="48"
+                  stroke="#2A2825"
+                  stroke-width="1"
+                  stroke-dasharray="2 4"
+                />
+                <line
+                  x1="0"
+                  y1="12"
+                  x2="330"
+                  y2="12"
+                  stroke="#2A2825"
+                  stroke-width="1"
+                  stroke-dasharray="2 4"
+                />
+                <path
+                  d="M6 66 L36 60 L66 63 L96 50 L126 54 L156 40 L186 46 L216 30 L246 36 L276 24 L306 30 L324 18 L324 86 L6 86 Z"
+                  fill="rgba(240,180,41,.08)"
+                />
+                <path
+                  d="M6 66 L36 60 L66 63 L96 50 L126 54 L156 40 L186 46 L216 30 L246 36 L276 24 L306 30 L324 18"
+                  fill="none"
+                  stroke="#F0B429"
+                  stroke-width="2"
+                  stroke-linejoin="round"
+                  stroke-linecap="round"
+                />
+                <circle cx="324" cy="18" r="3.5" fill="#F0B429" />
+              </svg>
+            </div>
+            <div class="card">
+              <span class="kick">Strength · est. 1RM</span>
+              <div style="margin-top: 2px">
+                <div class="lift">
+                  <div class="th">B</div>
+                  <div class="nm">Bench Press (Barbell)<small>last: Jul 13</small></div>
+                  <span class="rm tnum">156</span><span class="d fl mono">→ 0</span>
+                </div>
+                <div class="lift">
+                  <div class="th">D</div>
+                  <div class="nm">Deadlift (Barbell)<small>last: Jul 31</small></div>
+                  <span class="rm tnum">297</span><span class="d up mono">▲ 27</span>
+                </div>
+                <div class="lift">
+                  <div class="th">S</div>
+                  <div class="nm">Squat (Barbell)<small>last: Jul 17</small></div>
+                  <span class="rm tnum">204</span><span class="d dn mono">▼ 12</span>
+                </div>
+                <div class="lift">
+                  <div class="th">R</div>
+                  <div class="nm">
+                    Seated Cable Row — V Grip<small>last: Jul 15</small>
+                  </div>
+                  <span class="rm tnum">164</span><span class="d up mono">▲ 6</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="tabbar">
+            <div class="tab">
+              <svg viewBox="0 0 24 24">
+                <path d="M3 12h2m14 0h2M7 8v8M17 8v8M9 12h6" /></svg
+              >Log
+            </div>
+            <div class="tab">
+              <svg viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="9" />
+                <path d="M12 7v5l3 3" /></svg
+              >History
+            </div>
+            <div class="tab on">
+              <svg viewBox="0 0 24 24"><path d="M4 17l5-6 4 3 7-9" /></svg>Progress
+            </div>
+            <div class="tab">
+              <svg viewBox="0 0 24 24">
+                <path
+                  d="M12 3l2.2 4.8L19 9l-4 3.6L16 18l-4-2.6L8 18l1-5.4L5 9l4.8-1.2z"
+                /></svg
+              >Coach
+            </div>
+            <div class="tab">
+              <svg viewBox="0 0 24 24">
+                <circle cx="9" cy="8" r="3" />
+                <path d="M3 20c0-3.3 2.7-5 6-5s6 1.7 6 5" />
+                <circle cx="17.5" cy="9.5" r="2.5" />
+                <path d="M15.5 15.4c2.7.3 5 1.8 5 4.6" /></svg
+              >Friends
+            </div>
+          </div>
+        </div>
+        <div class="spec">
+          <h4>This week</h4>
+          <p>
+            Three columns split by inner rules: sessions, volume, streak. Figures 27/600
+            tnum; streak keeps the v2 plate-bars (4px, heights 7/10/13/16). All three
+            derived, no new tables.
+          </p>
+          <h4>Muscle balance — the signature</h4>
+          <p>
+            One row per group: label 74px, 14px track on <code>--tile1</code>, value
+            right-aligned. The 10–20 target zone is a <b>knurl band</b> at 33–67% of
+            track width (scale caps at 30 sets). Fill: under band =
+            <code>--n5</code> neutral; in band = amber 500; over = amber 800. Single
+            hue, three meanings — no red, no green, ramp carries the message.
+          </p>
+          <h4>Focus callout</h4>
+          <p>
+            7% amber tint row naming the lagging groups, cross-linking to Coach. This is
+            the "what should I focus on" answer, computed by SQL — the AI only phrases
+            it.
+          </p>
+          <h4>Volume trend</h4>
+          <p>
+            v2 chart grammar exactly: amber 2px line, 8% area, 3.5px last-point dot,
+            solid baseline + dashed 2/4 gridlines. One point per week.
+          </p>
+          <h4>Strength list</h4>
+          <p>
+            Rows: 40px initial tile (or thumb), name + last-session micro, e1RM 20/500
+            tnum, 4-week delta in mono — <code>▲</code> amber, <code>▼</code>
+            <code>--n3</code>, <code>→</code> <code>--n5</code>. Row opens the existing
+            exercise detail page. Sorted by most-trained.
+          </p>
+          <h4>Empty state</h4>
+          <p>
+            New user: week card renders zeros, balance chart shows the knurl bands with
+            no fills + "Log a workout to load the bar." Charts never show fake data.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= 03 FRIENDS ================= -->
+    <section class="sec">
+      <div class="sec-head">
+        <span class="no">03</span>
+        <h2>Friends — feed + leaderboard</h2>
+      </div>
+      <p class="sec-sub">
+        The week's leaderboard on top — knurl crown, your row on amber tint — then the
+        feed: finished workouts as stat cards with one-tap respect. No comments, no
+        infinite anything.
+      </p>
+      <div class="row">
+        <div class="phone">
+          <div class="hdr">
+            <span class="t">Friends</span
+            ><span class="side"><span class="ghost">Invite</span></span>
+          </div>
+          <div class="scr">
+            <div class="card">
+              <div class="lb-band knurl"></div>
+              <span class="kick">This week · volume</span>
+              <div style="margin-top: 2px">
+                <div class="lb">
+                  <span class="rk">1</span><span class="nm">Nawal</span
+                  ><span class="vol tnum">51.2k</span
+                  ><span class="s tnum">5 sessions</span>
+                </div>
+                <div class="lb me">
+                  <span class="rk">2</span><span class="nm">Ameen</span
+                  ><span class="vol tnum">42.1k</span
+                  ><span class="s tnum">4 sessions</span>
+                </div>
+                <div class="lb">
+                  <span class="rk">3</span><span class="nm">Chloe</span
+                  ><span class="vol tnum">28.7k</span
+                  ><span class="s tnum">3 sessions</span>
+                </div>
+              </div>
+            </div>
+            <div class="card feed-card">
+              <div class="fh">
+                <div class="av">N</div>
+                <div class="who">
+                  <b>Nawal · Upper A</b><span class="tnum">Today · 6:12 PM</span>
+                </div>
+                <span class="badge"><span class="k knurl"></span><span>PR</span></span>
+              </div>
+              <div class="fstats">
+                <div class="fs">
+                  <div class="v tnum">
+                    58<small style="font-size: 12px; color: var(--n3)"> min</small>
+                  </div>
+                  <div class="l">Duration</div>
+                </div>
+                <div class="fs">
+                  <div class="v tnum">12.4k</div>
+                  <div class="l">Volume lb</div>
+                </div>
+                <div class="fs">
+                  <div class="v tnum">18</div>
+                  <div class="l">Sets</div>
+                </div>
+              </div>
+              <div class="facts">
+                <span style="font-size: 12px; color: var(--n2)"
+                  >Bench Press — new e1RM
+                  <b class="tnum" style="color: var(--a300)">142 lb</b></span
+                >
+                <span class="like on"
+                  ><svg viewBox="0 0 24 24">
+                    <path
+                      d="M12 20s-7-4.6-9.2-9C1.2 7.7 3.6 4.5 7 4.5c2 0 3.6 1.1 5 3 1.4-1.9 3-3 5-3 3.4 0 5.8 3.2 4.2 6.5C19 15.4 12 20 12 20z"
+                    /></svg
+                  >4</span
+                >
+              </div>
+            </div>
+            <div class="card feed-card">
+              <div class="fh">
+                <div class="av">C</div>
+                <div class="who">
+                  <b>Chloe · Lower</b><span class="tnum">Yesterday · 7:40 AM</span>
+                </div>
+              </div>
+              <div class="fstats">
+                <div class="fs">
+                  <div class="v tnum">
+                    44<small style="font-size: 12px; color: var(--n3)"> min</small>
+                  </div>
+                  <div class="l">Duration</div>
+                </div>
+                <div class="fs">
+                  <div class="v tnum">9.8k</div>
+                  <div class="l">Volume lb</div>
+                </div>
+                <div class="fs">
+                  <div class="v tnum">15</div>
+                  <div class="l">Sets</div>
+                </div>
+              </div>
+              <div class="facts">
+                <span style="font-size: 12px; color: var(--n3)"
+                  >3rd session this week</span
+                >
+                <span class="like"
+                  ><svg viewBox="0 0 24 24">
+                    <path
+                      d="M12 20s-7-4.6-9.2-9C1.2 7.7 3.6 4.5 7 4.5c2 0 3.6 1.1 5 3 1.4-1.9 3-3 5-3 3.4 0 5.8 3.2 4.2 6.5C19 15.4 12 20 12 20z"
+                    /></svg
+                  >1</span
+                >
+              </div>
+            </div>
+          </div>
+          <div class="tabbar">
+            <div class="tab">
+              <svg viewBox="0 0 24 24">
+                <path d="M3 12h2m14 0h2M7 8v8M17 8v8M9 12h6" /></svg
+              >Log
+            </div>
+            <div class="tab">
+              <svg viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="9" />
+                <path d="M12 7v5l3 3" /></svg
+              >History
+            </div>
+            <div class="tab">
+              <svg viewBox="0 0 24 24"><path d="M4 17l5-6 4 3 7-9" /></svg>Progress
+            </div>
+            <div class="tab">
+              <svg viewBox="0 0 24 24">
+                <path
+                  d="M12 3l2.2 4.8L19 9l-4 3.6L16 18l-4-2.6L8 18l1-5.4L5 9l4.8-1.2z"
+                /></svg
+              >Coach
+            </div>
+            <div class="tab on">
+              <svg viewBox="0 0 24 24">
+                <circle cx="9" cy="8" r="3" />
+                <path d="M3 20c0-3.3 2.7-5 6-5s6 1.7 6 5" />
+                <circle cx="17.5" cy="9.5" r="2.5" />
+                <path d="M15.5 15.4c2.7.3 5 1.8 5 4.6" /></svg
+              >Friends
+            </div>
+          </div>
+        </div>
+        <div class="spec">
+          <h4>Leaderboard</h4>
+          <p>
+            Card crowned by a 6px knurl band (this screen's one knurl). Rows: rank mono
+            12, name 14/500, volume 15/500 tnum, sessions micro. <b>Your row</b> sits on
+            7% amber tint with an amber rank — you always know where you stand. Toggle
+            volume/sessions lives behind the kicker later; ship volume only.
+          </p>
+          <h4>Feed cards</h4>
+          <p>
+            Header: 40px initial tile, name + routine 14/600, timestamp micro; PR badge
+            (knurl overlay) only when a record fell. Stats: three rule-split columns —
+            duration, volume, sets. Fact line quotes the best moment ("new e1RM 142 lb",
+            amber-300). Like: outline heart → filled amber; count in mono. One tap, no
+            comments.
+          </p>
+          <h4>Empty state</h4>
+          <p>
+            No follows yet: leaderboard shows only you + "A leaderboard of one. Invite
+            someone to chase." with <code>Invite</code> as the screen's primary. Invite
+            = share-sheet link.
+          </p>
+          <h4>Privacy</h4>
+          <p>
+            Everything here renders only what RLS already allows: private-by-default,
+            followers see finished workouts only — name, duration, volume, PRs. Never
+            sets-by-set data in the feed.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= 04 FINISH + SHARE ================= -->
+    <section class="sec">
+      <div class="sec-head">
+        <span class="no">04</span>
+        <h2>Finish — summary &amp; share card</h2>
+      </div>
+      <p class="sec-sub">
+        The session's receipt, then the poster version of it. The share card is a 4:5
+        dark plate built for a phone screenshot: wordmark, one huge number, knurl
+        divider, the grid. It is the only organic growth surface until Stage 3 ships —
+        treat it as marketing rendered client-side.
+      </p>
+      <div class="row">
+        <div class="phone">
+          <div class="hdr">
+            <span class="t">Workout complete</span
+            ><span class="side"><span class="quiet">Close</span></span>
+          </div>
+          <div class="scr">
+            <div class="card">
+              <span class="kick">Upper A · Mon, Aug 3</span>
+              <div class="fin-big week" style="margin-top: 8px">
+                <div class="wk">
+                  <span class="v tnum">58<small>min</small></span
+                  ><span class="kick" style="font-size: 10px">Duration</span>
+                </div>
+                <div class="wk">
+                  <span class="v tnum">12.4<small>k lb</small></span
+                  ><span class="kick" style="font-size: 10px">Volume</span>
+                </div>
+                <div class="wk">
+                  <span class="v tnum">18</span
+                  ><span class="kick" style="font-size: 10px">Sets</span>
+                </div>
+              </div>
+            </div>
+            <div
+              class="card"
+              style="
+                background: var(--tint7);
+                box-shadow:
+                  0 0 0 1px rgba(240, 180, 41, 0.25),
+                  inset 0 1px 0 var(--toplight);
+              "
+            >
+              <div style="display: flex; align-items: center; gap: 10px">
+                <span class="badge"><span class="k knurl"></span><span>PR</span></span>
+                <div>
+                  <div style="font-size: 14px; font-weight: 600">
+                    Bench Press (Barbell)
+                  </div>
+                  <div style="font-size: 12.5px; color: var(--a300)" class="tnum">
+                    130 lb × 6 · new best e1RM 156 lb
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="hero-btn">Share card</div>
+            <div class="sec-btn">Done</div>
+          </div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 14px; flex: 0 0 360px">
+          <span class="kick">The share card · 4:5 · rendered on canvas</span>
+          <div class="share-card">
+            <div class="wm"><span class="bar"></span><b>WAZN</b></div>
+            <div class="big">
+              <div class="v tnum">12.4<small>k lb</small></div>
+              <div class="l kick">Moved · Upper A · 58 min</div>
+            </div>
+            <div class="share-kn knurl"></div>
+            <div class="share-grid">
+              <div class="fs">
+                <div class="v tnum">18</div>
+                <div class="l">Sets</div>
+              </div>
+              <div class="fs">
+                <div class="v tnum">1</div>
+                <div class="l">PR</div>
+              </div>
+              <div class="fs">
+                <div class="v tnum">
+                  6<small style="font-size: 13px; color: var(--n3)">wk</small>
+                </div>
+                <div class="l">Streak</div>
+              </div>
+            </div>
+            <div class="share-foot">
+              <span class="u">AMEEN · AUG 3</span
+              ><span class="u" style="color: var(--a700)">TRYWAZN.APP</span>
+            </div>
+          </div>
+        </div>
+        <div class="spec">
+          <h4>Summary</h4>
+          <p>
+            Receipt card: routine + date kicker, three rule-split display figures. PR
+            rows on 7% tint with amber ring and the knurl badge; the fact line quotes
+            the lift and both numbers. Hero = <code>Share card</code>;
+            <code>Done</code> secondary. PR flash per v2 motion (28% → 900ms settle to
+            7%).
+          </p>
+          <h4>Share card</h4>
+          <p>
+            Rendered to a 1080×1350 canvas, then native share sheet. Anatomy top→bottom:
+            wordmark (bar + WAZN 600), giant volume figure 56/600 tnum with the session
+            label as a mono kicker, an 8px <b>knurl divider</b>, the three-stat grid,
+            footer: name+date mono left, <code>TRYWAZN.APP</code> in amber-700 right.
+            Pure tokens — exports pixel-identical to the app.
+          </p>
+          <h4>Rules</h4>
+          <p>
+            If a PR fell, the PR replaces volume as the hero number ("156 lb · new bench
+            e1RM"). No profile photos, no map, no emoji. The URL is the only marketing
+            copy — quiet on the plate, legible in a feed.
+          </p>
+        </div>
+      </div>
+    </section>
+  </body>
+</html>
