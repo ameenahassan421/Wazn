@@ -411,12 +411,27 @@ verbatim, so they survive even if this file isn't read.**
   no moonshot model has a `:free` variant — so the free slug is
   `nvidia/nemotron-3-super-120b-a12b:free`, chosen by testing four candidates
   against the real schema. See DECISIONS.md.
-- **BLOCKED ON AMEEN — 1: buy ~$5 of OpenRouter credit.** The account has
-  never purchased any, so the paid model returns 402 and the free model is
-  carrying everything. It works, but a free-tier rate limit is currently a
-  user-visible failure rather than a slower answer — the fallback the design
-  depends on has nothing to fall back to.
-  <https://openrouter.ai/settings/credits>
+- **~~BLOCKED ON AMEEN — 1: buy ~$5 of OpenRouter credit.~~ DONE 2026-08-05**
+  ($5.00, 9:21 AM). The paid fallback now has something to fall back to. Note
+  that free is still tried first by design, so Kimi is only reached when the
+  free model fails — and **`moonshotai/kimi-k2.5` has still never returned a
+  successful response through this codebase.** No key limit is set on the
+  OpenRouter key yet; §2C asks for a hard cap.
+- **~~WRONG ACCOUNT IN PRODUCTION.~~ RESOLVED 2026-08-05 by merge.** All 156
+  workouts and 3,201 sets now belong to `6da348ed`
+  (`ameenahassan421@gmail.com`, **no dot**) — the address Ameen actually signs
+  in with. Verified under his own JWT with RLS in the path: `total_sets_90d`
+  went 0 → 560. The dotted account `3551b340` still exists and is now empty; it
+  was not deleted because that is an auth change (§2.8). See DECISIONS.md.
+  **Gmail dot-normalisation at sign-in is still unbuilt**, and it is the reason
+  this happened — one Gmail inbox can still create two Wazn accounts.
+- **TESTERS HAVE ARRIVED, and one could not get in.**
+  `hafsaabdi2013@yahoo.com` requested a code at 02:28:45 UTC on 2026-08-05 and
+  **never verified** — no sign-in, ever. 88 seconds later
+  `hafsaa.abdii12@gmail.com` requested one and was signed in within 32 seconds.
+  That reads as a Yahoo deliverability failure, and a tester who never receives
+  a code cannot report it. **Check Resend's logs before more invites go out.**
+  The Gmail tester has logged zero workouts since.
 - **Rotate the OpenRouter key** once beta is settled: it was shared in a chat
   session, so treat it as compromised by construction.
 - **BLOCKED ON AMEEN — 2: run `LAUNCH.md`** with a second account on a real
@@ -426,7 +441,19 @@ verbatim, so they survive even if this file isn't read.**
   GitHub, npm. NOT the Vercel app, `trywazn.app`, or `openrouter.ai`.
 - **Data, live:** exercises 134, workouts 154, workout_sets 3,201 (335
   supersetted, **491 records**), profiles 2, routines 0.
-- **Tests:** 152 passing, plus the SQL RLS suite.
+- **Tests:** 164 passing, plus the SQL RLS suite. CI is green on every run in
+  the repo's history — the failures Ameen is seeing are runtime, not build.
+- **Migrations: 0001–0013 are ALL live**, confirmed 2026-08-05 by probing for
+  objects — `strength_summary` exists (0012) and `social_feed` returns
+  `best_record_name` / `best_record_e1rm_kg` (0013). There is still no
+  `schema_migrations` ledger, so this remains a probe rather than a read.
+- **Data, live (2026-08-05):** 4 auth users, 156 workouts and 3,201 sets all on
+  `6da348ed`, exercises 134, routines 0, profiles 4, usernames 0.
+- **The Edge Functions in production are BEHIND the repo.** `coach-notes` and
+  `generate-routine` still run the pre-fix code, so the routine builder is
+  still broken live. Deploying is not automated — there is no CI step and no
+  ledger of what version is deployed, which is the same gap that let 0007 ship
+  broken. `supabase functions deploy coach-notes generate-routine`.
 - **Open decision for Ameen:** four zero-set workouts from desktop testing
   still render as blank History rows. Say "delete all my workouts with zero
   sets" and they go server-side.
@@ -443,11 +470,23 @@ verbatim, so they survive even if this file isn't read.**
   call of mine (the like icon). Side effect worth knowing: drawing the volume
   trend to the v2 chart grammar removed the last recharts import, so the
   dependency is gone and **precache fell 914 KiB -> 537 KiB**.
-- **LAUNCH.md is now out of date in one place** — it describes four tabs and
-  the old Progress sub-tabs. Re-read it before the second-account pass.
+- **LAUNCH.md is current again** — the five-tab bar and the new empty states
+  landed with the custom-exercises work. Re-read it before the second-account
+  pass regardless; it is the checklist that would have caught today's defects.
+- **Routine generation was failing in production**, with "The routine came back
+  unreadable" on the Coach tab. Cause found and fixed in code: `parsePlan`
+  handled a fenced ```json block but not a bare object after a reasoning
+  preamble, while `coach-notes` handled both. One shared parser now serves
+  both, with 9 tests. **The fix is not live until the functions are deployed** —
+  see the Edge Function item above.
+- **Free models are now the default in code, not just in config.** An unset
+  `*_MODEL_FREE` secret used to skip the free attempt and go straight to paid.
+  Confirmed empirically: every row in `ai_generations` used the free model.
 - **The launch build queue is EMPTY.** Everything the Launch Bundle asks for
-  is built. What stands between here and invites is the two items above, both
-  Ameen's. Nothing else should be built before the beta runs — offline sync and
-  Stage 4B are explicitly sequenced _after_ it.
+  is built. What stands between here and invites is the Ameen-owned items
+  above. Nothing else should be built before the beta runs — offline sync and
+  Stage 4B are explicitly sequenced _after_ it. The one exception is the work
+  the beta itself surfaces, which on 2026-08-05 alone was four defects.
 - **Last updated:** 2026-08-05 by Claude Code (custom exercises + privacy
-  policy; the last two things a beta cohort would have hit immediately).
+  policy; then the AI failure diagnosis, the profile merge, and STATUS
+  reconciled against production).

@@ -42,6 +42,25 @@ export class ModelError extends Error {
 const MAX_TOKENS = 2400
 const TIMEOUT_MS = 45_000
 
+/**
+ * Free by default, not free by configuration.
+ *
+ * Before this, an unset `*_MODEL_FREE` secret meant the free attempt was
+ * skipped entirely and every call went straight to the paid model — the most
+ * expensive possible reading of a missing environment variable. A secret that
+ * is absent, misspelled, or lost in a project restore should cost nothing, so
+ * the free attempt now happens unless something explicitly says otherwise.
+ *
+ * This slug is the one free model that both answered and honoured
+ * `response_format` when four candidates were tested against the real schema
+ * on 2026-08-04 (3.2s). `*_MODEL_FREE` still overrides it.
+ *
+ * To run a feature on the paid model deliberately, set its `*_MODEL_FREE` to
+ * the same value as its `*_MODEL` — equal values skip the free attempt, which
+ * is the existing behaviour and now also the documented escape hatch.
+ */
+const DEFAULT_FREE_MODEL = 'nvidia/nemotron-3-super-120b-a12b:free'
+
 async function callOnce(
   model: string,
   system: string,
@@ -126,8 +145,9 @@ export async function chat({
   }
 
   const attempts: { model: string; free: boolean }[] = []
-  if (freeModel && freeModel !== paidModel) {
-    attempts.push({ model: freeModel, free: true })
+  const free = freeModel ?? DEFAULT_FREE_MODEL
+  if (free !== paidModel) {
+    attempts.push({ model: free, free: true })
   }
   attempts.push({ model: paidModel, free: false })
 

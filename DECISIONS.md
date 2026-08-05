@@ -1494,6 +1494,166 @@ The RLS suite was re-run afterwards and still passes all eight assertions —
 which is the point of having it, since the function it exercises was replaced
 wholesale.
 
+## 2026-08-05 — The AI features failed in production for two unrelated reasons
+
+Ameen reported "deployment keeps failing" and sent two screenshots of the Coach
+tab on the live app. Neither failure was a deployment. CI is green on every run
+in this repository's history, and the full chain — lint, format, typecheck, 164
+tests, production build — passes locally at `81e5e45`. What the screenshots
+actually show is two runtime faults that happen to sit next to each other.
+
+### 1. The routine generator could not read its own model's answer
+
+`generate-routine`'s `parsePlan` tried `JSON.parse`, then looked for a fenced
+
+```json block, and threw "The routine came back unreadable" if there was no
+fence. `coach-notes`' `parseInsights` did the same **plus** a fall-back to the
+outermost `{…}` anywhere in the text — added during the 2C self-test, when a
+model was observed answering with a reasoning preamble and no fence.
+
+The lesson was learned on one surface and never carried to the other. So a
+model that thinks out loud produces notes fine and fails the routine builder
+every time, which is exactly the asymmetry Ameen hit.
+
+Both now call `_shared/parse-json-object.ts`: raw, then fenced, then the brace
+scan, each attempt guarded so a broken fence falls through to the next strategy
+instead of throwing. It also rejects arrays and scalars, which the old code
+would have passed to a caller that immediately reads a named property off them.
+
+Two smaller bugs died with it. `JSON.parse(fenced[1])` was unguarded, so a
+fence containing malformed JSON escaped as a raw `SyntaxError` and surfaced as
+a generic 500 rather than the intended 502. And a truncated object — precisely
+what the old 900-token cap produced — now returns null instead of throwing.
+
+Plain TypeScript with no Deno APIs and no imports, for the reason
+`validate-plan.ts` is: the vitest suite imports the shipped module rather than
+a copy. Nine tests, one per shape a model has actually answered in.
+
+### 2. The account signed in has no training history
+
+Coach's Notes reported `total_sets_90d 0 · sessions_last_7 0` and "No training
+data" — against an account with 3,201 sets and a nine-month history.
+
+The data is not lost. It belongs to `3551b340` = **`ameen.hassan421@gmail.com`,
+with a dot**, which is what Stage 0B set `IMPORT_USER_ID` to. The address in
+use now is **`ameenahassan421@gmail.com`, no dot** = `6da348ed`, the profile
+that has been empty since 2026-08-01.
+
+Gmail ignores dots and delivers both to one inbox. Supabase auth does not, and
+treats them as two users. Before Stage 2A only the dotted address could receive
+a code, so the ambiguity could not surface; the moment `code@trywazn.app` could
+mail anybody, it did.
+
+The 2026-08-01 entry above called this exactly — "there will be two accounts
+where one is expected. Worth a cleanup decision then, not now." Then is now.
+Not resolved here: merging profiles moves user data, §2.6 puts that behind an
+ask, and the cheap answer (sign in with the dotted address) costs nothing and
+needs no migration.
+
+### What this says about the quality bar
+
+2C was signed off on a self-test that ran `coach-notes` against a stat block
+read from Ameen's real history. It never ran `generate-routine` end to end, and
+it never ran either feature *through the app as a signed-in user*. Both faults
+were sitting in the gap between those two things: one in the function that was
+not exercised, one in the identity that was supplied out of band rather than by
+signing in. A self-test that supplies its own inputs cannot find either.
+
+The `LAUNCH.md` second-account pass is the check that would have caught both,
+which is an argument for running it before invites rather than after.
+
+### Free models are now the default in code
+
+Ameen asked to make sure the app uses free models. It largely did — free is
+tried first and paid is only a fallback — but `chat()` read `*_MODEL_FREE` from
+the environment and skipped the free attempt entirely when it was unset, which
+is the most expensive possible reading of a missing variable. The known-good
+free slug is now the default in `openrouter.ts`, and setting `*_MODEL_FREE`
+equal to `*_MODEL` is the documented way to force paid on purpose.
+
+Worth stating plainly: this session cannot read the project's secrets, so what
+is proven here is what the code does with them, not what they currently are.
+```
+
+## 2026-08-05 — The two profiles were merged, and the ledger was refunded
+
+Ameen authorised both. Recorded in full because this moved user data, and the
+next session should be able to see exactly what happened.
+
+### What the merge actually touched
+
+Ten tables carry ownership. Only three held anything:
+
+| table            | dotted (`3551b340`) | undotted (`6da348ed`) |
+| ---------------- | ------------------- | --------------------- |
+| `workouts`       | 155                 | 1                     |
+| `coach_notes`    | 1                   | 1                     |
+| `ai_generations` | 2                   | 1                     |
+
+`routines`, `exercises.owner_id`, `exercise_notes`, `invites`, `workout_likes`
+and both sides of `follows` were empty on both accounts, which is the only
+reason this was three UPDATEs rather than a migration.
+
+**`workout_sets` has no `user_id`.** It is owned through `workout_id`, so all
+3,201 sets followed their workouts without being touched. Worth knowing before
+someone writes a merge script that tries to update them directly and wonders
+why the column is missing.
+
+The undotted account's `coach_notes` row was deleted before the dotted one was
+moved onto it — that table is one row per user, so the move would have
+collided. The row deleted was the "No training data" note, which had no value
+to lose.
+
+### Verified as the user, not as postgres
+
+The Management API runs as `postgres`, which bypasses RLS and would have
+happily confirmed a merge the app itself could not see. So the check was run
+inside a transaction with `set local role authenticated` and the undotted
+account's `sub` in `request.jwt.claims` — the same path PostgREST takes:
+
+| reading           | before | after |
+| ----------------- | ------ | ----- |
+| `total_sets_90d`  | 0      | 560   |
+| `sessions_last_7` | 0      | 5     |
+| workouts visible  | 1      | 156   |
+
+Ended in `rollback`, so the verification left nothing behind.
+
+One detail that made the merge free: `coach_notes.basis_workout_at` is
+`2026-08-03 01:15:40.326+00`, which is exactly the newest finished workout on
+the merged account. The cache therefore hits, and Ameen sees notes written
+against his real nine-month history with no model call — despite the merged
+account being over its weekly quota at 2 generations against a limit of 1.
+
+### The refund
+
+Two `ai_generations` rows were deleted: the undotted account's and the
+tester's, both spent by the model on telling a user they had no data. That is
+the bug fixed in this same session, so the charges were not legitimate.
+
+The tester's cached `coach_notes` row was left in place. It is model-written
+text saying she has no training data, which is true, and it will be replaced
+by real notes the moment she logs something. Deleting it would only swap it for
+the designed empty state, which is not worth another write to her row.
+
+### What was not done, and why
+
+The dotted account (`ameen.hassan421@gmail.com`) still exists, now empty. It was
+not deleted: deleting an `auth.users` row is an auth change, §2.8 puts those
+behind Ameen, and an empty account costs nothing. It also stays as the visible
+evidence of why Gmail dot-normalisation is worth building.
+
+### The double charge that is still unexplained
+
+The dotted account's two generations are stamped `01:06:58` and `01:06:59` —
+one second apart. `NotesCard` was read looking for a double-fire and does not
+obviously have one: React 18 batches the `setForce`/`setReload` pair in the
+Regenerate handler into a single effect run, and `active` guards the unmount
+race. The likeliest explanation is the first uncached generation followed
+immediately by a Regenerate press, but that is a guess and it is recorded as a
+guess. If a third row ever appears one second after a second one, this is the
+note that says where to start looking.
+
 ## 2026-08-05 — Custom exercises: the gap a solo build could not see
 
 `exercises` had exactly one policy — SELECT — and no client path to create a
@@ -1581,3 +1741,40 @@ and exercise names only, and says _why_ that is trustworthy — it comes from on
 database function whose output has no identifying fields in it, not from a rule
 someone has to remember. Ameen should still read it before invites go out; it
 describes his obligations, not mine.
+
+## 2026-08-05 — `vercel.json` cannot carry comments, and it took production down for deploys
+
+`0cc7bde` shipped a `vercel.json` whose first rewrite carried a `"//"` key
+holding the reason the rule exists. It is a common JSON-comment convention and
+it is not legal here: Vercel validates `vercel.json` against a strict schema
+that forbids additional properties, and every deploy after that commit was
+rejected with
+
+    rewrites[0] should NOT have additional property `//`
+
+**This is a whole class of failure the repo's own checks cannot see.** `npm run
+build` does not read `vercel.json`; neither do lint, typecheck or the tests. CI
+was green on the commit that broke deployment, which is exactly the shape of
+the migration-0007 problem — a file that only the platform parses, shipped on
+the strength of checks that never look at it. The parse check written for SQL
+has no equivalent here.
+
+The failure mode is quiet rather than loud: a rejected deploy leaves the
+**previous** deployment serving, so the site stays up and simply stops
+receiving changes. Nobody notices until they go looking for a change that never
+arrived, which is how "deployment keeps failing" gets reported as a vague
+feeling rather than an error.
+
+The comment is deleted rather than relocated into the file, because there is
+nowhere legal to put it. The knowledge it held is worth keeping and belongs
+here:
+
+**`/privacy` must be listed before the SPA catch-all.** Rewrites are evaluated
+in order, and the catch-all `/((?!assets/|.*\..*).*)` matches any path without a
+dot in it — including `/privacy`. Without the earlier, more specific rule, the
+store-listing privacy URL renders the Log screen. Stage 4B requires that URL to
+resolve, and App Review checks it.
+
+Worth doing if `vercel.json` grows: validate it in CI against
+`https://openapi.vercel.sh/vercel.json`. One file, one schema, and it closes the
+gap that a green CI run currently leaves wide open.

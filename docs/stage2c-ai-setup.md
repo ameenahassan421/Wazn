@@ -1,9 +1,12 @@
 # Stage 2C — turning the AI layer on
 
-Everything is built and deployed. **One value is missing**, and it is the only
-thing standing between the current state and working Coach's Notes.
+**This runbook is done.** The key was set on 2026-08-04 and credit purchased on
+2026-08-05; both features have run against real data. It is kept as the record
+of how the layer is wired and where each value lives — read the state table
+below first, and treat the steps that follow as reference for the next time a
+key has to be replaced, not as work outstanding.
 
-## What you need to do
+## How the key gets set (done — kept for rotation)
 
 ### 1. OpenRouter — create the key
 
@@ -50,25 +53,36 @@ for you to read **before any other user can see theirs**.
 
 | Thing                            | State                                                      |
 | -------------------------------- | ---------------------------------------------------------- |
-| `coach-notes` Edge Function      | deployed, v1, ACTIVE, `verify_jwt` on                      |
-| `generate-routine` Edge Function | deployed, v1, ACTIVE, `verify_jwt` on                      |
+| `coach-notes` Edge Function      | deployed, ACTIVE, `verify_jwt` on                          |
+| `generate-routine` Edge Function | deployed, ACTIVE, `verify_jwt` on                          |
 | Migration `0010_ai_layer.sql`    | applied — `coach_notes`, `ai_generations`, `coach_stats()` |
 | `COACH_MODEL`                    | `moonshotai/kimi-k2.5`                                     |
-| `COACH_MODEL_FREE`               | `moonshotai/kimi-k2.5:free`                                |
+| `COACH_MODEL_FREE`               | `nvidia/nemotron-3-super-120b-a12b:free`                   |
 | `ROUTINE_MODEL`                  | `moonshotai/kimi-k2.5`                                     |
-| `ROUTINE_MODEL_FREE`             | `moonshotai/kimi-k2.5:free`                                |
-| `OPENROUTER_API_KEY`             | **missing — this is step 2**                               |
+| `ROUTINE_MODEL_FREE`             | `nvidia/nemotron-3-super-120b-a12b:free`                   |
+| `OPENROUTER_API_KEY`             | set 2026-08-04                                             |
+| OpenRouter credit                | $5.00, purchased 2026-08-05                                |
 
-**The model ids are now fact, not the plan's guess.** `moonshotai/kimi-k2.5:free`
-— which the plan specified — **does not exist**; OpenRouter has no `:free`
-variant of any moonshot model. Four free candidates were tested against the real
-schema and only Nemotron both answered and honoured it.
+**There is exactly one AI credential in this project: `OPENROUTER_API_KEY`.**
+Every model is reached through OpenRouter — including Kimi. `moonshotai/kimi-k2.5`
+is an OpenRouter _model slug_, not a second provider, and Moonshot's own API is
+not called from anywhere in this codebase. If a Kimi/Moonshot key ever turns up
+in a chat or a note, it has nothing to plug into here.
 
-**⚠️ Buy credits.** The account has never purchased any, so the paid model
-returns `402` and the free model is carrying everything. That works, but it
-means a free-tier rate limit is a _user-visible failure_ instead of a slower
-answer — the fallback the design depends on has nothing to fall back to.
-Roughly **$5** restores it. <https://openrouter.ai/settings/credits>
+**The model ids are fact, not the plan's guess.** `moonshotai/kimi-k2.5:free` —
+which the plan specified, and which an earlier version of this very table
+listed — **does not exist**; OpenRouter has no `:free` variant of any moonshot
+model. Four free candidates were tested against the real schema and only
+Nemotron both answered and honoured it.
+
+**Free is the default in code, not just in config.** An unset `*_MODEL_FREE`
+used to skip the free attempt entirely and go straight to the paid model;
+`_shared/openrouter.ts` now falls back to the known-good free slug on its own.
+To run a feature on the paid model deliberately, set its `*_MODEL_FREE` equal
+to its `*_MODEL` — equal values skip the free attempt.
+
+**Still worth doing:** no key limit is set on the OpenRouter key, and §2C asks
+for a hard spend cap. Set one at <https://openrouter.ai/settings/keys>.
 
 ## How it behaves before the key lands
 
@@ -86,11 +100,19 @@ without the model. That is the design, not a fallback.
 - **Free-tier quotas:** notes at most once a week per user, routines three per
   month. Enforced in the Edge Function against the `ai_generations` ledger,
   which a client cannot write to or delete from.
-- **The `:free` variant is tried first**, with automatic fallback to the paid
-  model on `429` (rate limited) or `402` (out of free credit). Which one served
-  a request is recorded in `ai_generations.used_free`, so
-  "is the free tier actually carrying this?" is one query.
-- **Every request is capped** at 900 output tokens and 45 seconds.
+- **The free model is tried first**, and **any** failure of that attempt falls
+  through to the paid model — not just `429`/`402`. The narrow rule was tried
+  and was wrong: a free slug that 404s is exactly when falling back is right.
+  Only the paid attempt's failure is terminal. Which model served a request is
+  recorded in `ai_generations.used_free`, so "is the free tier actually
+  carrying this?" is one query. As of 2026-08-05 the answer is yes, every time.
+- **A new account costs nothing.** If `coach_stats()` reports no training in
+  the last 90 days, the function returns the empty state without calling a
+  model or writing a ledger row — so a first-day user cannot spend their weekly
+  regenerate on being told they have no data.
+- **Every request is capped** at 2400 output tokens and 45 seconds. It was 900,
+  which truncated reasoning models mid-answer — a cap that guarantees failure
+  is not a cost control.
 
 ## Checking on it later
 

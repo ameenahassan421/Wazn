@@ -22,6 +22,8 @@ import {
   recordGeneration,
 } from '../_shared/context.ts'
 import { chat, ModelError } from '../_shared/openrouter.ts'
+import { hasTrainingData } from '../_shared/has-training-data.ts'
+import { parseJsonObject } from '../_shared/parse-json-object.ts'
 
 /**
  * Static, and identical for every user on every call — which is the point.
@@ -104,26 +106,11 @@ interface Insight {
 
 /** Trust nothing a model returns. Shape, types and length are all checked. */
 function parseInsights(raw: string): Insight[] {
-  let parsed: unknown
-  try {
-    parsed = JSON.parse(raw)
-  } catch {
-    // Models ignore "JSON only" in two different ways, and both were seen in
-    // live testing: a fenced block, and a reasoning preamble with the object
-    // somewhere after it. Take the outermost {...} anywhere in the text.
-    // Not a parser — just the first brace to the last, which is exactly right
-    // for a response that is one object with prose around it.
-    const fenced = raw.match(/```(?:json)?\s*([\s\S]*?)```/)
-    const candidate = fenced
-      ? fenced[1]
-      : raw.slice(raw.indexOf('{'), raw.lastIndexOf('}') + 1)
-    if (!candidate.trim()) throw new HttpError('The notes came back unreadable.', 502)
-    try {
-      parsed = JSON.parse(candidate)
-    } catch {
-      throw new HttpError('The notes came back unreadable.', 502)
-    }
-  }
+  // Recovery from fenced blocks and reasoning preambles lives in one shared
+  // module, because the routine generator needs exactly the same thing and
+  // shipped without it — see `_shared/parse-json-object.ts`.
+  const parsed = parseJsonObject(raw)
+  if (!parsed) throw new HttpError('The notes came back unreadable.', 502)
 
   const list = (parsed as { insights?: unknown }).insights
   if (!Array.isArray(list) || list.length === 0) {
@@ -190,12 +177,37 @@ Deno.serve(async (request) => {
       })
     }
 
-    await assertWithinQuota(caller, 'coach_notes')
-
+    // Read the stats before the quota is touched, because whether there is
+    // anything to say decides whether this costs anything at all.
+    //
     // Runs under the caller's JWT. It takes no user id — it cannot be pointed
     // at anyone else.
     const { data: stats, error: statsError } = await caller.asUser.rpc('coach_stats')
     if (statsError) throw new HttpError('Could not read your training data.', 500)
+
+    // A brand-new account has nothing to analyse, and asking a model to say so
+    // costs a call, a wait, and — worst of all — the caller's one regenerate
+    // for the week. Two real users hit exactly that on 2026-08-05: both opened
+    // Coach before logging anything, both got a model-written "no training
+    // data" note, and both were then locked out of regenerating for seven days
+    // *including after they started training*, which is precisely when the
+    // feature becomes worth using.
+    //
+    // An empty `insights` array is already the client's designed empty state
+    // ("Log 3 workouts and the coach will have something to say"), so this
+    // returns better copy than the model produced, instantly and for free.
+    // §2C's rule, applied: if statistics can answer it, statistics answer it.
+    if (!hasTrainingData(stats)) {
+      return json({
+        insights: [],
+        generatedAt: new Date().toISOString(),
+        model: 'none',
+        cached: false,
+        regeneratesLeft: await quotaRemaining(caller, 'coach_notes'),
+      })
+    }
+
+    await assertWithinQuota(caller, 'coach_notes')
 
     const result = await chat({
       freeModel: Deno.env.get('COACH_MODEL_FREE'),
