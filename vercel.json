@@ -1,11 +1,7 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "rewrites": [
-    {
-      "//": "Before the SPA catch-all: /privacy is a standalone page, not a route in the app. Without this it would fall through to index.html and render the log screen.",
-      "source": "/privacy",
-      "destination": "/privacy.html"
-    },
+    { "source": "/privacy", "destination": "/privacy.html" },
     { "source": "/((?!assets/|.*\\..*).*)", "destination": "/index.html" }
   ]
 }

@@ -1741,3 +1741,40 @@ and exercise names only, and says _why_ that is trustworthy — it comes from on
 database function whose output has no identifying fields in it, not from a rule
 someone has to remember. Ameen should still read it before invites go out; it
 describes his obligations, not mine.
+
+## 2026-08-05 — `vercel.json` cannot carry comments, and it took production down for deploys
+
+`0cc7bde` shipped a `vercel.json` whose first rewrite carried a `"//"` key
+holding the reason the rule exists. It is a common JSON-comment convention and
+it is not legal here: Vercel validates `vercel.json` against a strict schema
+that forbids additional properties, and every deploy after that commit was
+rejected with
+
+    rewrites[0] should NOT have additional property `//`
+
+**This is a whole class of failure the repo's own checks cannot see.** `npm run
+build` does not read `vercel.json`; neither do lint, typecheck or the tests. CI
+was green on the commit that broke deployment, which is exactly the shape of
+the migration-0007 problem — a file that only the platform parses, shipped on
+the strength of checks that never look at it. The parse check written for SQL
+has no equivalent here.
+
+The failure mode is quiet rather than loud: a rejected deploy leaves the
+**previous** deployment serving, so the site stays up and simply stops
+receiving changes. Nobody notices until they go looking for a change that never
+arrived, which is how "deployment keeps failing" gets reported as a vague
+feeling rather than an error.
+
+The comment is deleted rather than relocated into the file, because there is
+nowhere legal to put it. The knowledge it held is worth keeping and belongs
+here:
+
+**`/privacy` must be listed before the SPA catch-all.** Rewrites are evaluated
+in order, and the catch-all `/((?!assets/|.*\..*).*)` matches any path without a
+dot in it — including `/privacy`. Without the earlier, more specific rule, the
+store-listing privacy URL renders the Log screen. Stage 4B requires that URL to
+resolve, and App Review checks it.
+
+Worth doing if `vercel.json` grows: validate it in CI against
+`https://openapi.vercel.sh/vercel.json`. One file, one schema, and it closes the
+gap that a green CI run currently leaves wide open.
