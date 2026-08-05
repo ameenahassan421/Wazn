@@ -449,11 +449,21 @@ verbatim, so they survive even if this file isn't read.**
   `schema_migrations` ledger, so this remains a probe rather than a read.
 - **Data, live (2026-08-05):** 4 auth users, 156 workouts and 3,201 sets all on
   `6da348ed`, exercises 134, routines 0, profiles 4, usernames 0.
-- **The Edge Functions in production are BEHIND the repo.** `coach-notes` and
-  `generate-routine` still run the pre-fix code, so the routine builder is
-  still broken live. Deploying is not automated — there is no CI step and no
-  ledger of what version is deployed, which is the same gap that let 0007 ship
-  broken. `supabase functions deploy coach-notes generate-routine`.
+- **Edge Function deploys are automated, and production is current.**
+  `coach-notes` and `generate-routine` are at **version 14**, deployed
+  2026-08-05 by `.github/workflows/deploy-functions.yml` — merging to `main`
+  now deploys them, so "merged" and "live" are the same thing. Before that they
+  sat at 13 while the fix for a routine builder that had never once succeeded
+  waited on `main`. `SUPABASE_ACCESS_TOKEN` is a repository secret; the CLI is
+  pinned to `supabase@2.111.0` because `latest` made every deploy depend on a
+  shared GitHub API rate limit.
+- **`vercel.json` is validated in CI** (`npm run check:vercel`). A `"//"`
+  comment key in a rewrite once made Vercel reject every deploy, main included,
+  while CI stayed green and production quietly froze on the previous build.
+- **Not verified yet, and it is the acceptance test:** nobody has generated a
+  routine through the app since the fix. Coach → Build me a routine, on a real
+  account, is what proves it. The ledger says `generate-routine` has never
+  produced a successful generation in its life.
 - **Open decision for Ameen:** four zero-set workouts from desktop testing
   still render as blank History rows. Say "delete all my workouts with zero
   sets" and they go server-side.
@@ -488,5 +498,6 @@ verbatim, so they survive even if this file isn't read.**
   Stage 4B are explicitly sequenced _after_ it. The one exception is the work
   the beta itself surfaces, which on 2026-08-05 alone was four defects.
 - **Last updated:** 2026-08-05 by Claude Code (custom exercises + privacy
-  policy; then the AI failure diagnosis, the profile merge, and STATUS
-  reconciled against production).
+  policy; the AI failure diagnosis and profile merge; then the two CI gaps
+  closed — vercel.json validation and automated Edge Function deploys, with
+  both functions confirmed live at version 14).
