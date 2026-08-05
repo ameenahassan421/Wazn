@@ -48,8 +48,18 @@ npm run build        # typecheck + production build
 npm run format       # prettier
 ```
 
-Before pushing: `npm run lint && npm run format:check && npm run typecheck && npm test && npm run build`.
+Before pushing: `npm run lint && npm run format:check && npm run typecheck && npm run check:vercel && npm test && npm run build`.
 CI runs exactly that on every PR.
+
+**Touching `vercel.json`?** `npm run check:vercel` is the only thing in the repo
+that reads it. A `"//"` comment key in a rewrite once made Vercel reject every
+deploy — main included — while CI stayed green and production quietly froze on
+the previous build. JSON has no comments; put the reasoning in `DECISIONS.md`.
+
+**Touching `supabase/functions/`?** Merging to `main` now deploys them
+(`.github/workflows/deploy-functions.yml`). Before that existed, "merged" and
+"live" were different things and a fix could sit on `main` for a day while
+production served the bug.
 
 **Touching `supabase/migrations/`?** None of the above reads SQL. Run
 `python3 scripts/check_migrations.py` (needs `pip install pglast`) — it parses

@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "build": "tsc --noEmit && vite build",
+    "check:vercel": "node scripts/check_vercel_config.mjs",
     "dev": "vite",
     "format": "prettier --write .",
     "format:check": "prettier --check .",

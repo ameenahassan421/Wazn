@@ -1,0 +1,62 @@
+name: Deploy Edge Functions
+
+# Why this exists: merging used to leave production untouched.
+#
+# Vercel deploys the web app on every push to main, but nothing deployed the
+# Supabase Edge Functions — that was a command someone had to remember to run.
+# On 2026-08-05 a fix for a broken routine generator sat merged on main while
+# production kept serving the broken version, because "merged" and "live" were
+# different things and nothing said so.
+#
+# Deploys are keyed to the files that matter, so a docs-only push does not
+# redeploy anything, and `workflow_dispatch` is here so a deploy can be forced
+# without an empty commit — including the first one after this lands.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'supabase/functions/**'
+      - '.github/workflows/deploy-functions.yml'
+  workflow_dispatch:
+
+# Two pushes in quick succession should not race each other onto the same
+# project. The later one wins; the earlier is cancelled before it deploys.
+concurrency:
+  group: deploy-edge-functions
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Deploy coach-notes and generate-routine
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+        # --use-api bundles through the Management API instead of Docker, which
+        # keeps this working on a plain runner with no Docker daemon.
+        #
+        # Deploying every function in supabase/functions rather than naming
+        # them: a function added later should not need this file edited, and
+        # the CLI skips `_shared` because a leading underscore marks it as a
+        # module directory rather than a function.
+        run: |
+          supabase functions deploy \
+            --project-ref ttasiwxeqerhsztxjxip \
+            --use-api
+
+      - name: Report what is now live
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+        # The deploy step succeeding is not the same as the right version being
+        # live, and the version number is the one fact that settles "did my fix
+        # actually ship". Printed into the run log so the answer is on the
+        # commit rather than in someone's dashboard.
+        run: |
+          supabase functions list --project-ref ttasiwxeqerhsztxjxip
