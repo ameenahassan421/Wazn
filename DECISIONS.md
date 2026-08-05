@@ -1574,3 +1574,82 @@ equal to `*_MODEL` is the documented way to force paid on purpose.
 Worth stating plainly: this session cannot read the project's secrets, so what
 is proven here is what the code does with them, not what they currently are.
 ```
+
+## 2026-08-05 — The two profiles were merged, and the ledger was refunded
+
+Ameen authorised both. Recorded in full because this moved user data, and the
+next session should be able to see exactly what happened.
+
+### What the merge actually touched
+
+Ten tables carry ownership. Only three held anything:
+
+| table            | dotted (`3551b340`) | undotted (`6da348ed`) |
+| ---------------- | ------------------- | --------------------- |
+| `workouts`       | 155                 | 1                     |
+| `coach_notes`    | 1                   | 1                     |
+| `ai_generations` | 2                   | 1                     |
+
+`routines`, `exercises.owner_id`, `exercise_notes`, `invites`, `workout_likes`
+and both sides of `follows` were empty on both accounts, which is the only
+reason this was three UPDATEs rather than a migration.
+
+**`workout_sets` has no `user_id`.** It is owned through `workout_id`, so all
+3,201 sets followed their workouts without being touched. Worth knowing before
+someone writes a merge script that tries to update them directly and wonders
+why the column is missing.
+
+The undotted account's `coach_notes` row was deleted before the dotted one was
+moved onto it — that table is one row per user, so the move would have
+collided. The row deleted was the "No training data" note, which had no value
+to lose.
+
+### Verified as the user, not as postgres
+
+The Management API runs as `postgres`, which bypasses RLS and would have
+happily confirmed a merge the app itself could not see. So the check was run
+inside a transaction with `set local role authenticated` and the undotted
+account's `sub` in `request.jwt.claims` — the same path PostgREST takes:
+
+| reading           | before | after |
+| ----------------- | ------ | ----- |
+| `total_sets_90d`  | 0      | 560   |
+| `sessions_last_7` | 0      | 5     |
+| workouts visible  | 1      | 156   |
+
+Ended in `rollback`, so the verification left nothing behind.
+
+One detail that made the merge free: `coach_notes.basis_workout_at` is
+`2026-08-03 01:15:40.326+00`, which is exactly the newest finished workout on
+the merged account. The cache therefore hits, and Ameen sees notes written
+against his real nine-month history with no model call — despite the merged
+account being over its weekly quota at 2 generations against a limit of 1.
+
+### The refund
+
+Two `ai_generations` rows were deleted: the undotted account's and the
+tester's, both spent by the model on telling a user they had no data. That is
+the bug fixed in this same session, so the charges were not legitimate.
+
+The tester's cached `coach_notes` row was left in place. It is model-written
+text saying she has no training data, which is true, and it will be replaced
+by real notes the moment she logs something. Deleting it would only swap it for
+the designed empty state, which is not worth another write to her row.
+
+### What was not done, and why
+
+The dotted account (`ameen.hassan421@gmail.com`) still exists, now empty. It was
+not deleted: deleting an `auth.users` row is an auth change, §2.8 puts those
+behind Ameen, and an empty account costs nothing. It also stays as the visible
+evidence of why Gmail dot-normalisation is worth building.
+
+### The double charge that is still unexplained
+
+The dotted account's two generations are stamped `01:06:58` and `01:06:59` —
+one second apart. `NotesCard` was read looking for a double-fire and does not
+obviously have one: React 18 batches the `setForce`/`setReload` pair in the
+Regenerate handler into a single effect run, and `active` guards the unmount
+race. The likeliest explanation is the first uncached generation followed
+immediately by a Regenerate press, but that is a guess and it is recorded as a
+guess. If a third row ever appears one second after a second one, this is the
+note that says where to start looking.

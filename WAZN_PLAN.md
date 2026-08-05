@@ -417,16 +417,21 @@ verbatim, so they survive even if this file isn't read.**
   free model fails — and **`moonshotai/kimi-k2.5` has still never returned a
   successful response through this codebase.** No key limit is set on the
   OpenRouter key yet; §2C asks for a hard cap.
-- **WRONG ACCOUNT IN PRODUCTION — the biggest open item.** Coach's Notes on
-  the live app reports `total_sets_90d 0 · sessions_last_7 0` and "No training
-  data". The nine-month history is real and intact; it belongs to profile
-  `3551b340` (`ameen.hassan421@gmail.com`, **with the dot**), which is what
-  `IMPORT_USER_ID` was set to in Stage 0B. The address being signed in with is
-  `ameenahassan421@gmail.com` (**no dot**) = profile `6da348ed`, which has
-  always been empty. Gmail treats the two as one inbox; Supabase auth treats
-  them as two users. Predicted in DECISIONS.md on 2026-08-01 and now arrived.
-  Ameen's call: sign in with the dotted address, or move the data. Do not
-  guess — moving it is destructive and §2.6 puts it behind an ask.
+- **~~WRONG ACCOUNT IN PRODUCTION.~~ RESOLVED 2026-08-05 by merge.** All 156
+  workouts and 3,201 sets now belong to `6da348ed`
+  (`ameenahassan421@gmail.com`, **no dot**) — the address Ameen actually signs
+  in with. Verified under his own JWT with RLS in the path: `total_sets_90d`
+  went 0 → 560. The dotted account `3551b340` still exists and is now empty; it
+  was not deleted because that is an auth change (§2.8). See DECISIONS.md.
+  **Gmail dot-normalisation at sign-in is still unbuilt**, and it is the reason
+  this happened — one Gmail inbox can still create two Wazn accounts.
+- **TESTERS HAVE ARRIVED, and one could not get in.**
+  `hafsaabdi2013@yahoo.com` requested a code at 02:28:45 UTC on 2026-08-05 and
+  **never verified** — no sign-in, ever. 88 seconds later
+  `hafsaa.abdii12@gmail.com` requested one and was signed in within 32 seconds.
+  That reads as a Yahoo deliverability failure, and a tester who never receives
+  a code cannot report it. **Check Resend's logs before more invites go out.**
+  The Gmail tester has logged zero workouts since.
 - **Rotate the OpenRouter key** once beta is settled: it was shared in a chat
   session, so treat it as compromised by construction.
 - **BLOCKED ON AMEEN — 2: run `LAUNCH.md`** with a second account on a real
@@ -438,12 +443,17 @@ verbatim, so they survive even if this file isn't read.**
   supersetted, **491 records**), profiles 2, routines 0.
 - **Tests:** 164 passing, plus the SQL RLS suite. CI is green on every run in
   the repo's history — the failures Ameen is seeing are runtime, not build.
-- **Migrations:** the repo holds 0001–**0013**. This STATUS previously said
-  0001–0011 were live; 0012 and 0013 shipped with design v2.1 and whether they
-  are applied to production is **unconfirmed** — there is still no
-  `schema_migrations` ledger, so it has to be answered by probing for objects.
-  If they are missing, Progress's strength list and the Friends fact line fail
-  while every test and typecheck passes.
+- **Migrations: 0001–0013 are ALL live**, confirmed 2026-08-05 by probing for
+  objects — `strength_summary` exists (0012) and `social_feed` returns
+  `best_record_name` / `best_record_e1rm_kg` (0013). There is still no
+  `schema_migrations` ledger, so this remains a probe rather than a read.
+- **Data, live (2026-08-05):** 4 auth users, 156 workouts and 3,201 sets all on
+  `6da348ed`, exercises 134, routines 0, profiles 4, usernames 0.
+- **The Edge Functions in production are BEHIND the repo.** `coach-notes` and
+  `generate-routine` still run the pre-fix code, so the routine builder is
+  still broken live. Deploying is not automated — there is no CI step and no
+  ledger of what version is deployed, which is the same gap that let 0007 ship
+  broken. `supabase functions deploy coach-notes generate-routine`.
 - **Open decision for Ameen:** four zero-set workouts from desktop testing
   still render as blank History rows. Say "delete all my workouts with zero
   sets" and they go server-side.
