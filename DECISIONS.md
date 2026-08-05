@@ -1493,3 +1493,91 @@ rather than a second function with a new name.
 The RLS suite was re-run afterwards and still passes all eight assertions —
 which is the point of having it, since the function it exercises was replaced
 wholesale.
+
+## 2026-08-05 — Custom exercises: the gap a solo build could not see
+
+`exercises` had exactly one policy — SELECT — and no client path to create a
+row. That was invisible while the only user was Ameen: the 134 seeded rows came
+from his own nine months of history, so the catalogue was complete _for him_ by
+construction.
+
+It stops being complete the moment a cohort of other people's gyms is involved.
+A tester whose gym has a machine the seed does not know about could not log it
+at all, and "log a set in under 30 seconds" becomes "you cannot". This is the
+last unchecked item on Stage 2's insight list, and it is the one most likely to
+end a beta tester's first session.
+
+**Nothing new was invented.** `is_custom` and `owner_id` have been on the table
+since 0001, and the SELECT policy has always read
+`owner_id is null or owner_id = auth.uid()`. Migration 0014 adds only the three
+write policies that were missing, so a custom exercise is private _by
+construction_ rather than by a filter somebody has to remember.
+
+Three details that are the actual security, not the feature:
+
+- **The insert policy requires `is_custom`.** Without it a client could insert
+  `is_custom = false`, and the row would be indistinguishable from the shared
+  library everywhere the UI trusts that flag.
+- **The update policy has both halves.** `USING` decides which rows you may
+  edit; `WITH CHECK` decides what they may become. Without the second, a user
+  could edit their own row into somebody else's by rewriting `owner_id`.
+- **Custom names are unique per owner, case-insensitively.** Two people may both
+  add "Hack Squat"; neither can add it twice. The client turns the 23505 into
+  "you already have one of those" rather than letting a duplicate surface later
+  in the picker.
+
+Deleting is allowed by policy and will usually still be refused by the database,
+which is correct: `workout_sets.exercise_id` is `on delete restrict`, so an
+exercise that has ever been logged cannot be removed. History is what every
+chart is built from.
+
+`supabase/tests/rls_custom_exercises.sql` proves it the same way the social
+suite does — eight assertions under `set local role authenticated` with real
+JWT claims, in a transaction that rolls back. The headline one: B cannot see,
+edit or delete A's custom exercise, and still sees the whole shared library.
+
+### Where the create lives, and why
+
+In the picker's **no-results state**. The moment the gap is felt is the moment
+to offer the fix, and a search that found nothing already _is_ the name of the
+thing — so the name field arrives prefilled. Saving goes straight into set
+entry: somebody who just typed a name and two categories wanted to log a set,
+not to admire a catalogue entry.
+
+Two fields only. Muscle group and equipment are the only attributes the rest of
+the app consumes — the balance chart counts by muscle group, the routine
+generator filters by equipment. Anything else would be collected for its own
+sake.
+
+Both are fixed lists rather than free text, and
+`src/lib/exercises.test.ts` asserts they match the database's CHECK constraint
+and the values the seed actually uses. A drift between them shows up as an
+insert rejected at the very end of a form, which is the worst moment to find it.
+
+## 2026-08-05 — A privacy policy was overdue, not a Stage 4B item
+
+The plan lists a privacy policy under Stage 4B, as a store prerequisite. That
+is where the _stores_ need it. It is not when the app needs it.
+
+Stage 2A shipped: any address can sign in. Real people who are not Ameen now
+hand over an email, have it stored, and have their training statistics sent to
+a third-party model API — with no page anywhere saying so. That gap opened the
+day 2A landed and nobody noticed, because the person testing it already knew
+the answers.
+
+`public/privacy.html` is deliberately **standalone**: no build step, no font
+download, no script, tokens hard-coded. A privacy policy that depends on the
+app's bundle is a page that can fail to load for exactly the person trying to
+find out what you do with their data. `vercel.json` rewrites `/privacy` to it
+_before_ the SPA catch-all, which would otherwise swallow it.
+
+Linked from the auth screen and nowhere else — the one screen where somebody
+hands over an email. A privacy link buried in a settings menu is a link written
+for an app store rather than for a reader.
+
+The content is a description of what the code actually does, and it is specific
+where a template would be vague: the AI section says the block contains numbers
+and exercise names only, and says _why_ that is trustworthy — it comes from one
+database function whose output has no identifying fields in it, not from a rule
+someone has to remember. Ameen should still read it before invites go out; it
+describes his obligations, not mine.
