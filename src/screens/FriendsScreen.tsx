@@ -20,7 +20,7 @@ import {
   type Visibility,
 } from '../lib/social'
 import { supabase } from '../lib/supabase'
-import { IconPlate } from '../components/icons'
+import { IconBack, IconHeart } from '../components/icons'
 
 /**
  * Stage 3, on one screen.
@@ -35,17 +35,20 @@ import { IconPlate } from '../components/icons'
  * screen exists to use.
  */
 
-type Panel = 'feed' | 'board' | 'you'
-
-const PANELS: { id: Panel; label: string }[] = [
-  { id: 'feed', label: 'Feed' },
-  { id: 'board', label: 'This week' },
-  { id: 'you', label: 'You' },
-]
+/**
+ * Design v2.1 screen 03 puts the leaderboard and the feed on ONE surface, with
+ * Invite in the header — the week's standing, then what everyone did. The tab
+ * strip that was here split a single answer across two taps.
+ *
+ * `You` (visibility, username, follow, invite link, sign out) becomes a
+ * sub-view rather than a peer panel: it is where you go to change something,
+ * not something you read.
+ */
+type Panel = 'main' | 'you'
 
 export function FriendsScreen({ userId }: { userId: string }) {
   const { unit } = useUnit()
-  const [panel, setPanel] = useState<Panel>('feed')
+  const [panel, setPanel] = useState<Panel>('main')
 
   const [profile, setProfile] = useState<Profile | null>(null)
   const [feed, setFeed] = useState<FeedRow[]>([])
@@ -104,44 +107,50 @@ export function FriendsScreen({ userId }: { userId: string }) {
         </p>
       )}
 
-      <div
-        className="flex w-full overflow-hidden"
-        style={{ border: '1px solid var(--divider)', borderRadius: 'var(--radius-md)' }}
-        role="tablist"
-      >
-        {PANELS.map((p, i) => {
-          const on = p.id === panel
-          return (
+      {panel === 'you' ? (
+        <>
+          <div className="flex items-center gap-2">
             <button
-              key={p.id}
               type="button"
-              role="tab"
-              aria-selected={on}
-              onClick={() => setPanel(p.id)}
-              className={`h-12 flex-1 text-sm ${on ? 'font-medium text-accent' : 'text-muted'}`}
-              style={{
-                boxShadow: on ? 'inset 0 0 0 1px var(--color-accent)' : undefined,
-                borderInlineStart: i > 0 ? '1px solid var(--divider)' : undefined,
-              }}
+              onClick={() => setPanel('main')}
+              aria-label="Back"
+              className="btn-base btn-quiet h-12 w-12"
             >
-              {p.label}
+              <IconBack size={20} />
             </button>
-          )
-        })}
-      </div>
+            <h2 className="flex-1 text-base font-medium">You</h2>
+          </div>
+          <You
+            userId={userId}
+            profile={profile}
+            following={following}
+            onChanged={reload}
+            onError={setError}
+          />
+        </>
+      ) : (
+        <>
+          <div className="flex items-center gap-2">
+            <h2 className="kicker flex-1">This week · volume</h2>
+            <button
+              type="button"
+              onClick={() => setPanel('you')}
+              className="btn-base btn-quiet h-10 px-3 text-[13px]"
+            >
+              You
+            </button>
+          </div>
 
-      {panel === 'feed' && (
-        <Feed rows={feed} unit={unit} following={following.length} onError={setError} />
-      )}
-      {panel === 'board' && <Leaderboard rows={board} unit={unit} />}
-      {panel === 'you' && (
-        <You
-          userId={userId}
-          profile={profile}
-          following={following}
-          onChanged={reload}
-          onError={setError}
-        />
+          <Leaderboard rows={board} unit={unit} />
+
+          <Feed
+            rows={feed}
+            unit={unit}
+            following={following.length}
+            onError={setError}
+            onInvite={() => setPanel('you')}
+          />
+        </>
       )}
     </div>
   )
@@ -149,19 +158,45 @@ export function FriendsScreen({ userId }: { userId: string }) {
 
 /* ── Feed ─────────────────────────────────────────────────────────────── */
 
+/** Initial tile — the same fallback the exercise picker uses, for a person. */
+function InitialTile({ name, size = 40 }: { name: string; size?: number }) {
+  const letter = name.replace(/^@/, '').charAt(0).toUpperCase() || '?'
+  // A stable step per name, so the same person is always the same tone. Five
+  // neutral steps, never a hue — §2.4 allows exactly one accent.
+  let hash = 0
+  for (const ch of name) hash = (hash * 31 + ch.charCodeAt(0)) >>> 0
+  const step = (hash % 4) + 1
+  return (
+    <span
+      aria-hidden="true"
+      className="flex shrink-0 items-center justify-center rounded-[6px] font-medium text-text/80"
+      style={{
+        width: size,
+        height: size,
+        backgroundColor: `var(--color-tile-${step})`,
+        fontSize: size * 0.4,
+      }}
+    >
+      {letter}
+    </span>
+  )
+}
+
 function Feed({
   rows,
   unit,
   following,
   onError,
+  onInvite,
 }: {
   rows: FeedRow[]
   unit: 'lbs' | 'kg'
   following: number
   onError: (message: string | null) => void
+  onInvite: () => void
 }) {
   // Likes are optimistic. The write is small, the failure is recoverable, and
-  // a heart that waits for a round trip feels broken on gym wifi.
+  // a like that waits for a round trip feels broken on gym wifi.
   const [likes, setLikes] = useState<Record<string, { liked: boolean; count: number }>>(
     {},
   )
@@ -186,105 +221,161 @@ function Feed({
 
   if (rows.length === 0) {
     return (
-      <p className="py-6 text-sm text-muted">
-        {following === 0
-          ? 'Nothing here yet. Follow someone on the You tab — by username, or send them your invite link.'
-          : 'Nobody you follow has finished a workout yet. It shows up here when they do.'}
-      </p>
+      <section>
+        <h2 className="kicker mb-2">Feed</h2>
+        <p className="text-sm text-muted">
+          {following === 0
+            ? 'Nobody to watch yet.'
+            : 'Nobody you follow has finished a workout yet. It shows up here when they do.'}
+        </p>
+        {following === 0 && (
+          <button
+            type="button"
+            onClick={onInvite}
+            className="btn-base btn-hero mt-3 h-[60px] w-full text-[17px]"
+          >
+            Invite someone
+          </button>
+        )}
+      </section>
     )
   }
 
   return (
-    <ul>
-      {rows.map((row, i) => {
+    <section className="flex flex-col gap-3">
+      <h2 className="kicker">Feed</h2>
+      {rows.map((row) => {
         const like = likes[row.workout_id] ?? {
           liked: row.liked_by_me,
           count: row.like_count,
         }
         return (
-          <li key={row.workout_id}>
-            {i > 0 && <div className="rule-fade" />}
-            <div className="py-3">
-              <p className="kicker">
-                {nameOf(row)} · {formatRelativeDay(row.started_at)}
-              </p>
-              <div className="mt-1 flex items-center gap-2">
-                <p className="min-w-0 flex-1 truncate text-base font-medium">
-                  {row.name?.trim() || 'Workout'}
+          <article
+            key={row.workout_id}
+            className="ring-edge bg-surface px-3 py-3"
+            style={{ borderRadius: 'var(--radius-md)' }}
+          >
+            <div className="flex items-center gap-2.5">
+              <InitialTile name={nameOf(row)} />
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-semibold">
+                  {nameOf(row)}
+                  {row.name?.trim() ? ` · ${row.name.trim()}` : ''}
                 </p>
-                {row.record_count > 0 && (
-                  <span className="tag-pr h-[22px] shrink-0">
-                    {row.record_count === 1 ? 'PR' : `${row.record_count} PR`}
-                  </span>
-                )}
+                <p className="text-[11px] text-muted">
+                  {formatRelativeDay(row.started_at)}
+                </p>
               </div>
-              <p className="tnum mt-0.5 text-[13px] text-muted">
-                {formatDuration(row.started_at, row.ended_at)} ·{' '}
-                {formatWeight(row.volume_kg, unit)} · {row.set_count}{' '}
-                {row.set_count === 1 ? 'set' : 'sets'}
-              </p>
-
-              <button
-                type="button"
-                onClick={() => void toggle(row)}
-                aria-pressed={like.liked}
-                aria-label={like.liked ? 'Remove your like' : 'Like this workout'}
-                className={`mt-1.5 flex h-12 items-center gap-2 ${
-                  like.liked ? 'text-accent' : 'text-muted'
-                }`}
-              >
-                <IconPlate size={20} filled={like.liked} />
-                {like.count > 0 && <span className="tnum text-sm">{like.count}</span>}
-              </button>
+              {/* Only when a record actually fell. A badge that is always
+                  there stops meaning anything. */}
+              {row.record_count > 0 && (
+                <span className="tag-pr h-[22px] shrink-0">
+                  {row.record_count === 1 ? 'PR' : `${row.record_count} PR`}
+                </span>
+              )}
             </div>
-          </li>
+
+            <div className="mt-2.5 flex items-stretch">
+              <FeedStat
+                label="Duration"
+                value={formatDuration(row.started_at, row.ended_at)}
+              />
+              <span aria-hidden="true" className="w-px shrink-0 bg-[var(--divider)]" />
+              <FeedStat label={`Volume`} value={formatWeight(row.volume_kg, unit)} />
+              <span aria-hidden="true" className="w-px shrink-0 bg-[var(--divider)]" />
+              <FeedStat label="Sets" value={String(row.set_count)} />
+            </div>
+
+            {/* The fact line quotes the session's best moment — computed in
+                SQL, never phrased by a model, and never per-set data. */}
+            {row.best_record_name && row.best_record_e1rm_kg !== null && (
+              <p className="mt-2.5 text-[13px] text-accent-300">
+                {row.best_record_name} — new e1RM{' '}
+                {formatWeight(row.best_record_e1rm_kg, unit)}
+              </p>
+            )}
+
+            <button
+              type="button"
+              onClick={() => void toggle(row)}
+              aria-pressed={like.liked}
+              aria-label={like.liked ? 'Remove your like' : 'Like this workout'}
+              className={`mt-1 flex h-12 items-center gap-2 ${
+                like.liked ? 'text-accent' : 'text-muted'
+              }`}
+            >
+              <IconHeart size={20} filled={like.liked} />
+              {like.count > 0 && (
+                <span className="tnum font-mono text-[13px]">{like.count}</span>
+              )}
+            </button>
+          </article>
         )
       })}
-    </ul>
+    </section>
+  )
+}
+
+function FeedStat({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex min-w-0 flex-1 flex-col items-center gap-0.5 px-1">
+      <span className="tnum truncate text-[17px] font-medium leading-none">
+        {value}
+      </span>
+      <span className="text-[11px] text-muted">{label}</span>
+    </div>
   )
 }
 
 /* ── Leaderboard ──────────────────────────────────────────────────────── */
 
 function Leaderboard({ rows, unit }: { rows: LeaderRow[]; unit: 'lbs' | 'kg' }) {
-  if (rows.length <= 1) {
-    return (
-      <p className="py-6 text-sm text-muted">
-        A leaderboard needs someone to stand next to. Follow a friend and this fills in.
-      </p>
-    )
-  }
-
   return (
-    <section>
-      <h2 className="kicker mb-2">Volume this week</h2>
-      <ol>
-        {rows.map((row, i) => (
-          <li key={row.user_id}>
-            {i > 0 && <div className="rule-fade" />}
-            <div
-              className={`flex items-center gap-3 py-2.5 ${
-                // Your own row is tinted, not moved. A leaderboard that pins
-                // you to the top is not a leaderboard.
-                row.is_me ? 'record-row -mx-1.5 rounded-[6px] px-1.5' : ''
-              }`}
-            >
-              <span className="tnum w-5 shrink-0 font-mono text-[13px] text-muted">
-                {i + 1}
-              </span>
-              <span className="min-w-0 flex-1 truncate text-sm font-medium">
-                {row.is_me ? 'You' : nameOf(row)}
-              </span>
-              <span className="tnum shrink-0 text-figure">
-                {formatWeight(row.volume_kg, unit)}
-              </span>
-              <span className="tnum w-14 shrink-0 text-end text-[13px] text-muted">
-                {row.session_count} {row.session_count === 1 ? 'session' : 'sessions'}
-              </span>
-            </div>
-          </li>
-        ))}
-      </ol>
+    <section
+      className="ring-edge overflow-hidden bg-surface"
+      style={{ borderRadius: 'var(--radius-md)' }}
+    >
+      {/* The screen's one knurl: a 6px crown on the leaderboard card. */}
+      <span aria-hidden="true" className="knurl block h-[6px] w-full" />
+      <div className="px-3 py-2.5">
+        {rows.length <= 1 ? (
+          <p className="text-sm text-muted">
+            A leaderboard of one. Invite someone to chase.
+          </p>
+        ) : (
+          <ol>
+            {rows.map((row, i) => (
+              <li key={row.user_id}>
+                {i > 0 && <div className="rule-solid" />}
+                <div
+                  className={`flex items-center gap-3 py-2 ${
+                    // Your row is tinted, not moved. A leaderboard that pins
+                    // you to the top is not a leaderboard.
+                    row.is_me ? 'record-row -mx-1.5 rounded-[6px] px-1.5' : ''
+                  }`}
+                >
+                  <span
+                    className={`tnum w-4 shrink-0 font-mono text-xs ${
+                      row.is_me ? 'text-accent' : 'text-muted'
+                    }`}
+                  >
+                    {i + 1}
+                  </span>
+                  <span className="min-w-0 flex-1 truncate text-sm font-medium">
+                    {row.is_me ? 'You' : nameOf(row)}
+                  </span>
+                  <span className="tnum shrink-0 text-[15px] font-medium">
+                    {formatWeight(row.volume_kg, unit)}
+                  </span>
+                  <span className="tnum w-16 shrink-0 text-end text-[11px] text-muted">
+                    {row.session_count} session{row.session_count === 1 ? '' : 's'}
+                  </span>
+                </div>
+              </li>
+            ))}
+          </ol>
+        )}
+      </div>
     </section>
   )
 }

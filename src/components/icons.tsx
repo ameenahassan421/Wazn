@@ -129,19 +129,6 @@ export function IconPeople(props: IconProps) {
   )
 }
 
-/**
- * A plate, for a like. Not a heart: this app has one accent and no decorative
- * illustration, and the plate is already the shape language (see the streak
- * and the mark). Filled when you have liked it, outlined when you have not.
- */
-export function IconPlate({ filled, ...props }: IconProps & { filled?: boolean }) {
-  return (
-    <Svg {...props}>
-      <circle cx="12" cy="12" r="8.5" fill={filled ? 'currentColor' : 'none'} />
-      <circle cx="12" cy="12" r="2.6" fill="var(--color-ink)" stroke="currentColor" />
-    </Svg>
-  )
-}
 
 /**
  * A star, for the Coach tab. Drawn on the same 24 grid at stroke 2 as the
@@ -154,6 +141,27 @@ export function IconStar(props: IconProps) {
   return (
     <Svg {...props}>
       <path d="M12 3.6l2.5 5.3 5.6.8-4.1 4 1 5.7-5-2.7-5 2.7 1-5.7-4.1-4 5.6-.8z" />
+    </Svg>
+  )
+}
+
+/**
+ * A heart, for the like on a feed card.
+ *
+ * Design v2.1 names it explicitly, which reverses an earlier call: the first
+ * Friends build used a plate, on the reasoning that this app's shape language
+ * is plates and a heart is borrowed vocabulary. The handoff is the newer and
+ * more specific instruction, and it is right for a reason the earlier note
+ * missed — a plate outline at 20px reads as a "record" or a "weight", not as
+ * approval, and a like that has to be explained is not one tap.
+ */
+export function IconHeart({ filled, ...props }: IconProps & { filled?: boolean }) {
+  return (
+    <Svg {...props}>
+      <path
+        d="M12 20s-7-4.4-7-9.2A4 4 0 0 1 12 8a4 4 0 0 1 7 2.8C19 15.6 12 20 12 20z"
+        fill={filled ? 'currentColor' : 'none'}
+      />
     </Svg>
   )
 }

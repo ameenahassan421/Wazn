@@ -32,6 +32,9 @@ export interface FeedRow {
   record_count: number
   like_count: number
   liked_by_me: boolean
+  /** The session's best record, for the feed card's fact line. */
+  best_record_name: string | null
+  best_record_e1rm_kg: number | null
 }
 
 export interface LeaderRow {
@@ -98,6 +101,8 @@ export async function fetchFeed(before?: string): Promise<FeedRow[]> {
     set_count: n(row.set_count),
     record_count: n(row.record_count),
     like_count: n(row.like_count),
+    best_record_e1rm_kg:
+      row.best_record_e1rm_kg === null ? null : n(row.best_record_e1rm_kg),
   }))
 }
 
