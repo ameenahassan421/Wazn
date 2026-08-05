@@ -22,6 +22,7 @@ import {
   recordGeneration,
 } from '../_shared/context.ts'
 import { chat, ModelError } from '../_shared/openrouter.ts'
+import { parseJsonObject } from '../_shared/parse-json-object.ts'
 
 /**
  * Static, and identical for every user on every call — which is the point.
@@ -104,26 +105,11 @@ interface Insight {
 
 /** Trust nothing a model returns. Shape, types and length are all checked. */
 function parseInsights(raw: string): Insight[] {
-  let parsed: unknown
-  try {
-    parsed = JSON.parse(raw)
-  } catch {
-    // Models ignore "JSON only" in two different ways, and both were seen in
-    // live testing: a fenced block, and a reasoning preamble with the object
-    // somewhere after it. Take the outermost {...} anywhere in the text.
-    // Not a parser — just the first brace to the last, which is exactly right
-    // for a response that is one object with prose around it.
-    const fenced = raw.match(/```(?:json)?\s*([\s\S]*?)```/)
-    const candidate = fenced
-      ? fenced[1]
-      : raw.slice(raw.indexOf('{'), raw.lastIndexOf('}') + 1)
-    if (!candidate.trim()) throw new HttpError('The notes came back unreadable.', 502)
-    try {
-      parsed = JSON.parse(candidate)
-    } catch {
-      throw new HttpError('The notes came back unreadable.', 502)
-    }
-  }
+  // Recovery from fenced blocks and reasoning preambles lives in one shared
+  // module, because the routine generator needs exactly the same thing and
+  // shipped without it — see `_shared/parse-json-object.ts`.
+  const parsed = parseJsonObject(raw)
+  if (!parsed) throw new HttpError('The notes came back unreadable.', 502)
 
   const list = (parsed as { insights?: unknown }).insights
   if (!Array.isArray(list) || list.length === 0) {

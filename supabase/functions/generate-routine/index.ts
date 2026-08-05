@@ -29,6 +29,7 @@ import {
   recordGeneration,
 } from '../_shared/context.ts'
 import { chat, ModelError } from '../_shared/openrouter.ts'
+import { parseJsonObject } from '../_shared/parse-json-object.ts'
 import { validatePlan } from '../_shared/validate-plan.ts'
 
 const SYSTEM = `You design strength-training routines for an app called Wazn.
@@ -90,14 +91,8 @@ const GOALS = ['strength', 'muscle', 'general fitness', 'endurance'] as const
 const EQUIPMENT = ['barbell', 'dumbbell', 'machine', 'cable', 'bodyweight', 'other']
 
 function parsePlan(raw: string): unknown {
-  let parsed: unknown
-  try {
-    parsed = JSON.parse(raw)
-  } catch {
-    const fenced = raw.match(/```(?:json)?\s*([\s\S]*?)```/)
-    if (!fenced) throw new HttpError('The routine came back unreadable.', 502)
-    parsed = JSON.parse(fenced[1])
-  }
+  const parsed = parseJsonObject(raw)
+  if (!parsed) throw new HttpError('The routine came back unreadable.', 502)
   const days = (parsed as { days?: unknown }).days
   if (!Array.isArray(days) || days.length === 0) {
     throw new HttpError('The routine came back empty.', 502)

@@ -1493,3 +1493,84 @@ rather than a second function with a new name.
 The RLS suite was re-run afterwards and still passes all eight assertions —
 which is the point of having it, since the function it exercises was replaced
 wholesale.
+
+## 2026-08-05 — The AI features failed in production for two unrelated reasons
+
+Ameen reported "deployment keeps failing" and sent two screenshots of the Coach
+tab on the live app. Neither failure was a deployment. CI is green on every run
+in this repository's history, and the full chain — lint, format, typecheck, 164
+tests, production build — passes locally at `81e5e45`. What the screenshots
+actually show is two runtime faults that happen to sit next to each other.
+
+### 1. The routine generator could not read its own model's answer
+
+`generate-routine`'s `parsePlan` tried `JSON.parse`, then looked for a fenced
+
+```json block, and threw "The routine came back unreadable" if there was no
+fence. `coach-notes`' `parseInsights` did the same **plus** a fall-back to the
+outermost `{…}` anywhere in the text — added during the 2C self-test, when a
+model was observed answering with a reasoning preamble and no fence.
+
+The lesson was learned on one surface and never carried to the other. So a
+model that thinks out loud produces notes fine and fails the routine builder
+every time, which is exactly the asymmetry Ameen hit.
+
+Both now call `_shared/parse-json-object.ts`: raw, then fenced, then the brace
+scan, each attempt guarded so a broken fence falls through to the next strategy
+instead of throwing. It also rejects arrays and scalars, which the old code
+would have passed to a caller that immediately reads a named property off them.
+
+Two smaller bugs died with it. `JSON.parse(fenced[1])` was unguarded, so a
+fence containing malformed JSON escaped as a raw `SyntaxError` and surfaced as
+a generic 500 rather than the intended 502. And a truncated object — precisely
+what the old 900-token cap produced — now returns null instead of throwing.
+
+Plain TypeScript with no Deno APIs and no imports, for the reason
+`validate-plan.ts` is: the vitest suite imports the shipped module rather than
+a copy. Nine tests, one per shape a model has actually answered in.
+
+### 2. The account signed in has no training history
+
+Coach's Notes reported `total_sets_90d 0 · sessions_last_7 0` and "No training
+data" — against an account with 3,201 sets and a nine-month history.
+
+The data is not lost. It belongs to `3551b340` = **`ameen.hassan421@gmail.com`,
+with a dot**, which is what Stage 0B set `IMPORT_USER_ID` to. The address in
+use now is **`ameenahassan421@gmail.com`, no dot** = `6da348ed`, the profile
+that has been empty since 2026-08-01.
+
+Gmail ignores dots and delivers both to one inbox. Supabase auth does not, and
+treats them as two users. Before Stage 2A only the dotted address could receive
+a code, so the ambiguity could not surface; the moment `code@trywazn.app` could
+mail anybody, it did.
+
+The 2026-08-01 entry above called this exactly — "there will be two accounts
+where one is expected. Worth a cleanup decision then, not now." Then is now.
+Not resolved here: merging profiles moves user data, §2.6 puts that behind an
+ask, and the cheap answer (sign in with the dotted address) costs nothing and
+needs no migration.
+
+### What this says about the quality bar
+
+2C was signed off on a self-test that ran `coach-notes` against a stat block
+read from Ameen's real history. It never ran `generate-routine` end to end, and
+it never ran either feature *through the app as a signed-in user*. Both faults
+were sitting in the gap between those two things: one in the function that was
+not exercised, one in the identity that was supplied out of band rather than by
+signing in. A self-test that supplies its own inputs cannot find either.
+
+The `LAUNCH.md` second-account pass is the check that would have caught both,
+which is an argument for running it before invites rather than after.
+
+### Free models are now the default in code
+
+Ameen asked to make sure the app uses free models. It largely did — free is
+tried first and paid is only a fallback — but `chat()` read `*_MODEL_FREE` from
+the environment and skipped the free attempt entirely when it was unset, which
+is the most expensive possible reading of a missing variable. The known-good
+free slug is now the default in `openrouter.ts`, and setting `*_MODEL_FREE`
+equal to `*_MODEL` is the documented way to force paid on purpose.
+
+Worth stating plainly: this session cannot read the project's secrets, so what
+is proven here is what the code does with them, not what they currently are.
+```

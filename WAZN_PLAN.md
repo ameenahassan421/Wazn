@@ -411,12 +411,22 @@ verbatim, so they survive even if this file isn't read.**
   no moonshot model has a `:free` variant — so the free slug is
   `nvidia/nemotron-3-super-120b-a12b:free`, chosen by testing four candidates
   against the real schema. See DECISIONS.md.
-- **BLOCKED ON AMEEN — 1: buy ~$5 of OpenRouter credit.** The account has
-  never purchased any, so the paid model returns 402 and the free model is
-  carrying everything. It works, but a free-tier rate limit is currently a
-  user-visible failure rather than a slower answer — the fallback the design
-  depends on has nothing to fall back to.
-  <https://openrouter.ai/settings/credits>
+- **~~BLOCKED ON AMEEN — 1: buy ~$5 of OpenRouter credit.~~ DONE 2026-08-05**
+  ($5.00, 9:21 AM). The paid fallback now has something to fall back to. Note
+  that free is still tried first by design, so Kimi is only reached when the
+  free model fails — and **`moonshotai/kimi-k2.5` has still never returned a
+  successful response through this codebase.** No key limit is set on the
+  OpenRouter key yet; §2C asks for a hard cap.
+- **WRONG ACCOUNT IN PRODUCTION — the biggest open item.** Coach's Notes on
+  the live app reports `total_sets_90d 0 · sessions_last_7 0` and "No training
+  data". The nine-month history is real and intact; it belongs to profile
+  `3551b340` (`ameen.hassan421@gmail.com`, **with the dot**), which is what
+  `IMPORT_USER_ID` was set to in Stage 0B. The address being signed in with is
+  `ameenahassan421@gmail.com` (**no dot**) = profile `6da348ed`, which has
+  always been empty. Gmail treats the two as one inbox; Supabase auth treats
+  them as two users. Predicted in DECISIONS.md on 2026-08-01 and now arrived.
+  Ameen's call: sign in with the dotted address, or move the data. Do not
+  guess — moving it is destructive and §2.6 puts it behind an ask.
 - **Rotate the OpenRouter key** once beta is settled: it was shared in a chat
   session, so treat it as compromised by construction.
 - **BLOCKED ON AMEEN — 2: run `LAUNCH.md`** with a second account on a real
@@ -426,7 +436,14 @@ verbatim, so they survive even if this file isn't read.**
   GitHub, npm. NOT the Vercel app, `trywazn.app`, or `openrouter.ai`.
 - **Data, live:** exercises 134, workouts 154, workout_sets 3,201 (335
   supersetted, **491 records**), profiles 2, routines 0.
-- **Tests:** 152 passing, plus the SQL RLS suite.
+- **Tests:** 164 passing, plus the SQL RLS suite. CI is green on every run in
+  the repo's history — the failures Ameen is seeing are runtime, not build.
+- **Migrations:** the repo holds 0001–**0013**. This STATUS previously said
+  0001–0011 were live; 0012 and 0013 shipped with design v2.1 and whether they
+  are applied to production is **unconfirmed** — there is still no
+  `schema_migrations` ledger, so it has to be answered by probing for objects.
+  If they are missing, Progress's strength list and the Friends fact line fail
+  while every test and typecheck passes.
 - **Open decision for Ameen:** four zero-set workouts from desktop testing
   still render as blank History rows. Say "delete all my workouts with zero
   sets" and they go server-side.
@@ -441,4 +458,13 @@ verbatim, so they survive even if this file isn't read.**
   dependency is gone and **precache fell 914 KiB -> 537 KiB**.
 - **LAUNCH.md is now out of date in one place** — it describes four tabs and
   the old Progress sub-tabs. Re-read it before the second-account pass.
-- **Last updated:** 2026-08-05 by Claude Code (design v2.1 complete).
+- **Routine generation was failing in production**, with "The routine came back
+  unreadable" on the Coach tab. Cause found and fixed in code: `parsePlan`
+  handled a fenced ```json block but not a bare object after a reasoning
+  preamble, while `coach-notes` handled both. One shared parser now serves
+  both, with 9 tests. **The fix is not live** — deploying an Edge Function
+  needs Supabase access this session does not have.
+- **Free models are now the default in code, not just in config.** An unset
+  `*_MODEL_FREE` secret used to skip the free attempt and go straight to paid.
+- **Last updated:** 2026-08-05 by Claude Code (AI failure diagnosis; free-model
+  default; STATUS reconciled against the live app).
