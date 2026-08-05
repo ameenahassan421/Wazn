@@ -32,22 +32,37 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: supabase/setup-cli@v1
+      - uses: actions/setup-node@v4
         with:
-          version: latest
+          node-version: 22
 
       - name: Deploy coach-notes and generate-routine
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+        # The CLI comes from npm at a pinned version rather than from
+        # `supabase/setup-cli@v1` with `version: latest`. The first real run of
+        # this workflow died on
+        #
+        #     Failed to resolve latest Supabase CLI release: rate limit exceeded
+        #
+        # because "latest" means an unauthenticated GitHub API lookup on every
+        # run, and a shared runner IP burns that allowance on somebody else's
+        # behalf. Deploys should not be able to fail for a reason that has
+        # nothing to do with this repository.
+        #
+        # Pinning also makes a CLI upgrade a deliberate edit with a diff and a
+        # PR, instead of something that arrives unannounced on a Tuesday and
+        # changes how deployment behaves. Same reasoning as
+        # `check_vercel_config.mjs` not fetching a schema over the network.
+        #
         # --use-api bundles through the Management API instead of Docker, which
         # keeps this working on a plain runner with no Docker daemon.
         #
-        # Deploying every function in supabase/functions rather than naming
-        # them: a function added later should not need this file edited, and
-        # the CLI skips `_shared` because a leading underscore marks it as a
-        # module directory rather than a function.
+        # No function is named: one added later should not need this file
+        # edited, and the CLI skips `_shared` because a leading underscore marks
+        # a directory as modules rather than a function.
         run: |
-          supabase functions deploy \
+          npx --yes supabase@2.111.0 functions deploy \
             --project-ref ttasiwxeqerhsztxjxip \
             --use-api
 
@@ -59,4 +74,5 @@ jobs:
         # actually ship". Printed into the run log so the answer is on the
         # commit rather than in someone's dashboard.
         run: |
-          supabase functions list --project-ref ttasiwxeqerhsztxjxip
+          npx --yes supabase@2.111.0 functions list \
+            --project-ref ttasiwxeqerhsztxjxip

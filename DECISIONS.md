@@ -1844,3 +1844,33 @@ Three details worth keeping:
 exist as a repository secret. Until it does, the workflow runs and fails at the
 deploy step. That is the correct failure — loud, on the commit, and impossible
 to mistake for success — and it is strictly better than the silence it replaces.
+
+## 2026-08-05 — The deploy workflow's first real run died on someone else's rate limit
+
+`supabase/setup-cli@v1` with `version: latest` resolves the newest release
+through an unauthenticated GitHub API call on every run. The first manual
+dispatch failed in 12 seconds:
+
+    Failed to resolve latest Supabase CLI release: rate limit exceeded
+
+Nothing about this repository caused that. Shared runners share an IP, and the
+allowance had already been spent by whoever else was on that machine. A
+deployment pipeline that can fail for reasons entirely outside the project is
+not a pipeline anyone will trust — the first instinct on seeing it red becomes
+"re-run it", which is precisely the reflex that lets a real failure through.
+
+The CLI now comes from npm at a pinned version: `npx --yes supabase@2.111.0`.
+No release lookup, so nothing to rate-limit, and npm is already the channel
+this project depends on for everything else rather than a second one.
+
+**Pinning is the point, not a side effect.** `latest` means the tool that
+performs deployment can change under the project without a diff, a PR, or a
+person. A CLI upgrade should be an edit somebody reviewed, not something that
+arrives on a Tuesday and quietly changes how deploys behave. This is the same
+reasoning that kept `check_vercel_config.mjs` off the network: a gate is only
+worth having if its failures always mean something.
+
+Dropping `setup-cli` also removed one of the two actions GitHub warns are still
+on the deprecated Node 20. `actions/checkout@v4` is the remaining one; it is
+being forced onto Node 24 and works, so it is left alone rather than bundled
+into an unrelated fix.
