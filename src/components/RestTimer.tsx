@@ -1,5 +1,6 @@
 import { formatRest, REST_STEP_SECONDS } from '../lib/use-rest-timer'
 import type { RestTimer as Timer } from '../lib/use-rest-timer'
+import { describeRest } from '../lib/rest'
 
 /**
  * The countdown, shown inside the logging flow rather than over it.
@@ -13,10 +14,29 @@ import type { RestTimer as Timer } from '../lib/use-rest-timer'
  * fill is accent-900 — dark enough that the figures on top keep their
  * contrast, distinct enough to read at a glance from arm's length.
  */
-export function RestTimerBar({ timer }: { timer: Timer }) {
+export function RestTimerBar({
+  timer,
+  defaultSeconds,
+  onSaveDefault,
+}: {
+  timer: Timer
+  /** What this lift's rest is currently set to, for the keep-it affordance. */
+  defaultSeconds?: number
+  onSaveDefault?: (seconds: number) => void
+}) {
   if (timer.remaining === null) return null
 
   const done = timer.remaining === 0
+  // The moment a preference exists is the moment somebody presses ±. Offering
+  // to keep it here costs nothing when unused, needs no settings screen, and
+  // is the only place in the app where the user is already thinking about how
+  // long they rest on this lift. It disappears again the instant it is taken,
+  // because the two numbers then agree.
+  const adjusted =
+    onSaveDefault !== undefined &&
+    defaultSeconds !== undefined &&
+    timer.total !== null &&
+    timer.total !== defaultSeconds
   const pct =
     timer.total && timer.total > 0
       ? Math.max(0, Math.min(100, (timer.remaining / timer.total) * 100))
@@ -77,6 +97,18 @@ export function RestTimerBar({ timer }: { timer: Timer }) {
           </button>
         </div>
       </div>
+
+      {adjusted && (
+        <div className="relative border-t border-line">
+          <button
+            type="button"
+            onClick={() => onSaveDefault(timer.total as number)}
+            className="btn-base btn-ghost h-12 w-full justify-start px-3 text-[13px]"
+          >
+            Keep {describeRest(timer.total as number)} as the rest for this lift
+          </button>
+        </div>
+      )}
     </div>
   )
 }

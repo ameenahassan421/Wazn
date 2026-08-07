@@ -520,6 +520,26 @@ verbatim, so they survive even if this file isn't read.**
   on the volume and strength blocks, applied client-side — neither RPC takes a
   window, and both already return everything RLS allows. **Items 3–7 of U1 are
   NOT built**, so GATE U1 is only half-reportable.
+- **U1 items 3–7 are BUILT (2026-08-07).** Picker filter chips (muscle group +
+  equipment, two taps to "cable · shoulders"); discard-workout — a zero-set
+  workout is dropped when the Log tab is left and when Finish is pressed, plus
+  an explicit Discard behind the armed finish row; un-superset; the sticky
+  warm-up defect; workout rename + note on the finish summary and in the
+  History expansion; a rest-duration control in both the exercise detail page
+  and the timer bar; one-tap logging of the warm-up ramp rows. **GATE U1 is now
+  fully reportable** — see the PR.
+- **Migration 0015 (`exercise_rest`) is PARSE-CHECKED, NOT APPLIED.** It is the
+  first unapplied migration in the repo. The app degrades rather than breaking
+  without it — a missing table reads as "no override" and the rest timer falls
+  back — but the per-lift rest setting does nothing until Ameen applies it.
+- **`exercises.default_rest_seconds` was never writable.** The upgrade plan
+  read its emptiness as an oversight; RLS makes it structural. `exercises` is a
+  shared catalogue and the only update policy covers rows you own, so a user
+  cannot write to a seeded row — and should not, since the value would be
+  everyone's. 0015 gives the preference a user-scoped table instead.
+- **`workouts.notes` also already existed** (0008), unread and unwritten since
+  the day it was added. Same dead-column pattern as the U1a charts; no new
+  column was needed.
 - **The muscle-balance chart had never actually drawn.** `inset-block-0` is not
   a Tailwind v4 utility; a class that does not exist emits no CSS and fails no
   check, so the fills, the knurl target band, the Coach rail and the rest-timer
@@ -527,6 +547,8 @@ verbatim, so they survive even if this file isn't read.**
   fixes all four. Nothing in the CI wall could have caught it — a screenshot
   did. See DECISIONS.md.
 - **Last updated:** 2026-08-07 by Claude Code (the four-path auth screen; then
-  U1 items 1–2: the unrendered progress functions now draw, time-range chips
-  on volume and strength, and the `inset-block-0` fix that made the
-  muscle-balance chart visible for the first time).
+  all of U1 — the unrendered progress functions now draw, time-range chips, the
+  `inset-block-0` fix that made the muscle-balance chart visible for the first
+  time, and items 3–7: picker filters, discard-workout, un-superset, the sticky
+  warm-up defect, workout notes, per-lift rest on migration 0015, and one-tap
+  warm-up ramp logging).

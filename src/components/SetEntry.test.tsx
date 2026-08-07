@@ -222,7 +222,7 @@ describe('SetEntry set type and RPE', () => {
 
     await user.click(screen.getByRole('button', { name: /Tap to change/ }))
     await user.type(reps(), '10')
-    await user.click(screen.getByRole('button', { name: /Log set/ }))
+    await user.click(screen.getByRole('button', { name: /^Log / }))
 
     expect(onAddSet).toHaveBeenCalledWith(
       expect.objectContaining({ setType: 'warmup', reps: 10 }),
@@ -238,12 +238,67 @@ describe('SetEntry set type and RPE', () => {
 
     await user.click(type()) // warmup
     await user.type(reps(), '10')
-    await user.click(screen.getByRole('button', { name: /Log set/ }))
+    await user.click(screen.getByRole('button', { name: /^Log / }))
     expect(type()).toHaveTextContent('W')
 
     await user.click(type()) // failure
-    await user.click(screen.getByRole('button', { name: /Log set/ }))
+    await user.click(screen.getByRole('button', { name: /^Log / }))
     expect(type()).toHaveTextContent('Set')
+  })
+
+  it('names the warm-up mode on the button that logs the set', async () => {
+    // The bug this closes: warm-up sticks on purpose, and a working set
+    // logged three sets later inherited it and vanished from every PR and
+    // chart without saying anything. The mode now rides the largest element
+    // on the screen instead of a 48px chip nobody is looking at.
+    const user = userEvent.setup()
+    setup()
+
+    expect(screen.getByRole('button', { name: /^Log / })).toHaveTextContent('Log set 1')
+
+    await user.click(screen.getByRole('button', { name: /Tap to change/ }))
+    expect(screen.getByRole('button', { name: /^Log / })).toHaveTextContent(
+      'Log warm-up 1',
+    )
+  })
+
+  it('does not let warm-ups consume a working-set number', () => {
+    const warmups: WorkoutSet[] = [1, 2, 3].map((n) => ({
+      id: `s-${n}`,
+      workout_id: 'w-1',
+      exercise_id: exercise.id,
+      set_number: n,
+      weight_kg: 40,
+      reps: 8,
+      rpe: null,
+      duration_seconds: null,
+      distance_meters: null,
+      set_type: 'warmup',
+      superset_group: null,
+      pr_weight: false,
+      pr_e1rm: false,
+    }))
+    setup({ setsThisWorkout: warmups })
+
+    expect(screen.getByRole('button', { name: /^Log / })).toHaveTextContent('Log set 1')
+  })
+
+  it('drops the set type when the exercise changes', async () => {
+    // Warming up on bench and then switching to rows used to carry the
+    // warm-up flag across with you.
+    const user = userEvent.setup()
+    const { rerender, props } = setup()
+
+    await user.click(screen.getByRole('button', { name: /Tap to change/ }))
+    expect(screen.getByRole('button', { name: /Tap to change/ })).toHaveTextContent('W')
+
+    rerender(
+      <SetEntry {...props} exercise={{ ...exercise, id: 'ex-2', name: 'Row' }} />,
+    )
+
+    expect(screen.getByRole('button', { name: /Tap to change/ })).toHaveTextContent(
+      'Set',
+    )
   })
 
   it('starts RPE at 8 and clears after the last step', async () => {

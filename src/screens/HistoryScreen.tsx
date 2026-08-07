@@ -14,6 +14,7 @@ import type { SessionVolumeRow } from '../lib/progress'
 import { EditSetDialog } from '../components/EditSetDialog'
 import { ExerciseThumb } from '../components/ExerciseThumb'
 import { TrainingCalendar } from '../components/TrainingCalendar'
+import { WorkoutNotes } from '../components/WorkoutNotes'
 import { IconChevronDown } from '../components/icons'
 
 const PAGE_SIZE = 30
@@ -325,6 +326,16 @@ export function HistoryScreen() {
 
                 {open && (
                   <div className="pb-4">
+                    {/* The note reads without entering edit mode — it is the
+                        reason you scrolled back to this session — and is
+                        rewritten under the same toggle the set corrections
+                        live behind. */}
+                    {workout.notes && correcting !== workout.id && (
+                      <p className="mb-3 whitespace-pre-line border-s-2 border-[color:var(--color-accent-800)] ps-3 text-[13px] leading-relaxed text-text/85">
+                        {workout.notes}
+                      </p>
+                    )}
+
                     {!sets ? (
                       <p className="text-sm text-muted">Loading sets…</p>
                     ) : sets.length === 0 ? (
@@ -332,28 +343,46 @@ export function HistoryScreen() {
                         This workout has no sets recorded.
                       </p>
                     ) : (
-                      <>
-                        <ExerciseBreakdown
-                          sets={sets}
-                          unit={unit}
-                          editable={correcting === workout.id}
-                          onEditSet={setEditing}
-                          onDeleteSet={(s) => void removeSet(s)}
-                        />
-                        {/* Correcting a set is rare and destructive; it does
-                            not deserve two buttons on every row of every
-                            session. One entry point per workout reveals them. */}
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setCorrecting(correcting === workout.id ? null : workout.id)
-                          }
-                          className="btn-base btn-secondary mt-3 h-10 px-4 text-sm"
-                        >
-                          {correcting === workout.id ? 'Done editing' : 'Edit sets'}
-                        </button>
-                      </>
+                      <ExerciseBreakdown
+                        sets={sets}
+                        unit={unit}
+                        editable={correcting === workout.id}
+                        onEditSet={setEditing}
+                        onDeleteSet={(s) => void removeSet(s)}
+                      />
                     )}
+
+                    {correcting === workout.id && (
+                      <div className="mt-3.5">
+                        <WorkoutNotes
+                          workoutId={workout.id}
+                          initialName={workout.name}
+                          initialNote={workout.notes ?? null}
+                          onSaved={(values) =>
+                            setWorkouts((prev) =>
+                              prev.map((w) =>
+                                w.id === workout.id ? { ...w, ...values } : w,
+                              ),
+                            )
+                          }
+                        />
+                      </div>
+                    )}
+
+                    {/* Correcting a session is rare and destructive; it does
+                        not deserve buttons on every row of every workout. One
+                        entry point per workout reveals them — and now the
+                        name and note too, so there is one way in rather than
+                        two competing ones. */}
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setCorrecting(correcting === workout.id ? null : workout.id)
+                      }
+                      className="btn-base btn-secondary mt-3 h-11 px-4 text-sm"
+                    >
+                      {correcting === workout.id ? 'Done editing' : 'Edit workout'}
+                    </button>
                   </div>
                 )}
               </li>

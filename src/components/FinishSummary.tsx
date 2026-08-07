@@ -1,10 +1,11 @@
 import { Fragment, useEffect, useRef, useState } from 'react'
 import type { WorkoutSummary } from '../lib/summary'
-import type { Exercise } from '../lib/types'
+import type { Exercise, Workout } from '../lib/types'
 import type { Unit } from '../lib/units'
 import { formatWeight } from '../lib/units'
 import { drawShareCard, shareCard } from '../lib/share-card'
 import { ExerciseThumb } from './ExerciseThumb'
+import { WorkoutNotes } from './WorkoutNotes'
 
 /** Seconds → "48 min" / "1h 12m". `formatDuration` in lib/format takes ISO
  *  strings; the summary already holds a duration, so it formats that. */
@@ -25,6 +26,7 @@ export function FinishSummary({
   dateLabel,
   onDone,
   exercisesById,
+  workout,
 }: {
   summary: WorkoutSummary
   unit: Unit
@@ -33,6 +35,8 @@ export function FinishSummary({
   /** Only used to put a face on each PR row; optional so tests and any
    *  caller without the catalogue still render. */
   exercisesById?: Map<string, Exercise>
+  /** The workout just finished. Omit to hide the name and note fields. */
+  workout?: Workout | null
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [status, setStatus] = useState<string | null>(null)
@@ -139,6 +143,18 @@ export function FinishSummary({
             })}
           </ul>
         </div>
+      )}
+
+      {/* The only moment in the app where writing a sentence costs nothing:
+          the set is racked, the session is over, and §2.1's protection of the
+          logging flow no longer applies. Optional in every sense — nothing
+          below waits on it. */}
+      {workout && (
+        <WorkoutNotes
+          workoutId={workout.id}
+          initialName={workout.name}
+          initialNote={workout.notes ?? null}
+        />
       )}
 
       {/* Rendered off-screen: the card is 1080x1350 (4:5) and only ever leaves

@@ -5,6 +5,8 @@ import { useUnit } from '../lib/unit-context'
 import { formatWeight } from '../lib/units'
 import { formatRelativeDay } from '../lib/format'
 import type { Exercise } from '../lib/types'
+import { describeRest, resolveRest, stepRest } from '../lib/rest'
+import { REST_STEP_SECONDS } from '../lib/use-rest-timer'
 import { ExerciseThumb } from './ExerciseThumb'
 
 /** One session's worth of this exercise, newest first. */
@@ -80,6 +82,13 @@ export function ExerciseDetail({
   const [note, setNote] = useState<{ exerciseId: string; text: string } | null>(null)
   const [noteSaving, setNoteSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  // The user's own rest length for this lift, or null for "whatever the app
+  // decides". Carries its exercise id for the same reason the others do.
+  const [rest, setRest] = useState<{
+    exerciseId: string
+    override: number | null
+  } | null>(null)
+  const [restDirty, setRestDirty] = useState(false)
 
   const exerciseId = exercise.id
 
@@ -169,6 +178,72 @@ export function ExerciseDetail({
     }
   }, [exerciseId])
 
+  useEffect(() => {
+    let active = true
+    void supabase
+      .from('exercise_rest')
+      .select('rest_seconds')
+      .eq('exercise_id', exerciseId)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (!active) return
+        // A missing table (0015 unapplied) reads the same as no override, and
+        // both mean "fall back to the default" — so neither is an error here.
+        setRest({
+          exerciseId,
+          override: (data?.rest_seconds as number | undefined) ?? null,
+        })
+        setRestDirty(false)
+      })
+    return () => {
+      active = false
+    }
+  }, [exerciseId])
+
+  /**
+   * Written on a delay rather than on every tap: five taps of + is one
+   * preference, not five round trips, and the number on screen is already
+   * correct the moment it is pressed.
+   */
+  useEffect(() => {
+    if (!restDirty || rest === null || rest.exerciseId !== exerciseId) return
+    const seconds = rest.override
+    if (seconds === null) return
+    const id = setTimeout(() => {
+      void (async () => {
+        const { data: session } = await supabase.auth.getUser()
+        const userId = session.user?.id
+        if (!userId) return
+        const { error: writeError } = await supabase.from('exercise_rest').upsert(
+          {
+            user_id: userId,
+            exercise_id: exerciseId,
+            rest_seconds: seconds,
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: 'user_id,exercise_id' },
+        )
+        setError(writeError ? describeError('Saving the rest time', writeError) : null)
+        setRestDirty(false)
+      })()
+    }, 600)
+    return () => clearTimeout(id)
+  }, [restDirty, rest, exerciseId])
+
+  async function clearRest() {
+    const { data: session } = await supabase.auth.getUser()
+    const userId = session.user?.id
+    if (!userId) return
+    setRest({ exerciseId, override: null })
+    setRestDirty(false)
+    const { error: deleteError } = await supabase
+      .from('exercise_rest')
+      .delete()
+      .eq('exercise_id', exerciseId)
+      .eq('user_id', userId)
+    if (deleteError) setError(describeError('Clearing the rest time', deleteError))
+  }
+
   async function saveNote(text: string) {
     const trimmed = text.trim()
     setNoteSaving(true)
@@ -200,6 +275,21 @@ export function ExerciseDetail({
 
     setNoteSaving(false)
     setError(writeError ? describeError('Saving your note', writeError) : null)
+  }
+
+  const restState = rest?.exerciseId === exerciseId ? rest : null
+  const restForThis =
+    restState === null
+      ? null
+      : resolveRest(exercise.default_rest_seconds, restState.override)
+
+  function stepRestBy(direction: 1 | -1) {
+    if (restForThis === null) return
+    setRest({
+      exerciseId,
+      override: stepRest(restForThis, direction, REST_STEP_SECONDS),
+    })
+    setRestDirty(true)
   }
 
   const rec = records?.exerciseId === exerciseId ? records : null
@@ -281,6 +371,53 @@ export function ExerciseDetail({
         <p className="text-sm text-muted">
           Records and notes need migration 0008. Apply it and reload.
         </p>
+      )}
+
+      {/* Rest lives here because this is the lift's page, and in the timer bar
+          because that is where the opinion forms. Same value, two doors. */}
+      {restForThis !== null && (
+        <div>
+          <h3 className="kicker mb-2">Rest timer</h3>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => stepRestBy(-1)}
+              aria-label="Shorter rest"
+              className="btn-base btn-secondary h-12 w-12 shrink-0 text-xl"
+            >
+              −
+            </button>
+            <span className="tnum flex-1 text-center text-figure">
+              {describeRest(restForThis)}
+            </span>
+            <button
+              type="button"
+              onClick={() => stepRestBy(1)}
+              aria-label="Longer rest"
+              className="btn-base btn-secondary h-12 w-12 shrink-0 text-xl"
+            >
+              +
+            </button>
+            {restState !== null && restState.override !== null && (
+              <button
+                type="button"
+                onClick={() => void clearRest()}
+                className="btn-base btn-quiet h-12 shrink-0 px-2.5 text-[13px]"
+              >
+                Reset
+              </button>
+            )}
+          </div>
+          <p className="mt-1 text-[11px] text-muted">
+            {restState?.override == null
+              ? 'The app default. Change it and the timer uses your number for this lift from the next set on.'
+              : `Yours${
+                  exercise.default_rest_seconds
+                    ? `, over the ${describeRest(exercise.default_rest_seconds)} default`
+                    : ''
+                }. Zero turns the timer off for this lift.`}
+          </p>
+        </div>
       )}
 
       {!rec?.missing && (

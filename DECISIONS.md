@@ -2146,3 +2146,71 @@ in the one place the app cannot lint.
 workout, un-superset, the warmup stickiness bug, workout notes + migration
 0014, rest-duration stepper, one-tap ramp). GATE U1 covers all of them; this
 is its chart half only.
+
+## 2026-08-07 — U1b: flow fixes, and two columns that could never have worked
+
+U1 items 3–7, approved and built. Six deviations, two of them because the
+plan asked for something the schema cannot do.
+
+**1. `exercises.default_rest_seconds` has no writer because it can have no
+writer.** The upgrade plan reads its emptiness as an oversight (O10: "read but
+nothing writes it"). It is not. `exercises` is a shared catalogue — 134 seeded
+rows with `owner_id` null — and the only update policy on the table
+(`exercises_update_own`, 0014) permits a user to edit rows they own. Writing
+the column from the client is refused by RLS, and if it were not, one person's
+ninety seconds would become everyone's. Migration **0015** adds
+`exercise_rest`, a user-scoped table with the same shape and the same
+reasoning as `exercise_notes` in 0008. 0004's column stays as the catalogue
+fallback: a heavy squat and a lateral raise should not share a default, and an
+importer is the right thing to say so. Parse-checked with
+`scripts/check_migrations.py`; **not executed** — the app treats a missing
+table as "no override" and falls back, so the feature degrades rather than
+breaking if it ships before the migration is applied.
+
+**2. `workouts.notes` already exists.** Migration 0008 added it (nullable
+text, ≤2000 chars) and nothing has ever read or written it — the same dead-
+column pattern as the U1a charts. The plan asked for a new `workouts.note`;
+renaming a live column to match a document is not a migration worth running,
+so the existing plural column is what the UI writes.
+
+**3. The warm-up bug is fixed by making the mode loud, not by removing it.**
+Warm-up sticks on purpose: three ramp sets in a row is the normal case and
+re-arming it each time would cost three taps per exercise. The defect was that
+the fourth set inherited it silently and vanished from every PR and chart. So
+the mode now rides the largest element on the screen — the commit button reads
+**"Log warm-up 3"** and drops out of the solid hero tier into the outlined one,
+because logging a warm-up is not what the screen exists for. Two supporting
+changes: warm-ups no longer consume a working-set number (three warm-ups then
+"Log set 1" is the honest reading), and the set type **resets when the exercise
+changes** — warming up on bench and switching to rows used to carry the flag
+across, which is the same bug with a longer fuse. Zero taps added.
+
+**4. Auto-discard fires on unmount, never on `pagehide`.** `pagehide` is the
+obvious hook and it is wrong: it fires when a phone is pocketed, and "start the
+workout at the rack, walk over, log the first set" is exactly the sequence that
+must survive. Leaving the Log tab is a deliberate navigation and is safe.
+Closing the browser leaves an _open_ zero-set workout, which never becomes a
+blank History row and is discarded the next time the tab is left. The other
+half is bigger: **finishing a workout with no sets discards it** rather than
+writing it, which is how all four of the blank rows in production were made.
+
+**5. Un-supersetting dissolves a pair rather than stranding half of it.**
+Taking one exercise out of a two-member group would leave the other wearing an
+"SS 1" badge naming a partner that no longer exists, so the group goes with it.
+Three or more members lose only the leaver. `ungroupIds` in `supersets.ts`,
+four tests.
+
+**6. The armed-finish window went 4s → 6s.** The row now carries a sentence
+and a second control (Discard), and four seconds was measured for a lone
+Finish button — long enough to arm, too short to read a warning and reach a
+different target. Touching either control restarts the window.
+
+**Also:** the picker filters are two single-select chip rows, drawn from the
+catalogue rather than declared, so no chip can find nothing. They sit _below_
+the sticky search rather than inside it — search is the fast path and stays
+put; filters are the fallback and should scroll away. The one-tap ramp rows
+log as warm-ups without touching the draft or the set type, so they cannot
+leave the warm-up flag switched on behind them.
+
+**Not built:** U2 onward. The workout overview, offline, and everything after
+stay unapproved.
