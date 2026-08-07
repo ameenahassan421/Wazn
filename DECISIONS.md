@@ -1951,3 +1951,31 @@ where the knowledge lives:
 
 Nothing was built. The launch queue stays empty per STATUS; the phases in
 the plan doc activate only on Ameen's approval, after the beta starts.
+
+## 2026-08-07 — The offense plan, and a flagged collision with "no chat"
+
+Ameen asked how Wazn _beats_ Hevy, naming AI and social as the weapons:
+proactive, interactive, deep analysis. `docs/BEATING_HEVY_PLAN.md` is the
+answer, structured as a coach ladder (recorder → analyst → advisor →
+interlocutor → programmer) with phases B1–B6, each gated.
+
+Two decisions worth recording now, before any of it is built:
+
+1. **"Interactive" collides with the standing no-chat rule**
+   (`CoachScreen.tsx:17-22`, design v2.1). The plan does not quietly
+   reverse it. It proposes the narrowest interactive design that
+   delivers the ask — grounded interrogation through a whitelisted SQL
+   tool-loop, chips-first, data chips on every figure, fixed off-domain
+   refusal — and gates B3 on Ameen explicitly approving the change.
+   If he declines, B3 tightens to chips-only or dies; the rest of the
+   plan stands without it.
+
+2. **The kill criterion is pre-decided**, same reasoning as GATE 3: if
+   coach-engaged testers don't retain visibly better than non-engaged
+   ones by the retention gate, the B-series freezes wherever it stands
+   and effort returns to the parity U-series. AI is the most seductive
+   feature category in the industry; the guard against sunk-cost drift
+   goes in writing on day zero.
+
+Nothing was built. Both plans are proposals; the beta blockers stay
+first.
