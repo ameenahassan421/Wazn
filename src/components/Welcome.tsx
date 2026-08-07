@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { takeInviteCode } from '../lib/invite'
-import { follow, resolveInvite, nameOf, type Inviter } from '../lib/social'
+import { follow, resolveInvite, nameOf, saveProfile, type Inviter } from '../lib/social'
+import { USERNAME_RE, normalizeUsername } from '../lib/auth-identity'
+import { useAuth } from '../lib/use-auth'
 
 /**
  * The first screen after a brand-new account signs in.
@@ -28,6 +30,11 @@ export function Welcome({
   const [inviter, setInviter] = useState<Inviter | null>(null)
   const [followed, setFollowed] = useState(false)
   const [busy, setBusy] = useState(false)
+  const { userId } = useAuth()
+  const [username, setUsername] = useState('')
+  const [usernameSaved, setUsernameSaved] = useState<string | null>(null)
+  const [usernameError, setUsernameError] = useState<string | null>(null)
+  const [savingUsername, setSavingUsername] = useState(false)
 
   useEffect(() => {
     let active = true
@@ -41,6 +48,27 @@ export function Welcome({
       active = false
     }
   }, [])
+
+  async function claimUsername() {
+    if (!userId) return
+    const clean = normalizeUsername(username)
+    if (!USERNAME_RE.test(clean)) {
+      setUsernameError('3–20 characters: letters, numbers, underscores.')
+      return
+    }
+    setSavingUsername(true)
+    setUsernameError(null)
+    try {
+      await saveProfile(userId, { username: clean })
+      setUsernameSaved(clean)
+    } catch (caught) {
+      setUsernameError(
+        caught instanceof Error ? caught.message : 'Could not save that username.',
+      )
+    } finally {
+      setSavingUsername(false)
+    }
+  }
 
   async function acceptInvite() {
     if (!inviter) return
@@ -93,6 +121,55 @@ export function Welcome({
           </button>
         </section>
       )}
+
+      {/* Part of identity since the 2026-08-07 auth decisions — a username
+          signs you in anywhere an email does — so it is offered here, at the
+          door, not buried in Friends → You. Still skippable: the two buttons
+          below work regardless, and email sign-in never stops working. */}
+      <section
+        className="ring-edge bg-surface px-3 py-3"
+        style={{ borderRadius: 'var(--radius-md)' }}
+      >
+        <label htmlFor="welcome-username" className="kicker mb-1 block">
+          Pick a username — optional
+        </label>
+        <p className="mb-2 text-sm text-muted">
+          Sign in with it instead of your email, and let friends find you.
+        </p>
+        {usernameSaved ? (
+          <p className="text-[15px] font-medium">
+            @{usernameSaved} <span className="text-sm text-muted">is yours.</span>
+          </p>
+        ) : (
+          <div className="flex gap-2">
+            <input
+              id="welcome-username"
+              type="text"
+              autoCapitalize="none"
+              autoComplete="off"
+              spellCheck={false}
+              maxLength={21}
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder="your_name"
+              className="h-12 min-w-0 flex-1 rounded-lg border border-line bg-ink px-3 text-start text-[15px] outline-none placeholder:text-muted focus:border-accent"
+            />
+            <button
+              type="button"
+              onClick={() => void claimUsername()}
+              disabled={savingUsername || username.trim().length === 0}
+              className="btn-base btn-secondary h-12 px-4 text-sm disabled:opacity-45"
+            >
+              {savingUsername ? 'Saving…' : 'Claim'}
+            </button>
+          </div>
+        )}
+        {usernameError && (
+          <p role="alert" className="mt-2 text-sm text-accent">
+            {usernameError}
+          </p>
+        )}
+      </section>
 
       <section>
         <p className="kicker mb-2">Where to start</p>

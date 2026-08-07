@@ -1979,3 +1979,103 @@ Two decisions worth recording now, before any of it is built:
 
 Nothing was built. Both plans are proposals; the beta blockers stay
 first.
+
+## 2026-08-07 — Ameen reverses the OTP-only rule: social sign-in becomes the hero path
+
+Direct owner decision: "I would rather google/apple emails or sign ups."
+The hard rule in CLAUDE.md is amended accordingly. What was decided, and
+the constraints that survive it:
+
+- **Google sign-in becomes the primary path** as soon as its OAuth
+  client exists. The only blocking work is Ameen's (~15 min in Google
+  Cloud) — `docs/auth-social-setup.md` Part 1 has the exact steps; the
+  implementation prompt is in `docs/IMPLEMENTATION_PROMPTS.md`.
+- **Apple sign-in is deferred to Stage 4B**, where the $99 developer
+  account gets bought anyway — and where it stops being optional:
+  App Store Guideline 4.8 makes Sign in with Apple mandatory in the
+  iOS build once Google sign-in exists there. 4B inherits it. Apple's
+  hide-my-email relay also breaks email-based account linking, so 4B
+  needs an explicit identity-linking story before the store launch.
+- **The OTP path stays, as the fallback, not removed.** Two reasons on
+  the record: the Yahoo deliverability failure proved a single sign-in
+  path is a single point of failure, and ripping out a working auth
+  path mid-beta is the destructive-to-auth class of change §2.6 says
+  not to make casually. "Never passwords, never a magic link" survives
+  unchanged.
+- **Account linking is safe for Google, not for typed OTP addresses:**
+  Google returns the canonical Gmail (undotted), which matches the live
+  account exactly. The dot-duplicate risk lives only in the typed OTP
+  path — so the Gmail dot-normalisation guard rides the same
+  implementation prompt.
+
+Nothing implemented yet; the change is blocked on Ameen's Part 1.
+
+## 2026-08-07 — Second auth reversal, explicit: passwords return as an option
+
+Hours after choosing social sign-in, Ameen added — in his own words,
+after being told this was the one thing needing an explicit call —
+"a sign up/sign in option where the user can create an account and
+password and use that to sign in as well". That reverses the
+no-passwords half of the original auth rule. The final menu: Google
+(hero, pending his OAuth client), Apple (Stage 4B, then mandatory on
+iOS), email + password, and the 6-digit code as the passwordless
+option. Username works as a sign-in alias on both non-social paths.
+
+What survives the reversal, deliberately:
+
+- **"Never a magic link" now extends to recovery**: password reset is
+  code-based (`verifyOtp type:'recovery'`), because reset links break
+  in exactly the ways sign-in links did — wrong browser context,
+  scanner pre-clicks, installed-PWA handoff.
+- **Guardrails over theater**: min length 8 + leaked-password
+  protection (if the tier offers it), no composition rules.
+- **Email confirmation on** for password sign-ups — a typo'd address
+  must not anchor an account (the dot incident's cousin).
+- **One account, many methods**: identity linking by verified email is
+  now an explicit test case, not an assumption.
+
+The username-alias design is unchanged from earlier today: alias, not
+anchor; server-side resolution; no enumeration oracle. All of it lives
+in docs/auth-social-setup.md and the run-book's auth prompt.
+
+## 2026-08-07 — The four-path auth screen is built
+
+Implemented the same day the decisions landed, since the only external
+blocker (the Google OAuth client) was done by Ameen within the hour.
+What shipped and the calls made along the way:
+
+- **The username path performs the sign-in server-side.** The obvious
+  design — an RPC that turns a username into an email for the client to
+  use — hands every visitor an email-harvesting endpoint. Instead the
+  `auth-alias` Edge Function resolves the username AND completes the
+  sign-in (`signInWithOtp` / `verifyOtp` / `signInWithPassword` via the
+  ordinary anon auth API, so rate limits and password policy still
+  apply), returning only session tokens. The email reaches the browser
+  only inside the session the user just proved they own.
+- **No masked-email hint on code request**, deviating from the setup
+  doc's sketch. A hint rendered only when the username exists is an
+  existence oracle — the very thing the identical-response rule
+  forbids. Every request-code response is the same hedged sentence;
+  `maskEmail` survives in `auth-identity.ts` for post-sign-in surfaces.
+- **PKCE + `detectSessionInUrl: true`** replaces the old
+  `detectSessionInUrl: false`. Google's redirect needs it; the invite
+  capture in `main.tsx` only rewrites `/join/...` paths and runs before
+  render, so the two never touch the same URL.
+- **Gmail dot-normalisation is client-side and gmail-only**
+  (`normalizeEmail`): dots are meaningful at every other provider, so
+  nothing is stripped there. Applied at every typed-address entry
+  point; Google itself returns canonical addresses.
+- **Recovery races the screen swap knowingly**: `verifyOtp
+type:'recovery'` signs the user in, and App swaps screens on session
+  — the `updateUser({password})` write runs in the same handler with
+  the length already validated, so the race has no user-visible seam.
+- **`verify_jwt` stays ON for `auth-alias`.** The platform check only
+  requires a valid JWT and the anon key is one; no config.toml, no
+  special-case deploy flags. The function needs no caller identity —
+  it is establishing identity.
+
+Not done here, Ameen-owned (Part 3 of docs/auth-social-setup.md):
+the Google enable toggle + Confirm-email + password-length dashboard
+settings, and `set-templates` to push the recovery template. The
+LAUNCH.md §1 pass now covers all four paths and is still the gate
+before invites.
