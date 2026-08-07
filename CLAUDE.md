@@ -15,7 +15,11 @@ Before starting any task, search the session's available skills and load the
 relevant one with the Skill tool — do the task unassisted only when no skill
 covers it. Known fits: **`impeccable` for any UI/frontend work** (its design
 hook also fires automatically on Edit/Write of UI files and on Stop — wired
-in `.claude/settings.json`; manage with `/impeccable hooks`), `canvas-design`
+in `.claude/settings.json`; manage with `/impeccable hooks`),
+**`wellness-app-design` for anything about what to build or how a flow
+should behave** — workout-tracker UX judgment, Hevy parity questions,
+retention mechanics, roadmap sequencing (pairs with `impeccable`: that one
+executes pixels, this one supplies the domain), `canvas-design`
 for visual/brand/logo art, `supabase-postgres-best-practices` before touching
 anything in `supabase/migrations/`, `dataviz` before writing any chart,
 `frontend-slides` / `pptx` / `docx` / `pdf` for documents. The brand

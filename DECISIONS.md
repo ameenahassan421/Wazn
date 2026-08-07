@@ -1923,3 +1923,31 @@ it before parsing, so a cut-off answer says **"That routine was too long to
 finish. Try fewer days"** rather than "came back unreadable". The user gets an
 action instead of a mystery, and the next occurrence is diagnosable from the
 message alone.
+
+## 2026-08-07 — A Hevy gap analysis got a skill, not just a document
+
+Ameen asked for an upgrade plan toward Hevy's look and operation, based on
+the Aug 1 comparison doc. Two deliverables, one deliberate choice about
+where the knowledge lives:
+
+1. **`.claude/skills/wellness-app-design/`** — the Hevy-class design
+   grammar (screen anatomy, mid-workout heuristics, wellness/retention
+   patterns) encoded as a reusable skill rather than buried in a one-shot
+   analysis. Every future UI session loads it next to `impeccable`; the
+   comparison doc goes stale, the skill gets maintained. Eval scaffolding
+   is in `evals/evals.json`; the interactive skill-creator eval loop
+   awaits Ameen.
+
+2. **`docs/HEVY_PARITY_UPGRADE_PLAN.md`** — a PROPOSAL, explicitly
+   subordinate to `WAZN_PLAN.md` and the beta-first sequencing. Its load-
+   bearing findings, from reading every screen as built rather than
+   trusting the comparison doc: the real structural gap is the
+   one-exercise-at-a-time workout model vs Hevy's checkable whole-workout
+   grid (rooted in the correct "a set row means it happened" rule — the
+   plan keeps the rule and fixes the glass); and the cheapest wins are
+   already written and tested but rendered by nothing
+   (`trainingCalendar`, `liftBalance`, `sessionsPerWeek`,
+   `monthlyVolume` in `src/lib/progress.ts`).
+
+Nothing was built. The launch queue stays empty per STATUS; the phases in
+the plan doc activate only on Ameen's approval, after the beta starts.

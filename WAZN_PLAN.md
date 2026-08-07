@@ -497,6 +497,11 @@ verbatim, so they survive even if this file isn't read.**
   above. Nothing else should be built before the beta runs — offline sync and
   Stage 4B are explicitly sequenced _after_ it. The one exception is the work
   the beta itself surfaces, which on 2026-08-05 alone was four defects.
+- **Hevy-parity upgrade plan exists as a PROPOSAL** (2026-08-07):
+  `docs/HEVY_PARITY_UPGRADE_PLAN.md`, plus a reusable
+  `wellness-app-design` skill in `.claude/skills/`. Nothing from it is
+  approved or built; it does not change the next action. Read it at the
+  next gate review.
 - **Last updated:** 2026-08-05 by Claude Code (custom exercises + privacy
   policy; the AI failure diagnosis and profile merge; then the two CI gaps
   closed — vercel.json validation and automated Edge Function deploys, with
