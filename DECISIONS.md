@@ -2009,3 +2009,31 @@ the constraints that survive it:
   implementation prompt.
 
 Nothing implemented yet; the change is blocked on Ameen's Part 1.
+
+## 2026-08-07 — Second auth reversal, explicit: passwords return as an option
+
+Hours after choosing social sign-in, Ameen added — in his own words,
+after being told this was the one thing needing an explicit call —
+"a sign up/sign in option where the user can create an account and
+password and use that to sign in as well". That reverses the
+no-passwords half of the original auth rule. The final menu: Google
+(hero, pending his OAuth client), Apple (Stage 4B, then mandatory on
+iOS), email + password, and the 6-digit code as the passwordless
+option. Username works as a sign-in alias on both non-social paths.
+
+What survives the reversal, deliberately:
+
+- **"Never a magic link" now extends to recovery**: password reset is
+  code-based (`verifyOtp type:'recovery'`), because reset links break
+  in exactly the ways sign-in links did — wrong browser context,
+  scanner pre-clicks, installed-PWA handoff.
+- **Guardrails over theater**: min length 8 + leaked-password
+  protection (if the tier offers it), no composition rules.
+- **Email confirmation on** for password sign-ups — a typo'd address
+  must not anchor an account (the dot incident's cousin).
+- **One account, many methods**: identity linking by verified email is
+  now an explicit test case, not an assumption.
+
+The username-alias design is unchanged from earlier today: alias, not
+anchor; server-side resolution; no enumeration oracle. All of it lives
+in docs/auth-social-setup.md and the run-book's auth prompt.

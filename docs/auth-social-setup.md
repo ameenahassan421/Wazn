@@ -1,10 +1,17 @@
-# Social sign-in setup (Google now, Apple at 4B)
+# Auth setup: Google + Apple + email/password + code
 
-Ameen's decision, 2026-08-07: social sign-in becomes the primary path,
-with the 6-digit email code kept as the always-available fallback (the
-Yahoo deliverability failure is the standing proof that one path is not
-enough). This file is the setup guide — the parts only Ameen can do,
-then the parts Claude does.
+Ameen's decisions, 2026-08-07 (two of them): social sign-in becomes the
+primary path, AND classic email + password sign-up returns as a full
+option — an explicit reversal of the old no-passwords rule, recorded in
+DECISIONS.md. The 6-digit email code stays as the passwordless option
+(the Yahoo deliverability failure is the standing proof that one path
+is not enough). This file is the setup guide — the parts only Ameen can
+do, then the parts Claude does.
+
+The auth screen's final shape, top to bottom: **Continue with Google**
+(hero) → **Sign up / Sign in with email** (email-or-username +
+password) → **Email me a code instead** (existing OTP) — with Apple
+joining at Stage 4B.
 
 ## Part 1 — Ameen: create the Google OAuth client (~15 min)
 
@@ -50,6 +57,51 @@ in `docs/IMPLEMENTATION_PROMPTS.md`.
   already covered by the existing site URL config.
 - Extend LAUNCH.md: a second-account pass must now cover BOTH paths
   (Google sign-in from a fresh account, and the OTP fallback).
+
+## Email + password (2026-08-07, explicit owner reversal)
+
+Classic account creation returns: `signUp({ email, password })`,
+sign-in with `signInWithPassword`. Supabase supports it natively next
+to OTP and OAuth — no migration, existing accounts unaffected (an OTP
+user can add a password later via the recovery flow). The guardrails
+that come with the reversal:
+
+- **Password floor:** minimum length 8 in Supabase Auth settings, and
+  enable leaked-password protection if our tier offers it. No
+  composition theater (mandatory symbols etc.) — length + leak check
+  beats complexity rules.
+- **Recovery is code-based, not link-based.** "Never a magic link"
+  survives the reversal: password reset sends a 6-digit code
+  (`resetPasswordForEmail` + `verifyOtp type:'recovery'` +
+  `updateUser`), reusing the same template discipline — the recovery
+  template in `supabase/email_templates/` must carry `{{ .Token }}`.
+- **Email confirmation on password sign-up** stays on, so a typo'd
+  address can't anchor an account (the dot incident's cousin).
+- **One account, many methods:** password, Google, and code sign-ins
+  with the same verified email land in the same account (Supabase
+  links identities by verified email). Test this explicitly.
+
+## Username as a sign-in alias (all non-social paths)
+
+- **Username is an alias, not an anchor.** Every account is anchored
+  by an email (or Google/Apple identity); the user picks their
+  username at sign-up (the `profiles.username` column and its
+  uniqueness rules already exist for social). The sign-in field
+  accepts **email or username**, for both the password form and the
+  code flow.
+- A username entry resolves to the account's email **server-side**
+  (an Edge Function or security-definer RPC — the client must never
+  read another account's email). For the code flow the address is
+  rendered only masked ("code sent to a•••@gmail.com").
+- **Enumeration guard:** identical response whether the username
+  exists or not — same no-oracle principle `src/lib/social.ts` already
+  applies to follows. Rate-limit lookups like any auth endpoint.
+  (Password sign-in with a wrong username fails exactly like a wrong
+  password — "invalid credentials", never "no such user".)
+- **Username choice moves into onboarding** (Welcome screen) instead
+  of being buried in Friends → You, since it is now part of identity,
+  not just social. Existing users without a username keep signing in
+  by email until they pick one.
 
 ## Account-linking facts (why the dot incident doesn't repeat here)
 

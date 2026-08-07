@@ -82,15 +82,21 @@ unverified, and the PR should say so.
 - **Dark theme, one accent (amber `#f0b429`).** Nothing else is coloured. No
   gradients, shadows, emoji, or decorative illustration. Numbers render large
   and tabular (`.tnum`). Touch targets ≥ 48px.
-- **Auth is social OAuth + a 6-digit email code — never passwords, never a
-  magic link.** Ameen's decision 2026-08-07 (see DECISIONS.md): Google
-  sign-in is the hero path once its OAuth client exists
-  (`docs/auth-social-setup.md`); Apple sign-in lands at Stage 4B with the
-  developer account, and becomes MANDATORY in the iOS build the moment
-  Google exists there (App Store rule). The OTP path
-  (`signInWithOtp` + `verifyOtp`) stays as the always-available fallback —
-  do not remove it. The email templates in `supabase/email_templates/`
-  must contain `{{ .Token }}` or code sign-in is impossible.
+- **Auth offers four ways in — never a magic link.** Ameen's decisions
+  2026-08-07 (see DECISIONS.md, including the explicit reversal of the
+  old no-passwords rule): (1) **Google sign-in**, the hero path once its
+  OAuth client exists (`docs/auth-social-setup.md`); (2) **Apple
+  sign-in** at Stage 4B with the developer account — MANDATORY in the
+  iOS build the moment Google exists there (App Store rule);
+  (3) **email + password** sign-up/sign-in, with code-based password
+  recovery (no recovery links — same reasoning as no magic links) and
+  every hardening Supabase offers on our tier; (4) the **6-digit email
+  code** (`signInWithOtp` + `verifyOtp`) as the passwordless option —
+  do not remove it. Sign-in fields accept a **username** as an alias
+  for the email on any non-social path: resolved server-side, address
+  rendered only masked, identical response whether the username exists
+  or not. The email templates in `supabase/email_templates/` must
+  contain `{{ .Token }}` or code flows are impossible.
 - **The service-role / secret key is script-only.** Never in a `VITE_*` var,
   never in the client, never in Vercel.
 

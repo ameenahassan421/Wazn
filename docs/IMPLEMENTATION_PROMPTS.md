@@ -49,19 +49,32 @@ mandatory (see the setup doc).
 
 ```
 The Google provider is now enabled in Supabase per
-docs/auth-social-setup.md Part 1. Implement Part 2: "Continue with
-Google" as the hero action on the auth screen via signInWithOAuth,
-with the existing 6-digit code flow unchanged beneath it as "Email me
-a code instead". Use Google's neutral dark button variant — the design
-system's colour rule holds. Make sure the OAuth callback coexists with
-the /join/{code} invite capture in src/main.tsx, and that a Google
-sign-in by an existing OTP user with the same email lands in the SAME
-account (test this — the profile-merge incident must not repeat).
-While you are in the auth path, add Gmail dot-normalisation at OTP
-sign-in (STATUS names it as unbuilt and it caused the duplicate-account
-incident). Update LAUNCH.md so the second-account pass covers both
-sign-in paths. Do not remove or weaken the OTP path. CI wall, push,
-report, stop.
+docs/auth-social-setup.md Part 1. Implement the full auth screen from
+that doc's "final shape": (1) "Continue with Google" as the hero via
+signInWithOAuth — neutral dark button variant, the design system's
+colour rule holds; make sure the OAuth callback coexists with the
+/join/{code} invite capture in src/main.tsx. (2) Email + password
+sign-up and sign-in per the doc's password section: signUp with email
+confirmation on, signInWithPassword, and CODE-BASED password recovery
+(resetPasswordForEmail + verifyOtp type 'recovery' + updateUser — no
+recovery links; the recovery template must carry {{ .Token }}). Set
+the password minimum to 8 and enable leaked-password protection if
+the tier offers it. (3) Keep the existing 6-digit code flow as "Email
+me a code instead", unchanged. (4) Username-as-sign-in-alias on both
+non-social paths: the identifier field accepts email or username; a
+username resolves to the account email server-side (security-definer
+RPC or Edge Function — never expose the email to the client unmasked);
+identical responses whether the username exists or not; wrong
+username on the password form fails as "invalid credentials". Move
+username choice into Welcome-screen onboarding.
+
+Verify explicitly: a Google sign-in, a password sign-in, and a code
+sign-in with the same verified email all land in the SAME account —
+the profile-merge incident must not repeat. While you are in the auth
+path, add Gmail dot-normalisation at typed-email sign-in (STATUS names
+it as unbuilt and it caused the duplicate-account incident). Update
+LAUNCH.md so the second-account pass covers all four paths. Do not
+remove the code path. CI wall, push, report, stop.
 ```
 
 ---
