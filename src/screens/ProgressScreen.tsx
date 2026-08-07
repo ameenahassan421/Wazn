@@ -9,8 +9,31 @@ import { formatRelativeDay } from '../lib/format'
 import type { Exercise } from '../lib/types'
 import { ExerciseDetail } from '../components/ExerciseDetail'
 import { ExerciseThumb } from '../components/ExerciseThumb'
-import { SET_BAND, bandState, underBand, weeklyVolume } from '../lib/progress'
-import type { MuscleGroupSets, SessionVolumeRow, VolumeWeek } from '../lib/progress'
+import { RangeChips } from '../components/RangeChips'
+import {
+  SET_BAND,
+  bandState,
+  liftBalance,
+  monthlyVolume,
+  sessionsPerWeek,
+  underBand,
+  weeklyVolume,
+} from '../lib/progress'
+import type {
+  BalanceRow as AnchorRow,
+  ExerciseBest,
+  MuscleGroupSets,
+  SessionVolumeRow,
+  WeekBucket,
+} from '../lib/progress'
+import {
+  DEFAULT_RANGE,
+  describeRange,
+  describeSpan,
+  volumeSpan,
+  withinRange,
+} from '../lib/range'
+import type { RangeKey, VolumeSpan } from '../lib/range'
 
 /**
  * Progress — design v2.1 screen 02.
@@ -46,6 +69,12 @@ function num(value: number | string | null | undefined): number {
 /** The balance track caps here, so one enormous group cannot flatten the rest. */
 const SCALE_MAX = 30
 
+/** A quarter of weeks — long enough to show a pattern, short enough that a
+ *  bar is still a bar on a phone. Fixed, unlike the two ranged blocks: the
+ *  question this answers is "am I showing up lately", and lately is a
+ *  quarter. */
+const FREQUENCY_WEEKS = 13
+
 export function ProgressScreen({ onOpenCoach }: { onOpenCoach: () => void }) {
   const { unit } = useUnit()
 
@@ -59,6 +88,11 @@ export function ProgressScreen({ onOpenCoach }: { onOpenCoach: () => void }) {
 
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+
+  // Each ranged block keeps its own window: "how much am I lifting lately"
+  // and "where is my bench all time" are different questions.
+  const [volumeRange, setVolumeRange] = useState<RangeKey>(DEFAULT_RANGE)
+  const [strengthRange, setStrengthRange] = useState<RangeKey>(DEFAULT_RANGE)
 
   useEffect(() => {
     let active = true
@@ -96,7 +130,47 @@ export function ProgressScreen({ onOpenCoach }: { onOpenCoach: () => void }) {
     }
   }, [])
 
-  const weeks = useMemo(() => weeklyVolume(sessions, 12), [sessions])
+  // `session_volume_history` comes back oldest first, so the first row is the
+  // first workout ever — which is how far "All" has to reach.
+  const oldest = sessions[0]?.started_at ?? null
+
+  const span = useMemo(() => volumeSpan(volumeRange, oldest), [volumeRange, oldest])
+
+  // Both bucketings produce { start, volumeKg }, so the chart takes one shape
+  // and the range decides which function fills it.
+  const volumePoints = useMemo(
+    () =>
+      span.bucket === 'week'
+        ? weeklyVolume(sessions, span.count)
+        : monthlyVolume(sessions, span.count),
+    [sessions, span],
+  )
+
+  const frequency = useMemo(
+    () => sessionsPerWeek(sessions, FREQUENCY_WEEKS),
+    [sessions],
+  )
+
+  // The anchor lifts ride the strength RPC rather than a fifth call:
+  // `strength_summary` already carries every field `liftBalance` reads.
+  const anchors = useMemo(
+    () =>
+      liftBalance(
+        strength
+          .filter((row) => row.best_e1rm_kg !== null)
+          .map((row): ExerciseBest => ({
+            exercise_id: row.exercise_id,
+            name: row.name,
+            best_e1rm_kg: row.best_e1rm_kg as number | string,
+          })),
+      ),
+    [strength],
+  )
+
+  const rangedStrength = useMemo(
+    () => strength.filter((row) => withinRange(row.last_trained_at, strengthRange)),
+    [strength, strengthRange],
+  )
 
   const thisWeek = useMemo(() => {
     // Monday-start, in the viewer's own timezone — the same boundary the
@@ -137,12 +211,32 @@ export function ProgressScreen({ onOpenCoach }: { onOpenCoach: () => void }) {
 
       <MuscleBalance groups={groups} onOpenCoach={onOpenCoach} empty={empty} />
 
-      {!empty && <VolumeTrend weeks={weeks} unit={unit} />}
+      {/* Frequency and anchors draw on an empty log; volume and strength do
+          not. The difference is whether the empty chart still says something:
+          thirteen week slots and four named lifts are the shape of the
+          question, the way the muscle-balance band is. An empty line chart
+          is just an axis. */}
+      <SessionFrequency weeks={frequency} />
+
+      {!empty && (
+        <VolumeTrend
+          points={volumePoints}
+          span={span}
+          unit={unit}
+          range={volumeRange}
+          onRange={setVolumeRange}
+        />
+      )}
+
+      <AnchorLifts rows={anchors} unit={unit} />
 
       {!empty && (
         <StrengthList
-          rows={strength}
+          rows={rangedStrength}
+          total={strength.length}
           unit={unit}
+          range={strengthRange}
+          onRange={setStrengthRange}
           onOpen={(id) => {
             const found = exercises.find((e) => e.id === id)
             if (found) setDetail(found)
@@ -151,9 +245,12 @@ export function ProgressScreen({ onOpenCoach }: { onOpenCoach: () => void }) {
       )}
 
       {empty && (
+        /* "Log a workout to load the bar" already sits under the balance
+           chart; with four blocks between them, saying it twice reads as a
+           stutter. What is left is the part only this line says. */
         <p className="text-sm text-muted">
-          Log a workout to load the bar. Every chart here is built from your own sets —
-          nothing on this screen is a sample.
+          Every chart here is built from your own sets — nothing on this screen is a
+          sample.
         </p>
       )}
     </div>
@@ -345,35 +442,143 @@ function BalanceRow({ label, sets }: { label: string; sets: number }) {
   )
 }
 
+/* ── Session frequency ────────────────────────────────────────────────── */
+
+/**
+ * Sessions per week, one bar per week, thirteen weeks back.
+ *
+ * Volume answers "how hard"; this answers "how often", and of the two it is
+ * the one that predicts whether there will be a chart to read in six months.
+ * Every week gets a track whether or not it has a bar, because the gap is the
+ * information — a missing week that renders as nothing is a week the chart
+ * quietly forgave.
+ */
+function SessionFrequency({ weeks }: { weeks: WeekBucket[] }) {
+  const W = 320
+  const H = 72
+  const total = weeks.reduce((sum, w) => sum + w.sessions, 0)
+  // Floored at three so a single session in an otherwise blank quarter does
+  // not draw itself a full-height bar.
+  const max = Math.max(3, ...weeks.map((w) => w.sessions))
+  const average = total / weeks.length
+  const slot = W / weeks.length
+  const barW = Math.max(3, slot - 3)
+  const y = (value: number) => H - (value / max) * (H - 4)
+
+  return (
+    <section>
+      <div className="mb-2.5 flex items-baseline gap-2">
+        <h2 className="kicker flex-1">Sessions · per week</h2>
+        <span className="tnum font-mono text-[11px] text-muted">{weeks.length} wk</span>
+      </div>
+      <svg
+        viewBox={`0 0 ${W} ${H}`}
+        className="block w-full"
+        // Aspect ratio rather than a pixel height: with a fixed height the
+        // viewBox scales to fit and the chart sits inset from the column
+        // everything else on the screen aligns to. Uniform scaling keeps the
+        // 2px rules 2px-ish and lets the plot use the width it has.
+        style={{ aspectRatio: `${W} / ${H}` }}
+        role="img"
+        aria-label={
+          total === 0
+            ? `Sessions per week, last ${weeks.length} weeks: nothing logged yet`
+            : `Sessions per week, last ${weeks.length} weeks: ${total} sessions, averaging ${average.toFixed(1)} a week`
+        }
+      >
+        {weeks.map((week, i) => (
+          <rect
+            key={week.start.getTime()}
+            x={i * slot + (slot - barW) / 2}
+            y="0"
+            width={barW}
+            height={H}
+            rx="2"
+            fill="var(--color-tile-1)"
+          />
+        ))}
+        {total > 0 && (
+          <line
+            x1="0"
+            x2={W}
+            y1={y(average)}
+            y2={y(average)}
+            stroke="var(--divider)"
+            strokeWidth="1"
+            strokeDasharray="2 4"
+          />
+        )}
+        {weeks.map((week, i) =>
+          week.sessions === 0 ? null : (
+            <rect
+              key={week.start.getTime()}
+              x={i * slot + (slot - barW) / 2}
+              y={y(week.sessions)}
+              width={barW}
+              height={H - y(week.sessions)}
+              rx="2"
+              fill="var(--color-accent)"
+            />
+          ),
+        )}
+        <line x1="0" x2={W} y1={H} y2={H} stroke="var(--divider)" strokeWidth="1" />
+      </svg>
+      <p className="tnum mt-1 text-[11px] text-muted">
+        {total === 0
+          ? 'One bar a week. The dashed line arrives with your average.'
+          : `avg ${average.toFixed(1)}/wk · ${total} ${total === 1 ? 'session' : 'sessions'} · dashed line is the average`}
+      </p>
+    </section>
+  )
+}
+
 /* ── Volume trend ─────────────────────────────────────────────────────── */
 
 /**
  * v2 chart grammar, hand-rolled: amber 2px line, 8% area fill, dashed 2/4
  * gridlines, a dot on the last point. Not recharts — this is three paths, and
  * recharts was half the bundle on a screen the Log tab must never wait for.
+ *
+ * The range chips do not re-fetch anything. `session_volume_history` already
+ * returns every finished workout, so the window is a bucketing decision made
+ * over data in hand — instant, offline-safe, and one round trip regardless of
+ * how many times the chips are tapped.
  */
-function VolumeTrend({ weeks, unit }: { weeks: VolumeWeek[]; unit: Unit }) {
+function VolumeTrend({
+  points,
+  span,
+  unit,
+  range,
+  onRange,
+}: {
+  points: { start: Date; volumeKg: number }[]
+  span: VolumeSpan
+  unit: Unit
+  range: RangeKey
+  onRange: (key: RangeKey) => void
+}) {
   const W = 320
   const H = 96
-  const max = Math.max(1, ...weeks.map((w) => w.volumeKg))
-  const step = weeks.length > 1 ? W / (weeks.length - 1) : W
-  const points = weeks.map((w, i) => ({
+  const max = Math.max(1, ...points.map((p) => p.volumeKg))
+  const step = points.length > 1 ? W / (points.length - 1) : W
+  const plotted = points.map((p, i) => ({
     x: i * step,
-    y: H - (w.volumeKg / max) * (H - 8) - 4,
+    y: H - (p.volumeKg / max) * (H - 8) - 4,
   }))
-  const line = points.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x} ${p.y}`).join(' ')
+  const line = plotted.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x} ${p.y}`).join(' ')
   const area = `${line} L${W} ${H} L0 ${H} Z`
-  const last = points.at(-1)
+  const last = plotted.at(-1)
+  const bucket = span.bucket === 'week' ? 'week' : 'month'
 
   return (
     <section>
-      <h2 className="kicker mb-2.5">Volume · last {weeks.length} weeks</h2>
+      <h2 className="kicker mb-2.5">Volume · {describeSpan(span)}</h2>
       <svg
         viewBox={`0 0 ${W} ${H}`}
         className="block w-full"
-        style={{ height: H }}
+        style={{ aspectRatio: `${W} / ${H}` }}
         role="img"
-        aria-label={`Weekly volume, peaking at ${formatWeight(max, unit)}`}
+        aria-label={`Volume per ${bucket} over the ${describeSpan(span)}, peaking at ${formatWeight(max, unit)} ${unit}`}
       >
         {[0.25, 0.5, 0.75].map((f) => (
           <line
@@ -399,30 +604,194 @@ function VolumeTrend({ weeks, unit }: { weeks: VolumeWeek[]; unit: Unit }) {
         />
         {last && <circle cx={last.x} cy={last.y} r="3.5" fill="var(--color-accent)" />}
       </svg>
-      <p className="tnum mt-1 text-[11px] text-muted">
-        peak {formatWeight(max, unit)} · this week{' '}
-        {formatWeight(weeks.at(-1)?.volumeKg ?? 0, unit)}
+      <p className="tnum mb-2.5 mt-1 text-[11px] text-muted">
+        one point per {bucket} · peak {formatWeight(max, unit)} · this {bucket}{' '}
+        {formatWeight(points.at(-1)?.volumeKg ?? 0, unit)}
+      </p>
+      <RangeChips value={range} onChange={onRange} label="Volume range" />
+    </section>
+  )
+}
+
+/* ── Anchor lifts ─────────────────────────────────────────────────────── */
+
+/**
+ * The four lifts a program is judged on, each against what the deadlift
+ * predicts it should be.
+ *
+ * Same track-and-fill grammar as the muscle-balance rows, because it answers
+ * the same shape of question — where does this sit against where it should
+ * sit. The band there is a range; the target here is a point, so it is a tick
+ * rather than a knurl panel.
+ *
+ * The prediction is the usual strength-standards ratio, not a claim about
+ * this lifter. A lift under its tick is a lift that has fallen behind the
+ * others, which is worth seeing; it is not a failure, so it goes grey rather
+ * than shouting.
+ */
+/** "Squat, Bench and Overhead" — never "Squat and Bench and Overhead". */
+function joinList(items: string[]): string {
+  if (items.length <= 2) return items.join(' and ')
+  return `${items.slice(0, -1).join(', ')} and ${items.at(-1)}`
+}
+
+function AnchorLifts({ rows, unit }: { rows: AnchorRow[]; unit: Unit }) {
+  const scale = Math.max(
+    1,
+    ...rows.flatMap((r) => [r.measuredKg ?? 0, r.predictedKg ?? 0]),
+  )
+  const measured = rows.filter((r) => r.measuredKg !== null)
+  const predicted = rows.some((r) => r.predictedKg !== null)
+  const behind = rows.filter(
+    (r) =>
+      r.measuredKg !== null &&
+      r.predictedKg !== null &&
+      r.measuredKg < r.predictedKg * 0.95,
+  )
+
+  return (
+    <section>
+      <div className="mb-2.5 flex items-baseline gap-2">
+        <h2 className="kicker flex-1">Anchor lifts · vs predicted</h2>
+        <span className="font-mono text-[11px] text-muted">est. 1RM</span>
+      </div>
+
+      <div className="flex flex-col gap-1.5">
+        {rows.map((row) => (
+          <AnchorRowBar key={row.label} row={row} scale={scale} unit={unit} />
+        ))}
+      </div>
+
+      <p className="mt-2 text-[11px] leading-relaxed text-muted">
+        {measured.length === 0
+          ? 'Four lifts, one bar each. Log a deadlift, a squat, a bench and an overhead press and the bars fill.'
+          : !predicted
+            ? 'The tick is what your deadlift predicts each lift should be. Log a deadlift and the ticks appear.'
+            : behind.length > 0
+              ? `Ticks are predicted off your deadlift — squat 0.85, bench 0.75, overhead 0.45. ${joinList(
+                  behind.map((r) => r.label),
+                )} ${behind.length === 1 ? 'sits' : 'sit'} behind ${
+                  behind.length === 1 ? 'its' : 'their'
+                } tick. A guide, not a target.`
+              : 'Ticks are predicted off your deadlift — squat 0.85, bench 0.75, overhead 0.45. A guide, not a target.'}
       </p>
     </section>
   )
 }
 
+function AnchorRowBar({
+  row,
+  scale,
+  unit,
+}: {
+  row: AnchorRow
+  scale: number
+  unit: Unit
+}) {
+  const measured = row.measuredKg
+  const predicted = row.predictedKg
+  const pct = measured === null ? 0 : Math.min(100, (measured / scale) * 100)
+  const tick = predicted === null ? null : Math.min(100, (predicted / scale) * 100)
+  // Under its prediction is quiet, not an error — the same reading the
+  // muscle-balance band gives an under-worked group.
+  const fill =
+    measured !== null && predicted !== null && measured < predicted * 0.95
+      ? 'var(--color-tile-3)'
+      : 'var(--color-accent)'
+
+  return (
+    <div className="flex items-center gap-2">
+      <span className="w-[74px] shrink-0 truncate text-[13px] text-muted">
+        {row.label}
+      </span>
+      <span
+        className="relative block h-[14px] flex-1 overflow-hidden rounded-[3px]"
+        style={{ backgroundColor: 'var(--color-tile-1)' }}
+      >
+        {measured !== null && (
+          <span
+            className="absolute inset-block-0 start-0 block rounded-[3px]"
+            style={{ width: `${pct}%`, backgroundColor: fill }}
+          />
+        )}
+        {tick !== null && (
+          <span
+            aria-hidden="true"
+            className="absolute inset-block-0 block"
+            style={{
+              insetInlineStart: `calc(${tick}% - 1px)`,
+              width: 2,
+              backgroundColor: 'var(--color-neutral-300)',
+            }}
+          />
+        )}
+      </span>
+      <span className="tnum w-11 shrink-0 text-end font-mono text-[13px]">
+        {measured === null ? (
+          <span style={{ color: 'var(--color-tile-3)' }}>—</span>
+        ) : (
+          Math.round(toDisplayWeight(measured, unit))
+        )}
+      </span>
+    </div>
+  )
+}
+
 /* ── Strength list ────────────────────────────────────────────────────── */
 
+const STRENGTH_SHOWN = 12
+
+/**
+ * The range chips here scope *which lifts are listed* — the ones trained in
+ * the window — and not the numbers beside them, which stay all-time bests.
+ *
+ * That is a deliberate line, and the caption draws it out loud. Windowing the
+ * best itself would mean a new `strength_summary(p_days)` signature, and a
+ * client calling an RPC that only exists once someone applies a migration by
+ * hand is a Progress screen that breaks in production. See DECISIONS.md.
+ */
 function StrengthList({
   rows,
+  total,
   unit,
+  range,
+  onRange,
   onOpen,
 }: {
   rows: StrengthRow[]
+  /** Lifts before the range filter, so the caption can say what it hid. */
+  total: number
   unit: Unit
+  range: RangeKey
+  onRange: (key: RangeKey) => void
   onOpen: (exerciseId: string) => void
 }) {
+  const shown = rows.slice(0, STRENGTH_SHOWN)
+  const scope = range === 'ALL' ? '' : ` trained in ${describeRange(range)}`
+  const caption =
+    rows.length > shown.length
+      ? `top ${shown.length} of ${rows.length} lifts${scope} · est. 1RM is your all-time best`
+      : `${rows.length} ${rows.length === 1 ? 'lift' : 'lifts'}${scope} · est. 1RM is your all-time best`
+
   return (
     <section>
-      <h2 className="kicker mb-2">Strength · est. 1RM</h2>
+      <div className="mb-2 flex items-baseline gap-2">
+        <h2 className="kicker flex-1">Strength · est. 1RM</h2>
+        {rows.length < total && (
+          <span className="tnum font-mono text-[11px] text-muted">
+            {rows.length}/{total}
+          </span>
+        )}
+      </div>
+
+      {rows.length === 0 && (
+        <p className="py-2 text-sm text-muted">
+          Nothing trained in {describeRange(range)}. Widen the range to see older lifts.
+        </p>
+      )}
+
       <ul>
-        {rows.slice(0, 12).map((row, i) => {
+        {shown.map((row, i) => {
           const best = num(row.best_e1rm_kg)
           const recent = row.recent_e1rm_kg === null ? null : num(row.recent_e1rm_kg)
           const previous =
@@ -472,6 +841,12 @@ function StrengthList({
           )
         })}
       </ul>
+
+      {rows.length > 0 && <p className="mt-1.5 text-[11px] text-muted">{caption}</p>}
+
+      <div className="mt-2.5">
+        <RangeChips value={range} onChange={onRange} label="Strength range" />
+      </div>
     </section>
   )
 }

@@ -235,6 +235,18 @@ button {
   box-shadow: var(--ring-hairline);
 }
 
+/* Pin an absolutely-positioned child to both block edges of its container.
+   The inline axis has `start-0`/`end-0`; Tailwind v4 ships nothing for the
+   block axis, and `inset-block-0` had been written in five places as if it
+   did. A class that does not exist generates no CSS and raises no error, so
+   every one of those elements resolved to height 0 and drew nothing — the
+   muscle-balance fills, the coach rail and the rest-timer bar all rendered as
+   empty tracks. Defining it here fixes all of them at once, and keeps the
+   §2.5 logical-properties rule rather than reaching for top-0/bottom-0. */
+@utility inset-block-0 {
+  inset-block: 0;
+}
+
 /* Freestanding rules between list rows fade out at both ends, so a long
    list reads as one column rather than a stack of boxes. Separators inside
    a control stay solid — see rule-solid.

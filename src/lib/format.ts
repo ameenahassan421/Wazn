@@ -29,6 +29,22 @@ export function formatShortDate(iso: string): string {
   return DAY_WITH_YEAR.format(new Date(iso))
 }
 
+const MONTH = new Intl.DateTimeFormat(undefined, { month: 'short' })
+
+/**
+ * A `Date` rather than an ISO string, deliberately: the training calendar's
+ * cells are local midnights, and `toISOString()` on a local midnight lands on
+ * the day before in every timezone east of UTC. The heatmap would label the
+ * wrong day for half the planet.
+ */
+export function formatDayLabel(date: Date): string {
+  return DAY.format(date)
+}
+
+export function formatMonthLabel(date: Date): string {
+  return MONTH.format(date)
+}
+
 /** "3 days ago" / "today" — the only context needed above a set input. */
 export function formatRelativeDay(iso: string): string {
   const then = new Date(iso)

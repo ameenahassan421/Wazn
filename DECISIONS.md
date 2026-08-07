@@ -1979,3 +1979,70 @@ Two decisions worth recording now, before any of it is built:
 
 Nothing was built. Both plans are proposals; the beta blockers stay
 first.
+
+## 2026-08-07 — U1a: the dead charts got rendered, and a class that never existed
+
+Phase U1 items 1–2 of `docs/HEVY_PARITY_UPGRADE_PLAN.md`, approved by Ameen
+and built. Four deviations and one bug worth not re-deriving.
+
+**1. `inset-block-0` is not a Tailwind utility, and never was.** Tailwind v4
+ships `start-*`/`end-*` for the inline axis and nothing for the block axis.
+Five places in the app were written as if `inset-block-0` existed. A class
+that does not exist emits no CSS and raises no error, so every one of those
+absolutely-positioned elements resolved to **height 0 and drew nothing**:
+
+- the muscle-balance fills — the chart WAZN_PLAN §4 calls the Progress
+  screen's signature has been rendering as six empty tracks, target band
+  included, for as long as the screen has existed;
+- the knurl rail on the Coach notes;
+- the rest-timer progress bar.
+
+Fixed once, in `src/index.css`, by defining the utility (`inset-block: 0`)
+rather than reaching for `top-0`/`bottom-0`, which would trade the bug for a
+§2.5 violation. `RestTimer` also used `inset-inline-start-0`, equally
+non-existent; it now uses `start-0`, which Tailwind really does emit. Caught
+by screenshotting the built screen — no linter, type check or test in the
+repo can see a className that silently means nothing.
+
+**2. The range chips do not parameterize any RPC.** The plan said to
+parameterize the existing calls. Neither call has a window to parameterize:
+`session_volume_history()` returns every finished workout and
+`strength_summary()` every trained lift, both already scoped by RLS. So the
+range is applied client-side in `src/lib/range.ts`, over data in hand. This
+is strictly better than the plan's version — zero extra round trips, instant
+chip switching, and it will keep working when U3 makes the screen read from
+cache — and it avoids the trap in the alternative: a client that calls
+`strength_summary(p_days)` is a Progress screen that 404s in production until
+someone applies a migration by hand, and migrations here are applied by hand.
+
+**3. The strength range scopes which lifts are listed, not the numbers.**
+Windowing "best e1RM" itself needs SQL (per-set data the client never has), so
+the chips filter on `last_trained_at` and the est. 1RM column stays the
+all-time best. That is a real distinction and the caption says it out loud —
+"11 lifts trained in the last 6 months · est. 1RM is your all-time best" —
+rather than letting the reader assume the number moved with the chip. Windowed
+bests belong to U4's records work, with the migration that implies.
+
+**4. Volume switches bucket by range: weeks to 6M, months beyond.** 52 weekly
+points across 320 units is 6px apart, which is a texture, not a trend. The
+caption always names the bucket ("one point per week"), so the axis can never
+change under the reader silently. This is what finally renders `monthlyVolume`,
+which had been written, tested and called by nothing since 0007.
+
+**5. Charts fill the column now.** Both SVG charts carried
+`style={{ height: 96 }}` against a 320-wide viewBox, so `preserveAspectRatio`
+scaled the drawing to fit the height and left it inset from the column every
+other element aligns to — 37px of slack each side at 430px. Swapped for
+`aspectRatio`, which scales uniformly to the available width.
+
+**Known gap, deliberately left:** the two SVG charts do not mirror under
+`dir="rtl"` — time still runs left-to-right. The DOM-based charts (calendar
+grid, balance and anchor rows) flip correctly for free, because they are grid
+and logical properties. Stage 5 owns the SVG flip; there is no RTL locale to
+test it against today, and guessing at it now would ship an untested transform
+in the one place the app cannot lint.
+
+**Not built, and not started:** U1 items 3–7 (picker filter chips, discard
+workout, un-superset, the warmup stickiness bug, workout notes + migration
+0014, rest-duration stepper, one-tap ramp). GATE U1 covers all of them; this
+is its chart half only.

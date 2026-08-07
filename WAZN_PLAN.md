@@ -502,9 +502,22 @@ verbatim, so they survive even if this file isn't read.**
   `docs/BEATING_HEVY_PLAN.md` (open a lead via AI + social, phases
   B1–B6 — note B3 requires Ameen to explicitly reverse the no-chat
   rule), plus a reusable `wellness-app-design` skill in
-  `.claude/skills/`. Nothing from either is approved or built; they do
-  not change the next action. Read both at the next gate review.
-- **Last updated:** 2026-08-05 by Claude Code (custom exercises + privacy
-  policy; the AI failure diagnosis and profile merge; then the two CI gaps
-  closed — vercel.json validation and automated Edge Function deploys, with
-  both functions confirmed live at version 14).
+  `.claude/skills/`. `BEATING_HEVY_PLAN` is still unapproved and unbuilt.
+- **U1 items 1–2 are BUILT (2026-08-07), approved by Ameen.** The four
+  functions in `src/lib/progress.ts` that were written, tested and rendered by
+  nothing now draw: `trainingCalendar`/`heatStep` as a nine-month heatmap atop
+  History, `sessionsPerWeek` and `liftBalance` as Progress blocks,
+  `monthlyVolume` behind the long volume ranges. Time-range chips (3M/6M/1Y/All)
+  on the volume and strength blocks, applied client-side — neither RPC takes a
+  window, and both already return everything RLS allows. **Items 3–7 of U1 are
+  NOT built**, so GATE U1 is only half-reportable.
+- **The muscle-balance chart had never actually drawn.** `inset-block-0` is not
+  a Tailwind v4 utility; a class that does not exist emits no CSS and fails no
+  check, so the fills, the knurl target band, the Coach rail and the rest-timer
+  bar were all height 0 in production. One utility definition in `index.css`
+  fixes all four. Nothing in the CI wall could have caught it — a screenshot
+  did. See DECISIONS.md.
+- **Last updated:** 2026-08-07 by Claude Code (U1 items 1–2: the unrendered
+  progress functions now draw, time-range chips on volume and strength, and
+  the `inset-block-0` fix that made the muscle-balance chart visible for the
+  first time).
