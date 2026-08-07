@@ -1,0 +1,23 @@
+{
+  "skill_name": "wellness-app-design",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Our workout PWA's set entry feels slower than Hevy's even though the code is fast. Look at src/components/SetEntry.tsx and src/screens/LogScreen.tsx and tell me what interaction-level changes would make logging a repeat set as fast as Hevy. Don't touch code yet — give me a ranked critique.",
+      "expected_output": "A severity-ordered critique grounded in mid-workout ergonomics: pre-fill/1-tap commit, focus order, tap targets, previous-session ghosting, thumb-zone placement. Fixes must respect the Wazn design system (dark ink, single amber, logical properties) rather than proposing Hevy's visual styling.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "we're adding body measurements (weight, waist, arms) to the app next quarter. sketch the feature: screens, data model concerns, and what NOT to build. our users include people trying to lose weight so be careful with the tone stuff",
+      "expected_output": "A design that treats body data as a safety surface: neutral copy, no red-for-gain, user-framed goals, units/precision matching real scales, charting, privacy defaults. Explicit non-goals (no BMI judgment, no prescriptive calorie advice). Phased with an acceptance gate.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "My gym app has routines, a rest timer, PRs, and a social feed, but week-4 retention is bad. Users log for two weeks then vanish. What retention mechanics actually work for lifters and in what order should I fix things?",
+      "expected_output": "Prioritizes the previous-session ghost, PR/records ladders, week-based streaks with grace, honest progress visualization, and reliability/trust (offline, persistence) before social amplification. Rejects guilt notifications and XP-style gamification. Concrete sequencing with measurable gates.",
+      "files": []
+    }
+  ]
+}

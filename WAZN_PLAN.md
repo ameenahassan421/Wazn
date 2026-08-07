@@ -497,6 +497,13 @@ verbatim, so they survive even if this file isn't read.**
   above. Nothing else should be built before the beta runs — offline sync and
   Stage 4B are explicitly sequenced _after_ it. The one exception is the work
   the beta itself surfaces, which on 2026-08-05 alone was four defects.
+- **Two strategy PROPOSALS exist** (2026-08-07):
+  `docs/HEVY_PARITY_UPGRADE_PLAN.md` (close the gap, phases U1–U6) and
+  `docs/BEATING_HEVY_PLAN.md` (open a lead via AI + social, phases
+  B1–B6 — note B3 requires Ameen to explicitly reverse the no-chat
+  rule), plus a reusable `wellness-app-design` skill in
+  `.claude/skills/`. Nothing from either is approved or built; they do
+  not change the next action. Read both at the next gate review.
 - **Last updated:** 2026-08-05 by Claude Code (custom exercises + privacy
   policy; the AI failure diagnosis and profile merge; then the two CI gaps
   closed — vercel.json validation and automated Edge Function deploys, with
