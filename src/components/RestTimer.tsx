@@ -38,7 +38,7 @@ export function RestTimerBar({ timer }: { timer: Timer }) {
       {/* Progress drains right-to-left in LTR, start-to-end in RTL. */}
       <div
         aria-hidden="true"
-        className="absolute inset-block-0 inset-inline-start-0 bg-accent-900 transition-[width] duration-300 ease-linear"
+        className="absolute inset-block-0 start-0 bg-accent-900 transition-[width] duration-300 ease-linear"
         style={{ width: `${pct}%` }}
       />
       <div className="relative flex min-h-[50px] items-center gap-2 px-3 py-1">

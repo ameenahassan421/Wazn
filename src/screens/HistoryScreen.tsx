@@ -10,8 +10,10 @@ import {
 } from '../lib/format'
 import type { Exercise, Workout, WorkoutSet } from '../lib/types'
 import { isRecord } from '../lib/types'
+import type { SessionVolumeRow } from '../lib/progress'
 import { EditSetDialog } from '../components/EditSetDialog'
 import { ExerciseThumb } from '../components/ExerciseThumb'
+import { TrainingCalendar } from '../components/TrainingCalendar'
 import { IconChevronDown } from '../components/icons'
 
 const PAGE_SIZE = 30
@@ -66,6 +68,10 @@ export function HistoryScreen() {
   // 154 rows today — rather than one per page, because the user scrolls back
   // faster than a paged aggregate can keep up.
   const [totals, setTotals] = useState<Record<string, WorkoutTotals>>({})
+  // The whole finished-workout series, for the calendar above the list. It is
+  // one row per workout — 154 today — and it is the same RPC Progress reads,
+  // so the heatmap and the volume chart can never tell different stories.
+  const [sessions, setSessions] = useState<SessionVolumeRow[]>([])
 
   const fetchPage = useCallback(async (offset: number) => {
     const { data, error: pageError } = await supabase
@@ -122,13 +128,16 @@ export function HistoryScreen() {
    * make a one-field correction feel like a page load.
    */
   async function refreshRecords(workoutId: string) {
-    const [{ data: setRows }, totalRows] = await Promise.all([
+    const [{ data: setRows }, totalRows, history] = await Promise.all([
       supabase
         .from('workout_sets')
         .select('*, exercises(id, name, muscle_group, equipment, image_url)')
         .eq('workout_id', workoutId)
         .order('set_number'),
       loadTotals(),
+      // The calendar is drawn from volume, and a correction changes volume.
+      // Same round trip, so it costs nothing to keep the grid honest.
+      supabase.rpc('session_volume_history'),
     ])
     if (setRows) {
       setSetsByWorkout((prev) => ({
@@ -137,6 +146,7 @@ export function HistoryScreen() {
       }))
     }
     setTotals(totalRows)
+    if (history.data) setSessions(history.data as SessionVolumeRow[])
   }
 
   async function removeSet(set: SetWithExercise) {
@@ -173,16 +183,23 @@ export function HistoryScreen() {
   useEffect(() => {
     let active = true
     void (async () => {
-      // Both at once: the totals RPC is independent of the page, and making
-      // the list wait for it would put a spinner in front of the whole screen
+      // All at once: neither aggregate depends on the page, and making the
+      // list wait for them would put a spinner in front of the whole screen
       // for the sake of one line of secondary text.
-      const [page, totalRows] = await Promise.all([fetchPage(0), loadTotals()])
+      const [page, totalRows, history] = await Promise.all([
+        fetchPage(0),
+        loadTotals(),
+        supabase.rpc('session_volume_history'),
+      ])
       if (!active) return
       if (page) {
         setWorkouts(page)
         setDone(page.length < PAGE_SIZE)
       }
       setTotals(totalRows)
+      // A failed calendar is not a failed History: the list is the screen's
+      // job, so an empty grid is drawn rather than an error banner raised.
+      setSessions((history.data ?? []) as SessionVolumeRow[])
       setLoading(false)
     })()
     return () => {
@@ -236,6 +253,8 @@ export function HistoryScreen() {
           {error}
         </p>
       )}
+
+      <TrainingCalendar sessions={sessions} unit={unit} />
 
       {workouts.length === 0 ? (
         <p className="py-6 text-sm text-muted">
