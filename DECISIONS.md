@@ -2037,3 +2037,45 @@ What survives the reversal, deliberately:
 The username-alias design is unchanged from earlier today: alias, not
 anchor; server-side resolution; no enumeration oracle. All of it lives
 in docs/auth-social-setup.md and the run-book's auth prompt.
+
+## 2026-08-07 — The four-path auth screen is built
+
+Implemented the same day the decisions landed, since the only external
+blocker (the Google OAuth client) was done by Ameen within the hour.
+What shipped and the calls made along the way:
+
+- **The username path performs the sign-in server-side.** The obvious
+  design — an RPC that turns a username into an email for the client to
+  use — hands every visitor an email-harvesting endpoint. Instead the
+  `auth-alias` Edge Function resolves the username AND completes the
+  sign-in (`signInWithOtp` / `verifyOtp` / `signInWithPassword` via the
+  ordinary anon auth API, so rate limits and password policy still
+  apply), returning only session tokens. The email reaches the browser
+  only inside the session the user just proved they own.
+- **No masked-email hint on code request**, deviating from the setup
+  doc's sketch. A hint rendered only when the username exists is an
+  existence oracle — the very thing the identical-response rule
+  forbids. Every request-code response is the same hedged sentence;
+  `maskEmail` survives in `auth-identity.ts` for post-sign-in surfaces.
+- **PKCE + `detectSessionInUrl: true`** replaces the old
+  `detectSessionInUrl: false`. Google's redirect needs it; the invite
+  capture in `main.tsx` only rewrites `/join/...` paths and runs before
+  render, so the two never touch the same URL.
+- **Gmail dot-normalisation is client-side and gmail-only**
+  (`normalizeEmail`): dots are meaningful at every other provider, so
+  nothing is stripped there. Applied at every typed-address entry
+  point; Google itself returns canonical addresses.
+- **Recovery races the screen swap knowingly**: `verifyOtp
+type:'recovery'` signs the user in, and App swaps screens on session
+  — the `updateUser({password})` write runs in the same handler with
+  the length already validated, so the race has no user-visible seam.
+- **`verify_jwt` stays ON for `auth-alias`.** The platform check only
+  requires a valid JWT and the anon key is one; no config.toml, no
+  special-case deploy flags. The function needs no caller identity —
+  it is establishing identity.
+
+Not done here, Ameen-owned (Part 3 of docs/auth-social-setup.md):
+the Google enable toggle + Confirm-email + password-length dashboard
+settings, and `set-templates` to push the recovery template. The
+LAUNCH.md §1 pass now covers all four paths and is still the gate
+before invites.

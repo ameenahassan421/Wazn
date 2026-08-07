@@ -18,7 +18,13 @@ export const supabase = createClient(url ?? 'http://localhost', anonKey ?? 'anon
   auth: {
     persistSession: true,
     autoRefreshToken: true,
-    detectSessionInUrl: false,
+    // Google sign-in returns through a redirect; PKCE puts a one-time `?code=`
+    // in the URL and this exchanges it for a session on load (supabase-js
+    // cleans the URL afterwards). Harmless for every other path — the invite
+    // capture in main.tsx only rewrites `/join/...` and runs before render,
+    // so the two never touch the same URL.
+    detectSessionInUrl: true,
+    flowType: 'pkce',
   },
 })
 

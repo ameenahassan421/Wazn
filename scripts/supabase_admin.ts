@@ -27,6 +27,10 @@ const API = 'https://api.supabase.com/v1'
 const TEMPLATES = {
   mailer_templates_confirmation_content: 'supabase/email_templates/confirm_signup.html',
   mailer_templates_magic_link_content: 'supabase/email_templates/magic_link.html',
+  // Password reset (2026-08-07 auth decisions). Code-based like everything
+  // else — a recovery link breaks in the same wrong-browser ways sign-in
+  // links did, so the template carries {{ .Token }}, never a URL.
+  mailer_templates_recovery_content: 'supabase/email_templates/recovery.html',
 } as const
 
 /** Auth config keys worth seeing at a glance in `show`. */
@@ -45,6 +49,7 @@ const INTERESTING = [
   'smtp_max_frequency',
   'mailer_templates_confirmation_content',
   'mailer_templates_magic_link_content',
+  'mailer_templates_recovery_content',
 ]
 
 /** The app's input is six boxes wide. See the OTP length rule in CLAUDE.md. */

@@ -50,22 +50,45 @@ joining at Stage 4B.
 That's everything Claude is blocked on. Once done, run the auth prompt
 in `docs/IMPLEMENTATION_PROMPTS.md`.
 
-## Part 2 — Claude (after Part 1): the app work
+## Part 2 — the app work: BUILT 2026-08-07
 
-- "Continue with Google" as the hero action on the auth screen
-  (`signInWithOAuth({ provider: 'google' })` with
-  `redirectTo: window.location.origin`), with "Email me a code instead"
-  as the secondary path beneath — the existing OTP flow, unchanged.
-- Button branding: Google's guidelines permit a neutral dark variant —
-  use it; the design system's no-other-colours rule holds (the "G"
-  mark itself is exempt as a trademark, buttons stay ink/chalk).
-- Handle the OAuth return (Supabase parses the URL hash; make sure the
-  `/join/{code}` invite capture in `src/main.tsx` and the auth
-  listener coexist with the callback).
-- Update `uri_allow_list` in Supabase if the redirect target isn't
-  already covered by the existing site URL config.
-- Extend LAUNCH.md: a second-account pass must now cover BOTH paths
-  (Google sign-in from a fresh account, and the OTP fallback).
+All four paths are implemented (`src/components/AuthScreen.tsx`):
+Google via PKCE (`detectSessionInUrl` now on — the invite capture in
+`main.tsx` only rewrites `/join/...`, so they never collide), email or
+username + password, code-based password recovery
+(`supabase/email_templates/recovery.html`), the 6-digit code flow, and
+Gmail dot-normalisation on every typed address
+(`src/lib/auth-identity.ts`). Username resolution lives in the
+`auth-alias` Edge Function — the email never reaches the browser
+before a session does; the function performs the sign-in itself and
+returns only tokens. The welcome screen offers the username claim.
+
+One deviation from the earlier sketch, logged in DECISIONS.md: no
+masked-email hint on code request — a hint that appears only for real
+usernames is itself the existence oracle, so every response is the
+same hedged sentence.
+
+## Part 3 — Ameen: apply the config (5 min, after merging)
+
+- [ ] Supabase → Auth → Sign In / Providers → **Google → toggle
+      "Enable Sign in with Google" ON → Save** (the panel can hold a
+      client ID with the toggle still off — the provider list must say
+      _Enabled_).
+- [ ] Same page → **"Confirm email" ON** under User Signups.
+- [ ] Auth → Sign In / Providers → **Email** panel → minimum password
+      length **8**; enable leaked-password protection if the tier
+      offers it.
+- [ ] Push the reset-code template (needs `SUPABASE_ACCESS_TOKEN` in
+      `.env`):
+      `npm run supabase:admin -- set-templates`
+      — or paste `supabase/email_templates/recovery.html` into Auth →
+      Emails → "Reset password" in the dashboard. **Until this is
+      done, reset emails carry Supabase's default link, which the app
+      cannot use.**
+- [ ] Merge to `main` — the deploy workflow ships the `auth-alias`
+      function automatically.
+- [ ] Run the LAUNCH.md §1 auth checks (now four paths) with a second
+      account.
 
 ## Email + password (2026-08-07, explicit owner reversal)
 
