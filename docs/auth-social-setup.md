@@ -23,6 +23,15 @@ joining at Stage 4B.
    `openid`) — requesting nothing sensitive means no Google
    verification review. Publish the app (leave "Testing" mode, and
    only test users can sign in).
+
+   **If Google rejects the app name** ("does not comply with Google's
+   requirements"): the name must not look like a URL (`trywazn.app`
+   fails — use `Wazn`), must avoid mixed scripts / emoji / the Arabic
+   وزن for this field, and if bare `Wazn` still fails, `Wazn Fitness`
+   clears the brand-similarity check. Pick the support email from the
+   dropdown rather than typing it, and leave the logo EMPTY — a logo
+   triggers Google's full verification review prematurely.
+
 3. **APIs & Services → Credentials → Create credentials → OAuth client
    ID**: Application type **Web application**, name `Wazn web`.
    - Authorized JavaScript origins:
@@ -31,13 +40,6 @@ joining at Stage 4B.
    - Authorized redirect URI (exactly this — it is Supabase's callback,
      not the app's):
      - `https://ttasiwxeqerhsztxjxip.supabase.co/auth/v1/callback`
-       **If Google rejects the app name** ("does not comply with Google's
-       requirements"): the name must not look like a URL (`trywazn.app`
-       fails — use `Wazn`), must avoid mixed scripts / emoji / the Arabic
-       وزن for this field, and if bare `Wazn` still fails, `Wazn Fitness`
-       clears the brand-similarity check. Pick the support email from the
-       dropdown rather than typing it, and leave the logo EMPTY — a logo
-       triggers Google's full verification review prematurely.
 4. Copy the **Client ID** and **Client secret**.
 5. Supabase dashboard → Authentication → Sign In / Up → Google →
    enable, paste both values, save. (Or hand them to a Claude session
