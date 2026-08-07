@@ -39,6 +39,33 @@ before and after, and confirm History renders clean.
 
 ---
 
+## Auth upgrade — Google sign-in (owner decision 2026-08-07)
+
+Depends on: **Part 1 of `docs/auth-social-setup.md` done by Ameen**
+(Google OAuth client created, provider enabled in Supabase). Can run
+before or during beta — it is owner-directed auth work, and the OTP
+path stays live throughout. Apple waits for Stage 4B, where it becomes
+mandatory (see the setup doc).
+
+```
+The Google provider is now enabled in Supabase per
+docs/auth-social-setup.md Part 1. Implement Part 2: "Continue with
+Google" as the hero action on the auth screen via signInWithOAuth,
+with the existing 6-digit code flow unchanged beneath it as "Email me
+a code instead". Use Google's neutral dark button variant — the design
+system's colour rule holds. Make sure the OAuth callback coexists with
+the /join/{code} invite capture in src/main.tsx, and that a Google
+sign-in by an existing OTP user with the same email lands in the SAME
+account (test this — the profile-merge incident must not repeat).
+While you are in the auth path, add Gmail dot-normalisation at OTP
+sign-in (STATUS names it as unbuilt and it caused the duplicate-account
+incident). Update LAUNCH.md so the second-account pass covers both
+sign-in paths. Do not remove or weaken the OTP path. CI wall, push,
+report, stop.
+```
+
+---
+
 ## Phase U1 — Free wins (parity plan §3, U1)
 
 Depends on: beta live. Zero core-loop risk.

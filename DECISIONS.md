@@ -1979,3 +1979,33 @@ Two decisions worth recording now, before any of it is built:
 
 Nothing was built. Both plans are proposals; the beta blockers stay
 first.
+
+## 2026-08-07 — Ameen reverses the OTP-only rule: social sign-in becomes the hero path
+
+Direct owner decision: "I would rather google/apple emails or sign ups."
+The hard rule in CLAUDE.md is amended accordingly. What was decided, and
+the constraints that survive it:
+
+- **Google sign-in becomes the primary path** as soon as its OAuth
+  client exists. The only blocking work is Ameen's (~15 min in Google
+  Cloud) — `docs/auth-social-setup.md` Part 1 has the exact steps; the
+  implementation prompt is in `docs/IMPLEMENTATION_PROMPTS.md`.
+- **Apple sign-in is deferred to Stage 4B**, where the $99 developer
+  account gets bought anyway — and where it stops being optional:
+  App Store Guideline 4.8 makes Sign in with Apple mandatory in the
+  iOS build once Google sign-in exists there. 4B inherits it. Apple's
+  hide-my-email relay also breaks email-based account linking, so 4B
+  needs an explicit identity-linking story before the store launch.
+- **The OTP path stays, as the fallback, not removed.** Two reasons on
+  the record: the Yahoo deliverability failure proved a single sign-in
+  path is a single point of failure, and ripping out a working auth
+  path mid-beta is the destructive-to-auth class of change §2.6 says
+  not to make casually. "Never passwords, never a magic link" survives
+  unchanged.
+- **Account linking is safe for Google, not for typed OTP addresses:**
+  Google returns the canonical Gmail (undotted), which matches the live
+  account exactly. The dot-duplicate risk lives only in the typed OTP
+  path — so the Gmail dot-normalisation guard rides the same
+  implementation prompt.
+
+Nothing implemented yet; the change is blocked on Ameen's Part 1.

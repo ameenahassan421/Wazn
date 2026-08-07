@@ -82,9 +82,15 @@ unverified, and the PR should say so.
 - **Dark theme, one accent (amber `#f0b429`).** Nothing else is coloured. No
   gradients, shadows, emoji, or decorative illustration. Numbers render large
   and tabular (`.tnum`). Touch targets ≥ 48px.
-- **Auth is a 6-digit code**, `signInWithOtp` + `verifyOtp`. Never a magic
-  link. The email templates in `supabase/email_templates/` must contain
-  `{{ .Token }}` or sign-in is impossible.
+- **Auth is social OAuth + a 6-digit email code — never passwords, never a
+  magic link.** Ameen's decision 2026-08-07 (see DECISIONS.md): Google
+  sign-in is the hero path once its OAuth client exists
+  (`docs/auth-social-setup.md`); Apple sign-in lands at Stage 4B with the
+  developer account, and becomes MANDATORY in the iOS build the moment
+  Google exists there (App Store rule). The OTP path
+  (`signInWithOtp` + `verifyOtp`) stays as the always-available fallback —
+  do not remove it. The email templates in `supabase/email_templates/`
+  must contain `{{ .Token }}` or code sign-in is impossible.
 - **The service-role / secret key is script-only.** Never in a `VITE_*` var,
   never in the client, never in Vercel.
 
