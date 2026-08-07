@@ -29,13 +29,36 @@ You will need: your phone, a second email address you can receive mail at
 
 Do this in a private window, signed out, with the second email.
 
-- [ ] **Sign-in works from a non-owner address.** The code arrives from
-      **Wazn &lt;code@trywazn.app&gt;**, not from `onboarding@resend.dev`.
+The auth screen now offers four ways in (2026-08-07 decisions). All four get
+checked — a path nobody tested is a path that fails a stranger.
+
+- [ ] **The code path works from a non-owner address.** Tap "Email me a code
+      instead". The code arrives from **Wazn &lt;code@trywazn.app&gt;**, not
+      from `onboarding@resend.dev`.
 - [ ] It is **six digits**, and it is **in the inbox, not spam**. If it is in
       spam, stop — DKIM or SPF is wrong, and every invite you send lands there.
 - [ ] Entering it signs you in at `https://www.trywazn.app`.
+- [ ] **Password sign-up works.** Sign out, "Create an account" with a third
+      address, password of 8+ characters. The confirmation code arrives, and
+      entering it signs you in.
+- [ ] **Password reset works.** Sign out, "Forgot password?", the reset code
+      arrives (check the template says _reset_, not _sign-in_), and the new
+      password signs you in.
+- [ ] **Username sign-in works.** Claim a username on the welcome screen (or
+      Friends → You), sign out, then sign in typing the **username** — once
+      with the password, once via "Email me a code". Wrong username and wrong
+      password must produce the _same_ error, and requesting a code for a
+      username that does not exist must look identical to one that does.
+- [ ] **Google sign-in works** — "Continue with Google" round-trips and lands
+      signed in. Then the linking check: sign out, sign in by _code_ to the
+      same Gmail address — you must land in the **same** account (same
+      history), not a duplicate.
+- [ ] A **Gmail address typed with dots** (`a.meen@gmail.com` style) reaches
+      the same account as its undotted form. This is the guard the March
+      profile-merge incident paid for.
 - [ ] The **welcome screen** appears: "Log a set in under thirty seconds",
-      with "Draft me a routine" and "I will just start logging".
+      the optional username claim, "Draft me a routine" and "I will just
+      start logging".
 - [ ] Tap **"I will just start logging"**. You land on the Log tab with a
       single "Start your first workout" button and nothing else demanding
       attention.

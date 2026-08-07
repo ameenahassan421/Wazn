@@ -39,6 +39,46 @@ before and after, and confirm History renders clean.
 
 ---
 
+## Auth upgrade — Google sign-in (owner decision 2026-08-07)
+
+Depends on: **Part 1 of `docs/auth-social-setup.md` done by Ameen**
+(Google OAuth client created, provider enabled in Supabase). Can run
+before or during beta — it is owner-directed auth work, and the OTP
+path stays live throughout. Apple waits for Stage 4B, where it becomes
+mandatory (see the setup doc).
+
+```
+The Google provider is now enabled in Supabase per
+docs/auth-social-setup.md Part 1. Implement the full auth screen from
+that doc's "final shape": (1) "Continue with Google" as the hero via
+signInWithOAuth — neutral dark button variant, the design system's
+colour rule holds; make sure the OAuth callback coexists with the
+/join/{code} invite capture in src/main.tsx. (2) Email + password
+sign-up and sign-in per the doc's password section: signUp with email
+confirmation on, signInWithPassword, and CODE-BASED password recovery
+(resetPasswordForEmail + verifyOtp type 'recovery' + updateUser — no
+recovery links; the recovery template must carry {{ .Token }}). Set
+the password minimum to 8 and enable leaked-password protection if
+the tier offers it. (3) Keep the existing 6-digit code flow as "Email
+me a code instead", unchanged. (4) Username-as-sign-in-alias on both
+non-social paths: the identifier field accepts email or username; a
+username resolves to the account email server-side (security-definer
+RPC or Edge Function — never expose the email to the client unmasked);
+identical responses whether the username exists or not; wrong
+username on the password form fails as "invalid credentials". Move
+username choice into Welcome-screen onboarding.
+
+Verify explicitly: a Google sign-in, a password sign-in, and a code
+sign-in with the same verified email all land in the SAME account —
+the profile-merge incident must not repeat. While you are in the auth
+path, add Gmail dot-normalisation at typed-email sign-in (STATUS names
+it as unbuilt and it caused the duplicate-account incident). Update
+LAUNCH.md so the second-account pass covers all four paths. Do not
+remove the code path. CI wall, push, report, stop.
+```
+
+---
+
 ## Phase U1 — Free wins (parity plan §3, U1)
 
 Depends on: beta live. Zero core-loop risk.

@@ -497,6 +497,15 @@ verbatim, so they survive even if this file isn't read.**
   above. Nothing else should be built before the beta runs — offline sync and
   Stage 4B are explicitly sequenced _after_ it. The one exception is the work
   the beta itself surfaces, which on 2026-08-05 alone was four defects.
+- **Auth is now four paths (2026-08-07, built same day):** Google OAuth
+  (PKCE), email/username + password, code-based password recovery, and
+  the original 6-digit code. New `auth-alias` Edge Function (deploys
+  automatically on merge), recovery email template, Gmail
+  dot-normalisation, welcome-screen username claim. **Blocked on
+  Ameen — Part 3 of `docs/auth-social-setup.md`**: enable the Google
+  toggle, Confirm-email ON, password min length 8, and
+  `supabase:admin -- set-templates` for the recovery template. LAUNCH.md
+  §1 now checks all four paths and remains the pre-invite gate.
 - **Two strategy PROPOSALS exist** (2026-08-07):
   `docs/HEVY_PARITY_UPGRADE_PLAN.md` (close the gap, phases U1–U6) and
   `docs/BEATING_HEVY_PLAN.md` (open a lead via AI + social, phases
@@ -517,7 +526,7 @@ verbatim, so they survive even if this file isn't read.**
   bar were all height 0 in production. One utility definition in `index.css`
   fixes all four. Nothing in the CI wall could have caught it — a screenshot
   did. See DECISIONS.md.
-- **Last updated:** 2026-08-07 by Claude Code (U1 items 1–2: the unrendered
-  progress functions now draw, time-range chips on volume and strength, and
-  the `inset-block-0` fix that made the muscle-balance chart visible for the
-  first time).
+- **Last updated:** 2026-08-07 by Claude Code (the four-path auth screen; then
+  U1 items 1–2: the unrendered progress functions now draw, time-range chips
+  on volume and strength, and the `inset-block-0` fix that made the
+  muscle-balance chart visible for the first time).
