@@ -988,11 +988,21 @@ coach_surfaces.sql` asserts what the three functions RETURN against a seeded
   The name has its own line now and a test asserts every kicker is ≤ 20
   characters. **The harness had to be taught to hold still** to see the canvas
   at all — a surface gated on not being driven was its fourth blind spot.
-- **Migration 0022 is written and NOT applied.** It widens
-  `coach_views.surface` to admit `rest_canvas`, reusing GATE B1's instrument.
-  Unapplied it means the insert is refused and swallowed; nothing about the
-  canvas degrades except the count. Exposure is one row per workout, dismissals
-  every time — a dismissal is the kill signal §8-E1 names.
+- **Migration 0022 — APPLIED 2026-08-08**, on Ameen's instruction, after a probe
+  found it genuinely unapplied (the live constraint still listed only the three
+  B1 surfaces). It widens `coach_views.surface` to admit `rest_canvas`, reusing
+  GATE B1's instrument. Verified rather than trusted from the `[]` response:
+  `pg_get_constraintdef` reads back all four values with `convalidated = true`,
+  the three pre-existing rows survived re-validation, and RLS is still on with 2
+  policies. **Then proved functionally** — a real insert of both a `rest_canvas`
+  `view` and a `dismiss`, inside a block that aborts on purpose, was accepted
+  and rolled back (0 rows written, total still 3). **Production is at 0022.**
+  Exposure is one row per workout, dismissals every time — a dismissal is the
+  kill signal §8-E1 names.
+- **The ledger holds six rows**, having gained `rest_canvas_views`. Still silent
+  about 0001–0015, so it still reads as though the database began at 0016.
+  **0019 remains deliberately unapplied**, so the gap at that version is correct
+  rather than an omission.
 - **Wall green on the merged tree:** 660 tests (30 new), 8 Playwright tests,
   `check:sql` executes all 22 migrations from empty, `check:deploy` passes.
   Precache **565.00 → 569.93 KiB** with config, under the ~600 KiB ceiling.
