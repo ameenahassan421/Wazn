@@ -101,6 +101,22 @@ docker run -d --name omniroute --restart unless-stopped --stop-timeout 40 \
 Keep the `127.0.0.1:` prefix on the port binding. Without it the gateway is
 exposed on every interface, and `/v1/models` answers unauthenticated (verified).
 
+### Run it as a daemon, not in the foreground
+
+Plain `omniroute` runs in the foreground and **Ctrl+C stops the gateway** — the
+next request then fails with `Couldn't connect to server`, which reads like a
+broken install and is not one. Use:
+
+```bash
+omniroute serve --daemon
+omniroute status
+```
+
+`--daemon` also brings crash auto-restart (`--no-recovery` disables it). The
+`autostart` subcommand describes itself as Linux/systemd only, so on macOS
+expect to re-run the daemon after a reboot unless `omniroute autostart status`
+says otherwise.
+
 ## Verify it is up
 
 ```bash
@@ -145,6 +161,25 @@ Two traps in that table:
   with a larger window, auto-compaction fires far too early unless
   `CLAUDE_CODE_AUTO_COMPACT_WINDOW` is set below the real window. The generated
   profiles handle this; a hand-written config does not.
+
+### Opt-in, not always-on
+
+Putting that `env` block in `~/.claude/settings.json` routes **every** local
+Claude Code session through the gateway, including when you still have Anthropic
+quota. Prefer the profile mechanism: `omniroute setup-claude` writes
+`~/.claude/profiles/<name>/`, after which plain `claude` keeps using your
+subscription and `omniroute launch` is the deliberate fallback.
+
+To scope it to this repo instead, copy `.claude/settings.omniroute.example.json`
+over `.claude/settings.local.json` (gitignored — the token must never be
+committed) and fill in a key from the dashboard's API Keys page. That routes
+every Wazn session and leaves other projects alone.
+
+Note the dashboard's own Quick Start says to point clients at
+`http://localhost:20128/v1`. That is right for Cursor, Cline and other
+OpenAI-compatible clients, and **wrong for Claude Code**, which appends
+`/v1/messages` itself — it gets the bare origin. The resulting 404s look like a
+gateway fault.
 
 Other tools have their own generators: `setup-codex`, `setup-cursor`,
 `setup-cline`, `setup-continue`, `setup-goose`, `setup-aider`, `setup-opencode`,
