@@ -4,6 +4,10 @@ import {
   formatDuration,
   formatRelativeDay,
   formatSeconds,
+  formatDayLabel,
+  formatMonthLabel,
+  formatShortDate,
+  formatTime,
   formatVolume,
   formatVolumeWithUnit,
   formatWorkoutDate,
@@ -196,5 +200,44 @@ describe('formatVolume', () => {
   it('appends the unit when asked', () => {
     expect(formatVolumeWithUnit(90830.5, 'kg', 'en-US')).toBe('90,831 kg')
     expect(formatVolumeWithUnit(null, 'kg', 'en-US')).toBe('—')
+  })
+})
+
+/**
+ * `Intl.DateTimeFormat.format` throws `RangeError: Invalid time value` rather
+ * than returning anything, and a formatter that throws during render unmounts
+ * its tab. The Coach screen proved it: one response without `generatedAt` and
+ * the whole screen was replaced by the error boundary.
+ *
+ * So every date formatter degrades to an em dash, the way `formatVolume`
+ * already did for a null volume. These cases are the guard, not the maths.
+ */
+describe('unrenderable dates', () => {
+  const junk = ['', 'not a date', '2026-13-45T99:99:99Z']
+
+  it('never throws, whatever arrives on the wire', () => {
+    for (const value of junk) {
+      expect(formatWorkoutDate(value)).toBe('—')
+      expect(formatShortDate(value)).toBe('—')
+      expect(formatTime(value)).toBe('—')
+      expect(formatRelativeDay(value)).toBe('—')
+    }
+  })
+
+  it('survives a missing value the types say cannot happen', () => {
+    // The Coach tab's actual crash: `notes.generatedAt` was undefined because
+    // the response did not carry it, and TypeScript had been told it would.
+    expect(formatWorkoutDate(undefined as unknown as string)).toBe('—')
+    expect(formatTime(null as unknown as string)).toBe('—')
+  })
+
+  it('dashes an unusable duration instead of rendering NaN', () => {
+    expect(formatDuration('not a date', '2026-08-08T10:00:00Z')).toBe('—')
+    expect(formatDuration('2026-08-08T09:00:00Z', 'not a date')).toBe('—')
+  })
+
+  it('guards the calendar labels, which take a Date and not a string', () => {
+    expect(formatDayLabel(new Date('nope'))).toBe('—')
+    expect(formatMonthLabel(new Date('nope'))).toBe('—')
   })
 })

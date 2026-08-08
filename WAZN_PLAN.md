@@ -601,11 +601,38 @@ verbatim, so they survive even if this file isn't read.**
   visual pass used an ad-hoc rig that was lost; §4 requires a screenshot run
   every UI phase, so the rig is now part of the repo. `playwright` and
   `lighthouse` are devDependencies, deliberately NOT in the CI wall.
-- **The precache ceiling has been over for a while and the number being watched
-  was wrong.** Built with real Supabase config, `HEAD` is 649.76 KiB against a
-  ~600 KiB requirement; this branch is 651.79 KiB (+2.03 KiB). The 537 KiB in
-  the note above came from a config-less build, where the authenticated screens
-  tree-shake away entirely. Measure it with config from now on. Not fixed here.
+- **~~The precache ceiling has been over for a while.~~ FIXED 2026-08-08 —
+  571.25 KiB**, under the ~600 KiB requirement. It was 654 KiB measured with
+  real config; the old 537 KiB figure came from a config-less build where the
+  authenticated screens tree-shake away entirely. Measure it with config,
+  always. The fix was 78 KiB of `@supabase` client for features Wazn does not
+  have — realtime (plus its phoenix websocket layer) and file storage, neither
+  tree-shakeable, both aliased to Proxy stubs in `build/supabase-slim/`. **Main
+  chunk 471.99 → 387.05 kB, cold start 2308 → 2192ms.** The stubs sit on the
+  auth path (`realtime.setAuth` runs on every token refresh), so they no-op
+  anything unrecognised rather than throwing, and a test re-reads supabase-js's
+  own dist to catch an upgrade changing the contract. See DECISIONS.md.
+- **THREE TABS DIED ON EVERY DEPLOY, and it is fixed.** Ameen reported
+  Progress, Coach and Friends broken on 2026-08-08 — exactly the three
+  `React.lazy` tabs. A deploy retires the hashed chunk an already-open page is
+  about to import, and `autoUpdate`'s `skipWaiting`/`clientsClaim` hand that
+  page to a worker whose precache no longer has it. React remembers a failed
+  module as failed, so "Try again" could not recover it. Fixed twice over: the
+  new worker no longer claims a live page, and `lazyScreen` reloads once if an
+  import fails anyway. `npm run check:deploy` plays it out in a browser and
+  fails if either regresses. Eager loading was measured as an alternative and
+  costs 32ms of cold start on a budget already missed — staying lazy.
+- **MIGRATIONS 0016–0019 ARE NOT APPLIED, and 0015 IS** (STATUS said the
+  reverse). Probed 2026-08-08 by querying `information_schema` through the
+  Management API. Production stops at 0015. The consequences worth knowing:
+  **`client_errors` (0018) does not exist**, so the error boundary has been
+  reporting crashes into nothing since the day it shipped — which is why the
+  deploy break above was invisible until a user mentioned it; `ai_generations`
+  still has its five columns (0017), which the Edge Functions already handle
+  by falling back; 0016's owner defaults are absent but the client sends both
+  columns explicitly; and 0019's stat-tool RPCs are absent but nothing calls
+  them yet (the Ask surface is B3, unbuilt). **0018 is the one worth applying
+  today** — it is `create table if not exists` and additive.
 - **R0 is not Claude-buildable.** The offense plan's release table lists R0
   "Evidence" as `_none — beta runs_`; its content is Ameen's two blockers
   (Resend's logs for the Yahoo delivery failure; `LAUNCH.md` on a real phone
@@ -622,7 +649,23 @@ verbatim, so they survive even if this file isn't read.**
 event_message` comes back empty), so nothing here inspected message contents;
   and a no-window query silently returns `[]` because the default window is
   short — always pass `iso_timestamp_start`/`iso_timestamp_end`.
-- **Last updated:** 2026-08-08 by Claude Code (R1: U1c's number formatting and
+- **The screenshot harness had never rendered the Coach tab.** `installSupabaseStub`
+  had no route for `/functions/v1/*`, so the call fell through to `json([])` and
+  the tab drew the error boundary in every `npm run shots` run since the harness
+  was committed. Four screenshots of "Something broke", taken repeatedly, read
+  as normal. Both functions are stubbed now, including the empty-account path.
+  The §4 rule about stubbing every column a real RPC returns applies to
+  responses, and a function is a response too.
+- **Date formatters throw.** `Intl.DateTimeFormat.format` raises `RangeError` on
+  an invalid date, and a formatter that throws during render takes its tab down —
+  the same defect class U1c guarded `toneFor` against, and the dates were missed.
+  Every one in `src/lib/format.ts` now degrades to an em dash.
+- **Last updated:** 2026-08-08 by Claude Code (the deploy-time lazy-chunk break
+  Ameen reported, found by reproduction and fixed twice over; the precache
+  ceiling met at 571.25 KiB by dropping unused Supabase realtime and storage;
+  guarded date formatters; the harness's missing Edge Function stubs; and the
+  discovery that migrations 0016–0019 were never applied). Previously
+  2026-08-08 (R1: U1c's number formatting and
   error boundaries, U7's motion system and measured latency budgets, and the
   committed perf/screenshot harness). Previously 2026-08-07 (the four-path auth screen; then
   all of U1 — the unrendered progress functions now draw, time-range chips, the

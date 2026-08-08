@@ -2765,3 +2765,118 @@ time and nobody knew, because the number being watched was measuring a
 different app.** Not fixed here — it is a pre-existing condition and
 shrinking the main chunk is its own piece of work, sized against U3 — but
 it should be measured with config from now on.
+
+## 2026-08-08 — Three tabs died on every deploy, and nothing could see it
+
+Ameen: "Progress, coach and friends all broke by the way." Those are exactly
+the three `React.lazy` tabs. Log and History, which live in the main chunk,
+were fine. That shape is the diagnosis.
+
+**The mechanism**, reproduced end to end before a line was changed:
+
+1. A page is open holding `index-<oldhash>.js`.
+2. A deploy lands. Vercel's production alias serves only the current build,
+   so `ProgressScreen-<oldhash>.js` stops existing — a 404, not a stale file.
+3. The new service worker installs. `vite-plugin-pwa`'s `autoUpdate` sets
+   `skipWaiting` + `clientsClaim`, so it seizes the running page, and its
+   precache no longer lists the old hashes. The cache that would have covered
+   step 2 is gone.
+4. The user taps Progress. `import()` rejects with "Failed to fetch
+   dynamically imported module", `lazy` throws, the boundary renders
+   "Something broke".
+
+And it stays broken. A module that fails to load is remembered as failed, so
+the boundary's "Try again" re-throws instantly and switching tabs does
+nothing. Only a full reload clears it. This fired on **every** deploy, and
+there were several on 08-07 and 08-08.
+
+**Two fixes, because they close different holes.** `skipWaiting: false` and
+`clientsClaim: false` stop a new worker taking over a live page at all: the
+page keeps the assets it booted with and the update applies on the next
+launch. That closes step 3, and it is the right update policy for an app
+whose §2.1 rule is that nothing interrupts a workout — the alternative,
+reloading on `controllerchange`, would reload someone mid-set. `lazyScreen`
+in `src/lib/lazy-screen.ts` closes the rest: step 2 needs no service worker,
+so a plain tab left open across a deploy hits the same 404. It reloads once,
+guarded by a `sessionStorage` mark so it can never loop, and holds Suspense's
+fallback rather than flashing an error card the reload is about to discard.
+
+`npm run check:deploy` plays the whole thing out in a browser: build, install
+the worker, deploy over it, tap all three tabs. Verified it fails with both
+fixes removed and passes with either one alone.
+
+**Eager loading was measured, not dismissed.** Ameen asked whether the three
+could simply stop being lazy, which would remove the failure mode
+structurally. It works, and it costs: cold start 2192 → 2224ms against a
+budget already missed by 192ms, first load 164 → 173 KiB, TBT 5 → 28ms,
+Lighthouse 98 → 97. The parity plan §4 also lists "Progress/Coach/Friends
+stay lazy" as bundle discipline. Staying lazy, with the bug fixed twice over.
+
+### Why nobody saw it
+
+**`client_errors` (migration 0018) is not applied in production.** The table
+the error boundary reports into does not exist, so `reportError` has been
+inserting into nothing since the day it shipped. The one instrument built for
+exactly this crash was not plugged in. **0016, 0017 and 0019 are also
+unapplied**; 0015 _is_ applied, which STATUS says it is not.
+
+**And the screenshot harness was hiding it.** `installSupabaseStub` had no
+route for `/functions/v1/*`, so those calls fell through to `json([])`,
+`fetchCoachNotes` got an array, `notes.generatedAt` was undefined, and
+`Intl.DateTimeFormat` threw. Every `npm run shots` run has rendered the Coach
+tab as the error boundary — four screenshots of "Something broke", taken
+repeatedly, read as normal. The §4 rule about stubbing every column the real
+RPC returns is really about responses, and a function is a response too. The
+harness now stubs both functions with what they actually return, including
+the empty-account path (`insights: []`, `model: 'none'`, no quota spent).
+
+### Dates throw. Guard them like nulls.
+
+`Intl.DateTimeFormat.format` raises `RangeError: Invalid time value` on an
+invalid date rather than returning anything, and a formatter that throws
+during render takes its whole tab down. U1c guarded `toneFor` and the
+thumbnail initial against exactly this and missed the dates. Every date
+formatter in `src/lib/format.ts` now degrades to an em dash the way
+`formatVolume` already did for a null volume.
+
+## 2026-08-08 — 78 KiB of Supabase client for features Wazn does not have
+
+The precache ceiling (~600 KiB, parity plan §4) was over at **654 KiB**
+measured with real config, and the main chunk was 461 KiB of it. Split per
+package, two of the largest entries were dead: `@supabase/realtime-js` plus
+the `@supabase/phoenix` websocket layer it drags in (56.5 KiB), and
+`@supabase/storage-js` (21.8 KiB). Nothing in `src/` calls `.channel()`,
+`.getChannels()` or `.removeChannel()`, and Wazn stores no files —
+`scripts/match_exercise_images.ts` exists precisely so thumbnails are static
+assets rather than bucket fetches.
+
+Neither tree-shakes: `SupabaseClient`'s constructor instantiates both
+unconditionally, and supabase-js re-exports realtime wholesale
+(`export * from "@supabase/realtime-js"`). There is no slim entry point in
+the exports map. So: Vite aliases to stubs in `build/supabase-slim/`.
+
+**Result: precache 654 → 571.25 KiB, under the ceiling. Main chunk 471.99 →
+387.05 kB (135.15 → 112.44 kB gzipped). Cold start 2308 → 2192ms** — still
+short of the 2000ms budget, but the direction is right and the remaining
+weight is `auth-js` and `react-dom`, both load-bearing.
+
+**The risk was named before it was taken, because this touches the auth
+path.** `this.realtime.setAuth(token)` runs inside supabase-js's auth
+state-change handler on SIGNED_IN, TOKEN_REFRESHED, INITIAL_SESSION and
+SIGNED_OUT. A stub missing a method a future version calls would break sign-in
+for everyone to save 78 KiB, which is not a trade worth making. So each stub
+is a Proxy: the five members supabase-js actually calls (read out of
+`dist/index.mjs` at 2.111.0, not assumed) are implemented, and **anything
+else resolves to a no-op rather than `undefined`**. The failure mode of an
+upgrade is "realtime silently does nothing", which is already true today.
+`build/supabase-slim/slim.test.ts` re-reads supabase-js's own dist on every
+run and fails if that set of five ever changes — not because it would break,
+but because someone should look.
+
+`channel()` and `storage.from()` throw loudly on purpose. A subscription that
+silently never fires is a day of debugging; an error naming the alias is a
+minute. Undo is deleting the `resolve.alias` block and the directory.
+
+Aliases, not `overrides`: this is the browser bundle only. `tsc` still
+resolves the real packages so the types stay honest, and vitest has its own
+config and keeps the real modules.

@@ -138,6 +138,13 @@ const MUSCLES = [
   'core',
 ]
 
+/**
+ * The free slug the AI layer actually reaches first. `moonshotai/kimi-k2.5` is
+ * the paid fallback and has never returned a successful response through this
+ * codebase, so a fixture naming it would be fiction (STATUS, DECISIONS.md).
+ */
+const MODEL = 'nvidia/nemotron-3-super-120b-a12b:free'
+
 const LIFTS = [
   ['Bench Press (Barbell)', 'chest', 'barbell', 102.5],
   ['Squat (Barbell)', 'quads', 'barbell', 140],
@@ -188,6 +195,20 @@ export function fixtures({ empty = false } = {}) {
       profiles: [],
       follows: [],
       streak: [{ weeks: 0 }],
+      // What `coach-notes` really returns for an account with no history: a
+      // 200 with no insights and `model: 'none'`. It does not call the model
+      // and it does not spend a regenerate — two users burned their weekly one
+      // on an empty account before that was true. An empty `insights` array
+      // IS the client's empty state, so this is the fixture that shoots it.
+      coachNotes: {
+        insights: [],
+        generatedAt: iso(0),
+        model: 'none',
+        cached: false,
+        regeneratesLeft: 1,
+      },
+      routinePreview: { preview: [], model: MODEL, droppedExercises: [] },
+      savedRoutines: { routines: [], saved: true },
     }
   }
 
@@ -328,6 +349,70 @@ export function fixtures({ empty = false } = {}) {
     ],
     follows: [{ followee_id: uuid(900) }, { followee_id: uuid(901) }],
     streak: [{ weeks: 6 }],
+    // Three insights, because the function asks for 3-5 and the card's layout
+    // has to hold the shortest allowed answer. Every `chip` is a figure that
+    // appears elsewhere in these same fixtures — hamstrings at 4 sets and
+    // calves at 6 are the two bars under the band in `muscleSets`. A chip that
+    // disagreed with the charts would be the exact defect the chips exist to
+    // make catchable, and a harness that ships one teaches the eye to ignore
+    // them.
+    coachNotes: {
+      insights: [
+        {
+          title: 'Hamstrings are the gap',
+          body: 'Four working sets a week against a productive range of ten to twenty. Everything else you train sits in or above the band, so this is the cheapest thing to fix.',
+          chip: '4 sets/wk · target 10–20',
+        },
+        {
+          title: 'Bench is moving again',
+          body: 'Estimated one-rep max is up five kilos over the last month after eight weeks flat. Whatever changed in that block is worth keeping.',
+          chip: '+5 kg e1RM · 4 wk',
+        },
+        {
+          title: 'You train four days a week, reliably',
+          body: 'Fifty-two sessions across thirteen weeks with no gap longer than four days. Consistency is not your problem, so do not spend effort there.',
+          chip: '4.0 sessions/wk · 13 wk',
+        },
+      ],
+      generatedAt: iso(0),
+      model: MODEL,
+      cached: true,
+      regeneratesLeft: 1,
+    },
+    // Ids come from `exercises` above, because the real function validates
+    // every generated exercise against the table and drops what it cannot
+    // match — a preview naming an exercise that does not exist is a state the
+    // app never sees. `droppedExercises` is populated for the same reason: the
+    // line that reports them has to be shot at least once.
+    routinePreview: {
+      preview: [
+        {
+          name: 'Upper A',
+          exercises: [
+            { id: uuid(100), name: LIFTS[0][0], sets: 4, reps: 5 },
+            { id: uuid(103), name: LIFTS[3][0], sets: 3, reps: 8 },
+            { id: uuid(105), name: LIFTS[5][0], sets: 3, reps: 12 },
+          ],
+        },
+        {
+          name: 'Lower A',
+          exercises: [
+            { id: uuid(101), name: LIFTS[1][0], sets: 4, reps: 5 },
+            { id: uuid(102), name: LIFTS[2][0], sets: 3, reps: 8 },
+          ],
+        },
+      ],
+      model: MODEL,
+      droppedExercises: ['Nordic Curl'],
+      generationsLeft: 2,
+    },
+    savedRoutines: {
+      routines: [
+        { id: uuid(700), name: 'Upper A' },
+        { id: uuid(701), name: 'Lower A' },
+      ],
+      saved: true,
+    },
   }
 }
 
@@ -432,6 +517,27 @@ export async function installSupabaseStub(page, data, { latencyMs = 0 } = {}) {
     // Auth: the session is seeded into localStorage, so only refresh and
     // sign-out ever reach the wire.
     if (path.startsWith('/auth/')) return json({})
+
+    // The Edge Functions. Absent from the first version of this harness, and
+    // the omission cost more than it looks: unmatched paths fell through to
+    // `json([])`, so `fetchCoachNotes` got an array, `notes.generatedAt` was
+    // undefined, `Intl.DateTimeFormat` threw `RangeError: Invalid time value`,
+    // and EVERY `npm run shots` run rendered the Coach tab as the error
+    // boundary. Four screenshots of "Something broke", taken repeatedly, read
+    // as normal — which is the exact failure the screenshot rule exists to
+    // prevent. Rule 1 at the top of this file is about columns; it is really
+    // about responses, and a function is a response too.
+    if (path.startsWith('/functions/v1/')) {
+      const fn = path.slice('/functions/v1/'.length).split('?')[0]
+      if (fn === 'coach-notes') return json(data.coachNotes)
+      if (fn === 'generate-routine') {
+        // One function, two verbs: a body carrying `save` is the write, and it
+        // returns saved routines rather than a preview.
+        const body = route.request().postDataJSON() ?? {}
+        return json(body.save ? data.savedRoutines : data.routinePreview)
+      }
+      return json({})
+    }
 
     if (path.startsWith('/rest/v1/rpc/')) {
       const fn = path.slice('/rest/v1/rpc/'.length)

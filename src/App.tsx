@@ -1,5 +1,6 @@
-import { lazy, Suspense, useState } from 'react'
+import { Suspense, useState } from 'react'
 import { Analytics } from '@vercel/analytics/react'
+import { lazyScreen } from './lib/lazy-screen'
 import { supabaseConfigError } from './lib/supabase'
 import { useAuth } from './lib/use-auth'
 import { useBackLayer } from './lib/use-back'
@@ -12,22 +13,25 @@ import type { Tab } from './components/TabBar'
 import { LogScreen } from './screens/LogScreen'
 import { HistoryScreen } from './screens/HistoryScreen'
 
-// The chart library is most of the bundle and the Log screen is the hot path
-// mid-workout, so Progress loads on demand.
-const ProgressScreen = lazy(() =>
+// All three go through `lazyScreen`, not `lazy`. A deploy retires the hashed
+// chunk an already-open page is about to ask for, and these three tabs — and
+// only these three — died on it. See lib/lazy-screen.ts.
+
+// The Log screen is the hot path mid-workout, so Progress loads on demand.
+const ProgressScreen = lazyScreen(() =>
   import('./screens/ProgressScreen').then((m) => ({ default: m.ProgressScreen })),
 )
 
 // Friends is lazy for the same reason Progress is, plus one of its own: a
 // brand-new user has nobody to follow, so the most common first session never
 // downloads this at all.
-const FriendsScreen = lazy(() =>
+const FriendsScreen = lazyScreen(() =>
   import('./screens/FriendsScreen').then((m) => ({ default: m.FriendsScreen })),
 )
 
 // Coach is lazy for the same reason: a brand-new account has nothing for it to
 // read, so the first session never downloads it.
-const CoachScreen = lazy(() =>
+const CoachScreen = lazyScreen(() =>
   import('./screens/CoachScreen').then((m) => ({ default: m.CoachScreen })),
 )
 

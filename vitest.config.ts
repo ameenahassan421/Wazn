@@ -8,6 +8,6 @@ export default defineConfig({
     // tests opt into jsdom with a `@vitest-environment jsdom` docblock.
     environment: 'node',
     setupFiles: ['./src/test/setup.ts'],
-    include: ['src/**/*.test.{ts,tsx}', 'scripts/**/*.test.ts'],
+    include: ['src/**/*.test.{ts,tsx}', 'scripts/**/*.test.ts', 'build/**/*.test.ts'],
   },
 })
