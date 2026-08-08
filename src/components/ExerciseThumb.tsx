@@ -24,8 +24,18 @@ const TONES = [
   'bg-tile-4',
 ] as const
 
-/** Stable per-group tone so the same muscle always looks the same. */
-function toneFor(group: string): string {
+/**
+ * Stable per-group tone so the same muscle always looks the same.
+ *
+ * The parameter is typed `string`, and at runtime it is whatever the row
+ * actually carried. Exercises reach this component through `as Exercise`
+ * casts on RPC results, so a column the query forgot to select arrives as
+ * `undefined` and `undefined.length` throws — which is exactly how the
+ * Progress tab went black during the 2026-08-07 visual pass. A thumbnail is
+ * decoration; it has no business taking a screen down with it.
+ */
+function toneFor(group: string | null | undefined): string {
+  if (!group) return TONES[0]
   let h = 0
   for (let i = 0; i < group.length; i += 1) h = (h * 31 + group.charCodeAt(i)) >>> 0
   return TONES[h % TONES.length]
@@ -40,7 +50,11 @@ export function ExerciseThumb({
   size?: number
 }) {
   const [failed, setFailed] = useState(false)
-  const showImage = exercise.image_url !== null && !failed
+  // Truthiness rather than `!== null` for the same reason `toneFor` guards:
+  // an absent column is `undefined`, which is not `null`, and would otherwise
+  // render an `<img src="">` that only recovers via its own error handler.
+  const showImage = Boolean(exercise.image_url) && !failed
+  const initial = exercise.name?.charAt(0).toUpperCase() ?? '·'
 
   return (
     <span
@@ -61,7 +75,7 @@ export function ExerciseThumb({
           color: 'color-mix(in srgb, var(--color-text) 55%, transparent)',
         }}
       >
-        {exercise.name.charAt(0).toUpperCase()}
+        {initial}
       </span>
       {showImage && (
         <img

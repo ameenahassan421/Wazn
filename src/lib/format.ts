@@ -1,3 +1,6 @@
+import { toDisplayWeight } from './units'
+import type { Unit } from './units'
+
 const DAY = new Intl.DateTimeFormat(undefined, {
   weekday: 'short',
   month: 'short',
@@ -74,4 +77,77 @@ export function formatSeconds(seconds: number): string {
   const m = Math.floor(seconds / 60)
   const s = seconds % 60
   return `${m}:${String(s).padStart(2, '0')}`
+}
+
+/* ─── Numbers ───────────────────────────────────────────────────────────────
+   One grouper for every large number in the app. Before this there was none:
+   volume rendered `52393` and `90830.5` in the same column, and there was no
+   `Intl.NumberFormat` anywhere in `src/` at all.
+
+   Locale-aware, because Stage 5 turns the app Arabic and the separator should
+   follow — but with the digits pinned to Latin. Left alone, `ar` would render
+   `٩٠٬٨٣١`, and §2.4 pins numerals to Latin so a weight reads the same to a
+   lifter in Cairo and one in Minnesota. `numberingSystem: 'latn'` keeps the
+   separator local and the digits universal.
+
+   The formatters are built once and cached: constructing an
+   `Intl.NumberFormat` is the expensive part, and History renders one per row.
+   ───────────────────────────────────────────────────────────────────────── */
+const GROUPERS = new Map<string, Intl.NumberFormat>()
+
+function grouper(locale: string | undefined): Intl.NumberFormat {
+  const key = locale ?? ''
+  let format = GROUPERS.get(key)
+  if (!format) {
+    format = new Intl.NumberFormat(locale, {
+      numberingSystem: 'latn',
+      maximumFractionDigits: 0,
+    })
+    GROUPERS.set(key, format)
+  }
+  return format
+}
+
+/**
+ * Whole counts — sets, reps, sessions, workouts.
+ *
+ * `locale` exists so the tests can pin one; nothing in the app passes it, and
+ * `undefined` means "whatever the device is set to".
+ */
+export function formatCount(value: number, locale?: string): string {
+  return grouper(locale).format(value)
+}
+
+/**
+ * Session volume, grouped and deliberately without its fraction.
+ *
+ * Whether a half-kg on a five-figure total is information or noise was the
+ * open question in the L6 finding. It is noise, for three reasons:
+ *
+ * 1. It is below the resolution of the input. Plates come in 1.25 kg pairs,
+ *    and the bar plus the lifter's own day-to-day mass vary by more than
+ *    half a kilo between sets.
+ * 2. It is not measured, it is converted. The same session renders `90830.5`
+ *    in kg and a whole number in lbs purely because of the conversion factor —
+ *    a digit that changes with a display toggle is not a fact about training.
+ * 3. It costs a glyph at arm's length under load, and the one law says
+ *    glanceability wins.
+ *
+ * So volume is a grouped integer everywhere. Set weights keep their 0.25 kg /
+ * 0.5 lb precision (`formatWeight` in `units.ts`) because there the fraction
+ * *is* the information: 62.5 and 62 are different bars. This function never
+ * touches a stored value — kg storage is exact, as always.
+ */
+export function formatVolume(kg: number | null, unit: Unit, locale?: string): string {
+  if (kg === null) return '—'
+  return grouper(locale).format(toDisplayWeight(kg, unit))
+}
+
+export function formatVolumeWithUnit(
+  kg: number | null,
+  unit: Unit,
+  locale?: string,
+): string {
+  if (kg === null) return '—'
+  return `${formatVolume(kg, unit, locale)} ${unit}`
 }

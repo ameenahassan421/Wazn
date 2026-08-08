@@ -3,9 +3,11 @@ import { describeError, supabase } from '../lib/supabase'
 import { useUnit } from '../lib/unit-context'
 import { formatWeight } from '../lib/units'
 import {
+  formatCount,
   formatDuration,
   formatSeconds,
   formatTime,
+  formatVolumeWithUnit,
   formatWorkoutDate,
 } from '../lib/format'
 import type { Exercise, Workout, WorkoutSet } from '../lib/types'
@@ -296,7 +298,7 @@ export function HistoryScreen() {
                         >
                           {totals[workout.id].recordCount === 1
                             ? 'PR'
-                            : `${totals[workout.id].recordCount} PR`}
+                            : `${formatCount(totals[workout.id].recordCount)} PR`}
                         </span>
                       ) : null}
                     </span>
@@ -308,9 +310,9 @@ export function HistoryScreen() {
                       {totals[workout.id] && (
                         <>
                           {' · '}
-                          {formatWeight(totals[workout.id].volumeKg, unit)}
+                          {formatVolumeWithUnit(totals[workout.id].volumeKg, unit)}
                           {' · '}
-                          {totals[workout.id].setCount}{' '}
+                          {formatCount(totals[workout.id].setCount)}{' '}
                           {totals[workout.id].setCount === 1 ? 'set' : 'sets'}
                         </>
                       )}

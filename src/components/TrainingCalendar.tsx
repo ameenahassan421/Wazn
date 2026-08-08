@@ -1,8 +1,12 @@
 import { useMemo } from 'react'
 import { heatStep, trainingCalendar } from '../lib/progress'
 import type { SessionVolumeRow } from '../lib/progress'
-import { formatDayLabel, formatMonthLabel } from '../lib/format'
-import { formatWeight } from '../lib/units'
+import {
+  formatCount,
+  formatDayLabel,
+  formatMonthLabel,
+  formatVolumeWithUnit,
+} from '../lib/format'
 import type { Unit } from '../lib/units'
 
 /**
@@ -66,7 +70,7 @@ export function TrainingCalendar({
       <div className="mb-2 flex items-baseline gap-2">
         <h2 className="kicker flex-1">Training calendar</h2>
         <span className="tnum font-mono text-[11px] text-muted">
-          {trained} {trained === 1 ? 'day' : 'days'}
+          {formatCount(trained)} {trained === 1 ? 'day' : 'days'}
         </span>
       </div>
 
@@ -106,7 +110,7 @@ export function TrainingCalendar({
             key={day.date.getTime()}
             title={
               day.volumeKg > 0
-                ? `${formatDayLabel(day.date)} · ${formatWeight(day.volumeKg, unit)} ${unit}`
+                ? `${formatDayLabel(day.date)} · ${formatVolumeWithUnit(day.volumeKg, unit)}`
                 : `${formatDayLabel(day.date)} · rest`
             }
             style={{

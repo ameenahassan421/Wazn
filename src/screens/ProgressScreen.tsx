@@ -3,9 +3,14 @@ import type { ReactNode } from 'react'
 import { describeError, supabase } from '../lib/supabase'
 import { useBackLayer } from '../lib/use-back'
 import { useUnit } from '../lib/unit-context'
-import { formatWeight, toDisplayWeight } from '../lib/units'
+import { toDisplayWeight } from '../lib/units'
 import type { Unit } from '../lib/units'
-import { formatRelativeDay } from '../lib/format'
+import {
+  formatCount,
+  formatRelativeDay,
+  formatVolume,
+  formatVolumeWithUnit,
+} from '../lib/format'
 import type { Exercise } from '../lib/types'
 import { ExerciseDetail } from '../components/ExerciseDetail'
 import { ExerciseThumb } from '../components/ExerciseThumb'
@@ -277,9 +282,9 @@ function ThisWeek({
     >
       <h2 className="kicker mb-2.5">This week</h2>
       <div className="flex items-stretch">
-        <Figure label="Sessions" value={String(sessions)} />
+        <Figure label="Sessions" value={formatCount(sessions)} />
         <span aria-hidden="true" className="w-px shrink-0 bg-[var(--divider)]" />
-        <Figure label="Volume" value={formatWeight(volumeKg, unit)} />
+        <Figure label="Volume" value={formatVolume(volumeKg, unit)} />
         <span aria-hidden="true" className="w-px shrink-0 bg-[var(--divider)]" />
         <Figure
           label="Streak"
@@ -483,7 +488,7 @@ function SessionFrequency({ weeks }: { weeks: WeekBucket[] }) {
         aria-label={
           total === 0
             ? `Sessions per week, last ${weeks.length} weeks: nothing logged yet`
-            : `Sessions per week, last ${weeks.length} weeks: ${total} sessions, averaging ${average.toFixed(1)} a week`
+            : `Sessions per week, last ${weeks.length} weeks: ${formatCount(total)} sessions, averaging ${average.toFixed(1)} a week`
         }
       >
         {weeks.map((week, i) => (
@@ -526,7 +531,7 @@ function SessionFrequency({ weeks }: { weeks: WeekBucket[] }) {
       <p className="tnum mt-1 text-[11px] text-muted">
         {total === 0
           ? 'One bar a week. The dashed line arrives with your average.'
-          : `avg ${average.toFixed(1)}/wk · ${total} ${total === 1 ? 'session' : 'sessions'} · dashed line is the average`}
+          : `avg ${average.toFixed(1)}/wk · ${formatCount(total)} ${total === 1 ? 'session' : 'sessions'} · dashed line is the average`}
       </p>
     </section>
   )
@@ -578,7 +583,7 @@ function VolumeTrend({
         className="block w-full"
         style={{ aspectRatio: `${W} / ${H}` }}
         role="img"
-        aria-label={`Volume per ${bucket} over the ${describeSpan(span)}, peaking at ${formatWeight(max, unit)} ${unit}`}
+        aria-label={`Volume per ${bucket} over the ${describeSpan(span)}, peaking at ${formatVolumeWithUnit(max, unit)}`}
       >
         {[0.25, 0.5, 0.75].map((f) => (
           <line
@@ -605,8 +610,8 @@ function VolumeTrend({
         {last && <circle cx={last.x} cy={last.y} r="3.5" fill="var(--color-accent)" />}
       </svg>
       <p className="tnum mb-2.5 mt-1 text-[11px] text-muted">
-        one point per {bucket} · peak {formatWeight(max, unit)} · this {bucket}{' '}
-        {formatWeight(points.at(-1)?.volumeKg ?? 0, unit)}
+        one point per {bucket} · peak {formatVolume(max, unit)} · this {bucket}{' '}
+        {formatVolume(points.at(-1)?.volumeKg ?? 0, unit)}
       </p>
       <RangeChips value={range} onChange={onRange} label="Volume range" />
     </section>

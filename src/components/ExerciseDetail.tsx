@@ -3,7 +3,7 @@ import { describeError, supabase } from '../lib/supabase'
 import { useBackLayer } from '../lib/use-back'
 import { useUnit } from '../lib/unit-context'
 import { formatWeight } from '../lib/units'
-import { formatRelativeDay } from '../lib/format'
+import { formatRelativeDay, formatVolume } from '../lib/format'
 import type { Exercise } from '../lib/types'
 import { describeRest, resolveRest, stepRest } from '../lib/rest'
 import { REST_STEP_SECONDS } from '../lib/use-rest-timer'
@@ -301,7 +301,7 @@ export function ExerciseDetail({
     ? [
         [formatWeight(num(rec.value.best_weight_kg), unit), 'best set'],
         [formatWeight(num(rec.value.best_e1rm_kg), unit), 'est. 1RM'],
-        [formatWeight(num(rec.value.best_session_volume_kg), unit), 'best session'],
+        [formatVolume(num(rec.value.best_session_volume_kg), unit), 'best session'],
       ]
     : []
 

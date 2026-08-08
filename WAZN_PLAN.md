@@ -556,7 +556,38 @@ verbatim, so they survive even if this file isn't read.**
   Screenshotting the built app is now a cross-cutting requirement of every UI
   phase — §4 of the parity plan says how, including the two ways the first run
   got it wrong.
-- **Last updated:** 2026-08-07 by Claude Code (the four-path auth screen; then
+- **R1 "Finished" is BUILT (2026-08-08) — U1c + U7.** Numbers are grouped
+  everywhere by one formatter (`formatVolume`/`formatCount` in
+  `src/lib/format.ts`), volume as a grouped integer, digits pinned to Latin so
+  Stage 5 Arabic inherits the grouping and none of the risk. `toneFor` is
+  guarded and a `ScreenBoundary` wraps all five screens, so a leaf crash no
+  longer blanks a tab. Motion is four tokens on the two approved easings, three
+  of which name motion that already existed; the one new one is a 90ms
+  set-commit rise.
+- **Two U7 budgets are MISSED, and both misses are informative.** Cold start is
+  2308ms against a 2000ms budget (470 KiB main chunk, mostly `supabase-js`,
+  needed before the auth gate). Core-loop tap → set on screen is 204ms against
+  100ms — and that is a floor of one round trip, exactly what §3-U7 predicted:
+  **U3's optimistic writes are what make that budget reachable.** Warm start
+  (1148ms), tap feedback (23ms) and tab switch (25ms) all pass; Lighthouse
+  mobile is 97 with CLS 0.001.
+- **The perf and screenshot harness is COMMITTED** — `npm run perf`,
+  `npm run shots`, sharing `scripts/harness/app-harness.mjs`. The 2026-08-07
+  visual pass used an ad-hoc rig that was lost; §4 requires a screenshot run
+  every UI phase, so the rig is now part of the repo. `playwright` and
+  `lighthouse` are devDependencies, deliberately NOT in the CI wall.
+- **The precache ceiling has been over for a while and the number being watched
+  was wrong.** Built with real Supabase config, `HEAD` is 649.76 KiB against a
+  ~600 KiB requirement; this branch is 651.79 KiB (+2.03 KiB). The 537 KiB in
+  the note above came from a config-less build, where the authenticated screens
+  tree-shake away entirely. Measure it with config from now on. Not fixed here.
+- **R0 is not Claude-buildable.** The offense plan's release table lists R0
+  "Evidence" as `_none — beta runs_`; its content is Ameen's two blockers
+  (Resend's logs for the Yahoo delivery failure; `LAUNCH.md` on a real phone
+  with a second account). Neither is reachable from a sandboxed session.
+- **Last updated:** 2026-08-08 by Claude Code (R1: U1c's number formatting and
+  error boundaries, U7's motion system and measured latency budgets, and the
+  committed perf/screenshot harness). Previously 2026-08-07 (the four-path auth screen; then
   all of U1 — the unrendered progress functions now draw, time-range chips, the
   `inset-block-0` fix that made the muscle-balance chart visible for the first
   time, and items 3–7: picker filters, discard-workout, un-superset, the sticky

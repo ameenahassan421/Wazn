@@ -1,7 +1,12 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useUnit } from '../lib/unit-context'
 import { formatWeight } from '../lib/units'
-import { formatDuration, formatRelativeDay } from '../lib/format'
+import {
+  formatCount,
+  formatDuration,
+  formatRelativeDay,
+  formatVolume,
+} from '../lib/format'
 import {
   fetchFeed,
   fetchFollowing,
@@ -281,9 +286,9 @@ function Feed({
                 value={formatDuration(row.started_at, row.ended_at)}
               />
               <span aria-hidden="true" className="w-px shrink-0 bg-[var(--divider)]" />
-              <FeedStat label={`Volume`} value={formatWeight(row.volume_kg, unit)} />
+              <FeedStat label={`Volume`} value={formatVolume(row.volume_kg, unit)} />
               <span aria-hidden="true" className="w-px shrink-0 bg-[var(--divider)]" />
-              <FeedStat label="Sets" value={String(row.set_count)} />
+              <FeedStat label="Sets" value={formatCount(row.set_count)} />
             </div>
 
             {/* The fact line quotes the session's best moment — computed in
@@ -365,10 +370,11 @@ function Leaderboard({ rows, unit }: { rows: LeaderRow[]; unit: 'lbs' | 'kg' }) 
                     {row.is_me ? 'You' : nameOf(row)}
                   </span>
                   <span className="tnum shrink-0 text-[15px] font-medium">
-                    {formatWeight(row.volume_kg, unit)}
+                    {formatVolume(row.volume_kg, unit)}
                   </span>
                   <span className="tnum w-16 shrink-0 text-end text-[11px] text-muted">
-                    {row.session_count} session{row.session_count === 1 ? '' : 's'}
+                    {formatCount(row.session_count)} session
+                    {row.session_count === 1 ? '' : 's'}
                   </span>
                 </div>
               </li>

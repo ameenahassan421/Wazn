@@ -55,11 +55,21 @@ export function RestTimerBar({
           : 'var(--ring-hairline)',
       }}
     >
-      {/* Progress drains right-to-left in LTR, start-to-end in RTL. */}
+      {/* Progress drains right-to-left in LTR, start-to-end in RTL.
+          `pct` is computed from whole seconds, so the width changes once a
+          second. The transition is a second long to match: at 300ms the bar
+          lurched for a third of every second and then sat frozen, which reads
+          as a stutter rather than as time passing. Linear, because a countdown
+          that eases is lying about the rate. This is the motion system's one
+          use of `linear` and its one duration off the four-token scale — it is
+          a readout, not a response to a tap. */}
       <div
         aria-hidden="true"
-        className="absolute inset-block-0 start-0 bg-accent-900 transition-[width] duration-300 ease-linear"
-        style={{ width: `${pct}%` }}
+        className="absolute inset-block-0 start-0 bg-accent-900"
+        style={{
+          width: `${pct}%`,
+          transition: `width 1000ms var(--motion-linear)`,
+        }}
       />
       <div className="relative flex min-h-[50px] items-center gap-2 px-3 py-1">
         <span className="kicker">{done ? 'Rest done' : 'Rest'}</span>
