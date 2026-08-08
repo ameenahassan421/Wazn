@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { describeError, supabase } from '../lib/supabase'
 import { useBackLayer } from '../lib/use-back'
 import { useUnit } from '../lib/unit-context'
@@ -17,7 +17,7 @@ import type {
 import { ExercisePicker } from '../components/ExercisePicker'
 import { ExerciseThumb } from '../components/ExerciseThumb'
 import { SetEntry } from '../components/SetEntry'
-import { useRestTimer, DEFAULT_REST_SECONDS } from '../lib/use-rest-timer'
+import { useRestTimer } from '../lib/use-rest-timer'
 import { FinishSummary } from '../components/FinishSummary'
 import { RoutineList } from '../components/RoutineList'
 import { InstallPrompt } from '../components/InstallPrompt'
@@ -38,9 +38,11 @@ import {
   nextGroupId,
   nextInGroup,
   roundComplete,
+  ungroupIds,
 } from '../lib/supersets'
 import { summarise } from '../lib/summary'
 import type { WorkoutSummary } from '../lib/summary'
+import { resolveRest } from '../lib/rest'
 
 type View = 'overview' | 'picker' | 'entry' | 'summary' | 'routine'
 
@@ -65,6 +67,9 @@ export function LogScreen({
   const timer = useRestTimer()
   const [summary, setSummary] = useState<WorkoutSummary | null>(null)
   const [summaryDate, setSummaryDate] = useState('')
+  // The finished workout's identity, kept past the point where `workout` is
+  // cleared, so the summary can name and annotate the thing just logged.
+  const [summaryWorkout, setSummaryWorkout] = useState<Workout | null>(null)
   const [streak, setStreak] = useState<WeeklyStreakRow | null>(null)
   const [routines, setRoutines] = useState<Routine[]>([])
   const [editing, setEditing] = useState<RoutineDetail | null>(null)
@@ -82,6 +87,11 @@ export function LogScreen({
 
   const [exercises, setExercises] = useState<Exercise[]>([])
   const [usage, setUsage] = useState<Map<string, ExerciseUsageRow>>(new Map())
+  // Per-user rest defaults (migration 0015). Small — one row per lift the user
+  // has an opinion about — so it rides the initial load rather than being
+  // fetched when an exercise opens, which would put a round trip in front of
+  // the timer.
+  const [restOverrides, setRestOverrides] = useState<Map<string, number>>(new Map())
   const [workout, setWorkout] = useState<Workout | null>(null)
   const [sets, setSets] = useState<WorkoutSet[]>([])
   const [hasHistory, setHasHistory] = useState(false)
@@ -115,11 +125,23 @@ export function LogScreen({
   // Two-tap finish: one graze of a button must not end the workout. The
   // armed state relaxes on its own.
   const [confirmFinish, setConfirmFinish] = useState(false)
+  // Discard is armed the same way, and only ever reachable from the armed
+  // finish row — two deliberate taps, no modal. §8 of the UX heuristics: undo
+  // beats "are you sure", and where undo is impossible, arming is the next
+  // best thing, because it never interrupts anything.
+  const [confirmDiscard, setConfirmDiscard] = useState(false)
+  // One window governs both, and touching either restarts it. The armed row
+  // now carries a sentence and a second control, so the four seconds that
+  // were right for a lone Finish button would take Discard out from under a
+  // thumb already on its way there.
   useEffect(() => {
     if (!confirmFinish) return
-    const id = setTimeout(() => setConfirmFinish(false), 4000)
+    const id = setTimeout(() => {
+      setConfirmFinish(false)
+      setConfirmDiscard(false)
+    }, 6000)
     return () => clearTimeout(id)
-  }, [confirmFinish])
+  }, [confirmFinish, confirmDiscard])
   // Re-render each half-minute while a workout is open, so the duration in
   // the status row moves. The value itself is derived at render time.
   const [, setDurationTick] = useState(0)
@@ -139,25 +161,58 @@ export function LogScreen({
     [exercises],
   )
 
+  /**
+   * A workout with no sets in it is not a workout — it is a tap.
+   *
+   * Four of them are sitting in production History right now as blank rows,
+   * from desktop taps that started a session and walked away. They cannot be
+   * distinguished from a real workout after the fact, so they are removed at
+   * the moment they are abandoned instead.
+   *
+   * Only on unmount — leaving the Log tab — and on finish. Deliberately NOT on
+   * `pagehide`: that fires when a phone is pocketed, and a workout started at
+   * the rack before the first set is exactly the case that must survive it.
+   */
+  const emptyWorkoutId = useRef<string | null>(null)
+  useEffect(() => {
+    emptyWorkoutId.current = workout && sets.length === 0 ? workout.id : null
+  }, [workout, sets.length])
+  useEffect(
+    () => () => {
+      const id = emptyWorkoutId.current
+      if (id) void supabase.from('workouts').delete().eq('id', id)
+    },
+    [],
+  )
+
+  /** Override, then the catalogue's default for the movement, then the app's. */
+  const restFor = useCallback(
+    (exercise: Exercise) =>
+      resolveRest(exercise.default_rest_seconds, restOverrides.get(exercise.id)),
+    [restOverrides],
+  )
+
   // No synchronous setState here: the effect below calls it on mount, where a
   // state update before the first await would cause a cascading render.
   const load = useCallback(async () => {
-    const [catalogue, usageRows, open, anyWorkout, streakRows] = await Promise.all([
-      supabase.from('exercises').select('*').order('name'),
-      supabase.rpc('exercise_usage'),
-      supabase
-        .from('workouts')
-        .select('*')
-        .is('ended_at', null)
-        .order('started_at', { ascending: false })
-        .limit(1),
-      supabase.from('workouts').select('id').limit(1),
-      // Streak is a Monday-based week in the caller's zone; the server cannot
-      // know where the user is, so the browser tells it.
-      supabase.rpc('weekly_streak', {
-        p_timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-      }),
-    ])
+    const [catalogue, usageRows, open, anyWorkout, streakRows, restRows] =
+      await Promise.all([
+        supabase.from('exercises').select('*').order('name'),
+        supabase.rpc('exercise_usage'),
+        supabase
+          .from('workouts')
+          .select('*')
+          .is('ended_at', null)
+          .order('started_at', { ascending: false })
+          .limit(1),
+        supabase.from('workouts').select('id').limit(1),
+        // Streak is a Monday-based week in the caller's zone; the server cannot
+        // know where the user is, so the browser tells it.
+        supabase.rpc('weekly_streak', {
+          p_timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        }),
+        supabase.from('exercise_rest').select('exercise_id, rest_seconds'),
+      ])
 
     const failure = catalogue.error ?? usageRows.error ?? open.error ?? anyWorkout.error
     if (failure) {
@@ -168,6 +223,16 @@ export function LogScreen({
 
     // A failed streak must not block the screen — it is decoration, not data.
     setStreak(((streakRows.data ?? []) as WeeklyStreakRow[])[0] ?? null)
+    // Same posture for the rest overrides: migration 0015 may not be applied
+    // yet, and a missing table must fall the timer back to its default rather
+    // than stop the workout loading.
+    setRestOverrides(
+      new Map(
+        ((restRows.data ?? []) as { exercise_id: string; rest_seconds: number }[]).map(
+          (row) => [row.exercise_id, row.rest_seconds],
+        ),
+      ),
+    )
     // Routines are only needed on the idle screen; a failure there must not
     // stop an in-progress workout from loading.
     try {
@@ -343,6 +408,30 @@ export function LogScreen({
     setView('picker')
   }
 
+  /**
+   * Remember a rest length for one lift, for this user only.
+   *
+   * `exercises.default_rest_seconds` is not writable here and should not be:
+   * `exercises` is a shared catalogue and one person's ninety seconds is not
+   * everyone's. Migration 0015 gives the preference its own user-scoped row,
+   * the same split `exercise_notes` uses. See DECISIONS.md.
+   */
+  async function saveRestDefault(exerciseId: string, seconds: number) {
+    // Optimistic: the value is already on screen in the timer the user just
+    // adjusted, and a spinner on a preference is worse than a silent retry.
+    setRestOverrides((prev) => new Map(prev).set(exerciseId, seconds))
+    const { error: writeError } = await supabase.from('exercise_rest').upsert(
+      {
+        user_id: userId,
+        exercise_id: exerciseId,
+        rest_seconds: seconds,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: 'user_id,exercise_id' },
+    )
+    if (writeError) setError(describeError('Saving the rest time', writeError))
+  }
+
   async function persistRoutine(draft: RoutineDraft) {
     setSaving(true)
     setError(null)
@@ -413,8 +502,76 @@ export function LogScreen({
     setView('picker')
   }
 
+  /**
+   * Throw the open workout away. Sets go with it — `workout_sets.workout_id`
+   * cascades — which is the point: this is the exit for a session that should
+   * never have been started, and for one that was abandoned mid-way.
+   */
+  async function discardWorkout() {
+    if (!workout) return
+    const discarded = workout.id
+    setConfirmDiscard(false)
+    setConfirmFinish(false)
+    setSaving(true)
+    setError(null)
+    const { error: deleteError } = await supabase
+      .from('workouts')
+      .delete()
+      .eq('id', discarded)
+    setSaving(false)
+
+    if (deleteError) {
+      setError(describeError('Discarding the workout', deleteError))
+      return
+    }
+
+    // Before clearing state, so the unmount guard cannot chase a row that is
+    // already gone.
+    emptyWorkoutId.current = null
+    timer.stop()
+    setWorkout(null)
+    setSets([])
+    setCurrent(null)
+    setPlanned([])
+    setPendingGroup(null)
+    setView('overview')
+    void load()
+  }
+
+  /**
+   * Take this exercise out of its superset. If that leaves one exercise alone
+   * in the group, the group dissolves — a superset of one is not a superset,
+   * and a lone "SS 1" badge names a partner that no longer exists.
+   */
+  async function ungroupCurrent() {
+    if (!workout || !current) return
+    setPendingGroup(null)
+    const ids = ungroupIds(sets, current.id)
+    if (ids.length === 0) return
+
+    const { error: updateError } = await supabase
+      .from('workout_sets')
+      .update({ superset_group: null })
+      .in('id', ids)
+    if (updateError) {
+      setError(describeError('Leaving the superset', updateError))
+      return
+    }
+    setSets((prev) =>
+      prev.map((s) => (ids.includes(s.id) ? { ...s, superset_group: null } : s)),
+    )
+  }
+
   async function finishWorkout() {
     if (!workout) return
+    // Finishing a workout with nothing in it is the commonest way a blank row
+    // reaches History. There is no session to save, so it is discarded rather
+    // than written — and no summary screen is shown for a workout that never
+    // happened.
+    if (sets.length === 0) {
+      await discardWorkout()
+      return
+    }
     setConfirmFinish(false)
     setSaving(true)
     setError(null)
@@ -447,6 +604,7 @@ export function LogScreen({
       summarise(sets, workout.started_at, endedAt, exercisesById, previousBests),
     )
     setSummaryDate(formatWorkoutDate(workout.started_at))
+    setSummaryWorkout({ ...workout, ended_at: endedAt })
     setSaving(false)
     timer.stop()
     setWorkout(null)
@@ -506,7 +664,8 @@ export function LogScreen({
     // Rest starts on a logged set, never on a tap: a failed save must not
     // leave a timer counting against a set that does not exist. Warm-ups start
     // nothing — nobody rests two minutes after an empty bar.
-    const rest = current.default_rest_seconds ?? DEFAULT_REST_SECONDS
+    // Zero is a real setting — "no timer on this lift" — so it starts nothing.
+    const rest = restFor(current)
     if (supersetGroup !== null) {
       const members = groupsFromSets(nextSets).get(supersetGroup) ?? []
       const advanceTo = nextInGroup(nextSets, members, current.id)
@@ -517,11 +676,13 @@ export function LogScreen({
         if (target) setCurrent(target)
         return true
       }
-      if (setType !== 'warmup' && roundComplete(nextSets, members)) timer.start(rest)
+      if (rest > 0 && setType !== 'warmup' && roundComplete(nextSets, members)) {
+        timer.start(rest)
+      }
       return true
     }
 
-    if (setType !== 'warmup') timer.start(rest)
+    if (rest > 0 && setType !== 'warmup') timer.start(rest)
     return true
   }
 
@@ -613,8 +774,10 @@ export function LogScreen({
           unit={unit}
           dateLabel={summaryDate}
           exercisesById={exercisesById}
+          workout={summaryWorkout}
           onDone={() => {
             setSummary(null)
+            setSummaryWorkout(null)
             setView('overview')
           }}
         />
@@ -743,6 +906,32 @@ export function LogScreen({
         </button>
       </div>
 
+      {/* Discard lives behind the armed finish, on its own line: it is the
+          destructive twin of the button next to it, and putting them shoulder
+          to shoulder in the header is how a mis-tap deletes a session. */}
+      {confirmFinish && (
+        <div className="flex items-center gap-2">
+          <p className="min-w-0 flex-1 text-[11px] text-muted">
+            {sets.length === 0
+              ? 'Nothing logged yet — finishing throws this one away.'
+              : 'Finish saves it. Discard deletes it and its sets.'}
+          </p>
+          <button
+            type="button"
+            onClick={() => {
+              if (confirmDiscard) void discardWorkout()
+              else setConfirmDiscard(true)
+            }}
+            disabled={saving}
+            className={`btn-base h-12 shrink-0 px-3 text-[13px] disabled:opacity-45 ${
+              confirmDiscard ? 'btn-primary' : 'btn-quiet'
+            }`}
+          >
+            {confirmDiscard ? 'Discard?' : 'Discard workout'}
+          </button>
+        </div>
+      )}
+
       {view === 'picker' && (
         <ExercisePicker
           exercises={exercises}
@@ -773,8 +962,13 @@ export function LogScreen({
           saving={saving}
           onAddSet={addSet}
           timer={timer}
+          restSeconds={restFor(current)}
+          onSaveRest={(seconds) => void saveRestDefault(current.id, seconds)}
           supersetGroup={groupOf(sets, current.id) ?? pendingGroup}
           onSuperset={() => void beginSuperset()}
+          onUngroup={
+            groupOf(sets, current.id) !== null ? () => void ungroupCurrent() : undefined
+          }
           onBack={() => {
             setCurrent(null)
             setView('overview')

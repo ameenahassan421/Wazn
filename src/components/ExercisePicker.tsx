@@ -1,5 +1,13 @@
 import { useMemo, useRef, useState } from 'react'
 import type { Exercise, ExerciseUsageRow } from '../lib/types'
+import {
+  NO_FILTER,
+  applyFilter,
+  describeFilter,
+  filterActive,
+  filterOptions,
+} from '../lib/exercise-filter'
+import type { ExerciseFilter } from '../lib/exercise-filter'
 import { ExerciseThumb } from './ExerciseThumb'
 import { IconBack } from './icons'
 import { NewExercise } from './NewExercise'
@@ -29,6 +37,57 @@ function orderExercises(
   })
 }
 
+/**
+ * One dimension of the filter, as a row that scrolls sideways.
+ *
+ * Bleeds to the screen edge — the negative inline margin cancels the app
+ * shell's gutter — so a row that continues past the fold looks like it
+ * continues, rather than stopping at an invisible wall. No visible heading:
+ * muscle names and equipment names are self-describing, the labels are
+ * carried for screen readers, and two 13px headings would cost more of the
+ * list than they explain.
+ */
+function ChipScroller({
+  label,
+  options,
+  value,
+  onChange,
+}: {
+  label: string
+  options: string[]
+  value: string | null
+  onChange: (next: string | null) => void
+}) {
+  if (options.length === 0) return null
+  return (
+    <div
+      role="group"
+      aria-label={label}
+      className="-mx-[18px] flex gap-2 overflow-x-auto px-[18px]"
+      style={{ scrollbarWidth: 'none' }}
+    >
+      {options.map((option) => {
+        const on = option === value
+        return (
+          <button
+            key={option}
+            type="button"
+            aria-pressed={on}
+            // Tapping the chosen chip clears it: the fastest way out of a
+            // filter is the control that put you in it.
+            onClick={() => onChange(on ? null : option)}
+            className={`btn-base h-12 shrink-0 px-3.5 text-sm capitalize ${
+              on ? 'btn-primary' : 'btn-secondary'
+            }`}
+          >
+            {option}
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
 export function ExercisePicker({
   exercises,
   usage,
@@ -45,22 +104,29 @@ export function ExercisePicker({
   onCreated?: (exercise: Exercise) => void
 }) {
   const [query, setQuery] = useState('')
+  const [filter, setFilter] = useState<ExerciseFilter>(NO_FILTER)
   const [creating, setCreating] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
 
   const ordered = useMemo(() => orderExercises(exercises, usage), [exercises, usage])
+  const options = useMemo(() => filterOptions(exercises), [exercises])
 
   const results = useMemo(() => {
+    // Filter first, then search. The other order would rank a name match the
+    // filter is about to throw away.
+    const pool = applyFilter(ordered, filter)
     const q = query.trim().toLowerCase()
-    if (!q) return ordered
-    const matches = ordered.filter((e) => e.name.toLowerCase().includes(q))
+    if (!q) return pool
+    const matches = pool.filter((e) => e.name.toLowerCase().includes(q))
     return matches.sort((a, b) => {
       const aStarts = a.name.toLowerCase().startsWith(q) ? 0 : 1
       const bStarts = b.name.toLowerCase().startsWith(q) ? 0 : 1
       if (aStarts !== bStarts) return aStarts - bStarts
       return ordered.indexOf(a) - ordered.indexOf(b)
     })
-  }, [ordered, query])
+  }, [ordered, filter, query])
+
+  const filtered = filterActive(filter)
 
   if (creating && onCreated) {
     return (
@@ -104,19 +170,65 @@ export function ExercisePicker({
         />
       </div>
 
+      {/* Below the sticky block on purpose. The search bar is the fast path
+          and stays put; the filters are the fallback for "find me something I
+          have not done", and they should scroll out of the way once you are
+          reading the list. */}
+      <div className="flex flex-col gap-1.5 pt-2.5">
+        <ChipScroller
+          label="Filter by muscle group"
+          options={options.muscleGroups}
+          value={filter.muscleGroup}
+          onChange={(next) => setFilter((f) => ({ ...f, muscleGroup: next }))}
+        />
+        <ChipScroller
+          label="Filter by equipment"
+          options={options.equipment}
+          value={filter.equipment}
+          onChange={(next) => setFilter((f) => ({ ...f, equipment: next }))}
+        />
+      </div>
+
+      {filtered && (
+        <div className="flex items-center gap-2 pt-2">
+          <span className="tnum flex-1 font-mono text-[11px] text-muted">
+            {results.length} of {exercises.length}
+          </span>
+          <button
+            type="button"
+            onClick={() => setFilter(NO_FILTER)}
+            className="btn-base btn-quiet h-12 px-2 text-[13px]"
+          >
+            Clear filters
+          </button>
+        </div>
+      )}
+
       {results.length === 0 ? (
-        <div className="py-8">
+        <div className="py-6">
           <p className="text-sm text-muted">
-            No exercise matches “{query.trim()}”. Check the spelling — the catalogue
-            uses names like “Bench Press (Barbell)”.
+            {filtered
+              ? query.trim()
+                ? `Nothing matching “${query.trim()}” in ${describeFilter(filter)}.`
+                : `No ${describeFilter(filter)} exercise in your catalogue.`
+              : `No exercise matches “${query.trim()}”. Check the spelling — the catalogue uses names like “Bench Press (Barbell)”.`}
           </p>
+          {filtered && (
+            <button
+              type="button"
+              onClick={() => setFilter(NO_FILTER)}
+              className="btn-base btn-secondary mt-3 h-12 w-full text-sm"
+            >
+              Clear filters
+            </button>
+          )}
           {/* The moment the gap is felt is the moment to offer the fix: a
               search that found nothing already IS the name of the thing. */}
-          {onCreated && (
+          {onCreated && query.trim() !== '' && (
             <button
               type="button"
               onClick={() => setCreating(true)}
-              className="btn-base btn-hero mt-4 h-[60px] w-full text-[17px]"
+              className="btn-base btn-hero mt-3 h-[60px] w-full text-[17px]"
             >
               Add “{query.trim()}”
             </button>

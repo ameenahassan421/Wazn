@@ -15,7 +15,24 @@ import type { Unit } from '../lib/units'
  * `equipment`, because the catalogue's equipment field comes from a fuzzy
  * import and a wrongly-hidden calculator is worse than a harmlessly-shown one.
  */
-export function LoadHelper({ weight, unit }: { weight: number | null; unit: Unit }) {
+export function LoadHelper({
+  weight,
+  unit,
+  onLogStep,
+  loggedWeights,
+  busy,
+}: {
+  weight: number | null
+  unit: Unit
+  /**
+   * Logs one ramp row as a warm-up set, in display units. Omit and the ramp
+   * stays a table of numbers to copy by hand.
+   */
+  onLogStep?: (weight: number, reps: number) => void
+  /** Warm-up weights already logged for this exercise, in display units. */
+  loggedWeights?: number[]
+  busy?: boolean
+}) {
   const [open, setOpen] = useState(false)
   const [bar, setBar] = useState<number>(DEFAULT_BAR[unit])
 
@@ -81,23 +98,54 @@ export function LoadHelper({ weight, unit }: { weight: number | null; unit: Unit
           </div>
 
           <div>
-            <p className="text-xs text-muted">Warm-up</p>
+            <p className="text-xs text-muted">
+              Warm-up{onLogStep ? ' · tap a row to log it' : ''}
+            </p>
             {ramp ? (
-              <ul className="mt-1 flex flex-col gap-1">
-                {ramp.map((s) => (
-                  <li
-                    key={s.percent}
-                    className="tnum flex items-baseline gap-3 text-base"
-                  >
-                    <span className="w-10 text-xs text-muted">
-                      {Math.round(s.percent * 100)}%
-                    </span>
-                    <span className="flex-1 font-semibold">
-                      {s.weight} {unit}
-                    </span>
-                    <span className="text-muted">× {s.reps}</span>
-                  </li>
-                ))}
+              <ul className="mt-1 flex flex-col">
+                {ramp.map((s) => {
+                  // Matching on the weight rather than on an id: the ramp is
+                  // recomputed from whatever is typed, so a row has no
+                  // identity beyond the load it names.
+                  const logged = (loggedWeights ?? []).some(
+                    (w) => Math.abs(w - s.weight) < 0.01,
+                  )
+                  const figures = (
+                    <>
+                      <span className="w-10 shrink-0 text-xs text-muted">
+                        {Math.round(s.percent * 100)}%
+                      </span>
+                      <span className="flex-1 text-start font-semibold">
+                        {s.weight} {unit}
+                      </span>
+                      <span className="text-muted">× {s.reps}</span>
+                    </>
+                  )
+                  return (
+                    <li key={s.percent} className="tnum text-base">
+                      {onLogStep ? (
+                        <button
+                          type="button"
+                          disabled={logged || busy}
+                          onClick={() => onLogStep(s.weight, s.reps)}
+                          aria-label={
+                            logged
+                              ? `${s.weight} ${unit} for ${s.reps} already logged`
+                              : `Log ${s.weight} ${unit} for ${s.reps} as a warm-up`
+                          }
+                          className="flex h-12 w-full items-center gap-3 disabled:opacity-45"
+                        >
+                          {figures}
+                          <span className="w-12 shrink-0 text-end text-[11px] font-medium text-accent">
+                            {logged ? 'logged' : 'Log'}
+                          </span>
+                        </button>
+                      ) : (
+                        <div className="flex h-9 items-center gap-3">{figures}</div>
+                      )}
+                    </li>
+                  )
+                })}
               </ul>
             ) : (
               <p className="text-sm text-muted">

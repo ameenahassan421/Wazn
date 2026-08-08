@@ -1,8 +1,8 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import type { Exercise, PreviousSessionRow, SetType, WorkoutSet } from '../lib/types'
 import { SET_TYPE_CYCLE, SET_TYPE_LABEL, SET_TYPE_NAME, isRecord } from '../lib/types'
 import { formatRelativeDay } from '../lib/format'
-import { formatWeight, fromDisplayWeight } from '../lib/units'
+import { formatWeight, fromDisplayWeight, toDisplayWeight } from '../lib/units'
 import type { Unit } from '../lib/units'
 import type { RestTimer } from '../lib/use-rest-timer'
 import { RestTimerBar } from './RestTimer'
@@ -60,8 +60,11 @@ export function SetEntry({
   onAddSet,
   onBack,
   timer,
+  restSeconds,
+  onSaveRest,
   supersetGroup,
   onSuperset,
+  onUngroup,
 }: {
   exercise: Exercise
   unit: Unit
@@ -78,8 +81,13 @@ export function SetEntry({
   onBack: () => void
   /** Optional so existing tests and any non-workout use keep working. */
   timer?: RestTimer
+  /** This lift's resolved rest length, for the timer's keep-it affordance. */
+  restSeconds?: number
+  onSaveRest?: (seconds: number) => void
   supersetGroup?: number | null
   onSuperset?: () => void
+  /** Clears this exercise's group for the whole workout. Omit to hide. */
+  onUngroup?: () => void
 }) {
   const [draft, setDraft] = useState<Draft>({ weight: '', reps: '' })
   const [error, setError] = useState<string | null>(null)
@@ -91,6 +99,15 @@ export function SetEntry({
   const [seededFor, setSeededFor] = useState<string | null>(null)
   const [draftUnit, setDraftUnit] = useState<Unit>(unit)
 
+  // Two taps to arm, matching the finish control: breaking a superset is
+  // destructive and undoing it means re-picking a partner.
+  const [confirmUngroup, setConfirmUngroup] = useState(false)
+  useEffect(() => {
+    if (!confirmUngroup) return
+    const id = setTimeout(() => setConfirmUngroup(false), 4000)
+    return () => clearTimeout(id)
+  }, [confirmUngroup])
+
   const lastLogged = setsThisWorkout.at(-1)
   const lastPrevious = previousSession.at(-1)
 
@@ -99,6 +116,12 @@ export function SetEntry({
     setSeededFor(null)
     setDraft({ weight: '', reps: '' })
     setError(null)
+    // The set type does not travel between exercises. Warming up on bench and
+    // then switching to rows used to carry the warm-up flag across with you,
+    // and every row set after that landed excluded from PRs and charts.
+    setSetType('normal')
+    setRpe(null)
+    setConfirmUngroup(false)
   } else if (seededFor === null && !previousLoading) {
     // Seed from this workout's last set for the exercise, else the last
     // session's. Waiting for the fetch matters: seeding from an empty list
@@ -118,6 +141,21 @@ export function SetEntry({
       return { ...d, weight: formatWeight(fromDisplayWeight(parsed, draftUnit), unit) }
     })
   }
+
+  // Warm-ups do not consume a working-set number. Three warm-ups then "Log
+  // set 1" is the honest reading, and it is also the loudest possible signal
+  // that the working sets have not started yet.
+  const workingCount = setsThisWorkout.filter((s) => s.set_type !== 'warmup').length
+  const warmupCount = setsThisWorkout.length - workingCount
+
+  /** Display-unit weights of warm-ups already logged, so the ramp can say so. */
+  const loggedWarmups = useMemo(
+    () =>
+      setsThisWorkout
+        .filter((s) => s.set_type === 'warmup' && s.weight_kg !== null)
+        .map((s) => toDisplayWeight(s.weight_kg as number, unit)),
+    [setsThisWorkout, unit],
+  )
 
   const previousSummary = useMemo(() => {
     const working = previousSession.filter((s) => s.set_type !== 'warmup')
@@ -173,6 +211,25 @@ export function SetEntry({
     // Weight and reps stay put so the next set is pre-filled with what was
     // just logged; RPE does not, because it is a judgement about one set.
     setRpe(null)
+  }
+
+  /**
+   * Log one row of the warm-up ramp exactly as it reads, without touching the
+   * draft or the set type.
+   *
+   * The ramp used to be numbers to copy by hand: read 95, type 95, set the
+   * type to warm-up, log, repeat. This is the same set in one tap, and it
+   * cannot leave the warm-up flag switched on behind it, because it never
+   * switches it on in the first place.
+   */
+  async function logRampStep(weight: number, reps: number) {
+    setError(null)
+    await onAddSet({
+      weightKg: Number(fromDisplayWeight(weight, unit).toFixed(2)),
+      reps,
+      setType: 'warmup',
+      rpe: null,
+    })
   }
 
   function cycleSetType() {
@@ -236,7 +293,13 @@ export function SetEntry({
         )}
       </div>
 
-      {timer && <RestTimerBar timer={timer} />}
+      {timer && (
+        <RestTimerBar
+          timer={timer}
+          defaultSeconds={restSeconds}
+          onSaveDefault={onSaveRest}
+        />
+      )}
 
       {setsThisWorkout.length > 0 && (
         <ul
@@ -345,6 +408,9 @@ export function SetEntry({
       <LoadHelper
         weight={Number.isFinite(typedWeight) ? typedWeight : null}
         unit={unit}
+        onLogStep={(weight, reps) => void logRampStep(weight, reps)}
+        loggedWeights={loggedWarmups}
+        busy={saving}
       />
 
       <div className="flex items-center gap-2">
@@ -374,6 +440,11 @@ export function SetEntry({
           <button
             type="button"
             onClick={onSuperset}
+            aria-label={
+              supersetGroup != null
+                ? `Superset ${supersetGroup}. Add another exercise to it.`
+                : 'Start a superset'
+            }
             className={`btn-base h-12 px-3 text-sm ${
               supersetGroup != null ? 'btn-primary' : 'btn-secondary'
             }`}
@@ -382,7 +453,33 @@ export function SetEntry({
           </button>
         )}
 
-        <span className="ms-auto text-[11px] text-muted">{SET_TYPE_NAME[setType]}</span>
+        {/* Grouping used to be permanent — there was no way back from a
+            mis-tapped superset short of finishing the workout. */}
+        {onUngroup && supersetGroup != null && (
+          <button
+            type="button"
+            onClick={() => {
+              if (confirmUngroup) {
+                setConfirmUngroup(false)
+                onUngroup()
+              } else {
+                setConfirmUngroup(true)
+              }
+            }}
+            aria-label={`Leave superset ${supersetGroup}`}
+            className={`btn-base h-12 px-2.5 text-[13px] ${
+              confirmUngroup ? 'btn-primary' : 'btn-quiet'
+            }`}
+          >
+            {confirmUngroup ? 'Ungroup?' : 'Ungroup'}
+          </button>
+        )}
+
+        {supersetGroup == null && (
+          <span className="ms-auto truncate text-[11px] text-muted">
+            {SET_TYPE_NAME[setType]}
+          </span>
+        )}
       </div>
 
       {error && (
@@ -391,13 +488,27 @@ export function SetEntry({
         </p>
       )}
 
+      {/* The warm-up mode is carried by the biggest element on the screen, not
+          by a 48px chip you set three sets ago and stopped looking at.
+          Warm-up sticks on purpose — nobody wants to re-arm it for each of
+          three ramp sets — and the cost of that was a working set logged as a
+          warm-up, silently excluded from every PR and chart. So the mode is
+          made unmissable instead of removed: the label names it, and the
+          button drops out of the solid hero tier, because logging a warm-up
+          is not the thing this screen exists for. */}
       <button
         type="button"
         onClick={() => void submit()}
         disabled={saving}
-        className="btn-base btn-hero press mt-1 h-[62px] w-full text-[18px] disabled:opacity-45"
+        className={`btn-base press mt-1 h-[62px] w-full text-[18px] disabled:opacity-45 ${
+          setType === 'warmup' ? 'btn-primary' : 'btn-hero'
+        }`}
       >
-        {saving ? 'Saving…' : `Log set ${setsThisWorkout.length + 1}`}
+        {saving
+          ? 'Saving…'
+          : setType === 'warmup'
+            ? `Log warm-up ${warmupCount + 1}`
+            : `Log set ${workingCount + 1}`}
       </button>
     </section>
   )

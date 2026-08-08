@@ -5,6 +5,7 @@ import {
   nextGroupId,
   nextInGroup,
   roundComplete,
+  ungroupIds,
 } from './supersets'
 import type { WorkoutSet } from './types'
 
@@ -87,5 +88,38 @@ describe('roundComplete', () => {
 
   it('treats a single exercise as always complete', () => {
     expect(roundComplete([s('a')], ['a'])).toBe(true)
+  })
+})
+
+describe('ungroupIds', () => {
+  /** Ids are random in `s`, so build the sets once and read them back. */
+  function pair() {
+    return [s('a', 1), s('b', 1), s('a', 1), s('c', null)]
+  }
+
+  it('returns nothing for an exercise that is not grouped', () => {
+    expect(ungroupIds(pair(), 'c')).toEqual([])
+  })
+
+  it('dissolves a pair rather than stranding the other half', () => {
+    // Two members: taking one out leaves a "superset" of one, which is not a
+    // superset and would leave a lone SS badge naming a partner that is gone.
+    const sets = pair()
+    const cleared = ungroupIds(sets, 'a')
+    expect(cleared).toHaveLength(3)
+    expect(cleared).toContain(sets[1].id)
+  })
+
+  it('removes only the leaver when the group still has two left', () => {
+    const sets = [s('a', 1), s('b', 1), s('c', 1)]
+    const cleared = ungroupIds(sets, 'a')
+    expect(cleared).toEqual([sets[0].id])
+  })
+
+  it('leaves other groups alone', () => {
+    const sets = [s('a', 1), s('b', 1), s('x', 2), s('y', 2)]
+    const cleared = ungroupIds(sets, 'a')
+    expect(cleared).not.toContain(sets[2].id)
+    expect(cleared).not.toContain(sets[3].id)
   })
 })

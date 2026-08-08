@@ -29,6 +29,28 @@ export function groupOf(sets: WorkoutSet[], exerciseId: string): number | null {
   return null
 }
 
+/**
+ * Set ids whose `superset_group` should be cleared when `exerciseId` leaves.
+ *
+ * Includes the sets of whoever is left behind when only one member remains: a
+ * superset of one is not a superset, and a lone exercise still wearing an
+ * "SS 1" badge is a group the user cannot see the other half of. Grouping used
+ * to be permanent, so this is the first code that ever had to answer it.
+ */
+export function ungroupIds(sets: WorkoutSet[], exerciseId: string): string[] {
+  const group = groupOf(sets, exerciseId)
+  if (group === null) return []
+
+  const members = groupsFromSets(sets).get(group) ?? []
+  const dissolve = members.filter((id) => id !== exerciseId).length <= 1
+
+  return sets
+    .filter(
+      (s) => s.superset_group === group && (dissolve || s.exercise_id === exerciseId),
+    )
+    .map((s) => s.id)
+}
+
 /** Lowest unused group id, so ids stay small and readable. */
 export function nextGroupId(sets: WorkoutSet[]): number {
   const used = new Set(

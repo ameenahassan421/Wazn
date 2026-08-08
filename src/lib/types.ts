@@ -58,6 +58,13 @@ export interface Workout {
   name: string | null
   started_at: string
   ended_at: string | null
+  /**
+   * Free text about the session. The column has existed since migration 0008
+   * and had no reader or writer until U1 — plural, unlike the singular
+   * `note` the upgrade plan asked for, because renaming a live column to
+   * match a document is not a migration worth running.
+   */
+  notes?: string | null
 }
 
 export interface WorkoutSet {
