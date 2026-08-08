@@ -3940,3 +3940,32 @@ does not extend a Claude quota — it substitutes other models and compresses
 prompts, which is a different thing and the doc leads with it. And the project
 flags 15 of its own providers on terms-of-service grounds, so the provider pool
 is something to choose rather than leave wide open.
+
+### Claude stays out of the OmniRoute cascade
+
+OmniRoute ranks providers in tiers and puts "Claude Code OAuth" at Tier 1: connect
+the subscription, and the gateway drains it first, then falls through to cheap
+API keys and free tiers automatically, per request. That is precisely the
+"fail over when I hit the limit" behaviour asked for, and it is the only way to
+get it — Claude Code reads `ANTHROPIC_BASE_URL` once at startup and will never
+switch endpoints mid-session, so any other arrangement needs a human to notice
+the limit and relaunch.
+
+It was still declined, and the reason is worth keeping. Subscription access is
+intended for first-party use; handing that OAuth to a third-party proxy is very
+likely contrary to Anthropic's terms, and the realistic downside is action
+against the very subscription the whole exercise exists to protect. Ameen chose
+to keep Claude separate on 2026-08-08.
+
+So the shape is opt-in, not always-on: `claude` runs against Anthropic as it
+always has, and `omniroute launch` is the deliberate fallback once the limit
+lands. It execs Claude Code in the current directory, so running it from the Wazn
+checkout gives a Wazn session on Kimi/GLM/DeepSeek with no per-repo config at
+all. `.claude/settings.omniroute.example.json` stays in the tree for the
+repo-scoped always-on variant, unused for now.
+
+The limitation that no configuration fixes: a claude.ai/code session runs in
+Anthropic's own container and cannot reach a gateway on a laptop, and the web
+client has no custom-endpoint setting — a public VPS would not change that.
+Routing is a local-Claude-Code capability. Wazn is a repo rather than a "cloud
+project", so that costs the web surface, not the work.

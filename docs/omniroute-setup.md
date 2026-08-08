@@ -162,6 +162,17 @@ Two traps in that table:
   `CLAUDE_CODE_AUTO_COMPACT_WINDOW` is set below the real window. The generated
   profiles handle this; a hand-written config does not.
 
+### Cloud Claude Code sessions cannot be routed
+
+A claude.ai/code session runs in a container in Anthropic's infrastructure. It
+cannot reach `localhost:20128` on your machine, and the web client exposes no
+setting for a custom endpoint — so a public VPS would not help either. There is
+no configuration that routes a cloud session through OmniRoute.
+
+This does not cost you the project, only the surface: Wazn is a repo, so opening
+it in **local** Claude Code routes it like anything else. What you give up is the
+web and mobile session, not the codebase.
+
 ### Opt-in, not always-on
 
 Putting that `env` block in `~/.claude/settings.json` routes **every** local
