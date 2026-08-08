@@ -43,10 +43,29 @@ export default defineConfig({
 
   webServer: {
     // `build` then `preview`, so what is tested is what Vercel serves.
-    command: 'npm run build && npm run preview -- --port 4173 --strictPort',
+    //
+    // `--host 127.0.0.1` is explicit rather than left to Vite's default of
+    // `localhost`. On a GitHub runner `localhost` can resolve to `::1` first,
+    // so the server listens on IPv6 while Playwright polls the IPv4 `url`
+    // below and waits out the whole timeout. It works locally either way,
+    // which is exactly how this reaches CI unnoticed.
+    //
+    // `vite preview` directly, not `npm run preview --`, so there is one less
+    // layer of argument forwarding between here and the flags.
+    command:
+      'npm run build && npx vite preview --port 4173 --strictPort --host 127.0.0.1',
     url: 'http://127.0.0.1:4173',
     reuseExistingServer: !process.env.CI,
-    timeout: 180_000,
+    // A cold runner builds from an empty Vite cache; 180s was not enough
+    // headroom once `tsc --noEmit` and the PWA plugin were both in front of
+    // the server starting.
+    timeout: 300_000,
+    // Without these, a webServer that fails to start is indistinguishable
+    // from one that is merely slow: the log shows a bare "Timed out waiting
+    // 180000ms" and nothing else. Piping them is what made this diagnosable
+    // rather than guessable.
+    stdout: 'pipe',
+    stderr: 'pipe',
     env: {
       // Placeholder config on purpose, matching the CI build step: without it
       // the app short-circuits on the "not configured" screen and every
