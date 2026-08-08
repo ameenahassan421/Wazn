@@ -425,13 +425,19 @@ verbatim, so they survive even if this file isn't read.**
   was not deleted because that is an auth change (§2.8). See DECISIONS.md.
   **Gmail dot-normalisation at sign-in is still unbuilt**, and it is the reason
   this happened — one Gmail inbox can still create two Wazn accounts.
-- **TESTERS HAVE ARRIVED, and one could not get in.**
-  `hafsaabdi2013@yahoo.com` requested a code at 02:28:45 UTC on 2026-08-05 and
-  **never verified** — no sign-in, ever. 88 seconds later
-  `hafsaa.abdii12@gmail.com` requested one and was signed in within 32 seconds.
-  That reads as a Yahoo deliverability failure, and a tester who never receives
-  a code cannot report it. **Check Resend's logs before more invites go out.**
-  The Gmail tester has logged zero workouts since.
+- **~~TESTERS HAVE ARRIVED, and one could not get in.~~ ANSWERED 2026-08-08, and
+  the answer was not deliverability.** `hafsaabdi2013@yahoo.com` requested a
+  code at 02:28:45 UTC on 2026-08-05 and **never verified**; 88 seconds later
+  `hafsaa.abdii12@gmail.com` requested one and signed in within 32 seconds.
+  This file called that a Yahoo deliverability failure for three days. Resend's
+  logs say otherwise: the API accepted the send at 02:28:47 (HTTP 200) and the
+  email is marked **`delivered`** to Yahoo. Every message in Resend's history
+  is `delivered` — no bounce, no complaint, no deferral, ever.
+  **So nothing was undelivered and the theory is dead.** What `delivered` does
+  not prove is placement: Yahoo's server accepted it, and whether it reached an
+  inbox or a junk folder is not knowable from here. Still open, and unknowable
+  without asking her: junk placement, or she saw it and did not finish, or the
+  code aged past its hour. The Gmail tester has logged zero workouts since.
 - **Rotate the OpenRouter key** once beta is settled: it was shared in a chat
   session, so treat it as compromised by construction.
 - **BLOCKED ON AMEEN — 2: run `LAUNCH.md`** with a second account on a real
@@ -616,20 +622,37 @@ verbatim, so they survive even if this file isn't read.**
   2026-08-08 off the live auth config. That is Supabase's default for the
   built-in mailer, and configuring custom SMTP does not raise it — you do,
   deliberately. **Two auth emails per hour, project-wide**: invite five friends
-  in one evening and three of them get nothing and have no way to say so, which
-  is the Yahoo failure repeating at scale. Raise it before the invite wave.
-  (It does _not_ explain the 08-05 Yahoo case — the Gmail tester was sent a
-  code 88 seconds later and got it, so the budget was not spent.)
+  in one evening and three of them get nothing and have no way to say so. Raise
+  it before the invite wave. It is a forward-looking risk and **nothing more** —
+  it did not cause the 08-05 case (the Gmail tester was sent a code 88 seconds
+  later and got it), and Resend's log shows the ceiling has never once been
+  reached: 25 sends across eight days, never more than 2 in any single hour.
 - **Email authentication for `trywazn.app` is correctly set up**, checked
   2026-08-08 by querying DNS directly: SPF `v=spf1 include:amazonses.com ~all`
   on `send.trywazn.app` (Resend sends through SES), a DKIM key at
   `resend._domainkey.trywazn.app`, and `v=DMARC1; p=none;` at
   `_dmarc.trywazn.app`. The From is `code@trywazn.app`, and DKIM signs for the
   root domain, so DMARC aligns. **So the Yahoo failure was not an
-  unauthenticated-sender rejection** — that theory is dead and Resend's own log
-  is still the only source. One loose end: the root domain carries no TXT
-  record at all, so anything ever sent with an envelope from `trywazn.app`
-  itself, rather than the `send.` subdomain, has no SPF to fall back on.
+  unauthenticated-sender rejection** — confirmed the same day by Resend's
+  delivery log, which marks that message `delivered`. One loose end: the root
+  domain carries no TXT record at all, so anything ever sent with an envelope
+  from `trywazn.app` itself, rather than the `send.` subdomain, has no SPF to
+  fall back on.
+- **THE EMAIL SUBJECTS WERE LYING, and that is what a new tester actually saw.**
+  Found 2026-08-08 in the same Resend log. `set-templates` has always guarded
+  the email BODIES — it refuses any template missing `{{ .Token }}`, because the
+  app verifies a 6-digit code and never follows a link — but it never touched
+  the SUBJECTS, so they sat at Supabase's dashboard defaults describing a
+  link-based flow this app has never had: "Confirm your email address" (no
+  code), "Reset your password" (no code), and **"Your sign-in link" — which
+  promised a link to an app that has never sent one**, against §2.4's rule.
+  The guard covered half the email. Fixed and **applied live**: all three now
+  read `{{ .Token }} is your Wazn sign-in code` / `… password reset code`,
+  matching the reauthentication subject that was already right, and
+  `set-templates` now guards subjects the same way it guards bodies. Code first
+  so it is readable from a lock screen without opening anything. `invite` and
+  `email_change` are deliberately left alone — their bodies carry no token, so
+  a subject promising a code would be the same lie in reverse.
 - **Part 3 of `docs/auth-social-setup.md` is DONE**, contrary to the blocker
   above: `external_google_enabled` is true, `mailer_autoconfirm` is false
   (confirm-email on), `password_min_length` is 8, and every code-carrying
@@ -668,18 +691,19 @@ verbatim, so they survive even if this file isn't read.**
   the fifteen before them, so it reads as though the database began at 0016.**
   Anyone reaching for `supabase db push` or `db reset` needs to know that
   first. Backfilling 0001–0015 as ledger-only rows is offered and not done.
-- **R0 is not Claude-buildable.** The offense plan's release table lists R0
-  "Evidence" as `_none — beta runs_`; its content is Ameen's two blockers
-  (Resend's logs for the Yahoo delivery failure; `LAUNCH.md` on a real phone
-  with a second account). Neither is reachable from a sandboxed session.
-- **The Yahoo evidence is GONE from Supabase, and Resend's copy is expiring.**
-  Checked 2026-08-08 against the Management API's analytics endpoint:
-  `auth_logs` holds **~1 day**. Counts by day were 38 for 2026-08-07 and
-  **0 for 08-04, 08-05 and 08-06** — the 02:28:45 UTC request on 08-05 is past
-  retention and cannot be recovered. **Do not spend time in the Supabase
-  dashboard on this.** Resend's own log retention is also finite and the event
-  is already three days old, so if blocker 1 is going to be answered at all it
-  has to be answered now. Two caveats on the check: the endpoint returned
+- **R0 blocker 1 is CLOSED (2026-08-08).** Ameen pulled Resend's API log and
+  its Emails list; both are read above. The send was accepted and the message
+  was delivered, so there was never anything to fix in delivery — the finding
+  that came out of it instead was the subject lines. **Blocker 2 stands**:
+  `LAUNCH.md` on a real phone with a second account, which is also GATE U7's
+  last item, and is not reachable from a sandboxed session.
+- **`auth_logs` retention is ~1 day**, which is why Supabase could not answer
+  the 08-05 question and Resend had to. Checked 2026-08-08 against the
+  Management API's analytics endpoint: counts by day were 38 for 2026-08-07 and
+  **0 for 08-04, 08-05 and 08-06**. Anything older than about a day is gone —
+  worth knowing the next time a sign-in question arrives, because the window to
+  ask Supabase is one day and Resend's is longer. Two caveats on the check: the
+  endpoint returned
   aggregates but not rows for this token (`count(*)` works, `select
 event_message` comes back empty), so nothing here inspected message contents;
   and a no-window query silently returns `[]` because the default window is

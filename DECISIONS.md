@@ -2969,3 +2969,64 @@ and the person who ran them should be the one to make it.
 
 Recorded here rather than only in STATUS because the next person to reach for
 the Supabase CLI will not have read this conversation.
+
+## 2026-08-08 — The Yahoo email was delivered. The subject line was the defect.
+
+Blocker 1 has been open since 2026-08-05 on a premise this file and STATUS both
+repeated: a tester requested a code and "never received" it, read as a Yahoo
+deliverability failure. Ameen pulled Resend's logs. The premise was false.
+
+**The API log**: the send was accepted at `2026-08-05 02:28:47` with HTTP 200,
+two seconds after the request Supabase recorded at 02:28:45. **The Emails
+list**: that message is marked `delivered`. So is every other message Resend
+has ever sent for this project — 25 sends across eight days, no bounce, no
+complaint, no deferral, not once.
+
+Three theories died in one afternoon, in this order: not the Supabase rate
+limit (the Gmail tester was sent a code 88 seconds later and got it); not
+SPF/DKIM/DMARC (all present and aligned, queried from DNS); not delivery
+(`delivered`). What `delivered` does **not** prove is placement — Yahoo's
+server accepted it, and inbox versus junk is not visible from here. What is
+left is unknowable without asking her: junk placement, or she saw it and did
+not finish, or the code aged past its hour.
+
+### What the log did turn up
+
+The subject line. Every new tester's email read **"Confirm your email
+address"**, and every returning sign-in read **"Your sign-in link"** — for an
+app that has never sent a link, and whose §2.4 rule is that it never will.
+
+`set-templates` has always guarded the email BODIES: it refuses to apply a
+template missing `{{ .Token }}`, on the grounds that the app verifies a
+6-digit code and never follows a link. It never touched the SUBJECTS, so those
+stayed at Supabase's dashboard defaults, which describe exactly the link-based
+flow the guard exists to prevent. **The guard covered half the email**, and the
+half it missed is the half a person reads first.
+
+The project already had one subject right — reauthentication has read
+`{{ .Token }} is your verification code` all along. That is both proof that
+Supabase renders the token in a subject and the pattern the other three should
+have followed. Now they do:
+
+    mailer_subjects_confirmation   {{ .Token }} is your Wazn sign-in code
+    mailer_subjects_magic_link     {{ .Token }} is your Wazn sign-in code
+    mailer_subjects_recovery       {{ .Token }} is your Wazn password reset code
+
+Code first, so it is readable from a lock-screen notification without opening
+anything. `mailer_subjects_invite` and `mailer_subjects_email_change` are
+deliberately untouched: their bodies carry no `{{ .Token }}`, so a subject
+promising a code would be the same lie pointing the other way.
+
+Applied live and read back from `/config/auth`, on Ameen's explicit
+authorisation — auth configuration is his under §2.8 and this was not assumed.
+The bodies were diffed against the repo before applying and matched exactly,
+so re-applying them changed nothing.
+
+### The lesson worth keeping
+
+A guard that checks the artifact but not its envelope is a guard with a blind
+spot the size of the thing users actually see. The same shape appeared twice
+this week: `npm run shots` rendered the Coach tab as an error boundary for its
+entire life because the harness stubbed tables but not functions, and
+`set-templates` protected bodies but not subjects. Both were checks that
+verified the part someone remembered to name.
