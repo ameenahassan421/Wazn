@@ -175,6 +175,38 @@ begin
     raise exception 'FAIL: B liked a workout as A';
   end if;
 
+  -- ── 7b. The CLIENT's insert shape works, not just SQL's ─────────────────
+  -- Every other assertion in this file names both columns, the way raw SQL
+  -- does. The app does not: it inserts `{following_id}` and lets the column
+  -- default supply the owner. That gap is why follows and likes were refused
+  -- in production while all eight assertions here passed. Insert exactly the
+  -- way the client does, and require it to work.
+  reset role;
+  update public.profiles set visibility = 'followers' where id = user_a;
+  delete from public.follows where follower_id = user_b;
+  set local role authenticated;
+  perform set_config(
+    'request.jwt.claims',
+    json_build_object('sub', user_b, 'role', 'authenticated')::text,
+    true
+  );
+
+  insert into public.follows (following_id) values (user_a);
+  if not exists (
+    select 1 from public.follows
+    where follower_id = user_b and following_id = user_a
+  ) then
+    raise exception 'FAIL: an insert omitting follower_id did not record B -> A';
+  end if;
+
+  insert into public.workout_likes (workout_id)
+  select id from public.workouts
+  where user_id = user_a and ended_at is not null
+  limit 1;
+  if not exists (select 1 from public.workout_likes where user_id = user_b) then
+    raise exception 'FAIL: an insert omitting user_id did not record B''s like';
+  end if;
+
   -- ── 8. The feed shows nothing you do not follow ──────────────────────────
   reset role;
   delete from public.follows where follower_id = user_b;

@@ -2353,6 +2353,139 @@ reached a committed document (the first: the muscle-balance chart
 listed as a working differentiator when it had never rendered). Both
 were caught by going and looking. That is the pattern worth keeping.
 
+## 2026-08-07 — Following and liking had never worked, and the tests said they did
+
+Ameen, running the LAUNCH.md invite flow with a second account: "Follow
+<name>" did not change to "Following". No error, no message, nothing.
+
+**Root cause.** `follows.follower_id` and `workout_likes.user_id` are
+`not null` with **no database default**, and the client inserts omitted
+them — `follow()` sent `{following_id}`, `setLiked()` sent
+`{workout_id}`. Every follow and every like this app has attempted was
+refused before RLS had an opinion. `workouts` never had the problem
+because `LogScreen` passes `user_id` explicitly, which is why logging
+worked and social did not.
+
+**Why the tests missed it, and this is the part worth keeping.**
+`supabase/tests/rls_social.sql` has eight assertions and they all
+passed. Every one of them writes `insert into public.follows
+(follower_id, following_id)` — raw SQL naming both columns. The tests
+proved the _policies_ were right and never once exercised the payload
+the client actually sends. A test that constructs its own input
+differently from production is testing a different program. There is
+now a 7b assertion that inserts exactly the way the app does, omitting
+the owner column, and requires it to work.
+
+**Why Ameen saw nothing at all.** `Welcome.tsx` caught the failure and
+discarded it — "not worth an alarm on the first screen someone ever
+sees". That instinct is defensible and it was wrong here: it hid a
+total feature failure behind a button that silently did nothing, which
+is worse than an error, because the user taps it twice and then decides
+the app is broken. The catch now surfaces the message.
+
+**The fix, in two independent halves.** The client sends the owner
+column (ships immediately, no manual step), and migration 0016 adds
+`default auth.uid()` so the next insert written here cannot repeat the
+omission. The client half does not depend on the migration.
+
+**A parse check is not an execution check, again.** The migration was
+first written as `set default (select auth.uid())` — the subselect
+wrapper that RLS policies use so the planner caches the value as an
+InitPlan. `check_migrations.py` parsed it happily. Postgres would have
+rejected it on apply: a column DEFAULT must be a variable-free
+expression, and a subquery is not one. Caught by reading, not by the
+gate. The migration says so in a comment.
+
+**Second finding, for Ameen rather than the code.** Even with the fix,
+`follows_insert_own` requires `private.is_discoverable(following_id)` —
+the target must be 'followers' or 'public'. Default visibility is
+'private', so **an invite link from a private profile is a dead end by
+design**. `follow()` now says exactly that instead of a generic error.
+Whether the invite/share surface should warn the sender up front is a
+UX question left open, not decided here.
+
+## 2026-08-07 — Three gaps the launch pass found, and where they landed
+
+Ameen, testing: no delete workout, no way to get to the next workout
+when one is done, no discard. Each turned out to be a different kind of
+problem, which is why they landed in three different places.
+
+**Discard already existed and could not be found.** U1b shipped it
+behind the armed Finish button — correct placement for something that
+deletes a live session and its sets, wrong placement for discovery. The
+label says "Finish", which gives no hint that abandoning lives
+underneath it, and the armed state times out while you are still
+reading the row. Now L8, in U1c: add it to the header overflow as a
+second route, still two-tap armed, and explicitly do **not** promote it
+to a top-level control. A one-tap delete of a live workout beside the
+thumb is the version that loses somebody's session.
+
+**Delete-workout was real, and moved forward from U4 to U1c.** The rest
+of O3 (add set, add exercise, rename, duplicate-as-routine) genuinely
+wants U2's editor grammar first. Delete does not: one statement, the
+cascade the schema already declares, and the `refreshRecords` path
+History proved when a corrected set demotes a PR. Leaving it in U4
+would mean running a beta where the only way to remove a junk workout
+is hand-written SQL — which is exactly how the four zero-set rows were
+cleaned up, and not something to ask a tester to do.
+
+**"Next workout" was not a missing button.** Finishing returns you to
+an idle Log screen that lists routines by stored position; nothing in
+the app knows a four-day split just consumed Upper A, so the user is
+the scheduler every session for a fact the database already holds. Split
+deliberately: the **deterministic half** (compute the due day, order the
+list by it, make it the primary start action) goes in U1c with no model
+involved, and **B1's briefing** later adds the sentence explaining why
+it is due, layering on top rather than replacing it. Building the
+explanation first would have made a cheap ordering fix wait on the AI
+phase.
+
+The rule attached to that last one, from the offense plan's §2: order
+and pre-select, never auto-start, and never hide the other days. A
+lifter who wants Thursday's session on a Tuesday is not a mis-tap.
+
+## 2026-08-07 — The auth config had two gaps, and one of them broke password reset
+
+Ameen enabled Google and asked what else was missing. Reading the live
+config through the Management API rather than the dashboard UI answered
+it in one call, and found two things:
+
+**The recovery email was still Supabase's default — a link.** It said
+"Follow the link below to choose a new one" and carried
+`{{ .ConfirmationURL }}`. The app asks for six digits. Every password
+reset would have dead-ended: an email with a link, an app waiting for a
+code, and no way to get from one to the other. `set-templates` pushed
+`recovery.html`; verified live with `{{ .Token }}`.
+
+This is what the "never a magic link" rule costs if you only apply it
+to the code and not to the provider config — the client was correct all
+along and the mail was not.
+
+**`password_min_length` was 6.** The client validates 8, so the floor
+was weaker than the app's own rule, and a password the UI refused could
+still be set through any other caller. Now 8, verified.
+
+**Leaked-password protection could not be enabled: 402, Pro plan only.**
+The auth doc had already hedged this as "if our tier offers it" — it
+does not. The 8-character floor stands alone until an upgrade.
+
+Added `set-password-policy` to `scripts/supabase_admin.ts` rather than
+doing this with a one-off curl, for the reason the script exists at all:
+auth setup should be a command somebody can re-run and review, not a
+dashboard click nobody can reproduce. It writes the two settings in
+**two separate PATCHes** — the API rejects the whole request with a 402
+when the Pro-only field is included, so bundling them would have meant
+the length silently never landed either. The breach check degrades to a
+printed note instead of an error.
+
+**Left alone, but worth watching:**
+`security_update_password_require_reauthentication` is true. The
+recovery flow verifies the code (which signs the user in) and then
+immediately calls `updateUser({password})`; a fresh session should
+satisfy the requirement, but that is an assumption, not a test. If
+"Set password and sign in" fails on a real device, this is the first
+suspect.
+
 ## 2026-08-08 — R1: U1c and U7, and the two numbers that came back honest
 
 Release R1 in the offense plan's table (§11) is "Finished" — the release
