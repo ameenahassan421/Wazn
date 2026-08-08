@@ -1,6 +1,7 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { describeError, supabase } from '../lib/supabase'
 import { useBackLayer } from '../lib/use-back'
+import { lazyScreen } from '../lib/lazy-screen'
 import { useUnit } from '../lib/unit-context'
 import { formatWeight } from '../lib/units'
 import { formatDuration, formatRelativeDay, formatWorkoutDate } from '../lib/format'
@@ -63,7 +64,23 @@ import {
   save as saveCheckpoint,
 } from '../lib/checkpoint'
 
-type View = 'overview' | 'picker' | 'entry' | 'summary' | 'routine'
+type View = 'overview' | 'picker' | 'entry' | 'summary' | 'routine' | 'import'
+
+/**
+ * The Hevy import, loaded on demand.
+ *
+ * A person opens this once in their life and most never open it at all, so it
+ * has no business in the chunk that has to be interactive before the first set.
+ * It is also excluded from the service worker's precache (`vite.config.ts`),
+ * because an import that writes to Supabase cannot work offline anyway.
+ *
+ * `lazyScreen` rather than `lazy`, for the reason the three tabs needed it: a
+ * deploy retires the hashed chunk an open page is about to import. Reloading
+ * is safe here because this is only ever reachable with no workout open.
+ */
+const HevyImport = lazyScreen(() =>
+  import('../components/HevyImport').then((m) => ({ default: m.HevyImport })),
+)
 
 interface ExerciseBestRow {
   exercise_id: string
@@ -1358,6 +1375,21 @@ export function LogScreen({
     return <p className="py-10 text-sm text-muted">Loading…</p>
   }
 
+  // Ahead of the empty state and the welcome screen, because both of them are
+  // where it is reached from and neither should draw underneath it.
+  if (view === 'import') {
+    return (
+      <Suspense fallback={<p className="py-10 text-sm text-muted">Loading…</p>}>
+        <HevyImport
+          userId={userId}
+          exercises={exercises}
+          onImported={() => void load()}
+          onCancel={() => setView('overview')}
+        />
+      </Suspense>
+    )
+  }
+
   // The summary lands here: finishing clears `workout`, so this has to come
   // before the empty state or the summary would never be shown.
   if (view === 'routine') {
@@ -1419,6 +1451,10 @@ export function LogScreen({
           onOpenCoach()
         }}
         onSkip={() => setWelcomed(true)}
+        onImport={() => {
+          setWelcomed(true)
+          setView('import')
+        }}
       />
     )
   }
@@ -1467,6 +1503,24 @@ export function LogScreen({
           }}
           onGenerate={onOpenCoach}
         />
+
+        {/* The switcher's way back to the import if they skipped it during
+            onboarding.
+
+            Only while there is no history, and that is a real limit rather
+            than a layout choice: importing the same export twice would
+            duplicate every workout in it, and nothing here de-duplicates.
+            Gating on an empty account makes that impossible instead of
+            merely unlikely. */}
+        {!hasHistory && (
+          <button
+            type="button"
+            onClick={() => setView('import')}
+            className="btn-base btn-secondary h-12 w-full text-sm"
+          >
+            Coming from Hevy? Bring your history
+          </button>
+        )}
 
         {/* Offered only once the app has proved useful — `hasHistory` means
             at least one workout exists — and never while one is open. */}

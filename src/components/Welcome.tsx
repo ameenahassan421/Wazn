@@ -23,9 +23,12 @@ import { useAuth } from '../lib/use-auth'
 export function Welcome({
   onGenerate,
   onSkip,
+  onImport,
 }: {
   onGenerate: () => void
   onSkip: () => void
+  /** Offered only to a switcher — see the section this renders. */
+  onImport: () => void
 }) {
   const [inviter, setInviter] = useState<Inviter | null>(null)
   const [followed, setFollowed] = useState(false)
@@ -212,6 +215,24 @@ export function Welcome({
           className="btn-base btn-secondary mt-2 h-12 w-full text-sm"
         >
           I will just start logging
+        </button>
+
+        {/* Last, and quiet, because it is true for a minority — but for that
+            minority it is the most valuable button in the app: a switcher who
+            imports opens their first session with their own numbers ghosted on
+            every row, which is the retention engine firing on day one instead
+            of week three (offense plan §9-F1).
+
+            Below the hero rather than above it. The first render put it first
+            and it read as the primary path for everybody, which inverts who
+            this screen is mostly for. The label names its audience, so a
+            switcher scanning the screen still finds it. */}
+        <button
+          type="button"
+          onClick={onImport}
+          className="btn-base btn-quiet mt-2 h-12 w-full text-sm"
+        >
+          Coming from Hevy? Bring your history
         </button>
       </section>
     </div>

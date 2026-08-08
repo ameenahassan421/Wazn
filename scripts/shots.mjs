@@ -117,6 +117,24 @@ async function shoot(browser, origin, { width, empty, active }) {
     return crashes
   }
 
+  // The Hevy import is only reachable from an account with nothing in it —
+  // the Welcome screen and the empty Log screen — so the empty pass is the
+  // only one that can photograph it. It is gated on having no history on
+  // purpose: importing the same export twice would duplicate every workout.
+  if (empty) {
+    const bring = page.getByRole('button', { name: /Bring your history/ })
+    if (await bring.count()) {
+      await bring.first().click()
+      await page.waitForTimeout(900)
+      await page.screenshot({
+        path: `${OUT}/empty-${width}-import.png`,
+        fullPage: false,
+      })
+      await page.reload({ waitUntil: 'networkidle' })
+      await page.waitForTimeout(900)
+    }
+  }
+
   const state = empty ? 'empty' : 'full'
   for (const tab of TABS) {
     const button = page.getByRole('button', { name: tab, exact: true })
@@ -162,7 +180,7 @@ async function main() {
   }
 
   console.log(
-    `\n${TABS.length * WIDTHS.length * 2 + WIDTHS.length * 4} screenshots in ${OUT}/`,
+    `\n${TABS.length * WIDTHS.length * 2 + WIDTHS.length * 5} screenshots in ${OUT}/`,
   )
   if (crashes.length) {
     // An uncaught error no longer blanks a tab — U1c's boundaries catch it —

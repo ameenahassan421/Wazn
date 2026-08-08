@@ -65,6 +65,17 @@ export default defineConfig({
         // App shell only. Supabase calls always go to the network — slice 1 has
         // no offline sync, and a cached API response would show stale sets.
         globPatterns: ['**/*.{js,css,html,svg,png,ico,woff2}'],
+        // The Hevy import is excluded from the shell, not from the build.
+        //
+        // It writes to Supabase, so it cannot do anything without a network
+        // regardless; precaching it would spend 13 KiB of every install to
+        // make a once-in-a-lifetime screen open marginally faster while
+        // online. It is fetched on demand and, like the lazy tabs, wrapped in
+        // `lazyScreen` so a chunk retired by a deploy reloads once instead of
+        // dying. This also keeps the precache under the ~600 KiB ceiling the
+        // parity plan §4 sets, which it had just gone over — both reasons are
+        // real and the first one is why this is the right place to cut.
+        globIgnores: ['**/HevyImport-*.js'],
         navigateFallbackDenylist: [/^\/api/],
         runtimeCaching: [],
         // BOTH FALSE ON PURPOSE, and this is the fix for a real outage: after

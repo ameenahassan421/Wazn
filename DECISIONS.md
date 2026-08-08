@@ -3183,3 +3183,128 @@ No new dependency. Precache 570.63 KiB → 587.13 KiB, measured with config
 (a config-less build tree-shakes the authenticated screens away and reports a
 flattering number). 12.87 KiB under the ~600 KiB ceiling, which is tight enough
 that the next UI phase should expect to spend some of it removing something.
+
+---
+
+## 2026-08-08 — U3a and R5: optimistic writes, and the import as onboarding
+
+Two phases in one session. They are unrelated in code and related in effect:
+both are about the first thing a lifter feels.
+
+### U3a — the 100ms budget was never a rendering problem
+
+U7 measured tap → set on screen at **195ms against a 100ms budget** and R1
+reported it as a miss with the note that U3's optimistic writes were the fix.
+That was right, and the reason is worth stating plainly: `addSet` awaited
+Postgres before touching state, so the number was one round trip and no amount
+of rendering work could have moved it. It is now **46ms, worst 53ms**.
+
+**The id is the whole design.** Every queued write carries a client-generated
+uuid that IS `workout_sets.id` — the column has a default, not a prohibition
+on being given one. Three things fall out of that single decision:
+
+1. A replay cannot double-insert. Kill the tab between the insert landing and
+   the ack being processed and the restored queue retries the same write;
+   Postgres answers `23505` on the primary key, which is not an error here but
+   the server saying "I already have that."
+2. The optimistic row has its final identity immediately — no temporary id, no
+   swap on ack, so React never remounts the row and the 90ms commit animation
+   cannot run twice for one set.
+3. The queue is safe to persist without deduplication logic of its own.
+
+**PR flags are the one thing an optimistic row cannot know.** Records are
+computed in the database against every earlier set, so `pr_weight`/`pr_e1rm`
+stay false until the ack and the badge arrives on reconcile. Guessing and then
+retracting would be worse than a badge that appears a beat late — and the
+existing `record-flash` fires on the class change, so the record still lands
+with its flash, just after the set rather than with it.
+
+**Failures stay silent for three attempts.** Gym wifi drops a request and
+recovers; an error banner between sets is exactly the interruption §2.1
+forbids. Past that the silence stops being honest and the message says the set
+is on screen and will be retried, because it is and it will.
+
+**Finish is the one place that waits.** The summary and `exercise_bests` are
+computed against what the server has, so finishing with writes in flight would
+report a workout smaller than the one performed and then mark it ended,
+putting those sets beyond reach. §2.1 protects the logging _flow_; Finish is
+the end of it, so a bounded flush is allowed there and nowhere else.
+
+localStorage, not IndexedDB, for the checkpoint: a few hundred bytes on every
+commit, and it has to be readable _synchronously_ in the load path so nothing
+renders a board that is about to change under it. IndexedDB arrives in U3b
+where the volume and the async access pattern actually justify it. Every
+storage call is guarded including the property access — merely touching
+`window.localStorage` throws in a Safari private window, and a throw on the
+commit path would take down the set the checkpoint exists to protect.
+
+### R5 — why the import does NOT reuse `scripts/import_hevy.ts`
+
+The offense plan calls this "80% built" and it is, but not reusably. Three
+reasons, all of them about whose file it is:
+
+1. **The script aborts; the client reports.** Every problem in the script calls
+   `fail()` and throws. That is right for a one-off run by the person who can
+   go and fix the CSV. A stranger's export will contain lifts Wazn has never
+   heard of, and refusing the whole import over one of them would be the app
+   throwing away someone's training history to protect a lookup table.
+2. **The script's timezone is Ameen's.** `SOURCE_TIMEZONE` is hardcoded to
+   `America/Chicago` because that is where the seed data was logged. A
+   switcher's export is in their own zone, so the client reads the browser's.
+3. **The script's weight column is `weight_lbs`.** Hevy names it after the
+   account's unit. An export from a kg account has `weight_kg`, and the script
+   would read every weight as null without erroring — the quietest possible
+   failure, and the one a test now covers.
+
+`csv-parse` did not come along either. It is right for Node and wrong for a
+bundle with single-digit KiB of headroom, so `src/lib/csv.ts` is RFC 4180 and
+nothing else — quoted fields, embedded commas and newlines, `""` escapes. The
+first test run proved it works by failing: the fixture wrote Hevy's own dates
+("21 Oct 2025, 18:04") unquoted, and the parser correctly split them.
+
+**Unmatched lifts are guessed, not asked about.** `NewExercise` asks the user
+and that is better, but an export can carry thirty unknown lifts and thirty
+questions between "open the file" and "see your history" is a form, not an
+onboarding. `exercise-guess.ts` is keyword patterns with a deliberate order
+(Leg Curl is hamstrings, Leg Press is quads) and defaults to `core` rather than
+a popular group — a mis-grouped lift should not quietly inflate the number a
+user is most likely to be reading on the balance chart.
+
+**The import is offered only to an account with no history.** That is a real
+limit rather than a layout choice: importing the same export twice would
+duplicate every workout in it and nothing de-duplicates. Gating on an empty
+account makes that impossible instead of merely unlikely.
+
+**The write boundary is a whole workout.** A workout whose sets fail is deleted
+before reporting, so a failure is always "142 of 156 came across" and resuming
+can never double-write one. There is no silent half-write.
+
+### The precache went over the ceiling, and the fix is not a diet
+
+The build hit **604.98 KiB against the ~600 KiB requirement**. The import chunk
+is now excluded from the service worker's precache (`globIgnores`), taking it
+to **592.20 KiB**.
+
+That is the right cut on its own terms rather than a convenient one: the
+import writes to Supabase, so it cannot do anything without a network, and
+precaching it spends 13 KiB of every install to make a once-in-a-lifetime
+screen open marginally faster while already online. It is wrapped in
+`lazyScreen` rather than `lazy` for the same reason the three tabs needed it —
+a deploy retires the hashed chunk an open page is about to import — and
+reloading is safe here because it is only reachable with no workout open.
+
+**7.8 KiB of headroom is not a budget, it is a warning.** The next UI phase
+should expect to remove something.
+
+### One deviation from the R5 prompt
+
+The prompt asks for the entry point "on the auth screen and in the Welcome
+screen". The auth screen gets a sentence, not a button: the import needs a
+session to write anything, so a control there could only ever lead to the
+sign-in already on screen. What is worth saying before somebody signs up is
+that switching will not cost them their history, and that is what it says.
+
+The Welcome screen's button moved during the visual pass. The first render put
+it above the hero, where it read as the primary path for everybody and
+inverted who that screen is mostly for. It is last and quiet now; the label
+names its audience, so a switcher still finds it.
