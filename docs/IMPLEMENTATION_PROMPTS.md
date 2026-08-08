@@ -677,6 +677,35 @@ stop.
 
 ## Phase U4 — Insight depth (parity plan §3, U4)
 
+**NEXT UP as of 2026-08-08**, once migration 0021 is applied. Two reasons
+beyond its own merits. It is the half of release **R5 "Switch"** that never
+shipped — the import landed and took the R5 label with it, but the offense
+plan's §11 table defines R5 as F1 **and** U4. And it closes the last block of
+P-class parity gaps in one phase: O3, O5, O8 and O12 all live here, and after
+it the only P-items left are native-gated (O18) or post-retention (O16, O17).
+
+It is also the phase that can be gated **without a beta**. Every other open
+phase needs testers; GATE U4 asks whether Ameen can answer "is my bench
+actually progressing?" from one screen in under five seconds, against the nine
+months of history already in production.
+
+Four small items verified open on 2026-08-08 belong with it rather than in a
+phase of their own — all four are in the parity plan's §2.2/§2.3 with their
+evidence:
+
+- **L9 (half built).** B1's `session_brief()` already computes the due routine
+  by rotation and the briefing says it. The list underneath is still in stored
+  `position` order and the primary start action is still not the due day, so
+  the card names a day the list does not reflect. The SQL exists; this is
+  ordering and a pre-selection.
+- **O15.** `routines.position` is sorted on and never written, so the list has
+  no user order to fall back on either. Pairs with L9 — do them together.
+- **L8.** Discard is still only reachable from the armed Finish row. The
+  amendment asking for it in the header overflow was written because Ameen
+  went looking and could not find it, and was never built.
+- **L3.** The duration tick is still 30s, so the elapsed figure reads stale.
+  Either apply the ~10s recommendation or record the decision to keep it.
+
 Can run any time after U1; pairs well while B4's wear-test runs.
 
 ```
