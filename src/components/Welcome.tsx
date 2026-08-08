@@ -29,6 +29,7 @@ export function Welcome({
 }) {
   const [inviter, setInviter] = useState<Inviter | null>(null)
   const [followed, setFollowed] = useState(false)
+  const [followError, setFollowError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const { userId } = useAuth()
   const [username, setUsername] = useState('')
@@ -73,13 +74,22 @@ export function Welcome({
   async function acceptInvite() {
     if (!inviter) return
     setBusy(true)
+    setFollowError(null)
     try {
       await follow(inviter.user_id)
       setFollowed(true)
-    } catch {
-      // Not worth an alarm on the first screen someone ever sees. They can
-      // follow by username from the Friends tab.
+    } catch (caught) {
+      // This used to swallow the failure to keep the first screen calm, and
+      // that decision hid a real defect for as long as the feature has
+      // existed: every follow was being refused, and the button simply did
+      // nothing. A button that does nothing is worse than an error — the user
+      // taps it again, then decides the app is broken. Say what happened.
       setFollowed(false)
+      setFollowError(
+        caught instanceof Error
+          ? caught.message
+          : 'That did not go through. You can follow them from the Friends tab.',
+      )
     } finally {
       setBusy(false)
     }
@@ -117,8 +127,17 @@ export function Welcome({
               followed ? 'btn-secondary' : 'btn-primary'
             }`}
           >
-            {followed ? `Following ${nameOf(inviter)}` : `Follow ${nameOf(inviter)}`}
+            {followed
+              ? `Following ${nameOf(inviter)}`
+              : busy
+                ? 'Following…'
+                : `Follow ${nameOf(inviter)}`}
           </button>
+          {followError && (
+            <p role="alert" className="mt-2 text-sm text-accent">
+              {followError}
+            </p>
+          )}
         </section>
       )}
 

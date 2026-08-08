@@ -10,6 +10,25 @@ import { describeError, supabase } from './supabase'
  * would be a second rule to keep in step with the first.
  */
 
+/**
+ * The owning column on every social write.
+ *
+ * `follows.follower_id` and `workout_likes.user_id` are NOT NULL with no
+ * database default, and the inserts below used to omit them — so every follow
+ * and every like this app has ever attempted was refused, while
+ * `supabase/tests/rls_social.sql` passed because it writes both columns in
+ * raw SQL. Policies were tested; the client's actual payload never was.
+ *
+ * `getSession()` reads the locally stored session — no network hop, so this
+ * costs nothing on a screen that already has a session.
+ */
+async function currentUserId(): Promise<string> {
+  const { data } = await supabase.auth.getSession()
+  const id = data.session?.user.id
+  if (!id) throw new Error('Your sign-in expired. Sign in again to continue.')
+  return id
+}
+
 export type Visibility = 'private' | 'followers' | 'public'
 
 export interface Profile {
@@ -167,7 +186,7 @@ export async function followByUsername(username: string): Promise<Profile> {
   const profile = data as Profile
   const { error: followError } = await supabase
     .from('follows')
-    .insert({ following_id: profile.id })
+    .insert({ follower_id: await currentUserId(), following_id: profile.id })
   if (followError) {
     if ((followError as { code?: string }).code === '23505') {
       throw new Error(`You already follow @${clean}.`)
@@ -178,11 +197,24 @@ export async function followByUsername(username: string): Promise<Profile> {
 }
 
 export async function follow(userId: string): Promise<void> {
-  const { error } = await supabase.from('follows').insert({ following_id: userId })
+  const { error } = await supabase
+    .from('follows')
+    .insert({ follower_id: await currentUserId(), following_id: userId })
   // 23505 is "already following", which is the state the caller wanted.
-  if (error && (error as { code?: string }).code !== '23505') {
-    throw new Error(describeError('Following that person', error))
+  if (!error || (error as { code?: string }).code === '23505') return
+
+  // 42501 here means `is_discoverable(following_id)` refused: the person is
+  // still on the default 'private' visibility, so nobody can follow them —
+  // including someone holding their own invite link. Saying so is the
+  // difference between a dead end and a fixable one, and the follower already
+  // knows who they are.
+  if ((error as { code?: string }).code === '42501') {
+    throw new Error(
+      'They are not accepting followers yet. Ask them to set their profile to ' +
+        'Followers or Public on their Friends tab, then tap this again.',
+    )
   }
+  throw new Error(describeError('Following that person', error))
 }
 
 export async function unfollow(userId: string): Promise<void> {
@@ -194,7 +226,7 @@ export async function setLiked(workoutId: string, liked: boolean): Promise<void>
   if (liked) {
     const { error } = await supabase
       .from('workout_likes')
-      .insert({ workout_id: workoutId })
+      .insert({ user_id: await currentUserId(), workout_id: workoutId })
     if (error && (error as { code?: string }).code !== '23505') {
       throw new Error(describeError('Liking that workout', error))
     }
