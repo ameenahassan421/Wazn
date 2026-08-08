@@ -2352,3 +2352,54 @@ This is the second time in one day that an unverified assumption
 reached a committed document (the first: the muscle-balance chart
 listed as a working differentiator when it had never rendered). Both
 were caught by going and looking. That is the pattern worth keeping.
+
+## 2026-08-07 — Following and liking had never worked, and the tests said they did
+
+Ameen, running the LAUNCH.md invite flow with a second account: "Follow
+<name>" did not change to "Following". No error, no message, nothing.
+
+**Root cause.** `follows.follower_id` and `workout_likes.user_id` are
+`not null` with **no database default**, and the client inserts omitted
+them — `follow()` sent `{following_id}`, `setLiked()` sent
+`{workout_id}`. Every follow and every like this app has attempted was
+refused before RLS had an opinion. `workouts` never had the problem
+because `LogScreen` passes `user_id` explicitly, which is why logging
+worked and social did not.
+
+**Why the tests missed it, and this is the part worth keeping.**
+`supabase/tests/rls_social.sql` has eight assertions and they all
+passed. Every one of them writes `insert into public.follows
+(follower_id, following_id)` — raw SQL naming both columns. The tests
+proved the _policies_ were right and never once exercised the payload
+the client actually sends. A test that constructs its own input
+differently from production is testing a different program. There is
+now a 7b assertion that inserts exactly the way the app does, omitting
+the owner column, and requires it to work.
+
+**Why Ameen saw nothing at all.** `Welcome.tsx` caught the failure and
+discarded it — "not worth an alarm on the first screen someone ever
+sees". That instinct is defensible and it was wrong here: it hid a
+total feature failure behind a button that silently did nothing, which
+is worse than an error, because the user taps it twice and then decides
+the app is broken. The catch now surfaces the message.
+
+**The fix, in two independent halves.** The client sends the owner
+column (ships immediately, no manual step), and migration 0016 adds
+`default auth.uid()` so the next insert written here cannot repeat the
+omission. The client half does not depend on the migration.
+
+**A parse check is not an execution check, again.** The migration was
+first written as `set default (select auth.uid())` — the subselect
+wrapper that RLS policies use so the planner caches the value as an
+InitPlan. `check_migrations.py` parsed it happily. Postgres would have
+rejected it on apply: a column DEFAULT must be a variable-free
+expression, and a subquery is not one. Caught by reading, not by the
+gate. The migration says so in a comment.
+
+**Second finding, for Ameen rather than the code.** Even with the fix,
+`follows_insert_own` requires `private.is_discoverable(following_id)` —
+the target must be 'followers' or 'public'. Default visibility is
+'private', so **an invite link from a private profile is a dead end by
+design**. `follow()` now says exactly that instead of a generic error.
+Whether the invite/share surface should warn the sender up front is a
+UX question left open, not decided here.
