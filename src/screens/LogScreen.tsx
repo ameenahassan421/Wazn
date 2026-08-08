@@ -673,11 +673,16 @@ export function LogScreen({
    * before v2.2: order derived from the sets.
    */
   async function persistOrder(next: string[]) {
-    setOrder(next)
+    // Deduped on the way in. `addToBoard` reads `order` from its closure, so
+    // two sets committed for a new exercise in quick succession can both see it
+    // absent and both append it. `mergeOrder` tolerates that on read; the
+    // column should not have to.
+    const deduped = [...new Set(next)]
+    setOrder(deduped)
     if (!workout || orderUnavailable.current) return
     const { error: writeError } = await supabase
       .from('workouts')
-      .update({ exercise_order: next })
+      .update({ exercise_order: deduped })
       .eq('id', workout.id)
     if (writeError) orderUnavailable.current = true
   }
