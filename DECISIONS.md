@@ -2258,3 +2258,97 @@ reads as an app defect.
 The general lesson is the reason this entry exists: **lint sees syntax,
 typecheck sees types, tests see functions, and none of them can see a
 screen.** Every UI phase from here ends with somebody looking at pixels.
+
+## 2026-08-07 — The plans get a design thesis, and two pillars that were missing
+
+Ameen asked for a full evaluation of the plans against one goal: be
+better than Hevy on design and user experience, leveraging the AI
+vision. Four changes, and the reasoning behind each.
+
+**1. A design thesis, because "better UX" is not a plan.** Hevy is
+_reactive_ — an excellent clipboard that waits to be told everything,
+refined over seven years. Out-polishing that on its own axis is the
+race we lose. Wazn is _anticipatory_: the app should already know what
+you are about to do, and the interface's job is to make accepting that
+cheaper than typing it. Five levels (memory → prediction → explanation
+→ inquiry → adaptation) now organise the whole offense plan, and the
+law that keeps them honest is written down: **an anticipation must be
+cheaper to accept than to produce by hand, and never more expensive to
+override than to accept.** One tap either way. A guess about someone's
+training is wrong often enough that bullying them toward it would be
+fatal.
+
+**2. Pillar E — AI-native UX.** The earlier draft under-served Ameen's
+actual vision by treating AI as content inside existing screens. The
+mistake to avoid is AI arriving as a tab: a chat box is an admission
+the app does not know what you need and would like you to type it.
+Two real ideas came out of the evaluation:
+
+- **The rest canvas.** 60–180 seconds per set, 20–60 minutes per
+  workout, is the largest unclaimed attention surface in the category,
+  and every tracker spends it on a countdown. Wazn already owns the
+  timer that governs it. This deliberately tests §2.1 ("the logging
+  flow is sacred"), so the rules are strict and written into the plan —
+  passive, silent, no input, vanishes when the user reaches for the
+  next set, and dies on a single "this is noise" from a tester.
+- **Adaptive information architecture.** Ordering adapts to what
+  matters now; **presence never does**, and the hot path never adapts
+  at all. An interface where controls come and go cannot be learned,
+  and a lifter mid-workout is the last person who should be
+  re-learning anything. Both are now in §13's do-not-build list as
+  fences around the idea.
+
+**3. Pillar F — Distribution, which neither plan had a word about.**
+Reading the comparison document properly (see the entry below on
+having not read it) surfaced that Hevy's growth engine is **SEO, 725k
+monthly visits**, and that Hevy offers **no competitor import**. So:
+productize the importer that already exists — "bring your history from
+Hevy" turns three years of logged sets from the reason to stay into
+the reason to leave — and build Arabic exercise pages from the
+catalogue already imported. The second is the only compounding
+zero-marginal-cost channel a one-person product has.
+
+**4. Releases replace phase numbers as the unit of shipping.** A phase
+ID is backlog bookkeeping; a release is what a tester experiences, and
+one is only worth shipping if it changes a sentence they would say
+unprompted. R1 Finished → R2 The board → R3 Trust → **R4 It knows** →
+R5 Switch → R6 Ask it → R7 Programs → R8 Crew → R9 Native → R10 Found.
+**R4 is where the lead opens** — the first release Hevy has no answer
+to, and cheap because the deterministic spine already exists. R1–R3 are
+still just becoming as good as Hevy.
+
+Also added: **U7 "Feel"** in the parity plan (latency budgets as
+measured numbers — a precached PWA can beat a native cold start, and
+that is a checkable claim rather than a consolation; plus a four-token
+motion system, because restraint by absence reads as cheapness), and
+**§4B, the bar every phase is held to** — five questions a reviewer can
+put to any output.
+
+## 2026-08-07 — The comparison document was cited before it was read
+
+Worth recording as a process failure, not just a correction. The first
+extraction of `Wazn_vs_Hevy_Comparison.docx` was
+`pandoc ... 2>/dev/null | head -300 || python3 ... || echo FAILED`. A
+pipeline's exit status is its **last** command, so `head` succeeding
+meant the `||` fallbacks never ran and the failure printed nothing at
+all. Both plan documents then listed the docx as a source, and the
+parity plan asserted it was "out of date in Wazn's favor" — a claim
+inferred from `WAZN_PLAN.md`, not read from the document.
+
+Reading it properly (unzip the .docx, strip the XML) changed two
+things that mattered: Hevy's growth engine is **SEO at 725k monthly
+visits**, and Hevy offers **no competitor import**. Neither plan had a
+word about distribution before that; both are now Pillar F. The rest
+of the document broadly agreed with what had been inferred, which is
+luck rather than method.
+
+Two rules from this, both cheap: **never put a fallible command
+upstream of `head` in a `||` chain** — capture the exit status first
+or drop the pipe — and **a source is not a source until its contents
+appear in the work**. The parity plan's Sources line now says exactly
+when the docx entered.
+
+This is the second time in one day that an unverified assumption
+reached a committed document (the first: the muscle-balance chart
+listed as a working differentiator when it had never rendered). Both
+were caught by going and looking. That is the pattern worth keeping.
