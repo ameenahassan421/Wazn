@@ -1,0 +1,1124 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Wazn · Design v2.2 — the workout overview</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500&family=IBM+Plex+Sans:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      /* ============ The real typeface, from the repo ============ */
+      /* The CDN link above is for anyone opening this file outside the repo.
+         These rules point at the self-hosted woff2 the app itself ships, so
+         the handoff renders in IBM Plex with no network at all — which is how
+         it gets opened in a sandbox, on a plane, or in five years. A design
+         reference that silently falls back to the system sans is a reference
+         to a different design: the fallback is wider, and the first render of
+         this file truncated exercise names that fit fine in Plex. */
+      @font-face {
+        font-family: 'IBM Plex Sans';
+        src: url('../../public/fonts/ibm-plex-sans-latin.woff2') format('woff2');
+        font-weight: 100 700;
+        font-display: swap;
+      }
+      @font-face {
+        font-family: 'IBM Plex Mono';
+        src: url('../../public/fonts/ibm-plex-mono-500-latin.woff2') format('woff2');
+        font-weight: 500;
+        font-display: swap;
+      }
+      @font-face {
+        font-family: 'IBM Plex Mono';
+        src: url('../../public/fonts/ibm-plex-mono-600-latin.woff2') format('woff2');
+        font-weight: 600;
+        font-display: swap;
+      }
+
+      /* ============ Loaded Ink tokens (v2, unchanged) ============ */
+      :root {
+        --ink: #0c0b0a;
+        --surface: #161513;
+        --raised: #1f1d1a;
+        --line: #2a2825;
+        --chalk: #ecebe8;
+        --iron: #f0b429;
+        --accent-ink: #1a1200;
+        --a300: #f8dc9b;
+        --a700: #977018;
+        --a800: #664c11;
+        --n2: #b2aea6;
+        --n3: #8d8983;
+        --n5: #595650;
+        --n6: #3f3d38;
+        --n7: #292724;
+        --hair: rgba(236, 235, 232, 0.14);
+        --rule: rgba(236, 235, 232, 0.08);
+        --toplight: rgba(236, 235, 232, 0.04);
+        --tint7: rgba(240, 180, 41, 0.07);
+        --tint10: rgba(240, 180, 41, 0.1);
+      }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      html {
+        background: #080807;
+      }
+      body {
+        font-family: 'IBM Plex Sans', system-ui, sans-serif;
+        color: var(--chalk);
+        background: #080807;
+        padding: 64px 40px 120px;
+      }
+      .knurl {
+        background:
+          repeating-linear-gradient(
+            45deg,
+            rgba(240, 180, 41, 0.55) 0 1px,
+            transparent 1px 5px
+          ),
+          repeating-linear-gradient(
+            -45deg,
+            rgba(240, 180, 41, 0.55) 0 1px,
+            transparent 1px 5px
+          );
+      }
+      .kick {
+        font:
+          500 11px/1.2 'IBM Plex Mono',
+          monospace;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--n3);
+      }
+      .tnum {
+        font-variant-numeric: tabular-nums;
+      }
+
+      /* ============ doc chrome ============ */
+      .doc-head {
+        max-width: 1200px;
+        margin: 0 auto 56px;
+      }
+      .doc-head h1 {
+        font-size: 34px;
+        font-weight: 600;
+        letter-spacing: -0.01em;
+      }
+      .doc-head .sub {
+        color: var(--n2);
+        font-size: 15px;
+        margin-top: 10px;
+        max-width: 760px;
+        line-height: 1.55;
+      }
+      .doc-head .band {
+        height: 8px;
+        width: 220px;
+        margin-top: 22px;
+        border-radius: 2px;
+      }
+      .sec {
+        max-width: 1200px;
+        margin: 0 auto 96px;
+      }
+      .sec-head {
+        display: flex;
+        align-items: baseline;
+        gap: 14px;
+        margin-bottom: 8px;
+      }
+      .sec-head .no {
+        font:
+          500 12px 'IBM Plex Mono',
+          monospace;
+        color: var(--iron);
+        letter-spacing: 0.14em;
+      }
+      .sec-head h2 {
+        font-size: 22px;
+        font-weight: 600;
+      }
+      .sec-sub {
+        color: var(--n2);
+        font-size: 14px;
+        line-height: 1.6;
+        max-width: 760px;
+        margin-bottom: 30px;
+      }
+      .row {
+        display: flex;
+        gap: 42px;
+        align-items: flex-start;
+        flex-wrap: wrap;
+      }
+      .spec {
+        flex: 1 1 300px;
+        min-width: 280px;
+        max-width: 440px;
+      }
+      .spec h4 {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--chalk);
+        margin: 20px 0 6px;
+      }
+      .spec h4:first-child {
+        margin-top: 2px;
+      }
+      .spec p {
+        font-size: 13px;
+        line-height: 1.6;
+        color: var(--n2);
+        margin-bottom: 8px;
+      }
+      .spec code {
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 11.5px;
+        color: var(--a300);
+        background: var(--n7);
+        padding: 1px 5px;
+        border-radius: 4px;
+      }
+      .spec .warn {
+        border-inline-start: 2px solid var(--a700);
+        padding-inline-start: 12px;
+        margin: 12px 0;
+      }
+
+      /* ============ phone frame ============ */
+      .phone {
+        width: 390px;
+        flex: 0 0 390px;
+        background: var(--ink);
+        border-radius: 22px;
+        box-shadow:
+          0 0 0 1px var(--line),
+          inset 0 1px 0 var(--toplight);
+        overflow: hidden;
+      }
+      .hdr {
+        background: linear-gradient(180deg, #131210, #0c0b0a);
+        padding: 14px 18px 12px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .hdr .t {
+        font-size: 17px;
+        font-weight: 600;
+      }
+      .hdr .side {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+      }
+      .unit {
+        font: 500 13px/1 'IBM Plex Sans';
+        color: var(--n2);
+        border: 1px solid var(--hair);
+        border-radius: 8px;
+        padding: 9px 12px;
+      }
+      .scr {
+        padding: 14px 18px 8px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+      .tabbar {
+        display: flex;
+        border-top: 1px solid rgba(236, 235, 232, 0.09);
+        height: 58px;
+      }
+      .tab {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
+        font-size: 11px;
+        color: var(--n3);
+      }
+      .tab.on {
+        color: var(--iron);
+      }
+      .tab .g {
+        font-size: 15px;
+        line-height: 1;
+      }
+
+      /* ============ the overview ============ */
+      .block {
+        background: var(--surface);
+        border-radius: 14px;
+        box-shadow:
+          0 0 0 1px var(--line),
+          inset 0 1px 0 var(--toplight);
+        overflow: hidden;
+      }
+      .bhead {
+        display: flex;
+        align-items: center;
+        height: 52px;
+        padding-inline-end: 4px;
+      }
+      .grip {
+        width: 44px;
+        height: 52px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--n5);
+        font-size: 15px;
+        letter-spacing: 1px;
+        flex: 0 0 44px;
+      }
+      .bname {
+        flex: 1;
+        min-width: 0;
+        font-size: 19px;
+        font-weight: 600;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .bmeta {
+        display: flex;
+        align-items: baseline;
+        gap: 8px;
+        padding: 0 18px 10px 44px;
+        margin-top: -6px;
+      }
+      .bmeta .p {
+        font:
+          500 11px 'IBM Plex Mono',
+          monospace;
+        color: var(--n3);
+        letter-spacing: 0.06em;
+        flex: 0 0 auto;
+      }
+      .bmeta .p.full {
+        color: var(--iron);
+      }
+      .bmeta .n {
+        font-size: 13px;
+        color: var(--n3);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .bmore {
+        width: 48px;
+        height: 52px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--n3);
+        font-size: 17px;
+        flex: 0 0 48px;
+      }
+
+      /* --- the set row: 56px, four regions --- */
+      .set {
+        display: flex;
+        align-items: center;
+        height: 56px;
+        margin: 0 8px 8px;
+        border-radius: 8px;
+        padding-inline-start: 6px;
+      }
+      .set .i {
+        width: 28px;
+        flex: 0 0 28px;
+        font:
+          500 11px 'IBM Plex Mono',
+          monospace;
+        color: var(--n3);
+        text-align: center;
+      }
+      .set .mid {
+        flex: 1;
+        min-width: 0;
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 10px;
+        padding-inline-end: 10px;
+      }
+      .set .v {
+        font-size: 24px;
+        font-weight: 500;
+        line-height: 1.15;
+        font-variant-numeric: tabular-nums;
+        white-space: nowrap;
+      }
+      .set .prev {
+        font:
+          500 11px 'IBM Plex Mono',
+          monospace;
+        color: var(--n3);
+        white-space: nowrap;
+      }
+      .chk {
+        width: 56px;
+        height: 56px;
+        flex: 0 0 56px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .box {
+        width: 30px;
+        height: 30px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 15px;
+        line-height: 1;
+      }
+
+      /* ghost — planned, not done */
+      .set.ghost {
+        border: 1px dashed var(--line);
+      }
+      .set.ghost .v {
+        color: var(--n5);
+      }
+      .set.ghost .prev {
+        color: var(--n6);
+      }
+      .set.ghost .box {
+        border: 1px solid var(--line);
+        color: transparent;
+      }
+
+      /* committed — it happened */
+      .set.done {
+        background: var(--raised);
+        box-shadow:
+          0 0 0 1px var(--line),
+          inset 0 1px 0 var(--toplight);
+      }
+      .set.done .v {
+        color: var(--chalk);
+      }
+      .set.done .box {
+        background: var(--iron);
+        color: var(--accent-ink);
+        font-weight: 600;
+      }
+      .set.done .prev.up {
+        color: var(--iron);
+      }
+
+      /* editing — focused view open on this row */
+      .set.editing {
+        background: var(--raised);
+        box-shadow: 0 0 0 1px var(--iron);
+      }
+      .set.editing .v {
+        color: var(--chalk);
+      }
+      .set.editing .box {
+        border: 1px solid var(--iron);
+        color: transparent;
+      }
+
+      /* PR */
+      /* Matches the app's `tag-pr`: dark ink on an amber field, knurl behind
+         rather than across. The first draft of this file put knurl straight
+         under 10px letters and the badge was unreadable — texture must never
+         be asked to carry legibility. */
+      .pr {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        height: 22px;
+        padding: 0 8px;
+        border-radius: 5px;
+        background-color: var(--iron);
+        background-blend-mode: overlay;
+        font:
+          600 11px 'IBM Plex Mono',
+          monospace;
+        letter-spacing: 0.12em;
+        color: var(--accent-ink);
+        margin-inline-start: 10px;
+        vertical-align: middle;
+      }
+      .addset {
+        display: flex;
+        align-items: center;
+        height: 48px;
+        margin: 0 8px 8px;
+        padding-inline-start: 40px;
+        font-size: 13px;
+        color: var(--n3);
+      }
+
+      /* superset rail */
+      .ss {
+        position: relative;
+        padding-inline-start: 10px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+      .ss::before {
+        content: '';
+        position: absolute;
+        inset-block: 0;
+        inset-inline-start: 0;
+        width: 2px;
+        border-radius: 1px;
+        background: var(--iron);
+      }
+      .sslabel {
+        font:
+          500 11px 'IBM Plex Mono',
+          monospace;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--a700);
+        padding-inline-start: 12px;
+      }
+
+      /* timer bar + finish row */
+      .timer {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        height: 56px;
+        padding: 0 18px;
+        background: var(--surface);
+        border-top: 1px solid var(--rule);
+      }
+      .timer .ring {
+        width: 26px;
+        height: 26px;
+        border-radius: 50%;
+        border: 2px solid var(--a800);
+        border-block-start-color: var(--iron);
+        flex: 0 0 26px;
+      }
+      .timer .t {
+        font-size: 24px;
+        font-weight: 500;
+        font-variant-numeric: tabular-nums;
+      }
+      .timer .adj {
+        margin-inline-start: auto;
+        display: flex;
+        gap: 8px;
+      }
+      .timer .adj span {
+        border: 1px solid var(--hair);
+        border-radius: 8px;
+        padding: 7px 10px;
+        font-size: 12px;
+        color: var(--n2);
+      }
+      .hero {
+        height: 58px;
+        margin: 4px 8px 10px;
+        border-radius: 12px;
+        background: var(--iron);
+        color: var(--accent-ink);
+        font-size: 16px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .skiprow {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        height: 48px;
+        padding: 0 6px 0 12px;
+      }
+      .tag {
+        font:
+          500 10px 'IBM Plex Mono',
+          monospace;
+        letter-spacing: 0.12em;
+        color: var(--n5);
+        border: 1px solid var(--n6);
+        border-radius: 4px;
+        padding: 3px 7px;
+      }
+      .cap {
+        font:
+          500 11px 'IBM Plex Mono',
+          monospace;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--n5);
+        margin: 26px 0 8px;
+      }
+      .legend {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        margin-bottom: 10px;
+        font-size: 12px;
+        color: var(--n2);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="doc-head">
+      <h1>Wazn · Design v2.2 — the workout overview</h1>
+      <p class="sub">
+        The structural phase. Hevy's active workout is a table; Wazn's is a corridor —
+        one exercise per screen, a button that <em>creates</em> a row. The cause is a
+        rule that is correct and stays: sets are never pre-inserted, because a set row
+        means it happened. v2.2 stops that rule from dictating the interface. Planned
+        rows are rendered client-side and become a real INSERT at the moment of commit.
+        Every token, radius, motion and voice rule from v2 applies unchanged — no new
+        colour, no new texture, no new motion token.
+      </p>
+      <div class="band knurl"></div>
+    </div>
+
+    <!-- ================= 01 THE OVERVIEW ================= -->
+    <section class="sec">
+      <div class="sec-head">
+        <span class="no">01</span>
+        <h2>The overview — mid-workout</h2>
+      </div>
+      <p class="sec-sub">
+        The spine of the session. Every block visible, every planned row rendered,
+        committed rows visibly distinct from ghosts. This screen's job is the ledger,
+        not the keyboard — values are read here and typed in the focused view, which
+        survives unchanged as the zoom state.
+      </p>
+      <div class="row">
+        <div class="phone">
+          <div class="hdr">
+            <span class="t">Upper A</span>
+            <span class="side">
+              <span class="kick tnum" style="color: var(--n2)">48:12</span>
+              <span class="unit">kg</span>
+            </span>
+          </div>
+          <div class="scr">
+            <div class="block">
+              <div class="bhead">
+                <span class="grip">▤</span>
+                <span class="bname">Bench Press (Barbell)</span>
+                <span class="bmore">⋮</span>
+              </div>
+              <div class="bmeta">
+                <span class="p tnum">3 / 4</span>
+                <span class="n">· seat position 4</span>
+              </div>
+              <div class="set done">
+                <span class="i tnum">1</span>
+                <span class="mid"
+                  ><span class="v">102.5 × 8</span
+                  ><span class="prev tnum">↺ 100 × 8</span></span
+                >
+                <span class="chk"><span class="box">✓</span></span>
+              </div>
+              <div class="set done">
+                <span class="i tnum">2</span>
+                <span class="mid"
+                  ><span class="v">102.5 × 8</span
+                  ><span class="prev tnum up">▲ +2.5</span></span
+                >
+                <span class="chk"><span class="box">✓</span></span>
+              </div>
+              <div class="set done">
+                <span class="i tnum">3</span>
+                <span class="mid"
+                  ><span class="v">102.5 × 7</span
+                  ><span class="prev tnum">↺ 100 × 8</span></span
+                >
+                <span class="chk"><span class="box">✓</span></span>
+              </div>
+              <div class="set ghost">
+                <span class="i tnum">4</span>
+                <span class="mid"
+                  ><span class="v">102.5 × 8</span
+                  ><span class="prev tnum">↺ 100 × 8</span></span
+                >
+                <span class="chk"><span class="box">✓</span></span>
+              </div>
+            </div>
+
+            <div class="block">
+              <div class="bhead">
+                <span class="grip">▤</span>
+                <span class="bname">Bent Over Row (Barbell)</span>
+                <span class="bmore">⋮</span>
+              </div>
+              <div class="bmeta"><span class="p tnum">0 / 4</span></div>
+              <div class="set ghost">
+                <span class="i tnum">1</span>
+                <span class="mid"
+                  ><span class="v">70 × 10</span
+                  ><span class="prev tnum">↺ 70 × 10</span></span
+                >
+                <span class="chk"><span class="box">✓</span></span>
+              </div>
+              <div class="set ghost">
+                <span class="i tnum">2</span>
+                <span class="mid"
+                  ><span class="v">70 × 10</span
+                  ><span class="prev tnum">↺ 70 × 9</span></span
+                >
+                <span class="chk"><span class="box">✓</span></span>
+              </div>
+            </div>
+          </div>
+          <div class="timer">
+            <span class="ring"></span>
+            <span class="t tnum">1:24</span>
+            <span class="adj"><span>−15</span><span>+15</span></span>
+          </div>
+          <div class="tabbar">
+            <div class="tab on"><span class="g">⊢⊣</span>Log</div>
+            <div class="tab"><span class="g">◷</span>History</div>
+            <div class="tab"><span class="g">↗</span>Progress</div>
+            <div class="tab"><span class="g">☆</span>Coach</div>
+            <div class="tab"><span class="g">◎◎</span>Friends</div>
+          </div>
+        </div>
+
+        <div class="spec">
+          <h4>One row, two targets</h4>
+          <p>
+            Tap the <strong>check</strong> → commit exactly as shown. The modal case,
+            <strong>1 tap</strong>, unchanged from today and required by GATE U2. Tap
+            the <strong>values</strong> → open the focused view at that row, where the
+            30px input, ± steppers, plate calculator and warm-up ramp live. A table cell
+            would have regressed all four; the protect list forbids that.
+          </p>
+          <h4>Row: 56px, four regions</h4>
+          <p>
+            <code>28px</code> index (mono 11) · <code>~270px</code> one tap target
+            holding value and previous · <code>56px</code> check at
+            <code>inline-end</code>, nearest the thumb and correct in RTL by
+            construction.
+          </p>
+          <h4>Values are 24px</h4>
+          <p>
+            <code>--text-figure</code> (24/500 tabular) satisfies §2.4's numeric floor
+            with 16px of room inside a 56px row. The 20px multi-set exception is not
+            needed and is not claimed.
+          </p>
+          <h4>The previous ghost is the retention engine</h4>
+          <p>
+            Mono 11, muted, trailing. Seeing last time on every row turns a session into
+            a game against yourself, and it costs a query the app already makes. On a
+            committed row it becomes the comparison — <code>▲ +2.5</code> in amber when
+            beaten, <code>→</code> muted when matched.
+            <strong>Never red when down</strong>: a lighter day is not a failure, and
+            §2.4 has no red.
+          </p>
+          <h4>Block header</h4>
+          <p>
+            Grip (44×56, the only place a drag starts) · name 19/600 truncating to one
+            line · <code>3 / 4</code> committed-over-planned, the only number that
+            answers "am I done here" · <code>⋮</code> for everything that is not
+            logging. The note line is the second half of O9, read from
+            <code>exercise_notes</code> — a table that has existed since migration 0008
+            and been read by nothing.
+          </p>
+          <h4>Timer coexistence</h4>
+          <p>
+            Sticky, 56px, above the tab bar, never a modal, never covering a row. The
+            scroll container carries ~118px of bottom padding. On commit the overview
+            scrolls <strong>the next ghost into the thumb band</strong> — the next thing
+            you touch arrives under the thumb that just committed.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= 02 ROW STATES ================= -->
+    <section class="sec">
+      <div class="sec-head">
+        <span class="no">02</span>
+        <h2>The row-state ladder</h2>
+      </div>
+      <p class="sec-sub">
+        Four states, separated by value contrast, border style and fill — never by hue
+        alone. One accent, no red. Dashed already means "not yet real" in this system:
+        v2.1 gave the routine builder a dashed card for exactly that reason, and v2.2
+        reuses the meaning rather than inventing one.
+      </p>
+      <div class="row">
+        <div class="phone">
+          <div class="scr" style="padding-top: 22px">
+            <div class="cap">Ghost — planned, has not happened</div>
+            <div class="block">
+              <div class="set ghost">
+                <span class="i tnum">4</span>
+                <span class="mid"
+                  ><span class="v">102.5 × 8</span
+                  ><span class="prev tnum">↺ 100 × 8</span></span
+                >
+                <span class="chk"><span class="box">✓</span></span>
+              </div>
+            </div>
+
+            <div class="cap">Committed — it happened</div>
+            <div class="block">
+              <div class="set done">
+                <span class="i tnum">3</span>
+                <span class="mid"
+                  ><span class="v">102.5 × 8</span
+                  ><span class="prev tnum up">▲ +2.5</span></span
+                >
+                <span class="chk"><span class="box">✓</span></span>
+              </div>
+            </div>
+
+            <div class="cap">Committed + PR</div>
+            <div class="block">
+              <div class="set done">
+                <span class="i tnum">3</span>
+                <span class="mid"
+                  ><span class="v"
+                    >107.5 × 5<span class="pr knurl">PR</span></span
+                  ></span
+                >
+                <span class="chk"><span class="box">✓</span></span>
+              </div>
+            </div>
+
+            <div class="cap">Editing — focused view open on this row</div>
+            <div class="block">
+              <div class="set editing">
+                <span class="i tnum">4</span>
+                <span class="mid"
+                  ><span class="v">102.5 × 8</span
+                  ><span class="prev tnum">↺ 100 × 8</span></span
+                >
+                <span class="chk"><span class="box">✓</span></span>
+              </div>
+            </div>
+
+            <div class="cap">Past the plan — working beyond the routine</div>
+            <div class="block">
+              <div class="set done">
+                <span class="i tnum">4</span>
+                <span class="mid"><span class="v">102.5 × 8</span></span>
+                <span class="chk"><span class="box">✓</span></span>
+              </div>
+              <div class="addset">+ Add set</div>
+            </div>
+
+            <div class="cap">Blank ghost — no history for this lift</div>
+            <div class="block">
+              <div class="set ghost">
+                <span class="i tnum">1</span>
+                <span class="mid"
+                  ><span class="v" style="color: var(--n6)">— × 8</span></span
+                >
+                <span class="chk"><span class="box">✓</span></span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="spec">
+          <h4>Ghost</h4>
+          <p>
+            Values <code>--n5</code>, ring <strong>1px dashed</strong>, check an outline
+            square. Client state only — it has never been in the database and is not in
+            it now.
+          </p>
+          <h4>Committed</h4>
+          <p>
+            Values full chalk, ring solid hairline + inset top light, check
+            <strong>filled amber</strong> with the ink glyph. The transition is the
+            existing 90ms <code>set-commit</code> rise (<code>--motion-instant</code>,
+            "did my set save?"). No new motion token.
+          </p>
+          <h4>Editing</h4>
+          <p>
+            1px solid amber ring. The only amber border on the screen, so the row you
+            are typing into is findable without reading anything.
+          </p>
+          <h4>Where ghosts come from</h4>
+          <p>
+            <strong>Routine active</strong> — the routine gives row count and rep
+            target; the previous session gives the weight, because a routine stores what
+            to do and only history knows what you lifted. <strong>Freestyle</strong> —
+            previous session gives both, which is what draft-seeding already does.
+            <strong>Neither</strong> — one blank ghost; <code>— × 8</code> is honest, an
+            invented weight would not be.
+          </p>
+          <h4>Beyond the plan</h4>
+          <p>
+            When every planned row is committed there is no celebration and no modal
+            (§2.1). The header's <code>4 / 4</code> is the whole signal, and a muted
+            "Add set" appears — working past the plan is normal and should cost one tap.
+          </p>
+          <div class="warn">
+            <p style="margin: 0">
+              <strong>No "complete all" button.</strong> It would let someone log a
+              workout they did not do — the same lie as pre-inserted sets wearing a
+              different hat.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= 03 SUPERSETS + REORDER ================= -->
+    <section class="sec">
+      <div class="sec-head">
+        <span class="no">03</span>
+        <h2>Superset rails and reordering</h2>
+      </div>
+      <p class="sec-sub">
+        Wazn's superset semantics are already better than Hevy's default — alternation
+        picks whoever has the fewest sets logged, and rest is one timer per round rather
+        than per set. Today that is correct and completely invisible. The rail is how it
+        becomes visible.
+      </p>
+      <div class="row">
+        <div class="phone">
+          <div class="scr" style="padding-top: 22px">
+            <div class="sslabel">Superset · round 2 of 3</div>
+            <div class="ss">
+              <div class="block">
+                <div class="bhead">
+                  <span class="grip">▤</span>
+                  <span class="bname">Lat Pulldown (Cable)</span>
+                  <span class="bmore">⋮</span>
+                </div>
+                <div class="bmeta"><span class="p tnum">2 / 3</span></div>
+                <div class="set done">
+                  <span class="i tnum">2</span>
+                  <span class="mid"
+                    ><span class="v">64 × 12</span
+                    ><span class="prev tnum">↺ 64 × 12</span></span
+                  >
+                  <span class="chk"><span class="box">✓</span></span>
+                </div>
+                <div class="set ghost">
+                  <span class="i tnum">3</span>
+                  <span class="mid"
+                    ><span class="v">64 × 12</span
+                    ><span class="prev tnum">↺ 64 × 11</span></span
+                  >
+                  <span class="chk"><span class="box">✓</span></span>
+                </div>
+              </div>
+              <div class="block">
+                <div class="bhead">
+                  <span class="grip">▤</span>
+                  <span class="bname">Face Pull (Cable)</span>
+                  <span class="bmore">⋮</span>
+                </div>
+                <div class="bmeta"><span class="p tnum">1 / 3</span></div>
+                <div class="set ghost">
+                  <span class="i tnum">2</span>
+                  <span class="mid"
+                    ><span class="v">22.5 × 15</span
+                    ><span class="prev tnum">↺ 22.5 × 15</span></span
+                  >
+                  <span class="chk"><span class="box">✓</span></span>
+                </div>
+              </div>
+            </div>
+
+            <div class="cap">Reordering — block lifted</div>
+            <div class="block" style="background: var(--raised); opacity: 0.96">
+              <div class="bhead">
+                <span class="grip" style="color: var(--iron)">▤</span>
+                <span class="bname">Overhead Press (Barbell)</span>
+                <span class="bmore">⋮</span>
+              </div>
+              <div class="bmeta"><span class="p tnum">0 / 3</span></div>
+            </div>
+            <div
+              class="block"
+              style="
+                height: 56px;
+                background: transparent;
+                box-shadow: none;
+                border: 1px dashed var(--line);
+              "
+            ></div>
+          </div>
+        </div>
+
+        <div class="spec">
+          <h4>The rail</h4>
+          <p>
+            2px solid amber on the <code>inline-start</code> edge, spanning from the
+            first block's header to the last block's final row.
+            <strong>Not knurl</strong> — §2.4 reserves knurl for thin bands and the PR
+            badge. A rail is structure, not texture.
+          </p>
+          <h4>Nothing below the glass changes</h4>
+          <p>
+            Alternation, round-rest and the group id on
+            <code>workout_sets.superset_group</code> are untouched. The rail is
+            presentation of behaviour that already exists and has never been drawn.
+          </p>
+          <h4>Reorder: grip only</h4>
+          <p>
+            Long-press the grip (250ms), then drag. Because the handle is explicit, a
+            drag anywhere else in the block still scrolls — which is the failure mode
+            that makes hand-rolled reordering feel broken. Hand-rolled pointer events
+            first; <code>@dnd-kit/core</code> (~10 KiB) only if it fights scroll, and
+            only with a DECISIONS.md entry naming the size. Precache ceiling is 600 KiB
+            and currently sits at 571.
+          </p>
+          <div class="warn">
+            <p style="margin: 0 0 6px">
+              <strong>Order must survive a reload.</strong> A reordering a lock screen
+              forgets is worse than none — the trust ladder starts with "in-progress
+              workout persists". Where it lives is U2b's call.
+            </p>
+            <p style="margin: 0">
+              One warning for whoever implements it:
+              <strong>do not name the column <code>position</code></strong
+              >. It is a reserved word, and migration 0007 shipped with one and failed
+              to parse in its entirety.
+            </p>
+          </div>
+          <h4>Blocks reorder, sets do not</h4>
+          <p>Set order is chronological fact, not preference.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= 04 FINISH + SKIPPED ================= -->
+    <section class="sec">
+      <div class="sec-head">
+        <span class="no">04</span>
+        <h2>Finish — where "skipped" is allowed to exist</h2>
+      </div>
+      <p class="sec-sub">
+        Mid-workout there is no such thing as a skipped exercise; there is only
+        not-yet-done. Implying otherwise would be the app scolding a lifter who is still
+        lifting. Skipped exists at exactly one moment — Finish — where routine adherence
+        becomes visible without becoming a lecture.
+      </p>
+      <div class="row">
+        <div class="phone">
+          <div class="hdr">
+            <span class="t">Finish</span>
+            <span class="side"><span class="unit">kg</span></span>
+          </div>
+          <div class="scr">
+            <div class="block" style="padding: 14px 14px 6px">
+              <span class="kick">Upper A · 52 min</span>
+              <div
+                style="
+                  display: flex;
+                  justify-content: space-between;
+                  margin: 14px 0 10px;
+                "
+              >
+                <div>
+                  <div class="v tnum" style="font-size: 27px; font-weight: 600">
+                    7,340
+                  </div>
+                  <div class="kick" style="margin-top: 2px">Volume</div>
+                </div>
+                <div>
+                  <div class="v tnum" style="font-size: 27px; font-weight: 600">18</div>
+                  <div class="kick" style="margin-top: 2px">Sets</div>
+                </div>
+                <div>
+                  <div
+                    class="v tnum"
+                    style="font-size: 27px; font-weight: 600; color: var(--iron)"
+                  >
+                    1
+                  </div>
+                  <div class="kick" style="margin-top: 2px">PR</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="block" style="padding: 12px 8px 4px">
+              <div class="kick" style="padding-inline-start: 6px">Not done today</div>
+              <div class="skiprow">
+                <span style="font-size: 15px; color: var(--n2)"
+                  >Overhead Press (Barbell)</span
+                >
+                <span class="tag">SKIPPED</span>
+              </div>
+              <div class="skiprow">
+                <span style="font-size: 15px; color: var(--n2)">Face Pull (Cable)</span>
+                <span class="tag">SKIPPED</span>
+              </div>
+            </div>
+
+            <div class="hero">Finish workout</div>
+            <div
+              style="
+                text-align: center;
+                font-size: 13px;
+                color: var(--n3);
+                padding-bottom: 6px;
+              "
+            >
+              Update Upper A with today's changes?
+            </div>
+          </div>
+          <div class="tabbar">
+            <div class="tab on"><span class="g">⊢⊣</span>Log</div>
+            <div class="tab"><span class="g">◷</span>History</div>
+            <div class="tab"><span class="g">↗</span>Progress</div>
+            <div class="tab"><span class="g">☆</span>Coach</div>
+            <div class="tab"><span class="g">◎◎</span>Friends</div>
+          </div>
+        </div>
+
+        <div class="spec">
+          <h4>Named, not scored</h4>
+          <p>
+            A block with zero committed sets is listed under "Not done today" with a
+            muted <code>SKIPPED</code> tag. No count, no percentage, no streak
+            consequence. The workout still saves. Never guilt.
+          </p>
+          <h4>Why a prompt is allowed here</h4>
+          <p>
+            §2.1 protects the <em>logging flow</em>. Finish is the end of it, not the
+            middle, so the routine-update question ("update Upper A with today's
+            changes?") is permitted here and nowhere else. It rides the existing armed
+            finish row.
+          </p>
+          <h4>States not drawn here</h4>
+          <p>
+            <strong>Offline</strong> — U3's problem, but the overview must not lie
+            meanwhile: a committed row that has not reached the server renders
+            committed, because it happened. The screen is shaped so optimistic commit is
+            a drop-in when U3 lands. <strong>Reduced motion</strong> — all four tokens
+            collapse to 0.01ms; the commit rise becomes an instant state change and the
+            reorder lift an instant swap. Nothing here needs motion to be legible.
+            <strong>Long names</strong> truncate to one line.
+            <strong>10+ sets</strong> get no inner scroll container — a scroll inside a
+            scroll is a rage moment with one hand.
+          </p>
+          <h4>RTL</h4>
+          <p>
+            Logical properties throughout, so this is a flip and not a rewrite. Grip and
+            rail at <code>inline-start</code>, check at <code>inline-end</code>. Figures
+            stay Latin tabular digits in isolated <code>dir="ltr"</code> spans. The
+            <code>↺</code> previous glyph is directional and does flip; the clock and
+            trend icons do not.
+          </p>
+        </div>
+      </div>
+    </section>
+  </body>
+</html>
