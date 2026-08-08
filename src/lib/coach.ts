@@ -147,6 +147,27 @@ async function readErrorBody(
 }
 
 /**
+ * Is this actually a block, or merely truthy?
+ *
+ * Both RPCs return a single `jsonb` object. Anything else — an array, a
+ * string, a number — means the call did not reach the function it was aimed
+ * at, and the honest response is "no briefing" rather than an attempt to read
+ * fields off it.
+ *
+ * **This is not defensive-programming garnish; the smoke suite caught it.**
+ * An RPC that does not exist yet returns `[]` through some stubs and through
+ * PostgREST in some shapes, `[]` is truthy, and `block.low_bands.length` on an
+ * array threw — which took down the Log screen behind the error boundary and
+ * left no Start button on the screen the app opens on. Exactly the failure the
+ * whole two-stage draw exists to make impossible, arriving through the one
+ * door nobody had checked: the shape of the answer, rather than the presence
+ * of an error.
+ */
+function isBlock(value: unknown): value is Record<string, unknown> {
+  return !!value && typeof value === 'object' && !Array.isArray(value)
+}
+
+/**
  * The deterministic block, straight from SQL.
  *
  * Returns null rather than throwing on ANY failure, including the function not
@@ -156,8 +177,8 @@ async function readErrorBody(
  */
 export async function fetchBriefBlock(): Promise<BriefBlock | null> {
   const { data, error } = await supabase.rpc('session_brief')
-  if (error || !data) return null
-  return data as BriefBlock
+  if (error || !isBlock(data)) return null
+  return data as unknown as BriefBlock
 }
 
 export async function fetchDebriefBlock(
@@ -166,8 +187,8 @@ export async function fetchDebriefBlock(
   const { data, error } = await supabase.rpc('session_debrief', {
     p_workout: workoutId,
   })
-  if (error || !data) return null
-  return data as DebriefBlock
+  if (error || !isBlock(data)) return null
+  return data as unknown as DebriefBlock
 }
 
 /** The phrased line. Never throws: the caller already has something to draw. */
@@ -244,15 +265,18 @@ export function briefSkeleton(block: BriefBlock | null, unit: Unit): string | nu
 
   const parts: string[] = []
 
-  if (block.due_routine) parts.push(`${block.due_routine.name} is up`)
+  if (block.due_routine?.name) parts.push(`${block.due_routine.name} is up`)
 
+  // Every field is read as optional even though the SQL always sends it. This
+  // function renders on the screen the app opens on, so it has to be TOTAL:
+  // there is no input for which throwing is better than saying less.
+  const gap = block.low_bands?.[0]
   if (block.target) {
     const t = block.target
     parts.push(
       `${t.exercise} — ${formatWeight(t.last_weight_kg, unit)} ${unit} × ${t.last_reps} last time`,
     )
-  } else if (block.low_bands.length > 0) {
-    const gap = block.low_bands[0]
+  } else if (gap) {
     parts.push(
       `${gap.muscle} is at ${gap.sets} ${gap.sets === 1 ? 'set' : 'sets'} this week`,
     )
@@ -261,7 +285,7 @@ export function briefSkeleton(block: BriefBlock | null, unit: Unit): string | nu
   // Only past the point where it is worth mentioning. §4-A1 puts that at five
   // days, and below it a "days since" line is the app nagging someone who is
   // on schedule.
-  if (block.days_since_last !== null && block.days_since_last > 5) {
+  if (typeof block.days_since_last === 'number' && block.days_since_last > 5) {
     parts.push(`${block.days_since_last} days since your last session`)
   }
 

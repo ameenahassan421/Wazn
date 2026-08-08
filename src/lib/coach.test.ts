@@ -213,6 +213,48 @@ describe('the debrief skeleton', () => {
   })
 })
 
+describe('a malformed block never takes the screen down', () => {
+  /**
+   * The regression this file exists to prevent from recurring.
+   *
+   * The e2e smoke suite caught it on the first CI run: an RPC that does not
+   * exist yet answered `[]`, `[]` is truthy so it sailed past a `!data` check,
+   * and `block.low_bands.length` on an array threw. The Log tab rendered the
+   * error boundary and there was no Start button on the screen the app opens
+   * on — the exact failure the two-stage draw exists to make impossible,
+   * arriving through the shape of the answer rather than the presence of an
+   * error.
+   *
+   * `fetchBriefBlock` now rejects anything that is not a plain object, and
+   * these assert the second line of defence: the composers are total.
+   */
+  const junk = [
+    [] as unknown,
+    {} as unknown,
+    { target: null } as unknown,
+    { low_bands: null } as unknown,
+    { due_routine: {} } as unknown,
+    { days_since_last: 'soon' } as unknown,
+    { anchor: undefined, found: true } as unknown,
+  ]
+
+  it.each(junk.map((b, i) => [i, b] as const))(
+    'briefSkeleton survives shape %i',
+    (_i, block) => {
+      expect(() => briefSkeleton(block as BriefBlock, 'kg')).not.toThrow()
+      expect(() => briefChip(block as BriefBlock, 'kg')).not.toThrow()
+    },
+  )
+
+  it.each(junk.map((b, i) => [i, b] as const))(
+    'debriefSkeleton survives shape %i',
+    (_i, block) => {
+      expect(() => debriefSkeleton(block as DebriefBlock, 'kg')).not.toThrow()
+      expect(() => debriefChip(block as DebriefBlock, 'kg')).not.toThrow()
+    },
+  )
+})
+
 describe('ordinal', () => {
   it('handles the counts a streak can reach', () => {
     expect([1, 2, 3, 4, 11, 12, 13, 21, 22, 23, 101].map(ordinal)).toEqual([
