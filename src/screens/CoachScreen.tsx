@@ -1,15 +1,21 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import {
   AI_DISCLAIMER,
   ROUTINE_EQUIPMENT,
   ROUTINE_GOALS,
-  fetchCoachNotes,
   generateRoutines,
   saveGeneratedRoutines,
-  type CoachNotes,
   type RoutinePreview,
 } from '../lib/ai'
+import {
+  REVIEW_SECTIONS,
+  REVIEW_SECTION_LABELS,
+  fetchWeeklyReview,
+  recordCoachView,
+  type CoachNotes,
+} from '../lib/coach'
 import { formatWorkoutDate } from '../lib/format'
+import { useUnit } from '../lib/unit-context'
 
 /**
  * The Coach tab — design v2.1 screen 01.
@@ -34,10 +40,19 @@ export function CoachScreen({ onRoutinesSaved }: { onRoutinesSaved: () => void }
   )
 }
 
-/* ── Coach's notes ────────────────────────────────────────────────────── */
+/* ── The weekly review ────────────────────────────────────────────────────── */
 
 function NotesCard() {
+  // The review quotes e1RM figures, so it is written in whichever unit the
+  // header toggle is showing — see `_shared/display-units.ts`. Flipping the
+  // toggle refetches; the function caches per unit, so a unit already seen
+  // costs nothing.
+  const { unit } = useUnit()
   const [notes, setNotes] = useState<CoachNotes | null>(null)
+  // GATE B1's instrument, on the third surface. Fired once the review is
+  // actually on screen, never on mount — a tab that failed to load was not
+  // read.
+  const viewed = useRef(false)
   const [state, setState] = useState<'loading' | 'ready' | 'failed'>('loading')
   const [message, setMessage] = useState<string | null>(null)
   const [reload, setReload] = useState(0)
@@ -51,10 +66,14 @@ function NotesCard() {
     let active = true
     void (async () => {
       try {
-        const result = await fetchCoachNotes({ force })
+        const result = await fetchWeeklyReview(unit, { force })
         if (!active) return
         setNotes(result)
         setState('ready')
+        if (!viewed.current && (result.review || result.insights?.length)) {
+          viewed.current = true
+          void recordCoachView('weekly_review', 'view')
+        }
       } catch (error) {
         if (!active) return
         setMessage(error instanceof Error ? error.message : 'Notes are unavailable.')
@@ -66,7 +85,7 @@ function NotesCard() {
     }
     // `force` is intentionally part of the key: pressing Regenerate is a new
     // request, not a re-render of the old one.
-  }, [reload, force])
+  }, [reload, force, unit])
 
   const left = notes?.regeneratesLeft ?? 0
   const spent = left <= 0
@@ -88,7 +107,9 @@ function NotesCard() {
             ? // v2.1: the loading state is a kicker, not a skeleton. A shimmer
               // implies a layout is coming; this is waiting on a sentence.
               'Reading your log…'
-            : "Coach's notes"}
+            : // B2: it is a review of a week, and saying so is what tells a
+              // reader the shape will be the same next week.
+              'This week'}
         </h2>
         {state === 'ready' && (
           <button
@@ -112,20 +133,26 @@ function NotesCard() {
 
       {state === 'failed' && <p className="text-sm text-muted">{message}</p>}
 
-      {state === 'ready' && notes && notes.insights.length === 0 && (
+      {state === 'ready' && notes && !notes.review && !notes.insights?.length && (
         <p className="text-sm text-muted">
-          Log 3 workouts and the coach will have something to say.
+          {notes.degraded
+            ? 'The review is quiet right now. Your numbers are all still here.'
+            : 'Log 3 workouts and the coach will have something to say.'}
         </p>
       )}
 
-      {state === 'ready' && notes && notes.insights.length > 0 && (
+      {state === 'ready' && notes?.review && <Review review={notes.review} />}
+
+      {/* The pre-B2 list, still in some caches. Rendered rather than migrated:
+          a user whose weekly regenerate is spent should read last week's notes
+          rather than an apology, and the shape is gone the moment they
+          regenerate. See the stale-cache branch in `coach-notes`. */}
+      {state === 'ready' && !notes?.review && !!notes?.insights?.length && (
         <ol className="flex flex-col">
           {notes.insights.map((insight, i) => (
             <li key={insight.title} className="relative">
               {i > 0 && <div className="rule-fade my-3" />}
               <div className={i === 0 ? 'relative ps-3' : ''}>
-                {/* v2.1: only note #1 carries the knurl band, and severity
-                    comes from order rather than colour. One knurl per screen. */}
                 {i === 0 && (
                   <span
                     aria-hidden="true"
@@ -154,12 +181,73 @@ function NotesCard() {
 
       {state === 'ready' && (
         <p className="mt-3 text-[11px] text-muted">
-          {notes && `As of ${formatWorkoutDate(notes.generatedAt)} · `}
+          {notes?.generatedAt && `As of ${formatWorkoutDate(notes.generatedAt)} · `}
           {left} regenerate{left === 1 ? '' : 's'} left this week
           {spent ? ' · resets weekly' : ''}
+          {/* An older answer served because the week's regenerate is spent.
+              Said plainly here rather than dressed as an error: the numbers in
+              it were true when it was written, and it refreshes on its own. */}
+          {notes?.stale ? ' · in the previous format' : ''}
         </p>
       )}
     </section>
+  )
+}
+
+/**
+ * The weekly review — B2, offense plan §3-A3.
+ *
+ * The same five sections, in the same order, every week. That fixed shape is
+ * the feature: the list it replaced re-ordered itself weekly, so two reviews
+ * could not be compared and there was nothing to learn to read. Here, "how am
+ * I doing on volume" is always the second row.
+ *
+ * The section labels are the app's mono meta voice and carry no numbers — a
+ * label that changed with the content would defeat the point of a fixed row.
+ * Severity still comes from order rather than colour, and the one knurl on the
+ * screen marks the recommendation, because that is the row to act on.
+ */
+function Review({ review }: { review: NonNullable<CoachNotes['review']> }) {
+  return (
+    <div>
+      {review.headline && (
+        <p className="text-[17px] font-semibold leading-snug">{review.headline}</p>
+      )}
+
+      <ol className="mt-3 flex flex-col">
+        {REVIEW_SECTIONS.map((key, i) => {
+          const section = review.sections?.[key]
+          if (!section?.line) return null
+          const isRecommendation = key === 'recommendation'
+          return (
+            <li key={key} className="relative">
+              {i > 0 && <div className="rule-fade my-3" />}
+              <div className={isRecommendation ? 'relative ps-3' : ''}>
+                {isRecommendation && (
+                  <span
+                    aria-hidden="true"
+                    className="knurl absolute inset-block-0 start-0 block w-[4px] rounded-[2px]"
+                  />
+                )}
+                <p className="kicker">{REVIEW_SECTION_LABELS[key]}</p>
+                <p
+                  className={`mt-1 leading-snug ${
+                    isRecommendation
+                      ? 'text-[15px] font-medium'
+                      : 'text-[13px] text-muted'
+                  }`}
+                >
+                  {section.line}
+                </p>
+                {section.chip && (
+                  <span className="chip-data mt-2 inline-flex">{section.chip}</span>
+                )}
+              </div>
+            </li>
+          )
+        })}
+      </ol>
+    </div>
   )
 }
 

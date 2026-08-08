@@ -1,0 +1,12 @@
+{
+  "fixture": "debrief-streak",
+  "kind": "debrief",
+  "source": "adversarial",
+  "expect": "ungrounded",
+  "model": null,
+  "note": "A fabricated figure at the highest-emotion moment in the app. The session's estimate moved 3.3 on the session and 20.0 on the month; 7.5 is neither, and it is the kind of number a reader would believe precisely because the rest of the screen is true.",
+  "brief": {
+    "line": "Fourth straight Lat Pulldown progression, up 7.5 on the estimate this month.",
+    "chip": "4th straight · +7.5 e1RM"
+  }
+}

@@ -1,5 +1,6 @@
 {
   "fixture": "imbalanced",
+  "kind": "coach_notes",
   "source": "hand-authored",
   "model": null,
   "insights": [

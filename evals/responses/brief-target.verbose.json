@@ -1,0 +1,12 @@
+{
+  "fixture": "brief-target",
+  "kind": "briefing",
+  "source": "adversarial",
+  "expect": "too-many-sentences",
+  "model": null,
+  "note": "Everything in it is true and grounded, and it is still wrong for the surface: four sentences above the Start button, read by someone who has already decided to train. Under the one law a paragraph here is not a longer answer, it is an ignored one — so length is a contract rule, not a style note.",
+  "brief": {
+    "line": "Push A is up today. Bench Press was 100 kg x 5 last time. Try 102.5 x 5 to beat 116.7. Calves are also at 0 sets this week.",
+    "chip": "102.5 x 5 · beats 116.7"
+  }
+}

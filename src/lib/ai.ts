@@ -9,26 +9,11 @@ import { supabase } from './supabase'
  * which is how the function knows who is asking; nothing here sends a user id.
  */
 
-export interface CoachInsight {
-  title: string
-  body: string
-  /**
-   * The figures the note came from, verbatim from the stat block. Design v2.1
-   * calls this "what makes the AI feel like it read the log"; it is also the
-   * cheapest honesty check the feature has, because a chip that disagrees with
-   * the charts is a claim the reader can catch.
-   */
-  chip?: string
-}
-
-export interface CoachNotes {
-  insights: CoachInsight[]
-  generatedAt: string
-  model: string
-  cached: boolean
-  /** Drives the footer line and disables Regenerate at zero. */
-  regeneratesLeft?: number
-}
+/**
+ * The Coach's Notes half of this file moved to `coach.ts` at B2, along with
+ * the surfaces it feeds. What is left here is the routine builder, which is
+ * the Coach tab's other tool and shares nothing with the review but a screen.
+ */
 
 /** Shown on every AI surface. Plan §2C, and not negotiable per feature. */
 export const AI_DISCLAIMER = 'AI-generated — not medical advice.'
@@ -50,18 +35,6 @@ async function describeFunctionError(error: unknown): Promise<string> {
     }
   }
   return error instanceof Error ? error.message : 'Something went wrong.'
-}
-
-export async function fetchCoachNotes(
-  options: { force?: boolean } = {},
-): Promise<CoachNotes> {
-  const { data, error } = await supabase.functions.invoke<CoachNotes>(
-    `coach-notes${options.force ? '?force=1' : ''}`,
-    { method: 'POST' },
-  )
-  if (error) throw new Error(await describeFunctionError(error))
-  if (!data) throw new Error('No notes came back.')
-  return data
 }
 
 /** A generated plan that has NOT been written yet. v2.1: preview, then Save. */

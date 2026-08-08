@@ -8,6 +8,7 @@
     "check:coverage": "node scripts/check_coverage_floor.mjs",
     "check:deploy": "node scripts/deploy-check.mjs",
     "check:migrations": "python3 scripts/check_migrations.py",
+    "check:sql": "bash scripts/check_sql.sh",
     "check:vercel": "node scripts/check_vercel_config.mjs",
     "dev": "vite",
     "eval:live": "tsx scripts/eval_live.ts",

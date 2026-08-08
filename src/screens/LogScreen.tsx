@@ -27,6 +27,7 @@ import { DEFAULT_REST_SECONDS, useRestTimer } from '../lib/use-rest-timer'
 import { FinishSummary } from '../components/FinishSummary'
 import { RoutineList } from '../components/RoutineList'
 import { InstallPrompt } from '../components/InstallPrompt'
+import { CoachBrief } from '../components/CoachBrief'
 import { Welcome } from '../components/Welcome'
 import { useWakeLock } from '../lib/use-wake-lock'
 import { RoutineEditor } from '../components/RoutineEditor'
@@ -1985,8 +1986,19 @@ export function LogScreen({
     return (
       <div className="flex flex-col gap-[18px] pt-4">
         {error && <ErrorNote message={error} />}
+        {/* U3b's trust notes come first, with the error line: "some sets have
+            not reached the server" is about the data, and it outranks anything
+            the coach has to say. */}
         {cachedAt !== null && <CachedNote savedAt={cachedAt} />}
         <SyncNote online={online} pending={pendingSetCount(queue)} />
+
+        {/* B1's pre-workout briefing. Mounted HERE and nowhere else, which is
+            what enforces §4-A1's core-loop rule: this branch renders only
+            when no workout is open, so the coach cannot appear mid-session
+            without someone moving this line. It draws itself from SQL and
+            returns null when it has nothing to say, so it costs no layout on
+            a new account and never delays Start. */}
+        <CoachBrief />
         <div>
           <button
             type="button"

@@ -1,5 +1,6 @@
 {
   "name": "detrained",
+  "kind": "coach_notes",
   "note": "Trained hard, then stopped. best_e1rm_28d is null for every lift, which the prompt says means the lift has not been trained in four weeks. A note that reports a current e1RM here is fabricating.",
   "block": {
     "unit": "kg",
@@ -7,7 +8,11 @@
     "sessions_last_7": 0,
     "sessions_last_28": 1,
     "weekly_sets_by_muscle": {},
-    "weekly_sets_by_muscle_4w_ago": { "chest": 16, "back": 14, "quads": 12 },
+    "weekly_sets_by_muscle_4w_ago": {
+      "chest": 16,
+      "back": 14,
+      "quads": 12
+    },
     "lifts": [
       {
         "name": "Deadlift (Barbell)",

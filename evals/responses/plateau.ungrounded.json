@@ -1,5 +1,6 @@
 {
   "fixture": "plateau",
+  "kind": "coach_notes",
   "source": "adversarial",
   "note": "Deliberately wrong, and the harness must FAIL on it. An eval that can only pass is a decoration. Three planted defects: a fabricated e1RM (147.5), an invented total (700 sets), and a percentage nobody computed (12%).",
   "expect": "ungrounded",

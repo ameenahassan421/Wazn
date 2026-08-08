@@ -1,0 +1,33 @@
+{
+  "fixture": "review-plateau",
+  "kind": "weekly_review",
+  "source": "adversarial",
+  "expect": "ungrounded",
+  "model": null,
+  "note": "The squat plateau, reported with a number nobody measured. 147.5 appears nowhere in the block: the lift sat at 154.0 for all six sessions. This is the failure class §12 sets the tolerance for at zero, and it is the reason a green eval run means anything.",
+  "review": {
+    "headline": "Squat stalled, calves missing",
+    "sections": {
+      "adherence": {
+        "line": "One session this week against an average of 1.0.",
+        "chip": "1 session · avg 1.0/wk"
+      },
+      "bands": {
+        "line": "Calves and chest are at 0 sets against a range of 10 to 20.",
+        "chip": "calves 0 · chest 0"
+      },
+      "plateaus": {
+        "line": "Squat has drifted from 154.0 down to 147.5 across 6 sessions.",
+        "chip": "6 sessions · 154.0 to 147.5"
+      },
+      "wins": {
+        "line": "Lat Pulldown is up 20.0 over the month.",
+        "chip": "+20.0 e1RM"
+      },
+      "recommendation": {
+        "line": "Put calves back in next week, at 0 sets against 10 to 20.",
+        "chip": "calves 0 · target 10-20"
+      }
+    }
+  }
+}

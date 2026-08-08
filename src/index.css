@@ -563,6 +563,30 @@ button {
   transform-origin: right center;
 }
 
+/* The coach's sentence arriving over its own skeleton.
+
+   Both surfaces draw from SQL first and are upgraded by a phrased line a
+   moment later, so this is a *replacement* of correct text by better text —
+   the one case in the app where content changes under a reader's eye without
+   them having done anything. A plain swap reads as a glitch. Opacity only, no
+   movement: nothing has arrived or been logged, the same sentence has simply
+   got better, and 200ms is slow enough to be noticed without being waited on.
+
+   `both`-filled like the rest, so reduced motion lands the end state and the
+   line is simply there. */
+@keyframes coach-in {
+  from {
+    opacity: 0.35;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@utility coach-in {
+  animation: coach-in var(--motion-transition) var(--motion-ease) both;
+}
+
 /* A personal record. The row fills to 28% amber, then settles to the 7%
    tint it keeps. Amber, never confetti — §2.1 forbids a celebration, and a
    record is a fact about the row, so it stays on the row. */

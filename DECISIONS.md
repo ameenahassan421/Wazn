@@ -3447,3 +3447,214 @@ not mean "no previous best" — it means "not asked". Summarising against it wou
 celebrate a personal record on every single exercise. So an offline summary
 reports no PRs. The flags themselves are computed in the database on insert, so
 the records are correct in History and Progress the moment the queue drains.
+
+## 2026-08-08 — B1 and B2: the proactive coach, and a Postgres that actually runs
+
+### The migrations are executed now, not just parsed
+
+`npm run check:sql` starts a throwaway local Postgres, applies
+`scripts/pg_shim.sql` (the `auth` schema, `auth.uid()`, the three platform
+roles, and Supabase's default privileges — the parts the migrations reference
+but do not own), then applies every migration in order from an empty database
+and runs the suites in `supabase/tests/`. No network, no project, no
+credentials. It is in CI.
+
+This was built because 0021 needed it, and it earned its keep before it was
+finished. **Two defects in 0021 were invisible to `check_migrations.py` and
+died on the first execution:**
+
+- `user_id uuid not null default (select auth.uid())`. Legal grammar, and
+  every real Postgres rejects it: a column default may not contain a subquery.
+  The `(select …)` wrapper is an RLS-policy idiom for planner caching and does
+  not belong in a default — 0016 spells it bare, which is why that one works.
+- `order by x.sets_7d` against a subquery that had aliased the column to
+  `sets`.
+
+Neither is visible to a parser and neither is visible to review. STATUS has
+said for weeks that "a migration that has never been executed is unverified";
+this is the thing that executes them.
+
+**It does not prove production will accept them.** Production is at 0018 with a
+ledger that knows about three migrations. "Applies cleanly from empty" and
+"applies cleanly to production" are different claims, and this makes only the
+first one true.
+
+`supabase/tests/coach_surfaces.sql` goes further: it seeds a known ten-session
+history and asserts what the three new functions **return** — 102.5 kg as the
+next bench target, a four-session progression streak, exactly one plateau, one
+win, `raise_band` as the recommendation. It also asserts the empty-account path
+does not raise, and that a foreign workout id yields an empty block rather than
+someone else's session. Confirmed to fail when a figure is wrong, because a
+test that has never failed is not a test.
+
+### Both coach surfaces draw twice, and that is the whole design
+
+The briefing and the debrief each render **from SQL first** — the client calls
+`session_brief()` / `session_debrief()` itself and composes an English line in
+`src/lib/coach.ts` with no model involved — and are then _upgraded_ by a
+phrased sentence if one arrives.
+
+§12 requires the app to be fully usable with AI dark. The way to guarantee that
+is not to handle the error well; it is to never be waiting on the model. A card
+that renders from statistics in one round trip and improves when a sentence
+lands cannot be broken by a provider outage, a spent quota, an open breaker, or
+an unapplied migration. It can only be plainer. That is also why the Edge
+Function returning 503 is not a user-visible failure anywhere in B1.
+
+The function **recomputes the block** rather than accepting the client's
+figures. A request body carrying numbers is a request body that can carry any
+numbers, and the grounding gate would then be checking the model against
+whatever the browser claimed.
+
+### The coach was speaking kilograms to people reading pounds
+
+Caught by looking at a screenshot, not by a test. The header toggle read `lbs`
+and the briefing card read "Bench Press was 102.5 kg × 5" — because the block
+is always kg, the model copies figures verbatim, and grounding enforces that.
+Every one of those three is correct on its own.
+
+Fixed in `_shared/display-units.ts`: the block is converted to the caller's
+display unit **before the prompt is built**, so the same converted block is
+what grounding checks. The unit is part of the cache key, or the cache would
+reintroduce the bug it exists to avoid. `src/lib/display-units.test.ts` asserts
+the Edge Function's arithmetic against the client's `formatWeight` /
+`formatEstimate` digit for digit — two implementations of one rounding rule is
+one implementation that drifts.
+
+The field list is explicit rather than a walk over anything ending in `_kg`. A
+field added to the SQL and not here stays in kg and is visibly wrong beside its
+neighbours, which is the failure that gets noticed.
+
+### An e1RM is not a load, and rounding it like one made the chips lie
+
+`formatWeight` snaps to the nearest 0.25 kg because a weight is something you
+put on a bar. An estimated 1RM is not: nobody racks it, and snapping printed
+"116.75" where the block — and the Progress screen — say 116.7.
+
+The chips exist so a reader can catch the coach disagreeing with their own
+charts. A chip that rounds differently teaches them the chips are approximate,
+which is exactly the habit that makes a real fabrication invisible. New
+`formatEstimate` converts and rounds to one decimal, never to a plate.
+
+### "Planned vs done" is measured against the lifter's own cadence
+
+B2 asks the weekly review for "adherence (planned vs done)". There is no plan
+to compare against: `routines` carry a name, a position and a set list, and
+nothing in the schema says which day a routine falls on or how many sessions a
+week are intended. Inventing one — "you have 4 routines, so 4 is the plan" —
+would make the review's first figure a guess dressed as a measurement, on the
+one surface whose whole promise is that every number is traceable.
+
+So adherence is sessions this week against the lifter's own 8-week average,
+weeks trained out of 8, the longest gap, and how much of the last 28 days ran
+from a routine rather than freestyle. Every one is a fact. Revisit the day
+routines grow a schedule.
+
+### The ONE recommendation is chosen in SQL, not by the model
+
+"Exactly one recommendation" is a promise about the product, and a promise a
+model keeps only when asked nicely is not a promise. `weekly_review()` picks
+it, in priority order: they stopped turning up > a muscle group is starving > a
+lift has stalled > nothing is wrong. Each rung is a fact about a bigger problem
+than the rung below it. The model phrases the one it is handed, and
+`checkReviewContract` rejects an answer that turns it back into a list.
+
+### The privacy boundary moved by one field, deliberately
+
+`checkBlockPrivacy` failed on the new briefing fixture, which is the check
+doing its job: `due_routine.name` is text the user typed, so unlike an exercise
+name it can contain anything. It is allowed because the briefing's whole job is
+"Push A is up" and a briefing that says "your next routine is up" has given up
+the fact it exists to deliver.
+
+**What did not open:** workout names, workout notes, per-lift notes and set
+notes stay outside every block, and they are where free text actually
+accumulates. The point worth recording is that a check forced this to be
+decided out loud rather than discovered later in a prompt log.
+
+### Two grounding widenings, both narrow
+
+- **Array lengths are grounded.** `plateaus: []` on a good week has to be
+  sayable as "nothing has stalled — 0 lifts", and without this the truest
+  sentence the coach can write reads as a fabrication. The cost is a handful
+  more small integers in the allowed set, which is already the weakest part of
+  the check.
+- **Exercise names are checked, but only multi-word ones.** B2 asks for "no
+  exercise names outside the catalog" — the failure where every figure is
+  grounded and the sentence is still an invention ("add Romanian Deadlifts").
+  Single-word catalog entries — Row, Curl, Dip, Plank, Squat — are also
+  ordinary English, and a check that flagged "your rows are behind" would be
+  switched off inside a day. Multi-word is also the shape a fabricated
+  recommendation actually takes.
+
+### The empty account gets one line, not five sections
+
+The first draft filled the review contract for a brand-new account: five
+sections each saying "nothing yet". A screenshot settled it — that is five
+paragraphs of apology to someone who has logged nothing. The fixed shape earns
+its keep for a person who reads it weekly and learns where to look, and a
+lifter with no sessions is not that person yet. `review: null` with an empty
+`insights` renders the line the Coach tab has always had.
+
+### The Coach tab leaves the precache
+
+The build hit **598.32 KiB** against the ~600 KiB ceiling — STATUS had warned
+that the next UI phase should expect to remove something, and this is it.
+
+`CoachScreen-*.js` is now excluded, on the same terms as the Hevy import and
+not merely for budget. Both of that tab's tools are Edge Function calls — the
+weekly review is one, the routine builder is the other, and there is no third
+thing on the screen. Precached, it installs 8 KiB that can render nothing but
+an error the moment there is no network. **590.24 KiB now**, which is better
+than the 592.20 this phase started from.
+
+The briefing and the debrief are deliberately NOT excluded: they live on the
+Log and finish screens, in the main chunk, and both draw from SQL with the
+model optional.
+
+### The ledger had to learn two new words
+
+`ai_generations.feature` has been `check (feature in ('coach_notes','routine'))`
+since 0010. Left alone, every ledger write from `coach-brief` would have failed
+its check — and because `recordGeneration()` deliberately never throws, that
+would have been a console line nobody reads while the two new surfaces ran
+**completely unmetered**. Quota is derived by counting that table, so a row that
+cannot land is a limit that does not exist.
+
+Their limits are a cost backstop rather than a product rule: 20 a week each,
+roughly three sessions a day, which nobody does. Neither surface has a
+regenerate control, so a user cannot spend more by pressing anything — the cap
+exists to turn a client bug that calls in a loop from a bill into a 429.
+
+### The stale-cache escape hatch
+
+`PROMPT_VERSION` moved from `coach-notes@2` to `coach-review@1`, which makes
+every cached row a miss so the next Coach open regenerates into the new
+contract. On its own that hands a 429 to anyone who had already regenerated
+this week: their cache is a miss and the quota says no, so they would see an
+error where a review used to be, on deploy day, through no action of their own.
+
+So a version miss with no quota left serves the cached answer and says it is in
+the previous format. The client renders the old note list for exactly that
+case. Serving something true and old beats refusing.
+
+### Deploy ordering, again
+
+Merging deploys the functions; migrations are applied by hand. For the window
+between, `weekly_review()` and `session_brief()` do not exist.
+`isMissingSchema()` in `_shared/context.ts` recognises the four shapes that
+takes (42883 / PGRST202 / 42P01 / 42703), and both functions degrade to "quiet"
+rather than "broken". The 0017-era shims it replaces are deleted, since 0017 is
+applied. Delete these once 0021 is applied.
+
+### GATE B1 has an instrument
+
+`coach_views` records `view` and `dismiss` per surface, written by the client
+under RLS with `user_id` defaulting to `auth.uid()` — the 0016 lesson, where
+following and liking shipped with an owner column the client never sent.
+
+**Being honest about what it measures:** a `view` row is exposure, not reading,
+and `dismiss` is the only in-app signal of attention the design can claim,
+since you cannot dismiss what you did not look at. The gate's second half — "a
+tester changed a session because of it" — stays an exit-interview question,
+because nothing in the app can observe it.

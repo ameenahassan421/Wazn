@@ -65,12 +65,24 @@ the previous build. JSON has no comments; put the reasoning in `DECISIONS.md`.
 "live" were different things and a fix could sit on `main` for a day while
 production served the bug.
 
-**Touching `supabase/migrations/`?** None of the above reads SQL. Run
-`python3 scripts/check_migrations.py` (needs `pip install pglast`) — it parses
-every migration with the grammar Postgres itself uses. 0007 once shipped with a
-column named `position`, a reserved word, and failed to parse in its entirety.
-A parse check is the floor: a migration that has never been _executed_ is
-unverified, and the PR should say so.
+**Touching `supabase/migrations/`?** Run **`npm run check:sql`**. It starts a
+throwaway local Postgres, applies `scripts/pg_shim.sql` (the `auth` schema, the
+platform roles, the default privileges) and then every migration in order from
+an empty database, and finishes by running the suites in `supabase/tests/`. No
+network, no project, no credentials. CI runs it too.
+
+`npm run check:migrations` (needs `pip install pglast`) still parses everything
+with the grammar Postgres itself uses, and it is still the cheap floor — 0007
+once shipped a column named `position`, a reserved word, which failed to parse
+in its entirety. But a parser is not a server: 0021 shipped a
+`default (select auth.uid())` that parses perfectly and that every real
+Postgres rejects, and an `order by` on a column its own subquery had aliased
+away. Both died on the first execution.
+
+**Executed locally is still not applied.** Production is at 0018 with a ledger
+that only knows about three migrations, so "applies cleanly from empty" and
+"applies cleanly to production" remain different claims. The PR should say
+which one it has.
 
 ## Hard rules
 

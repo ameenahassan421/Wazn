@@ -113,6 +113,49 @@ const RPC_RESULTS: Record<string, unknown> = {
   training_calendar: [{ day: '2026-08-06', sessions: 1 }],
   social_feed: [],
   leaderboard: [],
+  /**
+   * B1's two blocks. Present because the fallback below answers `[]` for any
+   * RPC it does not know, and `[]` is truthy — which is how the briefing card
+   * first reached CI: it read `low_bands.length` off an array, threw, and took
+   * the whole Log tab down behind the error boundary. The client now rejects
+   * any answer that is not a plain object, and this makes the smoke run
+   * exercise the REAL path rather than that guard.
+   *
+   * `session_brief` deliberately carries a target and a routine, so the card
+   * actually renders and the "every tab opens" assertion covers it.
+   */
+  session_brief: {
+    unit: 'kg',
+    productive_range: [10, 20],
+    days_since_last: 2,
+    sessions_last_7: 2,
+    sessions_last_28: 9,
+    total_sets_90d: 210,
+    due_routine: { name: 'Upper A', exercises: 4, days_since_run: 5 },
+    target: {
+      exercise: 'Bench Press (Barbell)',
+      last_weight_kg: 100,
+      last_reps: 5,
+      last_e1rm: 116.7,
+      best_e1rm: 116.7,
+      last_done_days_ago: 5,
+      next_weight_kg: 102.5,
+      next_e1rm: 119.6,
+    },
+    low_bands: [{ muscle: 'back', sets: 9 }],
+  },
+  session_debrief: {
+    unit: 'kg',
+    productive_range: [10, 20],
+    found: false,
+    sets: 0,
+    exercises: 0,
+    volume_kg: 0,
+    duration_min: null,
+    records: 0,
+    anchor: null,
+    low_band: null,
+  },
   coach_stats: {
     unit: 'kg',
     window_days: 90,
@@ -253,13 +296,27 @@ export async function stubSupabase(
     }
 
     if (url.includes('/functions/v1/')) {
-      // The Coach surfaces call these. An empty-notes answer is the app's own
+      // The Coach surfaces call these. An empty answer is the app's own
       // designed empty state, so this exercises a real path rather than an
       // error one.
+      //
+      // `coach-brief` answers `line: null`, which is what the real function
+      // returns when there is nothing worth a model call. That leaves the
+      // briefing card showing its deterministic skeleton — the state that
+      // matters most, since it is the one every user sees when the AI layer is
+      // dark, and the one the two-stage draw exists to guarantee.
+      if (url.includes('coach-brief')) {
+        return route.fulfill({
+          status: 200,
+          headers,
+          body: JSON.stringify({ line: null, cached: false, model: 'none' }),
+        })
+      }
       return route.fulfill({
         status: 200,
         headers,
         body: JSON.stringify({
+          review: null,
           insights: [],
           generatedAt: new Date().toISOString(),
           model: 'none',

@@ -785,9 +785,14 @@ event_message` comes back empty), so nothing here inspected message contents;
   worker's precache — an import that writes to Supabase cannot work offline
   anyway, so precaching it was waste. **7.8 KiB of headroom is a warning, not a
   budget: the next UI phase should expect to remove something.**
-- **Cold start is still the one missed budget: 2171ms against 2000ms.** It has
-  measured 2308 / 2192 / 2130 / 2317 / 2171 across runs, so treat anything
-  under ~200ms of movement as noise rather than progress.
+- **Cold start is still the one missed budget: 2193ms against 2000ms.** It has
+  measured 2308 / 2192 / 2130 / 2317 / 2171 / 2141 / 2193 across runs, so treat
+  anything under ~200ms of movement as noise rather than progress. **This
+  figure and the ones below are from the MERGED tree** — U3b and B1/B2 were
+  each measured before the other landed, so neither branch's numbers described
+  what shipped. Everything else passes: warm **1032ms**, tap → feedback
+  **30ms**, tap → set on screen **43ms**, tab switch **19ms**, Lighthouse
+  **97**, CLS 0.001. Precache **565.00 KiB** with the four excluded chunks.
 - **U3b is BUILT (2026-08-08), and GATE 4 now has an answer.** A workout can be
   started, logged and finished with no signal at all: the queue widened from
   sets to an ordered op log (`set` / `workout-start` / `workout-finish` /
@@ -838,7 +843,9 @@ event_message` comes back empty), so nothing here inspected message contents;
 - **U7 budgets re-measured:** cold start **2164ms** (the one standing miss, and
   inside the ±200ms noise band: 2308 / 2192 / 2130 / 2317 / 2171 / 2164), warm
   **1035ms**, tap → feedback **32ms**, tap → set on screen **48ms**, tab switch
-  **20ms**, Lighthouse **98**, CLS 0.001.
+  **20ms**, Lighthouse **98**, CLS 0.001. (Measured on the U3b branch before
+  B1/B2 merged; the bullet at the top of this section carries the merged-tree
+  run that supersedes it.)
 - **`npm run shots` can cut the network now**, after being caught blind for the
   third time. It photographs the board with a set queued and the board reopened
   from cache; both frames are what found the hang above.
@@ -846,10 +853,85 @@ event_message` comes back empty), so nothing here inspected message contents;
   this device while offline (there is nothing cached to start from — one opened
   before works), removing a block that has committed sets while offline, and
   editing past workouts offline. Each reports honestly rather than pretending.
-- **Last updated:** 2026-08-08 by Claude Code (U3b: the offline op log, the
-  IndexedDB store and read cache, the airplane-mode e2e, and the two defects
-  they found — rung 1 never restoring, and the load path with no deadline).
-  Previously 2026-08-08 (U3a's optimistic writes and
+- **MIGRATIONS ARE EXECUTED IN CI NOW, NOT JUST PARSED.** `npm run check:sql`
+  starts a throwaway local Postgres, applies `scripts/pg_shim.sql` (the `auth`
+  schema, the platform roles, the default privileges) and then every migration
+  in order from an empty database, and runs the suites in `supabase/tests/`. No
+  network, no project, no credentials. It found **two defects in 0021 that the
+  parse check passed**: a `default (select auth.uid())`, which every real
+  Postgres rejects because a column default may not contain a subquery, and an
+  `order by` naming a column its own subquery had aliased away. The line in
+  STATUS that has said "a migration that has never been executed is unverified"
+  now has something behind it — but only for "applies cleanly from empty".
+  Production is at 0018 and that is still a different claim.
+- **B1 IS BUILT (2026-08-08) — the proactive coach's two surfaces.** The
+  pre-workout briefing sits above Start on the idle Log screen (dismissible,
+  never blocking, mounted in the idle branch only, which is what enforces "the
+  coach disappears the moment a workout starts"), and the debrief is one line
+  under the receipt on the finish summary. **Both draw twice**: the client
+  calls `session_brief()` / `session_debrief()` and composes an English line
+  with no model involved, then a phrased sentence upgrades it if one arrives.
+  So neither surface has a loading state, a spinner, or a failure state, and
+  "usable with AI dark" is a property of the shape rather than of the error
+  handling. The Edge Function recomputes the block rather than trusting the
+  client's figures — a body carrying numbers is a body that can carry any
+  numbers.
+- **B2 IS BUILT (2026-08-08) — Coach's Notes is now the weekly review.** Five
+  sections, same order every week: adherence, bands, plateaus, wins, and
+  exactly ONE "next week, change this". **The recommendation is chosen in SQL**,
+  in priority order (stopped turning up > a group is starving > a lift has
+  stalled > nothing is wrong), because "exactly one" is a promise about the
+  product and a model is not the thing to trust with it. `PROMPT_VERSION` moved
+  to `coach-review@1`, so every cached row is a miss and the next Coach open
+  regenerates; a version miss with no quota left serves the old answer and says
+  it is in the previous format rather than erroring on deploy day.
+- **The eval harness now covers all three surfaces.** Golden fixtures for the
+  review, briefing and debrief were **printed by the real SQL on a real
+  Postgres**, not hand-written, so a renamed key breaks CI instead of quietly
+  producing a vaguer review. Five adversarial responses must fail and are
+  asserted to fail for their stated reason: a fabricated figure, an invented
+  lift, diet advice, a dropped section, and four sentences where two were
+  allowed. `eval:live` follows the new prompts and skips the pre-B2 fixtures,
+  whose prompt no longer exists in the repo.
+- **THE COACH WAS SPEAKING KILOGRAMS TO PEOPLE READING POUNDS, and a screenshot
+  caught it.** The block is always kg, the model copies figures verbatim, and
+  grounding enforces that — all three correct, and together they printed
+  "102.5 kg" under a header toggled to `lbs`. The block is now converted to the
+  caller's display unit before the prompt is built, so grounding checks the
+  same converted block, and the unit is part of the cache key. Two related
+  finds: an e1RM was being rounded to the nearest 0.25 kg like a load, printing
+  116.75 where the Progress screen says 116.7 — which is exactly the
+  disagreement the data chips exist to make catchable — and `due_routine.name`
+  is user-typed text, so the privacy check refused it until the widening was
+  made explicit and logged.
+- **GATE B1 has an instrument, and an honest one.** `coach_views` records
+  `view` and `dismiss` per surface. A `view` row is exposure, not reading, and
+  dismissal is the only in-app signal of attention the design can claim. The
+  gate's second half — a tester changing a session because of it — stays an
+  exit-interview question, because nothing in the app can observe it.
+- **Migration 0021 is EXECUTED AND UNIT-TESTED, NOT APPLIED.** It carries
+  `session_brief()`, `session_debrief()`, `weekly_review()`, the `coach_briefs`
+  cache, `coach_views`, and a widened `ai_generations.feature` check — without
+  that last one every ledger write from `coach-brief` would fail silently and
+  the two new surfaces would run completely unmetered. `supabase/tests/
+coach_surfaces.sql` asserts what the three functions RETURN against a seeded
+  ten-session history. Until Ameen applies it, both functions degrade to quiet
+  via `isMissingSchema()` and the client renders no card at all — which is the
+  "or nothing" branch B1 asks for, reached by design rather than by luck.
+- **Precache 592.20 → 598.32 → 590.24 KiB.** The Coach tab chunk left the
+  precache on the same terms as the Hevy import: both its tools are Edge
+  Function calls, so precached it installs 8 KiB that can render nothing
+  offline. The warning in the previous entry was correct and has now been
+  spent; the phase ends with more headroom than it started with.
+- **Last updated:** 2026-08-08 by Claude Code (B1's briefing and debrief; B2's
+  weekly review contract and eval harness; migration 0021; the executable
+  migration runner and the two defects it caught; the kg/lbs defect a
+  screenshot found). Merged with U3b the same day — **the perf figures in the
+  two entries above were each measured before the other landed, and the numbers
+  below are a fresh run of the merged tree.** Previously 2026-08-08 (U3b: the
+  offline op log, the IndexedDB store and read cache, the airplane-mode e2e,
+  and the two defects they found — rung 1 never restoring, and the load path
+  with no deadline). Previously 2026-08-08 (U3a's optimistic writes and
   checkpoint; R5's Hevy import; the precache ceiling breach and its fix).
   Previously 2026-08-08 (U2b, the workout overview; the
   superset round-rest defect it uncovered; migration 0020; the harness's missing

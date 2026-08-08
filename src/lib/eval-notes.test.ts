@@ -26,14 +26,25 @@ import {
 
 const ROOT = join(import.meta.dirname, '..', '..', 'evals')
 
+/**
+ * B2 added fixtures for three more surfaces to the same two directories, and
+ * `kind` is what keeps the suites apart. Without it this file picked up the
+ * weekly-review responses, found no `insights` array on them, and failed with
+ * a TypeError — a green harness turning red because a *different* feature
+ * shipped. `eval-coach.test.ts` filters the same way from the other side.
+ */
+const KIND = 'coach_notes'
+
 interface Fixture {
   name: string
+  kind?: string
   note?: string
   block: Record<string, unknown>
 }
 
 interface Response {
   fixture: string
+  kind?: string
   source: 'hand-authored' | 'recorded' | 'adversarial'
   expect?: 'ungrounded' | 'unsafe'
   model: string | null
@@ -51,10 +62,10 @@ const responseFiles = readdirSync(join(ROOT, 'responses')).filter((f) =>
 )
 
 const fixtures = new Map<string, Fixture>(
-  fixtureFiles.map((f) => {
-    const fixture = read<Fixture>('fixtures', f)
-    return [fixture.name, fixture]
-  }),
+  fixtureFiles
+    .map((f) => read<Fixture>('fixtures', f))
+    .filter((fixture) => (fixture.kind ?? KIND) === KIND)
+    .map((fixture) => [fixture.name, fixture]),
 )
 
 describe('tier 1 — the stat block contract', () => {
@@ -113,10 +124,12 @@ describe('tier 1 — the stat block contract', () => {
 })
 
 describe('tier 2 — model output against the contract', () => {
-  const responses = responseFiles.map((f) => ({
-    file: f,
-    body: read<Response>('responses', f),
-  }))
+  const responses = responseFiles
+    .filter((f) => (read<Response>('responses', f).kind ?? KIND) === KIND)
+    .map((f) => ({
+      file: f,
+      body: read<Response>('responses', f),
+    }))
 
   it('every response names a fixture that exists', () => {
     for (const { file, body } of responses) {

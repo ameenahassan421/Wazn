@@ -1,0 +1,30 @@
+{
+  "fixture": "review-plateau",
+  "kind": "weekly_review",
+  "source": "adversarial",
+  "expect": "section-missing",
+  "model": null,
+  "note": "The old behaviour wearing the new shape: a good week for plateaus, so the section is simply dropped. That is exactly what the review contract exists to prevent — the section is supposed to SAY nothing stalled, because a reader who learns where to look must find something there every week.",
+  "review": {
+    "headline": "Calves missing this week",
+    "sections": {
+      "adherence": {
+        "line": "One session this week against an average of 1.0.",
+        "chip": "1 session · avg 1.0/wk"
+      },
+      "bands": {
+        "line": "Calves and chest are at 0 sets against a range of 10 to 20.",
+        "chip": "calves 0 · chest 0"
+      },
+      "plateaus": { "line": "" },
+      "wins": {
+        "line": "Lat Pulldown is up 20.0 over the month.",
+        "chip": "+20.0 e1RM"
+      },
+      "recommendation": {
+        "line": "Put calves back in next week, at 0 sets against 10 to 20.",
+        "chip": "calves 0 · target 10-20"
+      }
+    }
+  }
+}

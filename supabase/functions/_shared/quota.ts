@@ -24,9 +24,27 @@
  * Derived by counting a ledger rather than by keeping a counter, because a
  * counter needs something to reset it and a ledger just ages out.
  */
+/**
+ * B1's two surfaces are metered differently, and deliberately so.
+ *
+ * The weekly review is a thing the user *asks* for and can regenerate, so its
+ * limit is the product decision: once a week. The briefing and the debrief are
+ * things the app *offers*, lazily, at most once per logged session — a lifter
+ * who trains six times a week and opens the app before each one costs six
+ * briefings and six debriefs, and there is no way for them to spend more by
+ * pressing anything, because neither surface has a regenerate control.
+ *
+ * So their limits are not a product rule but a **backstop on cost**: 20 a week
+ * is roughly three sessions a day, which nobody does, and it is the number
+ * that turns a client bug that calls in a loop from a bill into a 429. Free
+ * models carry these first, so the expected marginal cost is zero and §12's
+ * $0.01/user/week ceiling has a wide margin.
+ */
 export const QUOTAS = {
   coach_notes: { limit: 1, days: 7 },
   routine: { limit: 3, days: 30 },
+  briefing: { limit: 20, days: 7 },
+  debrief: { limit: 20, days: 7 },
 } as const
 
 export type Feature = keyof typeof QUOTAS
@@ -63,7 +81,15 @@ export function remaining(feature: Feature, used: number): number {
  * one law, a dead end mid-session is worse than a limit.
  */
 export function quotaMessage(feature: Feature): string {
-  return feature === 'routine'
-    ? `That is ${QUOTAS.routine.limit} generated routines this month. You can still build one by hand — it takes about a minute.`
-    : 'Your notes were written recently. They refresh once a week, or whenever you log something new.'
+  if (feature === 'routine') {
+    return `That is ${QUOTAS.routine.limit} generated routines this month. You can still build one by hand — it takes about a minute.`
+  }
+  // The briefing and the debrief have no regenerate control, so a user can
+  // only reach this through a bug. It reads as the surface being quiet rather
+  // than as a refusal, because from where they are sitting that is what it is
+  // — and both surfaces still render every figure from SQL underneath.
+  if (feature === 'briefing' || feature === 'debrief') {
+    return 'The coach is taking a break. Your numbers are all still here.'
+  }
+  return 'Your notes were written recently. They refresh once a week, or whenever you log something new.'
 }

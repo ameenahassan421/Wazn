@@ -24,6 +24,27 @@ export function toDisplayWeight(kg: number, unit: Unit): number {
   return Math.round(raw / step) * step
 }
 
+/**
+ * An ESTIMATE in the display unit — an e1RM, or a change in one.
+ *
+ * `toDisplayWeight` snaps to the nearest quarter-kilo because a weight is
+ * something you load, and 116.7 kg is not a thing you can put on a bar. An
+ * estimated 1RM is not a load: nobody racks it, and snapping it prints 116.75
+ * where the database says 116.7.
+ *
+ * That difference is not cosmetic. The coach's chips exist so a reader can
+ * catch the model disagreeing with their own charts, and a chip reading
+ * "beats 116.75 e1RM" against a Progress screen reading 116.7 teaches them
+ * that the chips are approximate — which is exactly the habit that makes a
+ * real fabrication invisible. So estimates convert and round to one decimal,
+ * and never to a plate.
+ */
+export function formatEstimate(kg: number | null, unit: Unit): string {
+  if (kg === null) return '—'
+  const raw = unit === 'kg' ? kg : kgToLbs(kg)
+  return raw.toFixed(1).replace(/\.0$/, '')
+}
+
 /** What the user typed in their display unit -> kg for storage. */
 export function fromDisplayWeight(value: number, unit: Unit): number {
   return unit === 'kg' ? value : lbsToKg(value)

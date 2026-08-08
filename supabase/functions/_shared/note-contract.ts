@@ -63,10 +63,14 @@ const FORBIDDEN_TERMS = [
   'bulk',
   'cut',
 ]
-const FORBIDDEN_RE = new RegExp(`\\b(${FORBIDDEN_TERMS.join('|')})\\b`, 'i')
+/**
+ * Exported so the weekly review checks the same vocabulary against the same
+ * regex. Two copies of a safety list is one copy that gets updated.
+ */
+export const FORBIDDEN_RE = new RegExp(`\\b(${FORBIDDEN_TERMS.join('|')})\\b`, 'i')
 
 /** Prompt: "No emoji, no exclamation marks, no motivational filler." */
-const EMOJI_RE = /\p{Extended_Pictographic}/u
+export const EMOJI_RE = /\p{Extended_Pictographic}/u
 
 export interface ContractViolation {
   /** Which insight, or -1 for a violation of the set as a whole. */
@@ -174,8 +178,22 @@ export function checkBlockPrivacy(block: unknown): ContractViolation[] {
       for (const [key, item] of Object.entries(value as Record<string, unknown>)) {
         // `lifts[].name` is an exercise name and is allowed by §2C — the rule
         // is numbers and exercise names only. Any other identifying key is not.
-        const isExerciseName = key === 'name' && /^lifts\[\d+\]$/.test(path)
-        if (IDENTIFYING_KEY.test(key) && !isExerciseName) {
+        //
+        // `due_routine.name` is the ONE deliberate widening, added at B1, and
+        // it is a widening rather than an oversight: a routine name is text
+        // the user typed, so unlike an exercise name it can contain anything
+        // they chose to put in it. It is allowed because the briefing's whole
+        // job is "Push A is up", and a briefing that says "your next routine
+        // is up" has given up the fact it exists to deliver.
+        //
+        // What this does NOT open: workout names, workout notes, per-lift
+        // notes and set notes remain outside every block, and they are where
+        // free text actually accumulates. Logged in DECISIONS.md. This check
+        // is what forced the decision to be made out loud rather than
+        // discovered later in a prompt log.
+        const allowedName =
+          key === 'name' && (/^lifts\[\d+\]$/.test(path) || path === 'due_routine')
+        if (IDENTIFYING_KEY.test(key) && !allowedName) {
           violations.push({
             index: -1,
             rule: 'identifying-key',

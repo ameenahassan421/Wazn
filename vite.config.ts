@@ -93,6 +93,11 @@ export default defineConfig({
         // the case that matters — a tab you use, in a gym you have been to
         // before — without spending 42 KiB of every install on tabs a new user
         // may never open at all.
+        //
+        // B1's briefing and debrief are deliberately NOT in this list and
+        // never will be: they live on the Log and finish screens, in the main
+        // chunk, and both draw their figures from SQL with the phrased line
+        // optional. They are the two coach surfaces that DO work offline.
         globIgnores: [
           '**/HevyImport-*.js',
           '**/ProgressScreen-*.js',

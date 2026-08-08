@@ -1,0 +1,34 @@
+{
+  "name": "debrief-streak",
+  "kind": "debrief",
+  "note": "GOLDEN. Printed by session_debrief() on a real Postgres against the history supabase/tests/coach_surfaces.sql seeds. Placeholder lift names mapped to real catalog entries. Four straight progressions on the anchor lift and a band gap to point at — the case §4-A2 describes as 'what this session meant, plus one forward cue'. Note the anchor is 70 x 10 and not 72.5 x 10: the top set is ONE set, and 72.5 x 8 estimates lower.",
+  "catalog": [
+    "Bench Press (Barbell)",
+    "Squat (Barbell)",
+    "Lat Pulldown (Cable)",
+    "Romanian Deadlift (Barbell)",
+    "Calf Raise (Machine)"
+  ],
+  "block": {
+    "unit": "kg",
+    "productive_range": [10, 20],
+    "found": true,
+    "sets": 3,
+    "exercises": 1,
+    "volume_kg": 1980.0,
+    "duration_min": 45,
+    "records": 2,
+    "anchor": {
+      "exercise": "Lat Pulldown (Cable)",
+      "e1rm": 93.3,
+      "top_weight_kg": 70.0,
+      "top_reps": 10,
+      "previous_e1rm": 90.0,
+      "gain_since_last_e1rm": 3.3,
+      "progression_streak": 4,
+      "e1rm_28d": 93.3,
+      "e1rm_before_28d": 73.3
+    },
+    "low_band": { "muscle": "calves", "sets": 0 }
+  }
+}
