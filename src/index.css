@@ -551,6 +551,18 @@ button {
   --layer-dir: -1;
 }
 
+/* The rest timer's drain scales from the inline start, so the bar empties
+   toward the end the same way in both directions. `transform-origin` has no
+   logical keyword, so the flip is explicit — same shape as `--layer-dir`
+   above. See RestTimer.tsx for why this is a transform and not a width. */
+@utility timer-drain {
+  transform-origin: left center;
+}
+
+[dir='rtl'] .timer-drain {
+  transform-origin: right center;
+}
+
 /* A personal record. The row fills to 28% amber, then settles to the 7%
    tint it keeps. Amber, never confetti — §2.1 forbids a celebration, and a
    record is a fact about the row, so it stays on the row. */

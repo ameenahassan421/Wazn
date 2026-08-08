@@ -2575,6 +2575,23 @@ passing. It is now 1000ms, matching the tick. That duration is off the
 four-token scale on purpose: the bar is a readout of elapsed time, not a
 response to a tap.
 
+**And making it continuous exposed a cost that was hiding behind the
+stutter.** The bar animated `width`, which is a layout property. At 300ms it
+recomputed layout for a third of each second; at 1000ms it would do so every
+frame, for the whole 60–180s rest, on a budget Android, mid-workout — the
+single worst context in the app to be thrashing layout in. The fix that had
+been available all along is `scaleX` on a full-width bar, which the compositor
+handles without layout or paint. The two are pixel-identical here because the
+bar is a childless solid rectangle whose corners are clipped by its parent, so
+there is nothing for a scale to distort. `transform-origin` has no logical
+keyword, so it flips for RTL explicitly, the same shape as `--layer-dir`.
+
+Worth naming because the improvement and the regression were the same edit:
+fixing how the timer _reads_ would have quietly quadrupled what it _costs_.
+The design hook caught it; verified afterwards by measuring the rendered bar
+in a real build (full height, anchored at the inline start, `scaleX(0.988)`
+two seconds into a rest) rather than by trusting that the CSS compiled.
+
 ### U7 latency — measured, and two of the budgets are missed
 
 Mid-range Android profile, 4x CPU, 1.6 Mbps down, 150ms RTT, 390x844@3x —
