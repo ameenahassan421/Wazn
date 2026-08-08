@@ -2880,3 +2880,46 @@ minute. Undo is deleting the `resolve.alias` block and the directory.
 Aliases, not `overrides`: this is the browser bundle only. `tsc` still
 resolves the real packages so the types stay honest, and vitest has its own
 config and keeps the real modules.
+
+## 2026-08-08 — What the live auth config says about the Yahoo blocker
+
+R0's first blocker is Ameen's to close — Resend's dashboard is the only
+surviving copy of the 2026-08-05 delivery event, and no sandboxed session can
+reach it. But the sending _setup_ is readable through the Management API and
+through DNS, and reading it settles what the event was not.
+
+**Email authentication is correct.** Queried directly rather than assumed:
+
+    send.trywazn.app             TXT  v=spf1 include:amazonses.com ~all
+    resend._domainkey.trywazn.app TXT  p=MIGfMA0GCS... (DKIM)
+    _dmarc.trywazn.app           TXT  v=DMARC1; p=none;
+
+The From is `code@trywazn.app` and DKIM signs for the root domain, so DMARC
+aligns on the DKIM side; Resend's envelope sender is the `send.` subdomain,
+which relaxed alignment accepts. **Yahoo's bulk-sender rules were therefore
+satisfied, and "Yahoo rejected an unauthenticated sender" is not the
+explanation.** That leaves greylisting, a spam placement, or a Yahoo-side
+event — all of which only Resend's log can distinguish. Blocker 1 stands, and
+the retrieval is still time-critical.
+
+One loose end: the root domain carries no TXT record at all. Mail whose
+envelope is `trywazn.app` rather than `send.trywazn.app` has no SPF.
+
+**And a live problem found on the way: `rate_limit_email_sent` is 2.** Every
+other auth rate limit on the project is 30. Two is Supabase's default for the
+built-in mailer, and configuring custom SMTP does not raise it — that is a
+deliberate, separate change, and it was never made. Two auth emails per hour
+across the whole project. It does not explain 08-05 (the Gmail tester was
+sent a code 88 seconds after the Yahoo one and received it, so the budget was
+not spent), but it will break the invite wave: five invitations in an evening
+means three testers get silence, and a tester who never receives a code
+cannot report that they never received one. That is the same failure the
+Yahoo case already demonstrated, with a cause we can see and fix in advance.
+
+**Part 3 of `docs/auth-social-setup.md` also turns out to be done** —
+`external_google_enabled` true, `mailer_autoconfirm` false, password minimum
+8, and `{{ .Token }}` present in the confirmation, magic-link, recovery and
+reauthentication templates. STATUS still listed it as blocked on Ameen.
+
+Nothing here was changed. §2.8 puts key and auth configuration in Ameen's
+hands, and reading a config is not the same as owning it.

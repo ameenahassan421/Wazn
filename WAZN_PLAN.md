@@ -612,6 +612,29 @@ verbatim, so they survive even if this file isn't read.**
   auth path (`realtime.setAuth` runs on every token refresh), so they no-op
   anything unrecognised rather than throwing, and a test re-reads supabase-js's
   own dist to catch an upgrade changing the contract. See DECISIONS.md.
+- **`rate_limit_email_sent` IS 2. Every other auth rate limit is 30.** Read
+  2026-08-08 off the live auth config. That is Supabase's default for the
+  built-in mailer, and configuring custom SMTP does not raise it — you do,
+  deliberately. **Two auth emails per hour, project-wide**: invite five friends
+  in one evening and three of them get nothing and have no way to say so, which
+  is the Yahoo failure repeating at scale. Raise it before the invite wave.
+  (It does _not_ explain the 08-05 Yahoo case — the Gmail tester was sent a
+  code 88 seconds later and got it, so the budget was not spent.)
+- **Email authentication for `trywazn.app` is correctly set up**, checked
+  2026-08-08 by querying DNS directly: SPF `v=spf1 include:amazonses.com ~all`
+  on `send.trywazn.app` (Resend sends through SES), a DKIM key at
+  `resend._domainkey.trywazn.app`, and `v=DMARC1; p=none;` at
+  `_dmarc.trywazn.app`. The From is `code@trywazn.app`, and DKIM signs for the
+  root domain, so DMARC aligns. **So the Yahoo failure was not an
+  unauthenticated-sender rejection** — that theory is dead and Resend's own log
+  is still the only source. One loose end: the root domain carries no TXT
+  record at all, so anything ever sent with an envelope from `trywazn.app`
+  itself, rather than the `send.` subdomain, has no SPF to fall back on.
+- **Part 3 of `docs/auth-social-setup.md` is DONE**, contrary to the blocker
+  above: `external_google_enabled` is true, `mailer_autoconfirm` is false
+  (confirm-email on), `password_min_length` is 8, and every code-carrying
+  template — confirmation, magic link, recovery, reauthentication — contains
+  `{{ .Token }}`. Verified against the live config, not the dashboard.
 - **THREE TABS DIED ON EVERY DEPLOY, and it is fixed.** Ameen reported
   Progress, Coach and Friends broken on 2026-08-08 — exactly the three
   `React.lazy` tabs. A deploy retires the hashed chunk an already-open page is
