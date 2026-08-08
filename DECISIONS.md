@@ -2923,3 +2923,49 @@ reauthentication templates. STATUS still listed it as blocked on Ameen.
 
 Nothing here was changed. §2.8 puts key and auth configuration in Ameen's
 hands, and reading a config is not the same as owning it.
+
+## 2026-08-08 — 0016, 0017 and 0018 applied, and the ledger that now exists
+
+Ameen authorised the Supabase MCP connector and chose the three migrations
+with a live consumer. 0019 was deliberately left: its five stat-tool functions
+have no caller until B3's Ask surface, and `coach-notes` does not use them.
+
+Verified against `information_schema`, not from the three `{"success":true}`
+replies — a migration that has never been _read back_ is unverified, which is
+the same standard the plan already applies to parse-checked-but-unapplied SQL:
+
+    client_errors        8 columns, rls on, 2 policies (insert-own, select-own)
+    ai_generations       6 columns -> 14, plus ai_generations_quota_idx
+    follows/workout_likes  owner columns now default to auth.uid()
+    coach_notes          prompt_version present
+
+The one that mattered today is `client_errors`. The error boundary has been
+reporting into a table that did not exist since the day it shipped, which is
+precisely why the deploy-time chunk break was invisible until a user mentioned
+it. The instrument built for that crash was not plugged in.
+
+### The ledger is new, and it lies by omission
+
+`supabase_migrations.schema_migrations` was **empty** before today. Every
+migration from 0001 to 0015 was applied by hand-executed SQL, so Supabase held
+no record of any of them — that is why every session so far has had to _probe_
+`information_schema` to learn what is live rather than read a list. STATUS has
+said this for weeks; `list_migrations` returning `[]` confirmed it.
+
+Applying through the connector created the ledger as a side effect, and it
+contains exactly three rows:
+
+    20260808053503  social_owner_defaults
+    20260808053734  ai_observability
+    20260808053822  client_errors
+
+So the ledger is accurate about what it did and silent about everything
+before, and reads as though the database began at 0016. **That is a trap for
+`supabase db push` and a worse one for `db reset`**, which would replay the
+repo's migrations against a schema the ledger under-describes. Backfilling
+0001–0015 as ledger-only rows would fix it and was offered rather than done:
+writing fifteen rows asserting that migrations ran is a claim about history,
+and the person who ran them should be the one to make it.
+
+Recorded here rather than only in STATUS because the next person to reach for
+the Supabase CLI will not have read this conversation.
