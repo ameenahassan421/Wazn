@@ -719,7 +719,49 @@ event_message` comes back empty), so nothing here inspected message contents;
   an invalid date, and a formatter that throws during render takes its tab down —
   the same defect class U1c guarded `toneFor` against, and the dates were missed.
   Every one in `src/lib/format.ts` now degrades to an em dash.
-- **Last updated:** 2026-08-08 by Claude Code (the deploy-time lazy-chunk break
+- **U2b — the workout overview — is BUILT (2026-08-08), design v2.2.** The
+  active workout is a board, not a corridor: every exercise a block, every
+  planned row a ghost, one tap on a row's check to commit it exactly as shown.
+  **No set is pre-inserted, and none ever will be** — a ghost is client state in
+  `src/lib/plan.ts` and nothing there writes anything. Per-row previous-session
+  ghosting, the superset rail with a round count, grip long-press reorder
+  (hand-rolled, no `@dnd-kit`, plus Move up/down in the block menu for the
+  keyboard path), per-lift notes and rest on the block, and `SKIPPED` at Finish
+  and nowhere else. The focused view survives unchanged as the zoom state; its
+  25 tests still pass untouched, which is the proof.
+- **The superset round-rest had NEVER fired, and the parity plan listed it as a
+  shipped differentiator.** `addSet` asked "who is behind?" before "is the round
+  done?", and after the set that closes a round the first question always
+  answers — so the rest branch was unreachable from the second set onward. An
+  A/B superset rested exactly once per session, after A's first set, before B
+  was even picked. This is the muscle-balance chart again: right in intent,
+  wired wrong, invisible because nothing drew the round. Fixed in the new
+  `src/lib/commit.ts` with a full A/B/A/B replay as a test. **Protect-list items
+  are not verified until something renders them.**
+- **Migration 0020 (`workouts.exercise_order`) is PARSE-CHECKED, NOT APPLIED.**
+  It is a `uuid[]` column, deliberately not a join table: an unapplied column
+  makes one PATCH fail and the board falls back to deriving order from the sets
+  (the pre-v2.2 behaviour), where an unapplied table would error on every write
+  mid-workout. The column is NOT named `position`. Block order does not survive
+  a reload until Ameen applies it; nothing else degrades.
+- **U7 budgets re-measured against the new hot path.** `measureCoreLoop` used to
+  time "Log set N" in the focused view and now times the overview's row check,
+  because that is what a repeat set costs. Cold start 2192 → **2130ms** (still
+  over the 2000ms budget), warm 1148 → **1055ms**, tap → feedback **25ms**,
+  tap → set on screen 204 → **195ms** (still over 100ms; the floor is one round
+  trip and U3's optimistic writes are what make it reachable), tab switch
+  **21ms**, Lighthouse **98**, CLS 0.001. Precache 570.63 → **587.13 KiB** with
+  config, under the ~600 KiB ceiling with 12.87 KiB of headroom.
+- **The screenshot harness had never opened a workout.** Every fixture workout
+  carried an `ended_at`, so the Log tab always drew the idle screen and the
+  entire U2b screen would have been invisible to `npm run shots` — the same hole
+  as the missing Edge Function routes, one week later. There is now an `active`
+  fixture, and the run commits a real set against a real build. It also found a
+  real defect: the sticky rest bar's wrapper was transparent and cut a control
+  in half mid-scroll.
+- **Last updated:** 2026-08-08 by Claude Code (U2b, the workout overview; the
+  superset round-rest defect it uncovered; migration 0020; the harness's missing
+  in-progress workout). Previously 2026-08-08 (the deploy-time lazy-chunk break
   Ameen reported, found by reproduction and fixed twice over; the precache
   ceiling met at 571.25 KiB by dropping unused Supabase realtime and storage;
   guarded date formatters; the harness's missing Edge Function stubs; and the

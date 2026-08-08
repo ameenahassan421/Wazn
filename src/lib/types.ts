@@ -65,6 +65,14 @@ export interface Workout {
    * match a document is not a migration worth running.
    */
   notes?: string | null
+  /** Set when the workout was started from a routine (migration 0004). */
+  routine_id?: string | null
+  /**
+   * Block order for the active workout (migration 0020). Membership and order
+   * only — it never implies a set was performed. Absent until 0020 is applied,
+   * in which case the order is derived from the sets, as it was before v2.2.
+   */
+  exercise_order?: string[] | null
 }
 
 export interface WorkoutSet {
