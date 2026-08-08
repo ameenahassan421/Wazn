@@ -77,14 +77,18 @@ function NotesCard() {
       style={{ borderRadius: 'var(--radius-md)' }}
     >
       <div className="mb-2.5 flex items-baseline gap-2">
+        {/* The label and the action, and nothing else. "as of <date>" used to
+            live here too, and three items would not fit 390px: the row wrapped
+            and left "Aug 8" orphaned on a line of its own under Regenerate.
+            Freshness is metadata about the note, so it sits with the other
+            metadata in the footer — one line each, neither able to push the
+            other. */}
         <h2 className="kicker flex-1">
           {state === 'loading'
             ? // v2.1: the loading state is a kicker, not a skeleton. A shimmer
               // implies a layout is coming; this is waiting on a sentence.
               'Reading your log…'
-            : `Coach's notes${
-                notes ? ` · as of ${formatWorkoutDate(notes.generatedAt)}` : ''
-              }`}
+            : "Coach's notes"}
         </h2>
         {state === 'ready' && (
           <button
@@ -150,6 +154,7 @@ function NotesCard() {
 
       {state === 'ready' && (
         <p className="mt-3 text-[11px] text-muted">
+          {notes && `As of ${formatWorkoutDate(notes.generatedAt)} · `}
           {left} regenerate{left === 1 ? '' : 's'} left this week
           {spent ? ' · resets weekly' : ''}
         </p>

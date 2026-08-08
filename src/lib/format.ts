@@ -18,18 +18,43 @@ const TIME = new Intl.DateTimeFormat(undefined, {
   minute: '2-digit',
 })
 
-export function formatWorkoutDate(iso: string): string {
+/**
+ * Every date formatter goes through here, and it is not defensive padding.
+ *
+ * `Intl.DateTimeFormat.format` THROWS on an invalid date — `RangeError:
+ * Invalid time value` — and a formatter that throws during render takes its
+ * whole tab down. That is the same defect class U1c guarded `toneFor` and the
+ * thumbnail initial against; the dates were missed, and the Coach tab found
+ * it: one absent `generatedAt` in a response and the screen was gone.
+ *
+ * Every caller here is rendering a timestamp that came off the wire, so
+ * "the server sent something unexpected" has to degrade to a dash the way a
+ * null volume does — not to an empty screen.
+ */
+function parse(iso: string | null | undefined): Date | null {
+  if (!iso) return null
   const date = new Date(iso)
+  return Number.isNaN(date.getTime()) ? null : date
+}
+
+/** What an unrenderable value looks like, matching `formatVolume`. */
+const NO_VALUE = '—'
+
+export function formatWorkoutDate(iso: string): string {
+  const date = parse(iso)
+  if (!date) return NO_VALUE
   const sameYear = date.getFullYear() === new Date().getFullYear()
   return sameYear ? DAY.format(date) : DAY_WITH_YEAR.format(date)
 }
 
 export function formatTime(iso: string): string {
-  return TIME.format(new Date(iso))
+  const date = parse(iso)
+  return date ? TIME.format(date) : NO_VALUE
 }
 
 export function formatShortDate(iso: string): string {
-  return DAY_WITH_YEAR.format(new Date(iso))
+  const date = parse(iso)
+  return date ? DAY_WITH_YEAR.format(date) : NO_VALUE
 }
 
 const MONTH = new Intl.DateTimeFormat(undefined, { month: 'short' })
@@ -41,16 +66,17 @@ const MONTH = new Intl.DateTimeFormat(undefined, { month: 'short' })
  * wrong day for half the planet.
  */
 export function formatDayLabel(date: Date): string {
-  return DAY.format(date)
+  return Number.isNaN(date.getTime()) ? NO_VALUE : DAY.format(date)
 }
 
 export function formatMonthLabel(date: Date): string {
-  return MONTH.format(date)
+  return Number.isNaN(date.getTime()) ? NO_VALUE : MONTH.format(date)
 }
 
 /** "3 days ago" / "today" — the only context needed above a set input. */
 export function formatRelativeDay(iso: string): string {
-  const then = new Date(iso)
+  const then = parse(iso)
+  if (!then) return NO_VALUE
   const startOfDay = (d: Date) =>
     new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime()
   const days = Math.round((startOfDay(new Date()) - startOfDay(then)) / 86_400_000)
@@ -64,10 +90,10 @@ export function formatRelativeDay(iso: string): string {
 
 export function formatDuration(startIso: string, endIso: string | null): string {
   if (!endIso) return 'in progress'
-  const minutes = Math.max(
-    0,
-    Math.round((new Date(endIso).getTime() - new Date(startIso).getTime()) / 60_000),
-  )
+  const start = parse(startIso)
+  const end = parse(endIso)
+  if (!start || !end) return NO_VALUE
+  const minutes = Math.max(0, Math.round((end.getTime() - start.getTime()) / 60_000))
   if (minutes < 60) return `${minutes} min`
   const hours = Math.floor(minutes / 60)
   return `${hours}h ${minutes % 60}m`

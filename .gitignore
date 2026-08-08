@@ -27,3 +27,8 @@ perf
 # traces from failures, `playwright-report/` the HTML report.
 test-results
 playwright-report
+
+# `npm run check:deploy` builds two copies of the app here to play a deploy
+# out against a running page. It cleans up after itself; this covers the run
+# that was interrupted.
+.deploy-check
