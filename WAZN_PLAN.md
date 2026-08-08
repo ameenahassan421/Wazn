@@ -759,7 +759,38 @@ event_message` comes back empty), so nothing here inspected message contents;
   fixture, and the run commits a real set against a real build. It also found a
   real defect: the sticky rest bar's wrapper was transparent and cut a control
   in half mid-scroll.
-- **Last updated:** 2026-08-08 by Claude Code (U2b, the workout overview; the
+- **U3a is BUILT (2026-08-08) — trust-ladder rungs 1 and 2.** Set commits are
+  optimistic: the row goes on screen when the check is pressed and the insert
+  follows behind it. **Tap → set on screen 195ms → 46ms, so the U7 budget that
+  has been missed since R1 now passes.** The client generates the row's uuid
+  and it IS the primary key, which makes a replay idempotent (`23505` reads as
+  "already landed"), gives the row its final identity so it is never remounted,
+  and makes the queue safe to persist. PR flags arrive on reconcile — a record
+  is computed in the database and an optimistic row genuinely cannot know it.
+  The pending queue and the board's client-only state are checkpointed to
+  localStorage on every change, so killing the tab mid-set loses nothing.
+  Finish flushes first and refuses while writes are outstanding. **U3b —
+  IndexedDB, the offline queue and GATE 4 — is NOT built.**
+- **R5 is BUILT (2026-08-08) — "Bring your history from Hevy".** File picker →
+  client-side parse → preview (workouts, sets, date range, which lifts matched,
+  which will be created, every problem the file has) → one confirm that writes
+  under the user's own RLS. The file never leaves the device. Deliberately does
+  NOT reuse `scripts/import_hevy.ts`: that script aborts where this must
+  report, hardcodes Ameen's timezone, and reads `weight_lbs` unconditionally —
+  which for a kg Hevy account would make every weight silently null.
+  **Offered only to an account with no history**, because importing the same
+  export twice would duplicate every workout and nothing de-duplicates.
+- **The precache went OVER the ceiling and was brought back.** 604.98 KiB at
+  worst, now **592.20 KiB** by excluding the import chunk from the service
+  worker's precache — an import that writes to Supabase cannot work offline
+  anyway, so precaching it was waste. **7.8 KiB of headroom is a warning, not a
+  budget: the next UI phase should expect to remove something.**
+- **Cold start is still the one missed budget: 2171ms against 2000ms.** It has
+  measured 2308 / 2192 / 2130 / 2317 / 2171 across runs, so treat anything
+  under ~200ms of movement as noise rather than progress.
+- **Last updated:** 2026-08-08 by Claude Code (U3a's optimistic writes and
+  checkpoint; R5's Hevy import; the precache ceiling breach and its fix).
+  Previously 2026-08-08 (U2b, the workout overview; the
   superset round-rest defect it uncovered; migration 0020; the harness's missing
   in-progress workout). Previously 2026-08-08 (the deploy-time lazy-chunk break
   Ameen reported, found by reproduction and fixed twice over; the precache

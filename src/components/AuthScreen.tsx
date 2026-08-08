@@ -335,6 +335,14 @@ export function AuthScreen() {
           What Wazn stores
         </a>
       </p>
+      {/* A statement, not a control. The import needs a session to write
+          anything, so a button here could only ever take you to the sign-in
+          you are already looking at — and the thing worth saying before
+          somebody signs up is that switching does not cost them their
+          history. */}
+      <p className="mt-1 text-[11px] text-muted">
+        Coming from Hevy? You can bring every workout with you.
+      </p>
 
       {view === 'signin' && (
         <div className="mt-8 flex flex-col gap-3">
