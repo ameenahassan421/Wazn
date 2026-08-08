@@ -585,6 +585,18 @@ verbatim, so they survive even if this file isn't read.**
   "Evidence" as `_none — beta runs_`; its content is Ameen's two blockers
   (Resend's logs for the Yahoo delivery failure; `LAUNCH.md` on a real phone
   with a second account). Neither is reachable from a sandboxed session.
+- **The Yahoo evidence is GONE from Supabase, and Resend's copy is expiring.**
+  Checked 2026-08-08 against the Management API's analytics endpoint:
+  `auth_logs` holds **~1 day**. Counts by day were 38 for 2026-08-07 and
+  **0 for 08-04, 08-05 and 08-06** — the 02:28:45 UTC request on 08-05 is past
+  retention and cannot be recovered. **Do not spend time in the Supabase
+  dashboard on this.** Resend's own log retention is also finite and the event
+  is already three days old, so if blocker 1 is going to be answered at all it
+  has to be answered now. Two caveats on the check: the endpoint returned
+  aggregates but not rows for this token (`count(*)` works, `select
+event_message` comes back empty), so nothing here inspected message contents;
+  and a no-window query silently returns `[]` because the default window is
+  short — always pass `iso_timestamp_start`/`iso_timestamp_end`.
 - **Last updated:** 2026-08-08 by Claude Code (R1: U1c's number formatting and
   error boundaries, U7's motion system and measured latency budgets, and the
   committed perf/screenshot harness). Previously 2026-08-07 (the four-path auth screen; then
