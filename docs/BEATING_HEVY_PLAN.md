@@ -51,7 +51,40 @@ without the user pressing something**), stats-only prompts (no
 identity), quotas on free / unmetered on Pro, and the anti-guilt rule —
 the coach celebrates and advises, it never scolds.
 
-## 2. The coach ladder
+## 2. The design thesis: anticipatory logging
+
+Everything below serves one idea, and it is the idea that makes "better
+than Hevy" tractable instead of a polish race we would lose.
+
+**Hevy is reactive.** It is an excellent clipboard: it waits to be told
+the exercise, the weight, the reps, the plan, the schedule. Seven years
+of refinement went into making the telling fast. Out-polishing that on
+its own axis takes years we do not have.
+
+**Wazn is anticipatory.** The app should already know what you are
+about to do, and the interface's job is to make accepting that cheaper
+than typing it. The user's remaining work is confirmation and
+correction, not entry.
+
+Five levels, each a rung of the coach ladder in §3 seen from the
+interface side:
+
+| Level          | The app...                              | Where it lives                   |
+| -------------- | --------------------------------------- | -------------------------------- |
+| L0 Memory      | shows what you did last time            | shipped (previous-session ghost) |
+| L1 Prediction  | computes what you should do next        | B4 progression engine            |
+| L2 Explanation | says why it moved                       | B1–B2 briefing, debrief, review  |
+| L3 Inquiry     | answers questions about your own data   | B3 grounded Q&A                  |
+| L4 Adaptation  | reorders itself around what matters now | **E2, new**                      |
+
+**The law that keeps anticipation honest:** an anticipation must always
+be cheaper to accept than to produce by hand, and never more expensive
+to override than to accept. One tap either way. The moment overriding
+costs two taps and accepting costs one, the app has started bullying
+the user toward its own guess — and a guess about someone's training is
+wrong often enough that this would be fatal.
+
+## 3. The coach ladder
 
 Every AI feature below sits on one rung of this ladder. Each rung is a
 phase gate; we do not skip rungs, because trust in rung N is what makes
@@ -71,7 +104,7 @@ combines rungs 1–5 with a crew. That combination is the product.
 
 ---
 
-## 3. Pillar A — The proactive coach (rungs 3 → advisor)
+## 4. Pillar A — The proactive coach (rungs 3 → advisor)
 
 "Proactive" does not mean notifications first. It means **the right
 words are already waiting at every natural attention point** — computed
@@ -132,7 +165,7 @@ testers read the briefing without being told it exists (measured by a
 `coach_views` event table), and at least one tester changes a session
 because of it (exit interview). Cost stays under $0.01/user/week.
 
-## 4. Pillar B — Interactive deep analysis (rung 4 — interlocutor)
+## 5. Pillar B — Interactive deep analysis (rung 4 — interlocutor)
 
 This is the feature Ameen is asking for with "interactive" — and it
 collides with a standing constraint: **the Coach tab was designed
@@ -197,7 +230,7 @@ question unprompted. If testers treat it as ChatGPT (off-domain rate
 
 > 30%), tighten to chips-only and reassess.
 
-## 5. Pillar C — Adaptive programming (rung 5 — programmer)
+## 6. Pillar C — Adaptive programming (rung 5 — programmer)
 
 The routine generator exists; it runs once and goes stale. The moat
 version: **routines that progress themselves, with consent**.
@@ -230,7 +263,7 @@ sessions by his own count; applying a coach diff round-trips into a
 normal editable routine. Kill switch: a "static targets" toggle per
 routine — the engine must be refusable per the consent rule.
 
-## 6. Pillar D — The social flywheel (AI × crew)
+## 7. Pillar D — The social flywheel (AI × crew)
 
 Hevy's social is a feed you scroll. Wazn's should be a **crew you
 train with** — smaller, warmer, and fed by the coach. Sequenced after
@@ -269,7 +302,110 @@ incidents; the crew recap gets shared outside the app at least once
 
 ---
 
-## 7. Infrastructure, tools, and quality (cross-cutting)
+## 8. Pillar E — AI-native UX: intelligence that removes interface
+
+This pillar is the difference between "an app with AI in it" and an app
+whose _interface_ is intelligent, and it is the part of Ameen's vision
+the earlier draft under-served.
+
+**The mistake to avoid:** AI arriving as a tab. A chat box is an
+admission that the app does not know what you need and would like you
+to type it. Every fitness app shipping AI in 2026 is shipping a chat
+box. Wazn's version should be mostly invisible — the user never "uses
+the AI", they find the app already prepared.
+
+### E1. The rest canvas — the category's unclaimed attention surface
+
+Between sets, a lifter has 60–180 seconds and nothing to do. Across a
+session that is **20 to 60 minutes of attention per workout** that
+every tracker in the market spends on a countdown and a blank screen.
+It is the largest unused surface in the category, and Wazn already owns
+the timer that governs it.
+
+The rest screen becomes a canvas that shows, at arm's length, one of:
+the next set's target and why it moved; a single insight about the
+session in progress; the crew's activity today. Deterministic layer
+picks the fact; the model phrases it; both are already computed for
+other surfaces, so the marginal cost is close to zero.
+
+**This tests §2.1 of the plan — "the logging flow is sacred" — so the
+rules are strict:** the canvas is passive (never blocks, never asks,
+never has an input), silent (the timer's own rule), glanceable at three
+feet, dismissible permanently in one tap, and it **vanishes the moment
+the user reaches for the next set** — the log control is never further
+away or later than it is today. Rest is not mid-set; the law forbids
+interrupting _between a set and its log_, and this is neither. If beta
+testers describe it as noise even once, it dies, and that is a cheap
+experiment to run.
+
+### E2. Adaptive information architecture (L4)
+
+The app reorders itself around what matters now. The exercise picker
+leads with what today's routine expects rather than global recency.
+Progress leads with the block that _changed_ — a plateau, a new PR, a
+group that fell under band — instead of a fixed order. History defaults
+to the view that answers the question the user most likely arrived
+with.
+
+**Guardrails, because an interface that moves is an interface that
+cannot be learned:**
+
+- **Ordering adapts; presence never does.** Nothing appears, nothing
+  disappears, nothing hides behind a fold it was not behind yesterday.
+- **Every reorder is explainable in one line** and says so ("ordered
+  for Push day"). An unexplained rearrangement reads as a bug.
+- **A reset exists** — one control returns any surface to its default
+  order, permanently.
+- **The hot path never adapts.** Set entry, the commit control, the
+  timer: muscle memory outranks cleverness, and a moved button
+  mid-workout is the worst thing this app could do.
+
+### E3. Zero-input capture (later, and mostly parked)
+
+The long arc of anticipatory logging is a tap budget near zero: ghost
+rows at one tap (U2), then voice entry ("bench sixty by eight") as a
+speed and accessibility path, then set detection from a wrist device.
+Only the first is scheduled. Voice is a candidate for after B4 — it is
+the one input mode that genuinely beats a touchscreen with chalked
+hands — and needs its own evidence before it earns a phase.
+
+## 9. Pillar F — Distribution: the two channels Hevy cannot contest
+
+The comparison document names Hevy's growth engine as SEO —
+**725,000+ monthly site visits** — and neither of this plan's earlier
+drafts had a word about distribution beyond share cards. That was a
+hole.
+
+### F1. Import as acquisition (the switching lever, 80% built)
+
+`scripts/import_hevy.ts` already exists; it built Wazn's catalogue and
+nine months of history from a Hevy export, including the ×2 weight
+corrections. Productizing it — "Bring your history from Hevy" on the
+auth screen, upload the CSV, done — converts the strongest reason to
+stay with Hevy (three years of logged sets) into a reason to leave it.
+The comparison doc records that **Hevy offers no competitor import**;
+this is asymmetric by construction, and the hard part is already
+written and tested.
+
+It is also the best onboarding this app can have: a switcher's first
+session opens with their own previous-session ghosts on every row,
+which is the retention engine firing on day one instead of week three.
+
+### F2. Arabic fitness SEO (uncontested, compounding, free)
+
+Hevy's moat is English search. Arabic fitness search is effectively
+uncontested, and Wazn already holds the raw material: 134+ exercises
+with names, muscle groups, and imported instruction text. Static pages
+per exercise — Arabic and English, one route, generated at build time,
+no CMS, no monthly cost — plus the privacy and about pages that already
+exist. This is the only compounding zero-marginal-cost channel
+available to a one-person product, and it wants to exist _before_
+Stage 7's on-the-ground push rather than after.
+
+Sequenced with Stage 5 (the Arabic strings land there) and gated on
+nothing else.
+
+## 10. Infrastructure, tools, and quality (cross-cutting)
 
 - **One Edge Function pattern, three modes.** `coach-notes` /
   `coach-brief` / `coach-ask` share the `chat()` helper, the shared
@@ -305,27 +441,40 @@ incidents; the crew recap gets shared outside the app at least once
   eval fixtures gain Arabic goldens; native-speaker review is part of
   GATE 5 already.
 
-## 8. Phase map and sequencing
+## 11. Release order — themed, not phase-numbered
 
-Parity phases (U-series) and offense phases (B-series) interleave;
-reliability still outranks offense — U3 (offline) ships before B3/B4
-because a coach whose log loses sets is a clown.
+Parity phases (U-series) and offense phases (B-series) interleave.
+Phase IDs are the backlog; **releases are what a user experiences**, and
+a release is only worth shipping if it changes one sentence a tester
+would say about the app. Reliability still outranks offense — U3 ships
+before B3/B4, because a coach whose log loses sets is a clown.
 
-| Phase | Contents                                              | Depends on                                              | Gate                  |
-| ----- | ----------------------------------------------------- | ------------------------------------------------------- | --------------------- |
-| B1    | A1 briefing + A2 debrief                              | beta live; OpenRouter cap set                           | GATE B1 (§3)          |
-| B2    | A3 weekly review contract + `coach_views` measurement | B1                                                      | folded into B1 review |
-| B3    | Grounded Q&A (tool-loop, chips, quotas)               | B1; **Ameen approves the no-chat change**; eval harness | GATE B3 (§4)          |
-| B4    | Progression engine + targets-in-flow + coach diffs    | U2 (overview ghosts) preferred; U3 shipped              | GATE B4 (§5)          |
-| B5    | Crew recap + challenges + PR moments                  | GATE 3 passed; U5 profiles                              | GATE B5 (§6)          |
-| B6    | Web Push → native push; D5 gym crews                  | 4B; Stage 7 contact                                     | rides GATE 4B / 7     |
+| Release          | What the tester would say                    | Phase IDs                    | Depends on                             |
+| ---------------- | -------------------------------------------- | ---------------------------- | -------------------------------------- |
+| **R0 Evidence**  | "I'm using it."                              | _none — beta runs_           | Ameen's two blockers                   |
+| **R1 Finished**  | "This feels like a real app."                | U1c + U7 (feel)              | nothing                                |
+| **R2 The board** | "I can see my whole workout."                | U2                           | design addendum                        |
+| **R3 Trust**     | "It works in the basement gym."              | U3                           | U2 preferred                           |
+| **R4 It knows**  | "It told me what to do before I asked."      | B1 + B2 + **E1 rest canvas** | beta live; OpenRouter cap              |
+| **R5 Switch**    | "I brought three years of history in a tap." | **F1 import** + U4           | nothing                                |
+| **R6 Ask it**    | "I asked why my bench stalled and it knew."  | B3 + **E2 adaptive order**   | Ameen's no-chat reversal; eval harness |
+| **R7 Programs**  | "It runs my training now."                   | B4                           | U2, U3                                 |
+| **R8 Crew**      | "My friends are in it."                      | U5 + B5                      | GATE 3 retention data                  |
+| **R9 Native**    | "The timer wakes my phone."                  | U6 + B6                      | store accounts                         |
+| **R10 Found**    | "People I don't know are signing up."        | **F2 Arabic SEO** + Stage 7  | Stage 5 strings                        |
+
+**Where the lead actually opens: R4.** R1–R3 are Wazn becoming as good
+as Hevy. R4 is the first release Hevy has no answer to, because nothing
+in a recorder answers "what should I do today" — and it is cheap,
+because the deterministic spine and the Edge Function pattern already
+exist. **If only one offense release ever ships, it is R4.**
 
 **Monetization note (Stage 6 alignment):** the Pro line becomes
 crisp — _free tier: the recorder + weekly review with quotas; Pro: the
 coach_ (unmetered questions, adaptive programming, deep review). Real
 marginal cost, real willingness to pay, and ads never touch any of it.
 
-## 9. Metrics and kill criteria
+## 12. Metrics and kill criteria
 
 - **Engagement:** briefing view-rate, review read-rate, questions/user/
   week, target-accept rate (C2 ghosts committed unchanged).
@@ -341,7 +490,7 @@ marginal cost, real willingness to pay, and ads never touch any of it.
   tolerance is zero; one confirmed fabricated number pauses the
   feature until the eval harness catches that class.
 
-## 10. What we are NOT building
+## 13. What we are NOT building
 
 Open-domain chat or personas; a "form check" from phone video (medical/
 injury territory + heavy infra); auto-applied programming (consent rule
@@ -352,12 +501,28 @@ leaderboards; streak-guilt notifications; any model output rendered
 mid-set. Each of these is either off-mission, off-voice, or on the
 wrong side of the wellness-patterns safety line.
 
+Three additions from the Pillar E work, because a powerful idea needs
+its own fence:
+
+- **Adaptive _presence_.** Ordering may adapt (E2); what exists on a
+  screen may not. An interface where controls come and go cannot be
+  learned, and a lifter mid-workout is the last person who should be
+  re-learning anything.
+- **Anything adaptive on the hot path.** Set entry, the commit control
+  and the timer are fixed geometry forever.
+- **A chat box as the front door to the coach.** B3 is a bounded
+  interrogation surface reached deliberately; it never becomes the
+  first thing the Coach tab offers, because a blank input is the app
+  admitting it has nothing prepared.
+
 ---
 
-**Priority read:** B1+B2 are cheap (one function mode, two cards) and
-prove the thesis on the beta cohort within weeks. B3 is the flagship
-and the Pro anchor — but it waits for the eval harness and Ameen's
-explicit reversal of the no-chat rule. B4 is the deepest moat (Fitbod's
-brain on Hevy's logbook, with consent). B5 turns retention into
-growth. If the B-series works, Wazn isn't a cheaper Hevy — it's a
-different species that happens to log sets.
+**Priority read:** R4 (B1 + B2 + the rest canvas) is the release where
+the lead opens — cheap, built on a spine that already exists, and the
+first thing here Hevy has no answer to. R5's import is the strongest
+switching lever available and is 80% written already. B3 is the
+flagship and the Pro anchor, but it waits for the eval harness and
+Ameen's explicit reversal of the no-chat rule. B4 is the deepest moat
+(Fitbod's brain on Hevy's logbook, with consent). If this plan works,
+Wazn isn't a cheaper Hevy — it's a different species that happens to
+log sets.

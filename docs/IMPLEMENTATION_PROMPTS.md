@@ -120,6 +120,102 @@ column the real RPC returns). CI wall, push, report, stop.
 
 ---
 
+## U7 — Feel: latency budgets and a motion system (release R1, with U1c)
+
+Depends on: nothing. Pairs with U1c to make one release.
+
+```
+Build phase U7 of docs/HEVY_PARITY_UPGRADE_PLAN.md. Load
+wellness-app-design and impeccable first.
+
+(1) Latency budgets, measured not asserted. Establish the numbers on a
+mid-range Android profile over a 3G-class connection: tap-to-first-
+interactive under 2s, core-loop tap under 100ms perceived, tab switch
+under 150ms. Add a scripted Playwright trace of "open -> start workout
+-> log a set" plus a Lighthouse run, and put the measured numbers in
+the PR body the way test counts already are. Fix what misses: check
+the app-shell precache actually covers the Log path, that no font or
+image blocks first paint, and that the lazy screens are not being
+pulled into the initial chunk. A PWA beating a native app's cold start
+is the claim — prove or disprove it with numbers, and say which.
+
+(2) A motion system. Four tokens on the two approved easings —
+instant / press / transition / celebration — defined in index.css
+beside the existing tokens, and spent only where motion answers a
+question the user is asking: set committed, timer running, PR beaten,
+screen came from somewhere. prefers-reduced-motion collapses all four.
+Nothing decorative, nothing over 200ms on the hot path, and the 80ms
+press behaviour that exists today stays as the press token.
+
+Screenshot the built app per the §4 visual-verification rule. CI wall,
+push, report against GATE U7, stop.
+```
+
+---
+
+## R4 — The rest canvas (offense plan §8-E1, ships with B1/B2)
+
+Depends on: B1 shipped (the briefing/debrief surfaces supply the
+content). ⚠️ This one deliberately touches the sacred flow — read
+§8-E1's rules before designing, and treat a single "this is noise"
+report from a tester as a kill signal.
+
+```
+Build the rest canvas from docs/BEATING_HEVY_PLAN.md §8-E1. Load
+wellness-app-design and impeccable first, and reread the "one law"
+section of the skill before you design anything.
+
+Between sets there are 60-180 seconds of attention every tracker
+wastes. The rest surface shows ONE of: the next set's target and why
+it moved, one insight about the session in progress, or the crew's
+activity today — deterministic layer picks the fact, the model phrases
+it, and both are already computed for the briefing and debrief so the
+marginal cost is near zero.
+
+The rules are the feature: passive (no input, ever), silent, readable
+at three feet, dismissible permanently in one tap, and it VANISHES the
+moment the user reaches for the next set — the log control must not
+move, shrink, or arrive later than it does today. Prove that last
+point with a tap-count and timing comparison before and after, and put
+both in the PR.
+
+If the deterministic layer has nothing worth saying, the canvas shows
+the plain timer exactly as today. Silence is a valid state and the
+better default. CI wall, screenshots, push, report, stop.
+```
+
+---
+
+## R5 — Import as onboarding (offense plan §9-F1)
+
+Depends on: nothing. The importer already exists as a script.
+
+```
+Productize the Hevy import per docs/BEATING_HEVY_PLAN.md §9-F1. Load
+wellness-app-design first.
+
+scripts/import_hevy.ts already parses a Hevy CSV export, maps
+exercises, and applies weight corrections — it built Ameen's nine
+months of history. Turn it into a first-run path: "Bring your history
+from Hevy" on the auth screen and in the Welcome screen, file picker,
+parse and preview client-side (how many workouts, how many sets, what
+date range, which exercises did not match), then one confirm that
+writes under the user's own RLS — never the service role, never a
+server-side upload of somebody's file.
+
+The payoff is the retention engine firing on day one: a switcher's
+first session opens with their own previous-session ghosts on every
+row. Design the failure cases honestly — a wrong file, a truncated
+export, an unmatched exercise (offer to create it as custom), a
+partial import (resumable, never a silent half-write). Show what will
+happen before it happens; this is the one flow where a surprise is
+unforgivable, because it is somebody's training history.
+
+CI wall, screenshots, push, report, stop.
+```
+
+---
+
 ## Phase U1 — Free wins (parity plan §3, U1)
 
 Depends on: beta live. Zero core-loop risk.

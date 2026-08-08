@@ -6,13 +6,17 @@ STATUS rule that nothing ships before the beta runs, every phase below is
 sequenced _around_ the beta, and no phase starts without explicit
 approval. This document is the map; the plan file stays the law.
 
-**Sources:** the `Wazn_vs_Hevy_Comparison.docx` (2026-08-01), a full
-code inventory of the app as built on 2026-08-07 (every screen,
-component, and lib module read; claims cite `file:line`), `WAZN_PLAN.md`
-
-- `DECISIONS.md`, and the `wellness-app-design` skill created alongside
-  this plan (`.claude/skills/wellness-app-design/`) — which encodes the
-  Hevy-class design grammar this analysis is run against.
+**Sources:** a full code inventory of the app as built on 2026-08-07
+(every screen, component, and lib module read; claims cite
+`file:line`), a screenshot pass over the built app (see §2.3),
+`WAZN_PLAN.md`, `DECISIONS.md`, and the `wellness-app-design` skill
+created alongside this plan (`.claude/skills/wellness-app-design/`),
+which encodes the Hevy-class design grammar this analysis runs
+against. **`Wazn_vs_Hevy_Comparison.docx` (2026-08-01) was added as a
+source only on 2026-08-07** — the first extraction attempt failed
+silently and the earlier drafts of this plan cited it without having
+read it. What it changed once read is recorded in DECISIONS.md and in
+Pillar F of the offense plan.
 
 ---
 
@@ -320,6 +324,38 @@ fires a notification on a locked real phone from the store build.
 
 ---
 
+### U7 — Feel (1–2 sessions; pairs with U1c as release R1)
+
+The engineering-and-craft half of "better than Hevy". Neither item is a
+feature; both are what separates an app that works from one that feels
+finished, and both are areas where a PWA can genuinely beat a React
+Native app rather than apologise to it.
+
+1. **Latency budgets, measured and defended.** A native app pays a
+   cold-start tax Wazn does not have to: an app-shell-precached PWA can
+   be logging a set before Hevy has finished splashing. That is a
+   winnable, checkable claim, so it becomes a number: **tap icon →
+   first interactive under 2s** on a mid-range Android over a
+   3G-class connection; **every core-loop tap under 100ms perceived**;
+   **tab switch under 150ms**. Measure with a Lighthouse run plus a
+   scripted trace of "open → start workout → log a set", and record the
+   numbers in the PR the way test counts are recorded. The optimistic
+   writes from U3 are what make the 100ms budget reachable — speed and
+   reliability are the same work here.
+2. **A motion system, not a motion setting.** Today there is one
+   80ms press dim. That is restraint by absence, which reads as
+   cheapness rather than discipline. Define four tokens (instant /
+   press / transition / celebration) on the two approved easings and
+   spend them only where motion answers a question the user is
+   actually asking: _did my set save_ (commit), _how long left_
+   (timer), _did I beat it_ (PR), _where did I come from_ (screen
+   transition). `prefers-reduced-motion` collapses all four. Nothing
+   decorative, nothing over 200ms on the hot path.
+
+**GATE U7:** the budgets are met on a real mid-range Android, recorded
+as numbers; and a tester describes the app as fast or smooth without
+being asked a leading question.
+
 ## 4. Cross-cutting requirements (every phase)
 
 - **RTL discipline holds**: logical properties only — every new
@@ -356,6 +392,27 @@ fires a notification on a locked real phone from the store build.
   (stopwatch, LAUNCH.md), first-workout completion rate for new
   testers, week-over-week logging retention (SQL over `workouts`),
   and after U3, sync-failure rate.
+
+## 4B. The bar this plan is actually held to
+
+Parity is the floor, not the goal. A reviewer — engineer, UX, or
+designer — should be able to hold any phase's output against these and
+get a yes:
+
+1. **Does it reduce what the user must supply?** (§2 of the offense
+   plan: anticipatory logging.) A feature that adds a field, a
+   decision, or a tap on the core loop needs an explicit reason.
+2. **Is it faster than the native competitor, not just as fast?**
+   See U7's budgets. "Good for a web app" is a losing frame.
+3. **Does it survive the bad case?** No signal, screen locked, app
+   killed, chalked hands, one thumb, glare. The bad case is the
+   normal case in a gym.
+4. **Would a lifter notice it in one session?** If a change cannot be
+   described in a sentence a tester would say unprompted, it belongs
+   in a release with something that can.
+5. **Does it hold the line?** Design system, logical properties, kg
+   storage, no pre-inserted sets, nothing model-written without a
+   press. Winning by breaking these is losing.
 
 ## 5. Priority read
 
