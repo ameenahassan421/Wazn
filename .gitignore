@@ -15,3 +15,8 @@ scripts/.aref-ruqaa-700.ttf
 # Impeccable: per-developer hook consent and machine-local Claude settings.
 .impeccable/config.local.json
 .claude/settings.local.json
+
+# Playwright: run output, never source. `test-results/` holds screenshots and
+# traces from failures, `playwright-report/` the HTML report.
+test-results
+playwright-report

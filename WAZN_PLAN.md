@@ -556,7 +556,23 @@ verbatim, so they survive even if this file isn't read.**
   Screenshotting the built app is now a cross-cutting requirement of every UI
   phase — §4 of the parity plan says how, including the two ways the first run
   got it wrong.
-- **Last updated:** 2026-08-07 by Claude Code (the four-path auth screen; then
+- **An infrastructure audit was run (2026-08-08)** — `docs/INFRASTRUCTURE_AUDIT.md`,
+  covering retrieval, evals, harnesses and tooling, with H0–H3 prompts added to
+  `docs/IMPLEMENTATION_PROMPTS.md`. Three results worth carrying here.
+  **RAG is now a recorded non-goal** (DECISIONS.md): Wazn has a schema, not a
+  corpus, and embeddings would break the one-file privacy boundary that
+  `coach_stats()` currently is. What the coach lacks is a tool layer, not a
+  vector store. **The Edge Functions are outside every gate the project has** —
+  `tsc --listFiles` sees 3 of 8 files under `supabase/functions`, so auth,
+  quota, the model key and the alias sign-in have no typecheck and no test
+  while merging to `main` deploys them. **The eval harness both plans depend on
+  needs the ledger first**: `ai_generations` has five columns and can produce
+  none of the cost, latency or hallucination figures §12 promises, because
+  `recordGeneration` only ever runs after success. Tranche **H2 (grounding gate
+  - ledger + breaker) is a hard dependency of the whole B-series** and is about
+    two days.
+- **Last updated:** 2026-08-08 by Claude Code (the infrastructure audit above).
+  Previously 2026-08-07 (the four-path auth screen; then
   all of U1 — the unrendered progress functions now draw, time-range chips, the
   `inset-block-0` fix that made the muscle-balance chart visible for the first
   time, and items 3–7: picker filters, discard-workout, un-superset, the sticky

@@ -181,6 +181,113 @@ push, report against GATE U7, stop.
 
 ---
 
+## H-series — Infrastructure (docs/INFRASTRUCTURE_AUDIT.md)
+
+> **All four shipped on 2026-08-08.** The prompts are kept because they are
+> the record of what each tranche was for, and because a follow-up ("extend
+> the eval fixtures", "add a stat tool") is easier to write against them than
+> from scratch. §10 of the audit says what changed against the plan.
+>
+> **H2 shipped, so the B-series is unblocked** — but B3 additionally needs
+> Ameen's explicit reversal of the no-chat rule, which is unchanged.
+
+None of these is a user surface, so none needs a product gate. **H2 is the
+one hard dependency: do not send a B-series prompt before it has shipped.**
+
+### H0 — Hygiene (half a day, send any time)
+
+```
+Ship tranche H0 of docs/INFRASTRUCTURE_AUDIT.md §8.
+
+(1) I2: add a migration-parse step to .github/workflows/ci.yml — set up
+python, `pip install pglast`, run `python3 scripts/check_migrations.py`.
+CLAUDE.md tells a human to run this; 0007 shipped a reserved word.
+(2) I3: write scripts/run_sql.sh — the psql runner that
+supabase/tests/rls_social.sql line 12 already tells people to use and
+that does not exist. ON_ERROR_STOP=1, DATABASE_URL from env, refuse to
+run with no argument. Both RLS suites must actually execute with it.
+(3) A4: a PROMPT_VERSION const in each Edge Function, carried into a
+new prompt_version column on coach_notes and ai_generations.
+
+Migration parse-check, CI wall, push, report, stop.
+```
+
+### H1 — Verification floor (~1 day, rides with R1/U1c)
+
+```
+Ship tranche H1 of docs/INFRASTRUCTURE_AUDIT.md §8.
+
+(1) I1: add denoland/setup-deno to CI and `deno check` every file under
+supabase/functions. Five files there — context.ts, openrouter.ts and
+all three index.ts — are in no typecheck and no test today, confirmed
+with `tsc --listFiles`, and they hold auth, quota and the model key
+while auto-deploying on merge. Then extract the quota window arithmetic
+from context.ts into a pure module and unit-test it, the same way
+validate-plan reached the vitest suite.
+(2) I5: the error boundary (also U1c's L7) plus a client_errors table,
+insert-own RLS, message/component/url/at only — no PII, no third party.
+(3) I6: vitest --coverage, and a checked-in list of src modules that
+must have a test file. A list, not a percentage. src/lib/social.ts had
+none and that is where the production bug lived.
+
+Migration parse-check, CI wall, push, report, stop.
+```
+
+### H2 — The AI safety floor ⭐ (~2 days) — **gates every B-series prompt**
+
+```
+Ship tranche H2 of docs/INFRASTRUCTURE_AUDIT.md §8. Read §3 and §4
+first.
+
+(1) A2, the grounding gate: a shared module that extracts every numeric
+token from a model response and requires each to appear in the stat
+block it was given, allowing the model's own rounding plus an
+allow-list for the constants stated in the system prompt. Wire it into
+coach-notes: on violation retry once naming the violation, then drop
+the offending note rather than the whole set. This module is also the
+eval harness's core assertion — one definition of "grounded", used in
+production and in CI.
+(2) A3: extend ai_generations with ok, error_code, latency_ms,
+finish_reason, tokens_in, tokens_out, tool_calls; move recordGeneration
+into a finally so EVERY attempt is recorded. Quota still counts only
+successes. §12 promises ledger-derived cost, latency and hallucination
+rates and the current five columns can produce none of them.
+(3) A5: a circuit breaker — on repeated provider failure the surface
+renders its deterministic skeleton with one honest line instead of a
+90-second spinner.
+(4) Eval tiers 1 and 2 from §4, in CI, no network: golden stat blocks
+asserting the SQL's numbers, and recorded model outputs asserting the
+contract via the A2 module.
+
+Migration parse-check, CI wall, push, report, stop.
+```
+
+### H3 — Tools and eyes (~2 days, before R6/B3)
+
+```
+Ship tranche H3 of docs/INFRASTRUCTURE_AUDIT.md §8.
+
+(1) A1: grow chat() a tools parameter with a bounded loop (max 4 calls,
+then it must answer) and a per-turn trace of tool/args/row-count.
+Build it once in _shared, generically — it is the retrieval mechanism
+for every AI surface after it. Add the security-invoker, RLS-scoped
+stat functions B3a needs.
+(2) Eval tier 3: `npm run eval:live` sends the fixtures through the
+real chat() and runs the tier-2 assertions on real answers. Manual and
+never in CI — a build that goes red on someone else's rate limit trains
+people to ignore red builds.
+(3) I4: a Playwright smoke run against vite preview with Supabase
+stubbed at the network layer. Assert each tab renders without a thrown
+error; assert height > 0 on the elements inset-block-0 silently
+zeroed; and assert the REQUEST BODIES the client sends match what the
+RLS suites assert about them — that last one is what would have caught
+the follow bug, and it generalises assertion 7b in rls_social.sql.
+
+Migration parse-check, CI wall, push, report, stop.
+```
+
+---
+
 ## R4 — The rest canvas (offense plan §8-E1, ships with B1/B2)
 
 Depends on: B1 shipped (the briefing/debrief surfaces supply the

@@ -2485,3 +2485,63 @@ immediately calls `updateUser({password})`; a fresh session should
 satisfy the requirement, but that is an assumption, not a test. If
 "Set password and sign in" fails on a real device, this is the first
 suspect.
+
+## 2026-08-08 — No RAG. The retrieval Wazn needs is SQL.
+
+Recorded as a decision rather than a finding so it stops being
+re-litigated every time "AI app" and "vector database" appear in the
+same sentence. Full reasoning in `docs/INFRASTRUCTURE_AUDIT.md` §2.
+
+Retrieval-augmented generation solves one problem: finding the relevant
+passage in a corpus too large and too unstructured to put in a prompt.
+Wazn has no such corpus. It has a schema. Every question a lifter asks
+maps to an aggregation, not a passage — "why has my bench stalled" is
+`e1rm_trend`, not a nearest-neighbour search. And the exercise
+catalogue, the one list big enough to be tempting, is ~135 rows that
+`generate-routine` already sends whole. A corpus you can send in full
+has nothing to retrieve from.
+
+The second reason is the one that would have been expensive to discover
+later: **embeddings would break the privacy boundary that is currently
+readable in one place.** `coach_stats()`'s column list _is_ the
+guarantee that prompts carry numbers and exercise names only. A vector
+store is a second copy of user data with its own access rules, and the
+guarantee stops being checkable by reading one SQL function.
+
+What the coach actually lacks is the ability to ask a _second_ question
+— structured retrieval through whitelisted, RLS-scoped stat functions,
+which is B3's tool layer. Build that once and generically; it is the
+retrieval mechanism for every AI surface after it.
+
+**The one conditional exception**, flagged and not built: a body of
+training _knowledge_ — technique libraries, programming methodology,
+translated coaching content — would be a genuine unstructured corpus,
+and `pgvector` on Supabase would be the obvious tool. `exercises.
+instructions` (0008) is the seed of one and reaches no prompt today.
+Even then it is retrieval over our content, never over user data, and
+it waits for a Gate 1 tester to ask something a number cannot answer.
+
+## 2026-08-08 — The Edge Functions are outside every gate the project has.
+
+Measured, not suspected: `tsc --noEmit --listFiles` includes three files
+under `supabase/functions` — the pure `_shared` modules, and only
+because `src/lib/*.test.ts` imports them across the boundary.
+`context.ts`, `openrouter.ts`, `auth-alias/index.ts`,
+`coach-notes/index.ts` and `generate-routine/index.ts` are in no
+typecheck and no test. ESLint reaches them but with no type information
+and no import resolution, so it catches syntax and little else.
+
+That set is the auth boundary, the quota arithmetic, the model key
+handling and the username-alias sign-in. Since `deploy-functions.yml`
+landed, a merge to `main` puts them straight into production — so the
+day the deploy gap closed is the day this gap started mattering.
+
+`deno check` in CI is six lines of YAML and closes the class. It is
+tranche H1 in `docs/INFRASTRUCTURE_AUDIT.md` §8.
+
+Same audit, same shape, three more: `check_migrations.py` is documented
+for humans and absent from CI; `scripts/run_sql.sh` is named by
+`supabase/tests/rls_social.sql` line 12 and **does not exist**, which
+makes both security suites paste-into-the-dashboard rituals that
+`LAUNCH.md` nonetheless gates invites on; and the visual pass is a rule
+a person has to remember, which is the same class of thing.

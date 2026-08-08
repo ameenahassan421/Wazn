@@ -5,8 +5,11 @@
   "type": "module",
   "scripts": {
     "build": "tsc --noEmit && vite build",
+    "check:coverage": "node scripts/check_coverage_floor.mjs",
+    "check:migrations": "python3 scripts/check_migrations.py",
     "check:vercel": "node scripts/check_vercel_config.mjs",
     "dev": "vite",
+    "eval:live": "tsx scripts/eval_live.ts",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "import:hevy": "tsx scripts/import_hevy.ts",
@@ -15,8 +18,10 @@
     "preview": "vite preview",
     "supabase:admin": "tsx scripts/supabase_admin.ts",
     "test": "vitest run",
+    "test:smoke": "playwright test",
     "test:watch": "vitest",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "typecheck:functions": "deno check supabase/functions/**/*.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.45.4",
@@ -26,6 +31,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@playwright/test": "^1.56.1",
     "@tailwindcss/vite": "^4.0.0",
     "@testing-library/jest-dom": "^7.0.0",
     "@testing-library/react": "^16.3.2",

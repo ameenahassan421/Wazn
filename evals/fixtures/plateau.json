@@ -1,0 +1,48 @@
+{
+  "name": "plateau",
+  "note": "A consistent lifter whose main lifts have not moved in four weeks. The observation worth writing is the flat e1RM, not the volume.",
+  "block": {
+    "unit": "kg",
+    "window_days": 90,
+    "sessions_last_7": 4,
+    "sessions_last_28": 16,
+    "weekly_sets_by_muscle": { "chest": 14, "back": 15, "quads": 12, "shoulders": 9 },
+    "weekly_sets_by_muscle_4w_ago": {
+      "chest": 13,
+      "back": 15,
+      "quads": 11,
+      "shoulders": 10
+    },
+    "lifts": [
+      {
+        "name": "Squat (Barbell)",
+        "muscle_group": "quads",
+        "best_e1rm": 142.5,
+        "best_e1rm_28d": 142.5,
+        "best_e1rm_before": 142.5,
+        "sets": 51,
+        "records": 0
+      },
+      {
+        "name": "Bench Press (Barbell)",
+        "muscle_group": "chest",
+        "best_e1rm": 104.2,
+        "best_e1rm_28d": 103.8,
+        "best_e1rm_before": 104.2,
+        "sets": 62,
+        "records": 0
+      },
+      {
+        "name": "Bent Over Row (Barbell)",
+        "muscle_group": "back",
+        "best_e1rm": 92.0,
+        "best_e1rm_28d": 92.0,
+        "best_e1rm_before": 88.5,
+        "sets": 48,
+        "records": 2
+      }
+    ],
+    "records_last_28": 2,
+    "total_sets_90d": 604
+  }
+}
