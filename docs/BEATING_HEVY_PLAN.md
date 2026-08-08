@@ -449,19 +449,32 @@ a release is only worth shipping if it changes one sentence a tester
 would say about the app. Reliability still outranks offense — U3 ships
 before B3/B4, because a coach whose log loses sets is a clown.
 
-| Release          | What the tester would say                    | Phase IDs                    | Depends on                             |
-| ---------------- | -------------------------------------------- | ---------------------------- | -------------------------------------- |
-| **R0 Evidence**  | "I'm using it."                              | _none — beta runs_           | Ameen's two blockers                   |
-| **R1 Finished**  | "This feels like a real app."                | U1c + U7 (feel)              | nothing                                |
-| **R2 The board** | "I can see my whole workout."                | U2                           | design addendum                        |
-| **R3 Trust**     | "It works in the basement gym."              | U3                           | U2 preferred                           |
-| **R4 It knows**  | "It told me what to do before I asked."      | B1 + B2 + **E1 rest canvas** | beta live; OpenRouter cap              |
-| **R5 Switch**    | "I brought three years of history in a tap." | **F1 import** + U4           | nothing                                |
-| **R6 Ask it**    | "I asked why my bench stalled and it knew."  | B3 + **E2 adaptive order**   | Ameen's no-chat reversal; eval harness |
-| **R7 Programs**  | "It runs my training now."                   | B4                           | U2, U3                                 |
-| **R8 Crew**      | "My friends are in it."                      | U5 + B5                      | GATE 3 retention data                  |
-| **R9 Native**    | "The timer wakes my phone."                  | U6 + B6                      | store accounts                         |
-| **R10 Found**    | "People I don't know are signing up."        | **F2 Arabic SEO** + Stage 7  | Stage 5 strings                        |
+| Release          | What the tester would say                    | Phase IDs                    | Depends on                             | State (2026-08-08)                    |
+| ---------------- | -------------------------------------------- | ---------------------------- | -------------------------------------- | ------------------------------------- |
+| **R0 Evidence**  | "I'm using it."                              | _none — beta runs_           | Ameen's two blockers                   | **NOT DONE — still gates everything** |
+| **R1 Finished**  | "This feels like a real app."                | U1c + U7 (feel)              | nothing                                | shipped                               |
+| **R2 The board** | "I can see my whole workout."                | U2                           | design addendum                        | shipped                               |
+| **R3 Trust**     | "It works in the basement gym."              | U3                           | U2 preferred                           | shipped                               |
+| **R4 It knows**  | "It told me what to do before I asked."      | B1 + B2 + **E1 rest canvas** | beta live; OpenRouter cap              | **PARTIAL — B1+B2 shipped, E1 not**   |
+| **R5 Switch**    | "I brought three years of history in a tap." | **F1 import** + U4           | nothing                                | **PARTIAL — F1 shipped, U4 not**      |
+| **R6 Ask it**    | "I asked why my bench stalled and it knew."  | B3 + **E2 adaptive order**   | Ameen's no-chat reversal; eval harness | not started                           |
+| **R7 Programs**  | "It runs my training now."                   | B4                           | U2, U3                                 | not started                           |
+| **R8 Crew**      | "My friends are in it."                      | U5 + B5                      | GATE 3 retention data                  | not started                           |
+| **R9 Native**    | "The timer wakes my phone."                  | U6 + B6                      | store accounts                         | not started                           |
+| **R10 Found**    | "People I don't know are signing up."        | **F2 Arabic SEO** + Stage 7  | Stage 5 strings                        | not started                           |
+
+**Two releases carry a label they have not earned, and the state column above
+is why it was added (2026-08-08).** The commit that shipped the Hevy import is
+titled `R5: bring your history from Hevy`, and STATUS records "R5 is BUILT" —
+but this table defines R5 as F1 **and U4**, and U4 has never been started. R4
+is the same shape one step earlier: B1 and B2 shipped without E1. Nothing was
+mis-built; the accounting drifted because phase IDs are what gets committed and
+releases are what this table promises. A release is done when a tester would
+say its sentence, and neither of those two would yet.
+
+**On R4's stated dependencies, both are still open.** "Beta live" has not
+happened, and the OpenRouter hard cap §10 asks to be set _before B1_ was still
+unset when B1 merged.
 
 **Where the lead actually opens: R4.** R1–R3 are Wazn becoming as good
 as Hevy. R4 is the first release Hevy has no answer to, because nothing
