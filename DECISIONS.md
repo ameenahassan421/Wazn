@@ -3881,3 +3881,33 @@ was up during this session" is what GATE E1 asks; twenty rows a workout is not
 a better answer to it. Dismissals are recorded every time, because a dismissal
 is a tester saying "not this" with a thumb, and §8-E1 names exactly that as the
 kill signal.
+
+### 0022 applied — and the probe was the point
+
+Asked to apply it, the first move was to check whether it already was. It was
+not: `pg_get_constraintdef` showed `coach_views_surface_check` still listing
+only `briefing`, `debrief` and `weekly_review`, and the ledger had five rows
+with no `rest_canvas_views`. That check cost one query and is the habit STATUS
+has been wrong about twice — 0015 was recorded as unapplied when production had
+stopped at it, and 0016–0018 were recorded as live when they were not.
+
+The API answered the `alter` with `[]`, which means "no rows returned" and
+nothing else. Three catalogue reads and one functional test say what actually
+happened:
+
+- the constraint reads back with all four values and `convalidated = true`
+- the three existing rows survived re-validation — which `add constraint`
+  performs by default, so its success is itself the proof that no stored row
+  was orphaned
+- RLS is still on with 2 policies; the `alter` touched neither
+
+Then the part a catalogue read cannot cover: a **real insert** of a
+`rest_canvas` `view` and a `rest_canvas` `dismiss`, wrapped in a block that
+raises deliberately so the whole thing rolls back. Both were accepted, and the
+follow-up count confirms nothing was written — 0 `rest_canvas` rows, total
+still 3. The app's own write path is what was tested, not a restatement of the
+constraint text.
+
+Ledger row added as `20260808210000 / rest_canvas_views`, matching how 0020 and
+0021 were recorded. Six rows now, still silent about 0001–0015, and 0019 still
+deliberately absent.
