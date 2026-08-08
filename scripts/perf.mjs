@@ -35,7 +35,7 @@
  */
 import { spawnSync } from 'node:child_process'
 import { mkdirSync, writeFileSync } from 'node:fs'
-import { chromium } from 'playwright'
+import { chromium } from '@playwright/test'
 import {
   SUPABASE_ANON_KEY,
   SUPABASE_URL,

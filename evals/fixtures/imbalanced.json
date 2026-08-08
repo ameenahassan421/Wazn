@@ -1,0 +1,34 @@
+{
+  "name": "imbalanced",
+  "note": "Heavy chest, almost no back or legs. The 10-20 band is the point of this one, and it is the only fixture where quoting a prompt constant is correct.",
+  "block": {
+    "unit": "kg",
+    "window_days": 90,
+    "sessions_last_7": 3,
+    "sessions_last_28": 11,
+    "weekly_sets_by_muscle": { "chest": 24, "biceps": 12, "back": 4, "quads": 3 },
+    "weekly_sets_by_muscle_4w_ago": { "chest": 22, "biceps": 10, "back": 6 },
+    "lifts": [
+      {
+        "name": "Bench Press (Dumbbell)",
+        "muscle_group": "chest",
+        "best_e1rm": 78.3,
+        "best_e1rm_28d": 78.3,
+        "best_e1rm_before": 71.6,
+        "sets": 88,
+        "records": 5
+      },
+      {
+        "name": "Lat Pulldown (Cable)",
+        "muscle_group": "back",
+        "best_e1rm": 61.2,
+        "best_e1rm_28d": 61.2,
+        "best_e1rm_before": 60.4,
+        "sets": 19,
+        "records": 1
+      }
+    ],
+    "records_last_28": 5,
+    "total_sets_90d": 412
+  }
+}

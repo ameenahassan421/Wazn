@@ -5,20 +5,25 @@
   "type": "module",
   "scripts": {
     "build": "tsc --noEmit && vite build",
+    "check:coverage": "node scripts/check_coverage_floor.mjs",
+    "check:migrations": "python3 scripts/check_migrations.py",
     "check:vercel": "node scripts/check_vercel_config.mjs",
     "dev": "vite",
+    "eval:live": "tsx scripts/eval_live.ts",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "import:hevy": "tsx scripts/import_hevy.ts",
     "import:instructions": "tsx scripts/import_instructions.ts",
     "lint": "eslint .",
+    "perf": "node scripts/perf.mjs",
     "preview": "vite preview",
+    "shots": "node scripts/shots.mjs",
     "supabase:admin": "tsx scripts/supabase_admin.ts",
     "test": "vitest run",
+    "test:smoke": "playwright test",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
-    "perf": "node scripts/perf.mjs",
-    "shots": "node scripts/shots.mjs"
+    "typecheck:functions": "deno check supabase/functions/**/*.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.45.4",
@@ -28,6 +33,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@playwright/test": "^1.56.1",
     "@tailwindcss/vite": "^4.0.0",
     "@testing-library/jest-dom": "^7.0.0",
     "@testing-library/react": "^16.3.2",
@@ -45,7 +51,6 @@
     "globals": "^17.8.0",
     "jsdom": "^30.0.1",
     "lighthouse": "^13.4.1",
-    "playwright": "^1.62.1",
     "prettier": "^3.9.6",
     "sharp": "^0.35.3",
     "tailwindcss": "^4.0.0",

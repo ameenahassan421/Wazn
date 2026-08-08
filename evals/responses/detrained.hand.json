@@ -1,0 +1,17 @@
+{
+  "fixture": "detrained",
+  "source": "hand-authored",
+  "model": null,
+  "insights": [
+    {
+      "title": "Nothing logged in the last four weeks",
+      "body": "You have 1 session in 28 days and 0 in the last 7. One short session this week restarts the trend.",
+      "chip": "1 session · 28 d"
+    },
+    {
+      "title": "Deadlift is your strongest lift on record",
+      "body": "Best deadlift e1RM is 187.5 but it has not been trained in four weeks. Start well under it when you come back.",
+      "chip": "deadlift 187.5 · last 4 wk none"
+    }
+  ]
+}

@@ -556,14 +556,39 @@ verbatim, so they survive even if this file isn't read.**
   Screenshotting the built app is now a cross-cutting requirement of every UI
   phase — §4 of the parity plan says how, including the two ways the first run
   got it wrong.
+- **An infrastructure audit was run (2026-08-08)** — `docs/INFRASTRUCTURE_AUDIT.md`,
+  covering retrieval, evals, harnesses and tooling, with H0–H3 prompts added to
+  `docs/IMPLEMENTATION_PROMPTS.md`. Three results worth carrying here.
+  **RAG is now a recorded non-goal** (DECISIONS.md): Wazn has a schema, not a
+  corpus, and embeddings would break the one-file privacy boundary that
+  `coach_stats()` currently is. What the coach lacks is a tool layer, not a
+  vector store. **The Edge Functions are outside every gate the project has** —
+  `tsc --listFiles` sees 3 of 8 files under `supabase/functions`, so auth,
+  quota, the model key and the alias sign-in have no typecheck and no test
+  while merging to `main` deploys them. **The eval harness both plans depend on
+  needs the ledger first**: `ai_generations` has five columns and can produce
+  none of the cost, latency or hallucination figures §12 promises, because
+  `recordGeneration` only ever runs after success. Tranche **H2 (grounding gate
+  - ledger + breaker) is a hard dependency of the whole B-series** and is about
+    two days.
+- **Last updated:** 2026-08-08 by Claude Code (the infrastructure audit above).
+  Previously 2026-08-07 (the four-path auth screen; then
+
 - **R1 "Finished" is BUILT (2026-08-08) — U1c + U7.** Numbers are grouped
   everywhere by one formatter (`formatVolume`/`formatCount` in
   `src/lib/format.ts`), volume as a grouped integer, digits pinned to Latin so
-  Stage 5 Arabic inherits the grouping and none of the risk. `toneFor` is
-  guarded and a `ScreenBoundary` wraps all five screens, so a leaf crash no
-  longer blanks a tab. Motion is four tokens on the two approved easings, three
-  of which name motion that already existed; the one new one is a 90ms
-  set-commit rise.
+  Stage 5 Arabic inherits the grouping and none of the risk. `toneFor` and the
+  thumbnail initial are guarded, so the leaf that blanked Progress cannot throw
+  at all. Motion is four tokens on the two approved easings, three of which
+  name motion that already existed; the one new one is a 90ms set-commit rise.
+- **L7's boundary was built twice in parallel and this branch's copy was
+  deleted.** R1 shipped a `ScreenBoundary`; the H-series shipped an
+  `ErrorBoundary` on `main` at the same hour. Theirs wins on three counts and
+  loses on none — a **root** boundary as well as a per-tab one (a boundary
+  inside `<main>` cannot catch a crash in the header or tab bar), `resetKey` so
+  switching tabs is itself the recovery, and reporting to the error ledger. Two
+  branches converging on the same feature in one day is the cost of running
+  them in parallel; worth watching before it happens a third time.
 - **Two U7 budgets are MISSED, and both misses are informative.** Cold start is
   2308ms against a 2000ms budget (470 KiB main chunk, mostly `supabase-js`,
   needed before the auth gate). Core-loop tap → set on screen is 204ms against
