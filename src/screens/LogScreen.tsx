@@ -43,6 +43,25 @@ import type { OverviewRow, PlannedSet, WorkoutPlan } from '../lib/plan'
 import { WorkoutOverview } from '../components/WorkoutOverview'
 import type { OverviewBlock } from '../components/WorkoutOverview'
 import { RestTimerBar } from '../components/RestTimer'
+import {
+  ack,
+  dropForWorkout,
+  enqueue,
+  head,
+  isAlreadyLanded,
+  newId,
+  retry,
+  retryDelayMs,
+  shouldSurface,
+} from '../lib/write-queue'
+import type { QueuedSet } from '../lib/write-queue'
+import {
+  browserStorage,
+  clear as clearCheckpoint,
+  isUsable,
+  load as loadCheckpoint,
+  save as saveCheckpoint,
+} from '../lib/checkpoint'
 
 type View = 'overview' | 'picker' | 'entry' | 'summary' | 'routine'
 
@@ -122,6 +141,19 @@ export function LogScreen({
   // Group id to stamp on the next set, set when starting a superset from the
   // overview and cleared once it lands on a row.
   const [pendingGroup, setPendingGroup] = useState<number | null>(null)
+
+  /**
+   * Sets committed on screen that the server has not acknowledged yet — U3's
+   * trust-ladder rung 2.
+   *
+   * Held in a ref as well as state because the drain loop must always see the
+   * current queue: a `useCallback` closing over state would retry against
+   * whatever the queue was when it was created. Every mutation goes through
+   * `updateQueue` so the two never disagree.
+   */
+  const [queue, setQueue] = useState<QueuedSet[]>([])
+  const queueRef = useRef<QueuedSet[]>([])
+  const drainingRef = useRef(false)
 
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -236,6 +268,125 @@ export function LogScreen({
     },
     [],
   )
+
+  const updateQueue = useCallback((fn: (q: QueuedSet[]) => QueuedSet[]) => {
+    queueRef.current = fn(queueRef.current)
+    setQueue(queueRef.current)
+  }, [])
+
+  /**
+   * Send queued sets, oldest first, until the queue is empty.
+   *
+   * One loop at a time (`drainingRef`), because two would race on the same
+   * head and insert it twice — which the primary key would catch, but only
+   * after both had been sent.
+   *
+   * A failure is not surfaced immediately. Gym wifi drops a request and
+   * recovers, and an error banner between sets is exactly the interruption
+   * §2.1 forbids; `shouldSurface` decides when silence stops being honest.
+   * Until then the row stays on screen looking committed, because it IS
+   * committed — the user did the set, and the only thing in doubt is whether
+   * this building's wifi has noticed.
+   */
+  const drain = useCallback(async () => {
+    if (drainingRef.current) return
+    drainingRef.current = true
+    try {
+      while (queueRef.current.length > 0) {
+        const item = head(queueRef.current)
+        if (!item) break
+
+        const { data, error: insertError } = await supabase
+          .from('workout_sets')
+          .insert({
+            // The client-generated id IS the primary key, so replaying a write
+            // that already landed is refused rather than duplicated.
+            id: item.id,
+            workout_id: item.workoutId,
+            exercise_id: item.exerciseId,
+            set_number: item.setNumber,
+            weight_kg: item.weightKg,
+            reps: item.reps,
+            set_type: item.setType,
+            rpe: item.rpe,
+            superset_group: item.supersetGroup,
+          })
+          .select()
+          .single()
+
+        if (!insertError || isAlreadyLanded(insertError)) {
+          updateQueue((q) => ack(q, item.id))
+          // Reconcile: the server's row carries the PR flags, which the
+          // optimistic row could not know. This is the moment a record
+          // becomes visible, and it is the only thing the wait ever bought.
+          if (data) {
+            const row = data as WorkoutSet
+            setSets((prev) => prev.map((s) => (s.id === row.id ? row : s)))
+          }
+          setError(null)
+          continue
+        }
+
+        updateQueue((q) => retry(q, item.id))
+        const attempts = queueRef.current.find((q) => q.id === item.id)?.attempts ?? 1
+        if (shouldSurface(attempts)) {
+          setError(
+            describeError(
+              `Saving set ${item.setNumber}. It is on screen and will be retried`,
+              insertError,
+            ),
+          )
+        }
+        await new Promise((resolve) => setTimeout(resolve, retryDelayMs(attempts)))
+      }
+    } finally {
+      drainingRef.current = false
+    }
+  }, [updateQueue])
+
+  /**
+   * Wait for the queue to empty, bounded.
+   *
+   * Used at Finish and nowhere else. Finish is the end of the logging flow
+   * rather than the middle of it, so a wait is allowed here — and it is
+   * necessary, because the summary and `exercise_bests` are computed against
+   * what the server actually has.
+   */
+  const flushQueue = useCallback(
+    async (timeoutMs = 8000) => {
+      void drain()
+      const deadline = Date.now() + timeoutMs
+      while (queueRef.current.length > 0 && Date.now() < deadline) {
+        await new Promise((resolve) => setTimeout(resolve, 120))
+      }
+      return queueRef.current.length === 0
+    },
+    [drain],
+  )
+
+  /**
+   * The checkpoint, rewritten whenever anything it protects changes.
+   *
+   * Committed sets already survive a refresh because Postgres has them. What
+   * did not survive anything is exactly what is written here: writes still in
+   * flight, and the board's client-only state — block order when 0020 is
+   * unapplied, rows added past the plan, exercises taken off the board.
+   */
+  useEffect(() => {
+    const storage = browserStorage()
+    if (!workout) {
+      clearCheckpoint(storage)
+      return
+    }
+    saveCheckpoint(storage, {
+      workoutId: workout.id,
+      savedAt: Date.now(),
+      queue,
+      order,
+      extraRows: [...extraRows],
+      removed: [...removed],
+    })
+  }, [workout, queue, order, extraRows, removed])
 
   /** Override, then the catalogue's default for the movement, then the app's. */
   const restFor = useCallback(
@@ -354,13 +505,60 @@ export function LogScreen({
 
       // The arrangement, restored. Absent when 0020 is not applied, in which
       // case the order is derived from the sets — exactly the pre-v2.2 order.
-      setOrder(
-        Array.isArray(active.exercise_order)
-          ? active.exercise_order.filter(Boolean)
-          : [],
-      )
-      setRemoved(new Set())
-      setExtraRows(new Map())
+      const stored = Array.isArray(active.exercise_order)
+        ? active.exercise_order.filter(Boolean)
+        : []
+
+      /**
+       * The checkpoint — trust-ladder rung 1. Restored only when it belongs to
+       * the workout the server just handed us and has not aged out; a
+       * checkpoint for another workout is not wrong, it is finished.
+       *
+       * This is what makes killing the tab mid-workout survivable. Committed
+       * sets were always safe because Postgres had them; what was not safe was
+       * a set whose insert had not come back yet, and — when 0020 is unapplied
+       * — the board's whole arrangement.
+       */
+      const checkpoint = loadCheckpoint(browserStorage())
+      if (isUsable(checkpoint, active.id, Date.now())) {
+        setOrder(stored.length > 0 ? stored : checkpoint.order)
+        setExtraRows(new Map(checkpoint.extraRows))
+        setRemoved(new Set(checkpoint.removed))
+
+        // Sets that were on screen and never acknowledged. They go back on
+        // screen as they were — the user did them — and back in the queue. The
+        // client-generated id makes the retry idempotent even if one of them
+        // actually landed before the tab died.
+        const known = new Set(((data ?? []) as WorkoutSet[]).map((row) => row.id))
+        const unsent = checkpoint.queue.filter((q) => !known.has(q.id))
+        if (unsent.length > 0) {
+          setSets((prev) => [
+            ...prev,
+            ...unsent.map<WorkoutSet>((q) => ({
+              id: q.id,
+              workout_id: q.workoutId,
+              exercise_id: q.exerciseId,
+              set_number: q.setNumber,
+              weight_kg: q.weightKg,
+              reps: q.reps,
+              rpe: q.rpe,
+              duration_seconds: null,
+              distance_meters: null,
+              set_type: q.setType,
+              superset_group: q.supersetGroup,
+              pr_weight: false,
+              pr_e1rm: false,
+            })),
+          ])
+        }
+        updateQueue(() => checkpoint.queue)
+        void drain()
+      } else {
+        setOrder(stored)
+        setRemoved(new Set())
+        setExtraRows(new Map())
+        updateQueue(() => [])
+      }
 
       // Reopening mid-session has to remember what the routine planned, or the
       // ghosts vanish on the first reload and the board loses half its rows.
@@ -412,7 +610,7 @@ export function LogScreen({
     }
 
     setLoading(false)
-  }, [applyRoutinePlan])
+  }, [applyRoutinePlan, drain, updateQueue])
 
   useEffect(() => {
     void (async () => {
@@ -766,6 +964,10 @@ export function LogScreen({
     setConfirmFinish(false)
     setSaving(true)
     setError(null)
+    // Before the delete, not after: a queued insert against a workout that no
+    // longer exists fails on the foreign key forever, and would surface as an
+    // error about a session the user deliberately threw away.
+    updateQueue((q) => dropForWorkout(q, discarded))
     const { error: deleteError } = await supabase
       .from('workouts')
       .delete()
@@ -873,6 +1075,24 @@ export function LogScreen({
     setConfirmFinish(false)
     setSaving(true)
     setError(null)
+
+    // Land every optimistic set before summarising. The summary and
+    // `exercise_bests` are computed against what the server has, so finishing
+    // with writes in flight would report a workout smaller than the one just
+    // performed — and mark it ended, putting those sets beyond reach.
+    //
+    // A wait is allowed here and nowhere else: §2.1 protects the logging flow,
+    // and this is the end of it rather than the middle.
+    if (!(await flushQueue())) {
+      setSaving(false)
+      setError(
+        `${queueRef.current.length} ${
+          queueRef.current.length === 1 ? 'set is' : 'sets are'
+        } still saving. They are safe — stay on this screen a moment and press Finish again.`,
+      )
+      return
+    }
+
     const endedAt = new Date().toISOString()
     const { error: updateError } = await supabase
       .from('workouts')
@@ -960,39 +1180,65 @@ export function LogScreen({
     // Keep the exercise in whatever group it is already part of this workout.
     const supersetGroup = groupOf(sets, exercise.id) ?? pendingGroup
 
-    setSaving(true)
-    setError(null)
-    const { data, error: insertError } = await supabase
-      .from('workout_sets')
-      .insert({
-        workout_id: workout.id,
-        exercise_id: exercise.id,
-        set_number: setNumber,
-        weight_kg: weightKg,
-        reps,
-        set_type: setType,
-        rpe,
-        superset_group: supersetGroup,
-      })
-      .select()
-      .single()
-    setSaving(false)
-
-    if (insertError) {
-      setError(
-        describeError(`Saving set ${setNumber} of ${exercise.name}`, insertError),
-      )
-      return null
+    /**
+     * OPTIMISTIC, since U3a. The row goes on screen now; the insert follows it.
+     *
+     * This used to await Postgres before touching state, which is why U7
+     * measured tap -> set on screen at 195ms against a 100ms budget: one round
+     * trip is the floor, and the fix was never to make the round trip faster.
+     * Design v2.2 anticipated this exactly — "a committed row that has not
+     * reached the server yet renders committed. It happened — the user did it."
+     *
+     * The id is generated here and IS the primary key, so a replay after a
+     * crash cannot insert the set twice, and the row never has to be remounted
+     * under a different key.
+     *
+     * `pr_weight`/`pr_e1rm` stay false until the server answers. They are the
+     * one thing an optimistic row genuinely cannot know — records are computed
+     * in the database against every earlier set — so the badge arrives on
+     * reconcile rather than being guessed at and then taken away.
+     */
+    const optimistic: WorkoutSet = {
+      id: newId(),
+      workout_id: workout.id,
+      exercise_id: exercise.id,
+      set_number: setNumber,
+      weight_kg: weightKg,
+      reps,
+      rpe,
+      duration_seconds: null,
+      distance_meters: null,
+      set_type: setType,
+      superset_group: supersetGroup,
+      pr_weight: false,
+      pr_e1rm: false,
     }
 
-    const nextSets = [...sets, data as WorkoutSet]
+    const nextSets = [...sets, optimistic]
     setSets(nextSets)
     setPendingGroup(null)
     addToBoard(exercise.id)
 
-    // Rest starts on a logged set, never on a tap: a failed save must not leave
-    // a timer counting against a set that does not exist. Everything else the
-    // commit implies — round-rest, alternation, warm-ups, "no timer on this
+    updateQueue((q) =>
+      enqueue(q, {
+        id: optimistic.id,
+        workoutId: workout.id,
+        exerciseId: exercise.id,
+        setNumber,
+        weightKg,
+        reps,
+        setType,
+        rpe,
+        supersetGroup,
+        attempts: 0,
+      }),
+    )
+    void drain()
+
+    // Rest starts on a logged set, never on a tap. It no longer waits for the
+    // server to agree: the set happened when the user pressed the check, and a
+    // rest timer that starts a round trip late is a rest timer that is wrong by
+    // a round trip. Everything else the commit implies — round-rest, alternation, warm-ups, "no timer on this
     // lift" — is decided by `commitOutcome`, which is tested.
     const outcome = commitOutcome({
       sets: nextSets,
