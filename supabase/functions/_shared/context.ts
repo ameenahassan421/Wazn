@@ -45,6 +45,13 @@ export class HttpError extends Error {
   constructor(
     message: string,
     readonly status: number,
+    /**
+     * A short machine-readable class for the ledger — 'parse', 'truncated',
+     * 'ungrounded', 'quota'. Grouping failures by their user-facing message
+     * means grouping by a typo, and the message is the part most likely to be
+     * reworded.
+     */
+    readonly code?: string,
   ) {
     super(message)
   }

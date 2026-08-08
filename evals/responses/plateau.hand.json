@@ -1,0 +1,23 @@
+{
+  "fixture": "plateau",
+  "source": "hand-authored",
+  "note": "Written by hand as the shape a good answer takes. `npm run eval:live -- --record` replaces this with a real one, source: recorded.",
+  "model": null,
+  "insights": [
+    {
+      "title": "Squat has not moved in four weeks",
+      "body": "Your squat e1RM is 142.5 in the last 28 days and 142.5 before that. Add a set or a small load step next session.",
+      "chip": "squat e1RM 142.5 -> 142.5"
+    },
+    {
+      "title": "Row is the lift that is moving",
+      "body": "Bent Over Row went from 88.5 to 92 with 2 records. Keep the progression that is working there.",
+      "chip": "row 88.5 -> 92 · 2 PR"
+    },
+    {
+      "title": "Shoulders sit under the productive band",
+      "body": "Shoulders have 9 sets this week against a 10 to 20 range. One more shoulder slot would close it.",
+      "chip": "shoulders 9 · target 10-20"
+    }
+  ]
+}

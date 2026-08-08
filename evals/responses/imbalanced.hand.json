@@ -1,0 +1,22 @@
+{
+  "fixture": "imbalanced",
+  "source": "hand-authored",
+  "model": null,
+  "insights": [
+    {
+      "title": "Back is far under the productive range",
+      "body": "Back has 4 sets this week against a 10 to 20 range, while chest has 24. Move two chest slots to rows.",
+      "chip": "back 4 · chest 24 · target 10-20"
+    },
+    {
+      "title": "Legs are almost untrained",
+      "body": "Quads have 3 sets this week. Two compound leg sets would more than double that.",
+      "chip": "quads 3 · target 10-20"
+    },
+    {
+      "title": "Dumbbell bench is progressing well",
+      "body": "It went from 71.6 to 78.3 with 5 records in 28 days. Nothing to change there.",
+      "chip": "DB bench 71.6 -> 78.3 · 5 PR"
+    }
+  ]
+}

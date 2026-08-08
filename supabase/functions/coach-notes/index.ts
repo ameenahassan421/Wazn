@@ -24,6 +24,17 @@ import {
 import { chat, ModelError } from '../_shared/openrouter.ts'
 import { hasTrainingData } from '../_shared/has-training-data.ts'
 import { parseJsonObject } from '../_shared/parse-json-object.ts'
+import { partitionGrounded } from '../_shared/grounding.ts'
+
+/**
+ * Bump when SYSTEM or SCHEMA changes.
+ *
+ * `coach_notes.model` was stored because "the notes got worse" is otherwise
+ * unanswerable — but the prompt changes far more often than the model does,
+ * so the model alone could never answer it (audit §3-A4). Stored on both the
+ * cache and the ledger.
+ */
+const PROMPT_VERSION = 'coach-notes@2'
 
 /**
  * Static, and identical for every user on every call — which is the point.
@@ -110,11 +121,11 @@ function parseInsights(raw: string): Insight[] {
   // module, because the routine generator needs exactly the same thing and
   // shipped without it — see `_shared/parse-json-object.ts`.
   const parsed = parseJsonObject(raw)
-  if (!parsed) throw new HttpError('The notes came back unreadable.', 502)
+  if (!parsed) throw new HttpError('The notes came back unreadable.', 502, 'parse')
 
   const list = (parsed as { insights?: unknown }).insights
   if (!Array.isArray(list) || list.length === 0) {
-    throw new HttpError('The notes came back empty.', 502)
+    throw new HttpError('The notes came back empty.', 502, 'empty')
   }
 
   const insights: Insight[] = []
@@ -134,7 +145,7 @@ function parseInsights(raw: string): Insight[] {
     })
   }
   if (insights.length === 0) {
-    throw new HttpError('The notes came back empty.', 502)
+    throw new HttpError('The notes came back empty.', 502, 'empty')
   }
   return insights
 }
@@ -209,15 +220,85 @@ Deno.serve(async (request) => {
 
     await assertWithinQuota(caller, 'coach_notes')
 
-    const result = await chat({
-      freeModel: Deno.env.get('COACH_MODEL_FREE'),
-      paidModel: Deno.env.get('COACH_MODEL') ?? 'moonshotai/kimi-k2.5',
-      system: SYSTEM,
-      user: JSON.stringify(stats),
-      jsonSchema: SCHEMA,
-    })
+    const startedAt = Date.now()
+    let insights: Insight[]
+    let result: Awaited<ReturnType<typeof chat>>
 
-    const insights = parseInsights(result.content)
+    try {
+      // ── The grounding gate ────────────────────────────────────────────────
+      // §12 sets the tolerance for a fabricated figure at zero. Up to now the
+      // check was a human reading a chip; `_shared/grounding.ts` makes it a
+      // guard, and this is where it runs. One retry, because a model that
+      // invented a number once will usually not do it twice when told which
+      // number it invented — and after that the offending note is dropped
+      // rather than the whole set, so one bad figure costs one observation.
+      let attempt = 0
+      let extraInstruction = ''
+      for (;;) {
+        result = await chat({
+          freeModel: Deno.env.get('COACH_MODEL_FREE'),
+          paidModel: Deno.env.get('COACH_MODEL') ?? 'moonshotai/kimi-k2.5',
+          system: SYSTEM,
+          user: JSON.stringify(stats) + extraInstruction,
+          jsonSchema: SCHEMA,
+        })
+
+        const parsed = parseInsights(result.content)
+        const { kept, dropped } = partitionGrounded(parsed, stats)
+
+        if (dropped.length === 0) {
+          insights = kept
+          break
+        }
+
+        const figures = dropped.flatMap((d) => d.ungrounded)
+        console.warn('ungrounded figures', {
+          attempt,
+          figures,
+          model: result.model,
+          promptVersion: PROMPT_VERSION,
+        })
+
+        if (attempt === 0) {
+          attempt = 1
+          extraInstruction =
+            `\n\nYour previous answer contained figures that are not in this block: ` +
+            `${figures.join(', ')}. Every number you write must appear above. ` +
+            `Write the observations again using only numbers from the block.`
+          continue
+        }
+
+        // Second attempt still ungrounded. Keep what was clean; if nothing
+        // was, that is a failed generation and it says so rather than
+        // returning prose nobody can check.
+        if (kept.length === 0) {
+          throw new HttpError(
+            'The notes came back with figures that do not match your log, so they were not saved. Try again in a moment.',
+            502,
+            'ungrounded',
+          )
+        }
+        insights = kept
+        break
+      }
+    } catch (error) {
+      // Every attempt is recorded now, not only the ones that worked — that
+      // is what makes the fallback rate, the parse-failure rate and p95
+      // latency computable at all (audit §3-A3). Quota counts `ok` rows only,
+      // so a failure here does not spend the caller's week.
+      await recordGeneration(caller, 'coach_notes', {
+        ok: false,
+        errorCode:
+          error instanceof ModelError
+            ? error.code
+            : error instanceof HttpError
+              ? (error.code ?? 'http')
+              : 'unknown',
+        latencyMs: Date.now() - startedAt,
+        promptVersion: PROMPT_VERSION,
+      })
+      throw error
+    }
 
     // Service role: `coach_notes` has no client-writable policy, so the only
     // text that can appear under the "AI-generated" label is text that came
@@ -227,12 +308,18 @@ Deno.serve(async (request) => {
       generated_at: new Date().toISOString(),
       basis_workout_at: basis,
       model: result.model,
+      prompt_version: PROMPT_VERSION,
       insights,
     })
     await recordGeneration(caller, 'coach_notes', {
       ok: true,
       model: result.model,
       usedFree: result.usedFree,
+      latencyMs: Date.now() - startedAt,
+      finishReason: result.finishReason,
+      tokensIn: result.tokensIn,
+      tokensOut: result.tokensOut,
+      promptVersion: PROMPT_VERSION,
     })
 
     return json({
@@ -244,7 +331,15 @@ Deno.serve(async (request) => {
     })
   } catch (error) {
     if (error instanceof HttpError) return json({ error: error.message }, error.status)
-    if (error instanceof ModelError) return json({ error: error.message }, error.status)
+    if (error instanceof ModelError) {
+      // An open breaker is not an error the user should read as a fault. The
+      // surface renders its deterministic skeleton — this is what "the app
+      // must be fully usable with AI dark" means in code rather than prose.
+      if (error.code === 'breaker_open') {
+        return json({ error: error.message, degraded: true }, 503)
+      }
+      return json({ error: error.message }, error.status)
+    }
     console.error('coach-notes', error)
     return json({ error: 'Could not write your notes right now.' }, 500)
   }

@@ -18,6 +18,9 @@ export interface ChatResult {
   /** The model that actually answered, after any fallback. */
   model: string
   usedFree: boolean
+  /** From the provider's `usage` block, when it sends one. */
+  tokensIn?: number
+  tokensOut?: number
   /**
    * Why the model stopped. `'length'` means it hit the token ceiling and the
    * answer is cut off mid-structure.
@@ -35,10 +38,62 @@ export class ModelError extends Error {
   constructor(
     message: string,
     readonly status: number,
+    /** Machine-readable class for the ledger: 'provider_429', 'timeout', … */
+    readonly code = 'provider',
   ) {
     super(message)
     this.name = 'ModelError'
   }
+}
+
+/**
+ * The circuit breaker.
+ *
+ * `BEATING_HEVY_PLAN` §10 says the app must be fully usable with AI dark, and
+ * until now nothing implemented that. The failure shape it exists for is not
+ * hypothetical: `TIMEOUT_MS` is 45s and every call tries the free model and
+ * then the paid one, so a provider having a bad afternoon meant **ninety
+ * seconds of spinner**, per request, for every user, for as long as it lasted.
+ *
+ * After `FAILURE_THRESHOLD` consecutive provider failures the breaker opens
+ * and calls fail instantly for `COOLDOWN_MS`; the next call after that is a
+ * probe, and one success closes it again. Callers turn an open breaker into
+ * the surface's deterministic skeleton — numbers, no prose — rather than an
+ * error.
+ *
+ * **State is per instance, deliberately.** Edge Function instances are reused
+ * across many requests, so an instance learns quickly; a fresh instance
+ * re-learns in three calls. Making this global would mean a database round
+ * trip on the hot path of every generation to protect against an outage that
+ * is, by definition, rare. The cheap version is the right version here, and
+ * naming the limitation is better than a shared counter nobody maintains.
+ */
+const FAILURE_THRESHOLD = 3
+const COOLDOWN_MS = 60_000
+
+let consecutiveFailures = 0
+let openedAt = 0
+
+function breakerIsOpen(now: number): boolean {
+  if (consecutiveFailures < FAILURE_THRESHOLD) return false
+  if (now - openedAt >= COOLDOWN_MS) {
+    // Half-open: let exactly one call through to find out. Resetting the
+    // counter rather than tracking a separate state means a probe that fails
+    // has to re-earn the threshold, which is the forgiving direction.
+    consecutiveFailures = 0
+    return false
+  }
+  return true
+}
+
+/** Test seam, and the reset an instance would get by being recycled. */
+export function resetBreaker(): void {
+  consecutiveFailures = 0
+  openedAt = 0
+}
+
+export function breakerState(): { open: boolean; consecutiveFailures: number } {
+  return { open: breakerIsOpen(Date.now()), consecutiveFailures }
 }
 
 /**
@@ -168,7 +223,18 @@ export async function chat({
 }): Promise<ChatResult> {
   const apiKey = Deno.env.get('OPENROUTER_API_KEY')
   if (!apiKey) {
-    throw new ModelError('OPENROUTER_API_KEY is not set on this project', 503)
+    throw new ModelError('OPENROUTER_API_KEY is not set on this project', 503, 'no_key')
+  }
+
+  // Fail in microseconds rather than ninety seconds. The caller renders the
+  // deterministic skeleton; nobody waits for a provider that is already known
+  // to be down.
+  if (breakerIsOpen(Date.now())) {
+    throw new ModelError(
+      'The coach is offline for a moment. Your numbers are all still here.',
+      503,
+      'breaker_open',
+    )
   }
 
   const attempts: { model: string; free: boolean }[] = []
@@ -203,6 +269,9 @@ export async function chat({
     if (response.ok) {
       const payload = (await response.json()) as {
         choices?: { message?: { content?: string }; finish_reason?: string }[]
+        // Token counts, which the ledger needs to answer "what does this cost
+        // per active user" — the question §12 promises and could not compute.
+        usage?: { prompt_tokens?: number; completion_tokens?: number }
       }
       const content = payload.choices?.[0]?.message?.content
       if (!content) {
@@ -210,11 +279,14 @@ export async function chat({
         lastBody = 'the model returned no content'
         continue
       }
+      consecutiveFailures = 0
       return {
         content,
         model: attempt.model,
         usedFree: attempt.free,
         finishReason: payload.choices?.[0]?.finish_reason,
+        tokensIn: payload.usage?.prompt_tokens,
+        tokensOut: payload.usage?.completion_tokens,
       }
     }
 
@@ -227,8 +299,19 @@ export async function chat({
     // attempt, which is the last entry.
   }
 
+  // Only a failure of the *paid* attempt reaches here — the free one is an
+  // optimisation and falls through. So this is a real provider failure and it
+  // counts toward opening the breaker.
+  consecutiveFailures += 1
+  if (consecutiveFailures === FAILURE_THRESHOLD) openedAt = Date.now()
+
   throw new ModelError(
     `the model provider refused the request (${lastStatus}): ${lastBody.slice(0, 200)}`,
     lastStatus === 429 ? 429 : 502,
+    lastStatus === 429
+      ? 'provider_429'
+      : lastStatus === 504
+        ? 'timeout'
+        : `provider_${lastStatus}`,
   )
 }
