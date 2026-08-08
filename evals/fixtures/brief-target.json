@@ -1,0 +1,36 @@
+{
+  "name": "brief-target",
+  "kind": "briefing",
+  "note": "GOLDEN. Printed by session_brief() on a real Postgres against the history supabase/tests/coach_surfaces.sql seeds — ./scripts/check_sql.sh, then read the FIXTURE lines. Placeholder lift names mapped to real catalog entries, as in review-plateau. The interesting property: last session's top set WAS the all-time best, so the target has to beat a number the lifter has already hit, and next_weight_kg is 102.5 rather than 100.",
+  "catalog": [
+    "Bench Press (Barbell)",
+    "Squat (Barbell)",
+    "Lat Pulldown (Cable)",
+    "Romanian Deadlift (Barbell)",
+    "Calf Raise (Machine)"
+  ],
+  "block": {
+    "unit": "kg",
+    "productive_range": [10, 20],
+    "days_since_last": 2,
+    "sessions_last_7": 1,
+    "sessions_last_28": 4,
+    "total_sets_90d": 19,
+    "due_routine": { "name": "Push A", "exercises": 2, "days_since_run": 9 },
+    "target": {
+      "exercise": "Bench Press (Barbell)",
+      "last_weight_kg": 100.0,
+      "last_reps": 5,
+      "last_e1rm": 116.7,
+      "best_e1rm": 116.7,
+      "last_done_days_ago": 9,
+      "next_weight_kg": 102.5,
+      "next_e1rm": 119.6
+    },
+    "low_bands": [
+      { "muscle": "calves", "sets": 0 },
+      { "muscle": "chest", "sets": 0 },
+      { "muscle": "back", "sets": 3 }
+    ]
+  }
+}

@@ -75,7 +75,20 @@ export default defineConfig({
         // dying. This also keeps the precache under the ~600 KiB ceiling the
         // parity plan §4 sets, which it had just gone over — both reasons are
         // real and the first one is why this is the right place to cut.
-        globIgnores: ['**/HevyImport-*.js'],
+        //
+        // The Coach tab joins it at B2, for the same reason and not for
+        // budget's sake — though the budget is why it was looked at. Both of
+        // that tab's tools are Edge Function calls: the weekly review is one,
+        // the routine builder is the other, and there is no third thing on the
+        // screen. Precached, it installs 8 KiB that can render nothing but an
+        // error the moment there is no network. The briefing and the debrief
+        // are deliberately NOT here — they live on the Log and finish screens,
+        // in the main chunk, and both draw from SQL with the model optional.
+        //
+        // Measured: 598.32 KiB before, 590.24 KiB after, against the ~600 KiB
+        // ceiling the parity plan §4 sets. STATUS had already warned that the
+        // next UI phase should expect to remove something; this is that.
+        globIgnores: ['**/HevyImport-*.js', '**/CoachScreen-*.js'],
         navigateFallbackDenylist: [/^\/api/],
         runtimeCaching: [],
         // BOTH FALSE ON PURPOSE, and this is the fix for a real outage: after

@@ -1,0 +1,60 @@
+{
+  "name": "review-healthy",
+  "kind": "weekly_review",
+  "note": "The week where nothing is wrong. Written by hand against the shape the golden fixture pins, because the SQL suite seeds a lifter with problems and this is the case that has none: every band inside 10-20, no plateau, three wins, and a `hold` recommendation. It exists because a review contract that only ever renders bad news is a contract nobody tested on a good week — the model still has to write all five sections, and 'plateaus' still has to say that nothing stalled rather than reaching for something to worry about.",
+  "catalog": [
+    "Bench Press (Barbell)",
+    "Squat (Barbell)",
+    "Lat Pulldown (Cable)",
+    "Romanian Deadlift (Barbell)",
+    "Calf Raise (Machine)",
+    "Overhead Press (Barbell)",
+    "Bent Over Row (Barbell)"
+  ],
+  "block": {
+    "unit": "kg",
+    "window_days": 90,
+    "productive_range": [10, 20],
+    "plateau_min_sessions": 6,
+    "adherence": {
+      "sessions_this_week": 4,
+      "sessions_prev_week": 4,
+      "avg_sessions_per_week_8w": 3.9,
+      "weeks_trained_of_8": 8,
+      "sessions_last_28": 16,
+      "from_routine_last_28": 15,
+      "longest_gap_days_28": 3
+    },
+    "bands": [
+      { "muscle": "calves", "sets": 11, "sets_prev": 10, "status": "in" },
+      { "muscle": "shoulders", "sets": 12, "sets_prev": 13, "status": "in" },
+      { "muscle": "quads", "sets": 14, "sets_prev": 12, "status": "in" },
+      { "muscle": "chest", "sets": 16, "sets_prev": 15, "status": "in" },
+      { "muscle": "back", "sets": 18, "sets_prev": 17, "status": "in" }
+    ],
+    "plateaus": [],
+    "wins": [
+      {
+        "exercise": "Squat (Barbell)",
+        "e1rm_28d": 162.5,
+        "e1rm_before": 154.0,
+        "gain": 8.5
+      },
+      {
+        "exercise": "Bench Press (Barbell)",
+        "e1rm_28d": 109.2,
+        "e1rm_before": 104.2,
+        "gain": 5.0
+      },
+      {
+        "exercise": "Bent Over Row (Barbell)",
+        "e1rm_28d": 95.0,
+        "e1rm_before": 92.0,
+        "gain": 3.0
+      }
+    ],
+    "records_last_7": 3,
+    "total_sets_90d": 604,
+    "recommendation": { "kind": "hold", "exercise": "Squat (Barbell)", "gain": 8.5 }
+  }
+}

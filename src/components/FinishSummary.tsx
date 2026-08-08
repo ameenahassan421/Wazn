@@ -5,6 +5,13 @@ import type { Unit } from '../lib/units'
 import { formatWeight } from '../lib/units'
 import { formatCount, formatVolume } from '../lib/format'
 import { drawShareCard, shareCard } from '../lib/share-card'
+import {
+  debriefChip,
+  debriefSkeleton,
+  fetchCoachLine,
+  fetchDebriefBlock,
+  recordCoachView,
+} from '../lib/coach'
 import { ExerciseThumb } from './ExerciseThumb'
 import { WorkoutNotes } from './WorkoutNotes'
 
@@ -79,6 +86,14 @@ export function FinishSummary({
     )
   }
 
+  // The debrief — B1, offense plan §4-A2. Under the receipt and above the
+  // records, because it is a sentence *about* the three numbers directly
+  // above it, and it must not push the PR card off the first screenful.
+  //
+  // Same two-stage draw as the briefing: `debriefSkeleton` renders from SQL
+  // and a phrased line replaces it if one arrives. Everything below is
+  // unaffected either way — the summary was complete before the coach existed
+  // and stays complete if it says nothing.
   const stats: [string, string][] = [
     [
       summary.durationSeconds === null ? '—' : fromSeconds(summary.durationSeconds),
@@ -123,6 +138,8 @@ export function FinishSummary({
           ))}
         </div>
       </div>
+
+      <CoachDebrief workoutId={workout?.id ?? null} unit={unit} />
 
       {summary.prs.length > 0 && (
         <div
@@ -231,5 +248,60 @@ export function FinishSummary({
 
       {status && <p className="text-xs text-muted">{status}</p>}
     </section>
+  )
+}
+
+/**
+ * One line about what the session meant — B1's second surface.
+ *
+ * §4-A2 calls this "the highest-emotion moment in the app … where the coach
+ * earns its keep". It is also the moment with the least patience: the bar is
+ * racked and the next thing a person does is leave. So it is one line, no
+ * card, no heading, no control — and it renders nothing at all rather than
+ * anything apologetic when there is nothing to say.
+ *
+ * Not a card on purpose. A bordered box here would make four boxes down the
+ * screen and turn a remark into a section; the rule above it is enough to
+ * separate a sentence from the receipt.
+ */
+function CoachDebrief({ workoutId, unit }: { workoutId: string | null; unit: Unit }) {
+  const [line, setLine] = useState<string | null>(null)
+  const [chip, setChip] = useState<string | undefined>(undefined)
+
+  useEffect(() => {
+    if (!workoutId) return
+    let active = true
+    void (async () => {
+      const block = await fetchDebriefBlock(workoutId)
+      if (!active) return
+
+      const skeleton = debriefSkeleton(block, unit)
+      if (!skeleton) return
+      setLine(skeleton)
+      setChip(debriefChip(block, unit))
+      void recordCoachView('debrief', 'view')
+
+      const phrased = await fetchCoachLine('debrief', unit, workoutId)
+      if (!active || !phrased.line) return
+      setLine(phrased.line)
+      setChip(phrased.chip)
+    })()
+    return () => {
+      active = false
+    }
+    // Same as the briefing: a unit change re-renders, it does not re-ask.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [workoutId])
+
+  if (!line) return null
+
+  return (
+    <div>
+      <div className="rule-fade mb-3" />
+      <p key={line} className="coach-in text-[15px] leading-snug">
+        {line}
+      </p>
+      {chip && <span className="chip-data mt-2 inline-flex">{chip}</span>}
+    </div>
   )
 }

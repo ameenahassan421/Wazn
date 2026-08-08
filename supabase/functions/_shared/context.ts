@@ -57,6 +57,35 @@ export class HttpError extends Error {
   }
 }
 
+/**
+ * Is this error "the schema this code expects is not applied yet"?
+ *
+ * Merging to `main` deploys these functions (`deploy-functions.yml`), and
+ * migrations are applied by hand. So for some window — an hour, a day, however
+ * long it takes Ameen to run the SQL — this code is live against a database
+ * that predates it. That window is not hypothetical: it is why `context.ts`
+ * and `coach-notes` both carried 42703 shims for migration 0017, and why three
+ * tabs once died on every deploy.
+ *
+ * The three shapes it takes, all of which supabase-js RETURNS rather than
+ * throws, so they are silent unless something looks:
+ *   42883 / PGRST202  a function that does not exist (a new RPC)
+ *   42P01             a table that does not exist (a new cache table)
+ *   42703             a column that does not exist (a new column)
+ *
+ * Callers use it to degrade to "this surface is quiet" instead of "this
+ * surface is broken". Delete the call sites once 0021 is applied, the way the
+ * 0017 shims were deleted — the comment at each one says so.
+ */
+export function isMissingSchema(error: { code?: string } | null | undefined): boolean {
+  return (
+    error?.code === '42883' ||
+    error?.code === 'PGRST202' ||
+    error?.code === '42P01' ||
+    error?.code === '42703'
+  )
+}
+
 export async function authenticate(request: Request): Promise<Caller> {
   const authorization = request.headers.get('Authorization') ?? ''
   if (!authorization.startsWith('Bearer ')) {

@@ -108,6 +108,22 @@ export function IconMore(props: IconProps) {
   )
 }
 
+/**
+ * Dismiss. Symmetrical, so it needs no RTL flip.
+ *
+ * Drawn rather than typed: a `×` is a multiplication sign in a product whose
+ * set rows are full of "100 × 5", and the two would sit four lines apart on
+ * the same screen.
+ */
+export function IconClose(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <line x1="6.5" y1="6.5" x2="17.5" y2="17.5" />
+      <line x1="17.5" y1="6.5" x2="6.5" y2="17.5" />
+    </Svg>
+  )
+}
+
 /** Disclosure chevron. Rotate 180° via class when open. */
 export function IconChevronDown(props: IconProps) {
   return (

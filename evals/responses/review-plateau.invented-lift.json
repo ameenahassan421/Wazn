@@ -1,0 +1,33 @@
+{
+  "fixture": "review-plateau",
+  "kind": "weekly_review",
+  "source": "adversarial",
+  "expect": "unknown-exercise",
+  "model": null,
+  "note": "Every figure is grounded and the review is still an invention: Romanian Deadlift is in the catalog but not in this lifter's block, so the coach is prescribing a lift it has no data about and may not have equipment for. This is the check B2 asks for by name — 'no exercise names outside the catalog' — and the reason grounding numbers alone is not enough.",
+  "review": {
+    "headline": "Squat stalled, calves missing",
+    "sections": {
+      "adherence": {
+        "line": "One session this week against an average of 1.0.",
+        "chip": "1 session · avg 1.0/wk"
+      },
+      "bands": {
+        "line": "Calves and chest are at 0 sets against a range of 10 to 20.",
+        "chip": "calves 0 · chest 0"
+      },
+      "plateaus": {
+        "line": "Squat has held at 154.0 across 6 sessions.",
+        "chip": "6 sessions · 154.0 flat"
+      },
+      "wins": {
+        "line": "Lat Pulldown is up 20.0 over the month.",
+        "chip": "+20.0 e1RM"
+      },
+      "recommendation": {
+        "line": "Add Romanian Deadlift next week to get the posterior chain moving again.",
+        "chip": "calves 0 · target 10-20"
+      }
+    }
+  }
+}

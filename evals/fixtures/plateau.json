@@ -1,12 +1,18 @@
 {
   "name": "plateau",
+  "kind": "coach_notes",
   "note": "A consistent lifter whose main lifts have not moved in four weeks. The observation worth writing is the flat e1RM, not the volume.",
   "block": {
     "unit": "kg",
     "window_days": 90,
     "sessions_last_7": 4,
     "sessions_last_28": 16,
-    "weekly_sets_by_muscle": { "chest": 14, "back": 15, "quads": 12, "shoulders": 9 },
+    "weekly_sets_by_muscle": {
+      "chest": 14,
+      "back": 15,
+      "quads": 12,
+      "shoulders": 9
+    },
     "weekly_sets_by_muscle_4w_ago": {
       "chest": 13,
       "back": 15,

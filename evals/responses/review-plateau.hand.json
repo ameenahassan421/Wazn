@@ -1,0 +1,31 @@
+{
+  "fixture": "review-plateau",
+  "kind": "weekly_review",
+  "source": "hand-authored",
+  "model": null,
+  "review": {
+    "headline": "One session, and calves at zero",
+    "sections": {
+      "adherence": {
+        "line": "One session this week against an average of 1.0, with 4 in the last 28 days and no gap longer than 7 days. You are turning up, barely.",
+        "chip": "1 session · avg 1.0/wk · 8 of 8 wk"
+      },
+      "bands": {
+        "line": "Calves and chest are both at 0 sets this week against a productive range of 10 to 20. Back has 3.",
+        "chip": "calves 0 · chest 0 · back 3"
+      },
+      "plateaus": {
+        "line": "Squat has not moved across 6 sessions, sitting at 154.0 the whole way.",
+        "chip": "6 sessions · 154.0 flat"
+      },
+      "wins": {
+        "line": "Lat Pulldown is up 20.0 over the month, from 73.3 to 93.3.",
+        "chip": "+20.0 e1RM · 73.3 to 93.3"
+      },
+      "recommendation": {
+        "line": "Put calves back in next week. They are at 0 sets against a range of 10 to 20, which is the largest gap you have.",
+        "chip": "calves 0 sets · target 10-20"
+      }
+    }
+  }
+}

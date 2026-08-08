@@ -1,15 +1,29 @@
 /**
- * Coach's Notes — 3-5 prioritised observations about the caller's training.
+ * The weekly review — B2, offense plan §3-A3.
  *
- * The division of labour, from plan §2C: `coach_stats()` computes every
- * number in SQL, and the model is asked only to decide what matters and say it
- * in a sentence. It is never asked to add, compare, or work out what a plateau
- * is — those answers are already in the block it is handed.
+ * ── WHAT CHANGED, AND WHY ───────────────────────────────────────────────────
+ * This function used to write "3 to 5 observations, most important first".
+ * That is a good answer to "what does my training look like" and a bad answer
+ * to "what am I reading": the sections moved every week, so there was nothing
+ * to learn to read, and two consecutive reviews could not be compared because
+ * they were not about the same things.
  *
- * Generation is lazy. The Progress screen calls this on open; if the cached
- * notes were written against the user's newest workout, the cache is returned
- * and no model is called. That is what keeps this affordable at a thousand
- * users: cost scales with *training*, not with app opens.
+ * It now writes a **review contract**: the same five sections, in the same
+ * order, every week — adherence, bands, plateaus, wins, and exactly one
+ * "next week, change this". A lifter who reads it twice knows where to look
+ * the third time, which is the entire point of a fixed shape and the reason
+ * §3-A3 asks for one.
+ *
+ * ── THE DIVISION OF LABOUR IS UNCHANGED ─────────────────────────────────────
+ * `weekly_review()` (migration 0021) computes every figure, including WHICH
+ * recommendation is made — "exactly one recommendation" is a promise about the
+ * product, and a promise a model keeps only when asked nicely is not a
+ * promise. The model chooses no facts. It writes five sentences about facts it
+ * was handed, and `checkReviewContract` refuses the answer if it strays.
+ *
+ * Generation is still lazy, still cached against the newest workout, and still
+ * capped at one regenerate a week. None of that changed, because none of it
+ * was wrong.
  */
 
 import {
@@ -18,136 +32,132 @@ import {
   quotaRemaining,
   CORS_HEADERS,
   HttpError,
+  isMissingSchema,
   json,
   recordGeneration,
 } from '../_shared/context.ts'
 import { chat, ModelError } from '../_shared/openrouter.ts'
 import { hasTrainingData } from '../_shared/has-training-data.ts'
 import { parseJsonObject } from '../_shared/parse-json-object.ts'
-import { partitionGrounded } from '../_shared/grounding.ts'
+import { exerciseCatalog } from '../_shared/catalog.ts'
+import { parseUnit, toDisplayBlock } from '../_shared/display-units.ts'
+import {
+  SECTIONS,
+  checkReviewBlock,
+  checkReviewContract,
+  type SectionKey,
+  type WeeklyReview,
+} from '../_shared/review-contract.ts'
 
 /**
  * Bump when SYSTEM or SCHEMA changes.
  *
- * `coach_notes.model` was stored because "the notes got worse" is otherwise
- * unanswerable — but the prompt changes far more often than the model does,
- * so the model alone could never answer it (audit §3-A4). Stored on both the
- * cache and the ledger.
+ * Renamed from `coach-notes@2`, and the rename is load-bearing: it is what
+ * makes every cached row from the old shape a miss, so the first Coach open
+ * after this deploys regenerates into the new contract instead of rendering
+ * last week's list forever.
  */
-const PROMPT_VERSION = 'coach-notes@2'
+const PROMPT_VERSION = 'coach-review@1'
 
-/**
- * Static, and identical for every user on every call — which is the point.
- * Providers cache a prompt prefix; a system block that never varies is the
- * cheapest token in the request. Everything user-specific is in the second
- * message.
- */
-const SYSTEM = `You write short training notes for a strength-training app called Wazn.
+const SYSTEM = `You write the weekly training review for a strength-training app called Wazn.
 
 You are given a block of statistics that has ALREADY been computed. Never
-recompute, re-add, or second-guess a number in it. Never invent a number that
-is not in it.
+recompute, re-add, or second-guess a number in it. Never write a number that is
+not in it. Never name an exercise that is not in it.
 
-Write 3 to 5 observations, most important first. Each has three parts:
+The review has the SAME five sections every week, in this order. Write all five,
+every time, even when a section's answer is "nothing":
 
-- "title": a headline of at most 8 words.
-- "body": 1 to 2 sentences saying what to do about it.
-- "chip": the exact figures the observation came from, as a terse fragment —
-  for example "chest 22 sets · back 9 · last 4 wk" or "e1RM 156 -> 156 lb" or
-  "quads 6 sets · target 10-20". Copy the numbers from the block verbatim.
-  Never write a number in the chip that is not in the block. No sentence, no
-  verb, under 40 characters.
+1. "adherence" — did they turn up. Use sessions_this_week against
+   avg_sessions_per_week_8w, weeks_trained_of_8, and longest_gap_days_28.
+2. "bands" — working sets per muscle group against the productive range of 10
+   to 20. Name the groups that are outside it. If everything is inside, say so.
+3. "plateaus" — lifts whose estimated 1RM has stopped moving, from "plateaus".
+   Each entry already satisfies the threshold; you do not decide what a plateau
+   is. If the list is empty, say nothing has stalled.
+4. "wins" — lifts whose estimated 1RM is up, from "wins". If the list is empty,
+   say so plainly rather than reaching for something else.
+5. "recommendation" — ONE change for next week, and it must be the one in
+   "recommendation" in the block. Say it as a single instruction. Never a list,
+   never two options, never "you could also".
+
+Each section has:
+
+- "line": 1 to 2 sentences. Under 320 characters.
+- "chip": the exact figures it came from, as a terse fragment — for example
+  "3 sessions - avg 3.5/wk" or "calves 4 - target 10-20" or "6 sessions - 0.0
+  per session". Copy the numbers from the block verbatim. No sentence, no verb,
+  under 60 characters.
+
+Weights are in the block's "unit" field, which is "kg" or "lbs". Write that unit
+and no other. Never convert a figure: the block is already in the unit the
+reader has chosen.
+
+Also write "headline": at most 8 words summing up the week.
 
 Rules:
 
-- Ground every observation in a specific number or exercise name from the block.
-- A productive weekly range for a muscle group is 10 to 20 working sets. Say so
-  when a group is outside it.
-- best_e1rm_28d against best_e1rm_before tells you whether a lift is moving. If
-  best_e1rm_28d is null the lift has not been trained in four weeks.
-- Prefer what to do next over what happened. "Your back has 4 sets this week,
-  under the 10 to 20 range" beats "you did some back work".
+- Ground every sentence in a specific number or exercise name from the block.
+- Prefer what to do next over what happened.
 - Plain language. No emoji, no exclamation marks, no motivational filler, no
   greeting, no sign-off.
 - Never give medical, injury, diet or supplement advice. If the data suggests
   pain or injury, say nothing about it.
-- If the block is nearly empty, say that plainly and suggest logging a few
-  sessions rather than inventing an analysis.
+- If the block is nearly empty, say that plainly in every section rather than
+  inventing an analysis.
 
 Output ONLY the JSON object. Do not explain your reasoning, do not think out
 loud, do not write anything before or after the JSON.`
 
+const SECTION_SCHEMA = {
+  type: 'object',
+  additionalProperties: false,
+  required: ['line', 'chip'],
+  properties: {
+    line: { type: 'string' },
+    chip: { type: 'string' },
+  },
+}
+
 const SCHEMA = {
   type: 'object',
   additionalProperties: false,
-  required: ['insights'],
+  required: ['headline', 'sections'],
   properties: {
-    insights: {
-      type: 'array',
-      minItems: 1,
-      maxItems: 5,
-      items: {
-        type: 'object',
-        additionalProperties: false,
-        required: ['title', 'body', 'chip'],
-        properties: {
-          title: { type: 'string' },
-          body: { type: 'string' },
-          chip: { type: 'string' },
-        },
-      },
+    headline: { type: 'string' },
+    sections: {
+      type: 'object',
+      additionalProperties: false,
+      required: [...SECTIONS],
+      properties: Object.fromEntries(SECTIONS.map((key) => [key, SECTION_SCHEMA])),
     },
   },
 }
 
-interface Insight {
-  title: string
-  body: string
-  /**
-   * The figures the observation came from, verbatim from the stat block.
-   *
-   * Design v2.1 calls this "what makes the AI feel like it read the log", and
-   * it is also the cheapest honesty check the feature has: a chip that does
-   * not match the charts is a claim the reader can catch without trusting
-   * anything. Optional in the type because a model may omit it and one
-   * missing chip should not throw away four good notes.
-   */
-  chip?: string
-}
-
 /** Trust nothing a model returns. Shape, types and length are all checked. */
-function parseInsights(raw: string): Insight[] {
-  // Recovery from fenced blocks and reasoning preambles lives in one shared
-  // module, because the routine generator needs exactly the same thing and
-  // shipped without it — see `_shared/parse-json-object.ts`.
+function parseReview(raw: string): WeeklyReview {
   const parsed = parseJsonObject(raw)
-  if (!parsed) throw new HttpError('The notes came back unreadable.', 502, 'parse')
+  if (!parsed) throw new HttpError('The review came back unreadable.', 502, 'parse')
 
-  const list = (parsed as { insights?: unknown }).insights
-  if (!Array.isArray(list) || list.length === 0) {
-    throw new HttpError('The notes came back empty.', 502, 'empty')
+  const record = parsed as { headline?: unknown; sections?: Record<string, unknown> }
+  const headline = typeof record.headline === 'string' ? record.headline.trim() : ''
+  const sections = {} as WeeklyReview['sections']
+
+  for (const key of SECTIONS) {
+    const raw = record.sections?.[key] as { line?: unknown; chip?: unknown } | undefined
+    const line = typeof raw?.line === 'string' ? raw.line.trim() : ''
+    const chip = typeof raw?.chip === 'string' ? raw.chip.trim() : ''
+    sections[key as SectionKey] = {
+      line: line.slice(0, 320),
+      ...(chip ? { chip: chip.slice(0, 60) } : {}),
+    }
   }
 
-  const insights: Insight[] = []
-  for (const item of list.slice(0, 5)) {
-    const title = (item as Insight)?.title
-    const body = (item as Insight)?.body
-    const chip = (item as Insight)?.chip
-    if (typeof title !== 'string' || typeof body !== 'string') continue
-    if (!title.trim() || !body.trim()) continue
-    insights.push({
-      title: title.trim().slice(0, 80),
-      body: body.trim().slice(0, 400),
-      // A missing chip drops the chip, not the note.
-      ...(typeof chip === 'string' && chip.trim()
-        ? { chip: chip.trim().slice(0, 60) }
-        : {}),
-    })
+  if (!SECTIONS.some((key) => sections[key].line)) {
+    throw new HttpError('The review came back empty.', 502, 'empty')
   }
-  if (insights.length === 0) {
-    throw new HttpError('The notes came back empty.', 502, 'empty')
-  }
-  return insights
+
+  return { headline: headline.slice(0, 80), sections }
 }
 
 Deno.serve(async (request) => {
@@ -157,10 +167,14 @@ Deno.serve(async (request) => {
 
   try {
     const caller = await authenticate(request)
-    const force = new URL(request.url).searchParams.get('force') === '1'
+    const url = new URL(request.url)
+    const force = url.searchParams.get('force') === '1'
+    // A display preference, not data — see `_shared/display-units.ts`. The
+    // review quotes e1RM figures, and quoting them in kilograms to a lifter
+    // whose every other screen is in pounds is the bug a screenshot caught on
+    // the briefing card.
+    const unit = parseUnit(url.searchParams.get('unit'))
 
-    // What the notes would be written against: the caller's most recent
-    // finished workout. Under RLS, so it is theirs by construction.
     const { data: latest } = await caller.asUser
       .from('workouts')
       .select('started_at')
@@ -175,41 +189,88 @@ Deno.serve(async (request) => {
       .select('*')
       .maybeSingle()
 
-    // The lazy rule, in one line: if the cache was written against the same
-    // newest workout, nothing has happened since and the model has nothing new
-    // to say. No model call, no cost.
-    if (cached && !force && cached.basis_workout_at === basis) {
-      return json({
-        insights: cached.insights,
-        generatedAt: cached.generated_at,
-        model: cached.model,
+    const cachedPayload = cached?.insights as unknown
+    // Rows written before B2 hold an ARRAY of insights; rows written after
+    // hold the review object. Both are valid things to have in the cache and
+    // the client renders either, so the shape is sniffed rather than assumed.
+    const cachedIsReview =
+      !!cachedPayload &&
+      !Array.isArray(cachedPayload) &&
+      typeof cachedPayload === 'object'
+
+    const serveCached = (stale: boolean, regeneratesLeft: number) =>
+      json({
+        review: cachedIsReview ? (cachedPayload as WeeklyReview) : null,
+        insights: cachedIsReview ? null : (cachedPayload ?? []),
+        generatedAt: cached?.generated_at,
+        model: cached?.model,
         cached: true,
-        regeneratesLeft: await quotaRemaining(caller, 'coach_notes'),
+        // "Your review is from the previous format and you have no regenerate
+        // left this week" is a real state, and it renders as a note rather
+        // than as an error. See the quota branch below.
+        stale,
+        regeneratesLeft,
       })
+
+    const fresh =
+      cached &&
+      cached.basis_workout_at === basis &&
+      cached.prompt_version === `${PROMPT_VERSION}:${unit}`
+
+    if (fresh && !force) {
+      return serveCached(false, await quotaRemaining(caller, 'coach_notes'))
     }
 
-    // Read the stats before the quota is touched, because whether there is
-    // anything to say decides whether this costs anything at all.
-    //
-    // Runs under the caller's JWT. It takes no user id — it cannot be pointed
-    // at anyone else.
-    const { data: stats, error: statsError } = await caller.asUser.rpc('coach_stats')
-    if (statsError) throw new HttpError('Could not read your training data.', 500)
+    const { data: raw, error: blockError } = await caller.asUser.rpc('weekly_review')
 
-    // A brand-new account has nothing to analyse, and asking a model to say so
-    // costs a call, a wait, and — worst of all — the caller's one regenerate
-    // for the week. Two real users hit exactly that on 2026-08-05: both opened
-    // Coach before logging anything, both got a model-written "no training
-    // data" note, and both were then locked out of regenerating for seven days
-    // *including after they started training*, which is precisely when the
-    // feature becomes worth using.
+    // Deploy ordering: merging deploys this function, and 0021 is applied by
+    // hand. In the window between the two, `weekly_review()` does not exist —
+    // and the honest answer is the review they already have, not a 500 on the
+    // Coach tab. Delete this branch once 0021 is applied.
+    if (isMissingSchema(blockError)) {
+      console.warn('weekly_review() is missing — apply migration 0021')
+      if (cached) return serveCached(true, await quotaRemaining(caller, 'coach_notes'))
+      return json(
+        {
+          review: null,
+          insights: null,
+          generatedAt: new Date().toISOString(),
+          model: 'none',
+          cached: false,
+          degraded: true,
+          regeneratesLeft: await quotaRemaining(caller, 'coach_notes'),
+        },
+        200,
+      )
+    }
+    if (blockError)
+      throw new HttpError('Could not read your training data.', 500, 'sql')
+
+    // Converted before the prompt is built, so grounding checks the model
+    // against the same unit the reader is looking at.
+    const block = toDisplayBlock(raw, unit)
+
+    // The block's own shape, checked but not enforced. A missing key degrades
+    // one section into vagueness; refusing the whole review over it would turn
+    // a small regression into an outage.
+    const blockViolations = checkReviewBlock(block)
+    if (blockViolations.length > 0) {
+      console.warn('weekly_review block is off contract', blockViolations)
+    }
+
+    // An account with nothing in it gets the client's one-line empty state,
+    // not a review.
     //
-    // An empty `insights` array is already the client's designed empty state
-    // ("Log 3 workouts and the coach will have something to say"), so this
-    // returns better copy than the model produced, instantly and for free.
-    // §2C's rule, applied: if statistics can answer it, statistics answer it.
-    if (!hasTrainingData(stats)) {
+    // The first draft filled the contract here — five sections each saying
+    // "nothing yet" — and a screenshot settled it: that is five paragraphs of
+    // apology on a brand-new account. The fixed shape earns its keep for
+    // someone who reads it every week and learns where to look, and a lifter
+    // with no sessions is not that person yet. `review: null` with an empty
+    // `insights` is the state the Coach tab has always rendered as "Log 3
+    // workouts and the coach will have something to say."
+    if (!hasTrainingData(block)) {
       return json({
+        review: null,
         insights: [],
         generatedAt: new Date().toISOString(),
         model: 'none',
@@ -218,74 +279,76 @@ Deno.serve(async (request) => {
       })
     }
 
+    // ── The stale-cache escape hatch ─────────────────────────────────────────
+    // Without this, bumping PROMPT_VERSION would hand a 429 to every user who
+    // had already regenerated that week: their cache is a miss, and the quota
+    // says no. They would see an error where a review used to be, on the day
+    // of a deploy, through no action of their own. Serving the old one and
+    // saying it is old is strictly better than that.
+    const left = await quotaRemaining(caller, 'coach_notes')
+    if (left <= 0 && cached && !force) {
+      return serveCached(true, 0)
+    }
     await assertWithinQuota(caller, 'coach_notes')
 
     const startedAt = Date.now()
-    let insights: Insight[]
+    let review: WeeklyReview
     let result: Awaited<ReturnType<typeof chat>>
 
     try {
-      // ── The grounding gate ────────────────────────────────────────────────
-      // §12 sets the tolerance for a fabricated figure at zero. Up to now the
-      // check was a human reading a chip; `_shared/grounding.ts` makes it a
-      // guard, and this is where it runs. One retry, because a model that
-      // invented a number once will usually not do it twice when told which
-      // number it invented — and after that the offending note is dropped
-      // rather than the whole set, so one bad figure costs one observation.
+      const catalog = await exerciseCatalog(caller)
       let attempt = 0
-      let extraInstruction = ''
+      let extra = ''
+
       for (;;) {
         result = await chat({
           freeModel: Deno.env.get('COACH_MODEL_FREE'),
           paidModel: Deno.env.get('COACH_MODEL') ?? 'moonshotai/kimi-k2.5',
           system: SYSTEM,
-          user: JSON.stringify(stats) + extraInstruction,
+          user: JSON.stringify(block) + extra,
           jsonSchema: SCHEMA,
+          // Five sections with chips is a bigger structure than the old list,
+          // and a truncated one parses as "empty" — which reads as a model
+          // fault rather than a ceiling. Raised deliberately.
+          maxTokens: 1600,
         })
 
-        const parsed = parseInsights(result.content)
-        const { kept, dropped } = partitionGrounded(parsed, stats)
+        const parsed = parseReview(result.content)
+        const violations = checkReviewContract(parsed, block, { catalog })
 
-        if (dropped.length === 0) {
-          insights = kept
+        if (violations.length === 0) {
+          review = parsed
           break
         }
 
-        const figures = dropped.flatMap((d) => d.ungrounded)
-        console.warn('ungrounded figures', {
+        console.warn('review contract violations', {
           attempt,
-          figures,
+          violations,
           model: result.model,
           promptVersion: PROMPT_VERSION,
         })
 
         if (attempt === 0) {
           attempt = 1
-          extraInstruction =
-            `\n\nYour previous answer contained figures that are not in this block: ` +
-            `${figures.join(', ')}. Every number you write must appear above. ` +
-            `Write the observations again using only numbers from the block.`
+          extra =
+            `\n\nYour previous answer broke these rules: ` +
+            `${violations.map((v) => `${v.rule} (${v.detail})`).join('; ')}. ` +
+            `Write the review again. Use only numbers and exercise names from ` +
+            `the block above, and write all five sections.`
           continue
         }
 
-        // Second attempt still ungrounded. Keep what was clean; if nothing
-        // was, that is a failed generation and it says so rather than
-        // returning prose nobody can check.
-        if (kept.length === 0) {
-          throw new HttpError(
-            'The notes came back with figures that do not match your log, so they were not saved. Try again in a moment.',
-            502,
-            'ungrounded',
-          )
-        }
-        insights = kept
-        break
+        // Unlike the old note list, a review cannot drop its bad parts and
+        // keep the rest: the contract IS the five sections, and four of five
+        // is not a review. So a second failure is a failed generation, said
+        // plainly, and the client keeps whatever it had.
+        throw new HttpError(
+          'The review came back with figures that do not match your log, so it was not saved. Try again in a moment.',
+          502,
+          violations[0].rule,
+        )
       }
     } catch (error) {
-      // Every attempt is recorded now, not only the ones that worked — that
-      // is what makes the fallback rate, the parse-failure rate and p95
-      // latency computable at all (audit §3-A3). Quota counts `ok` rows only,
-      // so a failure here does not spend the caller's week.
       await recordGeneration(caller, 'coach_notes', {
         ok: false,
         errorCode:
@@ -300,36 +363,23 @@ Deno.serve(async (request) => {
       throw error
     }
 
+    const generatedAt = new Date().toISOString()
+
     // Service role: `coach_notes` has no client-writable policy, so the only
     // text that can appear under the "AI-generated" label is text that came
-    // through here.
-    //
-    // The retry without `prompt_version` exists because merging to main
-    // deploys these functions (deploy-functions.yml) while migrations are
-    // applied by hand, so for some window this code is live against a schema
-    // that predates 0017. PostgREST answers 42703 for an unknown column and
-    // supabase-js returns it rather than throwing — which would have made the
-    // cache silently stop working, and a cache that silently stops working
-    // means every Coach open calls the model again.
-    //
-    // Delete this fallback once 0017 is applied. It is a deploy-ordering
-    // shim, not a design.
-    const cacheRow = {
+    // through here. `insights` is jsonb and now holds an object rather than an
+    // array — the column was never typed to the old shape, and the client
+    // sniffs which one it got.
+    const { error: cacheError } = await caller.asService.from('coach_notes').upsert({
       user_id: caller.userId,
-      generated_at: new Date().toISOString(),
+      generated_at: generatedAt,
       basis_workout_at: basis,
       model: result.model,
-      insights,
-    }
-    const { error: cacheError } = await caller.asService
-      .from('coach_notes')
-      .upsert({ ...cacheRow, prompt_version: PROMPT_VERSION })
-    if (cacheError?.code === '42703') {
-      console.warn('coach_notes is missing prompt_version — apply migration 0017')
-      await caller.asService.from('coach_notes').upsert(cacheRow)
-    } else if (cacheError) {
-      console.error('coach_notes upsert failed', cacheError)
-    }
+      prompt_version: `${PROMPT_VERSION}:${unit}`,
+      insights: review,
+    })
+    if (cacheError) console.error('coach_notes upsert failed', cacheError)
+
     await recordGeneration(caller, 'coach_notes', {
       ok: true,
       model: result.model,
@@ -342,8 +392,9 @@ Deno.serve(async (request) => {
     })
 
     return json({
-      insights,
-      generatedAt: new Date().toISOString(),
+      review,
+      insights: null,
+      generatedAt,
       model: result.model,
       cached: false,
       regeneratesLeft: await quotaRemaining(caller, 'coach_notes'),
@@ -351,15 +402,12 @@ Deno.serve(async (request) => {
   } catch (error) {
     if (error instanceof HttpError) return json({ error: error.message }, error.status)
     if (error instanceof ModelError) {
-      // An open breaker is not an error the user should read as a fault. The
-      // surface renders its deterministic skeleton — this is what "the app
-      // must be fully usable with AI dark" means in code rather than prose.
       if (error.code === 'breaker_open') {
         return json({ error: error.message, degraded: true }, 503)
       }
       return json({ error: error.message }, error.status)
     }
     console.error('coach-notes', error)
-    return json({ error: 'Could not write your notes right now.' }, 500)
+    return json({ error: 'Could not write your review right now.' }, 500)
   }
 })

@@ -1,5 +1,6 @@
 {
   "fixture": "plateau",
+  "kind": "coach_notes",
   "source": "hand-authored",
   "note": "Written by hand as the shape a good answer takes. `npm run eval:live -- --record` replaces this with a real one, source: recorded.",
   "model": null,

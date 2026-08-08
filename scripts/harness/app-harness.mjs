@@ -201,11 +201,54 @@ export function fixtures({ empty = false, active = false } = {}) {
       // on an empty account before that was true. An empty `insights` array
       // IS the client's empty state, so this is the fixture that shoots it.
       coachNotes: {
+        review: null,
         insights: [],
         generatedAt: iso(0),
         model: 'none',
         cached: false,
         regeneratesLeft: 1,
+      },
+      // The empty account's coach, which is the case B1 is most careful about:
+      // `session_brief()` returns a block with no target and no routine, the
+      // skeleton composes nothing from it, and the card never renders. The
+      // Edge Function is stubbed with `line: null` to match — it declines
+      // without spending a call, the same way `worthSaying` does.
+      //
+      // These MUST be present rather than omitted. `data.coachBrief[unit]`
+      // would throw on an undefined stub, and a harness that crashes on its
+      // own fixture reads as an app defect — rule 1 at the top of this file.
+      sessionBrief: {
+        unit: 'kg',
+        productive_range: [10, 20],
+        days_since_last: null,
+        sessions_last_7: 0,
+        sessions_last_28: 0,
+        total_sets_90d: 0,
+        due_routine: null,
+        target: null,
+        low_bands: [],
+      },
+      sessionDebrief: {
+        unit: 'kg',
+        productive_range: [10, 20],
+        found: false,
+        sets: 0,
+        exercises: 0,
+        volume_kg: 0,
+        duration_min: null,
+        records: 0,
+        anchor: null,
+        low_band: null,
+      },
+      coachBrief: {
+        kg: {
+          briefing: { surface: 'briefing', line: null },
+          debrief: { surface: 'debrief', line: null },
+        },
+        lbs: {
+          briefing: { surface: 'briefing', line: null },
+          debrief: { surface: 'debrief', line: null },
+        },
       },
       routinePreview: { preview: [], model: MODEL, droppedExercises: [] },
       savedRoutines: { routines: [], saved: true },
@@ -448,28 +491,148 @@ export function fixtures({ empty = false, active = false } = {}) {
     // disagreed with the charts would be the exact defect the chips exist to
     // make catchable, and a harness that ships one teaches the eye to ignore
     // them.
+    // B2's weekly review, in the shape the function now returns. Five
+    // sections, always, in contract order — a fixture that dropped one would
+    // photograph the exact defect the contract exists to prevent, and the
+    // screenshot would look fine.
+    //
+    // Every figure agrees with the other fixtures in this file, which is the
+    // §4 rule about stubbing: hamstrings at 4 and calves at 6 are the two bars
+    // under the band in `muscleSets`, and Bench at 102.5 is `LIFTS[0]`. A chip
+    // that disagreed with the charts would be the very defect chips exist to
+    // make catchable, and a harness that ships one teaches the eye to ignore
+    // them.
     coachNotes: {
-      insights: [
-        {
-          title: 'Hamstrings are the gap',
-          body: 'Four working sets a week against a productive range of ten to twenty. Everything else you train sits in or above the band, so this is the cheapest thing to fix.',
-          chip: '4 sets/wk · target 10–20',
+      review: {
+        headline: 'Four sessions, hamstrings still short',
+        sections: {
+          adherence: {
+            line: 'Four sessions this week against an average of 4.0, and you trained in all 8 of the last 8 weeks. No gap longer than 4 days.',
+            chip: '4 sessions · avg 4.0/wk',
+          },
+          bands: {
+            line: 'Hamstrings are at 4 working sets against a productive range of 10 to 20, and calves at 6. Everything else sits inside the band.',
+            chip: 'hamstrings 4 · calves 6 · 10-20',
+          },
+          plateaus: {
+            line: 'Nothing has stalled. No lift has 6 sessions without the estimate moving.',
+            chip: '0 stalled · 6 session floor',
+          },
+          // Swapped for its pounds twin at route time — see `winsByUnit`
+          // below. It is the one figure in the review that carries a unit, and
+          // the real function hands the model a block already converted to
+          // whichever one the header shows (`_shared/display-units.ts`).
+          wins: {
+            line: 'Bench Press is up 5 kg on the estimate over the last 28 days, after eight weeks flat.',
+            chip: '+5 kg e1RM · 28 d',
+          },
+          recommendation: {
+            line: 'Add two hamstring sets next week. At 4 against a range of 10 to 20 it is the largest gap you have, and it is the cheapest one to close.',
+            chip: 'hamstrings 4 · target 10-20',
+          },
         },
-        {
-          title: 'Bench is moving again',
-          body: 'Estimated one-rep max is up five kilos over the last month after eight weeks flat. Whatever changed in that block is worth keeping.',
-          chip: '+5 kg e1RM · 4 wk',
-        },
-        {
-          title: 'You train four days a week, reliably',
-          body: 'Fifty-two sessions across thirteen weeks with no gap longer than four days. Consistency is not your problem, so do not spend effort there.',
-          chip: '4.0 sessions/wk · 13 wk',
-        },
-      ],
+      },
+      insights: null,
       generatedAt: iso(0),
       model: MODEL,
       cached: true,
       regeneratesLeft: 1,
+    },
+
+    // B1's two one-line surfaces. Both are stubbed because both are drawn by
+    // `npm run shots`: the briefing sits above Start on the idle Log tab, and
+    // the debrief on the finish summary.
+    //
+    // Keyed by UNIT as well as surface, because the real function is: the
+    // model writes the sentence, so it is handed the block already converted
+    // to whatever the header toggle shows (`_shared/display-units.ts`). A stub
+    // that answered in kilograms regardless would photograph "102.5 kg" under
+    // a header reading `lbs` — which is exactly the defect the first run of
+    // this card revealed, and a fixture that reproduces it would teach the eye
+    // to accept it.
+    coachBrief: {
+      kg: {
+        briefing: {
+          surface: 'briefing',
+          line: 'Upper A is up. Bench Press was 102.5 kg × 5 last time, so 105 × 5 takes the estimate past 119.6.',
+          chip: '105 kg × 5 · beats 119.6 e1RM',
+        },
+        debrief: {
+          surface: 'debrief',
+          line: 'Third straight Bench Press progression, and 5 kg on the estimate this month. Hamstrings are at 4 sets if you want somewhere to put Thursday.',
+          chip: '3rd straight · +5 kg e1RM',
+        },
+      },
+      lbs: {
+        briefing: {
+          surface: 'briefing',
+          line: 'Upper A is up. Bench Press was 226 lbs × 5 last time, so 231.5 × 5 takes the estimate past 263.7.',
+          chip: '231.5 lbs × 5 · beats 263.7 e1RM',
+        },
+        debrief: {
+          surface: 'debrief',
+          line: 'Third straight Bench Press progression, and 11 lbs on the estimate this month. Hamstrings are at 4 sets if you want somewhere to put Thursday.',
+          chip: '3rd straight · +11 lbs e1RM',
+        },
+      },
+    },
+
+    /**
+     * The blocks the CLIENT reads directly — `session_brief()` and
+     * `session_debrief()`, migration 0021.
+     *
+     * These are load-bearing for the screenshots in a way the two above are
+     * not. Both surfaces render their deterministic skeleton from THESE and
+     * only then upgrade to the phrased line, so a run with these missing would
+     * photograph no briefing card at all and read as "the card is not
+     * finished" rather than "the stub is not finished". Same class of hole as
+     * the missing Edge Function routes and the missing in-progress workout.
+     */
+    sessionBrief: {
+      unit: 'kg',
+      productive_range: [10, 20],
+      days_since_last: 2,
+      sessions_last_7: 4,
+      sessions_last_28: 16,
+      total_sets_90d: 604,
+      due_routine: { name: 'Upper A', exercises: 5, days_since_run: 6 },
+      target: {
+        exercise: 'Bench Press (Barbell)',
+        last_weight_kg: 102.5,
+        last_reps: 5,
+        last_e1rm: 119.6,
+        best_e1rm: 119.6,
+        last_done_days_ago: 6,
+        next_weight_kg: 105,
+        next_e1rm: 122.5,
+      },
+      low_bands: [
+        { muscle: 'hamstrings', sets: 4 },
+        { muscle: 'calves', sets: 6 },
+        { muscle: 'biceps', sets: 9 },
+      ],
+    },
+    sessionDebrief: {
+      unit: 'kg',
+      productive_range: [10, 20],
+      found: true,
+      sets: 24,
+      exercises: 5,
+      volume_kg: 12480.5,
+      duration_min: 62,
+      records: 2,
+      anchor: {
+        exercise: 'Bench Press (Barbell)',
+        e1rm: 119.6,
+        top_weight_kg: 102.5,
+        top_reps: 5,
+        previous_e1rm: 117.1,
+        gain_since_last_e1rm: 2.5,
+        progression_streak: 3,
+        e1rm_28d: 119.6,
+        e1rm_before_28d: 114.6,
+      },
+      low_band: { muscle: 'hamstrings', sets: 4 },
     },
     // Ids come from `exercises` above, because the real function validates
     // every generated exercise against the table and drops what it cannot
@@ -574,6 +737,31 @@ function applyQuery(rows, params) {
  * `applyQuery` covers, and a stub that grew a real query planner would be its
  * own bug farm.
  */
+/**
+ * The pounds twin of the review's one unit-carrying section.
+ *
+ * The review is stored once, in kilograms, and this swaps the single section
+ * whose figures are weights. Cheap, and it keeps the fixture from stating
+ * "+5 e1RM" under a header reading `lbs` — the defect the briefing card's
+ * first screenshot revealed, which would otherwise reappear one tab over.
+ */
+function withReviewUnit(notes, unit) {
+  if (unit !== 'lbs' || !notes?.review) return notes
+  return {
+    ...notes,
+    review: {
+      ...notes.review,
+      sections: {
+        ...notes.review.sections,
+        wins: {
+          line: 'Bench Press is up 11 lbs on the estimate over the last 28 days, after eight weeks flat.',
+          chip: '+11 lbs e1RM · 28 d',
+        },
+      },
+    },
+  }
+}
+
 export async function installSupabaseStub(page, data, { latencyMs = 0 } = {}) {
   let inserted = 0
 
@@ -621,7 +809,21 @@ export async function installSupabaseStub(page, data, { latencyMs = 0 } = {}) {
     // about responses, and a function is a response too.
     if (path.startsWith('/functions/v1/')) {
       const fn = path.slice('/functions/v1/'.length).split('?')[0]
-      if (fn === 'coach-notes') return json(data.coachNotes)
+      if (fn === 'coach-notes') {
+        return json(withReviewUnit(data.coachNotes, url.searchParams.get('unit')))
+      }
+      if (fn === 'coach-brief') {
+        // One function, two surfaces, chosen by the body — same shape as
+        // generate-routine's two verbs below.
+        const body = route.request().postDataJSON() ?? {}
+        const unit = body.unit === 'lbs' ? 'lbs' : 'kg'
+        return json({
+          ...data.coachBrief[unit][body.surface === 'debrief' ? 'debrief' : 'briefing'],
+          generatedAt: iso(0),
+          model: MODEL,
+          cached: true,
+        })
+      }
       if (fn === 'generate-routine') {
         // One function, two verbs: a body carrying `save` is the write, and it
         // returns saved routines rather than a preview.
@@ -645,6 +847,14 @@ export async function installSupabaseStub(page, data, { latencyMs = 0 } = {}) {
           (data.previousSession ?? []).filter((r) => r.exercise_id === exerciseId),
         )
       }
+
+      // `session_brief()` and `session_debrief()` return a single jsonb object,
+      // not a set of rows, so they answer with the object itself rather than
+      // through `byName` below — which wraps everything in an array. Getting
+      // that wrong would hand `fetchBriefBlock` an array, `block.target` would
+      // be undefined, and the card would silently render nothing.
+      if (fn === 'session_brief') return json(data.sessionBrief)
+      if (fn === 'session_debrief') return json(data.sessionDebrief)
 
       const byName = {
         session_volume_history: data.sessionVolume,

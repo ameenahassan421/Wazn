@@ -56,9 +56,34 @@ jobs:
         # needs no server and no connection. It is still only the floor: it
         # cannot see a wrong column name or a broken RLS predicate. `0016` and
         # `0017` are both parse-clean and neither has ever been executed.
+        #
+        # The step below is what raised that floor.
         run: |
           pip install pglast
           python3 scripts/check_migrations.py
+
+      - name: Execute migrations and run the SQL suites
+        # The floor above is a PARSER. This is a SERVER.
+        #
+        # Both of the defects 0021 shipped with were invisible to the parse
+        # check and died on the first execution: a `default (select auth.uid())`
+        # — legal grammar, rejected by every real Postgres, because a column
+        # default may not contain a subquery — and an `order by` naming a column
+        # the subquery had aliased away. STATUS has said for weeks that "a
+        # migration that has never been executed is unverified"; this executes
+        # every one of them, in order, from an empty database.
+        #
+        # Ubuntu runners ship Postgres, so this needs no service container and
+        # no credentials. `scripts/check_sql.sh` starts a throwaway cluster on a
+        # unix socket with `listen_addresses` empty, applies `scripts/pg_shim.sql`
+        # for the parts of Supabase the migrations reference but do not own, and
+        # then runs `supabase/tests/coach_surfaces.sql` — which asserts what the
+        # coach's SQL actually RETURNS, not merely that it was accepted.
+        #
+        # It does NOT prove production will accept them: production is at 0018
+        # with a ledger that knows about three migrations. "Applies cleanly from
+        # empty" and "applies cleanly to production" are different claims.
+        run: npm run check:sql
 
       - uses: denoland/setup-deno@v2
         with:

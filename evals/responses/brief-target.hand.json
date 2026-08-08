@@ -1,0 +1,10 @@
+{
+  "fixture": "brief-target",
+  "kind": "briefing",
+  "source": "hand-authored",
+  "model": null,
+  "brief": {
+    "line": "Push A is up. Bench Press was 100 kg x 5 last time, so 102.5 x 5 takes the estimate past 116.7.",
+    "chip": "102.5 x 5 · beats 116.7 e1RM"
+  }
+}

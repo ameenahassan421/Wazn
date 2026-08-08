@@ -1,0 +1,31 @@
+{
+  "fixture": "review-healthy",
+  "kind": "weekly_review",
+  "source": "hand-authored",
+  "model": null,
+  "review": {
+    "headline": "Four sessions, three lifts moving",
+    "sections": {
+      "adherence": {
+        "line": "Four sessions this week, matching last week and sitting just above your 3.9 average. You trained in all 8 of the last 8 weeks.",
+        "chip": "4 sessions · avg 3.9/wk"
+      },
+      "bands": {
+        "line": "Every muscle group is inside the 10 to 20 range, from calves at 11 to back at 18. Nothing to fix here.",
+        "chip": "calves 11 · back 18 · all in"
+      },
+      "plateaus": {
+        "line": "Nothing has stalled. No lift has 6 sessions without movement.",
+        "chip": "0 stalled · 6 session floor"
+      },
+      "wins": {
+        "line": "Squat is up 8.5 to 162.5, Bench up 5.0 to 109.2, and Bent Over Row up 3.0 to 95.0.",
+        "chip": "squat +8.5 · bench +5.0"
+      },
+      "recommendation": {
+        "line": "Change nothing. Squat is up 8.5 over the month and the week you are running is producing it.",
+        "chip": "squat +8.5 e1RM"
+      }
+    }
+  }
+}

@@ -1,0 +1,54 @@
+{
+  "name": "review-plateau",
+  "kind": "weekly_review",
+  "note": "GOLDEN. Every key and every figure below was printed by weekly_review() running on a real Postgres against the history supabase/tests/coach_surfaces.sql seeds — run ./scripts/check_sql.sh and read the FIXTURE lines to regenerate it. The ONE edit: the suite's placeholder lift names (ZZ Test Squat, ZZ Test Pulldown) are mapped to real catalog entries, because the unknown-exercise check needs a catalog that a real name can be absent from. A lifter who trains six flat squat sessions, whose pulldown climbs every week, and who has done nothing for chest or calves in seven days.",
+  "catalog": [
+    "Bench Press (Barbell)",
+    "Squat (Barbell)",
+    "Lat Pulldown (Cable)",
+    "Romanian Deadlift (Barbell)",
+    "Calf Raise (Machine)",
+    "Overhead Press (Barbell)",
+    "Bent Over Row (Barbell)"
+  ],
+  "block": {
+    "unit": "kg",
+    "window_days": 90,
+    "productive_range": [10, 20],
+    "plateau_min_sessions": 6,
+    "adherence": {
+      "sessions_this_week": 1,
+      "sessions_prev_week": 1,
+      "avg_sessions_per_week_8w": 1.0,
+      "weeks_trained_of_8": 8,
+      "sessions_last_28": 4,
+      "from_routine_last_28": 2,
+      "longest_gap_days_28": 7
+    },
+    "bands": [
+      { "muscle": "calves", "sets": 0, "sets_prev": 2, "status": "under" },
+      { "muscle": "chest", "sets": 0, "sets_prev": 3, "status": "under" },
+      { "muscle": "back", "sets": 3, "sets_prev": 1, "status": "under" }
+    ],
+    "plateaus": [
+      {
+        "exercise": "Squat (Barbell)",
+        "sessions": 6,
+        "slope_per_session": 0.0,
+        "first_e1rm": 154.0,
+        "last_e1rm": 154.0
+      }
+    ],
+    "wins": [
+      {
+        "exercise": "Lat Pulldown (Cable)",
+        "e1rm_28d": 93.3,
+        "e1rm_before": 73.3,
+        "gain": 20.0
+      }
+    ],
+    "records_last_7": 2,
+    "total_sets_90d": 19,
+    "recommendation": { "kind": "raise_band", "muscle": "calves", "sets": 0 }
+  }
+}

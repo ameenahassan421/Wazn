@@ -101,6 +101,18 @@ export function collectAllowedNumbers(block: unknown): Set<number> {
       return
     }
     if (Array.isArray(value)) {
+      // How many are in the list is a fact the block carries, and one the
+      // review contract actively asks the model to state: "plateaus" is an
+      // empty array on a good week and the section still has to say so, which
+      // in English is "nothing has stalled — 0 lifts". Without this, the
+      // truest sentence the coach can write about a healthy week reads as a
+      // fabrication.
+      //
+      // The cost is a handful more small integers in the allowed set, which
+      // is the weakest part of this check already (see the note above about
+      // window boundaries). The benefit is that "0", "1 win", "3 groups" stop
+      // being unwritable.
+      allowed.add(value.length)
       for (const item of value) walk(item)
       return
     }
@@ -137,6 +149,104 @@ export function isGrounded(claim: number, allowed: Set<number>): boolean {
     if (Math.abs(value * 100 - claim) < 0.5) return true
   }
   return false
+}
+
+/* ── Names ────────────────────────────────────────────────────────────────── */
+
+/**
+ * The same rule as the numbers, applied to lifts: **an exercise the model
+ * names must be an exercise we gave it data about.**
+ *
+ * The failure this catches is specific and plausible — a model handed a block
+ * about a stalled bench reaches for a lift it knows about from training rather
+ * than from the block: "add Romanian Deadlifts on Thursday". Every figure in
+ * that sentence can be grounded and the sentence is still an invention,
+ * because the user may not own a barbell, may never have done one, and
+ * certainly did not have one measured.
+ *
+ * Detecting an invented name needs to know what a name looks like, which is
+ * what the catalog is for: `public.exercises` is a shared table, so the set of
+ * strings that ARE exercise names is knowable. The check is then set
+ * membership again — a catalog name that appears in the output but not in the
+ * block is out of bounds.
+ *
+ * ── WHAT THIS DOES NOT CATCH, and why it is drawn where it is ───────────────
+ *  - **Single-word lifts.** "Squat", "Deadlift", "Row", "Curl", "Dip",
+ *    "Plank" are catalog entries AND ordinary English. A check that flagged
+ *    "your rows are behind" because the block happened to lack a lift called
+ *    Row would be turned off inside a day, and a check people turn off catches
+ *    nothing. Only multi-word base names are matched, which is also the shape
+ *    a fabricated recommendation actually takes.
+ *  - **A lift that is not in the catalog at all.** Nothing here can tell
+ *    "Bulgarian Split Squat" from a phrase, if the catalog has no such row.
+ *  - **The right lift described wrongly.** Semantics again, not membership.
+ */
+
+/**
+ * "Bench Press (Barbell)" → "bench press".
+ *
+ * The parenthetical is equipment, and a model quoting the block will almost
+ * always drop it — so matching full catalog strings would miss every real
+ * mention and flag nothing, which is the quiet way for a guard to be useless.
+ */
+export function baseName(name: string): string {
+  return name
+    .replace(/\([^)]*\)/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .toLowerCase()
+}
+
+/** Every exercise name reachable in a block, at any depth, under any key. */
+export function collectBlockNames(block: unknown): Set<string> {
+  const names = new Set<string>()
+  const NAME_KEYS = /^(name|exercise|exercise_name)$/
+
+  const walk = (value: unknown): void => {
+    if (Array.isArray(value)) {
+      for (const item of value) walk(item)
+      return
+    }
+    if (value && typeof value === 'object') {
+      for (const [key, item] of Object.entries(value as Record<string, unknown>)) {
+        if (NAME_KEYS.test(key) && typeof item === 'string') {
+          names.add(baseName(item))
+        }
+        walk(item)
+      }
+    }
+  }
+
+  walk(block)
+  return names
+}
+
+/**
+ * Catalog names mentioned in `text` that the block never mentioned.
+ *
+ * `catalog` is every exercise name the app knows. Passing an empty catalog
+ * disables the check rather than failing everything open-mouthed — the eval
+ * fixtures carry their own, and production reads it once per isolate.
+ */
+export function ungroundedNames(
+  text: string,
+  block: unknown,
+  catalog: readonly string[],
+): string[] {
+  if (catalog.length === 0) return []
+  const allowed = collectBlockNames(block)
+  const haystack = ` ${text.toLowerCase().replace(/[^a-z0-9]+/g, ' ')} `
+
+  const found = new Set<string>()
+  for (const entry of catalog) {
+    const base = baseName(entry)
+    // Multi-word only — see the note above.
+    if (!base.includes(' ')) continue
+    if (allowed.has(base)) continue
+    const needle = ` ${base.replace(/[^a-z0-9]+/g, ' ')} `
+    if (haystack.includes(needle)) found.add(base)
+  }
+  return [...found]
 }
 
 export interface GroundingResult {
