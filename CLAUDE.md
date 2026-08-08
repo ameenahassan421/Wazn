@@ -52,8 +52,14 @@ npm run build        # typecheck + production build
 npm run format       # prettier
 ```
 
-Before pushing: `npm run lint && npm run format:check && npm run typecheck && npm run check:vercel && npm test && npm run build`.
-CI runs exactly that on every PR.
+Before pushing: `npm run lint && npm run format:check && npm run typecheck && npm run check:vercel && npm run check:coverage && npm test && npm run build`.
+
+**That list is not the whole wall, and this line used to claim it was.** CI's
+`check` job also runs `check:migrations`, `check:sql` and `deno check` on the
+Edge Functions, and a second `smoke` job runs Playwright. E1 was pushed green on
+the old list and failed on `check:coverage` — every module in `src/lib` needs a
+test file or a written exemption, and a new one with neither fails. Read
+`.github/workflows/ci.yml` rather than this paragraph when it matters.
 
 **Touching `vercel.json`?** `npm run check:vercel` is the only thing in the repo
 that reads it. A `"//"` comment key in a rewrite once made Vercel reject every
