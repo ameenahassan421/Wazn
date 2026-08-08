@@ -2370,7 +2370,7 @@ worked and social did not.
 `supabase/tests/rls_social.sql` has eight assertions and they all
 passed. Every one of them writes `insert into public.follows
 (follower_id, following_id)` — raw SQL naming both columns. The tests
-proved the *policies* were right and never once exercised the payload
+proved the _policies_ were right and never once exercised the payload
 the client actually sends. A test that constructs its own input
 differently from production is testing a different program. There is
 now a 7b assertion that inserts exactly the way the app does, omitting
