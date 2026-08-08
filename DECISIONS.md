@@ -2443,3 +2443,45 @@ phase.
 The rule attached to that last one, from the offense plan's §2: order
 and pre-select, never auto-start, and never hide the other days. A
 lifter who wants Thursday's session on a Tuesday is not a mis-tap.
+
+## 2026-08-07 — The auth config had two gaps, and one of them broke password reset
+
+Ameen enabled Google and asked what else was missing. Reading the live
+config through the Management API rather than the dashboard UI answered
+it in one call, and found two things:
+
+**The recovery email was still Supabase's default — a link.** It said
+"Follow the link below to choose a new one" and carried
+`{{ .ConfirmationURL }}`. The app asks for six digits. Every password
+reset would have dead-ended: an email with a link, an app waiting for a
+code, and no way to get from one to the other. `set-templates` pushed
+`recovery.html`; verified live with `{{ .Token }}`.
+
+This is what the "never a magic link" rule costs if you only apply it
+to the code and not to the provider config — the client was correct all
+along and the mail was not.
+
+**`password_min_length` was 6.** The client validates 8, so the floor
+was weaker than the app's own rule, and a password the UI refused could
+still be set through any other caller. Now 8, verified.
+
+**Leaked-password protection could not be enabled: 402, Pro plan only.**
+The auth doc had already hedged this as "if our tier offers it" — it
+does not. The 8-character floor stands alone until an upgrade.
+
+Added `set-password-policy` to `scripts/supabase_admin.ts` rather than
+doing this with a one-off curl, for the reason the script exists at all:
+auth setup should be a command somebody can re-run and review, not a
+dashboard click nobody can reproduce. It writes the two settings in
+**two separate PATCHes** — the API rejects the whole request with a 402
+when the Pro-only field is included, so bundling them would have meant
+the length silently never landed either. The breach check degrades to a
+printed note instead of an error.
+
+**Left alone, but worth watching:**
+`security_update_password_require_reauthentication` is true. The
+recovery flow verifies the code (which signs the user in) and then
+immediately calls `updateUser({password})`; a fresh session should
+satisfy the requirement, but that is an assumption, not a test. If
+"Set password and sign in" fails on a real device, this is the first
+suspect.

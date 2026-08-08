@@ -274,6 +274,49 @@ async function setOtpLength(raw: string | undefined) {
   console.log(`mailer_otp_length set to ${length} (verified)`)
 }
 
+/**
+ * Password policy, per the 2026-08-07 auth decisions.
+ *
+ * Length plus a breach check, and deliberately no
+ * `password_required_characters`: composition rules push people toward
+ * `Password1!` and a longer minimum does more for the same annoyance. The
+ * project default was 6 with the breach check off, which is weaker than the
+ * client's own 8-character validation — so a password the app refused could
+ * still be set through any other caller.
+ */
+async function setPasswordPolicy(raw?: string) {
+  const length = Number(raw ?? 8)
+  if (!Number.isInteger(length) || length < 8 || length > 72) {
+    fail(`Password minimum must be an integer 8-72, got ${JSON.stringify(raw)}.`)
+  }
+
+  // Two writes, not one. The breach check is a Pro-plan feature and the API
+  // rejects the whole PATCH with a 402 when it is included on the free tier —
+  // so bundling them would mean the length never lands either. Length first,
+  // because it is the part that always works.
+  await request('PATCH', '/config/auth', { password_min_length: length })
+
+  const auth = await request('GET', '/config/auth')
+  if (auth.password_min_length !== length) {
+    fail(
+      `password_min_length is ${JSON.stringify(auth.password_min_length)} after the write, expected ${length}.`,
+    )
+  }
+  console.log(`password_min_length set to ${length} (verified)`)
+
+  try {
+    await request('PATCH', '/config/auth', { password_hibp_enabled: true })
+    console.log('breach check (HaveIBeenPwned) enabled')
+  } catch (cause) {
+    const message = cause instanceof Error ? cause.message : String(cause)
+    if (!/402|Pro Plan/i.test(message)) throw cause
+    console.log(
+      'breach check NOT enabled — it needs a Pro plan. The 8-character floor ' +
+        'still applies. Re-run this command after any upgrade.',
+    )
+  }
+}
+
 async function main() {
   const [command, ...rest] = process.argv.slice(2)
 
@@ -288,10 +331,13 @@ async function main() {
       return setTemplates()
     case 'set-otp-length':
       return setOtpLength(rest[0])
+    case 'set-password-policy':
+      return setPasswordPolicy(rest[0])
     default:
       fail(
         `Unknown command ${command ? `"${command}"` : ''}. ` +
-          'Use: show | set-site-url <url> | set-smtp | set-templates | set-otp-length [6-10]',
+          'Use: show | set-site-url <url> | set-smtp | set-templates | ' +
+          'set-otp-length [6-10] | set-password-policy [8-72]',
       )
   }
 }
