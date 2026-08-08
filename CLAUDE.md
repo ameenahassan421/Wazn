@@ -157,5 +157,16 @@ effects run before the parent's, which silently broke the set auto-fill once.
 
 - Supabase project ref: `ttasiwxeqerhsztxjxip`
 - Production: https://workout-theta-plum.vercel.app (Vercel, auto-deploys `main`)
-- Sandboxed sessions have **no network egress to Supabase** unless the
-  environment allowlist is widened. See `docs/agent-setup.md`.
+- **Sandboxed sessions CAN reach Supabase now**, which reverses what this line
+  said until 2026-08-08. `SUPABASE_ACCESS_TOKEN` and `SUPABASE_PROJECT_REF` are
+  in the environment, and `https://api.supabase.com/v1/projects/$REF/database/query`
+  answers — that is a Management API personal access token, and it can run
+  arbitrary SQL, including DDL. Migrations 0020 and 0021 were applied through
+  it. Direct Postgres (5432 / the 6543 pooler) is still NOT reachable, so
+  `scripts/run_sql.sh` and its `DATABASE_URL` remain a laptop-only path.
+- **That token is production DDL access. Treat it as such.** Plan §2.6 makes a
+  destructive change an ask, and applying a migration is a change to the
+  database every user depends on: confirm before applying, verify against
+  `information_schema` afterwards rather than trusting a success flag, and
+  write what actually landed into STATUS. A `[]` response means "no rows
+  returned", not "it worked".

@@ -470,7 +470,7 @@ verbatim, so they survive even if this file isn't read.**
   routine through the app since the fix. Coach → Build me a routine, on a real
   account, is what proves it. The ledger says `generate-routine` has never
   produced a successful generation in its life.
-- **Open decision for Ameen:** four zero-set workouts from desktop testing
+- **CLOSED 2026-08-08 — deleted, and there were ten rather than four.** Open decision for Ameen: four zero-set workouts from desktop testing
   still render as blank History rows. Say "delete all my workouts with zero
   sets" and they go server-side.
 - **Next action:** the two blocked items above. After beta starts: offline
@@ -738,7 +738,8 @@ event_message` comes back empty), so nothing here inspected message contents;
   wired wrong, invisible because nothing drew the round. Fixed in the new
   `src/lib/commit.ts` with a full A/B/A/B replay as a test. **Protect-list items
   are not verified until something renders them.**
-- **Migration 0020 (`workouts.exercise_order`) is PARSE-CHECKED, NOT APPLIED.**
+- **Migration 0020 (`workouts.exercise_order`) — APPLIED 2026-08-08; the note
+  below describes the state before that.**
   It is a `uuid[]` column, deliberately not a join table: an unapplied column
   makes one PATCH fail and the board falls back to deriving order from the sets
   (the pre-v2.2 behaviour), where an unapplied table would error on every write
@@ -909,7 +910,8 @@ event_message` comes back empty), so nothing here inspected message contents;
   dismissal is the only in-app signal of attention the design can claim. The
   gate's second half — a tester changing a session because of it — stays an
   exit-interview question, because nothing in the app can observe it.
-- **Migration 0021 is EXECUTED AND UNIT-TESTED, NOT APPLIED.** It carries
+- **Migration 0021 — APPLIED 2026-08-08; the note below describes the state
+  before that.** It carries
   `session_brief()`, `session_debrief()`, `weekly_review()`, the `coach_briefs`
   cache, `coach_views`, and a widened `ai_generations.feature` check — without
   that last one every ledger write from `coach-brief` would fail silently and
@@ -923,6 +925,40 @@ coach_surfaces.sql` asserts what the three functions RETURN against a seeded
   Function calls, so precached it installs 8 KiB that can render nothing
   offline. The warning in the previous entry was correct and has now been
   spent; the phase ends with more headroom than it started with.
+- **0020 AND 0021 ARE APPLIED (2026-08-08), and B1/B2 are LIVE.** Applied
+  through the Supabase Management API — `SUPABASE_ACCESS_TOKEN` is in the
+  sandbox environment and `api.supabase.com/v1/projects/$REF/database/query`
+  runs DDL, which reverses the long-standing "no egress from a sandboxed
+  session" note in CLAUDE.md. Verified against `information_schema` rather than
+  trusted from a success flag: `workouts.exercise_order` exists as a `uuid[]`;
+  `coach_briefs` and `coach_views` have RLS on with 1 and 2 policies;
+  `session_brief`, `session_debrief` and `weekly_review` all exist as
+  SECURITY INVOKER; and `ai_generations_feature_check` now admits `briefing`
+  and `debrief`, **without which both new surfaces would have run completely
+  unmetered**.
+- **The three functions were run against the real 152-workout history, as the
+  real user.** `session_brief()` returned a due routine (`Core & Conditioning`,
+  never run — the rotation rule preferring a never-run routine, working as
+  designed), a target of 15.00 kg × 12 to beat a 19.1 e1RM on Cable Crunch, and
+  three muscle groups at zero this week. `weekly_review()` returned five wins,
+  two genuine plateaus (Lat Pulldown, slope -0.72 over 7 sessions; Lateral
+  Raise, -0.10 over 6) and one recommendation. **RLS was proved rather than
+  assumed**: a different `request.jwt.claim.sub` asking for the owner's workout
+  gets `found: false` and `total_sets_90d: 0`, while the owner gets their own.
+- **The zero-set workouts are deleted, and there were TEN, not four.** STATUS
+  had said four since the note was written; six more accumulated. All ten were
+  finished, so none was a live session, and the delete carried an
+  `ended_at is not null` guard so an in-progress workout could not have been
+  caught by it. **162 → 152 workouts, zero-set count now 0, and
+  `workout_sets` unchanged at 3210** — the check that matters, because it says
+  nothing with data in it was touched. The open decision in this section is
+  closed.
+- **The migration ledger now holds five rows**, having gained
+  `workout_exercise_order` and `coach_surfaces`. It is still silent about
+  0001–0015, so it still reads as though the database began at 0016 — but a
+  `supabase db push` would now wrongly re-attempt sixteen migrations rather
+  than eighteen. **0019 is still deliberately unapplied**, so the gap at that
+  version is correct rather than an omission.
 - **Last updated:** 2026-08-08 by Claude Code (B1's briefing and debrief; B2's
   weekly review contract and eval harness; migration 0021; the executable
   migration runner and the two defects it caught; the kg/lbs defect a

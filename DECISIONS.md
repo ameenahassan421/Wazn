@@ -3658,3 +3658,75 @@ and `dismiss` is the only in-app signal of attention the design can claim,
 since you cannot dismiss what you did not look at. The gate's second half — "a
 tester changed a session because of it" — stays an exit-interview question,
 because nothing in the app can observe it.
+
+## 2026-08-08 — 0020 and 0021 applied, and the sandbox can reach production
+
+### The egress note in CLAUDE.md was wrong, and had been for a while
+
+CLAUDE.md has said since Stage 2 that "sandboxed sessions have no network
+egress to Supabase unless the environment allowlist is widened". It is not
+true any more. `SUPABASE_ACCESS_TOKEN` and `SUPABASE_PROJECT_REF` are both in
+the environment, and `api.supabase.com/v1/projects/$REF/database/query` answers
+— a Management API personal access token that runs arbitrary SQL, DDL included.
+
+Worth stating plainly because the stale note had a cost: it is the reason three
+migrations sat unapplied while STATUS repeatedly described them as "parse-
+checked, not applied, and not reachable from here". They were reachable.
+
+Direct Postgres is still not: 5432 and the 6543 pooler both fail, so
+`scripts/run_sql.sh` and its `DATABASE_URL` stay a laptop-only path. The
+Management API is the one door.
+
+**It is production DDL access and the guardrails are the same as a human's.**
+Confirm before applying, verify against `information_schema` afterwards rather
+than trusting a success flag — the endpoint answers `[]` for "no rows", which
+looks identical to "nothing happened" — and write what actually landed into
+STATUS.
+
+### What was applied, and what was checked afterwards
+
+0020 first, then 0021, each verified by query rather than by response code:
+`workouts.exercise_order` is a `uuid[]`; `coach_briefs` and `coach_views` have
+RLS enabled with 1 and 2 policies; the three coach functions exist as SECURITY
+INVOKER; `ai_generations_feature_check` admits `briefing` and `debrief`.
+
+That last one is the one that would have been silent. `recordGeneration()`
+deliberately never throws, so a rejected ledger insert is a console line nobody
+reads — and quota is derived by counting that table, so both new surfaces would
+have run **unmetered** while looking healthy.
+
+Then the functions were run against the real 152-workout history under the
+owner's JWT claim, which is the only test that could catch SQL that is correct
+against a seeded fixture and wrong against nine months of imported Hevy data.
+They were right. `weekly_review()` found five wins and two genuine plateaus —
+Lat Pulldown at slope -0.72 over 7 sessions, Lateral Raise at -0.10 over 6.
+
+**RLS was proved, not assumed.** A different `request.jwt.claim.sub` asking
+`session_debrief()` for the owner's workout gets `found: false` and
+`session_brief()` gives it `total_sets_90d: 0`. The owner gets their own. That
+is the property the whole "no user id parameter" design rests on, checked
+against the real database rather than a local shim.
+
+### Ten zero-set workouts, not four
+
+STATUS has said "four zero-set workouts from desktop testing" since the note
+was written. There were ten: six more had accumulated and nobody had looked
+again. A count in a status note ages.
+
+All ten were finished, so none was a live session — but the delete carried an
+`ended_at is not null` guard anyway, because a zero-set workout that is still
+open is somebody who pressed Start thirty seconds ago, and a cleanup that can
+delete a session in progress is a cleanup that eventually will.
+
+162 → 152 workouts, zero-set count 0, and **`workout_sets` unchanged at 3210**.
+That last figure is the one worth recording: it is what says nothing with data
+in it was touched.
+
+### The ledger holds five rows now
+
+`supabase_migrations.schema_migrations` gained `workout_exercise_order` and
+`coach_surfaces`. It is still silent about 0001–0015 and still reads as though
+the database began at 0016, so the warning stands — but a `supabase db push`
+would now wrongly re-attempt sixteen migrations rather than eighteen. 0019 is
+deliberately unapplied, so the gap at that version is correct rather than an
+omission.
