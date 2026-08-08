@@ -3911,3 +3911,61 @@ constraint text.
 Ledger row added as `20260808210000 / rest_canvas_views`, matching how 0020 and
 0021 were recorded. Six rows now, still silent about 0001–0015, and 0019 still
 deliberately absent.
+
+### OmniRoute setup lives as a doc, not as an install
+
+Asked to set up OmniRoute — a local AI gateway that routes coding-agent traffic
+across ~290 providers with fallback — the useful deliverable turned out not to
+be an install. It has to run on the machine the agent runs on, and a web session
+runs in a container that is reclaimed when the session ends; nothing on a laptop
+can reach its `localhost`. So it was installed and exercised here as a _test_,
+and what got committed is `docs/omniroute-setup.md`, written from what that run
+actually showed rather than from the README's claims.
+
+What the run established: 3.8.49 installs on Node 22.22.2 without build tools
+under `OMNIROUTE_SKIP_POSTINSTALL=1`; `/healthz` is the unauthenticated liveness
+endpoint while `/health` 404s and `/api/health` 401s; `/v1/models` answers with
+no credentials at all, which is why the doc insists on the `127.0.0.1:` prefix
+on the Docker port binding; state lives in `~/.omniroute/`, outside the install,
+keyed by a generated `STORAGE_ENCRYPTION_KEY` that is the only thing standing
+between a stolen sqlite file and every stored provider key.
+
+What it did not establish: a completion. `model: auto` routed correctly through
+`opencode` → `felo-web` and returned a structured diagnostics payload, but every
+upstream fetch failed on this container's egress policy. The router worked; the
+network did not. The doc says so rather than implying an end-to-end pass.
+
+Two caveats belong in the record because they are decisions, not trivia. This
+does not extend a Claude quota — it substitutes other models and compresses
+prompts, which is a different thing and the doc leads with it. And the project
+flags 15 of its own providers on terms-of-service grounds, so the provider pool
+is something to choose rather than leave wide open.
+
+### Claude stays out of the OmniRoute cascade
+
+OmniRoute ranks providers in tiers and puts "Claude Code OAuth" at Tier 1: connect
+the subscription, and the gateway drains it first, then falls through to cheap
+API keys and free tiers automatically, per request. That is precisely the
+"fail over when I hit the limit" behaviour asked for, and it is the only way to
+get it — Claude Code reads `ANTHROPIC_BASE_URL` once at startup and will never
+switch endpoints mid-session, so any other arrangement needs a human to notice
+the limit and relaunch.
+
+It was still declined, and the reason is worth keeping. Subscription access is
+intended for first-party use; handing that OAuth to a third-party proxy is very
+likely contrary to Anthropic's terms, and the realistic downside is action
+against the very subscription the whole exercise exists to protect. Ameen chose
+to keep Claude separate on 2026-08-08.
+
+So the shape is opt-in, not always-on: `claude` runs against Anthropic as it
+always has, and `omniroute launch` is the deliberate fallback once the limit
+lands. It execs Claude Code in the current directory, so running it from the Wazn
+checkout gives a Wazn session on Kimi/GLM/DeepSeek with no per-repo config at
+all. `.claude/settings.omniroute.example.json` stays in the tree for the
+repo-scoped always-on variant, unused for now.
+
+The limitation that no configuration fixes: a claude.ai/code session runs in
+Anthropic's own container and cannot reach a gateway on a laptop, and the web
+client has no custom-endpoint setting — a public VPS would not change that.
+Routing is a local-Claude-Code capability. Wazn is a repo rather than a "cloud
+project", so that costs the web surface, not the work.
