@@ -584,6 +584,23 @@ clean sync, and kill-tab-mid-workout → reopen → nothing lost.
 CI wall, push, report against GATE 4 verbatim, stop.
 ```
 
+**BUILT 2026-08-08.** Notes for whoever reads this next:
+
+- **Half of the Workbox ask is not implementable.** Supabase RPCs are POSTs and
+  the Cache API stores GETs only, so `previous_session` cannot ride a service
+  worker route at any price. The NetworkFirst rule covers `/rest/v1/` GETs
+  (History and Progress); the Log screen's reads are cached structurally in
+  IndexedDB, which also knows when each snapshot was true so the screen can
+  stamp it.
+- **The prompt understates the scope by two writes.** A _full_ airplane-mode
+  workout has to be started and finished offline too, and both used to await a
+  round trip. The queue is an op log now, not a queue of sets.
+- **The e2e found two defects, and one of them was a shipped feature that had
+  never worked** — U3a's checkpoint cleared itself on mount, before the load
+  path could read it. Details in DECISIONS.md. The lesson for the next phase is
+  the one this repo keeps relearning: a protect-list item is not verified until
+  something drives it.
+
 ---
 
 ## Phase B3 — Interactive deep analysis (offense plan §4)

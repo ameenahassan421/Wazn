@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   CHECKPOINT_KEY,
+  CHECKPOINT_VERSION,
   MAX_AGE_MS,
   clear,
   decode,
@@ -14,6 +15,7 @@ import type { WorkoutCheckpoint } from './checkpoint'
 import type { QueuedSet } from './write-queue'
 
 const queued: QueuedSet = {
+  kind: 'set',
   id: 'set-1',
   workoutId: 'w1',
   exerciseId: 'ex-1',
@@ -71,7 +73,7 @@ function hostileStorage(): Storage {
 
 describe('encode / decode', () => {
   it('round-trips a checkpoint', () => {
-    expect(decode(encode(body))).toEqual({ version: 1, ...body })
+    expect(decode(encode(body))).toEqual({ version: CHECKPOINT_VERSION, ...body })
   })
 
   it('returns null for anything it cannot vouch for, and never throws', () => {
@@ -97,6 +99,63 @@ describe('encode / decode', () => {
     expect(decode(raw)?.queue).toEqual([queued])
   })
 
+  it('still reads a version-1 checkpoint, whose queue was sets and only sets', () => {
+    // The user this protects is the one mid-workout when the update lands.
+    // v1 wrote no `kind` at all, so the absence of one means 'set'.
+    const { kind: _kind, ...v1Set } = queued
+    const raw = JSON.stringify({
+      version: 1,
+      workoutId: 'w1',
+      savedAt: 1,
+      queue: [v1Set],
+    })
+    expect(decode(raw)?.queue).toEqual([queued])
+  })
+
+  it('carries the workout ops the offline queue added in U3b', () => {
+    const ops = [
+      {
+        kind: 'workout-start',
+        id: 'w1',
+        workoutId: 'w1',
+        userId: 'u1',
+        startedAt: '2026-08-08T17:00:00Z',
+        name: null,
+        routineId: null,
+        attempts: 0,
+      },
+      {
+        kind: 'workout-finish',
+        id: 'finish:w1',
+        workoutId: 'w1',
+        endedAt: '2026-08-08T18:00:00Z',
+        attempts: 0,
+      },
+      { kind: 'workout-discard', id: 'discard:w2', workoutId: 'w2', attempts: 0 },
+    ]
+    expect(decode(encode({ ...body, queue: ops as never }))?.queue).toEqual(ops)
+  })
+
+  it('drops an op whose kind it has never heard of', () => {
+    const raw = JSON.stringify({
+      version: CHECKPOINT_VERSION,
+      workoutId: 'w1',
+      savedAt: 1,
+      queue: [{ kind: 'delete-account', id: 'x', workoutId: 'w1', attempts: 0 }],
+    })
+    expect(decode(raw)?.queue).toEqual([])
+  })
+
+  it('drops a set whose type is not one of the four', () => {
+    const raw = JSON.stringify({
+      version: CHECKPOINT_VERSION,
+      workoutId: 'w1',
+      savedAt: 1,
+      queue: [{ ...queued, setType: 'superset' }],
+    })
+    expect(decode(raw)?.queue).toEqual([])
+  })
+
   it('survives the client-state fields being absent or the wrong type', () => {
     const raw = JSON.stringify({
       version: 1,
@@ -115,20 +174,26 @@ describe('encode / decode', () => {
 
 describe('isStale', () => {
   it('is fresh inside the window', () => {
-    expect(isStale({ version: 1, ...body }, body.savedAt + MAX_AGE_MS - 1)).toBe(false)
+    expect(
+      isStale({ version: CHECKPOINT_VERSION, ...body }, body.savedAt + MAX_AGE_MS - 1),
+    ).toBe(false)
   })
 
   it('ages out past it — a queue from yesterday belongs to a finished session', () => {
-    expect(isStale({ version: 1, ...body }, body.savedAt + MAX_AGE_MS + 1)).toBe(true)
+    expect(
+      isStale({ version: CHECKPOINT_VERSION, ...body }, body.savedAt + MAX_AGE_MS + 1),
+    ).toBe(true)
   })
 
   it('does not discard a live queue because the clock moved backwards', () => {
-    expect(isStale({ version: 1, ...body }, body.savedAt - 60_000)).toBe(false)
+    expect(
+      isStale({ version: CHECKPOINT_VERSION, ...body }, body.savedAt - 60_000),
+    ).toBe(false)
   })
 })
 
 describe('isUsable', () => {
-  const cp: WorkoutCheckpoint = { version: 1, ...body }
+  const cp: WorkoutCheckpoint = { version: CHECKPOINT_VERSION, ...body }
 
   it('restores a checkpoint for the workout the server just handed us', () => {
     expect(isUsable(cp, 'w1', body.savedAt)).toBe(true)

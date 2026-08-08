@@ -3,6 +3,9 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa'
+// One constant, shared with the app so the worker and `device-reset.ts`
+// cannot disagree about which cache holds cross-account data.
+import { READ_CACHE } from './src/lib/cache-names'
 
 const slim = (name: string) =>
   fileURLToPath(new URL(`./build/supabase-slim/${name}.ts`, import.meta.url))
@@ -62,8 +65,11 @@ export default defineConfig({
         ],
       },
       workbox: {
-        // App shell only. Supabase calls always go to the network — slice 1 has
-        // no offline sync, and a cached API response would show stale sets.
+        // The app shell is precached; Supabase reads are cached at runtime
+        // instead (see `runtimeCaching` below). Precaching an API response
+        // would freeze it at install time, which is the opposite of what a
+        // NetworkFirst route does — there, the network always wins when there
+        // is one, and the cache only answers a dead radio.
         globPatterns: ['**/*.{js,css,html,svg,png,ico,woff2}'],
         // The Hevy import is excluded from the shell, not from the build.
         //
@@ -75,9 +81,84 @@ export default defineConfig({
         // dying. This also keeps the precache under the ~600 KiB ceiling the
         // parity plan §4 sets, which it had just gone over — both reasons are
         // real and the first one is why this is the right place to cut.
-        globIgnores: ['**/HevyImport-*.js'],
+        //
+        // The three lazy tabs are out for the same reason, added in U3b when
+        // the offline work pushed the precache to 600.15 KiB — 0.15 over the
+        // ceiling, exactly the breach STATUS predicted the next UI phase would
+        // cause. Progress, Coach and Friends read their data through RPCs and
+        // an Edge Function, all of which are POSTs, which the Cache API cannot
+        // store. So precaching those chunks buys nothing offline: the tab
+        // would open and have nothing in it. They are still cached at runtime
+        // the first time they are opened (see `runtimeCaching`), which covers
+        // the case that matters — a tab you use, in a gym you have been to
+        // before — without spending 42 KiB of every install on tabs a new user
+        // may never open at all.
+        globIgnores: [
+          '**/HevyImport-*.js',
+          '**/ProgressScreen-*.js',
+          '**/CoachScreen-*.js',
+          '**/FriendsScreen-*.js',
+        ],
         navigateFallbackDenylist: [/^\/api/],
-        runtimeCaching: [],
+        runtimeCaching: [
+          {
+            /**
+             * The chunks that are no longer precached, cached once they are
+             * used. Stale-while-revalidate rather than CacheFirst so a chunk
+             * is never pinned: the background revalidation keeps it current,
+             * and a hashed filename means a new build asks for a new name
+             * anyway.
+             *
+             * This also makes the deploy break these tabs used to die from
+             * (see lib/lazy-screen.ts) less likely rather than more: a page
+             * open across a deploy asks for a hash Vercel has retired, and a
+             * runtime cache that already has it answers where the network 404s.
+             */
+            urlPattern:
+              /\/assets\/(ProgressScreen|CoachScreen|FriendsScreen|HevyImport)-[^/]+\.js$/,
+            handler: 'StaleWhileRevalidate',
+            options: {
+              cacheName: 'wazn-screens',
+              expiration: { maxEntries: 12 },
+              cacheableResponse: { statuses: [200] },
+            },
+          },
+          {
+            /**
+             * Last-known reads for the gym dead zone — U3b, trust-ladder rung
+             * 4. History and Progress fetch their own data and neither has an
+             * offline path of its own; NetworkFirst gives them one for the
+             * price of this block. The Log screen does not rely on it: it
+             * keeps a structured cache in IndexedDB, because it needs to know
+             * WHEN the data was true in order to stamp it.
+             *
+             * `rpc/` is excluded, and not by choice. Supabase RPCs are POSTs,
+             * the Cache API can only store GETs, and Workbox will not match a
+             * non-GET request at all — so `previous_session` and every other
+             * RPC are outside what a service worker can do anything about.
+             * The parity plan's U3 text asks for previous-session caching
+             * here; it is not implementable here, and it is implemented in
+             * `lib/offline-store.ts` instead. See DECISIONS.md.
+             *
+             * Cross-account safety: the Cache API keys on URL alone and these
+             * responses vary by `Authorization`, so a second account on one
+             * phone could read the first's history from here. Two things stop
+             * it — NetworkFirst means a live answer always wins, and
+             * `lib/device-reset.ts` empties this cache when the signed-in user
+             * changes.
+             */
+            urlPattern: /\/rest\/v1\/(?!rpc\/)/,
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: READ_CACHE,
+              // A dead radio must not hold a screen for thirty seconds before
+              // falling back. Three is longer than any real response here.
+              networkTimeoutSeconds: 3,
+              expiration: { maxEntries: 64, maxAgeSeconds: 7 * 24 * 60 * 60 },
+              cacheableResponse: { statuses: [200] },
+            },
+          },
+        ],
         // BOTH FALSE ON PURPOSE, and this is the fix for a real outage: after
         // every deploy, Progress, Coach and Friends broke for anyone whose
         // page was already open.

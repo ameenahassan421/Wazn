@@ -2,18 +2,25 @@ import { describe, expect, it } from 'vitest'
 import {
   MAX_SILENT_ATTEMPTS,
   ack,
+  classifyFailure,
+  discardOpId,
+  discardWrites,
   dropForWorkout,
   enqueue,
+  finishOpId,
+  hasPendingStart,
   head,
   isAlreadyLanded,
   newId,
+  pendingSetCount,
   retry,
   retryDelayMs,
   shouldSurface,
 } from './write-queue'
-import type { QueuedSet } from './write-queue'
+import type { QueuedSet, QueuedWorkoutStart, QueuedWrite } from './write-queue'
 
 const item = (id: string, workoutId = 'w1'): QueuedSet => ({
+  kind: 'set',
   id,
   workoutId,
   exerciseId: 'ex-1',
@@ -23,6 +30,17 @@ const item = (id: string, workoutId = 'w1'): QueuedSet => ({
   setType: 'normal',
   rpe: null,
   supersetGroup: null,
+  attempts: 0,
+})
+
+const start = (workoutId = 'w1'): QueuedWorkoutStart => ({
+  kind: 'workout-start',
+  id: workoutId,
+  workoutId,
+  userId: 'u1',
+  startedAt: '2026-08-08T17:00:00Z',
+  name: null,
+  routineId: null,
   attempts: 0,
 })
 
@@ -39,9 +57,21 @@ describe('enqueue', () => {
   })
 
   it('does not mutate the queue it is given', () => {
-    const q: QueuedSet[] = []
+    const q: QueuedWrite[] = []
     enqueue(q, item('a'))
     expect(q).toEqual([])
+  })
+
+  /**
+   * The invariant that makes an offline workout possible at all.
+   * `workout_sets.workout_id` references `workouts`, so the insert that
+   * creates the session has to stay in front of every set in it. The queue
+   * drains head-first and retries a failed head rather than skipping it, so
+   * appending IS the foreign-key guarantee.
+   */
+  it('keeps the workout insert in front of the sets that reference it', () => {
+    const q = enqueue(enqueue(enqueue([], start()), item('a')), item('b'))
+    expect(q.map((i) => i.kind)).toEqual(['workout-start', 'set', 'set'])
   })
 })
 
@@ -67,6 +97,74 @@ describe('dropForWorkout', () => {
   it('drops a discarded workout’s writes and keeps everything else', () => {
     const q = enqueue(enqueue([], item('a', 'w1')), item('b', 'w2'))
     expect(dropForWorkout(q, 'w1').map((i) => i.id)).toEqual(['b'])
+  })
+
+  it('takes the workout’s own start and finish ops with it', () => {
+    const q: QueuedWrite[] = [
+      start('w1'),
+      item('a', 'w1'),
+      {
+        kind: 'workout-finish',
+        id: finishOpId('w1'),
+        workoutId: 'w1',
+        endedAt: 'x',
+        attempts: 0,
+      },
+      item('b', 'w2'),
+    ]
+    expect(dropForWorkout(q, 'w1').map((i) => i.id)).toEqual(['b'])
+  })
+})
+
+describe('discardWrites', () => {
+  /**
+   * A workout discarded before its own insert drained has never existed
+   * anywhere but this device. Sending a delete for it would be a request that
+   * can only fail, about a row nobody has ever seen.
+   */
+  it('sends nothing for a workout the server has never seen', () => {
+    const q = enqueue(enqueue([], start('w1')), item('a', 'w1'))
+    const out = discardWrites(q, 'w1')
+    expect(out.queue).toEqual([])
+    expect(out.needsServerDelete).toBe(false)
+  })
+
+  it('queues the delete for a workout that already landed', () => {
+    const q = enqueue(enqueue([], item('a', 'w1')), item('b', 'w2'))
+    const out = discardWrites(q, 'w1')
+    expect(out.needsServerDelete).toBe(true)
+    expect(out.queue.map((i) => i.id)).toEqual(['b', discardOpId('w1')])
+  })
+
+  it('does not leave the delete op to delete itself', () => {
+    // The drop runs first, so a second discard of the same workout is a
+    // no-op rather than an op that removes the op that would have worked.
+    const once = discardWrites([item('a', 'w1')], 'w1')
+    const twice = discardWrites(once.queue, 'w1')
+    expect(twice.queue.filter((w) => w.kind === 'workout-discard')).toHaveLength(1)
+  })
+})
+
+describe('hasPendingStart and pendingSetCount', () => {
+  it('knows whether the workout row exists on the server yet', () => {
+    expect(hasPendingStart([start('w1'), item('a')], 'w1')).toBe(true)
+    expect(hasPendingStart([item('a')], 'w1')).toBe(false)
+  })
+
+  it('counts sets only — a lifter does not care about the finish op', () => {
+    const q: QueuedWrite[] = [
+      start('w1'),
+      item('a'),
+      item('b'),
+      {
+        kind: 'workout-finish',
+        id: finishOpId('w1'),
+        workoutId: 'w1',
+        endedAt: 'x',
+        attempts: 0,
+      },
+    ]
+    expect(pendingSetCount(q)).toBe(2)
   })
 })
 
@@ -104,6 +202,41 @@ describe('isAlreadyLanded', () => {
     expect(isAlreadyLanded({ code: '42501' })).toBe(false)
     expect(isAlreadyLanded({})).toBe(false)
     expect(isAlreadyLanded(null)).toBe(false)
+  })
+})
+
+describe('classifyFailure', () => {
+  /**
+   * The distinction the whole offline story rests on. Before it, walking into
+   * a basement gym produced three fast retries and an error banner over a
+   * board somebody was lifting from — the interruption §2.1 forbids, and wrong
+   * on the facts: nothing had failed, there was no network.
+   */
+  it('reads a dead radio as offline, in both browsers’ wording', () => {
+    expect(classifyFailure({ message: 'TypeError: Failed to fetch' })).toBe('offline')
+    expect(classifyFailure({ message: 'Load failed' })).toBe('offline')
+    expect(classifyFailure({ message: 'NetworkError when attempting to fetch' })).toBe(
+      'offline',
+    )
+  })
+
+  it('reads a server that answered as a rejection, whatever it said', () => {
+    expect(classifyFailure({ code: '42501', message: 'permission denied' })).toBe(
+      'rejected',
+    )
+    expect(classifyFailure({ code: '23503', message: 'foreign key' })).toBe('rejected')
+    expect(classifyFailure(null)).toBe('rejected')
+  })
+
+  it('does not mistake an HTTP error for a missing network', () => {
+    // A 503 body can say almost anything. The status is proof a server spoke.
+    expect(classifyFailure({ status: 503, message: 'network is unavailable' })).toBe(
+      'rejected',
+    )
+  })
+
+  it('still reports a replayed write as landed', () => {
+    expect(classifyFailure({ code: '23505', message: 'duplicate key' })).toBe('landed')
   })
 })
 

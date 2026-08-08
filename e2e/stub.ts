@@ -156,10 +156,37 @@ function tableOf(url: string): string {
 }
 
 /**
- * Install the stub. Returns the list the test asserts request bodies against.
+ * A stub that remembers, and that can lose its network.
+ *
+ * The plain stub echoes writes back and forgets them, which is enough to
+ * assert what the client sends. GATE 4 needs more than that: "syncs clean on
+ * reconnect" is a claim about what the SERVER ends up holding, so the offline
+ * run needs somewhere for rows to actually land, and a switch that makes every
+ * request fail the way a dead radio does.
  */
-export async function stubSupabase(page: Page): Promise<CapturedRequest[]> {
-  const captured: CapturedRequest[] = []
+export interface StubServer {
+  /** Every write the app attempted, in order. */
+  captured: CapturedRequest[]
+  /** Rows the server accepted, by table — what "synced clean" is asserted on. */
+  rows: Record<string, Record<string, unknown>[]>
+  /**
+   * Airplane mode. Requests to the project are aborted rather than answered,
+   * which is what the browser does with no radio and what supabase-js turns
+   * into `TypeError: Failed to fetch`.
+   *
+   * NOT `context.setOffline(true)` alone: that also stops the app shell
+   * loading from `vite preview`, so a test could never reach the state it is
+   * trying to test. The tests use both — this for the project, and
+   * `setOffline` where a genuinely dead browser is the point.
+   */
+  offline: boolean
+}
+
+export async function stubSupabase(
+  page: Page,
+  server?: StubServer,
+): Promise<CapturedRequest[]> {
+  const captured: CapturedRequest[] = server?.captured ?? []
 
   // A session in the exact key and shape supabase-js reads at startup, so the
   // app is signed in before its first render and never shows the auth screen.
@@ -195,6 +222,11 @@ export async function stubSupabase(page: Page): Promise<CapturedRequest[]> {
     const url = request.url()
     const method = request.method()
     const table = tableOf(url)
+
+    // A dead radio does not answer. `abort` is what the browser turns into
+    // `TypeError: Failed to fetch`, which is the exact string the app's
+    // `classifyFailure` has to recognise as "offline" rather than "refused".
+    if (server?.offline) return route.abort('internetdisconnected')
 
     if (method !== 'GET' && method !== 'HEAD') {
       captured.push({ method, table, body: request.postDataJSON?.() ?? null })
@@ -245,31 +277,88 @@ export async function stubSupabase(page: Page): Promise<CapturedRequest[]> {
       })
     }
 
-    if (method === 'POST' || method === 'PATCH') {
-      // Writes echo back a plausible row so optimistic UI has something.
-      const body = request.postDataJSON?.() ?? {}
+    const stored = server ? (server.rows[table] ??= []) : null
+
+    if (method === 'POST' || method === 'PATCH' || method === 'DELETE') {
+      const body = (request.postDataJSON?.() ?? {}) as Record<string, unknown>
+      const rows = Array.isArray(body) ? body : [body]
+
+      if (stored) {
+        if (method === 'POST') {
+          for (const row of rows) {
+            // The client generates the primary key, so a replay of a write
+            // that already landed has to be REFUSED here, exactly as Postgres
+            // refuses it. Answering 201 twice would let a double-drain pass a
+            // test that production would fail.
+            if (row.id && stored.some((r) => r.id === row.id)) {
+              return route.fulfill({
+                status: 409,
+                headers,
+                body: JSON.stringify({
+                  code: '23505',
+                  message: 'duplicate key value violates unique constraint',
+                }),
+              })
+            }
+            stored.push({ pr_weight: false, pr_e1rm: false, ...row })
+          }
+        } else if (method === 'PATCH') {
+          for (const row of stored.filter((r) => matchesFilters(r, url))) {
+            Object.assign(row, rows[0])
+          }
+        } else {
+          server.rows[table] = stored.filter((r) => !matchesFilters(r, url))
+        }
+      }
+
       return route.fulfill({
-        status: 201,
+        status: method === 'DELETE' ? 200 : 201,
         headers,
-        body: JSON.stringify([{ id: `new-${table}`, ...body }]),
+        body: JSON.stringify(
+          method === 'DELETE'
+            ? []
+            : rows.map((row) => ({ id: `new-${table}`, ...row })),
+        ),
       })
     }
 
-    // The one filter the stub actually reads. LogScreen asks for a workout
-    // with `ended_at is null` to decide between "Start workout" and resuming;
-    // returning the finished ones for that query would put the smoke run in a
-    // state a new user never sees, and hide the start button the payload
-    // assertions need.
-    if (table === 'workouts' && url.includes('ended_at=is.null')) {
-      return route.fulfill({ status: 200, headers, body: '[]' })
-    }
-
+    // Reads see the fixtures plus whatever this run has written, filtered by
+    // the query string the client actually sent. Before U3b the stub answered
+    // reads from a constant, which is fine for "does it render" and useless
+    // for "did the workout sync" — the assertion GATE 4 is made of.
+    const all = [
+      ...((TABLE_RESULTS[table] ?? []) as Record<string, unknown>[]),
+      ...(stored ?? []),
+    ]
     return route.fulfill({
       status: 200,
       headers,
-      body: JSON.stringify(TABLE_RESULTS[table] ?? []),
+      body: JSON.stringify(all.filter((row) => matchesFilters(row, url))),
     })
   })
 
   return captured
+}
+
+/**
+ * PostgREST's query string, as much of it as these tests use.
+ *
+ * `id=eq.x`, `workout_id=eq.x`, `ended_at=is.null`, `ended_at=not.is.null`.
+ * Anything else is ignored rather than guessed at — a stub that pretends to
+ * understand a filter it does not is worse than one that returns everything,
+ * because the test then passes for the wrong reason.
+ */
+function matchesFilters(row: Record<string, unknown>, url: string): boolean {
+  const params = new URL(url).searchParams
+  for (const [column, expression] of params) {
+    if (column === 'select' || column === 'order' || column === 'limit') continue
+    if (expression === 'is.null') {
+      if (row[column] != null) return false
+    } else if (expression === 'not.is.null') {
+      if (row[column] == null) return false
+    } else if (expression.startsWith('eq.')) {
+      if (String(row[column]) !== expression.slice(3)) return false
+    }
+  }
+  return true
 }
