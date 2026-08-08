@@ -183,6 +183,14 @@ push, report against GATE U7, stop.
 
 ## H-series — Infrastructure (docs/INFRASTRUCTURE_AUDIT.md)
 
+> **All four shipped on 2026-08-08.** The prompts are kept because they are
+> the record of what each tranche was for, and because a follow-up ("extend
+> the eval fixtures", "add a stat tool") is easier to write against them than
+> from scratch. §10 of the audit says what changed against the plan.
+>
+> **H2 shipped, so the B-series is unblocked** — but B3 additionally needs
+> Ameen's explicit reversal of the no-chat rule, which is unchanged.
+
 None of these is a user surface, so none needs a product gate. **H2 is the
 one hard dependency: do not send a B-series prompt before it has shipped.**
 

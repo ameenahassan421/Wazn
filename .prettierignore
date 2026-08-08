@@ -12,3 +12,5 @@ workouts_corrected.csv
 .github/hooks
 .codex
 .impeccable
+test-results
+playwright-report

@@ -87,3 +87,34 @@ jobs:
           VITE_SUPABASE_URL: https://example.supabase.co
           VITE_SUPABASE_ANON_KEY: ci-placeholder-anon-key
         run: npm run build
+
+  smoke:
+    # A separate job so it runs alongside `check` rather than after it — the
+    # browser download is the slow part and nothing in `check` depends on this.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Smoke
+        # The only thing in this repo that looks at the app. Three defects
+        # reached production in one day through the gap this closes:
+        # `inset-block-0` rendering four elements at height 0, follows and
+        # likes never sending their owner column, and progress functions that
+        # had never drawn. Lint sees syntax, typecheck sees types, unit tests
+        # see functions — none of them can see a screen.
+        #
+        # Supabase is stubbed at the network layer, so this needs no project,
+        # no key and no egress. playwright.config.ts builds and previews the
+        # real production bundle, because both of those defects were
+        # build-shaped.
+        run: npm run test:smoke

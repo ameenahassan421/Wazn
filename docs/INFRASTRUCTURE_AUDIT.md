@@ -390,6 +390,12 @@ Named so they stop being suggested:
 
 ## 8. Sequence — four tranches, each shippable alone
 
+> **STATUS 2026-08-08: H0–H3 are built.** Everything below shipped in one PR.
+> The sequence is kept as written because it is the reasoning, not a to-do
+> list, and because the dependency it names — H2 before any B-series surface —
+> outlives the build. What changed against the plan, and what is still owed,
+> is in §10.
+
 Slots into the existing releases rather than competing with them. Nothing here
 is a phase; none of it needs a product gate, because none of it is a user
 surface. **Only H2 gates anything.**
@@ -443,3 +449,69 @@ quota ledger and the model key — the least verified and most consequential cod
 in the repository, currently auto-deploying to production on merge. Neither
 needs a plan, a gate, or a decision. Everything else on this page can wait for
 the tranche it belongs to.
+
+## 10. What shipped, and what it changed about this audit (2026-08-08)
+
+H0–H3 were built in one pass. Recorded here rather than by rewriting the
+sections above, because the audit's value is the reasoning and the reasoning
+was mostly right — where it was not, the difference is the useful part.
+
+### Where the audit was wrong or incomplete
+
+- **I1 found no bugs.** All eight files under `supabase/functions` passed
+  `deno check` on the first run. The audit called them "the least verified
+  code in the repo", which was true, and could have been read as a promise of
+  hidden defects, which it was not. The step is a regression guard.
+- **A4 and A3 became one migration.** They alter the same two tables and a
+  column that exists but is not yet written is harmless. Fewer migrations to
+  apply is worth more than matching the tranche numbering.
+- **Tier 1 could not be what §4 describes.** "Canned stat blocks → assert the
+  deterministic layer's numbers" needs a database to run `coach_stats()`
+  against, and CI has none. What tier 1 asserts instead is the block's
+  _contract_: the keys the prompt relies on, kg as the unit, and the privacy
+  boundary that was previously only a comment on the SQL function. Asserting
+  the SQL's actual numbers still needs `run_sql.sh` against a real database,
+  and that is now possible where before it was not.
+- **A deploy-ordering hazard the audit missed entirely.** Merging deploys the
+  Edge Functions; migrations are applied by hand. So there is a window where
+  new code runs against an old schema, and three writes named columns that did
+  not exist yet — one of which (`quotaRemaining` filtering on `ok`) would have
+  500'd the whole feature. Each now falls back on `42703`. This is a general
+  property of the repo, not a one-off: **any migration that a function
+  references creates the same window.**
+
+### Three bugs the new checks found immediately
+
+Worth listing, because a harness that finds nothing on the day it lands is a
+harness nobody trusts:
+
+1. **`e1RM` contains a digit.** The grounding gate's first number extractor
+   harvested a phantom `1` from every note using this app's central term.
+2. **The tool loop echoed the provider's raw assistant message back**, which
+   works only while every provider includes `role` in it. It now rebuilds the
+   turn from parsed fields, keeping the tool-call ids that actually matter.
+3. **`format.ts`'s date tests passed under `TZ=UTC` and failed under
+   `TZ=Asia/Tokyo`.** `formatRelativeDay` compares local calendar days. Fixed
+   by constructing instants in local time rather than pinning `TZ` in the test
+   command, which would have hidden it.
+
+The smoke run was also verified to be able to fail: deleting the
+`inset-block-0` utility reproduces the original production defect and the
+height check names all three offending elements by class.
+
+### What is still owed
+
+- **Migrations 0016–0019 are parse-checked and not applied.** 0017 is the one
+  with a deadline: the compatibility shims exist so nothing breaks before it,
+  and they should be deleted after.
+- **`eval:live` has never run.** It needs `OPENROUTER_API_KEY` and this
+  session has no route to the provider. Until it does, every file in
+  `evals/responses/` is hand-authored — the shape a good answer takes, not a
+  real one. `--record` replaces them.
+- **The RLS suites still have not been executed.** `run_sql.sh` exists now, so
+  they can be; nothing has run them.
+- **The OpenRouter monthly cap is still unset.** Unchanged by any of this, and
+  still the cheapest item in §6.
+- **A6 (catalogue tokens) was not done.** The audit said it rides with
+  whichever tranche is convenient once A3 makes its cost visible, and A3 has
+  not produced a single row yet.
