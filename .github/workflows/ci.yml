@@ -34,6 +34,39 @@ jobs:
         # and looked healthy the whole time.
         run: npm run check:vercel
 
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Check migrations parse
+        # Nothing else in this job reads SQL. CLAUDE.md has told a human to run
+        # this since 0007 shipped a column named `position` — a reserved word,
+        # which is a parse error, so the whole migration was rejected before a
+        # single statement ran. A rule someone has to remember is not a check.
+        #
+        # pglast wraps libpg_query, the parser Postgres itself uses, so this
+        # needs no server and no connection. It is still only the floor: it
+        # cannot see a wrong column name or a broken RLS predicate. `0016` and
+        # `0017` are both parse-clean and neither has ever been executed.
+        run: |
+          pip install pglast
+          python3 scripts/check_migrations.py
+
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      - name: Typecheck Edge Functions
+        # `tsc` sees three of the eight files under supabase/functions, and only
+        # because src/lib tests import the pure _shared modules across the
+        # boundary. context.ts, openrouter.ts and all three index.ts — auth,
+        # quota, the model key, the alias sign-in — were in no typecheck and no
+        # test, while merging to main deploys them (deploy-functions.yml).
+        #
+        # Deno resolves the https:// imports itself, which is the whole reason
+        # this needs a second toolchain rather than another tsconfig.
+        run: deno check supabase/functions/**/*.ts
+
       - name: Test
         run: npm test
 
