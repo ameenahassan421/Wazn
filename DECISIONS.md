@@ -3308,3 +3308,142 @@ The Welcome screen's button moved during the visual pass. The first render put
 it above the hero, where it read as the primary path for everybody and
 inverted who that screen is mostly for. It is last and quiet now; the label
 names its audience, so a switcher still finds it.
+
+## U3b — the offline queue and GATE 4 (2026-08-08)
+
+GATE 4 has been written down since Stage 4 and nothing had ever checked it: "an
+airplane-mode workout syncs clean on reconnect", plus "kill the tab mid-workout,
+reopen, nothing lost". U3a built the queue's arithmetic and tested it as pure
+functions; none of those tests can see whether a person standing in a basement
+can start a workout, log it, finish it, and find it on the server afterwards.
+
+### The queue became an op log, because a workout has three writes and not one
+
+U3a's queue held sets. A **full** airplane-mode workout also has to be started
+and finished with no signal, and both of those used to await a round trip —
+`startWorkout` awaited an insert, `finishWorkout` awaited an update. So
+`QueuedSet` became `QueuedWrite`: `set`, `workout-start`, `workout-finish`,
+`workout-discard`. The workout's id is now client-generated too, which means
+the sets queued behind it already know what they belong to.
+
+**Order is the foreign key.** The queue drains strictly head-first and a failed
+head is retried rather than skipped. That is not politeness about ordering:
+`workout_sets.workout_id` references `workouts`, so draining out of order would
+turn every offline workout into a wall of foreign-key violations.
+
+**A discard of a workout that never landed sends nothing.** Its own start op is
+still in the queue, so it has never existed anywhere but this device — dropping
+its writes IS the discard, and a delete would be a request that can only 404.
+`discardWrites` decides, and it is tested.
+
+### The one distinction the whole thing rests on: offline is not failure
+
+`classifyFailure` splits a write's failure three ways — `landed` (a primary-key
+violation, which is the server saying it already has it), `offline` (no server
+answered), and `rejected` (one did, and said no). Before it, walking into a
+basement gym produced three fast retries and then an error banner over a board
+somebody was lifting from. That is the interruption §2.1 forbids, and it was
+wrong on the facts besides: nothing had failed. There was no network.
+
+Offline failures do not count attempts and are never surfaced. The same rule now
+applies to the per-lift rest write, the per-lift note, and the block-order PATCH
+— that last one used to read a dead radio as proof migration 0020 was unapplied
+and stop trying for the rest of the session.
+
+### Raw IndexedDB, not `idb`
+
+The prompt allows either and asks for a justification. Two reasons, both
+pointing the same way. **Shape:** there are no indexes, cursors, ranges or
+schema evolution here — one object store, get/put/delete/clear, keyed by a
+string. `idb`'s value is the promise wrapper, the typed cursors and the
+transaction ergonomics, and this uses one of the three. That wrapper is forty
+lines. **Budget:** the precache ceiling is the binding constraint on this app,
+and DECISIONS.md recorded 7.8 KiB of headroom and an explicit warning one
+section ago. Spending a slice of it on a dependency that saves sixty lines we
+would have to read anyway is the wrong direction.
+
+The backend is injectable, which is the testing story: the logic about
+staleness, ownership and shape is unit-tested against an in-memory store, and
+the real adapter is driven end to end by the Playwright run, in the only place
+a real IndexedDB exists.
+
+### Two durable copies of the queue, on purpose
+
+The localStorage checkpoint did not move. It does the one thing IndexedDB
+cannot: it writes **synchronously**. A transaction opened five milliseconds
+before the OS kills a backgrounded tab may never commit; a `setItem` that
+returned has already happened. So localStorage is the last-gasp copy, IndexedDB
+is the durable one that holds volume and stays off the main thread, and the
+load path merges the two by id. Merging is free of consequence because the id
+is the primary key: the same id is the same write, and a double send is refused
+rather than doubled.
+
+### Workbox cannot cache what the parity plan asked it to
+
+§3-U3 asks for `previous_session` and history reads to ride a NetworkFirst
+`runtimeCaching` route. **Half of that is not implementable.** Supabase RPCs are
+POSTs, the Cache API stores GETs only, and Workbox will not match a non-GET
+request at all — so `previous_session`, `exercise_usage`, `weekly_streak` and
+every other RPC are outside what a service worker can do anything about.
+
+So it is split. The Workbox route covers `/rest/v1/` GETs, which is real value
+for History and Progress — neither has an offline path of its own and both get
+one for the price of a config block. Everything the Log screen needs, RPCs
+included, is cached structurally in IndexedDB by `offline-store.ts`, which also
+knows _when_ each snapshot was true so the screen can stamp it.
+
+**Cross-account safety.** The Cache API keys on URL alone and these responses
+vary only by an `Authorization` header, so a second account on one phone could
+read the first's history out of it. NetworkFirst means a live answer always
+wins, and `device-reset.ts` empties the cache when the signed-in user changes.
+Deliberately not on sign-out: signing back in as yourself with a set still
+queued must not lose the set. The IndexedDB records are stamped with their
+owner as well and refuse to answer anyone else.
+
+### Three defects the browser found that no other check could
+
+1. **Rung 1 had never worked.** The checkpoint effect clears itself on mount
+   (`if (!workout) clearCheckpoint`), it is declared before the load effect, and
+   `loadCheckpoint` is called after an await inside it — so the clear always
+   beat the read to the key. "Kill the tab mid-workout, reopen, nothing lost"
+   was shipped in U3a and had never once restored anything. Both persist
+   effects are now gated on the load path having read the device first. This is
+   the muscle-balance chart again: right in intent, wired wrong, invisible
+   because nothing had ever driven it.
+2. **The Log tab could hang on "Loading…" forever.** A dead radio rejects and
+   the offline path takes over; a network that accepts and then goes quiet — a
+   captive portal, or a service worker holding a request open — never rejects,
+   so `Promise.all` never settles and the screen shows a spinner with a full
+   cache on the device beside it. The load path now has a six-second deadline,
+   and skips the network entirely when the browser already knows the radio is
+   off. Found by a screenshot.
+3. **The screenshot harness had never seen an offline state** — the third time
+   it has been caught blind to something that shipped, after the Coach tab's
+   missing Edge Function routes and the overview's missing in-progress workout.
+   `npm run shots` now cuts the network mid-run and photographs the board with
+   a set queued and the board reopened from cache.
+
+### The precache went over again, and the cut is the same argument as last time
+
+U3b took it to **600.15 KiB** — 0.15 over, exactly the breach the last section
+predicted. Progress, Coach and Friends left the precache, taking it to
+**559.38 KiB**.
+
+Same reasoning as the import chunk: all three read their data through RPCs and
+an Edge Function, all POSTs, none cacheable — so precaching those chunks buys
+nothing offline, because the tab would open and have nothing in it. They are
+cached at runtime the first time they are opened, which covers the case that
+matters (a tab you use, in a gym you have been to before) without spending
+42 KiB of every install on tabs a new user may never open. `npm run check:deploy`
+still passes, and the runtime cache makes the deploy break those three tabs used
+to die from less likely rather than more: a page open across a deploy asks for a
+hash Vercel has retired, and a cache that already has it answers where the
+network 404s.
+
+### What an offline finish does not claim
+
+`exercise_bests` cannot be fetched with no network, and an empty bests map does
+not mean "no previous best" — it means "not asked". Summarising against it would
+celebrate a personal record on every single exercise. So an offline summary
+reports no PRs. The flags themselves are computed in the database on insert, so
+the records are correct in History and Progress the moment the queue drains.

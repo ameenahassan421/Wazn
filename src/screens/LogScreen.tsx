@@ -4,7 +4,12 @@ import { useBackLayer } from '../lib/use-back'
 import { lazyScreen } from '../lib/lazy-screen'
 import { useUnit } from '../lib/unit-context'
 import { formatWeight } from '../lib/units'
-import { formatDuration, formatRelativeDay, formatWorkoutDate } from '../lib/format'
+import {
+  formatDuration,
+  formatRelativeDay,
+  formatSyncedAt,
+  formatWorkoutDate,
+} from '../lib/format'
 import type {
   Exercise,
   ExerciseUsageRow,
@@ -46,16 +51,19 @@ import type { OverviewBlock } from '../components/WorkoutOverview'
 import { RestTimerBar } from '../components/RestTimer'
 import {
   ack,
-  dropForWorkout,
+  classifyFailure,
+  discardWrites,
   enqueue,
+  finishOpId,
+  hasPendingStart,
   head,
-  isAlreadyLanded,
   newId,
+  pendingSetCount,
   retry,
   retryDelayMs,
   shouldSurface,
 } from '../lib/write-queue'
-import type { QueuedSet } from '../lib/write-queue'
+import type { QueuedWrite } from '../lib/write-queue'
 import {
   browserStorage,
   clear as clearCheckpoint,
@@ -63,6 +71,16 @@ import {
   load as loadCheckpoint,
   save as saveCheckpoint,
 } from '../lib/checkpoint'
+import { indexedDbStore } from '../lib/idb'
+import {
+  getQueue,
+  getSnapshot,
+  mergeQueues,
+  putQueue,
+  putSnapshot,
+  withDeadline,
+} from '../lib/offline-store'
+import { isOnline, useOnline } from '../lib/use-online'
 
 type View = 'overview' | 'picker' | 'entry' | 'summary' | 'routine' | 'import'
 
@@ -81,6 +99,61 @@ type View = 'overview' | 'picker' | 'entry' | 'summary' | 'routine' | 'import'
 const HevyImport = lazyScreen(() =>
   import('../components/HevyImport').then((m) => ({ default: m.HevyImport })),
 )
+
+/**
+ * What the device keeps so a gym with no signal is still a gym you can log in.
+ *
+ * Split in two because they change at completely different rates: the
+ * catalogue is rewritten once per load, the board on every set. Maps and Sets
+ * are stored as entry arrays — IndexedDB's structured clone would carry a Map
+ * fine, but the same records are read back through a validator and plain JSON
+ * is what a validator can check.
+ */
+interface CatalogueSnapshot {
+  exercises: Exercise[]
+  usage: [string, ExerciseUsageRow][]
+  restOverrides: [string, number][]
+  exerciseNotes: [string, string][]
+  routines: Routine[]
+  hasHistory: boolean
+  lastSession: { startedAt: string; sets: WorkoutSet[] } | null
+}
+
+interface BoardSnapshot {
+  workout: Workout | null
+  sets: WorkoutSet[]
+  order: string[]
+  planned: string[]
+  plan: [string, PlannedSet[]][]
+  previous: [string, PreviousSessionRow[]][]
+}
+
+/**
+ * A queued write, as the row it will become.
+ *
+ * The optimistic row and the queued write have said the same thing in two
+ * shapes since U3a; this is the one conversion between them, so a restored
+ * set and a just-committed set cannot drift apart. PR flags stay false: a
+ * record is computed in the database against every earlier set, and an
+ * unsent row genuinely cannot know.
+ */
+function asSetRow(q: Extract<QueuedWrite, { kind: 'set' }>): WorkoutSet {
+  return {
+    id: q.id,
+    workout_id: q.workoutId,
+    exercise_id: q.exerciseId,
+    set_number: q.setNumber,
+    weight_kg: q.weightKg,
+    reps: q.reps,
+    rpe: q.rpe,
+    duration_seconds: null,
+    distance_meters: null,
+    set_type: q.setType,
+    superset_group: q.supersetGroup,
+    pr_weight: false,
+    pr_e1rm: false,
+  }
+}
 
 interface ExerciseBestRow {
   exercise_id: string
@@ -168,9 +241,38 @@ export function LogScreen({
    * whatever the queue was when it was created. Every mutation goes through
    * `updateQueue` so the two never disagree.
    */
-  const [queue, setQueue] = useState<QueuedSet[]>([])
-  const queueRef = useRef<QueuedSet[]>([])
+  const [queue, setQueue] = useState<QueuedWrite[]>([])
+  const queueRef = useRef<QueuedWrite[]>([])
   const drainingRef = useRef(false)
+
+  /**
+   * The device's own copy of everything — U3b, trust-ladder rungs 3 and 4.
+   *
+   * Opened once: `indexedDB.open` is a handshake, not a per-render cost. Null
+   * wherever IndexedDB is not reachable (a locked-down WebView, a Firefox
+   * private window), in which case every read below returns nothing and every
+   * write is a no-op — a slower app with no offline cache, never a broken one.
+   */
+  const offlineStore = useMemo(() => indexedDbStore(), [])
+  const online = useOnline()
+  /**
+   * True once the load path has read what the device was holding.
+   *
+   * Both durable copies of the queue are written by effects that watch state,
+   * and on mount that state is empty — so without this gate the first render
+   * OVERWRITES the checkpoint and the IndexedDB queue with nothing, before the
+   * async load has had a chance to read either.
+   *
+   * That is not a new hazard introduced here. The checkpoint effect has
+   * cleared itself on mount since U3a (`if (!workout) clearCheckpoint`), which
+   * runs before the load effect and always beat `loadCheckpoint` to the key —
+   * so rung 1 could never actually restore anything. It survived review
+   * because nothing had ever driven a reload in a browser. The airplane-mode
+   * run in `e2e/offline.spec.ts` is what found it.
+   */
+  const restoredRef = useRef(false)
+  /** When the screen is showing cached reads, and how old they are. */
+  const [cachedAt, setCachedAt] = useState<number | null>(null)
 
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -281,43 +383,39 @@ export function LogScreen({
   useEffect(
     () => () => {
       const id = emptyWorkoutId.current
-      if (id) void supabase.from('workouts').delete().eq('id', id)
+      if (!id) return
+      // A workout whose own insert is still queued has never reached the
+      // server, so there is nothing to delete — dropping its writes IS the
+      // discard. Deleting anyway would be a request that can only 404, and
+      // leaving the insert queued would sync the blank row this guard exists
+      // to prevent.
+      const landed = !hasPendingStart(queueRef.current, id)
+      const rest = queueRef.current.filter((w) => w.workoutId !== id)
+      queueRef.current = rest
+      void putQueue(offlineStore, userId, rest)
+      if (landed) void supabase.from('workouts').delete().eq('id', id)
     },
-    [],
+    [offlineStore, userId],
   )
 
-  const updateQueue = useCallback((fn: (q: QueuedSet[]) => QueuedSet[]) => {
+  const updateQueue = useCallback((fn: (q: QueuedWrite[]) => QueuedWrite[]) => {
     queueRef.current = fn(queueRef.current)
     setQueue(queueRef.current)
   }, [])
 
   /**
-   * Send queued sets, oldest first, until the queue is empty.
+   * Send one queued write. Everything network-shaped about the queue is here.
    *
-   * One loop at a time (`drainingRef`), because two would race on the same
-   * head and insert it twice — which the primary key would catch, but only
-   * after both had been sent.
-   *
-   * A failure is not surfaced immediately. Gym wifi drops a request and
-   * recovers, and an error banner between sets is exactly the interruption
-   * §2.1 forbids; `shouldSurface` decides when silence stops being honest.
-   * Until then the row stays on screen looking committed, because it IS
-   * committed — the user did the set, and the only thing in doubt is whether
-   * this building's wifi has noticed.
+   * The client-generated id IS the primary key on both inserts, so replaying a
+   * write that already landed is refused (`23505`) rather than duplicated, and
+   * both updates are idempotent by nature.
    */
-  const drain = useCallback(async () => {
-    if (drainingRef.current) return
-    drainingRef.current = true
-    try {
-      while (queueRef.current.length > 0) {
-        const item = head(queueRef.current)
-        if (!item) break
-
-        const { data, error: insertError } = await supabase
+  const send = useCallback(async (item: QueuedWrite) => {
+    switch (item.kind) {
+      case 'set':
+        return supabase
           .from('workout_sets')
           .insert({
-            // The client-generated id IS the primary key, so replaying a write
-            // that already landed is refused rather than duplicated.
             id: item.id,
             workout_id: item.workoutId,
             exercise_id: item.exerciseId,
@@ -330,13 +428,75 @@ export function LogScreen({
           })
           .select()
           .single()
+      case 'workout-start':
+        return supabase
+          .from('workouts')
+          .insert({
+            id: item.id,
+            user_id: item.userId,
+            started_at: item.startedAt,
+            name: item.name,
+            routine_id: item.routineId,
+          })
+          .select()
+          .single()
+      case 'workout-finish':
+        return (
+          supabase
+            .from('workouts')
+            .update({ ended_at: item.endedAt })
+            // Device wins for its own data, and this is the one field where two
+            // devices could disagree: whoever finished the session is the one
+            // who was in the gym, so this overwrites rather than merges.
+            .eq('id', item.workoutId)
+            .select()
+            .maybeSingle()
+        )
+      case 'workout-discard':
+        return supabase.from('workouts').delete().eq('id', item.workoutId).select()
+    }
+  }, [])
 
-        if (!insertError || isAlreadyLanded(insertError)) {
+  /**
+   * Drain the queue, oldest first, until it is empty.
+   *
+   * One loop at a time (`drainingRef`), because two would race on the same
+   * head and send it twice — which the primary key would catch, but only after
+   * both had gone out.
+   *
+   * Head-first with a failed head retried rather than skipped, which is not
+   * politeness about ordering: `workout_sets.workout_id` references
+   * `workouts`, so the sets of a workout started offline must stay behind the
+   * insert that creates it.
+   *
+   * Three outcomes, and the middle one is what U3b added:
+   *
+   *  - **landed** — acked, and for a set, reconciled against the server's row,
+   *    which carries the PR flags an optimistic row genuinely cannot know.
+   *  - **offline** — not a failure. Nothing was refused; there was no network.
+   *    The attempt is not counted, nothing is said, and the loop stops until
+   *    something wakes it. Before this, a basement gym produced three fast
+   *    retries and then an error banner over a board somebody was lifting
+   *    from, which is the interruption §2.1 forbids and a lie besides.
+   *  - **rejected** — a server answered and said no. Counted, backed off, and
+   *    surfaced once `shouldSurface` says silence has stopped being honest.
+   */
+  const drain = useCallback(async () => {
+    if (drainingRef.current) return
+    // No radio, no point. The `online`/`visibilitychange` listeners below are
+    // what start this again, so nothing is lost by not trying.
+    if (!isOnline()) return
+    drainingRef.current = true
+    try {
+      while (queueRef.current.length > 0) {
+        const item = head(queueRef.current)
+        if (!item) break
+
+        const { data, error: writeError } = await send(item)
+
+        if (!writeError || classifyFailure(writeError) === 'landed') {
           updateQueue((q) => ack(q, item.id))
-          // Reconcile: the server's row carries the PR flags, which the
-          // optimistic row could not know. This is the moment a record
-          // becomes visible, and it is the only thing the wait ever bought.
-          if (data) {
+          if (item.kind === 'set' && data) {
             const row = data as WorkoutSet
             setSets((prev) => prev.map((s) => (s.id === row.id ? row : s)))
           }
@@ -344,13 +504,21 @@ export function LogScreen({
           continue
         }
 
+        if (classifyFailure(writeError) === 'offline') {
+          // Leave it at the head, uncounted. It is still true that the user
+          // did this set; the only thing in doubt is this building's signal.
+          break
+        }
+
         updateQueue((q) => retry(q, item.id))
         const attempts = queueRef.current.find((q) => q.id === item.id)?.attempts ?? 1
         if (shouldSurface(attempts)) {
           setError(
             describeError(
-              `Saving set ${item.setNumber}. It is on screen and will be retried`,
-              insertError,
+              item.kind === 'set'
+                ? `Saving set ${item.setNumber}. It is on screen and will be retried`
+                : 'Saving your workout. It is safe on this device and will be retried',
+              writeError,
             ),
           )
         }
@@ -359,7 +527,46 @@ export function LogScreen({
     } finally {
       drainingRef.current = false
     }
-  }, [updateQueue])
+  }, [send, updateQueue])
+
+  /**
+   * Wake the queue the moment there is somewhere to send it.
+   *
+   * Deliberately NOT the Background Sync API: it does not exist on iOS, and
+   * half the beta cohort is on iPhones. These three events are what every
+   * browser has — `online` for the radio coming back, `visibilitychange` for
+   * the phone coming out of a pocket (iOS suppresses `online` in a
+   * backgrounded tab), and a slow interval as the backstop for a network that
+   * changed without saying so, which is the captive-portal case
+   * `navigator.onLine` is famously wrong about.
+   */
+  useEffect(() => {
+    const wake = () => {
+      if (queueRef.current.length > 0) void drain()
+    }
+    window.addEventListener('online', wake)
+    document.addEventListener('visibilitychange', wake)
+    const id = setInterval(wake, 20_000)
+    return () => {
+      window.removeEventListener('online', wake)
+      document.removeEventListener('visibilitychange', wake)
+      clearInterval(id)
+    }
+  }, [drain])
+
+  /**
+   * The queue, on the device, durably.
+   *
+   * Written on every change rather than at intervals: the whole promise is
+   * that a set survives the tab dying between the check and the ack, and a
+   * batched write is a window where it would not. The checkpoint below holds a
+   * synchronous copy of the same thing for the harder case — see checkpoint.ts
+   * for why both exist.
+   */
+  useEffect(() => {
+    if (!restoredRef.current) return
+    void putQueue(offlineStore, userId, queue)
+  }, [offlineStore, userId, queue])
 
   /**
    * Wait for the queue to empty, bounded.
@@ -371,10 +578,14 @@ export function LogScreen({
    */
   const flushQueue = useCallback(
     async (timeoutMs = 8000) => {
+      // Nothing to wait for with no radio. Finishing offline is a supported
+      // ending, not a failure, so it must not cost eight seconds first.
+      if (!isOnline()) return queueRef.current.length === 0
       void drain()
       const deadline = Date.now() + timeoutMs
       while (queueRef.current.length > 0 && Date.now() < deadline) {
         await new Promise((resolve) => setTimeout(resolve, 120))
+        if (!isOnline()) break
       }
       return queueRef.current.length === 0
     },
@@ -390,6 +601,8 @@ export function LogScreen({
    * unapplied, rows added past the plan, exercises taken off the board.
    */
   useEffect(() => {
+    // Not before the load path has read it. See `restoredRef`.
+    if (!restoredRef.current) return
     const storage = browserStorage()
     if (!workout) {
       clearCheckpoint(storage)
@@ -404,6 +617,48 @@ export function LogScreen({
       removed: [...removed],
     })
   }, [workout, queue, order, extraRows, removed])
+
+  /**
+   * The board, on the device — the rows the checkpoint deliberately does not
+   * hold.
+   *
+   * The checkpoint's job is the client-only state; committed sets were always
+   * safe because Postgres had them. That reasoning has one hole and offline is
+   * it: a workout reopened with no signal cannot ask Postgres for anything, so
+   * the acked sets and the workout row itself have to be here too. Without
+   * this, "kill the tab mid-workout, reopen" works online and shows an empty
+   * screen in a basement.
+   */
+  /**
+   * Ending a session clears its cached board, and the two callers that do it
+   * are Finish and Discard.
+   *
+   * Deliberately NOT `if (!workout)` inside the effect below: `workout` is
+   * null on mount too, for the moment before the load resolves, and clearing
+   * there would wipe the board a dead-zone reopen is about to read.
+   */
+  const clearBoardSnapshot = useCallback(() => {
+    void putSnapshot(offlineStore, userId, 'board', {
+      workout: null,
+      sets: [],
+      order: [],
+      planned: [],
+      plan: [],
+      previous: [],
+    } satisfies BoardSnapshot)
+  }, [offlineStore, userId])
+
+  useEffect(() => {
+    if (!restoredRef.current || !workout) return
+    void putSnapshot(offlineStore, userId, 'board', {
+      workout,
+      sets,
+      order,
+      planned,
+      plan: [...plan],
+      previous: [...previousByExercise],
+    } satisfies BoardSnapshot)
+  }, [offlineStore, userId, workout, sets, order, planned, plan, previousByExercise])
 
   /** Override, then the catalogue's default for the movement, then the app's. */
   const restFor = useCallback(
@@ -435,11 +690,172 @@ export function LogScreen({
     )
   }, [])
 
+  /**
+   * A routine's exercises and set targets, from the network or from the last
+   * time it was fetched.
+   *
+   * "Start my usual split" is what a routine is for, and the gym where you run
+   * it is the gym with no signal. Every fetch caches the detail, so from the
+   * second time onwards it opens in a basement. A routine never opened on this
+   * device still cannot be started offline — there is nothing to fall back to
+   * — and the error says so rather than pretending.
+   */
+  const routineDetail = useCallback(
+    async (routineId: string): Promise<RoutineDetail | null> => {
+      try {
+        const detail = await loadRoutine(routineId)
+        void putSnapshot(offlineStore, userId, `routine:${routineId}`, detail)
+        return detail
+      } catch (err) {
+        const cached = await getSnapshot<RoutineDetail | null>(
+          offlineStore,
+          userId,
+          `routine:${routineId}`,
+        )
+        if (cached) return cached.value
+        throw err
+      }
+    },
+    [offlineStore, userId],
+  )
+
+  /**
+   * Restore the queue from both durable copies.
+   *
+   * Two of them exist on purpose — IndexedDB for volume and the localStorage
+   * checkpoint for the synchronous last-gasp write — and merging them by id
+   * costs nothing, because the id is the primary key and a write that reaches
+   * the server twice is refused rather than doubled. See checkpoint.ts.
+   *
+   * Nothing is filtered out by which workout is open. A queue is "writes this
+   * device has not delivered", full stop: a session finished in a dead zone
+   * leaves a finish op behind with no open workout to belong to, and dropping
+   * it because the board is empty would lose the workout. Whatever is already
+   * in memory is kept and merged rather than replaced, so a load that happens
+   * while the queue is live cannot swallow it.
+   *
+   * Returns the unsent sets belonging to `activeId`, so the caller can put
+   * them back on screen: the user did those sets, and the only thing in doubt
+   * is whether the network noticed.
+   */
+  const restoreQueue = useCallback(
+    async (
+      activeId: string | null,
+      checkpointQueue: QueuedWrite[],
+      knownSetIds: Set<string>,
+    ) => {
+      const durable = await getQueue(offlineStore, userId)
+      let merged: QueuedWrite[] = []
+      updateQueue((live) => {
+        merged = mergeQueues(mergeQueues(live, durable), checkpointQueue)
+        return merged
+      })
+      void drain()
+      return merged.filter(
+        (w): w is Extract<QueuedWrite, { kind: 'set' }> =>
+          w.kind === 'set' && w.workoutId === activeId && !knownSetIds.has(w.id),
+      )
+    },
+    [drain, offlineStore, updateQueue, userId],
+  )
+
+  /**
+   * The gym dead zone — trust-ladder rung 4, and the read half of GATE 4.
+   *
+   * With no network there is nothing to fetch and the alternative to this is a
+   * blank screen with an error on it, which for a person standing at a squat
+   * rack is the app failing at the one moment it was built for. Everything
+   * needed to log is on the device already: the catalogue, the board, the
+   * previous-session ghosts. It is stamped as cached, never passed off as
+   * live.
+   *
+   * Returns false when there is nothing cached — a first run with no signal
+   * genuinely has nothing to show, and the honest answer is the error.
+   */
+  const restoreFromCache = useCallback(async () => {
+    const [catalogue, board] = await Promise.all([
+      getSnapshot<CatalogueSnapshot>(offlineStore, userId, 'catalogue'),
+      getSnapshot<BoardSnapshot>(offlineStore, userId, 'board'),
+    ])
+    if (!catalogue) return false
+
+    setExercises(catalogue.value.exercises)
+    setUsage(new Map(catalogue.value.usage))
+    setRestOverrides(new Map(catalogue.value.restOverrides))
+    setExerciseNotes(new Map(catalogue.value.exerciseNotes))
+    setRoutines(catalogue.value.routines)
+    setHasHistory(catalogue.value.hasHistory)
+    setLastSession(catalogue.value.lastSession)
+
+    const active = board?.value.workout ?? null
+    setWorkout(active)
+    setSets(board?.value.sets ?? [])
+    setPlanned(board?.value.planned ?? [])
+    setPlan(new Map(board?.value.plan ?? []))
+    setPreviousByExercise(new Map(board?.value.previous ?? []))
+    // Every ghost this board can draw is already answered, so the effect that
+    // fetches them must not fire into a dead radio for each block.
+    for (const [exerciseId] of board?.value.previous ?? []) {
+      if (active) previousRequested.current.add(`${active.id}:${exerciseId}`)
+    }
+
+    if (active) {
+      const checkpoint = loadCheckpoint(browserStorage())
+      const usable = isUsable(checkpoint, active.id, Date.now())
+      setOrder(usable ? checkpoint.order : (board?.value.order ?? []))
+      setExtraRows(new Map(usable ? checkpoint.extraRows : []))
+      setRemoved(new Set(usable ? checkpoint.removed : []))
+      const known = new Set((board?.value.sets ?? []).map((s) => s.id))
+      const unsent = await restoreQueue(
+        active.id,
+        usable ? checkpoint.queue : [],
+        known,
+      )
+      if (unsent.length > 0) setSets((prev) => [...prev, ...unsent.map(asSetRow)])
+    } else {
+      setOrder([])
+      setRemoved(new Set())
+      setExtraRows(new Map())
+      // NOT cleared. A workout finished in a dead zone leaves its finish op
+      // behind with no open workout to belong to, and throwing the queue away
+      // because the board is empty would throw the session away with it.
+      await restoreQueue(null, [], new Set())
+    }
+
+    setCachedAt(catalogue.savedAt)
+    setError(null)
+    restoredRef.current = true
+    setLoading(false)
+    return true
+  }, [offlineStore, restoreQueue, userId])
+
   // No synchronous setState here: the effect below calls it on mount, where a
   // state update before the first await would cause a cascading render.
   const load = useCallback(async () => {
-    const [catalogue, usageRows, open, anyWorkout, streakRows, restRows, noteRows] =
-      await Promise.all([
+    /**
+     * No radio, no requests. Seven fetches into a dead antenna cost a
+     * six-second deadline before the fallback below can run, and the fallback
+     * is the answer either way — the device's copy is exactly what those
+     * requests would have been raced against.
+     *
+     * Falls through when there is nothing cached: a first run with no signal
+     * genuinely has nothing to show, and the honest outcome is the attempt and
+     * then the error.
+     */
+    if (!isOnline() && (await restoreFromCache())) return
+
+    /**
+     * Bounded, because an unbounded read is how the Log tab gets stuck.
+     *
+     * A dead radio rejects and the offline path below takes over. A network
+     * that accepts and then goes quiet — a captive portal, or a service worker
+     * holding a request open — never rejects at all, so `Promise.all` never
+     * settles and the screen shows "Loading…" forever with a full cache on the
+     * device it is not looking at. The screenshot harness photographed exactly
+     * that. Past the deadline, the device's own copy is the answer.
+     */
+    const answered = await withDeadline(
+      Promise.all([
         supabase.from('exercises').select('*').order('name'),
         supabase.rpc('exercise_usage'),
         supabase
@@ -459,54 +875,63 @@ export function LogScreen({
         // by nothing outside the exercise detail page. The block's meta line is
         // where "seat position 4" was always meant to be.
         supabase.from('exercise_notes').select('exercise_id, note'),
-      ])
+      ]),
+    )
+
+    if (!answered) {
+      if (await restoreFromCache()) return
+      setError(
+        describeError('Loading your workout', new Error('the server did not answer')),
+      )
+      setLoading(false)
+      return
+    }
+    const [catalogue, usageRows, open, anyWorkout, streakRows, restRows, noteRows] =
+      answered
 
     const failure = catalogue.error ?? usageRows.error ?? open.error ?? anyWorkout.error
     if (failure) {
+      // No network is not a load error — it is the state the whole of U3b
+      // exists for. Fall back to what the device already knows, and only say
+      // something went wrong if there is genuinely nothing to fall back to.
+      if (classifyFailure(failure) === 'offline' && (await restoreFromCache())) return
       setError(describeError('Loading your workout', failure))
       setLoading(false)
       return
     }
+    setCachedAt(null)
 
     // A failed streak must not block the screen — it is decoration, not data.
     setStreak(((streakRows.data ?? []) as WeeklyStreakRow[])[0] ?? null)
     // Same posture for the rest overrides: migration 0015 may not be applied
     // yet, and a missing table must fall the timer back to its default rather
     // than stop the workout loading.
-    setRestOverrides(
-      new Map(
-        ((restRows.data ?? []) as { exercise_id: string; rest_seconds: number }[]).map(
-          (row) => [row.exercise_id, row.rest_seconds],
-        ),
-      ),
-    )
-    setExerciseNotes(
-      new Map(
-        ((noteRows.data ?? []) as { exercise_id: string; note: string }[]).map(
-          (row) => [row.exercise_id, row.note],
-        ),
-      ),
-    )
+    const restEntries = (
+      (restRows.data ?? []) as { exercise_id: string; rest_seconds: number }[]
+    ).map<[string, number]>((row) => [row.exercise_id, row.rest_seconds])
+    setRestOverrides(new Map(restEntries))
+    const noteEntries = (
+      (noteRows.data ?? []) as { exercise_id: string; note: string }[]
+    ).map<[string, string]>((row) => [row.exercise_id, row.note])
+    setExerciseNotes(new Map(noteEntries))
     // Routines are only needed on the idle screen; a failure there must not
     // stop an in-progress workout from loading.
-    try {
-      setRoutines(await listRoutines())
-    } catch {
-      setRoutines([])
-    }
-    setExercises((catalogue.data ?? []) as Exercise[])
-    setUsage(
-      new Map(
-        ((usageRows.data ?? []) as ExerciseUsageRow[]).map((row) => [
-          row.exercise_id,
-          row,
-        ]),
-      ),
-    )
-    setHasHistory((anyWorkout.data ?? []).length > 0)
+    const routineList = await listRoutines().catch<Routine[]>(() => [])
+    setRoutines(routineList)
+    const catalogueRows = (catalogue.data ?? []) as Exercise[]
+    setExercises(catalogueRows)
+    const usageEntries = ((usageRows.data ?? []) as ExerciseUsageRow[]).map<
+      [string, ExerciseUsageRow]
+    >((row) => [row.exercise_id, row])
+    setUsage(new Map(usageEntries))
+    const anyHistory = (anyWorkout.data ?? []).length > 0
+    setHasHistory(anyHistory)
 
     const active = (open.data ?? [])[0] as Workout | undefined
     setWorkout(active ?? null)
+
+    let restoredSets: WorkoutSet[] = []
+    let lastFinished: { startedAt: string; sets: WorkoutSet[] } | null = null
 
     if (active) {
       const { data, error: setsError } = await supabase
@@ -517,7 +942,8 @@ export function LogScreen({
       if (setsError) {
         setError(describeError('Loading the sets in this workout', setsError))
       } else {
-        setSets((data ?? []) as WorkoutSet[])
+        restoredSets = (data ?? []) as WorkoutSet[]
+        setSets(restoredSets)
       }
 
       // The arrangement, restored. Absent when 0020 is not applied, in which
@@ -537,51 +963,36 @@ export function LogScreen({
        * — the board's whole arrangement.
        */
       const checkpoint = loadCheckpoint(browserStorage())
-      if (isUsable(checkpoint, active.id, Date.now())) {
+      const usable = isUsable(checkpoint, active.id, Date.now())
+      if (usable) {
         setOrder(stored.length > 0 ? stored : checkpoint.order)
         setExtraRows(new Map(checkpoint.extraRows))
         setRemoved(new Set(checkpoint.removed))
-
-        // Sets that were on screen and never acknowledged. They go back on
-        // screen as they were — the user did them — and back in the queue. The
-        // client-generated id makes the retry idempotent even if one of them
-        // actually landed before the tab died.
-        const known = new Set(((data ?? []) as WorkoutSet[]).map((row) => row.id))
-        const unsent = checkpoint.queue.filter((q) => !known.has(q.id))
-        if (unsent.length > 0) {
-          setSets((prev) => [
-            ...prev,
-            ...unsent.map<WorkoutSet>((q) => ({
-              id: q.id,
-              workout_id: q.workoutId,
-              exercise_id: q.exerciseId,
-              set_number: q.setNumber,
-              weight_kg: q.weightKg,
-              reps: q.reps,
-              rpe: q.rpe,
-              duration_seconds: null,
-              distance_meters: null,
-              set_type: q.setType,
-              superset_group: q.supersetGroup,
-              pr_weight: false,
-              pr_e1rm: false,
-            })),
-          ])
-        }
-        updateQueue(() => checkpoint.queue)
-        void drain()
       } else {
         setOrder(stored)
         setRemoved(new Set())
         setExtraRows(new Map())
-        updateQueue(() => [])
+      }
+
+      // Sets that were on screen and never acknowledged. They go back on
+      // screen as they were — the user did them — and back in the queue. The
+      // client-generated id makes the retry idempotent even if one of them
+      // actually landed before the tab died.
+      const unsent = await restoreQueue(
+        active.id,
+        usable ? checkpoint.queue : [],
+        new Set(restoredSets.map((row) => row.id)),
+      )
+      if (unsent.length > 0) {
+        restoredSets = [...restoredSets, ...unsent.map(asSetRow)]
+        setSets(restoredSets)
       }
 
       // Reopening mid-session has to remember what the routine planned, or the
       // ghosts vanish on the first reload and the board loses half its rows.
       if (active.routine_id) {
         try {
-          const detail = await loadRoutine(active.routine_id)
+          const detail = await routineDetail(active.routine_id)
           applyRoutinePlan(detail)
         } catch {
           setPlanned([])
@@ -598,6 +1009,9 @@ export function LogScreen({
       setPlan(new Map())
       setRemoved(new Set())
       setExtraRows(new Map())
+      // Same reasoning as the offline path: undelivered writes outlive the
+      // workout they belong to, so the queue is restored here, never cleared.
+      await restoreQueue(null, [], new Set())
       // Idle screen only. A failure here must not block the screen — like the
       // streak, it is context, not data you cannot log without.
       try {
@@ -614,20 +1028,45 @@ export function LogScreen({
             .select('*')
             .eq('workout_id', last.id)
             .order('set_number')
-          setLastSession({
+          lastFinished = {
             startedAt: last.started_at,
             sets: (lastSets ?? []) as WorkoutSet[],
-          })
-        } else {
-          setLastSession(null)
+          }
         }
       } catch {
-        setLastSession(null)
+        lastFinished = null
       }
+      setLastSession(lastFinished)
     }
 
+    /**
+     * The device's copy of everything the screen just fetched.
+     *
+     * Written from the values rather than from state, because state is not
+     * readable here yet — and written on every successful load, so the cache
+     * a dead zone falls back to is never older than the last time there was
+     * signal.
+     */
+    void putSnapshot(offlineStore, userId, 'catalogue', {
+      exercises: catalogueRows,
+      usage: usageEntries,
+      restOverrides: restEntries,
+      exerciseNotes: noteEntries,
+      routines: routineList,
+      hasHistory: anyHistory,
+      lastSession: lastFinished,
+    } satisfies CatalogueSnapshot)
+
+    restoredRef.current = true
     setLoading(false)
-  }, [applyRoutinePlan, drain, updateQueue])
+  }, [
+    applyRoutinePlan,
+    offlineStore,
+    restoreFromCache,
+    restoreQueue,
+    routineDetail,
+    userId,
+  ])
 
   useEffect(() => {
     void (async () => {
@@ -669,6 +1108,11 @@ export function LogScreen({
    */
   useEffect(() => {
     if (!workout) return
+    // With no radio there is nothing to ask. The ghosts this board already has
+    // came out of the cache and must not be replaced with the empty answer a
+    // dead request produces — losing them costs every comparison on the board,
+    // which is most of the reason to look at it.
+    if (!online) return
     const workoutId = workout.id
     for (const exerciseId of displayOrder) {
       const key = `${workoutId}:${exerciseId}`
@@ -680,6 +1124,12 @@ export function LogScreen({
           p_exclude_workout: workoutId,
         })
         .then(({ data, error: rpcError }) => {
+          // A request that died on the way out is not an answer of "no
+          // previous session", so it is allowed to be asked again.
+          if (rpcError && classifyFailure(rpcError) === 'offline') {
+            previousRequested.current.delete(key)
+            return
+          }
           setPreviousByExercise((prev) =>
             new Map(prev).set(
               exerciseId,
@@ -688,7 +1138,7 @@ export function LogScreen({
           )
         })
     }
-  }, [workout, displayOrder])
+  }, [workout, displayOrder, online])
 
   /**
    * Start a workout from a routine: create it, then seed the exercise order.
@@ -700,24 +1150,8 @@ export function LogScreen({
     setRoutineBusy(routine.id)
     setError(null)
     try {
-      const detail = await loadRoutine(routine.id)
-      const { data, error: insertError } = await supabase
-        .from('workouts')
-        .insert({
-          user_id: userId,
-          started_at: new Date().toISOString(),
-          name: routine.name,
-          routine_id: routine.id,
-        })
-        .select()
-        .single()
-      if (insertError) throw insertError
-
-      setWorkout(data as Workout)
-      setSets([])
-      setHasHistory(true)
-      setRemoved(new Set())
-      setExtraRows(new Map())
+      const detail = await routineDetail(routine.id)
+      openWorkout(routine)
       applyRoutinePlan(detail)
       setOrder(detail?.exercises.map((e) => e.exercise_id) ?? [])
 
@@ -727,7 +1161,7 @@ export function LogScreen({
       // guess at the rest of the plan. Design v2.2: the overview is the spine.
       setView(detail && detail.exercises.length > 0 ? 'overview' : 'picker')
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not start that routine.')
+      setError(describeError('Starting that routine', err))
     } finally {
       setRoutineBusy(null)
     }
@@ -785,7 +1219,11 @@ export function LogScreen({
       },
       { onConflict: 'user_id,exercise_id' },
     )
-    if (writeError) setError(describeError('Saving the rest time', writeError))
+    // Quiet when there is no network: the value is on screen, it is in the
+    // checkpoint, and an error banner between sets is what §2.1 forbids.
+    if (writeError && classifyFailure(writeError) !== 'offline') {
+      setError(describeError('Saving the rest time', writeError))
+    }
   }
 
   /** Write today's session back over the routine it came from. One tap, opt-in. */
@@ -853,28 +1291,57 @@ export function LogScreen({
     }
   }
 
-  async function startWorkout() {
-    setSaving(true)
-    setError(null)
-    const { data, error: insertError } = await supabase
-      .from('workouts')
-      .insert({ user_id: userId, started_at: new Date().toISOString() })
-      .select()
-      .single()
-    setSaving(false)
-
-    if (insertError) {
-      setError(describeError('Starting the workout', insertError))
-      return
+  /**
+   * Open a workout, without waiting for anyone's permission.
+   *
+   * OPTIMISTIC since U3b, and for the same reason the sets are: a workout that
+   * cannot be started with no signal is a workout that cannot be logged with
+   * no signal, and GATE 4 says "a full airplane-mode workout". The id is
+   * generated here and IS the primary key, so the insert queued behind it can
+   * be replayed without creating a second session, and every set that follows
+   * already knows what it belongs to.
+   *
+   * `routine` seeds the name and the plan; absent, this is freestyle.
+   */
+  function openWorkout(routine: { id: string; name: string } | null): Workout {
+    const startedAt = new Date().toISOString()
+    const local: Workout = {
+      id: newId(),
+      user_id: userId,
+      started_at: startedAt,
+      ended_at: null,
+      name: routine?.name ?? null,
+      notes: null,
+      routine_id: routine?.id ?? null,
+      exercise_order: null,
     }
-    setWorkout(data as Workout)
+    setWorkout(local)
     setSets([])
     setHasHistory(true)
+    setRemoved(new Set())
+    setExtraRows(new Map())
+    updateQueue((q) =>
+      enqueue(q, {
+        kind: 'workout-start',
+        id: local.id,
+        workoutId: local.id,
+        userId,
+        startedAt,
+        name: local.name,
+        routineId: local.routine_id ?? null,
+        attempts: 0,
+      }),
+    )
+    void drain()
+    return local
+  }
+
+  function startWorkout() {
+    setError(null)
+    openWorkout(null)
     setPlanned([])
     setPlan(new Map())
     setOrder([])
-    setRemoved(new Set())
-    setExtraRows(new Map())
     setView('picker')
   }
 
@@ -899,7 +1366,12 @@ export function LogScreen({
       .from('workouts')
       .update({ exercise_order: deduped })
       .eq('id', workout.id)
-    if (writeError) orderUnavailable.current = true
+    // Only a refusal means the column is not there. A write that never left
+    // the device says nothing about the schema, and treating it as proof would
+    // stop the app from ever trying again after one dead zone.
+    if (writeError && classifyFailure(writeError) !== 'offline') {
+      orderUnavailable.current = true
+    }
   }
 
   /** Put an exercise on the board, keeping whatever order is already there. */
@@ -966,7 +1438,9 @@ export function LogScreen({
             },
             { onConflict: 'user_id,exercise_id' },
           )
-    if (writeError) setError(describeError('Saving the note', writeError))
+    if (writeError && classifyFailure(writeError) !== 'offline') {
+      setError(describeError('Saving the note', writeError))
+    }
   }
 
   /**
@@ -979,26 +1453,25 @@ export function LogScreen({
     const discarded = workout.id
     setConfirmDiscard(false)
     setConfirmFinish(false)
-    setSaving(true)
     setError(null)
-    // Before the delete, not after: a queued insert against a workout that no
-    // longer exists fails on the foreign key forever, and would surface as an
-    // error about a session the user deliberately threw away.
-    updateQueue((q) => dropForWorkout(q, discarded))
-    const { error: deleteError } = await supabase
-      .from('workouts')
-      .delete()
-      .eq('id', discarded)
-    setSaving(false)
-
-    if (deleteError) {
-      setError(describeError('Discarding the workout', deleteError))
-      return
-    }
+    /**
+     * Every write for this workout goes first, and the delete goes on the end
+     * — a queued insert against a workout that no longer exists fails on the
+     * foreign key forever and would surface as an error about a session the
+     * user deliberately threw away.
+     *
+     * A workout whose own insert had not drained yet needs no delete at all:
+     * it has never existed anywhere but this device, which is exactly the case
+     * for a session started and abandoned in a dead zone. `discardWrites`
+     * decides, and it is tested.
+     */
+    updateQueue((q) => discardWrites(q, discarded).queue)
+    void drain()
 
     // Before clearing state, so the unmount guard cannot chase a row that is
     // already gone.
     emptyWorkoutId.current = null
+    clearBoardSnapshot()
     timer.stop()
     setWorkout(null)
     setSets([])
@@ -1100,7 +1573,31 @@ export function LogScreen({
     //
     // A wait is allowed here and nowhere else: §2.1 protects the logging flow,
     // and this is the end of it rather than the middle.
-    if (!(await flushQueue())) {
+    const flushed = await flushQueue()
+    const endedAt = new Date().toISOString()
+    /**
+     * Ending a workout with no signal is a supported ending, not a failure.
+     *
+     * Everything the summary needs about the session itself — duration,
+     * volume, sets, exercises — is already on this device, because `sets` is
+     * what the user just did. Only two things need the server, and both wait:
+     * `ended_at` becomes a queued op, and records are left uncounted rather
+     * than guessed at (see below).
+     */
+    const deferred = !isOnline() || !flushed
+    if (deferred && !isOnline()) {
+      updateQueue((q) =>
+        enqueue(q, {
+          kind: 'workout-finish',
+          id: finishOpId(workout.id),
+          workoutId: workout.id,
+          endedAt,
+          attempts: 0,
+        }),
+      )
+    } else if (!flushed) {
+      // Online, and writes are genuinely stuck rather than merely unsent.
+      // Marking the workout ended now would put those sets beyond reach.
       setSaving(false)
       setError(
         `${queueRef.current.length} ${
@@ -1110,34 +1607,52 @@ export function LogScreen({
       return
     }
 
-    const endedAt = new Date().toISOString()
-    const { error: updateError } = await supabase
-      .from('workouts')
-      .update({ ended_at: endedAt })
-      .eq('id', workout.id)
+    if (!deferred) {
+      const { error: updateError } = await supabase
+        .from('workouts')
+        .update({ ended_at: endedAt })
+        .eq('id', workout.id)
 
-    if (updateError) {
-      setSaving(false)
-      setError(describeError('Finishing the workout', updateError))
-      return
+      if (updateError) {
+        setSaving(false)
+        setError(describeError('Finishing the workout', updateError))
+        return
+      }
     }
 
-    // Bests EXCLUDING this workout, or every set of a new exercise reports a
-    // PR against itself. One call for the whole workout, after the write, so
-    // a slow summary never delays marking the workout finished.
-    const { data: bestRows } = await supabase.rpc('exercise_bests', {
-      p_exclude_workout: workout.id,
-    })
-    const previousBests = new Map(
-      ((bestRows ?? []) as ExerciseBestRow[]).map((r) => [
-        r.exercise_id,
-        { weightKg: Number(r.best_weight_kg), e1rmKg: Number(r.best_e1rm_kg) },
-      ]),
-    )
+    /**
+     * Bests EXCLUDING this workout, or every set of a new exercise reports a
+     * PR against itself. One call for the whole workout, after the write, so a
+     * slow summary never delays marking the workout finished.
+     *
+     * With no network there are no bests to compare against, and an empty map
+     * does not mean "no previous best" — it means "not asked". Reporting PRs
+     * from it would celebrate a record on every single exercise. So an offline
+     * summary shows none, and says why. The flags themselves are computed in
+     * the database on insert, so the records are still right in History and
+     * Progress the moment the queue drains.
+     */
+    const previousBests = new Map<string, { weightKg: number; e1rmKg: number }>()
+    if (!deferred) {
+      const { data: bestRows } = await supabase.rpc('exercise_bests', {
+        p_exclude_workout: workout.id,
+      })
+      for (const r of (bestRows ?? []) as ExerciseBestRow[]) {
+        previousBests.set(r.exercise_id, {
+          weightKg: Number(r.best_weight_kg),
+          e1rmKg: Number(r.best_e1rm_kg),
+        })
+      }
+    }
 
-    setSummary(
-      summarise(sets, workout.started_at, endedAt, exercisesById, previousBests),
+    const computed = summarise(
+      sets,
+      workout.started_at,
+      endedAt,
+      exercisesById,
+      previousBests,
     )
+    setSummary(deferred ? { ...computed, prs: [] } : computed)
     setSummaryDate(formatWorkoutDate(workout.started_at))
     setSummaryWorkout({ ...workout, ended_at: endedAt })
     // Mid-workout there is no such thing as a skipped exercise — there is only
@@ -1151,6 +1666,10 @@ export function LogScreen({
     )
     setRoutineUpdate(routineDiff(workout))
     setSaving(false)
+    // The session is over, so the cached board must stop describing it — or a
+    // reopen with no signal would restore the workout that was just finished.
+    clearBoardSnapshot()
+    emptyWorkoutId.current = null
     timer.stop()
     setWorkout(null)
     setSets([])
@@ -1238,6 +1757,7 @@ export function LogScreen({
 
     updateQueue((q) =>
       enqueue(q, {
+        kind: 'set',
         id: optimistic.id,
         workoutId: workout.id,
         exerciseId: exercise.id,
@@ -1465,6 +1985,8 @@ export function LogScreen({
     return (
       <div className="flex flex-col gap-[18px] pt-4">
         {error && <ErrorNote message={error} />}
+        {cachedAt !== null && <CachedNote savedAt={cachedAt} />}
+        <SyncNote online={online} pending={pendingSetCount(queue)} />
         <div>
           <button
             type="button"
@@ -1568,6 +2090,19 @@ export function LogScreen({
             {formatDuration(workout.started_at, new Date().toISOString())} ·{' '}
             {sets.length} {sets.length === 1 ? 'set' : 'sets'}
           </p>
+          {/* Under the duration, not over the board: the state of the network
+              is context, and the board is the thing being lifted from. */}
+          {/* ONE line, deliberately. A board drawn from the device says it is
+              offline and says how many sets are waiting; it does not also say
+              when it last synced, because that is four lines of meta above the
+              thing being lifted from and the exact timestamp is not a
+              mid-set question. The idle screen, where you read rather than
+              lift, carries it — see `CachedNote` below. */}
+          <SyncNote
+            online={online}
+            pending={pendingSetCount(queue)}
+            cached={cachedAt !== null}
+          />
         </div>
         <button
           type="button"
@@ -1774,6 +2309,60 @@ function StreakPlates({ weeks }: { weeks: number }) {
         />
       ))}
     </span>
+  )
+}
+
+/**
+ * What the app is doing about the network, said quietly.
+ *
+ * Deliberately not an `ErrorNote`. Nothing has gone wrong: the sets are on
+ * screen, they are on the device, and they will be on the server. §2.1 says
+ * nothing interrupts the logging flow, and the wellness-app-design law says
+ * feedback mid-workout is inline and passive — a line, not a banner, no border,
+ * no `role="alert"`, `aria-live="polite"` so a screen reader mentions it
+ * between sets instead of cutting across one.
+ *
+ * It says nothing at all when there is a connection and nothing pending, which
+ * is almost always.
+ */
+function SyncNote({
+  online,
+  pending,
+  cached = false,
+}: {
+  online: boolean
+  pending: number
+  cached?: boolean
+}) {
+  if (online && pending === 0 && !cached) return null
+  const sets = (n: number) => `${n} ${n === 1 ? 'set' : 'sets'}`
+  const label =
+    pending > 0
+      ? online
+        ? `Saving ${sets(pending)}…`
+        : `Offline · ${sets(pending)} saved on this device`
+      : !online
+        ? 'Offline · logging as normal'
+        : 'Offline · showing saved data'
+  return (
+    <p className="tnum text-xs text-muted" aria-live="polite" data-testid="sync-note">
+      {label}
+    </p>
+  )
+}
+
+/**
+ * The stamp on cached reads — trust-ladder rung 4's honesty clause.
+ *
+ * Showing week-old data as though it were live is worse than showing nothing;
+ * showing it with the time it was true is what makes it useful in a basement.
+ */
+function CachedNote({ savedAt }: { savedAt: number }) {
+  return (
+    <p className="text-xs text-muted" aria-live="polite" data-testid="cached-note">
+      Offline · showing what this device last synced{' '}
+      <span className="tnum">{formatSyncedAt(savedAt)}</span>
+    </p>
   )
 }
 

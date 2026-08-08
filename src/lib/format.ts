@@ -52,6 +52,23 @@ export function formatTime(iso: string): string {
   return date ? TIME.format(date) : NO_VALUE
 }
 
+/**
+ * When cached data was last true, for the offline stamp.
+ *
+ * A time alone would be a lie by omission on anything older than today —
+ * "synced 14:32" reads as this afternoon whether it was or not — so anything
+ * not from today carries its date instead. Epoch milliseconds rather than an
+ * ISO string because this one comes from the device's own clock, not the wire.
+ */
+export function formatSyncedAt(epochMs: number, now = new Date()): string {
+  if (!Number.isFinite(epochMs)) return NO_VALUE
+  const date = new Date(epochMs)
+  if (Number.isNaN(date.getTime())) return NO_VALUE
+  return date.toDateString() === now.toDateString()
+    ? TIME.format(date)
+    : DAY_WITH_YEAR.format(date)
+}
+
 export function formatShortDate(iso: string): string {
   const date = parse(iso)
   return date ? DAY_WITH_YEAR.format(date) : NO_VALUE

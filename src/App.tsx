@@ -1,5 +1,7 @@
-import { Suspense, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import { Analytics } from '@vercel/analytics/react'
+import { browserStorage } from './lib/checkpoint'
+import { reconcileDeviceUser } from './lib/device-reset'
 import { lazyScreen } from './lib/lazy-screen'
 import { supabaseConfigError } from './lib/supabase'
 import { useAuth } from './lib/use-auth'
@@ -38,6 +40,21 @@ const CoachScreen = lazyScreen(() =>
 export default function App() {
   const { loading, userId } = useAuth()
   const [tab, setTab] = useState<Tab>('log')
+
+  /**
+   * A different person on this phone gets a blank device.
+   *
+   * U3b keeps training data locally — an IndexedDB cache and write queue, the
+   * workout checkpoint, and the service worker's cache of Supabase reads. The
+   * first two refuse to answer anyone but their owner; the third cannot, since
+   * the Cache API keys on URL and these responses differ only by an auth
+   * header. This is what closes it. Not on sign-out: signing back in as
+   * yourself with a set still queued must not lose the set.
+   */
+  useEffect(() => {
+    void reconcileDeviceUser(userId, browserStorage())
+  }, [userId])
+
   // Android back from History or Progress returns to Log — the home tab —
   // instead of closing the app, matching what a bottom tab bar promises.
   useBackLayer(tab !== 'log', () => setTab('log'))

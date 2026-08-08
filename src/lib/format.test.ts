@@ -7,6 +7,7 @@ import {
   formatDayLabel,
   formatMonthLabel,
   formatShortDate,
+  formatSyncedAt,
   formatTime,
   formatVolume,
   formatVolumeWithUnit,
@@ -212,6 +213,33 @@ describe('formatVolume', () => {
  * So every date formatter degrades to an em dash, the way `formatVolume`
  * already did for a null volume. These cases are the guard, not the maths.
  */
+describe('formatSyncedAt', () => {
+  const now = new Date('2026-08-08T15:00:00Z')
+
+  it('gives a time for a sync that happened today', () => {
+    const earlier = new Date('2026-08-08T09:30:00Z')
+    expect(formatSyncedAt(earlier.getTime(), now)).toBe(
+      formatTime(earlier.toISOString()),
+    )
+  })
+
+  /**
+   * "Synced 14:32" reads as this afternoon whether it was or not, and the
+   * whole point of the stamp is that the user can tell how old the data is.
+   */
+  it('gives a date for anything older, rather than a misleading time', () => {
+    const yesterday = new Date('2026-08-07T14:32:00Z')
+    expect(formatSyncedAt(yesterday.getTime(), now)).toBe(
+      formatShortDate(yesterday.toISOString()),
+    )
+  })
+
+  it('dashes an unusable value instead of throwing under the workout', () => {
+    expect(formatSyncedAt(Number.NaN, now)).toBe('—')
+    expect(formatSyncedAt(Number.POSITIVE_INFINITY, now)).toBe('—')
+  })
+})
+
 describe('unrenderable dates', () => {
   const junk = ['', 'not a date', '2026-13-45T99:99:99Z']
 

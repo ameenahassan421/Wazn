@@ -1,4 +1,9 @@
-import type { QueuedSet } from './write-queue'
+import { SET_TYPE_CYCLE } from './types'
+import type { SetType } from './types'
+import type { QueuedWrite } from './write-queue'
+
+const isSetType = (v: unknown): v is SetType =>
+  typeof v === 'string' && (SET_TYPE_CYCLE as string[]).includes(v)
 
 /**
  * The in-progress workout checkpoint — trust-ladder rung 1.
@@ -11,11 +16,15 @@ import type { QueuedSet } from './write-queue'
  * the board. Kill the tab between a check and its ack and, before this, that
  * set was simply gone.
  *
- * localStorage rather than IndexedDB deliberately: this is a few hundred bytes
- * written on every commit, and it must be readable *synchronously* during the
- * load path so nothing renders a board that is about to change under it.
- * IndexedDB arrives in U3b, for the offline queue, where the volume and the
- * async access pattern actually justify it.
+ * ── Why this stayed in localStorage when U3b brought IndexedDB in ──────────
+ * IndexedDB now holds the durable queue and the offline read cache
+ * (`offline-store.ts`), which is where the volume is. This file did not move,
+ * and the reason is the one thing localStorage does that IndexedDB cannot: it
+ * writes *synchronously*. A transaction opened five milliseconds before the OS
+ * kills a backgrounded tab may never commit; a `setItem` that returned has
+ * already happened. So the two coexist deliberately — this is the last-gasp
+ * copy, IndexedDB is the durable one, and the load path takes the union of
+ * both by id, which the id-as-primary-key rule makes free of consequence.
  *
  * Every function here is total. A checkpoint is read from storage that a user,
  * a browser upgrade or a previous version of this app may have written, so
@@ -26,12 +35,16 @@ import type { QueuedSet } from './write-queue'
 export const CHECKPOINT_KEY = 'wazn.workout.v1'
 
 /**
- * Bumped when the shape changes. A mismatch is discarded rather than migrated:
- * the whole payload is reconstructible from the server plus one session of
- * lost preferences, so migration code would be more risk than the data is
- * worth.
+ * Bumped when the shape changes.
+ *
+ * Version 2 (U3b) widened `queue` from sets to the full op log. Version 1 is
+ * still accepted, and its entries are read as sets, because the one user this
+ * costs is the one mid-workout when the update lands — exactly the person the
+ * checkpoint exists for. Anything older or newer is discarded rather than
+ * migrated: the payload is reconstructible from the server plus one session of
+ * lost preferences, so migration code would be more risk than the data.
  */
-export const CHECKPOINT_VERSION = 1
+export const CHECKPOINT_VERSION = 2
 
 /**
  * A checkpoint older than this is not restored.
@@ -49,7 +62,7 @@ export interface WorkoutCheckpoint {
   /** Epoch milliseconds. Compared against a clock the caller supplies. */
   savedAt: number
   /** Writes that had not been acknowledged when this was written. */
-  queue: QueuedSet[]
+  queue: QueuedWrite[]
   /** Block order — the only copy of it when migration 0020 is unapplied. */
   order: string[]
   /** Rows added past the plan, per exercise. */
@@ -64,27 +77,78 @@ export function encode(checkpoint: Omit<WorkoutCheckpoint, 'version'>): string {
 
 const isString = (v: unknown): v is string => typeof v === 'string'
 
-function decodeQueue(value: unknown): QueuedSet[] {
+/**
+ * Validate one queued write, or drop it.
+ *
+ * A half-written entry is dropped rather than sent, because a write missing
+ * `reps` is a row Postgres will refuse forever and the queue — which drains
+ * strictly head-first to keep the foreign keys satisfied — would never get
+ * past it. Losing one entry costs a set; keeping it costs the session.
+ *
+ * Exported because IndexedDB needs exactly the same scrutiny: the durable
+ * queue is read back from a store the browser may have half-written too.
+ */
+export function decodeWrite(item: unknown): QueuedWrite | null {
+  if (typeof item !== 'object' || item === null) return null
+  const q = item as Record<string, unknown>
+  // Version 1 wrote sets and nothing else, with no discriminant on them.
+  const kind = q.kind === undefined ? 'set' : q.kind
+  if (!isString(q.id) || !isString(q.workoutId)) return null
+  if (typeof q.attempts !== 'number') return null
+  const base = { id: q.id, workoutId: q.workoutId, attempts: q.attempts }
+
+  if (kind === 'set') {
+    if (
+      !isString(q.exerciseId) ||
+      typeof q.setNumber !== 'number' ||
+      typeof q.reps !== 'number' ||
+      !isSetType(q.setType) ||
+      !(q.weightKg === null || typeof q.weightKg === 'number') ||
+      !(q.rpe === null || typeof q.rpe === 'number') ||
+      !(q.supersetGroup === null || typeof q.supersetGroup === 'number')
+    ) {
+      return null
+    }
+    return {
+      kind: 'set',
+      ...base,
+      exerciseId: q.exerciseId,
+      setNumber: q.setNumber,
+      reps: q.reps,
+      setType: q.setType,
+      weightKg: q.weightKg,
+      rpe: q.rpe,
+      supersetGroup: q.supersetGroup,
+    }
+  }
+
+  if (kind === 'workout-start') {
+    if (!isString(q.userId) || !isString(q.startedAt)) return null
+    return {
+      kind: 'workout-start',
+      ...base,
+      userId: q.userId,
+      startedAt: q.startedAt,
+      name: isString(q.name) ? q.name : null,
+      routineId: isString(q.routineId) ? q.routineId : null,
+    }
+  }
+
+  if (kind === 'workout-finish') {
+    if (!isString(q.endedAt)) return null
+    return { kind: 'workout-finish', ...base, endedAt: q.endedAt }
+  }
+
+  if (kind === 'workout-discard') {
+    return { kind: 'workout-discard', ...base }
+  }
+
+  return null
+}
+
+export function decodeQueue(value: unknown): QueuedWrite[] {
   if (!Array.isArray(value)) return []
-  return value.filter((item): item is QueuedSet => {
-    if (typeof item !== 'object' || item === null) return false
-    const q = item as Partial<QueuedSet>
-    // Every field the insert needs. A half-written entry is dropped rather
-    // than sent, because a write missing `reps` is a row Postgres will refuse
-    // forever and the queue would never drain past it.
-    return (
-      isString(q.id) &&
-      isString(q.workoutId) &&
-      isString(q.exerciseId) &&
-      typeof q.setNumber === 'number' &&
-      typeof q.reps === 'number' &&
-      isString(q.setType) &&
-      typeof q.attempts === 'number' &&
-      (q.weightKg === null || typeof q.weightKg === 'number') &&
-      (q.rpe === null || typeof q.rpe === 'number') &&
-      (q.supersetGroup === null || typeof q.supersetGroup === 'number')
-    )
-  })
+  return value.map(decodeWrite).filter((write): write is QueuedWrite => write !== null)
 }
 
 /** Null for anything this version cannot vouch for. Never throws. */
@@ -99,7 +163,10 @@ export function decode(raw: string | null | undefined): WorkoutCheckpoint | null
   if (typeof parsed !== 'object' || parsed === null) return null
 
   const c = parsed as Partial<WorkoutCheckpoint>
-  if (c.version !== CHECKPOINT_VERSION) return null
+  // v1 is read, not rejected: its queue entries are sets, and `decodeWrite`
+  // says so. The user this protects is the one mid-workout when an update
+  // lands, which is the exact person a checkpoint exists for.
+  if (c.version !== CHECKPOINT_VERSION && c.version !== 1) return null
   if (!isString(c.workoutId) || typeof c.savedAt !== 'number') return null
 
   return {

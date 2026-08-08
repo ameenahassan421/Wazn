@@ -31,6 +31,7 @@ import {
   SUPABASE_URL,
   fixtures,
   installSupabaseStub,
+  offlineSwitch,
   seedSession,
   serveDist,
 } from './harness/app-harness.mjs'
@@ -63,7 +64,8 @@ async function shoot(browser, origin, { width, empty, active }) {
   const page = await context.newPage()
   const crashes = []
   page.on('pageerror', (error) => crashes.push(error.message))
-  await installSupabaseStub(page, fixtures({ empty, active }))
+  const network = offlineSwitch()
+  await installSupabaseStub(page, fixtures({ empty, active }), { network })
 
   await page.goto(origin, { waitUntil: 'networkidle' })
   await page.waitForTimeout(900)
@@ -102,6 +104,45 @@ async function shoot(browser, origin, { width, empty, active }) {
 
     await page.evaluate(() => window.scrollTo(0, 0))
     await page.waitForTimeout(300)
+
+    /**
+     * The dead zone, photographed — U3b's whole surface, and the third time
+     * this harness has been caught unable to see a state that shipped. The
+     * Coach tab drew "Something broke" in every run for a week because no
+     * Edge Function route was stubbed; the overview was invisible because
+     * every fixture workout had an `ended_at`. Offline is the same shape of
+     * hole: the sync line and the cached stamp exist only when the network
+     * is gone, so the network has to actually go.
+     */
+    network.offline = true
+    // A committed set with nowhere to go. The check writes the row on screen
+    // and the queue holds it, which is the frame that proves rung 2 looks
+    // like nothing at all — no spinner, no banner, just the set.
+    const offlineChecks = page.getByRole('button', { name: /^Log .+ set \d/ })
+    if (await offlineChecks.count()) {
+      await offlineChecks.first().click()
+      await page.waitForTimeout(600)
+    }
+    // Top of the board: the status row is where the sync line lives, and a
+    // shot of the middle of the board would photograph everything about this
+    // state except the part that is new.
+    await page.evaluate(() => window.scrollTo(0, 0))
+    await page.waitForTimeout(300)
+    await page.screenshot({
+      path: `${OUT}/active-${width}-offline.png`,
+      fullPage: false,
+    })
+    // And the reopen: same phone, same basement, page reloaded. Everything on
+    // this screen is read off the device.
+    await page.reload({ waitUntil: 'domcontentloaded' })
+    await page.waitForTimeout(8000)
+    await page.screenshot({
+      path: `${OUT}/active-${width}-offline-reopen.png`,
+      fullPage: false,
+    })
+    network.offline = false
+    await page.reload({ waitUntil: 'networkidle' })
+    await page.waitForTimeout(900)
 
     const menu = page.getByRole('button', { name: /^More for/ })
     if (await menu.count()) {
@@ -180,7 +221,7 @@ async function main() {
   }
 
   console.log(
-    `\n${TABS.length * WIDTHS.length * 2 + WIDTHS.length * 5} screenshots in ${OUT}/`,
+    `\n${TABS.length * WIDTHS.length * 2 + WIDTHS.length * 7} screenshots in ${OUT}/`,
   )
   if (crashes.length) {
     // An uncaught error no longer blanks a tab — U1c's boundaries catch it —
