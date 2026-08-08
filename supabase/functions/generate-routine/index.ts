@@ -301,7 +301,11 @@ Deno.serve(async (request) => {
       )
     }
 
-    await recordGeneration(caller, 'routine', result.model, result.usedFree)
+    await recordGeneration(caller, 'routine', {
+      ok: true,
+      model: result.model,
+      usedFree: result.usedFree,
+    })
 
     // Nothing is written yet. The client renders this as a preview and calls
     // back with `save` if the user keeps it — see the save path above.

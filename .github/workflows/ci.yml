@@ -34,6 +34,14 @@ jobs:
         # and looked healthy the whole time.
         run: npm run check:vercel
 
+      - name: Check the coverage floor
+        # Not a percentage — a list. Every module in src/lib either has a test
+        # file or an exemption with a written reason, and a new module with
+        # neither fails here. src/lib/social.ts had no test at all while a
+        # percentage would have read as high the whole time, and that is the
+        # module where follows and likes silently failed for every user.
+        run: npm run check:coverage
+
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'

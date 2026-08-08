@@ -229,7 +229,11 @@ Deno.serve(async (request) => {
       model: result.model,
       insights,
     })
-    await recordGeneration(caller, 'coach_notes', result.model, result.usedFree)
+    await recordGeneration(caller, 'coach_notes', {
+      ok: true,
+      model: result.model,
+      usedFree: result.usedFree,
+    })
 
     return json({
       insights,

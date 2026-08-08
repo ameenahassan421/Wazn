@@ -5,6 +5,7 @@ import { useAuth } from './lib/use-auth'
 import { useBackLayer } from './lib/use-back'
 import { UnitProvider } from './lib/unit-context'
 import { AuthScreen } from './components/AuthScreen'
+import { ErrorBoundary } from './components/ErrorBoundary'
 import { Header } from './components/Header'
 import { TabBar } from './components/TabBar'
 import type { Tab } from './components/TabBar'
@@ -68,33 +69,43 @@ export default function App() {
             : undefined
 
   return (
-    <UnitProvider>
-      <Header title={title} />
-      <main className="mx-auto w-full max-w-[430px] px-[18px] pb-28">
-        {tab === 'log' && (
-          <LogScreen userId={userId} onOpenCoach={() => setTab('coach')} />
-        )}
-        {tab === 'history' && <HistoryScreen />}
-        {tab === 'progress' && (
-          <Suspense fallback={<p className="py-10 text-sm text-muted">Loading…</p>}>
-            <ProgressScreen onOpenCoach={() => setTab('coach')} />
-          </Suspense>
-        )}
-        {tab === 'coach' && (
-          <Suspense fallback={<p className="py-10 text-sm text-muted">Loading…</p>}>
-            {/* Saving generated routines sends you to Log, where routines
-                live — the thing you just made is one tap from being started. */}
-            <CoachScreen onRoutinesSaved={() => setTab('log')} />
-          </Suspense>
-        )}
-        {tab === 'friends' && (
-          <Suspense fallback={<p className="py-10 text-sm text-muted">Loading…</p>}>
-            <FriendsScreen userId={userId} />
-          </Suspense>
-        )}
-      </main>
-      <TabBar active={tab} onChange={setTab} />
-      <Analytics />
-    </UnitProvider>
+    // Two boundaries. The inner one is keyed to the tab, so a crashed screen
+    // recovers by switching tabs and coming back — no reload, and an
+    // in-progress workout survives it. The outer one exists because the
+    // header and tab bar can throw too, and a boundary inside `main` cannot
+    // catch its own chrome. See components/ErrorBoundary.tsx.
+    <ErrorBoundary boundary="root">
+      <UnitProvider>
+        <Header title={title} />
+        <main className="mx-auto w-full max-w-[430px] px-[18px] pb-28">
+          <ErrorBoundary boundary={tab} resetKey={tab}>
+            {tab === 'log' && (
+              <LogScreen userId={userId} onOpenCoach={() => setTab('coach')} />
+            )}
+            {tab === 'history' && <HistoryScreen />}
+            {tab === 'progress' && (
+              <Suspense fallback={<p className="py-10 text-sm text-muted">Loading…</p>}>
+                <ProgressScreen onOpenCoach={() => setTab('coach')} />
+              </Suspense>
+            )}
+            {tab === 'coach' && (
+              <Suspense fallback={<p className="py-10 text-sm text-muted">Loading…</p>}>
+                {/* Saving generated routines sends you to Log, where routines
+                    live — the thing you just made is one tap from being
+                    started. */}
+                <CoachScreen onRoutinesSaved={() => setTab('log')} />
+              </Suspense>
+            )}
+            {tab === 'friends' && (
+              <Suspense fallback={<p className="py-10 text-sm text-muted">Loading…</p>}>
+                <FriendsScreen userId={userId} />
+              </Suspense>
+            )}
+          </ErrorBoundary>
+        </main>
+        <TabBar active={tab} onChange={setTab} />
+        <Analytics />
+      </UnitProvider>
+    </ErrorBoundary>
   )
 }
