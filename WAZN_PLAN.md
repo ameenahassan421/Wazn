@@ -645,17 +645,29 @@ verbatim, so they survive even if this file isn't read.**
   import fails anyway. `npm run check:deploy` plays it out in a browser and
   fails if either regresses. Eager loading was measured as an alternative and
   costs 32ms of cold start on a budget already missed — staying lazy.
-- **MIGRATIONS 0016–0019 ARE NOT APPLIED, and 0015 IS** (STATUS said the
-  reverse). Probed 2026-08-08 by querying `information_schema` through the
-  Management API. Production stops at 0015. The consequences worth knowing:
-  **`client_errors` (0018) does not exist**, so the error boundary has been
-  reporting crashes into nothing since the day it shipped — which is why the
-  deploy break above was invisible until a user mentioned it; `ai_generations`
-  still has its five columns (0017), which the Edge Functions already handle
-  by falling back; 0016's owner defaults are absent but the client sends both
-  columns explicitly; and 0019's stat-tool RPCs are absent but nothing calls
-  them yet (the Ask surface is B3, unbuilt). **0018 is the one worth applying
-  today** — it is `create table if not exists` and additive.
+- **Migrations: production is at 0018. 0016, 0017 and 0018 were APPLIED
+  2026-08-08** through the Supabase MCP connector, on Ameen's instruction,
+  after a probe found production stopped at 0015 — the reverse of what STATUS
+  had claimed (it said 0015 was unapplied). Verified against
+  `information_schema` rather than trusted from a success flag:
+  `client_errors` has its 8 columns, RLS on, 2 policies;
+  `ai_generations` went from 6 columns to 14 plus `ai_generations_quota_idx`;
+  `follows.follower_id` and `workout_likes.user_id` default to `auth.uid()`;
+  `coach_notes.prompt_version` exists. **The error boundary finally has
+  somewhere to report to** — its absence is why the deploy break was invisible
+  until a user mentioned it.
+- **0019 is still unapplied, deliberately.** Its five stat-tool functions have
+  no caller until B3's Ask surface exists, and `coach-notes` does not use them.
+- **A MIGRATION LEDGER NOW EXISTS, AND IT ONLY KNOWS ABOUT THREE.**
+  `supabase_migrations.schema_migrations` was empty before 2026-08-08 — every
+  migration from 0001 to 0015 was applied by hand-executed SQL, so Supabase
+  had no record of any of them, which is why "what is live" has always been a
+  probe rather than a read. Applying through the connector created the ledger,
+  and it contains `social_owner_defaults`, `ai_observability` and
+  `client_errors` only. **It is accurate about those three and silent about
+  the fifteen before them, so it reads as though the database began at 0016.**
+  Anyone reaching for `supabase db push` or `db reset` needs to know that
+  first. Backfilling 0001–0015 as ledger-only rows is offered and not done.
 - **R0 is not Claude-buildable.** The offense plan's release table lists R0
   "Evidence" as `_none — beta runs_`; its content is Ameen's two blockers
   (Resend's logs for the Yahoo delivery failure; `LAUNCH.md` on a real phone
