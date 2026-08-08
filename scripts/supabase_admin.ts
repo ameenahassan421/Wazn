@@ -33,6 +33,40 @@ const TEMPLATES = {
   mailer_templates_recovery_content: 'supabase/email_templates/recovery.html',
 } as const
 
+/**
+ * The subject lines, which used to be nobody's job — and it showed.
+ *
+ * `setTemplates` guarded the BODIES: it refuses to apply a template without
+ * {{ .Token }}, because the app verifies a 6-digit code and never follows a
+ * link. The subjects were left at Supabase's dashboard defaults, and those
+ * defaults describe a link-based flow this app has never had:
+ *
+ *   confirmation   "Confirm your email address"   — no code, sounds like a button
+ *   magic link     "Your sign-in link"            — no code, AND THERE IS NO LINK
+ *   recovery       "Reset your password"          — no code
+ *
+ * The guard covered half the email. Found on 2026-08-08 while reading Resend's
+ * log for the tester who requested a code on 08-05 and never signed in: the
+ * email was DELIVERED, so the long-running "Yahoo deliverability failure"
+ * theory was wrong, and the subject line is what was actually in front of her.
+ *
+ * The project already had one subject right — reauthentication reads
+ * "{{ .Token }} is your verification code" — which is both the proof that
+ * Supabase renders the token in a subject and the pattern the rest should
+ * follow. Code first, so it is readable from a lock-screen notification
+ * without opening anything.
+ *
+ * Only the three code-carrying flows are here. `mailer_subjects_invite` and
+ * `mailer_subjects_email_change` are deliberately absent: their bodies carry
+ * no {{ .Token }}, so a subject promising a code would be the same class of
+ * lie this is fixing.
+ */
+const SUBJECTS = {
+  mailer_subjects_confirmation: '{{ .Token }} is your Wazn sign-in code',
+  mailer_subjects_magic_link: '{{ .Token }} is your Wazn sign-in code',
+  mailer_subjects_recovery: '{{ .Token }} is your Wazn password reset code',
+} as const
+
 /** Auth config keys worth seeing at a glance in `show`. */
 const INTERESTING = [
   'site_url',
@@ -235,13 +269,27 @@ async function setTemplates() {
     payload[field] = html
   }
 
+  // The same guard the bodies get. A subject for a code flow that does not
+  // show the code is how "Your sign-in link" survived in front of every new
+  // user of an app that has never sent a link.
+  for (const [field, subject] of Object.entries(SUBJECTS)) {
+    if (!subject.includes('{{ .Token }}')) {
+      fail(
+        `${field} has no {{ .Token }}. These three flows all mail a 6-digit ` +
+          'code; a subject that hides it is read on a lock screen as junk.',
+      )
+    }
+    payload[field] = subject
+  }
+
   await request('PATCH', '/config/auth', payload)
   console.log(
-    `Updated ${Object.keys(payload).length} email templates with {{ .Token }}`,
+    `Updated ${Object.keys(TEMPLATES).length} templates and ` +
+      `${Object.keys(SUBJECTS).length} subjects with {{ .Token }}`,
   )
 
   const auth = await request('GET', '/config/auth')
-  for (const field of Object.keys(TEMPLATES)) {
+  for (const field of [...Object.keys(TEMPLATES), ...Object.keys(SUBJECTS)]) {
     const value = auth[field]
     const ok = typeof value === 'string' && value.includes('{{ .Token }}')
     console.log(
