@@ -477,23 +477,72 @@ rest timer bar coexists. Commit the addendum, report, stop.
 
 ### U2b — Build it
 
-```
-Build phase U2 from the v2.2 addendum in docs/design/ and
-docs/HEVY_PARITY_UPGRADE_PLAN.md §3-U2. Load wellness-app-design and
-impeccable first.
+> Rewritten 2026-08-08, **after** U2a shipped. The first version of this
+> prompt was written when the addendum did not exist and could only gesture
+> at it; this one carries what the addendum actually settled, so a fresh
+> session does not re-derive decisions that are already made and reviewed.
+> Sent to a session on 2026-08-08.
 
-Hard constraints: no pre-inserted sets ever — ghosts are client state
-until committed; the 1-tap repeat set must cost exactly the same or
-fewer taps than today; the protect-list in the parity plan §1 (superset
-round-rest, deadline timer, unit-flip conversion, PR-on-insert) must
-survive unchanged, proven by the existing tests plus new ones. Try
-hand-rolled pointer-event reordering before adding @dnd-kit/core; if
-you add the dependency, log size and reasoning in DECISIONS.md. Include
-the routine "update template with today's changes?" prompt at finish.
-
-CI wall, push, report against GATE U2 (Ameen's real-gym pass is the
-final item and is his), stop.
 ```
+Build phase U2b — the workout overview — from the v2.2 addendum.
+
+Read first: docs/design/v2.2-workout-overview.md and its .html (open the
+HTML and look at it), plus docs/HEVY_PARITY_UPGRADE_PLAN.md §3-U2 and §1's
+protect list. Load the wellness-app-design and impeccable skills before
+writing any UI.
+
+THE DESIGN IS DECIDED. Do not re-derive it. The load-bearing parts:
+
+1. Two levels, different jobs. The overview is the ledger; the focused view
+   stays the keyboard and survives unchanged as the zoom state. On a row:
+   tap the CHECK to commit exactly as shown (1 tap — this must not get more
+   expensive than today, GATE U2 measures it); tap the VALUES to open the
+   focused view at that row.
+2. Ghost rows are client state and NEVER touch the database. "A set row
+   means it happened" still governs the schema. Commit = INSERT.
+   Precedence: routine gives row count + rep target, previous session gives
+   weight; freestyle uses previous session for both; neither = one blank
+   ghost with no invented weight.
+3. Four row states separated by value contrast, border style and fill —
+   never hue. No new colour, texture or motion token. The commit transition
+   is the existing 90ms set-commit rise.
+4. Block header: the name owns the whole header row (progress and the note
+   go on a meta line beneath). This is not cosmetic — with progress on the
+   header line, "Bench Press (Barbell)" and "Lat Pulldown (Cable)" both
+   truncate.
+5. Superset rail is solid 2px amber, not knurl. Knurl stays reserved.
+6. Reorder: grip-only long-press, hand-rolled pointer events first;
+   @dnd-kit/core only if it fights scroll and only with a DECISIONS.md entry
+   naming the size (precache ceiling 600 KiB, currently 571). The order must
+   survive a reload. If that needs a column, DO NOT NAME IT `position` — it
+   is a reserved word and 0007 already shipped that mistake.
+7. Skipped exercises exist only at Finish, never mid-workout.
+8. Read the addendum's "What this design does NOT do" list and honour it.
+
+HARD CONSTRAINTS: no pre-inserted sets, ever. The protect list must survive
+unchanged — superset round-rest, deadline rest timer, mid-set unit-flip
+conversion, PR-on-insert, 1-tap repeat — proven by the existing tests plus
+new ones, not by inspection.
+
+VERIFY: full CI wall (lint, format:check, typecheck, check:vercel, test,
+build). Then `npm run shots` and LOOK at the images — the harness stubs the
+Edge Functions now, so all five tabs render. Then `npm run check:deploy`.
+If you touch the core loop, `npm run perf` and quote the numbers. If you add
+a migration, `python3 scripts/check_migrations.py` (needs `pip install
+pglast`) and say plainly that it is parse-checked and not applied.
+
+Push, open a draft PR, report against GATE U2, and STOP. The real-gym pass
+is Ameen's and is the final item.
+```
+
+Two facts that session will need and cannot infer:
+
+- **Production is at migration 0018 and `client_errors` exists**, so a crash
+  in the new overview lands in a table instead of waiting to be noticed.
+  Worth querying after the first real session.
+- **Migrations are not applied by merging.** Merging `main` deploys the Edge
+  Functions and nothing else; SQL is applied by hand, and
+  `supabase_migrations.schema_migrations` only knows about 0016–0018.
 
 ---
 
