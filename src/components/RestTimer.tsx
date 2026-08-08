@@ -55,11 +55,32 @@ export function RestTimerBar({
           : 'var(--ring-hairline)',
       }}
     >
-      {/* Progress drains right-to-left in LTR, start-to-end in RTL. */}
+      {/* Progress drains right-to-left in LTR, start-to-end in RTL.
+          `pct` is computed from whole seconds, so it changes once a second.
+          The transition is a second long to match: at 300ms the bar lurched
+          for a third of every second and then sat frozen, which reads as a
+          stutter rather than as time passing. Linear, because a countdown
+          that eases is lying about the rate. This is the motion system's one
+          use of `linear` and its one duration off the four-token scale — it
+          is a readout, not a response to a tap.
+
+          `scaleX` on a full-width bar rather than an animated `width`: width
+          is a layout property, and making the transition continuous means it
+          would now recompute layout every frame for the whole 60-180s rest,
+          on a budget Android, mid-workout. A transform is composited instead
+          — no layout, no paint. The two are pixel-identical here because the
+          bar is a childless solid rectangle whose corners are clipped by the
+          parent, so there is nothing for the scale to distort.
+
+          `transform-origin` is physical, with no logical keyword, so it flips
+          for RTL the same way `layer-in` does. */}
       <div
         aria-hidden="true"
-        className="absolute inset-block-0 start-0 bg-accent-900 transition-[width] duration-300 ease-linear"
-        style={{ width: `${pct}%` }}
+        className="timer-drain absolute inset-block-0 start-0 w-full bg-accent-900"
+        style={{
+          transform: `scaleX(${pct / 100})`,
+          transition: `transform 1000ms var(--motion-linear)`,
+        }}
       />
       <div className="relative flex min-h-[50px] items-center gap-2 px-3 py-1">
         <span className="kicker">{done ? 'Rest done' : 'Rest'}</span>

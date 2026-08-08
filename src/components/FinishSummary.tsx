@@ -3,6 +3,7 @@ import type { WorkoutSummary } from '../lib/summary'
 import type { Exercise, Workout } from '../lib/types'
 import type { Unit } from '../lib/units'
 import { formatWeight } from '../lib/units'
+import { formatCount, formatVolume } from '../lib/format'
 import { drawShareCard, shareCard } from '../lib/share-card'
 import { ExerciseThumb } from './ExerciseThumb'
 import { WorkoutNotes } from './WorkoutNotes'
@@ -65,8 +66,8 @@ export function FinishSummary({
       summary.durationSeconds === null ? '—' : fromSeconds(summary.durationSeconds),
       'Duration',
     ],
-    [formatWeight(summary.totalVolumeKg, unit), 'Volume'],
-    [String(summary.setCount), summary.setCount === 1 ? 'Set' : 'Sets'],
+    [formatVolume(summary.totalVolumeKg, unit), 'Volume'],
+    [formatCount(summary.setCount), summary.setCount === 1 ? 'Set' : 'Sets'],
   ]
 
   return (

@@ -1,6 +1,7 @@
 import type { WorkoutSummary } from './summary'
 import type { Unit } from './units'
 import { formatWeight } from './units'
+import { formatCount, formatVolume } from './format'
 import {
   DOT_D,
   LETTERS_D,
@@ -124,9 +125,11 @@ export function drawShareCard(
   // is the rarer and more interesting fact, and the card exists to be
   // interesting to somebody who is not the person who lifted it.
   const topPr = summary.prs[0]
+  // A PR keeps `formatWeight`'s precision — it is a bar load, and 102.5 is a
+  // different lift from 102. Volume is grouped and whole; see `formatVolume`.
   const heroValue = topPr
     ? formatWeight(topPr.value, unit)
-    : formatWeight(summary.totalVolumeKg, unit)
+    : formatVolume(summary.totalVolumeKg, unit)
   const heroKicker = topPr
     ? `New best · ${topPr.exerciseName}`
     : `Moved · ${dateLabel} · ${hms(summary.durationSeconds)}`
@@ -148,8 +151,8 @@ export function drawShareCard(
 
   // ── Three-stat grid ─────────────────────────────────────────────────────
   const stats: [string, string][] = [
-    [String(summary.setCount), 'Sets'],
-    [String(summary.prs.length), summary.prs.length === 1 ? 'PR' : 'PRs'],
+    [formatCount(summary.setCount), 'Sets'],
+    [formatCount(summary.prs.length), summary.prs.length === 1 ? 'PR' : 'PRs'],
     [
       options.streakWeeks ? `${options.streakWeeks} wk` : hms(summary.durationSeconds),
       options.streakWeeks ? 'Streak' : 'Duration',

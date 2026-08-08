@@ -2545,3 +2545,223 @@ for humans and absent from CI; `scripts/run_sql.sh` is named by
 makes both security suites paste-into-the-dashboard rituals that
 `LAUNCH.md` nonetheless gates invites on; and the visual pass is a rule
 a person has to remember, which is the same class of thing.
+
+## 2026-08-08 — R1: U1c and U7, and the two numbers that came back honest
+
+Release R1 in the offense plan's table (§11) is "Finished" — the release
+whose one-sentence test is _"this feels like a real app."_ It is U1c (the
+two open findings from the visual pass) plus U7 (latency budgets and a
+motion system). Both are here. Ameen asked for R0 first; R0 is
+`_none — beta runs_` in that same table and its content is his two beta
+blockers, neither of which is reachable from a sandboxed session — no
+Resend key here, and `LAUNCH.md` §1 is a physical pass on a real phone.
+R1's dependency column says `nothing`, so it does not wait on R0 and the
+two run in parallel.
+
+### L6 — a half-kilo on a five-figure total is noise, and here is why
+
+`formatVolume` in `src/lib/format.ts` renders session volume as a grouped
+integer. The prompt asked for the precision rule to be decided out loud
+rather than picked, so:
+
+1. **It is below the resolution of the input.** Plates come in 1.25 kg
+   pairs; the bar plus the lifter's own day-to-day mass move by more than
+   half a kilo between sets.
+2. **It is converted, not measured.** The same session renders `90830.5`
+   in kg and a whole number in lbs purely because of the conversion
+   factor. A digit that changes when you flip a display toggle is not a
+   fact about training.
+3. **It costs a glyph at arm's length under load**, and the one law of
+   this app is that glanceability wins.
+
+Set weights keep their 0.25 kg / 0.5 lb precision through `formatWeight`,
+untouched, because there the fraction _is_ the information: 62.5 and 62
+are different bars. Nothing about stored values changed; kg storage stays
+exact.
+
+**Digits stay Latin even in Arabic.** `Intl.NumberFormat` left alone would
+render `٩٠٬٨٣١` under `ar`, and §2.4 pins numerals to Latin.
+`numberingSystem: 'latn'` keeps the separator local and the digits
+universal, so Stage 5 inherits the grouping and none of the risk. There is
+a test asserting exactly that against `ar-EG`.
+
+**One rule the screenshots settled:** a figure with its own label stays
+unitless (the three-column receipts on Progress, Friends and the finish
+summary — the label says "Volume" and the header toggle says lbs); a
+figure in a run-on line carries the unit, because `52 min · 7,055 · 18
+sets` reads as three unlabelled quantities. So History rows gained "lbs"
+and the leaderboard did not. That inconsistency was visible in a
+screenshot and invisible in the diff.
+
+### L7 — a thumbnail has no business taking a screen down with it
+
+`toneFor` now guards its argument, and `ExerciseThumb` no longer trusts
+`exercise.name` either — both arrive through `as Exercise` casts on RPC
+results, so a column the query forgot to select is `undefined` at runtime
+whatever the type says. That single missing field blanked the whole
+Progress tab during the visual pass.
+
+**The boundary half of L7 was built twice, in parallel, and this branch's
+copy lost on the merits.** This branch shipped a `ScreenBoundary` wrapping
+each of the five screens inside `<main>`; the H-series on `main` shipped an
+`ErrorBoundary` at the same time. Theirs is better on three counts and worse
+on none, so `ScreenBoundary` is **deleted** rather than reconciled:
+
+- it has a **root** boundary as well as a per-tab one, and a boundary living
+  inside `<main>` cannot catch a crash in the header or the tab bar — mine
+  structurally could not;
+- `resetKey` on the tab means switching away and back _is_ the recovery, with
+  no reload and an in-progress workout intact;
+- it reports to the error ledger via `reportError`, so a crash leaves a trace
+  instead of only a console line nobody reads.
+
+It also already carries the promise U1c asked for — "Every set you logged is
+already saved" — and that promise is checked, not assumed: `LogScreen.tsx`
+inserts each set server-side and surfaces the error if it fails, so a
+rendering crash after that cannot cost a set. Both branches independently
+verified the same fact and wrote nearly the same sentence, which is some
+evidence it is the right sentence.
+
+What does survive from this branch is the part `main` never touched: the
+guard in `ExerciseThumb`. `toneFor(group: string)` is still unguarded on
+`main`, and a boundary is a net rather than a licence to keep falling — a
+thumbnail is decoration and has no business failing a screen at all. The
+tests moved to `ExerciseThumb.test.tsx`, where they belong.
+
+### U7 motion — four tokens, and the one deliberate exception
+
+`--motion-instant` (90ms, a set committing) · `--motion-press` (80ms, the
+existing press) · `--motion-transition` (160ms, a layer arriving) ·
+`--motion-celebration` (1140ms, the record flash). Three of the four
+_name_ motion that already existed rather than inventing any; the system
+is a vocabulary for the restraint that was already there. The one new
+motion is `set-commit`, the 90ms rise on a newly logged row — the only
+motion on the hot path, answering the most important question in the app.
+A record row does not also get it: the two utilities both set `animation`
+and would fight, and the flash already answers louder.
+
+`prefers-reduced-motion` collapses the tokens themselves as well as
+keeping the existing global override, so an inline style the blanket rule
+cannot reach is still still. Every animation is `both`-filled, so
+collapsing a duration keeps the end state.
+
+**The rest timer is the exception and the only user of `linear`.** Its
+drain was `duration-300`, but `pct` is computed from whole seconds, so the
+bar lurched for 300ms and then sat frozen for 700 — a stutter, not time
+passing. It is now 1000ms, matching the tick. That duration is off the
+four-token scale on purpose: the bar is a readout of elapsed time, not a
+response to a tap.
+
+**And making it continuous exposed a cost that was hiding behind the
+stutter.** The bar animated `width`, which is a layout property. At 300ms it
+recomputed layout for a third of each second; at 1000ms it would do so every
+frame, for the whole 60–180s rest, on a budget Android, mid-workout — the
+single worst context in the app to be thrashing layout in. The fix that had
+been available all along is `scaleX` on a full-width bar, which the compositor
+handles without layout or paint. The two are pixel-identical here because the
+bar is a childless solid rectangle whose corners are clipped by its parent, so
+there is nothing for a scale to distort. `transform-origin` has no logical
+keyword, so it flips for RTL explicitly, the same shape as `--layer-dir`.
+
+Worth naming because the improvement and the regression were the same edit:
+fixing how the timer _reads_ would have quietly quadrupled what it _costs_.
+The design hook caught it; verified afterwards by measuring the rendered bar
+in a real build (full height, anchored at the inline start, `scaleX(0.988)`
+two seconds into a rest) rather than by trusting that the CSS compiled.
+
+### U7 latency — measured, and two of the budgets are missed
+
+Mid-range Android profile, 4x CPU, 1.6 Mbps down, 150ms RTT, 390x844@3x —
+Lighthouse's own mobile preset, so the scripted trace and the Lighthouse
+run describe the same device. `npm run perf`.
+
+| Budget                                | Measured   | Verdict |
+| ------------------------------------- | ---------- | ------- |
+| cold start → interactive < 2000ms     | **2308ms** | MISS    |
+| warm start → interactive < 2000ms     | **1148ms** | PASS    |
+| core-loop tap → feedback < 100ms      | **23ms**   | PASS    |
+| core-loop tap → set on screen < 100ms | **204ms**  | MISS    |
+| tab switch < 150ms                    | **25ms**   | PASS    |
+
+Lighthouse mobile: performance **97**, FCP 2107ms, LCP 2257ms, TBT 9ms,
+CLS 0.001.
+
+**The claim the plan makes — a precached PWA logging a set before a native
+app finishes splashing — holds for the warm start and fails for the cold
+one.** Warm is 1148ms to a usable Log screen, which is the number the
+claim is actually about: the installed PWA a lifter opens in the gym. Cold
+is 2308ms, ~300ms over, and that is a stranger following an invite link on
+a first-ever visit. The cause is the 470 KiB / 135 KiB-gzipped main chunk,
+most of it `supabase-js`, which cannot be deferred because the auth gate
+needs it before anything renders. Production serves brotli rather than the
+harness's gzip, so the real figure is somewhat better than this — but not
+by 300ms with confidence, so the honest report is MISS.
+
+**The core-loop miss is the one U7 predicted of itself.** The press is
+acknowledged in 23ms; the set appears in 204ms, and that number is a
+_floor_ — one round trip with zero server time. Optimistic writes (U3) are
+the fix, exactly as §3-U7 says: "speed and reliability are the same work
+here." Until then the budget is unreachable by construction, not by
+sloppiness.
+
+Checked and clear: the lazy screens are genuinely separate chunks; the
+service worker precaches all four, so an installed PWA never pays a fetch
+to open a tab (the "first render" numbers are render, not download); fonts
+are self-hosted with `font-display: swap` and block nothing.
+
+### Two corrections to the measurement itself, both mine
+
+The first run reported **cold start 3729ms and core-loop 56ms**, and both
+were wrong in opposite directions:
+
+- **The harness served everything uncompressed.** 543 KiB over the wire
+  where production sends 187 KiB. That invented a budget miss belonging to
+  the harness. It now gzips, which is conservative — Vercel negotiates
+  brotli.
+- **A fulfilled Playwright route never touches the network stack**, so
+  CDP's emulated 150ms RTT did not apply to any Supabase call. That made
+  every round trip free and turned a 204ms miss into a 56ms "pass". The
+  stub now costs one RTT.
+
+A measurement harness that flatters the thing it measures is worse than no
+harness. Both fixes are in the code with the reasoning attached.
+
+### The harness is committed this time
+
+`scripts/harness/app-harness.mjs` + `scripts/perf.mjs` + `scripts/shots.mjs`,
+run as `npm run perf` and `npm run shots`. The 2026-08-07 visual pass was
+driven from an ad-hoc harness that was never kept, and the plan now
+requires a screenshot run from every UI phase — a requirement nobody can
+meet without the rig. Output goes to `shots/` and `perf/`, both git-ignored.
+
+Three bugs found while building it, all of them the harness lying rather
+than the app breaking, and all recorded in the file where they happened:
+the stub ignored PostgREST filters (so the app opened a _finished_ workout
+as if in progress); it returned an array where `.single()` wanted an object
+(so `workout.id` was undefined and every set POSTed without a `workout_id`);
+and it invented a `performed_at` column that `previous_session` does not
+return (so the set-entry screen read "PREVIOUS · NAN MONTHS AGO"). The §4
+rule about stubbing every column the real RPC returns earned its place
+three more times.
+
+`playwright` and `lighthouse` are new **devDependencies** — 5.1 MB and
+21 MB in `node_modules`, zero bytes in the app bundle. Neither is wired
+into the CI wall: they need a browser download and would add minutes to
+every PR, and their value is a human looking at output, which CI cannot do.
+
+### A correction to STATUS: the precache ceiling was already breached
+
+The cross-cutting requirement says precache stays under ~600 KiB, and
+STATUS records it falling to 537 KiB when recharts was dropped. Built
+against `HEAD` with real Supabase config, it is **649.76 KiB**. With this
+branch it is **651.79 KiB** — a **+2.03 KiB** delta for the formatter, the
+error boundary and the motion tokens.
+
+The 537 KiB figure was measured from a build with no `VITE_SUPABASE_URL`,
+where the app short-circuits to the "not configured" screen and every
+authenticated screen tree-shakes out. That is the same trap the CI workflow
+already documents for the build step. **The ceiling has been over for some
+time and nobody knew, because the number being watched was measuring a
+different app.** Not fixed here — it is a pre-existing condition and
+shrinking the main chunk is its own piece of work, sized against U3 — but
+it should be measured with config from now on.

@@ -315,13 +315,21 @@ export function SetEntry({
                   re-flash every time a new set is logged — §2.1 forbids
                   anything that pulls attention mid-workout, and a list that
                   lights up on every render is exactly that. */}
+              {/* The newest non-record row gets the 90ms commit arrival —
+                  the motion system's answer to "did that save?". A record row
+                  does not also get it: the two utilities both set `animation`
+                  and would fight, and the flash already answers the question
+                  louder. Keyed by set.id, so the animation runs when the row
+                  mounts and never again on re-render. */}
               <div
                 className={`flex items-center gap-3 px-[13px] py-2.5 ${
-                  isRecord(set)
-                    ? i === setsThisWorkout.length - 1
+                  i === setsThisWorkout.length - 1
+                    ? isRecord(set)
                       ? 'record-flash'
-                      : 'record-row'
-                    : ''
+                      : 'set-commit'
+                    : isRecord(set)
+                      ? 'record-row'
+                      : ''
                 }`}
               >
                 <span className="tnum w-5 font-mono text-[11px] text-muted">

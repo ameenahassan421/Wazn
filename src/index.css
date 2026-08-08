@@ -156,6 +156,20 @@
      and what §2.4 forbids. */
   --top-light: inset 0 1px 0 rgba(236, 235, 232, 0.045);
   --ring-hairline: 0 0 0 1px var(--color-line), var(--top-light);
+
+  /* Motion, U7. Four durations and two easings — the whole vocabulary.
+     Every animated thing in the app names one of these; a raw millisecond
+     value in a component is the smell that something is being invented.
+     Each tier exists because it answers a question the user is asking. The
+     tiers and where they are spent are documented at the motion section
+     near the end of this file. */
+  --motion-instant: 90ms; /* "did my set save?" */
+  --motion-press: 80ms; /* "did my finger land?" */
+  --motion-transition: 160ms; /* "where did I come from?" */
+  --motion-celebration: 1140ms; /* "did I beat it?" */
+
+  --motion-ease: ease-out;
+  --motion-linear: linear;
 }
 
 html {
@@ -457,14 +471,36 @@ button {
 
 /* ─── Motion ───────────────────────────────────────────────────────────────
    Two curves in the whole app: ease-out and linear. No springs, no shimmer,
-   no scroll effects. A plate landing, not a page turning. */
+   no scroll effects. A plate landing, not a page turning.
+
+   U7 turns that restraint into a system. Four durations, declared with the
+   other tokens at the top of this file, spent only where motion answers a
+   question the user is actually asking:
+
+     --motion-instant      90ms   a set row arriving      "did my set save?"
+     --motion-press        80ms   the press dim           "did my finger land?"
+     --motion-transition  160ms   a layer sliding in      "where did I come from?"
+     --motion-celebration 1140ms  the record flash        "did I beat it?"
+
+   Nothing decorative gets a token, and nothing on the hot path exceeds
+   200ms — which is why the celebration tier is reachable only after the set
+   is already logged, never between one set and the next.
+
+   The rest timer's drain is the deliberate exception and the only use of
+   `linear`: it is a readout of elapsed time rather than a response to a
+   tap, so its duration is the tick interval, not a feel-scale value. See
+   the bar in RestTimer.tsx.
+
+   `prefers-reduced-motion` collapses all four at the bottom of this file —
+   both the tokens themselves (so an inline style follows) and every
+   animation and transition globally. */
 
 /* The only press effect. Dim and settle a pixel down — the give of a loaded
    bar, not a bounce. */
 @utility press {
   transition:
-    opacity 80ms ease-out,
-    transform 80ms ease-out;
+    opacity var(--motion-press) var(--motion-ease),
+    transform var(--motion-press) var(--motion-ease);
 }
 
 .press:active {
@@ -487,11 +523,44 @@ button {
 }
 
 @utility layer-in {
-  animation: layer-in 160ms ease-out both;
+  animation: layer-in var(--motion-transition) var(--motion-ease) both;
+}
+
+/* A set landing in the logged list. The one motion on the hot path, and the
+   question it answers is the most important one in the app: "did that save?"
+   90ms is under the threshold where a person waits for it — the row is
+   simply there, having arrived rather than appeared. It rises 3px instead of
+   sliding inline, so it reads as settling onto the stack, and it is a
+   `both`-filled animation so reduced motion still lands the end state. */
+@keyframes set-commit {
+  from {
+    opacity: 0;
+    transform: translateY(3px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@utility set-commit {
+  animation: set-commit var(--motion-instant) var(--motion-ease) both;
 }
 
 [dir='rtl'] .layer-in {
   --layer-dir: -1;
+}
+
+/* The rest timer's drain scales from the inline start, so the bar empties
+   toward the end the same way in both directions. `transform-origin` has no
+   logical keyword, so the flip is explicit — same shape as `--layer-dir`
+   above. See RestTimer.tsx for why this is a transform and not a width. */
+@utility timer-drain {
+  transform-origin: left center;
+}
+
+[dir='rtl'] .timer-drain {
+  transform-origin: right center;
 }
 
 /* A personal record. The row fills to 28% amber, then settles to the 7%
@@ -515,10 +584,22 @@ button {
    duration collapses to nothing but the end state still lands, so the row
    is still marked. */
 @utility record-flash {
-  animation: record-flash 1140ms ease-out both;
+  animation: record-flash var(--motion-celebration) var(--motion-ease) both;
 }
 
 @media (prefers-reduced-motion: reduce) {
+  /* Collapse the vocabulary itself, so anything reading a token — including
+     an inline style the blanket rule below cannot reach — is already still. */
+  :root {
+    --motion-instant: 0.01ms;
+    --motion-press: 0.01ms;
+    --motion-transition: 0.01ms;
+    --motion-celebration: 0.01ms;
+  }
+
+  /* And then the blanket, for anything that never named a token. Every
+     animation in the app is `both`-filled, so collapsing the duration keeps
+     the end state — a record row stays tinted, a committed set stays put. */
   *,
   *::before,
   *::after {
