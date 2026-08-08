@@ -546,9 +546,19 @@ verbatim, so they survive even if this file isn't read.**
   bar were all height 0 in production. One utility definition in `index.css`
   fixes all four. Nothing in the CI wall could have caught it — a screenshot
   did. See DECISIONS.md.
+- **A visual pass was run on the built app (2026-08-07)** — the thing the Hevy
+  comparison never did, and it falsified a claim in that comparison: the
+  muscle-balance chart the parity plan listed as a differentiator to protect
+  had never drawn. Two findings remain open and are now **U1c** in
+  `docs/IMPLEMENTATION_PROMPTS.md`: no number anywhere in the app is
+  thousands-grouped (no `toLocaleString`/`Intl.NumberFormat` in `src/` at all),
+  and there is no error boundary, so one leaf crash blanks an entire tab.
+  Screenshotting the built app is now a cross-cutting requirement of every UI
+  phase — §4 of the parity plan says how, including the two ways the first run
+  got it wrong.
 - **Last updated:** 2026-08-07 by Claude Code (the four-path auth screen; then
   all of U1 — the unrendered progress functions now draw, time-range chips, the
   `inset-block-0` fix that made the muscle-balance chart visible for the first
   time, and items 3–7: picker filters, discard-workout, un-superset, the sticky
   warm-up defect, workout notes, per-lift rest on migration 0015, and one-tap
-  warm-up ramp logging).
+  warm-up ramp logging; then the visual pass and the U1c findings it produced).

@@ -119,7 +119,38 @@ state; the overview becomes the spine.
 ### 2.3 Look gaps
 
 The visual system itself is not a gap — v2 is more coherent than Hevy's
-skin. The look gaps are _information-display_ gaps:
+skin. The look gaps are _information-display_ gaps.
+
+> **Amended 2026-08-07 after an actual visual pass.** Everything in §2
+> above was derived from reading source. That was not enough: a
+> screenshot run (real build, stubbed Supabase, Playwright, five tabs ×
+> two widths × populated/empty) found things the code read as correct.
+> The correction that matters most is in §1's protect-list — the
+> muscle-balance chart with the knurl band was listed there as a
+> working differentiator, and it had **never rendered**
+> (`inset-block-0` was not a real utility; fixed in U1a). L6 and L7
+> below come from the same pass. **Do not treat a code-only review as
+> visual verification again** — see §4.
+
+- **L1. Previous-vs-today alignment.** Hevy ghosts last session per row;
+  Wazn shows one summary card. Fixed by U2's overview grid.
+- **L6. No number in the app is grouped.** Volume renders `52393`,
+  `90830.5`, `15873.5` — verified structural, not incidental: there is
+  **no `toLocaleString` or `Intl.NumberFormat` anywhere in `src/`**.
+  Precision is inconsistent in the same column (`48722` beside
+  `90830.5`). §2.4 mandates large tabular numbers; grouping is the
+  missing half, and at arm's length `90,831` reads where `90830.5`
+  does not. One formatter used everywhere (History rows, Progress
+  figures, feed cards, leaderboard, finish summary, share card) —
+  cheap, and it touches every screen a Hevy user compares.
+- **L7. One leaf crash blanks a whole tab.** There is no error boundary
+  anywhere in `src/`, and `ExerciseThumb.toneFor()` reads
+  `group.length` on a value that arrives through an `as Exercise`
+  cast. Found by accident: a single missing field made the entire
+  Progress tab render black — no message, no recovery. A boundary per
+  lazy screen (fall back to a plain "This screen failed to draw" plus
+  the tab bar) turns a dead tab into a recoverable one, and guarding
+  `toneFor` costs one line.
 
 - **L1. Previous-vs-today alignment.** Hevy ghosts last session per row;
   Wazn shows one summary card. Fixed by U2's overview grid.
@@ -307,6 +338,20 @@ fires a notification on a locked real phone from the store build.
 - **Testing floor**: pure functions extracted and unit-tested before
   UI (the `progress.ts` pattern); RLS-touching work extends the SQL
   suite; U3 adds the Playwright offline e2e to CI.
+- **Visual verification is not optional, and CI cannot do it.** Two
+  defects reached production that every check passed over: a class
+  that did not exist (`inset-block-0`, so the signature chart drew
+  nothing) and a duplicated empty-state sentence. Lint sees valid
+  syntax, typecheck sees valid types, tests see functions — none of
+  them can see a screen. **Any phase that changes UI ends by
+  screenshotting the built app** (real build, stubbed Supabase,
+  Playwright; five tabs × 390/430px × populated/empty) and looking at
+  the images before the gate is reported. Two rules learned the hard
+  way from the first run: use viewport shots, not `fullPage`, to judge
+  overlap — `fullPage` renders fixed elements mid-page and invents
+  bugs that are not there; and stub every column the real RPC returns
+  (`strength_summary` yields `muscle_group` and `image_url`), or the
+  harness crashes on its own fixture and looks like an app bug.
 - **Metrics that referee the gates**: time-to-log-a-repeat-set
   (stopwatch, LAUNCH.md), first-workout completion rate for new
   testers, week-over-week logging retention (SQL over `workouts`),
