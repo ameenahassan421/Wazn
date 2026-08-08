@@ -50,6 +50,11 @@ import type { OverviewRow, PlannedSet, WorkoutPlan } from '../lib/plan'
 import { WorkoutOverview } from '../components/WorkoutOverview'
 import type { OverviewBlock } from '../components/WorkoutOverview'
 import { RestTimerBar } from '../components/RestTimer'
+import { RestCanvas } from '../components/RestCanvas'
+import { pickRestCard } from '../lib/rest-canvas'
+import type { CrewToday } from '../lib/rest-canvas'
+import { recordCoachView } from '../lib/coach'
+import { fetchFeed, nameOf } from '../lib/social'
 import {
   ack,
   classifyFailure,
@@ -175,6 +180,23 @@ export function LogScreen({
   // Owned by the screen, not by SetEntry: leaving the exercise to pick the
   // next one must not cancel the rest you are still taking.
   const timer = useRestTimer()
+  /**
+   * Which lift the running rest belongs to — E1's rest canvas needs to know
+   * what is coming, not what just happened.
+   *
+   * In a superset those are different exercises: a round alternates, so the
+   * next thing under the bar is the partner. `commitOutcome` already decides
+   * that (`advanceTo`), and this is the same answer kept for the canvas.
+   */
+  const [restingExerciseId, setRestingExerciseId] = useState<string | null>(null)
+  /**
+   * What the crew did today, fetched at most once per open workout and never on
+   * the load path — see the effect below.
+   */
+  const [crew, setCrew] = useState<CrewToday | null>(null)
+  const crewRequested = useRef(false)
+  /** One `rest_canvas` view row per workout. See RestCanvas's `onView`. */
+  const canvasViewed = useRef(false)
   const [summary, setSummary] = useState<WorkoutSummary | null>(null)
   const [summaryDate, setSummaryDate] = useState('')
   // The finished workout's identity, kept past the point where `workout` is
@@ -1789,7 +1811,14 @@ export function LogScreen({
       const target = exercisesById.get(outcome.advanceTo)
       if (target && view === 'entry') setCurrent(target)
     }
-    if (outcome.restSeconds !== null) timer.start(outcome.restSeconds)
+    if (outcome.restSeconds !== null) {
+      timer.start(outcome.restSeconds)
+      // The lift the canvas will talk about: the partner in a superset, this
+      // exercise otherwise. Set alongside the timer rather than derived from
+      // the board, because "whose rest is this" is a fact about the commit and
+      // the board cannot recover it afterwards.
+      setRestingExerciseId(outcome.advanceTo ?? exercise.id)
+    }
     return outcome
   }
 
@@ -1857,6 +1886,63 @@ export function LogScreen({
     exercisesById,
     restFor,
   ])
+
+  /**
+   * The crew's day, for the rest canvas's third card — §8-E1's "the crew's
+   * activity today".
+   *
+   * Fetched on the FIRST REST of a workout and never on the load path. The Log
+   * screen already issues seven requests before it can draw, and a garnish that
+   * only ever renders during a rest has no business in front of the Start
+   * button. Once per workout, online only, and silent about every failure: the
+   * canvas simply falls through to a card about the session.
+   */
+  useEffect(() => {
+    if (timer.remaining === null || crewRequested.current || !online) return
+    crewRequested.current = true
+    void (async () => {
+      try {
+        const rows = await fetchFeed()
+        const today = new Date().toDateString()
+        const mine = rows.filter(
+          (r) => r.user_id !== userId && new Date(r.ended_at).toDateString() === today,
+        )
+        if (mine.length === 0) return
+        const best = mine.reduce((a, b) => (b.volume_kg > a.volume_kg ? b : a))
+        setCrew({
+          lifters: new Set(mine.map((r) => r.user_id)).size,
+          best: {
+            name: nameOf(best),
+            volumeKg: best.volume_kg,
+            records: best.record_count,
+          },
+        })
+      } catch {
+        /* a card that does not exist is the honest version of this failing */
+      }
+    })()
+  }, [timer.remaining, online, userId])
+
+  /** Cleared with the workout, so the next session asks again. */
+  useEffect(() => {
+    if (workout) return
+    crewRequested.current = false
+    canvasViewed.current = false
+  }, [workout])
+
+  /**
+   * The one fact the rest canvas shows, or null for the plain timer. Pure, and
+   * derived from what the board already holds — see `src/lib/rest-canvas.ts`.
+   */
+  const resting = timer.remaining !== null
+  const restCard = useMemo(
+    () =>
+      resting ? pickRestCard({ unit, restingExerciseId, blocks, sets, crew }) : null,
+    // `resting`, not `timer.remaining`: the countdown changes every second and
+    // the card does not. Recomputing it 120 times a rest would hand the canvas
+    // a new object each tick for no change in what it says.
+    [resting, unit, restingExerciseId, blocks, sets, crew],
+  )
 
   // Up to three exercises from the last finished session, in the order they
   // were performed, each collapsed to its working sets.
@@ -2279,7 +2365,11 @@ export function LogScreen({
               which is what a sticky bar is for. */}
           {timer.remaining !== null && (
             <div
-              className="sticky z-10 -mx-[18px] bg-ink px-[18px] pt-2 pb-1"
+              // `flex-col` with a gap so the canvas and the bar read as two
+              // objects in one place rather than one object with a seam. With
+              // the canvas absent — which is most of the time — a single child
+              // makes the gap a no-op and the bar is exactly what it was.
+              className="sticky z-10 -mx-[18px] flex flex-col gap-1.5 bg-ink px-[18px] pt-2 pb-1"
               style={{
                 // The tab bar is 60px plus its own safe-area padding; 4px of
                 // air keeps the bar off it without a gap you could read as a
@@ -2292,6 +2382,23 @@ export function LogScreen({
                 borderTop: '1px solid rgba(236,235,232,0.09)',
               }}
             >
+              {/* E1's rest canvas, ABOVE the bar and inside the same wrapper.
+                  Above, because the timer row and the ± / Skip controls must
+                  keep the coordinates they have today — §8-E1 says the log
+                  control may not move, shrink, or arrive later, and a surface
+                  that grows downward would move all three. The card only ever
+                  appears while nothing is being touched (see RestCanvas), so
+                  the growth never lands under a thumb in motion. */}
+              <RestCanvas
+                card={restCard}
+                remaining={timer.remaining}
+                onView={() => {
+                  if (canvasViewed.current) return
+                  canvasViewed.current = true
+                  void recordCoachView('rest_canvas', 'view')
+                }}
+                onDismiss={() => void recordCoachView('rest_canvas', 'dismiss')}
+              />
               <RestTimerBar timer={timer} />
             </div>
           )}

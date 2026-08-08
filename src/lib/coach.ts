@@ -237,7 +237,11 @@ export async function fetchWeeklyReview(
 
 /** Fire-and-forget. GATE B1's instrument; never blocks or surfaces anything. */
 export async function recordCoachView(
-  surface: 'briefing' | 'debrief' | 'weekly_review',
+  // `rest_canvas` needs migration 0022; until that is applied the check
+  // constraint refuses the row and the catch below eats it, which is the
+  // correct outcome — an unapplied migration must never be visible on a
+  // surface somebody is resting under.
+  surface: 'briefing' | 'debrief' | 'weekly_review' | 'rest_canvas',
   action: 'view' | 'dismiss' = 'view',
 ): Promise<void> {
   try {

@@ -100,6 +100,29 @@ async function shoot(browser, origin, { width, empty, active }) {
         path: `${OUT}/active-${width}-committed.png`,
         fullPage: false,
       })
+
+      /**
+       * E1's rest canvas, which is invisible to every other check in the wall
+       * — it is gated on two seconds of NOT being touched, so a test that
+       * drives the app can only ever see it by deliberately holding still.
+       *
+       * The click above is the reach that starts the rest, exactly as a thumb
+       * would, so this is the real sequence rather than a staged one. Two
+       * frames: the canvas up, then the same board a scroll later, which is
+       * the whole "vanishes the moment the user reaches for the next set"
+       * rule and the only way to see that it actually vanishes.
+       */
+      await page.waitForTimeout(2800)
+      await page.screenshot({
+        path: `${OUT}/active-${width}-restcanvas.png`,
+        fullPage: false,
+      })
+      await page.evaluate(() => window.scrollBy(0, 24))
+      await page.waitForTimeout(200)
+      await page.screenshot({
+        path: `${OUT}/active-${width}-restcanvas-gone.png`,
+        fullPage: false,
+      })
     }
 
     await page.evaluate(() => window.scrollTo(0, 0))
@@ -221,7 +244,7 @@ async function main() {
   }
 
   console.log(
-    `\n${TABS.length * WIDTHS.length * 2 + WIDTHS.length * 7} screenshots in ${OUT}/`,
+    `\n${TABS.length * WIDTHS.length * 2 + WIDTHS.length * 9} screenshots in ${OUT}/`,
   )
   if (crashes.length) {
     // An uncaught error no longer blanks a tab — U1c's boundaries catch it —

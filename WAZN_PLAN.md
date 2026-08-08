@@ -959,7 +959,44 @@ coach_surfaces.sql` asserts what the three functions RETURN against a seeded
   `supabase db push` would now wrongly re-attempt sixteen migrations rather
   than eighteen. **0019 is still deliberately unapplied**, so the gap at that
   version is correct rather than an omission.
-- **Last updated:** 2026-08-08 by Claude Code (B1's briefing and debrief; B2's
+- **E1 — the rest canvas — is BUILT (2026-08-08).** The between-sets surface
+  offense plan §8-E1 calls the largest unclaimed one in the category. One card
+  above the existing rest bar: what is coming and why the number moved, a
+  record, the crew's day, or where the session stands — fixed priority, and
+  null when there is nothing worth saying, which is the plain timer exactly as
+  before. **The log control did not move**: the board, the check buttons and the
+  timer row keep their coordinates, tap count is unchanged at one, and tap → set
+  on screen measured **47 → 48ms** either side on the committed harness.
+- **"Vanishes the moment the user reaches" is enforced by the inverse rule.**
+  Hiding on `pointerdown` would already have taken the tap meant for a check, so
+  the canvas may only ever APPEAR after two seconds of nothing being touched
+  (`src/lib/use-idle.ts`, capture-phase listeners). It therefore cannot grow
+  under a thumb in motion — a stronger property than hiding fast. It also stays
+  away for the last 8 seconds of a rest.
+- **No model phrases it, deliberately.** §8-E1 asks for one; a rest happens
+  15–30 times a session, so that is 15–30 Edge Function calls per workout
+  against a tier sized for one regeneration a week, on the critical path of the
+  flow §2.1 calls sacred. Deterministic only, composed the way `briefSkeleton`
+  is. See DECISIONS.md — the door is left open for one phrased line per session.
+- **A screenshot caught the defect again, and it is the third time this week.**
+  The exercise name in the kicker rendered "NEXT UP · OVERHEAD PRESS (BARBEL…",
+  truncated mid-word on the one surface that exists to be read at three feet.
+  The name has its own line now and a test asserts every kicker is ≤ 20
+  characters. **The harness had to be taught to hold still** to see the canvas
+  at all — a surface gated on not being driven was its fourth blind spot.
+- **Migration 0022 is written and NOT applied.** It widens
+  `coach_views.surface` to admit `rest_canvas`, reusing GATE B1's instrument.
+  Unapplied it means the insert is refused and swallowed; nothing about the
+  canvas degrades except the count. Exposure is one row per workout, dismissals
+  every time — a dismissal is the kill signal §8-E1 names.
+- **Wall green on the merged tree:** 660 tests (30 new), 8 Playwright tests,
+  `check:sql` executes all 22 migrations from empty, `check:deploy` passes.
+  Precache **565.00 → 569.93 KiB** with config, under the ~600 KiB ceiling.
+  Cold start 2186 → 2235ms, still the one standing miss and still inside the
+  ±200ms noise band.
+- **Last updated:** 2026-08-08 by Claude Code (E1, the rest canvas; the idle
+  gate; migration 0022; the truncated kicker a screenshot found). Previously
+  2026-08-08 (B1's briefing and debrief; B2's
   weekly review contract and eval harness; migration 0021; the executable
   migration runner and the two defects it caught; the kg/lbs defect a
   screenshot found). Merged with U3b the same day — **the perf figures in the
