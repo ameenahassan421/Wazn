@@ -401,8 +401,8 @@ verbatim, so they survive even if this file isn't read.**
   RLS through one predicate, `private.can_view`; proved by
   `supabase/tests/rls_social.sql` (8 assertions, all passing).
 - **Stage 4 launch items:** wake-lock, install prompt, zero-data empty states,
-  invite onboarding — all done. **Offline sync is NOT built** and stays a
-  fast-follow.
+  invite onboarding — all done. **Offline sync is built (U3b, 2026-08-08)** —
+  see the U3b entries near the bottom of this section.
 - **Migrations live in production: 0001–0011.** All applied and verified by
   execution, not by parse.
 - **2C is LIVE.** `OPENROUTER_API_KEY` set 2026-08-04; Coach's Notes verified
@@ -769,8 +769,8 @@ event_message` comes back empty), so nothing here inspected message contents;
   is computed in the database and an optimistic row genuinely cannot know it.
   The pending queue and the board's client-only state are checkpointed to
   localStorage on every change, so killing the tab mid-set loses nothing.
-  Finish flushes first and refuses while writes are outstanding. **U3b —
-  IndexedDB, the offline queue and GATE 4 — is NOT built.**
+  Finish flushes first and refuses while writes are outstanding. **U3b is now
+  built — see below.**
 - **R5 is BUILT (2026-08-08) — "Bring your history from Hevy".** File picker →
   client-side parse → preview (workouts, sets, date range, which lifts matched,
   which will be created, every problem the file has) → one confirm that writes
@@ -785,14 +785,74 @@ event_message` comes back empty), so nothing here inspected message contents;
   worker's precache — an import that writes to Supabase cannot work offline
   anyway, so precaching it was waste. **7.8 KiB of headroom is a warning, not a
   budget: the next UI phase should expect to remove something.**
-- **Cold start is still the one missed budget: 2141ms against 2000ms.** It has
-  measured 2308 / 2192 / 2130 / 2317 / 2171 / 2141 across runs, so treat
-  anything under ~200ms of movement as noise rather than progress. Everything
-  else passes after B1/B2: warm 1026ms, tap → feedback 33ms, tap → set on
-  screen 48ms, tab switch 18ms, Lighthouse 97, CLS 0.001. **The Coach tab's
-  "first render" figure in `npm run perf` is no longer a precached read** — it
-  left the precache at B2, so that number is a warm localhost fetch rather than
-  what a phone on gym wifi pays.
+- **Cold start is still the one missed budget: 2193ms against 2000ms.** It has
+  measured 2308 / 2192 / 2130 / 2317 / 2171 / 2141 / 2193 across runs, so treat
+  anything under ~200ms of movement as noise rather than progress. **This
+  figure and the ones below are from the MERGED tree** — U3b and B1/B2 were
+  each measured before the other landed, so neither branch's numbers described
+  what shipped. Everything else passes: warm **1032ms**, tap → feedback
+  **30ms**, tap → set on screen **43ms**, tab switch **19ms**, Lighthouse
+  **97**, CLS 0.001. Precache **565.00 KiB** with the four excluded chunks.
+- **U3b is BUILT (2026-08-08), and GATE 4 now has an answer.** A workout can be
+  started, logged and finished with no signal at all: the queue widened from
+  sets to an ordered op log (`set` / `workout-start` / `workout-finish` /
+  `workout-discard`), the workout's id is client-generated like a set's, and
+  order in the queue IS the foreign-key guarantee. A durable IndexedDB store
+  (raw, no `idb` — justified in DECISIONS.md) holds the queue and a structured
+  read cache; the localStorage checkpoint stayed as the synchronous last-gasp
+  copy and the load path merges the two by id.
+- **Offline is no longer treated as failure**, which was the §2.1 violation
+  nobody had noticed. `classifyFailure` splits `landed` / `offline` /
+  `rejected`; an offline write does not count an attempt and is never
+  surfaced, so a basement gym no longer produces an error banner over a board
+  somebody is lifting from. Same rule now covers the rest, note and
+  block-order writes.
+- **THE TRUST LADDER'S RUNG 1 HAD NEVER WORKED.** The checkpoint effect clears
+  itself on mount (`if (!workout) clearCheckpoint`), it is declared before the
+  load effect, and `loadCheckpoint` runs after an await inside it — so the
+  clear always beat the read. "Kill the tab mid-workout, reopen, nothing lost"
+  shipped in U3a and had never once restored anything. Fixed; both persist
+  effects now wait for the load path to read the device first. Found by the
+  first check that ever drove a reload in a browser, and it is the
+  muscle-balance chart again: right in intent, wired wrong, invisible because
+  nothing rendered it.
+- **The Log tab could hang on "Loading…" forever.** A dead radio rejects and
+  the offline path takes over; a network that accepts and then goes quiet never
+  rejects at all, so `Promise.all` never settled. The load path now has a
+  six-second deadline and skips the network entirely when the browser already
+  says the radio is off. Found by a screenshot, not a test.
+- **`e2e/offline.spec.ts` runs in CI** — three tests against the real bundle
+  with the project's network cut: a full airplane-mode workout syncing clean on
+  reconnect, a tab killed mid-workout losing nothing, and a dead-zone reopen
+  still drawing the board. The stub is stateful now, and answers a replayed
+  primary key with `23505` exactly as Postgres would.
+- **The parity plan's Workbox plan for `previous_session` is not
+  implementable.** Supabase RPCs are POSTs and the Cache API stores GETs only,
+  so no service worker can cache them. The NetworkFirst route covers
+  `/rest/v1/` GETs (real value for History and Progress); everything the Log
+  screen needs is cached structurally in IndexedDB instead. The read cache is
+  emptied by `device-reset.ts` when the signed-in user changes — not on
+  sign-out, because signing back in as yourself with a set still queued must
+  not lose the set.
+- **The precache went over again and was cut again: 600.15 → 559.38 KiB.**
+  Progress, Coach and Friends left the precache on the same argument that moved
+  the import chunk — all three read through RPCs and an Edge Function, so
+  precaching them buys nothing offline. They are runtime-cached on first open.
+  `npm run check:deploy` still passes. **40 KiB of headroom, for the first time
+  in three phases.**
+- **U7 budgets re-measured:** cold start **2164ms** (the one standing miss, and
+  inside the ±200ms noise band: 2308 / 2192 / 2130 / 2317 / 2171 / 2164), warm
+  **1035ms**, tap → feedback **32ms**, tap → set on screen **48ms**, tab switch
+  **20ms**, Lighthouse **98**, CLS 0.001. (Measured on the U3b branch before
+  B1/B2 merged; the bullet at the top of this section carries the merged-tree
+  run that supersedes it.)
+- **`npm run shots` can cut the network now**, after being caught blind for the
+  third time. It photographs the board with a set queued and the board reopened
+  from cache; both frames are what found the hang above.
+- **Still NOT built, deliberately:** starting a routine you have never opened on
+  this device while offline (there is nothing cached to start from — one opened
+  before works), removing a block that has committed sets while offline, and
+  editing past workouts offline. Each reports honestly rather than pretending.
 - **MIGRATIONS ARE EXECUTED IN CI NOW, NOT JUST PARSED.** `npm run check:sql`
   starts a throwaway local Postgres, applies `scripts/pg_shim.sql` (the `auth`
   schema, the platform roles, the default privileges) and then every migration
@@ -866,7 +926,12 @@ coach_surfaces.sql` asserts what the three functions RETURN against a seeded
 - **Last updated:** 2026-08-08 by Claude Code (B1's briefing and debrief; B2's
   weekly review contract and eval harness; migration 0021; the executable
   migration runner and the two defects it caught; the kg/lbs defect a
-  screenshot found). Previously 2026-08-08 (U3a's optimistic writes and
+  screenshot found). Merged with U3b the same day — **the perf figures in the
+  two entries above were each measured before the other landed, and the numbers
+  below are a fresh run of the merged tree.** Previously 2026-08-08 (U3b: the
+  offline op log, the IndexedDB store and read cache, the airplane-mode e2e,
+  and the two defects they found — rung 1 never restoring, and the load path
+  with no deadline). Previously 2026-08-08 (U3a's optimistic writes and
   checkpoint; R5's Hevy import; the precache ceiling breach and its fix).
   Previously 2026-08-08 (U2b, the workout overview; the
   superset round-rest defect it uncovered; migration 0020; the harness's missing

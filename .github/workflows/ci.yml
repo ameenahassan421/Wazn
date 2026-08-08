@@ -131,8 +131,16 @@ jobs:
         run: npx playwright install --with-deps chromium
 
       - name: Smoke
-        # The only thing in this repo that looks at the app. Three defects
-        # reached production in one day through the gap this closes:
+        # The only thing in this repo that looks at the app, and since U3b the
+        # only thing that can answer GATE 4 — `e2e/offline.spec.ts` runs a
+        # whole workout with the project's network cut and asserts what the
+        # server holds afterwards. It found the defect that made rung 1 a
+        # no-op: the checkpoint was cleared on mount, before the load path
+        # could read it, so "kill the tab, reopen, nothing lost" had never
+        # actually worked.
+        #
+        # Three more defects reached production in one day through the gap
+        # this job closes:
         # `inset-block-0` rendering four elements at height 0, follows and
         # likes never sending their owner column, and progress functions that
         # had never drawn. Lint sees syntax, typecheck sees types, unit tests

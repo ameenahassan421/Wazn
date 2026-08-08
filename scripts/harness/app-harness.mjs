@@ -762,10 +762,31 @@ function withReviewUnit(notes, unit) {
   }
 }
 
-export async function installSupabaseStub(page, data, { latencyMs = 0 } = {}) {
+/**
+ * Cut the project's network, mid-run.
+ *
+ * A mutable holder rather than a parameter, because the offline states worth
+ * photographing only exist AFTER the app has loaded — the point is a phone
+ * that walks into a basement, not one that never had signal. Flip it between
+ * screenshots.
+ */
+export function offlineSwitch() {
+  return { offline: false }
+}
+
+export async function installSupabaseStub(
+  page,
+  data,
+  { latencyMs = 0, network = { offline: false } } = {},
+) {
   let inserted = 0
 
   await page.route(`${SUPABASE_URL}/**`, async (route) => {
+    // What a dead radio does: nothing. Chromium turns this into the
+    // `TypeError: Failed to fetch` the app classifies as offline rather than
+    // as a refusal.
+    if (network.offline) return route.abort('internetdisconnected')
+
     // A fulfilled route never touches the network stack, so CDP's emulated
     // latency does not apply to it. Left alone that silently turns every
     // Supabase call into a free one: the first perf run measured "tap -> set

@@ -401,13 +401,11 @@ TAB SWITCH
   first render         ${Object.entries(tabs?.firstVisit ?? {})
     .map(([k, v]) => `${k} ${v}ms`)
     .join(' · ')}
-                       (first RENDER, not first download, for History,
-                        Progress and Friends: the service worker precaches
-                        those three, so an installed PWA never pays a network
-                        fetch to open them. Coach is NOT precached as of B2 —
-                        both its tools are Edge Function calls, so it cannot
-                        do anything offline — and its number here is a warm
-                        localhost fetch, not what a phone on gym wifi pays.)
+                       (first RENDER, not first download. History is in the
+                        main chunk; Progress, Coach and Friends are fetched on
+                        first open and cached at runtime from then on — they
+                        left the precache in U3b, because none of the three
+                        can show anything without a network anyway)
 
 LIGHTHOUSE   ${
     lh.skipped

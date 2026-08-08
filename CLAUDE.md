@@ -114,9 +114,10 @@ which one it has.
 
 ## Scope — do not build without being asked
 
-Routines/templates, leaderboards, invites, social, offline sync, rest timers,
+Routines/templates, leaderboards, invites, social, rest timers,
 custom exercise creation, Arabic strings, payments, a settings screen, per-set
-correction tooling, body-composition analysis.
+correction tooling, body-composition analysis. (Offline sync was on this list
+until U3b built it on 2026-08-08 as Stage 4's planned fast-follow.)
 
 **Anything AI/LLM.** Stage 8 in the plan describes what would get built and
 how, but it is conditional on the Gate 1 backlog actually asking for it — an

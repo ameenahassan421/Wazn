@@ -157,6 +157,32 @@ This is the one that cannot be done at a table.
       TRYWAZN.APP in the footer. No emoji, no photo.
 - [ ] History's top row now shows that session with volume and set count.
 
+### Airplane mode — the one that decides whether the app is trustworthy
+
+Do this on a real phone, in the room with the worst signal you train in. Turn
+airplane mode ON before you start, not halfway through: the point is a session
+that is offline from its first tap to its last.
+
+- [ ] Start a workout with airplane mode on. It opens immediately — no spinner,
+      no error.
+- [ ] Log four or five sets. Each one appears the instant you press the check,
+      exactly as it does with signal. **Nothing red, nothing amber, no banner.**
+- [ ] Under the duration it says **"Offline · N sets saved on this device"**,
+      and N goes up as you log. That line is the only difference you should see.
+- [ ] Kill the app entirely — swipe it out of the app switcher — and reopen it,
+      still in airplane mode. The workout is still open, every set is still
+      there, and the exercise names and previous-session numbers are still on
+      the board.
+- [ ] Finish the workout, still offline. You get the summary card. It shows no
+      PRs, and that is correct — records are computed on the server and it
+      cannot ask. They appear in History and Progress once you reconnect.
+- [ ] Turn airplane mode off. Within a few seconds the line disappears.
+- [ ] Open History. **The session is there, with every set, exactly once.** Then
+      check Progress: any record you actually set is now flagged.
+
+If any set is missing or duplicated after that last step, stop and say so —
+that is the single failure this whole phase exists to prevent.
+
 ---
 
 ## 5. The AI surfaces
@@ -200,11 +226,16 @@ This is the one that cannot be done at a table.
 
 ## What is deliberately NOT on this list
 
-**Offline logging.** It is a fast-follow, built while the cohort is live, and
-it is not in this build. If a tester loses signal mid-workout, the set will
-fail to save. Tell them that up front — it is the single most likely thing to
-cost somebody real data, and a known limitation is a different conversation
-from a surprise.
+**Anything that needs the server to answer, while offline.** Logging works with
+no signal (§4 above). Three things still do not, and each says so rather than
+pretending: starting a routine you have never opened on this device, removing an
+exercise that already has sets in it, and editing a past workout. All three are
+reachable again the moment there is signal.
+
+**Two accounts on one phone.** Signing in as somebody else wipes this device's
+cached data on purpose. Signing out and back in as yourself does not, so a
+queued set survives it — but if you are testing account switching, expect the
+first load after a switch to need a connection.
 
 **App Store / Play Store.** Stage 4B, after beta.
 

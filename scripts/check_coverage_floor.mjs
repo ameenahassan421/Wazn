@@ -60,6 +60,8 @@ const EXEMPT = {
     'Canvas rendering. jsdom has no canvas; asserting the drawing calls would pin the implementation rather than the image.',
   'routines.ts':
     'PostgREST query shapes with no client-side branching. The ordering caveat it documents is a database behaviour.',
+  'cache-names.ts':
+    'One string constant, shared between vite.config.ts and device-reset.ts so the two cannot disagree. There is no behaviour to assert.',
 }
 
 const files = fs
