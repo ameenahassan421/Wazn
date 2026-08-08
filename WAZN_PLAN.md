@@ -470,7 +470,7 @@ verbatim, so they survive even if this file isn't read.**
   routine through the app since the fix. Coach → Build me a routine, on a real
   account, is what proves it. The ledger says `generate-routine` has never
   produced a successful generation in its life.
-- **Open decision for Ameen:** four zero-set workouts from desktop testing
+- **CLOSED 2026-08-08 — deleted, and there were ten rather than four.** Open decision for Ameen: four zero-set workouts from desktop testing
   still render as blank History rows. Say "delete all my workouts with zero
   sets" and they go server-side.
 - **Next action (superseded — see the U4 entry at the foot of this section):**
@@ -742,7 +742,8 @@ event_message` comes back empty), so nothing here inspected message contents;
   wired wrong, invisible because nothing drew the round. Fixed in the new
   `src/lib/commit.ts` with a full A/B/A/B replay as a test. **Protect-list items
   are not verified until something renders them.**
-- **Migration 0020 (`workouts.exercise_order`) is PARSE-CHECKED, NOT APPLIED.**
+- **Migration 0020 (`workouts.exercise_order`) — APPLIED 2026-08-08; the note
+  below describes the state before that.**
   It is a `uuid[]` column, deliberately not a join table: an unapplied column
   makes one PATCH fail and the board falls back to deriving order from the sets
   (the pre-v2.2 behaviour), where an unapplied table would error on every write
@@ -913,7 +914,8 @@ event_message` comes back empty), so nothing here inspected message contents;
   dismissal is the only in-app signal of attention the design can claim. The
   gate's second half — a tester changing a session because of it — stays an
   exit-interview question, because nothing in the app can observe it.
-- **Migration 0021 is EXECUTED AND UNIT-TESTED, NOT APPLIED.** It carries
+- **Migration 0021 — APPLIED 2026-08-08; the note below describes the state
+  before that.** It carries
   `session_brief()`, `session_debrief()`, `weekly_review()`, the `coach_briefs`
   cache, `coach_views`, and a widened `ai_generations.feature` check — without
   that last one every ledger write from `coach-brief` would fail silently and
@@ -927,49 +929,109 @@ coach_surfaces.sql` asserts what the three functions RETURN against a seeded
   Function calls, so precached it installs 8 KiB that can render nothing
   offline. The warning in the previous entry was correct and has now been
   spent; the phase ends with more headroom than it started with.
-- **THREE MIGRATIONS ARE NOW UNAPPLIED AT ONCE — 0019, 0020, 0021 — against a
-  production database at 0018.** They are not equally urgent and lumping them
-  together is how the last drift happened, so: **0021 is load-bearing** (until
-  it is applied B1's briefing and B2's review render nothing at all, and the
-  ledger widening it carries is what stops both surfaces running unmetered);
-  **0020 costs one thing** (block order does not survive a reload; everything
-  else degrades to the pre-v2.2 behaviour); **0019 is deliberate** and has no
-  caller until B3. The last time this list was allowed to grow, a probe found
-  production four migrations behind what STATUS claimed.
+- **0020 AND 0021 ARE APPLIED (2026-08-08), and B1/B2 are LIVE.** Applied
+  through the Supabase Management API — `SUPABASE_ACCESS_TOKEN` is in the
+  sandbox environment and `api.supabase.com/v1/projects/$REF/database/query`
+  runs DDL, which reverses the long-standing "no egress from a sandboxed
+  session" note in CLAUDE.md. Verified against `information_schema` rather than
+  trusted from a success flag: `workouts.exercise_order` exists as a `uuid[]`;
+  `coach_briefs` and `coach_views` have RLS on with 1 and 2 policies;
+  `session_brief`, `session_debrief` and `weekly_review` all exist as
+  SECURITY INVOKER; and `ai_generations_feature_check` now admits `briefing`
+  and `debrief`, **without which both new surfaces would have run completely
+  unmetered**.
+- **The three functions were run against the real 152-workout history, as the
+  real user.** `session_brief()` returned a due routine (`Core & Conditioning`,
+  never run — the rotation rule preferring a never-run routine, working as
+  designed), a target of 15.00 kg × 12 to beat a 19.1 e1RM on Cable Crunch, and
+  three muscle groups at zero this week. `weekly_review()` returned five wins,
+  two genuine plateaus (Lat Pulldown, slope -0.72 over 7 sessions; Lateral
+  Raise, -0.10 over 6) and one recommendation. **RLS was proved rather than
+  assumed**: a different `request.jwt.claim.sub` asking for the owner's workout
+  gets `found: false` and `total_sets_90d: 0`, while the owner gets their own.
+- **The zero-set workouts are deleted, and there were TEN, not four.** STATUS
+  had said four since the note was written; six more accumulated. All ten were
+  finished, so none was a live session, and the delete carried an
+  `ended_at is not null` guard so an in-progress workout could not have been
+  caught by it. **162 → 152 workouts, zero-set count now 0, and
+  `workout_sets` unchanged at 3210** — the check that matters, because it says
+  nothing with data in it was touched. The open decision in this section is
+  closed.
+- **The migration ledger now holds five rows**, having gained
+  `workout_exercise_order` and `coach_surfaces`. It is still silent about
+  0001–0015, so it still reads as though the database began at 0016 — but a
+  `supabase db push` would now wrongly re-attempt sixteen migrations rather
+  than eighteen. **0019 is still deliberately unapplied**, so the gap at that
+  version is correct rather than an omission.
+- **E1 — the rest canvas — is BUILT (2026-08-08).** The between-sets surface
+  offense plan §8-E1 calls the largest unclaimed one in the category. One card
+  above the existing rest bar: what is coming and why the number moved, a
+  record, the crew's day, or where the session stands — fixed priority, and
+  null when there is nothing worth saying, which is the plain timer exactly as
+  before. **The log control did not move**: the board, the check buttons and the
+  timer row keep their coordinates, tap count is unchanged at one, and tap → set
+  on screen measured **47 → 48ms** either side on the committed harness.
+- **"Vanishes the moment the user reaches" is enforced by the inverse rule.**
+  Hiding on `pointerdown` would already have taken the tap meant for a check, so
+  the canvas may only ever APPEAR after two seconds of nothing being touched
+  (`src/lib/use-idle.ts`, capture-phase listeners). It therefore cannot grow
+  under a thumb in motion — a stronger property than hiding fast. It also stays
+  away for the last 8 seconds of a rest.
+- **No model phrases it, deliberately.** §8-E1 asks for one; a rest happens
+  15–30 times a session, so that is 15–30 Edge Function calls per workout
+  against a tier sized for one regeneration a week, on the critical path of the
+  flow §2.1 calls sacred. Deterministic only, composed the way `briefSkeleton`
+  is. See DECISIONS.md — the door is left open for one phrased line per session.
+- **A screenshot caught the defect again, and it is the third time this week.**
+  The exercise name in the kicker rendered "NEXT UP · OVERHEAD PRESS (BARBEL…",
+  truncated mid-word on the one surface that exists to be read at three feet.
+  The name has its own line now and a test asserts every kicker is ≤ 20
+  characters. **The harness had to be taught to hold still** to see the canvas
+  at all — a surface gated on not being driven was its fourth blind spot.
+- **Migration 0022 is written and NOT applied.** It widens
+  `coach_views.surface` to admit `rest_canvas`, reusing GATE B1's instrument.
+  Unapplied it means the insert is refused and swallowed; nothing about the
+  canvas degrades except the count. Exposure is one row per workout, dismissals
+  every time — a dismissal is the kill signal §8-E1 names.
+- **Wall green on the merged tree:** 660 tests (30 new), 8 Playwright tests,
+  `check:sql` executes all 22 migrations from empty, `check:deploy` passes.
+  Precache **565.00 → 569.93 KiB** with config, under the ~600 KiB ceiling.
+  Cold start 2186 → 2235ms, still the one standing miss and still inside the
+  ±200ms noise band.
 - **The release ladder had drifted from what shipped, and §11 of the offense
-  plan now carries a state column.** Two releases hold a label they have not
-  earned: **R5 "Switch" is F1 + U4** and only the import shipped — the commit
-  is titled `R5` and this file said "R5 is BUILT" — and **R4 "It knows" is
-  B1 + B2 + E1**, of which the rest canvas was not built. Nothing was
-  mis-built; phase IDs are what gets committed and releases are what the table
-  promises, and nothing reconciled the two. Both of R4's stated dependencies
-  are also still open, including the OpenRouter hard cap §10 asks to be set
-  _before B1_, which was still unset when B1 merged.
+  plan now carries a state column.** As of this merge **R4 "It knows" is
+  COMPLETE** — B1 + B2 + E1, all three. **R5 "Switch" is still not**: §11
+  defines it as F1 + U4, the commit that shipped the Hevy import is titled
+  `R5`, and this file said "R5 is BUILT" while U4 has never started. Nothing
+  was mis-built; phase IDs are what gets committed and releases are what the
+  table promises, and nothing reconciled the two. One R4 dependency stayed open
+  through the whole release: the OpenRouter hard cap §10 asks to be set _before
+  B1_, still unset with three model-calling surfaces now live.
 - **Four parity-gap items verified open (2026-08-08), each checked in code
-  rather than assumed.** **L9 is now HALF built and the missing half got
-  worse**: B1's `session_brief()` computes the due routine by rotation and the
-  briefing says "Upper A is up", but `routines.ts` and `RoutineList.tsx` are
-  untouched, so the list directly under that sentence is still in stored
-  `position` order — a card naming a day the list does not reflect. **L8** was
-  never built (`Discard` appears in `LogScreen.tsx` and nowhere else; the
-  header has no entry, and the amendment asking for one was written because
-  Ameen went looking and could not find it). **L3** was never applied and
-  never decided either way — the tick is still 30s. **O15** stands, with a
-  clarification: `routine_exercises.position` IS written; it is the routine
-  list's own order that has no writer, which pairs it with L9.
+  rather than assumed.** **L9 is HALF built and the missing half got worse**:
+  B1's `session_brief()` computes the due routine by rotation and the briefing
+  says "Upper A is up", but `routines.ts` and `RoutineList.tsx` are untouched,
+  so the list directly under that sentence is still in stored `position` order
+  — a card naming a day the list does not reflect. **L8** was never built
+  (`Discard` appears in `LogScreen.tsx` and nowhere else; the header has no
+  entry, and the amendment asking for one was written because Ameen went
+  looking and could not find it). **L3** was never applied and never decided
+  either way — the tick is still 30s. **O15** stands, with a clarification:
+  `routine_exercises.position` IS written; it is the routine list's own order
+  that has no writer, which pairs it with L9.
 - **U4 is NEXT, and it is marked so in `docs/IMPLEMENTATION_PROMPTS.md`.**
   Three reasons: it is the half of R5 that never shipped; it closes the last
   block of P-class parity gaps in one phase (O3, O5, O8, O12 — after it the
   only P-items left are native-gated or post-retention); and **it is the only
   open phase whose gate can be run without a beta**, because GATE U4 asks
   whether Ameen can answer "is my bench actually progressing?" from one screen
-  against nine months of history already in production. The four items above
-  ride with it. E1, the rest canvas, deliberately does NOT — the offense plan
-  gates it on testers describing it, and it is the one pillar adjacent to the
-  sacred core loop.
-- **Last updated:** 2026-08-08 by Claude Code (the migration backlog, the
-  release-ladder drift, the four verified gap items, and U4 marked next).
-  Previously 2026-08-08 by Claude Code (B1's briefing and debrief; B2's
+  against the 152 workouts already in production. The four items above ride
+  with it.
+- **Last updated:** 2026-08-08 by Claude Code (E1, the rest canvas; the idle
+  gate; migration 0022; the truncated kicker a screenshot found — merged with
+  the release-ladder accounting, the four verified gap items, and U4 marked
+  next). Previously 2026-08-08 (B1's briefing and debrief; B2's
+
   weekly review contract and eval harness; migration 0021; the executable
   migration runner and the two defects it caught; the kg/lbs defect a
   screenshot found). Merged with U3b the same day — **the perf figures in the

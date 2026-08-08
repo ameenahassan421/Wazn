@@ -52,8 +52,14 @@ npm run build        # typecheck + production build
 npm run format       # prettier
 ```
 
-Before pushing: `npm run lint && npm run format:check && npm run typecheck && npm run check:vercel && npm test && npm run build`.
-CI runs exactly that on every PR.
+Before pushing: `npm run lint && npm run format:check && npm run typecheck && npm run check:vercel && npm run check:coverage && npm test && npm run build`.
+
+**That list is not the whole wall, and this line used to claim it was.** CI's
+`check` job also runs `check:migrations`, `check:sql` and `deno check` on the
+Edge Functions, and a second `smoke` job runs Playwright. E1 was pushed green on
+the old list and failed on `check:coverage` — every module in `src/lib` needs a
+test file or a written exemption, and a new one with neither fails. Read
+`.github/workflows/ci.yml` rather than this paragraph when it matters.
 
 **Touching `vercel.json`?** `npm run check:vercel` is the only thing in the repo
 that reads it. A `"//"` comment key in a rewrite once made Vercel reject every
@@ -157,5 +163,16 @@ effects run before the parent's, which silently broke the set auto-fill once.
 
 - Supabase project ref: `ttasiwxeqerhsztxjxip`
 - Production: https://workout-theta-plum.vercel.app (Vercel, auto-deploys `main`)
-- Sandboxed sessions have **no network egress to Supabase** unless the
-  environment allowlist is widened. See `docs/agent-setup.md`.
+- **Sandboxed sessions CAN reach Supabase now**, which reverses what this line
+  said until 2026-08-08. `SUPABASE_ACCESS_TOKEN` and `SUPABASE_PROJECT_REF` are
+  in the environment, and `https://api.supabase.com/v1/projects/$REF/database/query`
+  answers — that is a Management API personal access token, and it can run
+  arbitrary SQL, including DDL. Migrations 0020 and 0021 were applied through
+  it. Direct Postgres (5432 / the 6543 pooler) is still NOT reachable, so
+  `scripts/run_sql.sh` and its `DATABASE_URL` remain a laptop-only path.
+- **That token is production DDL access. Treat it as such.** Plan §2.6 makes a
+  destructive change an ask, and applying a migration is a change to the
+  database every user depends on: confirm before applying, verify against
+  `information_schema` afterwards rather than trusting a success flag, and
+  write what actually landed into STATUS. A `[]` response means "no rows
+  returned", not "it worked".

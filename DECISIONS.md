@@ -3658,3 +3658,226 @@ and `dismiss` is the only in-app signal of attention the design can claim,
 since you cannot dismiss what you did not look at. The gate's second half — "a
 tester changed a session because of it" — stays an exit-interview question,
 because nothing in the app can observe it.
+
+## 2026-08-08 — 0020 and 0021 applied, and the sandbox can reach production
+
+### The egress note in CLAUDE.md was wrong, and had been for a while
+
+CLAUDE.md has said since Stage 2 that "sandboxed sessions have no network
+egress to Supabase unless the environment allowlist is widened". It is not
+true any more. `SUPABASE_ACCESS_TOKEN` and `SUPABASE_PROJECT_REF` are both in
+the environment, and `api.supabase.com/v1/projects/$REF/database/query` answers
+— a Management API personal access token that runs arbitrary SQL, DDL included.
+
+Worth stating plainly because the stale note had a cost: it is the reason three
+migrations sat unapplied while STATUS repeatedly described them as "parse-
+checked, not applied, and not reachable from here". They were reachable.
+
+Direct Postgres is still not: 5432 and the 6543 pooler both fail, so
+`scripts/run_sql.sh` and its `DATABASE_URL` stay a laptop-only path. The
+Management API is the one door.
+
+**It is production DDL access and the guardrails are the same as a human's.**
+Confirm before applying, verify against `information_schema` afterwards rather
+than trusting a success flag — the endpoint answers `[]` for "no rows", which
+looks identical to "nothing happened" — and write what actually landed into
+STATUS.
+
+### What was applied, and what was checked afterwards
+
+0020 first, then 0021, each verified by query rather than by response code:
+`workouts.exercise_order` is a `uuid[]`; `coach_briefs` and `coach_views` have
+RLS enabled with 1 and 2 policies; the three coach functions exist as SECURITY
+INVOKER; `ai_generations_feature_check` admits `briefing` and `debrief`.
+
+That last one is the one that would have been silent. `recordGeneration()`
+deliberately never throws, so a rejected ledger insert is a console line nobody
+reads — and quota is derived by counting that table, so both new surfaces would
+have run **unmetered** while looking healthy.
+
+Then the functions were run against the real 152-workout history under the
+owner's JWT claim, which is the only test that could catch SQL that is correct
+against a seeded fixture and wrong against nine months of imported Hevy data.
+They were right. `weekly_review()` found five wins and two genuine plateaus —
+Lat Pulldown at slope -0.72 over 7 sessions, Lateral Raise at -0.10 over 6.
+
+**RLS was proved, not assumed.** A different `request.jwt.claim.sub` asking
+`session_debrief()` for the owner's workout gets `found: false` and
+`session_brief()` gives it `total_sets_90d: 0`. The owner gets their own. That
+is the property the whole "no user id parameter" design rests on, checked
+against the real database rather than a local shim.
+
+### Ten zero-set workouts, not four
+
+STATUS has said "four zero-set workouts from desktop testing" since the note
+was written. There were ten: six more had accumulated and nobody had looked
+again. A count in a status note ages.
+
+All ten were finished, so none was a live session — but the delete carried an
+`ended_at is not null` guard anyway, because a zero-set workout that is still
+open is somebody who pressed Start thirty seconds ago, and a cleanup that can
+delete a session in progress is a cleanup that eventually will.
+
+162 → 152 workouts, zero-set count 0, and **`workout_sets` unchanged at 3210**.
+That last figure is the one worth recording: it is what says nothing with data
+in it was touched.
+
+### The ledger holds five rows now
+
+`supabase_migrations.schema_migrations` gained `workout_exercise_order` and
+`coach_surfaces`. It is still silent about 0001–0015 and still reads as though
+the database began at 0016, so the warning stands — but a `supabase db push`
+would now wrongly re-attempt sixteen migrations rather than eighteen. 0019 is
+deliberately unapplied, so the gap at that version is correct rather than an
+omission.
+
+---
+
+## 2026-08-08 — E1, the rest canvas
+
+The largest unclaimed surface in the category, per offense plan §8-E1: between
+sets a lifter has 60–180 seconds and nothing to do, which across a session is
+20 to 60 minutes of attention that every tracker spends on a countdown and a
+blank screen. Wazn already owns the timer that governs it.
+
+It is also the one phase that deliberately touches the flow §2.1 calls sacred,
+so the rules in §8-E1 were treated as the specification rather than as advice.
+Each one below is implemented as a mechanism, not as an intention.
+
+### The model does not phrase it, and that is a deviation
+
+§8-E1 says "deterministic layer picks the fact; the model phrases it; both are
+already computed for other surfaces, so the marginal cost is close to zero."
+The first half shipped. The second did not, for three reasons that compound:
+
+1. **The arithmetic in the same paragraph refutes it.** A rest happens 15–30
+   times a session. "The model phrases it" is therefore 15–30 Edge Function
+   calls per workout, against a free tier §2C sized for one regeneration a
+   week. That is not a marginal cost close to zero; it is the largest AI
+   consumer in the app by an order of magnitude.
+2. **It would put the model on the critical path of the sacred flow.** The
+   plan's own AI rule is that the model never sits there. A rest canvas that
+   waits on a provider is a rest canvas that is blank in a basement.
+3. **A sentence arriving three seconds late would swap under the reader's
+   eye.** B1 can do that because a briefing is read once before a workout; a
+   surface seen twenty times a session that rewrites itself each time is the
+   moving interface E2 forbids.
+
+The lines are composed the way `briefSkeleton` composes the briefing, which
+has been shipping readable English since B1. The door is not closed: one
+phrased line per _session_, fetched once and reused, would cost what B1 costs.
+It is not built because nothing yet says the deterministic lines are the
+problem.
+
+### "Vanishes the moment the user reaches for the next set"
+
+This is the rule the whole design turns on, and the naive reading of it —
+hide on tap — is the version that breaks the app. A canvas that disappears on
+`pointerdown` has already taken the tap that was meant for a check button.
+
+So the canvas is gated on the inverse: it may only ever **appear** while
+nothing is being touched. `useIdle` (`src/lib/use-idle.ts`) reports two
+seconds of no pointer, scroll or key event; the canvas mounts only then, and
+the first event closes it in the capture phase before any component sees it.
+Because it can only grow while the hand is off the phone, it can never grow
+under a thumb in motion — which is a stronger property than "it hides
+quickly", and it is the one that makes the surface safe.
+
+The asymmetry in `useIdle` is deliberate: leaving idle is synchronous with the
+event, entering it is polled at 250ms. Getting the first one late puts a
+surface under a moving thumb; getting the second one late costs a quarter
+second of blank gap. Nothing symmetric can have both.
+
+Two further gates: the canvas stays away for the last 8 seconds of a rest
+(those belong to the set about to happen), and `pickRestCard` returns null
+whenever the deterministic layer has nothing worth saying — which §8-E1 names
+as the better default, and which is the plain timer exactly as before.
+
+### The log control does not move, and the measurement is in the PR
+
+The canvas mounts **above** the timer bar, inside the sticky wrapper that
+already existed. The board, the check buttons, the countdown, ±15s and Skip
+all keep the coordinates they had. Tap count to commit a ghost row is
+unchanged at one, because nothing was added to that path.
+
+Measured either side on the committed harness rather than asserted: tap →
+feedback 31 → 32ms, tap → set on screen 47 → 48ms, both against a 100ms
+budget. Precache 565.00 → 569.93 KiB against the ~600 KiB ceiling.
+
+The honest cost is that a pinned canvas covers about 66px more of the board
+mid-scroll than the bar alone. That is what the idle gate buys back, and the
+screenshot pair (`active-390-restcanvas.png` and `-gone.png`) is the proof: one
+24px scroll and the screen is byte-for-byte what it is today.
+
+### Four cards, fixed priority, and where the variety comes from
+
+`target` (what is coming and why the number moved) → `record` → `crew` →
+`session`. Fixed, never adaptive: E2's guardrail is that an interface a lifter
+cannot learn is worse than a dull one, and this surface appears twenty times a
+session.
+
+The variety comes from the board rather than from shuffling. Mid-block the
+answer is always the next set — which changes on its own every rest — and only
+when a block closes does anything else get a turn. That is a rhythm somebody
+can learn in one session.
+
+`target` reads the ghost row's own values, so the canvas cannot disagree with
+the board it is sitting over. `record` names the set that did it rather than
+counting records, because the load and the reps are what the next attempt has
+to beat; it is naturally absent offline, since PR flags only arrive on
+reconcile and an optimistic row genuinely cannot know it beat anything.
+
+### The crew fetch is on the first rest, not on load
+
+`social_feed` is the one card needing a network read. It is issued on the first
+rest of a workout, once, online only, and silently — never on the load path.
+The Log screen already makes seven requests before it can draw, and a garnish
+that renders only during a rest has no business in front of the Start button.
+
+### A permanent dismissal needs an undo
+
+§8-E1 says "dismissible permanently in one tap", and one tap is right: a
+confirmation dialog over a rest timer is the modal §2.1 forbids, on the screen
+it forbids it on. But permanent-and-unrecoverable, on a surface that appears
+while a phone is being picked up, is a mis-tap the user cannot undo — and
+there is no settings screen to restore it from (deliberately: §Scope).
+
+So the dismissal is genuinely one tap and genuinely permanent (localStorage),
+and for the following eight seconds the space it vacated holds one line —
+"Rest canvas off · Bring it back". §8 of the UX heuristics: undo beats "are you
+sure". After that the canvas is gone for good.
+
+### The kicker guard exists because a screenshot found the defect
+
+The first build put the exercise name in the kicker. Mono, uppercased, tracked
+out at 0.14em, beside a 48px dismiss control, it rendered as
+"NEXT UP · OVERHEAD PRESS (BARBEL…" — truncated mid-word on the one surface
+whose entire reason to exist is being readable at three feet. Nothing in the
+CI wall could have seen it.
+
+The name moved to its own 14px sentence-case line, and `rest-canvas.test.ts`
+now asserts every card's kicker is at most twenty characters. This is the
+third time in a week a screenshot has caught something no test could: the
+muscle-balance chart, the harness's missing Edge Function routes, and now this.
+
+### The harness had to be taught to hold still
+
+`npm run shots` drives the app, and a surface gated on _not_ being driven is
+invisible to it — the fourth blind spot this harness has had. The active pass
+now commits a set, waits 2.8 seconds without touching anything, photographs the
+canvas, then scrolls 24px and photographs the same board again. Two frames,
+and the second one is the rule.
+
+### Migration 0022 is written and NOT applied
+
+It widens `coach_views.surface` to admit `rest_canvas`, reusing the instrument
+B1 built rather than adding a second table that answers the same question in a
+different shape. Until it is applied the check constraint refuses the insert,
+`recordCoachView` swallows it — it is fire-and-forget by construction — and
+nothing about the canvas degrades except the count.
+
+Exposure is recorded **once per workout**, not once per appearance. "The canvas
+was up during this session" is what GATE E1 asks; twenty rows a workout is not
+a better answer to it. Dismissals are recorded every time, because a dismissal
+is a tester saying "not this" with a thumb, and §8-E1 names exactly that as the
+kill signal.
