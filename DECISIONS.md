@@ -2214,3 +2214,47 @@ leave the warm-up flag switched on behind them.
 
 **Not built:** U2 onward. The workout overview, offline, and everything after
 stay unapproved.
+
+## 2026-08-07 — The Hevy comparison was never looked at, so it got looked at
+
+Ameen asked whether the comparison work had actually viewed the app. It
+had not: `docs/HEVY_PARITY_UPGRADE_PLAN.md` and
+`docs/BEATING_HEVY_PLAN.md` were written from source, the plan files and
+the comparison docx. So a visual pass was run — the real build against a
+Supabase stubbed at the network layer, driven by Playwright, five tabs ×
+390/430px × populated/empty.
+
+**It falsified something in my own plan.** The parity plan's protect-list
+named the muscle-balance chart with the knurl target band as a working
+differentiator to defend. It had never rendered. Chest at 22 sets and
+hamstrings at 4 drew as identical empty tracks. U1a found the cause
+independently (`inset-block-0` was not a real Tailwind utility) and
+fixed it; the plan is now amended at §2.3 to say so, because a
+protect-list that protects a blank rectangle is worse than no list.
+
+Two further findings, now L6 and L7 in the plan with a prompt in the
+run-book:
+
+- **No number in the app is grouped.** Volume renders `52393`,
+  `90830.5`, `15873.5`; there is no `toLocaleString` or
+  `Intl.NumberFormat` anywhere in `src/`, and precision varies within a
+  single column. The design system asks for large tabular numbers and
+  gets them — grouping is the half nobody specified.
+- **No error boundary exists.** One missing field in the harness made
+  `ExerciseThumb.toneFor()` throw and the entire Progress tab went
+  black. In production any leaf crash does the same.
+
+A third finding — the empty Progress screen printing "Log a workout to
+load the bar." twice — was fixed by U1b in parallel.
+
+**Two method rules, learned by getting them wrong in the first run**, now
+in the plan's cross-cutting section: judge overlap from viewport
+screenshots, never `fullPage` (it renders fixed elements mid-page and
+invents bugs — a tab bar "overlapping" the strength list turned out to
+have 76px of clearance when measured); and stub every column the real
+RPC returns, or the harness crashes on its own fixture and the crash
+reads as an app defect.
+
+The general lesson is the reason this entry exists: **lint sees syntax,
+typecheck sees types, tests see functions, and none of them can see a
+screen.** Every UI phase from here ends with somebody looking at pixels.

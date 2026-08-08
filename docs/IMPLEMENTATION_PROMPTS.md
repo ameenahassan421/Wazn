@@ -79,6 +79,47 @@ remove the code path. CI wall, push, report, stop.
 
 ---
 
+## U1c — What the visual pass found (parity plan §2.3 L6–L7)
+
+Depends on: nothing. Two findings from the 2026-08-07 screenshot run
+that U1a and U1b did not cover — both small, both on every screen a
+Hevy user would compare. (The other two findings from that pass, the
+never-drawn muscle-balance chart and the duplicated empty-state
+sentence, are already fixed in U1a/U1b.)
+
+```
+Fix the two open findings from the visual pass, per
+docs/HEVY_PARITY_UPGRADE_PLAN.md §2.3 L6 and L7. Load
+wellness-app-design and impeccable first.
+
+L6 — no number in the app is grouped. There is no toLocaleString or
+Intl.NumberFormat anywhere in src/, so volume renders as 52393 and
+90830.5, with inconsistent precision in the same column. Add ONE
+formatter in src/lib/format.ts (unit-tested first, progress.ts
+pattern): thousands-grouped, locale-aware so Stage 5 Arabic inherits
+it, and a fixed precision rule for volume — decide whether a half-kg
+on a five-figure total is information or noise, and say why in
+DECISIONS.md. Apply it everywhere a large number renders: History
+rows, the Progress week card and captions, chart captions, feed
+cards, leaderboard, finish summary, and the share card. Weight
+entry fields and set rows keep their existing precision — this is a
+display-formatting change, never a stored-value change.
+
+L7 — one leaf crash blanks a whole tab. There is no error boundary in
+src/, and ExerciseThumb.toneFor() reads group.length on a value cast
+through `as Exercise`. Guard toneFor, and add an error boundary around
+each lazy screen so a crash renders a plain amber-outlined "This
+screen failed to draw" with the tab bar still usable, instead of a
+black rectangle. The Log screen matters most: a crash mid-workout must
+never look like lost data — say so in the fallback copy.
+
+Screenshot the built app before reporting (see the parity plan §4
+visual-verification rule: viewport shots not fullPage, and stub every
+column the real RPC returns). CI wall, push, report, stop.
+```
+
+---
+
 ## Phase U1 — Free wins (parity plan §3, U1)
 
 Depends on: beta live. Zero core-loop risk.
