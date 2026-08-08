@@ -3918,7 +3918,7 @@ Asked to set up OmniRoute — a local AI gateway that routes coding-agent traffi
 across ~290 providers with fallback — the useful deliverable turned out not to
 be an install. It has to run on the machine the agent runs on, and a web session
 runs in a container that is reclaimed when the session ends; nothing on a laptop
-can reach its `localhost`. So it was installed and exercised here as a *test*,
+can reach its `localhost`. So it was installed and exercised here as a _test_,
 and what got committed is `docs/omniroute-setup.md`, written from what that run
 actually showed rather than from the README's claims.
 

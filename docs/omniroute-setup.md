@@ -14,7 +14,7 @@ says so.
 
 **OmniRoute does not give you more Claude.** It is a router, not a quota
 extension. When your Anthropic limit is hit, OmniRoute's answer is to send the
-request to a *different* model — GLM, Kimi, DeepSeek, Gemini Flash, one of the
+request to a _different_ model — GLM, Kimi, DeepSeek, Gemini Flash, one of the
 free tiers — and to shrink the prompt so fewer tokens are spent everywhere. If
 what you want is Claude specifically, this does not deliver it. If what you want
 is "keep working when Claude is out", it does.
@@ -40,7 +40,7 @@ npm install -g omniroute@latest
 omniroute            # starts the server on :20128 and serves the dashboard
 ```
 
-`better-sqlite3` is an *optional* dependency: if no prebuilt binary matches your
+`better-sqlite3` is an _optional_ dependency: if no prebuilt binary matches your
 platform it falls back to `node:sqlite`, so the install never blocks on a
 compiler. To skip the native warm-up entirely (slow machines, CI):
 
@@ -89,12 +89,12 @@ omniroute launch --profile glm52
 If you would rather set it by hand, Claude Code is configured entirely through
 environment variables, read once at startup:
 
-| Variable | Value |
-| --- | --- |
-| `ANTHROPIC_BASE_URL` | `http://localhost:20128` — **no `/v1` suffix**, no trailing slash |
-| `ANTHROPIC_AUTH_TOKEN` | your OmniRoute API key (sent as `Authorization: Bearer`) |
-| `CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY` | `1` to populate the `/model` picker from `/v1/models` |
-| `CLAUDE_CODE_AUTO_COMPACT_WINDOW` | set per model whose real context window is not 200K |
+| Variable                                     | Value                                                             |
+| -------------------------------------------- | ----------------------------------------------------------------- |
+| `ANTHROPIC_BASE_URL`                         | `http://localhost:20128` — **no `/v1` suffix**, no trailing slash |
+| `ANTHROPIC_AUTH_TOKEN`                       | your OmniRoute API key (sent as `Authorization: Bearer`)          |
+| `CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY` | `1` to populate the `/model` picker from `/v1/models`             |
+| `CLAUDE_CODE_AUTO_COMPACT_WINDOW`            | set per model whose real context window is not 200K               |
 
 Two traps in that table:
 
@@ -123,7 +123,7 @@ All persistent state lives in `~/.omniroute/` (verified):
 
 `STORAGE_ENCRYPTION_KEY` is the AES key for the provider credentials in the
 sqlite file. Lose it and every stored provider key is unrecoverable — back it up
-somewhere that is not the same disk. Note that this directory is *outside* the
+somewhere that is not the same disk. Note that this directory is _outside_ the
 install, so `npm uninstall` leaves it, and a reinstall picks the same state back
 up.
 
