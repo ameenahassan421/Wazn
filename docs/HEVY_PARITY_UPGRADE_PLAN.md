@@ -155,6 +155,29 @@ skin. The look gaps are _information-display_ gaps.
   lazy screen (fall back to a plain "This screen failed to draw" plus
   the tab bar) turns a dead tab into a recoverable one, and guarding
   `toneFor` costs one line.
+- **L8. Discard exists and cannot be found.** U1b shipped it, correctly
+  buried: tap Finish once and a second line offers "Discard workout".
+  Ameen went looking for it during the launch pass and did not find it
+  (2026-08-07), which makes this a discoverability defect rather than a
+  taste question. Two things work against it — the control is labelled
+  **Finish**, which gives no hint that abandoning lives underneath, and
+  the armed state times out, so the discard row vanishes on its own
+  while you are still reading it. Surface "Discard workout" in the
+  header overflow (⋯) as well, where people actually look for _get me
+  out of this_; keep the two-tap arming there too. Do **not** promote it
+  to a top-level control — a one-tap delete of a live session next to
+  the thumb is the version of this that loses somebody's workout.
+- **L9. Nothing knows which day is next.** Finishing a workout returns
+  you to the idle Log screen, where routines are listed by stored
+  position. The app tracks no notion of which routine day you last did
+  or which is due, so a four-day split makes the user the scheduler
+  every single session — for a fact the database already knows. The
+  deterministic half belongs here in U1c (order the routine list by
+  what is due, and offer the next day as the primary start action); the
+  _explanation_ of why it is due is B1's briefing, and layers on top
+  without redesigning this. Rule: order and pre-select, never
+  auto-start — see the offense plan's §2 law about anticipation being
+  cheap to override.
 
 - **L1. Previous-vs-today alignment.** Hevy ghosts last session per row;
   Wazn shows one summary card. Fixed by U2's overview grid.
@@ -278,10 +301,16 @@ Plus: kill the tab mid-workout, reopen, nothing lost.
 2. Records: rep-max ladder (best 1/3/5/8/10RM from existing set data)
    on exercise detail + an all-time PR list block in Progress (O8).
 3. Full past-workout editing: add set, add exercise, change set
-   type/RPE in `EditSetDialog`, rename, delete workout (server-side
-   cascade + records refresh already proven), duplicate-as-routine
-   (O3). Reuse the U2 editor grammar — one editor, two persistence
-   modes (live vs historical).
+   type/RPE in `EditSetDialog`, rename, duplicate-as-routine (O3).
+   Reuse the U2 editor grammar — one editor, two persistence modes
+   (live vs historical). **Delete-workout moved out of this phase into
+   U1c** (2026-08-07): Ameen hit its absence during the launch pass,
+   and unlike the rest of O3 it needs no editor grammar — one delete,
+   the cascade the schema already declares, and the `refreshRecords`
+   path that History proved when a corrected set demotes a PR. Waiting
+   for U4 would mean a beta where the only way to remove a junk
+   workout is a hand-written SQL statement, which is how the four
+   zero-set rows got cleaned up last time.
 4. Custom exercise edit/delete (O12) with merge-guard (sets keep
    their exercise on delete → archive flag instead of hard delete).
 5. Rep-range distribution chart (data already in sets; new pure fn +

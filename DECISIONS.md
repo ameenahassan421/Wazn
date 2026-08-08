@@ -2403,3 +2403,43 @@ the target must be 'followers' or 'public'. Default visibility is
 design**. `follow()` now says exactly that instead of a generic error.
 Whether the invite/share surface should warn the sender up front is a
 UX question left open, not decided here.
+
+## 2026-08-07 — Three gaps the launch pass found, and where they landed
+
+Ameen, testing: no delete workout, no way to get to the next workout
+when one is done, no discard. Each turned out to be a different kind of
+problem, which is why they landed in three different places.
+
+**Discard already existed and could not be found.** U1b shipped it
+behind the armed Finish button — correct placement for something that
+deletes a live session and its sets, wrong placement for discovery. The
+label says "Finish", which gives no hint that abandoning lives
+underneath it, and the armed state times out while you are still
+reading the row. Now L8, in U1c: add it to the header overflow as a
+second route, still two-tap armed, and explicitly do **not** promote it
+to a top-level control. A one-tap delete of a live workout beside the
+thumb is the version that loses somebody's session.
+
+**Delete-workout was real, and moved forward from U4 to U1c.** The rest
+of O3 (add set, add exercise, rename, duplicate-as-routine) genuinely
+wants U2's editor grammar first. Delete does not: one statement, the
+cascade the schema already declares, and the `refreshRecords` path
+History proved when a corrected set demotes a PR. Leaving it in U4
+would mean running a beta where the only way to remove a junk workout
+is hand-written SQL — which is exactly how the four zero-set rows were
+cleaned up, and not something to ask a tester to do.
+
+**"Next workout" was not a missing button.** Finishing returns you to
+an idle Log screen that lists routines by stored position; nothing in
+the app knows a four-day split just consumed Upper A, so the user is
+the scheduler every session for a fact the database already holds. Split
+deliberately: the **deterministic half** (compute the due day, order the
+list by it, make it the primary start action) goes in U1c with no model
+involved, and **B1's briefing** later adds the sentence explaining why
+it is due, layering on top rather than replacing it. Building the
+explanation first would have made a cheap ordering fix wait on the AI
+phase.
+
+The rule attached to that last one, from the offense plan's §2: order
+and pre-select, never auto-start, and never hide the other days. A
+lifter who wants Thursday's session on a Tuesday is not a mis-tap.

@@ -79,7 +79,7 @@ remove the code path. CI wall, push, report, stop.
 
 ---
 
-## U1c — What the visual pass found (parity plan §2.3 L6–L7)
+## U1c — The visual pass, plus what the launch pass hit (§2.3 L6–L9)
 
 Depends on: nothing. Two findings from the 2026-08-07 screenshot run
 that U1a and U1b did not cover — both small, both on every screen a
@@ -112,6 +112,34 @@ each lazy screen so a crash renders a plain amber-outlined "This
 screen failed to draw" with the tab bar still usable, instead of a
 black rectangle. The Log screen matters most: a crash mid-workout must
 never look like lost data — say so in the fallback copy.
+
+L8 — discard exists and cannot be found. U1b shipped it behind the
+armed Finish button, which is the right place for a destructive action
+but the wrong place to discover one: the label says "Finish", and the
+armed row times out while you are still reading it. Add "Discard
+workout" to the header overflow (⋯) as a second route, two-tap armed
+there as well. Do NOT promote it to a top-level control — a one-tap
+delete of a live session beside the thumb is how somebody loses a
+workout. Also add delete-workout to the History expansion (moved out
+of U4, same reasoning): one delete behind the existing "Edit sets"
+gate, two-tap armed, then refreshRecords() because removing a session
+can demote a PR downstream — the path History already proves when a
+corrected set does the same.
+
+L9 — nothing knows which routine day is next. Finishing returns you to
+an idle Log screen listing routines by stored position; the app has no
+idea a four-day split just consumed Upper A. Build the deterministic
+half only: work out the due day from the user's own history (last
+completed routine day, then the routine's order), sort the routine
+list by it, and make the due one the primary start action with the
+others still one tap away. Pure SQL and client logic — no model, no
+Edge Function; B1's briefing will later add the sentence explaining
+WHY it is due, and must not require redesigning this.
+
+Order and pre-select; never auto-start, and never hide the other
+days. Read §2 of docs/BEATING_HEVY_PLAN.md first — an anticipation has
+to be as cheap to override as to accept, and a lifter who wants
+Thursday's session on a Tuesday is not a mis-tap.
 
 Screenshot the built app before reporting (see the parity plan §4
 visual-verification rule: viewport shots not fullPage, and stub every
