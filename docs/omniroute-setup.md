@@ -51,6 +51,45 @@ OMNIROUTE_SKIP_POSTINSTALL=1 npm install -g omniroute@latest
 That is the path verified here — 1183 packages, about 3 minutes, no build tools,
 server booted clean afterwards.
 
+### npm may block every install script
+
+On a real macOS install the tail of the output was:
+
+```
+added 1181 packages in 1m
+npm warn allow-scripts 11 packages have install scripts not yet covered by allowScripts:
+npm warn allow-scripts   omniroute@3.8.49 (postinstall: node scripts/build/postinstall.mjs)
+npm warn allow-scripts   keytar@7.9.0 (install: prebuild-install || npm run build)
+…
+```
+
+This is npm's supply-chain guard, not a failure — the package **is** installed,
+but no install script ran, OmniRoute's own postinstall included. That is a wider
+skip than `OMNIROUTE_SKIP_POSTINSTALL=1`, which suppresses only OmniRoute's.
+
+Try running it anyway first. The npm package ships a prebuilt `dist/`, so it
+usually boots regardless. If it dies on a missing native module, use the
+built-in repair rather than reaching for npm:
+
+```bash
+omniroute doctor     # names the broken native dep
+omniroute repair     # alias for `runtime repair` — refetches them
+```
+
+Only if that fails, reinstall permitting the scripts that matter:
+
+```bash
+npm install -g --allow-scripts=omniroute,esbuild,@swc/core,sharp,keytar omniroute@latest
+```
+
+`tls-client-node`, `koffi` and `onnxruntime-node` are deliberately absent from
+that list — they back TLS stealth, the transparent proxy and local embeddings,
+none of which are needed to route a coding agent. Add them when you enable those.
+
+The same run also prints `ERESOLVE overriding peer dependency` warnings for
+`@emoji-mart/react` (wants React ≤18, gets 19) and `marked-terminal` (wants
+marked <16, gets 18). Both are dashboard-side and both are warnings, not errors.
+
 Docker instead, if you would rather not put 1183 packages in your global npm:
 
 ```bash
