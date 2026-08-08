@@ -473,7 +473,8 @@ verbatim, so they survive even if this file isn't read.**
 - **CLOSED 2026-08-08 — deleted, and there were ten rather than four.** Open decision for Ameen: four zero-set workouts from desktop testing
   still render as blank History rows. Say "delete all my workouts with zero
   sets" and they go server-side.
-- **Next action:** the two blocked items above. After beta starts: offline
+- **Next action (superseded — see the U4 entry at the foot of this section):**
+  the two blocked items above. After beta starts: offline
   sync (Stage 4 fast-follow), then Stage 4B store publishing.
 - **Privacy policy is live at `/privacy`** (2026-08-05), linked from the auth
   screen. The plan filed this under Stage 4B as a store prerequisite; it was
@@ -535,7 +536,10 @@ verbatim, so they survive even if this file isn't read.**
   and the timer bar; one-tap logging of the warm-up ramp rows. **GATE U1 is now
   fully reportable** — see the PR.
 - **Migration 0015 (`exercise_rest`) is PARSE-CHECKED, NOT APPLIED.** It is the
-  first unapplied migration in the repo. The app degrades rather than breaking
+  first unapplied migration in the repo. **WRONG, and left here as a marker:
+  the 2026-08-08 probe found production had 0015 and stopped at it — see the
+  migration entries further down. This bullet is why "what is live" is a probe
+  and not a read.** The app degrades rather than breaking
   without it — a missing table reads as "no override" and the rest timer falls
   back — but the per-lift rest setting does nothing until Ameen applies it.
 - **`exercises.default_rest_seconds` was never writable.** The upgrade plan
@@ -994,9 +998,40 @@ coach_surfaces.sql` asserts what the three functions RETURN against a seeded
   Precache **565.00 → 569.93 KiB** with config, under the ~600 KiB ceiling.
   Cold start 2186 → 2235ms, still the one standing miss and still inside the
   ±200ms noise band.
+- **The release ladder had drifted from what shipped, and §11 of the offense
+  plan now carries a state column.** As of this merge **R4 "It knows" is
+  COMPLETE** — B1 + B2 + E1, all three. **R5 "Switch" is still not**: §11
+  defines it as F1 + U4, the commit that shipped the Hevy import is titled
+  `R5`, and this file said "R5 is BUILT" while U4 has never started. Nothing
+  was mis-built; phase IDs are what gets committed and releases are what the
+  table promises, and nothing reconciled the two. One R4 dependency stayed open
+  through the whole release: the OpenRouter hard cap §10 asks to be set _before
+  B1_, still unset with three model-calling surfaces now live.
+- **Four parity-gap items verified open (2026-08-08), each checked in code
+  rather than assumed.** **L9 is HALF built and the missing half got worse**:
+  B1's `session_brief()` computes the due routine by rotation and the briefing
+  says "Upper A is up", but `routines.ts` and `RoutineList.tsx` are untouched,
+  so the list directly under that sentence is still in stored `position` order
+  — a card naming a day the list does not reflect. **L8** was never built
+  (`Discard` appears in `LogScreen.tsx` and nowhere else; the header has no
+  entry, and the amendment asking for one was written because Ameen went
+  looking and could not find it). **L3** was never applied and never decided
+  either way — the tick is still 30s. **O15** stands, with a clarification:
+  `routine_exercises.position` IS written; it is the routine list's own order
+  that has no writer, which pairs it with L9.
+- **U4 is NEXT, and it is marked so in `docs/IMPLEMENTATION_PROMPTS.md`.**
+  Three reasons: it is the half of R5 that never shipped; it closes the last
+  block of P-class parity gaps in one phase (O3, O5, O8, O12 — after it the
+  only P-items left are native-gated or post-retention); and **it is the only
+  open phase whose gate can be run without a beta**, because GATE U4 asks
+  whether Ameen can answer "is my bench actually progressing?" from one screen
+  against the 152 workouts already in production. The four items above ride
+  with it.
 - **Last updated:** 2026-08-08 by Claude Code (E1, the rest canvas; the idle
-  gate; migration 0022; the truncated kicker a screenshot found). Previously
-  2026-08-08 (B1's briefing and debrief; B2's
+  gate; migration 0022; the truncated kicker a screenshot found — merged with
+  the release-ladder accounting, the four verified gap items, and U4 marked
+  next). Previously 2026-08-08 (B1's briefing and debrief; B2's
+
   weekly review contract and eval harness; migration 0021; the executable
   migration runner and the two defects it caught; the kg/lbs defect a
   screenshot found). Merged with U3b the same day — **the perf figures in the
