@@ -103,13 +103,30 @@ export async function quotaRemaining(
   caller: Caller,
   feature: Feature,
 ): Promise<number> {
-  const { count, error } = await caller.asService
-    .from('ai_generations')
-    .select('id', { count: 'exact', head: true })
-    .eq('user_id', caller.userId)
-    .eq('feature', feature)
-    .eq('ok', true)
-    .gte('created_at', quotaWindowStart(feature, Date.now()))
+  const since = quotaWindowStart(feature, Date.now())
+  const base = () =>
+    caller.asService
+      .from('ai_generations')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', caller.userId)
+      .eq('feature', feature)
+      .gte('created_at', since)
+
+  const { count, error } = await base().eq('ok', true)
+
+  // Pre-0017 there is no `ok` column, and PostgREST answers 42703. Without
+  // this fallback the whole feature would 500 for the window between merging
+  // (which deploys functions) and applying the migration by hand — the one
+  // failure in this file that a user would actually see. Every row in the old
+  // shape is a success, so dropping the filter is exactly right there.
+  //
+  // Delete once 0017 is applied.
+  if (error?.code === '42703') {
+    console.warn('ai_generations has no `ok` column — apply migration 0017')
+    const { count: legacyCount, error: legacyError } = await base()
+    if (legacyError) throw new HttpError('Could not check your usage.', 500)
+    return remaining(feature, legacyCount ?? 0)
+  }
   if (error) throw new HttpError('Could not check your usage.', 500)
   return remaining(feature, count ?? 0)
 }
@@ -154,13 +171,16 @@ export async function recordGeneration(
     toolCalls?: number
   },
 ): Promise<void> {
+  const legacy = {
+    user_id: caller.userId,
+    feature,
+    model: entry.model ?? null,
+    used_free: entry.usedFree ?? false,
+  }
   try {
-    await caller.asService.from('ai_generations').insert({
-      user_id: caller.userId,
-      feature,
+    const { error } = await caller.asService.from('ai_generations').insert({
+      ...legacy,
       ok: entry.ok,
-      model: entry.model ?? null,
-      used_free: entry.usedFree ?? false,
       error_code: entry.errorCode ?? null,
       latency_ms: entry.latencyMs ?? null,
       finish_reason: entry.finishReason ?? null,
@@ -169,7 +189,21 @@ export async function recordGeneration(
       prompt_version: entry.promptVersion ?? null,
       tool_calls: entry.toolCalls ?? 0,
     })
+    // 42703 is "column does not exist" — this code is live against a schema
+    // that predates 0017, because merging deploys functions while migrations
+    // are applied by hand. Falling back to the old shape keeps the quota
+    // ledger working in that window; without it every generation would be
+    // unrecorded and therefore unmetered. Only successes are worth recording
+    // in the old shape, since it has no column that can say otherwise.
+    //
+    // Delete once 0017 is applied.
+    if (error?.code === '42703') {
+      console.warn('ai_generations is missing the H2 columns — apply migration 0017')
+      if (entry.ok) await caller.asService.from('ai_generations').insert(legacy)
+    } else if (error) {
+      console.error('ledger write failed', error)
+    }
   } catch (error) {
-    console.error('ledger write failed', error)
+    console.error('ledger write threw', error)
   }
 }

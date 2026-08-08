@@ -303,14 +303,33 @@ Deno.serve(async (request) => {
     // Service role: `coach_notes` has no client-writable policy, so the only
     // text that can appear under the "AI-generated" label is text that came
     // through here.
-    await caller.asService.from('coach_notes').upsert({
+    //
+    // The retry without `prompt_version` exists because merging to main
+    // deploys these functions (deploy-functions.yml) while migrations are
+    // applied by hand, so for some window this code is live against a schema
+    // that predates 0017. PostgREST answers 42703 for an unknown column and
+    // supabase-js returns it rather than throwing — which would have made the
+    // cache silently stop working, and a cache that silently stops working
+    // means every Coach open calls the model again.
+    //
+    // Delete this fallback once 0017 is applied. It is a deploy-ordering
+    // shim, not a design.
+    const cacheRow = {
       user_id: caller.userId,
       generated_at: new Date().toISOString(),
       basis_workout_at: basis,
       model: result.model,
-      prompt_version: PROMPT_VERSION,
       insights,
-    })
+    }
+    const { error: cacheError } = await caller.asService
+      .from('coach_notes')
+      .upsert({ ...cacheRow, prompt_version: PROMPT_VERSION })
+    if (cacheError?.code === '42703') {
+      console.warn('coach_notes is missing prompt_version — apply migration 0017')
+      await caller.asService.from('coach_notes').upsert(cacheRow)
+    } else if (cacheError) {
+      console.error('coach_notes upsert failed', cacheError)
+    }
     await recordGeneration(caller, 'coach_notes', {
       ok: true,
       model: result.model,
