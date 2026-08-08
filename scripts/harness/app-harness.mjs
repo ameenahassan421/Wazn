@@ -168,7 +168,7 @@ const iso = (daysAgo, hour = 18) => {
   return d.toISOString()
 }
 
-export function fixtures({ empty = false } = {}) {
+export function fixtures({ empty = false, active = false } = {}) {
   const exercises = LIFTS.map(([name, muscle_group, equipment], i) => ({
     id: uuid(100 + i),
     name,
@@ -260,6 +260,65 @@ export function fixtures({ empty = false } = {}) {
     })
   })
 
+  /**
+   * An in-progress workout, so `npm run shots` can photograph the thing v2.2
+   * actually built.
+   *
+   * Without this the Log tab always renders the idle screen: every fixture
+   * workout carries an `ended_at`, so the app's "is there one open?" query
+   * matches nothing and the overview — the whole phase — is invisible to the
+   * visual pass. That is the same class of hole as the missing Edge Function
+   * routes, which made four screenshots of an error boundary read as normal.
+   *
+   * Shaped to exercise the states that are easy to get wrong: a warm-up that
+   * must not take a working number, a PR badge, a set beaten and a set matched
+   * against last session, an exercise with a note, a superset pair that has to
+   * draw one rail and a round count, and a routine-planned block with nothing
+   * logged in it at all.
+   */
+  const activeWorkout = {
+    id: uuid(4000),
+    user_id: USER_ID,
+    name: 'Upper A',
+    started_at: new Date(Date.now() - 48 * 60_000).toISOString(),
+    ended_at: null,
+    notes: null,
+    routine_id: null,
+    exercise_order: [
+      exercises[0].id,
+      exercises[6].id,
+      exercises[9].id,
+      exercises[3].id,
+    ],
+  }
+
+  const activeSets = [
+    // Bench: a warm-up, then three working sets — one up on last session, one
+    // level, and the top set a record.
+    [0, 60, 10, 'warmup', null, false],
+    [0, 102.5, 8, 'normal', null, false],
+    [0, 100, 8, 'normal', null, false],
+    [0, 107.5, 5, 'normal', null, true],
+    // Lat pulldown and triceps pushdown, supersetted.
+    [6, 77.5, 12, 'normal', 1, false],
+    [9, 45, 15, 'normal', 1, false],
+    [6, 77.5, 12, 'normal', 1, false],
+  ].map(([lift, weight, reps, setType, group, pr], i) => ({
+    id: uuid(40000 + i),
+    workout_id: activeWorkout.id,
+    exercise_id: exercises[lift].id,
+    set_number: i + 1,
+    weight_kg: weight,
+    reps,
+    rpe: null,
+    duration_seconds: null,
+    distance_meters: null,
+    set_type: setType,
+    superset_group: group,
+    pr_weight: pr,
+    pr_e1rm: pr,
+  }))
+
   const workoutTotals = sessionVolume.slice(0, 14).map((s) => ({
     workout_id: s.workout_id,
     volume_kg: s.volume_kg,
@@ -331,8 +390,41 @@ export function fixtures({ empty = false } = {}) {
 
   return {
     exercises,
-    workouts,
-    workout_sets,
+    workouts: active ? [activeWorkout, ...workouts] : workouts,
+    workout_sets: active ? [...activeSets, ...workout_sets] : workout_sets,
+    // Migration 0008's table, read by the overview's block meta line. It was
+    // stubbed as `[]` here for as long as nothing rendered it.
+    exerciseNotes: [
+      { user_id: USER_ID, exercise_id: exercises[0].id, note: 'seat position 4' },
+    ],
+    /**
+     * Every column `previous_session` declares, including `started_at` — the
+     * first draft invented `performed_at` and the set-entry screen rendered
+     * "PREVIOUS · NAN MONTHS AGO". Deliberately NOT drawn from the active
+     * workout: the real RPC excludes it, and reusing it would make every
+     * row-to-row comparison in the overview read as zero.
+     */
+    previousSession: exercises.flatMap((exercise, i) => {
+      const top = LIFTS[i][3]
+      return [
+        { setNumber: 1, weight: top * 0.55, reps: 10, type: 'warmup' },
+        { setNumber: 2, weight: top - 2.5, reps: 8, type: 'normal' },
+        { setNumber: 3, weight: top - 2.5, reps: 8, type: 'normal' },
+        { setNumber: 4, weight: top - 5, reps: 6, type: 'normal' },
+      ].map((row) => ({
+        // `exercise_id` is not a column the real RPC returns — it takes the id
+        // as a parameter. It rides along here purely so the stub can filter,
+        // and the route strips nothing, which is harmless: the client reads
+        // named fields.
+        exercise_id: exercise.id,
+        workout_id: workouts[1]?.id ?? uuid(1001),
+        started_at: iso(3),
+        set_number: row.setNumber,
+        weight_kg: row.weight,
+        reps: row.reps,
+        set_type: row.type,
+      }))
+    }),
     sessionVolume,
     workoutTotals,
     muscleSets,
@@ -541,6 +633,19 @@ export async function installSupabaseStub(page, data, { latencyMs = 0 } = {}) {
 
     if (path.startsWith('/rest/v1/rpc/')) {
       const fn = path.slice('/rest/v1/rpc/'.length)
+
+      // Per exercise, because the overview ghosts last session on every row and
+      // compares every committed row against it. A stub that answered with the
+      // same four bench sets for every lift made a cable pulldown read as 44 kg
+      // down on itself — a fixture inventing a defect, which is the same class
+      // of noise as the `/functions/v1/*` hole this file already documents.
+      if (fn === 'previous_session') {
+        const exerciseId = (route.request().postDataJSON() ?? {}).p_exercise_id
+        return json(
+          (data.previousSession ?? []).filter((r) => r.exercise_id === exerciseId),
+        )
+      }
+
       const byName = {
         session_volume_history: data.sessionVolume,
         workout_totals: data.workoutTotals,
@@ -558,14 +663,7 @@ export async function installSupabaseStub(page, data, { latencyMs = 0 } = {}) {
         // the first draft invented `performed_at` instead and the set-entry
         // screen rendered "PREVIOUS · NAN MONTHS AGO". That is the §4 rule
         // about stubbing every column, caught by looking at a screen.
-        previous_session: data.workout_sets.slice(0, 4).map((s) => ({
-          workout_id: data.workouts[1]?.id ?? uuid(1001),
-          started_at: iso(3),
-          set_number: s.set_number,
-          weight_kg: s.weight_kg,
-          reps: s.reps,
-          set_type: s.set_type,
-        })),
+        previous_session: data.previousSession ?? [],
         exercise_records: [
           {
             best_weight_kg: 102.5,
@@ -637,7 +735,7 @@ export async function installSupabaseStub(page, data, { latencyMs = 0 } = {}) {
         routines: [],
         routine_exercises: [],
         routine_sets: [],
-        exercise_notes: [],
+        exercise_notes: data.exerciseNotes ?? [],
         exercise_rest: [],
         invites: [],
       }

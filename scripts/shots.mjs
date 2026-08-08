@@ -52,7 +52,7 @@ function build() {
   if (out.status !== 0) process.exit(out.status ?? 1)
 }
 
-async function shoot(browser, origin, { width, empty }) {
+async function shoot(browser, origin, { width, empty, active }) {
   const context = await browser.newContext({
     viewport: { width, height: 844 },
     deviceScaleFactor: 2,
@@ -63,10 +63,59 @@ async function shoot(browser, origin, { width, empty }) {
   const page = await context.newPage()
   const crashes = []
   page.on('pageerror', (error) => crashes.push(error.message))
-  await installSupabaseStub(page, fixtures({ empty }))
+  await installSupabaseStub(page, fixtures({ empty, active }))
 
   await page.goto(origin, { waitUntil: 'networkidle' })
   await page.waitForTimeout(900)
+
+  // The workout overview only exists while a workout is open, and every other
+  // fixture workout is finished — so without this pass the screen v2.2 built
+  // is never photographed and the §4 rule is met on paper only. Log tab alone:
+  // the other four are unchanged by an open workout.
+  if (active) {
+    await page.screenshot({
+      path: `${OUT}/active-${width}-overview.png`,
+      fullPage: false,
+    })
+    // Down the board, because the states that are easiest to get wrong live
+    // there: ghost rows, a block with nothing logged in it, and whether the
+    // last row clears the tab bar.
+    await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight))
+    await page.waitForTimeout(400)
+    await page.screenshot({
+      path: `${OUT}/active-${width}-overview-end.png`,
+      fullPage: false,
+    })
+    // Commit a ghost for real, against the real build. This is the single most
+    // valuable frame in the run: it proves the check writes a set, that the row
+    // changes state, and — the part no unit test can see — that the rest timer
+    // the commit starts sits above the tab bar without covering a row.
+    const checks = page.getByRole('button', { name: /^Log .+ set \d/ })
+    if (await checks.count()) {
+      await checks.last().click()
+      await page.waitForTimeout(700)
+      await page.screenshot({
+        path: `${OUT}/active-${width}-committed.png`,
+        fullPage: false,
+      })
+    }
+
+    await page.evaluate(() => window.scrollTo(0, 0))
+    await page.waitForTimeout(300)
+
+    const menu = page.getByRole('button', { name: /^More for/ })
+    if (await menu.count()) {
+      await menu.first().click()
+      await page.waitForTimeout(300)
+      await page.screenshot({
+        path: `${OUT}/active-${width}-blockmenu.png`,
+        fullPage: false,
+      })
+      await menu.first().click()
+    }
+    await context.close()
+    return crashes
+  }
 
   const state = empty ? 'empty' : 'full'
   for (const tab of TABS) {
@@ -102,12 +151,19 @@ async function main() {
         crashes.push(...(await shoot(browser, server.origin, { width, empty })))
       }
     }
+    for (const width of WIDTHS) {
+      crashes.push(
+        ...(await shoot(browser, server.origin, { width, empty: false, active: true })),
+      )
+    }
   } finally {
     await browser.close()
     await server.close()
   }
 
-  console.log(`\n${TABS.length * WIDTHS.length * 2} screenshots in ${OUT}/`)
+  console.log(
+    `\n${TABS.length * WIDTHS.length * 2 + WIDTHS.length * 4} screenshots in ${OUT}/`,
+  )
   if (crashes.length) {
     // An uncaught error no longer blanks a tab — U1c's boundaries catch it —
     // so it would otherwise be invisible in a screenshot. Say it out loud.

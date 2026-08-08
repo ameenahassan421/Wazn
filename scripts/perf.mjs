@@ -67,6 +67,8 @@ const DEVICE = {
 
 const START_BUTTON = /^Start (workout|your first workout)$/
 const LOG_BUTTON = /^Log (set|warm-up) \d+$/
+/** The overview's row check — the core loop since design v2.2. */
+const CHECK_BUTTON = /^Log .+ set \d+:/
 
 function build() {
   console.log('building…')
@@ -146,7 +148,18 @@ const median = (xs) => {
 const stat = (xs) => ({ median: median(xs), worst: Math.round(Math.max(...xs)) })
 
 /**
- * Walk the app to a set-entry screen, then time the log button.
+ * Walk the app to the workout overview, then time its row check.
+ *
+ * REWRITTEN FOR DESIGN v2.2. This used to walk to the focused set-entry screen
+ * and time "Log set N", because that button WAS the core loop. It is not any
+ * more: the overview is the default after picking an exercise, and its row
+ * check is what a repeat set costs now. Measuring the old button would have
+ * kept reporting a green number for a control most sessions no longer press —
+ * and in fact the walk simply timed out, which is the honest failure and how
+ * this was caught.
+ *
+ * The budget is unchanged and so is what it means: one tap, one insert, one
+ * round trip. GATE U2 requires this to be no more expensive than it was.
  *
  * Everything is timed inside the page: a Playwright round trip per click would
  * add its own milliseconds to a number whose budget is 100.
@@ -164,22 +177,14 @@ async function measureCoreLoop(page) {
     .getByPlaceholder('Search exercises')
     .waitFor({ state: 'visible', timeout: 30000 })
   await page.getByText('Bench Press (Barbell)').first().click()
+
+  // A ghost row's check. It exists only once `previous_session` has answered
+  // and the block has planned rows to show, which is exactly the state the
+  // 1-tap repeat is defined against.
   await page
-    .getByRole('button', { name: LOG_BUTTON })
+    .getByRole('button', { name: CHECK_BUTTON })
     .first()
     .waitFor({ timeout: 30000 })
-
-  // The set-entry screen renders before `previous_session` answers, and the
-  // budget is about the 1-tap repeat set — accept the prefilled values and
-  // press once. Tapping Log the instant the button exists measured a
-  // validation error instead ("Enter the reps you did"), which is not the hot
-  // path and is not what U7 is asking about.
-  await page
-    .waitForFunction(
-      () => [...document.querySelectorAll('input')].some((i) => i.value.trim() !== ''),
-      { timeout: 20000 },
-    )
-    .catch(() => {})
 
   const feedback = []
   const committed = []
@@ -187,19 +192,32 @@ async function measureCoreLoop(page) {
   for (let i = 0; i < 7; i += 1) {
     const sample = await page.evaluate(async () => {
       const nextFrame = () => new Promise((r) => requestAnimationFrame(r))
-      const logButton = () =>
-        [...document.querySelectorAll('button')].find((b) =>
-          /^(Log (set|warm-up) \d+|Saving…)$/.test(b.textContent.trim()),
+      const label = (b) => b.getAttribute('aria-label') ?? ''
+      const checks = () =>
+        [...document.querySelectorAll('button')].filter((b) =>
+          /^Log .+ set \d+:/.test(label(b)),
         )
-      const button = logButton()
-      if (!button) return null
+      // The commit signal: one more row carrying the "Logged" mark than before.
+      // Direct rather than indirect — it is the committed row's own marker, so
+      // a stall cannot be confused with a walk that ended up on another screen.
+      const loggedCount = () =>
+        document.querySelectorAll('[aria-label="Logged"]').length
 
-      // The commit signal is the button's own counter going up: "Log set 1"
-      // becomes "Log set 2" only once the insert has come back and the set is
-      // in state. Counting `li` elements was the first attempt and it was too
-      // indirect to trust — when it failed there was no way to tell a slow
-      // insert from a walk that had ended up on the wrong screen.
-      const before = button.textContent.trim()
+      // Every planned row committed: working past the plan costs one tap, and
+      // that tap is not the measurement, so it is spent outside the timer.
+      if (checks().length === 0) {
+        const addSet = [...document.querySelectorAll('button')].find(
+          (b) => b.textContent.trim() === '+ Add set',
+        )
+        if (!addSet) return null
+        addSet.click()
+        await nextFrame()
+        await nextFrame()
+      }
+
+      const button = checks()[0]
+      if (!button) return null
+      const before = loggedCount()
 
       const t0 = performance.now()
       button.click()
@@ -214,8 +232,7 @@ async function measureCoreLoop(page) {
       const settled = await new Promise((resolve) => {
         const deadline = performance.now() + 10000
         const check = () => {
-          const now = logButton()?.textContent.trim()
-          if (now && now !== before && now !== 'Saving…') return resolve(true)
+          if (loggedCount() > before) return resolve(true)
           if (performance.now() > deadline) return resolve(false)
           requestAnimationFrame(check)
         }
@@ -227,7 +244,7 @@ async function measureCoreLoop(page) {
         return {
           feedback: feedbackAt,
           committed: null,
-          stuckAt: logButton()?.textContent.trim() ?? '(no log button)',
+          stuckAt: `${loggedCount()} logged, ${checks().length} check(s) on screen`,
           alert:
             document
               .querySelector('[role="alert"]')

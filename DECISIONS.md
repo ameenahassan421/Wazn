@@ -3030,3 +3030,156 @@ this week: `npm run shots` rendered the Coach tab as an error boundary for its
 entire life because the harness stubbed tables but not functions, and
 `set-templates` protected bodies but not subjects. Both were checks that
 verified the part someone remembered to name.
+
+---
+
+## 2026-08-08 — U2b: the workout overview, and the round-rest that had never fired
+
+Design v2.2 built (`docs/design/v2.2-workout-overview.md`). The addendum was
+followed rather than re-derived; what follows is only the places where the
+build had to decide something the design left open, plus one defect the build
+uncovered in a feature the parity plan lists as already working.
+
+### The superset round-rest was broken, and had been since Stage 1
+
+This is the finding that matters most in this phase, and it is not a design
+decision — it is a bug the design work exposed.
+
+`LogScreen.addSet` asked `nextInGroup` first and only reached the rest check if
+the answer was null. But after the set that _completes_ a round, `nextInGroup`
+returns the first member — it is the one furthest behind for the next round —
+so from the second set of a superset onward the rest branch was **unreachable**.
+Replayed against the shipped helpers, an A/B superset rests exactly once, after
+A's very first set and before B has even been picked, and then never again for
+the rest of the session:
+
+    log a -> advance (stay) | rest STARTS
+    log b -> advance a      | rest no
+    log a -> advance b      | rest no
+    log b -> advance a      | rest no      <- and so on, forever
+
+Parity plan §1 lists "one rest per round, not per set" on the protect list as a
+shipped differentiator, better than Hevy's default. It was better in intent and
+absent in fact. This is the muscle-balance chart again: correct-looking code,
+wired wrong, invisible because nothing rendered the thing it governed. The
+overview's superset rail and `Round 2 of 3` header are the first time either
+has been drawn — which is precisely how it surfaced.
+
+Fixed by inverting the order in the new `src/lib/commit.ts`: ask
+`roundComplete` FIRST, and if the round has closed, rest and hand the next
+round to the member that starts it. Six assertions cover it, including a full
+A/B/A/B replay that fails against the old ordering.
+
+**Why the logic moved to a module at all.** It was correct-looking and
+untestable where it was: proving it meant rendering a screen and mocking
+Supabase, so nobody ever did. v2.2 adds a second caller — the overview's row
+check commits without the focused view ever opening — and a rule with two
+callers and no test is a rule that diverges in the second one.
+
+### Where the block order lives: `workouts.exercise_order`, not a join table
+
+The addendum says the order must survive a reload and leaves the storage to
+this phase. Migration 0020 adds a `uuid[]` column to `workouts`.
+
+The relational answer is a `workout_exercises` table. It was rejected on how it
+fails when it is _not there_. Every migration to 0015 was applied by hand and
+0016–0018 sat unapplied for three days without anyone noticing. An unapplied
+table makes every write in the overview error, mid-workout, in a gym. An
+unapplied column makes exactly one PATCH fail, which the client already treats
+as "no stored order" and falls back to deriving the order from the sets — the
+pre-v2.2 behaviour. The feature degrades to the status quo instead of breaking
+the screen. Same posture as 0015.
+
+The column is `exercise_order`. **Not `position`** — the addendum carries that
+warning forward in writing because 0007 shipped one and failed to parse in its
+entirety.
+
+The array is membership and order, and nothing else. It never implies a set was
+performed; that remains the exclusive meaning of a `workout_sets` row.
+
+### No new dependency: the reorder is hand-rolled
+
+`@dnd-kit/core` was budgeted at ~10 KiB and is not needed. Long-press 250ms on
+an explicit grip, `touch-action: none` on the handle only, neighbours parting by
+the lifted block's own height, nearest-centre drop. Because the handle is
+explicit, a drag anywhere else in the block still scrolls — which is the failure
+mode that makes hand-rolled reordering feel broken, and it is avoided by
+construction rather than by tuning thresholds.
+
+Reordering is also reachable from the block's ⋮ menu as Move up / Move down. A
+long-press drag is unreachable without a pointer, and reordering is not
+decoration. It is also what makes the behaviour testable in jsdom.
+
+### Warm-up ghosting is deliberately not built
+
+The addendum says warm-up rows are ghosted from the ramp "when the ramp is
+enabled for that exercise". There is no per-exercise ramp setting in this app —
+`LoadHelper` shows a ramp whenever a weight is typed — so the condition
+describes something that does not exist, and building the setting to satisfy
+one sentence is scope the phase was not given. Every ghost is a working set.
+U1's one-tap ramp rows already cover warm-ups in the focused view, where the
+ramp lives.
+
+### Ghost weights follow today before they follow last session
+
+The addendum's precedence is routine → rep target, previous session → weight.
+Applied literally, the second working set of a freestyle session would ghost
+last week's weight even after you had already lifted today's. That regresses
+1-tap repeat, which the protect list guards. So: reps take the routine's target
+first, then today, then last session; weight takes today first, then last
+session. A routine never supplies a weight either way — it stores what to do,
+and only history knows what you lifted.
+
+### Picking a lift the app has never seen still opens the keyboard
+
+Picking an exercise lands on the overview, because the overview is the spine.
+But a lift with no history and no routine row has nothing to ghost, so the
+board would show a blank row and cost a tap to get to the keyboard that is
+obviously the point. When `exercise_usage` reports zero sets and no routine
+plans it, the picker goes straight to the focused view — exactly as before
+v2.2. The signal is honest: never logged means nothing to show.
+
+### One `previous_session` call per block, not one per screen
+
+The overview ghosts last session on every row of every block, so the fetch went
+from one exercise to all of them. One RPC per block, in parallel, once each and
+cached for the workout — four to eight lifts, so one round trip of wall time. A
+failure stores an empty list rather than raising the error banner the old
+single-exercise path raised: a missing comparison is not worth interrupting a
+session over, and §2.1 says so.
+
+### What the screenshots caught
+
+Two things, neither visible to lint, types or tests:
+
+1. **The harness had no in-progress workout**, so every fixture workout carried
+   an `ended_at` and the Log tab always rendered the idle screen. The screen
+   this whole phase built would have been invisible to `npm run shots`. Same
+   hole as the missing Edge Function routes. There is now an `active` fixture
+   and a pass that shoots the board, its foot, the block menu, and — the most
+   valuable frame in the run — a real commit against a real build.
+2. **`previous_session` answered with the same four bench sets for every
+   exercise**, so a cable pulldown read as 44 kg down on itself. A fixture
+   inventing a defect is as bad as one hiding a defect. It is per-exercise now.
+
+And one real defect in the app: the sticky rest bar's wrapper was transparent,
+so mid-scroll the board showed through the 12px above and below the bar and a
+control passing behind it read as being cut in half. Fixed with an opaque
+ground and the same hairline the tab bar carries. Measured before and after
+rather than eyeballed — at the foot of the board nothing overlaps at all, so
+the fix belonged to the mid-scroll case and a bottom-padding "fix" would have
+bought 68px of dead space and solved nothing.
+
+### The perf harness measured a control that no longer exists
+
+`measureCoreLoop` walked to the focused view and timed "Log set N". After v2.2
+that walk times out, because picking a lift with history lands on the board.
+The honest failure is the useful one: it now times the overview's row check,
+which is what a repeat set costs. Budget unchanged, meaning unchanged.
+
+### Bundle
+
+No new dependency. Precache 570.63 KiB → 587.13 KiB, measured with config
+(a config-less build tree-shakes the authenticated screens away and reports a
+flattering number). 12.87 KiB under the ~600 KiB ceiling, which is tight enough
+that the next UI phase should expect to spend some of it removing something.

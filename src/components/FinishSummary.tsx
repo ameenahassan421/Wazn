@@ -28,6 +28,8 @@ export function FinishSummary({
   onDone,
   exercisesById,
   workout,
+  skipped = [],
+  routineUpdate,
 }: {
   summary: WorkoutSummary
   unit: Unit
@@ -38,6 +40,22 @@ export function FinishSummary({
   exercisesById?: Map<string, Exercise>
   /** The workout just finished. Omit to hide the name and note fields. */
   workout?: Workout | null
+  /**
+   * Names of exercises that were on the board and had nothing logged.
+   *
+   * This is the ONLY place in the app where "skipped" exists. Mid-workout
+   * there is no such thing — there is only not-yet-done, and implying
+   * otherwise is the app scolding a lifter who is still lifting. Here the
+   * session is over, so routine adherence can be visible without becoming a
+   * lecture: named, never scored, never counted against anything.
+   */
+  skipped?: string[]
+  /**
+   * Offered only when today's work no longer matches the routine it came from.
+   * A quiet line, not a hero button: keeping the template current is worth one
+   * tap and worth nothing more than that.
+   */
+  routineUpdate?: { name: string; saving: boolean; onUpdate: () => void }
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [status, setStatus] = useState<string | null>(null)
@@ -146,6 +164,27 @@ export function FinishSummary({
         </div>
       )}
 
+      {skipped.length > 0 && (
+        <div
+          className="ring-edge bg-surface px-3 py-3"
+          style={{ borderRadius: 'var(--radius-md)' }}
+        >
+          <p className="kicker">Not done today</p>
+          <ul className="mt-2 flex flex-col gap-2">
+            {skipped.map((name) => (
+              <li key={name} className="flex items-center gap-2">
+                <span className="min-w-0 flex-1 truncate text-[13px] text-muted">
+                  {name}
+                </span>
+                <span className="tag-neutral h-[22px] shrink-0 px-1.5 font-mono tracking-[0.08em]">
+                  SKIPPED
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
       {/* The only moment in the app where writing a sentence costs nothing:
           the set is racked, the session is over, and §2.1's protection of the
           logging flow no longer applies. Optional in every sense — nothing
@@ -178,6 +217,16 @@ export function FinishSummary({
         >
           Done
         </button>
+        {routineUpdate && (
+          <button
+            type="button"
+            onClick={routineUpdate.onUpdate}
+            disabled={routineUpdate.saving}
+            className="btn-base btn-ghost h-12 w-full text-[13px] disabled:opacity-45"
+          >
+            Update {routineUpdate.name} with today’s changes?
+          </button>
+        )}
       </div>
 
       {status && <p className="text-xs text-muted">{status}</p>}
