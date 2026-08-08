@@ -3911,3 +3911,32 @@ constraint text.
 Ledger row added as `20260808210000 / rest_canvas_views`, matching how 0020 and
 0021 were recorded. Six rows now, still silent about 0001–0015, and 0019 still
 deliberately absent.
+
+### OmniRoute setup lives as a doc, not as an install
+
+Asked to set up OmniRoute — a local AI gateway that routes coding-agent traffic
+across ~290 providers with fallback — the useful deliverable turned out not to
+be an install. It has to run on the machine the agent runs on, and a web session
+runs in a container that is reclaimed when the session ends; nothing on a laptop
+can reach its `localhost`. So it was installed and exercised here as a *test*,
+and what got committed is `docs/omniroute-setup.md`, written from what that run
+actually showed rather than from the README's claims.
+
+What the run established: 3.8.49 installs on Node 22.22.2 without build tools
+under `OMNIROUTE_SKIP_POSTINSTALL=1`; `/healthz` is the unauthenticated liveness
+endpoint while `/health` 404s and `/api/health` 401s; `/v1/models` answers with
+no credentials at all, which is why the doc insists on the `127.0.0.1:` prefix
+on the Docker port binding; state lives in `~/.omniroute/`, outside the install,
+keyed by a generated `STORAGE_ENCRYPTION_KEY` that is the only thing standing
+between a stolen sqlite file and every stored provider key.
+
+What it did not establish: a completion. `model: auto` routed correctly through
+`opencode` → `felo-web` and returned a structured diagnostics payload, but every
+upstream fetch failed on this container's egress policy. The router worked; the
+network did not. The doc says so rather than implying an end-to-end pass.
+
+Two caveats belong in the record because they are decisions, not trivia. This
+does not extend a Claude quota — it substitutes other models and compresses
+prompts, which is a different thing and the doc leads with it. And the project
+flags 15 of its own providers on terms-of-service grounds, so the provider pool
+is something to choose rather than leave wide open.
