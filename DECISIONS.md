@@ -4145,3 +4145,73 @@ lost a race rather than returning wrong data. The load path has a six second
 deadline and this machine had been running builds, Postgres and Playwright for
 hours. CI is the authority for this one; it is recorded here so the next session
 does not spend the same hour bisecting it.
+
+## 2026-08-08: U4's records list, and what "archive not delete" turned out to be
+
+**The records list is a shaping, not a computation.** `pr_weight` and `pr_e1rm`
+are written by migration 0009's trigger and never by the client, so
+`recentRecords` sorts and labels rows and decides nothing. A record is a fact
+about the past: the row that says so was written when it happened, and
+`recompute_pr_flags` is what fixes it if history is edited.
+
+One set that beat both the load and the estimate is ONE entry with one label,
+not two rows. It was one set, and printing it twice would make a good day look
+like two.
+
+It sits second on the screen, above the diagnostics, because it is the only
+block there that answers "am I getting stronger" without being read. It renders
+nothing at all when there are no records, rather than a "no records yet" panel:
+on a new account that panel is a reminder of an absence.
+
+The limit is five. Eight rows pushed the muscle-balance chart off a phone
+screen, which a screenshot showed and which no test would have.
+
+### The fixture was showing a state production cannot reach
+
+The first version flagged the same top set across three sessions, so the list
+drew "Bench Press 226 heaviest" three times at the same weight on consecutive
+days. That cannot happen: `pr_weight` means the set beat every earlier
+qualifying set, so the same lift cannot be flagged twice at one weight. A
+fixture showing an impossible state invites fixing a defect that is not there,
+so only the most recent session carries flags now, and the reason is written
+next to it.
+
+Also found: the stub had no `or=` support, so the records query's
+`or(pr_weight.eq.true,pr_e1rm.eq.true)` fell through as a filter on a column
+literally named "or", every row failed it, and the block drew nothing while
+looking like an account with no records. The stub now implements `or()` and
+**throws on an operator it does not support**, because a stub that silently
+answers a filter it has not implemented is worse than one that answers nothing:
+the result looks real.
+
+### Archive-not-delete already exists, and it is not in the UI
+
+The plan asks for "custom exercise edit plus archive-not-delete". Edit is built.
+Archive turned out to be a misreading of what protects the data:
+`workout_sets.exercise_id` is **`on delete restrict`** (migration 0001), so the
+database refuses to delete any exercise a single set has ever been logged
+against. Logged history is structurally unlosable, and no client code can change
+that.
+
+What archive would add is therefore not safety but tidiness: getting a custom
+exercise you have used out of your picker without deleting it. That needs a
+column, which needs a migration, which needs Ameen. **Not built, and flagged
+rather than quietly skipped.**
+
+What the app owed the user instead was the reason for the refusal. Postgres
+raises 23503 with a constraint name in it, which tells a lifter nothing, so it
+is translated: "You have logged sets with this exercise, so it stays in your
+history. Rename it instead." The phrasing is deliberate. The exercise is not "in
+use", it is part of what they have already done.
+
+Editing is offered only on a custom row, because `exercises_update_own` (0014)
+requires `owner_id = auth.uid() and is_custom` and `exercises` is a shared
+catalogue. Renaming a seeded lift would rename it for everybody, so the control
+is absent rather than present and failing.
+
+The two field selectors are extracted into `ExerciseFields`, shared by the
+create flow in the picker and the edit flow on the lift's page. The field list
+is not cosmetic: the muscle group is what puts a lift on the weekly-sets chart
+and the equipment is what the routine generator filters by. Two copies would
+eventually offer different fields, and the one that drifted would write rows the
+rest of the app reads differently.

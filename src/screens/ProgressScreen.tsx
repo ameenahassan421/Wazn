@@ -3,7 +3,7 @@ import type { ReactNode } from 'react'
 import { describeError, supabase } from '../lib/supabase'
 import { useBackLayer } from '../lib/use-back'
 import { useUnit } from '../lib/unit-context'
-import { toDisplayWeight } from '../lib/units'
+import { formatWeight, toDisplayWeight } from '../lib/units'
 import type { Unit } from '../lib/units'
 import {
   formatCount,
@@ -21,6 +21,7 @@ import {
   bandState,
   liftBalance,
   monthlyVolume,
+  recentRecords,
   sessionsPerWeek,
   underBand,
   weeklyVolume,
@@ -29,6 +30,8 @@ import type {
   BalanceRow as AnchorRow,
   ExerciseBest,
   MuscleGroupSets,
+  RecordEntry,
+  RecordSetRow,
   SessionVolumeRow,
   WeekBucket,
 } from '../lib/progress'
@@ -97,19 +100,39 @@ export function ProgressScreen({ onOpenCoach }: { onOpenCoach: () => void }) {
 
   // Each ranged block keeps its own window: "how much am I lifting lately"
   // and "where is my bench all time" are different questions.
+  const [recordRows, setRecordRows] = useState<RecordSetRow[]>([])
   const [volumeRange, setVolumeRange] = useState<RangeKey>(DEFAULT_RANGE)
   const [strengthRange, setStrengthRange] = useState<RangeKey>(DEFAULT_RANGE)
 
   useEffect(() => {
     let active = true
     void (async () => {
-      const [volume, muscle, lifts, streakRows, catalogue] = await Promise.all([
-        supabase.rpc('session_volume_history'),
-        supabase.rpc('muscle_group_weekly_sets', { p_days: 7 }),
-        supabase.rpc('strength_summary'),
-        supabase.rpc('weekly_streak'),
-        supabase.from('exercises').select('*').order('name'),
-      ])
+      const [volume, muscle, lifts, streakRows, catalogue, recordRows] =
+        await Promise.all([
+          supabase.rpc('session_volume_history'),
+          supabase.rpc('muscle_group_weekly_sets', { p_days: 7 }),
+          supabase.rpc('strength_summary'),
+          supabase.rpc('weekly_streak'),
+          supabase.from('exercises').select('*').order('name'),
+          /*
+           * Every record the database has flagged, newest first.
+           *
+           * `workout_sets_records_idx` (migration 0009) is a partial index over
+           * exactly this predicate, so the scan touches only record rows rather
+           * than all 3,200 sets. The order goes through the embedded workout
+           * because a set has no date of its own, and the limit is a ceiling
+           * rather than the list length: `recentRecords` sorts and slices, so a
+           * ceiling that clipped a newer record would silently drop it.
+           */
+          supabase
+            .from('workout_sets')
+            .select(
+              'exercise_id, weight_kg, reps, pr_weight, pr_e1rm, workouts!inner(started_at)',
+            )
+            .or('pr_weight.eq.true,pr_e1rm.eq.true')
+            .order('started_at', { referencedTable: 'workouts', ascending: false })
+            .limit(120),
+        ])
       if (!active) return
 
       const failure =
@@ -129,6 +152,19 @@ export function ProgressScreen({ onOpenCoach }: { onOpenCoach: () => void }) {
       setStrength((lifts.data ?? []) as StrengthRow[])
       setStreak(((streakRows.data ?? []) as { weeks: number }[])[0]?.weeks ?? 0)
       setExercises((catalogue.data ?? []) as Exercise[])
+      // Records are deliberately NOT part of the `failure` check above: the
+      // whole screen should not go to an error page because one motivational
+      // block could not load. An error here means no Records section.
+      setRecordRows(
+        recordRows.error
+          ? []
+          : ((recordRows.data ?? []) as unknown[]).map((raw) => {
+              const row = raw as RecordSetRow & {
+                workouts?: { started_at: string } | null
+              }
+              return { ...row, started_at: row.workouts?.started_at ?? '' }
+            }),
+      )
       setLoading(false)
     })()
     return () => {
@@ -192,9 +228,40 @@ export function ProgressScreen({ onOpenCoach }: { onOpenCoach: () => void }) {
   }, [sessions])
 
   if (loading) return <p className="py-10 text-sm text-muted">Loading…</p>
-  if (detail) return <ExerciseDetail exercise={detail} onBack={() => setDetail(null)} />
+  if (detail)
+    return (
+      <ExerciseDetail
+        exercise={detail}
+        onBack={() => setDetail(null)}
+        // A rename has to reach the catalogue this screen is holding, or the
+        // strength list keeps the old name until the tab is reloaded and the
+        // user is left wondering whether the save took.
+        onChanged={(updated) => {
+          setDetail(updated)
+          setExercises((rows) => rows.map((e) => (e.id === updated.id ? updated : e)))
+          setStrength((rows) =>
+            rows.map((r) =>
+              r.exercise_id === updated.id ? { ...r, name: updated.name } : r,
+            ),
+          )
+        }}
+        onDeleted={(id) => {
+          setExercises((rows) => rows.filter((e) => e.id !== id))
+          setStrength((rows) => rows.filter((r) => r.exercise_id !== id))
+        }}
+      />
+    )
 
   const empty = sessions.length === 0 && strength.length === 0
+
+  const byId = new Map(exercises.map((e) => [e.id, e]))
+  const records = recentRecords(recordRows, (id) => byId.get(id)?.name)
+  // A record row leads to the lift's page, the same destination the strength
+  // list uses, so a record is a way in rather than a dead end.
+  const openRecord = (exerciseId: string) => {
+    const exercise = byId.get(exerciseId)
+    if (exercise) setDetail(exercise)
+  }
 
   return (
     <div className="flex flex-col gap-5 py-3">
@@ -214,6 +281,14 @@ export function ProgressScreen({ onOpenCoach }: { onOpenCoach: () => void }) {
         streakWeeks={streak}
         unit={unit}
       />
+
+      {/* Records sit second, above the diagnostics, because they are the one
+          block on this screen that answers "am I getting stronger?" without
+          being read. Nothing renders when there are none: a "no records yet"
+          panel on a new account is a reminder of an absence. */}
+      {records.length > 0 && (
+        <Records entries={records} unit={unit} onOpen={openRecord} />
+      )}
 
       <MuscleBalance groups={groups} onOpenCoach={onOpenCoach} empty={empty} />
 
@@ -578,6 +653,67 @@ function VolumeTrend({
         {formatVolume(points.at(-1)?.volumeKg ?? 0, unit)}
       </p>
       <RangeChips value={range} onChange={onRange} label="Volume range" />
+    </section>
+  )
+}
+
+/* ── Records ──────────────────────────────────────────────────────────── */
+
+/**
+ * Every record the database has flagged, newest first.
+ *
+ * Distinct from the strength list below it, which answers "where is this lift
+ * now". This answers "what have I just beaten", which is the question that
+ * makes somebody open the tab. The flags come from migration 0009's trigger, so
+ * nothing here decides what counts as a record.
+ *
+ * `both` is one set that beat the load and the estimate at once. It gets one
+ * row and one label rather than two entries, because it was one set.
+ */
+const RECORD_LABEL: Record<'weight' | 'e1rm' | 'both', string> = {
+  weight: 'heaviest',
+  e1rm: 'best est.',
+  both: 'heaviest · best est.',
+}
+
+function Records({
+  entries,
+  unit,
+  onOpen,
+}: {
+  entries: RecordEntry[]
+  unit: Unit
+  onOpen: (exerciseId: string) => void
+}) {
+  return (
+    <section>
+      <h2 className="kicker mb-2.5">Records</h2>
+      <ul className="ring-edge bg-surface" style={{ borderRadius: 'var(--radius-md)' }}>
+        {entries.map((entry) => (
+          <li key={`${entry.exercise_id}-${entry.at}-${entry.kind}`}>
+            <button
+              type="button"
+              onClick={() => onOpen(entry.exercise_id)}
+              className="flex h-14 w-full items-center gap-3 border-b border-line px-3 text-start last:border-b-0"
+            >
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-[15px] font-medium">
+                  {entry.name}
+                </span>
+                <span className="block truncate text-[11px] text-muted">
+                  {RECORD_LABEL[entry.kind]} · {formatRelativeDay(entry.at)}
+                </span>
+              </span>
+              <span className="tnum shrink-0 text-2xl font-medium">
+                {formatWeight(entry.weight_kg, unit)}
+                <span className="ms-1 text-xs font-normal text-muted">
+                  {unit} × {entry.reps}
+                </span>
+              </span>
+            </button>
+          </li>
+        ))}
+      </ul>
     </section>
   )
 }

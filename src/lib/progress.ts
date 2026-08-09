@@ -351,6 +351,71 @@ export interface LadderRung {
  * would answer it in SQL over everything, and it is deliberately unapplied —
  * see DECISIONS.md.
  */
+/**
+ * Records, newest first, for the Progress tab's all-time list.
+ *
+ * The flags are the database's own (`pr_weight` / `pr_e1rm`, migration 0009,
+ * maintained by a trigger and never by the client), so this shapes rather than
+ * computes. A record set is a fact about the past: nothing here recalculates
+ * whether it was one, because the row that says so was written when it happened
+ * and `recompute_pr_flags` is what fixes it if history is edited.
+ *
+ * Both flags on one set is one entry, not two: it is one set, and printing it
+ * twice would make a good day look like two.
+ */
+export interface RecordSetRow {
+  exercise_id: string
+  weight_kg: number | string | null
+  reps: number | null
+  pr_weight: boolean
+  pr_e1rm: boolean
+  started_at: string
+}
+
+export interface RecordEntry {
+  exercise_id: string
+  name: string
+  weight_kg: number
+  reps: number
+  at: string
+  /** What was beaten: the load, the estimate, or both in one set. */
+  kind: 'weight' | 'e1rm' | 'both'
+}
+
+export function recentRecords(
+  rows: RecordSetRow[],
+  nameFor: (exerciseId: string) => string | undefined,
+  // Five, not eight: at eight rows the block pushed the muscle-balance chart
+  // off a phone screen, and this is the reward surface rather than the report.
+  // Depth per lift lives on the exercise page.
+  limit = 5,
+): RecordEntry[] {
+  const entries: RecordEntry[] = []
+  for (const row of rows) {
+    if (!row.pr_weight && !row.pr_e1rm) continue
+    const weight = num(row.weight_kg)
+    // A bodyweight set stores null weight and cannot be a load record; a set
+    // with no reps is not a performance. Both are excluded everywhere else in
+    // the app and the list would be lying if it showed them.
+    if (weight <= 0 || row.reps === null || row.reps <= 0) continue
+    const name = nameFor(row.exercise_id)
+    // An unknown exercise means the catalogue has not arrived yet. Skipping is
+    // right: a row reading "undefined 102.5 kg" is worse than a shorter list.
+    if (!name) continue
+    entries.push({
+      exercise_id: row.exercise_id,
+      name,
+      weight_kg: weight,
+      reps: row.reps,
+      at: row.started_at,
+      kind: row.pr_weight && row.pr_e1rm ? 'both' : row.pr_weight ? 'weight' : 'e1rm',
+    })
+  }
+  return entries
+    .sort((a, b) => (a.at < b.at ? 1 : a.at > b.at ? -1 : 0))
+    .slice(0, limit)
+}
+
 /** A ladder row after equal neighbours are merged. `1-5 rep`, `8 rep`. */
 export interface LadderBand {
   label: string

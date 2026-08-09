@@ -1,7 +1,8 @@
 import { useState } from 'react'
-import { EQUIPMENT, MUSCLE_GROUPS, createCustomExercise } from '../lib/exercises'
+import { createCustomExercise } from '../lib/exercises'
 import type { Exercise, MuscleGroup } from '../lib/types'
 import { IconBack } from './icons'
+import { ExerciseFields } from './ExerciseFields'
 
 /**
  * Add an exercise the catalogue does not have.
@@ -67,67 +68,16 @@ export function NewExercise({
         </p>
       )}
 
-      <div>
-        <label htmlFor="exercise-name" className="kicker mb-2 block">
-          Name
-        </label>
-        <input
-          id="exercise-name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="Hack Squat (Machine)"
-          autoComplete="off"
-          autoCorrect="off"
-          className="ring-edge h-14 w-full bg-surface px-3 text-base outline-none focus:border-accent"
-          style={{ borderRadius: 'var(--radius-md)' }}
-        />
-        <p className="mt-1 text-[11px] text-muted">
-          Only you can see this one. The catalogue names lifts like “Bench Press
-          (Barbell)” — matching that makes it easier to find later.
-        </p>
-      </div>
-
-      <fieldset>
-        <legend className="kicker mb-2">Muscle group</legend>
-        <div className="flex flex-wrap gap-2">
-          {MUSCLE_GROUPS.map((g) => (
-            <button
-              key={g}
-              type="button"
-              aria-pressed={muscleGroup === g}
-              onClick={() => setMuscleGroup(g)}
-              className={`btn-base h-12 px-3.5 text-sm capitalize ${
-                muscleGroup === g ? 'btn-primary' : 'btn-secondary'
-              }`}
-            >
-              {g}
-            </button>
-          ))}
-        </div>
-        <p className="mt-1 text-[11px] text-muted">
-          This is what puts it on the weekly-sets chart, so pick the one it actually
-          trains.
-        </p>
-      </fieldset>
-
-      <fieldset>
-        <legend className="kicker mb-2">Equipment</legend>
-        <div className="flex flex-wrap gap-2">
-          {EQUIPMENT.map((e) => (
-            <button
-              key={e}
-              type="button"
-              aria-pressed={equipment === e}
-              onClick={() => setEquipment(e)}
-              className={`btn-base h-12 px-3.5 text-sm capitalize ${
-                equipment === e ? 'btn-primary' : 'btn-secondary'
-              }`}
-            >
-              {e}
-            </button>
-          ))}
-        </div>
-      </fieldset>
+      <ExerciseFields
+        idPrefix="new-exercise"
+        name={name}
+        muscleGroup={muscleGroup}
+        equipment={equipment}
+        onName={setName}
+        onMuscleGroup={setMuscleGroup}
+        onEquipment={setEquipment}
+        nameHint="Only you can see this one. The catalogue names lifts like “Bench Press (Barbell)” — matching that makes it easier to find later."
+      />
 
       {/* The one hero: it is the only thing this screen exists to do. */}
       <button
