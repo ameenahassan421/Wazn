@@ -895,12 +895,39 @@ export async function installSupabaseStub(
         // screen rendered "PREVIOUS · NAN MONTHS AGO". That is the §4 rule
         // about stubbing every column, caught by looking at a screen.
         previous_session: data.previousSession ?? [],
+        // Every column the real function returns. The first three were here
+        // and the last three were not, so `total_sets > 0` compared undefined
+        // and the detail page said "Not logged yet" directly above a full set
+        // of records. Same §4 rule as `previous_session` above, same fix.
         exercise_records: [
           {
             best_weight_kg: 102.5,
             best_e1rm_kg: 117.9,
             best_session_volume_kg: 4820.5,
+            total_sets: 149,
+            total_sessions: 38,
+            first_logged_at: iso(280),
           },
+        ],
+        // One point per session, oldest first, climbing with a dip in it — a
+        // monotonic fixture would hide a chart that sorts wrong, and a flat
+        // one would hide the verdict sentence entirely.
+        exercise_1rm_history: [
+          98.4, 101.2, 100.1, 104.7, 103.9, 108.3, 112.6, 117.9,
+        ].map((kg, i) => ({
+          workout_id: `1rm-${i}`,
+          started_at: iso(240 - i * 30),
+          best_1rm_kg: kg,
+        })),
+        // The real function's buckets and en-dashes, not invented ones: a
+        // fixture that says "1-5" would not catch the page rendering a label
+        // the database never emits.
+        exercise_rep_distribution: [
+          { bucket: '1–5', bucket_order: 1, set_count: 31 },
+          { bucket: '6–8', bucket_order: 2, set_count: 64 },
+          { bucket: '9–12', bucket_order: 3, set_count: 39 },
+          { bucket: '13–15', bucket_order: 4, set_count: 11 },
+          { bucket: '16+', bucket_order: 5, set_count: 4 },
         ],
         exercise_bests: data.strength.map((s) => ({
           exercise_id: s.exercise_id,
@@ -970,7 +997,28 @@ export async function installSupabaseStub(
         exercise_rest: [],
         invites: [],
       }
-      const rows = applyQuery(byTable[table] ?? [], url.searchParams)
+      let rows = applyQuery(byTable[table] ?? [], url.searchParams)
+
+      /*
+       * PostgREST embeds. `select=...,workouts!inner(id, started_at)` returns
+       * each set with a nested `workouts` object, and this stub returned flat
+       * rows — so `row.workouts.id` threw inside the exercise detail page's
+       * `.then`, `setHistory` was never reached, and the page sat on
+       * "Loading…" with the rep-max ladder absent. Two uncaught page errors
+       * and two missing sections, all from one unsupported query shape.
+       *
+       * Only attached when the select actually asks for it, so the stub keeps
+       * returning what the real API would.
+       */
+      const select = url.searchParams.get('select') ?? ''
+      if (table === 'workout_sets' && select.includes('workouts')) {
+        const byId = new Map(data.workouts.map((w) => [w.id, w]))
+        rows = rows.map((r) => {
+          const w = byId.get(r.workout_id)
+          return { ...r, workouts: w ? { id: w.id, started_at: w.started_at } : null }
+        })
+      }
+
       return json(wantsObject ? (rows[0] ?? null) : rows)
     }
 

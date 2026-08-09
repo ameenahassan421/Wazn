@@ -253,3 +253,178 @@ export function underBand(rows: MuscleGroupSets[]): string[] {
     .sort((a, b) => num(a.set_count) - num(b.set_count))
     .map((r) => r.muscle_group)
 }
+
+/**
+ * What a lift's estimated-1RM series says about whether it is going anywhere.
+ *
+ * GATE U4 is "can I answer 'is my bench actually progressing?' from one
+ * screen in under five seconds". A line answers it only if you read a line;
+ * this is the sentence next to the line. Both come off the same series, so
+ * they cannot disagree.
+ *
+ * `delta_kg` is latest minus earliest across the whole series, which is the
+ * question people actually mean. `best_kg` is carried separately because a
+ * lift can be up over the window and still below its best, and hiding that
+ * would make the sentence a cheerleader rather than an instrument.
+ */
+export interface E1rmProgress {
+  latest_kg: number
+  earliest_kg: number
+  delta_kg: number
+  since_at: string
+  best_kg: number
+  best_at: string
+  sessions: number
+}
+
+export function e1rmProgress(
+  points: { started_at: string; best_1rm_kg: number | string | null }[],
+): E1rmProgress | null {
+  const clean = points
+    .map((p) => ({ started_at: p.started_at, kg: num(p.best_1rm_kg) }))
+    .filter((p) => p.kg > 0)
+    .sort((a, b) =>
+      a.started_at < b.started_at ? -1 : a.started_at > b.started_at ? 1 : 0,
+    )
+
+  if (clean.length === 0) return null
+
+  const first = clean[0]
+  const latest = clean[clean.length - 1]
+  // Earliest wins a tie: a record stands from the first time it was set, the
+  // same rule the rep-max ladder uses.
+  let best = first
+  for (const p of clean) if (p.kg > best.kg) best = p
+
+  return {
+    latest_kg: latest.kg,
+    earliest_kg: first.kg,
+    delta_kg: latest.kg - first.kg,
+    since_at: first.started_at,
+    best_kg: best.kg,
+    best_at: best.started_at,
+    sessions: clean.length,
+  }
+}
+
+/** The rep counts the ladder reports, ascending. */
+export const LADDER_RUNGS = [1, 3, 5, 8, 10]
+
+/**
+ * One set as the ladder needs it: the PostgREST column names, because that is
+ * what `ExerciseDetail` already selects from `workout_sets`. Deliberately not
+ * a camelCase shape — a mapping layer between the query and this function is
+ * a place for the two to disagree.
+ */
+export interface LadderSet {
+  weight_kg: number | null
+  reps: number | null
+  set_type: string
+  /** `started_at` of the workout the set belongs to. */
+  started_at: string
+}
+
+export interface LadderRung {
+  reps: number
+  best_weight_kg: number
+  /** When it was first done, so the row can say how long the rung has stood. */
+  achieved_at: string
+}
+
+/**
+ * Best weight for each rep count in `rungs`.
+ *
+ * A set counts toward every rung at or below its rep count: 100 kg × 8 proves
+ * a 5-rep max of at least 100 kg. That is what makes the ladder readable as a
+ * strength curve rather than five unrelated numbers.
+ *
+ * Exclusions match every other record surface in the app (plan §5): warm-ups
+ * never count, and a set missing weight or reps is not a performance. Zero and
+ * negative values are refused too — the database permits them and a
+ * bodyweight set stores null, so a 0 here is bad data rather than a light set.
+ *
+ * Ties go to the earliest date: the first time you did it is when you did it.
+ *
+ * NOTE ON SCOPE: this is "best in the sets you pass it", not a guaranteed
+ * all-time record. `ExerciseDetail` caps its query, so a lift with more sets
+ * than that cap has a ladder over a window. Migration 0019's `records_ladder`
+ * would answer it in SQL over everything, and it is deliberately unapplied —
+ * see DECISIONS.md.
+ */
+/** A ladder row after equal neighbours are merged. `1-5 rep`, `8 rep`. */
+export interface LadderBand {
+  label: string
+  best_weight_kg: number
+  achieved_at: string
+}
+
+/**
+ * Merge consecutive rungs that share a weight into one row.
+ *
+ * Because a set counts toward every rung at or below its reps, the top of the
+ * ladder ties constantly: one heavy set of five makes the 1, 3 and 5 rungs
+ * identical. Rendered raw that is three rows carrying one fact, which is worse
+ * than useless on a screen read at arm's length — it looks like a bug. The
+ * merged row says the same thing once and truthfully: a 226 lb five is a
+ * proven 226 lb single.
+ *
+ * Found by looking at the built screen, not by reading the function.
+ */
+export function ladderBands(rungs: LadderRung[]): LadderBand[] {
+  const bands: LadderBand[] = []
+  for (const rung of rungs) {
+    const open = bands.at(-1)
+    if (open && open.best_weight_kg === rung.best_weight_kg) {
+      // Extend the open band. The date stays the band's first one: it is when
+      // the weight was lifted, and that is what the whole band records.
+      const from = open.label.split('-')[0]
+      open.label = `${from}-${rung.reps}`
+      continue
+    }
+    bands.push({
+      label: String(rung.reps),
+      best_weight_kg: rung.best_weight_kg,
+      achieved_at: rung.achieved_at,
+    })
+  }
+  return bands
+}
+
+export function repMaxLadder(
+  sets: LadderSet[],
+  rungs: number[] = LADDER_RUNGS,
+): LadderRung[] {
+  const qualifying = sets.filter(
+    (s) =>
+      s.set_type !== 'warmup' &&
+      s.weight_kg !== null &&
+      s.reps !== null &&
+      s.weight_kg > 0 &&
+      s.reps > 0,
+  )
+
+  const ladder: LadderRung[] = []
+
+  for (const rung of [...rungs].sort((a, b) => a - b)) {
+    let best: LadderSet | null = null
+    for (const set of qualifying) {
+      if ((set.reps as number) < rung) continue
+      if (best === null) {
+        best = set
+        continue
+      }
+      const weight = set.weight_kg as number
+      const bestWeight = best.weight_kg as number
+      if (weight > bestWeight) best = set
+      else if (weight === bestWeight && set.started_at < best.started_at) best = set
+    }
+    if (best === null) continue
+    ladder.push({
+      reps: rung,
+      best_weight_kg: best.weight_kg as number,
+      achieved_at: best.started_at,
+    })
+  }
+
+  return ladder
+}

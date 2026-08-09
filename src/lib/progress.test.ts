@@ -1,15 +1,19 @@
 import { describe, expect, it } from 'vitest'
 import {
   bandState,
+  e1rmProgress,
   heatStep,
+  ladderBands,
   liftBalance,
   monthlyVolume,
+  repMaxLadder,
   sessionsPerWeek,
   trainingCalendar,
   underBand,
   weekStart,
   weeklyVolume,
 } from './progress'
+import type { LadderSet } from './progress'
 import type { ExerciseBest, MuscleGroupSets, SessionVolumeRow } from './progress'
 
 /** Local-time ISO so the buckets under test see the same day the user would. */
@@ -234,5 +238,206 @@ describe('bandState', () => {
     expect(bandState(10)).toBe('in')
     expect(bandState(20)).toBe('in')
     expect(bandState(21)).toBe('over')
+  })
+})
+
+describe('e1rmProgress', () => {
+  const point = (started_at: string, best_1rm_kg: number | string | null) => ({
+    started_at,
+    best_1rm_kg,
+  })
+
+  it('is null when there is nothing to read', () => {
+    expect(e1rmProgress([])).toBeNull()
+  })
+
+  it('is null when every point is unusable', () => {
+    expect(e1rmProgress([point('2026-01-01', null), point('2026-02-01', 0)])).toBeNull()
+  })
+
+  it('reads the delta across the whole series, oldest to newest', () => {
+    const p = e1rmProgress([
+      point('2026-01-01T00:00:00Z', 100),
+      point('2026-03-01T00:00:00Z', 110),
+    ])
+    expect(p).toMatchObject({
+      earliest_kg: 100,
+      latest_kg: 110,
+      delta_kg: 10,
+      since_at: '2026-01-01T00:00:00Z',
+      sessions: 2,
+    })
+  })
+
+  it('sorts an out-of-order series rather than trusting it', () => {
+    const p = e1rmProgress([
+      point('2026-03-01T00:00:00Z', 110),
+      point('2026-01-01T00:00:00Z', 100),
+    ])
+    expect(p?.delta_kg).toBe(10)
+    expect(p?.since_at).toBe('2026-01-01T00:00:00Z')
+  })
+
+  it('reports a decline as a negative delta', () => {
+    const p = e1rmProgress([
+      point('2026-01-01T00:00:00Z', 120),
+      point('2026-03-01T00:00:00Z', 110),
+    ])
+    expect(p?.delta_kg).toBe(-10)
+  })
+
+  it('keeps the best separate, so being up is not confused with being at your best', () => {
+    const p = e1rmProgress([
+      point('2026-01-01T00:00:00Z', 100),
+      point('2026-02-01T00:00:00Z', 130),
+      point('2026-03-01T00:00:00Z', 110),
+    ])
+    expect(p?.delta_kg).toBe(10)
+    expect(p?.best_kg).toBe(130)
+    expect(p?.best_at).toBe('2026-02-01T00:00:00Z')
+  })
+
+  it('gives a tied best to the earliest date', () => {
+    const p = e1rmProgress([
+      point('2026-01-01T00:00:00Z', 130),
+      point('2026-02-01T00:00:00Z', 130),
+    ])
+    expect(p?.best_at).toBe('2026-01-01T00:00:00Z')
+  })
+
+  it('accepts the numeric strings PostgREST returns', () => {
+    const p = e1rmProgress([point('2026-01-01T00:00:00Z', '100.5')])
+    expect(p?.latest_kg).toBe(100.5)
+    expect(p?.delta_kg).toBe(0)
+  })
+
+  it('drops an unusable point without dropping the series', () => {
+    const p = e1rmProgress([
+      point('2026-01-01T00:00:00Z', 100),
+      point('2026-02-01T00:00:00Z', null),
+      point('2026-03-01T00:00:00Z', 105),
+    ])
+    expect(p?.sessions).toBe(2)
+    expect(p?.delta_kg).toBe(5)
+  })
+})
+
+describe('ladderBands', () => {
+  const rung = (reps: number, kg: number, at = '2026-01-01') => ({
+    reps,
+    best_weight_kg: kg,
+    achieved_at: at,
+  })
+
+  it('is empty for an empty ladder', () => {
+    expect(ladderBands([])).toEqual([])
+  })
+
+  it('merges the tied top of the ladder into one row', () => {
+    expect(ladderBands([rung(1, 102.5), rung(3, 102.5), rung(5, 102.5)])).toEqual([
+      { label: '1-5', best_weight_kg: 102.5, achieved_at: '2026-01-01' },
+    ])
+  })
+
+  it('keeps genuinely different rungs apart', () => {
+    const bands = ladderBands([rung(1, 120), rung(3, 120), rung(5, 100), rung(8, 90)])
+    expect(bands.map((b) => [b.label, b.best_weight_kg])).toEqual([
+      ['1-3', 120],
+      ['5', 100],
+      ['8', 90],
+    ])
+  })
+
+  it('does not merge across a gap in weight and back again', () => {
+    const bands = ladderBands([rung(1, 120), rung(3, 100), rung(5, 120)])
+    expect(bands.map((b) => b.label)).toEqual(['1', '3', '5'])
+  })
+
+  it('keeps the earliest date of a merged band', () => {
+    const bands = ladderBands([rung(1, 100, '2026-01-01'), rung(3, 100, '2026-03-01')])
+    expect(bands[0].achieved_at).toBe('2026-01-01')
+  })
+
+  it('leaves a single rung alone', () => {
+    expect(ladderBands([rung(8, 80)])).toEqual([
+      { label: '8', best_weight_kg: 80, achieved_at: '2026-01-01' },
+    ])
+  })
+})
+
+describe('repMaxLadder', () => {
+  const set = (
+    weight_kg: number | null,
+    reps: number | null,
+    set_type = 'normal',
+    started_at = '2026-01-01T00:00:00.000Z',
+  ): LadderSet => ({ weight_kg, reps, set_type, started_at })
+
+  it('is empty for no sets', () => {
+    expect(repMaxLadder([])).toEqual([])
+  })
+
+  it('counts one set toward every rung at or below its reps', () => {
+    expect(repMaxLadder([set(100, 8)])).toEqual([
+      { reps: 1, best_weight_kg: 100, achieved_at: '2026-01-01T00:00:00.000Z' },
+      { reps: 3, best_weight_kg: 100, achieved_at: '2026-01-01T00:00:00.000Z' },
+      { reps: 5, best_weight_kg: 100, achieved_at: '2026-01-01T00:00:00.000Z' },
+      { reps: 8, best_weight_kg: 100, achieved_at: '2026-01-01T00:00:00.000Z' },
+    ])
+  })
+
+  it('reads as a strength curve when heavy-low and light-high coexist', () => {
+    const ladder = repMaxLadder([set(120, 3), set(100, 8)])
+    expect(ladder.map((r) => [r.reps, r.best_weight_kg])).toEqual([
+      [1, 120],
+      [3, 120],
+      [5, 100],
+      [8, 100],
+    ])
+  })
+
+  it('never counts a warm-up, however heavy', () => {
+    const ladder = repMaxLadder([
+      set(140, 3, 'warmup', '2026-01-02T00:00:00.000Z'),
+      set(100, 8),
+    ])
+    expect(ladder.every((r) => r.best_weight_kg === 100)).toBe(true)
+  })
+
+  it('counts failure and drop sets, which are real performances', () => {
+    expect(repMaxLadder([set(130, 3, 'failure')])[0].best_weight_kg).toBe(130)
+    expect(repMaxLadder([set(130, 3, 'drop')])[0].best_weight_kg).toBe(130)
+  })
+
+  it('excludes a set missing weight or reps', () => {
+    expect(repMaxLadder([set(null, 10), set(100, null)])).toEqual([])
+  })
+
+  it('excludes zero and negative values as bad data, not light sets', () => {
+    expect(repMaxLadder([set(0, 5), set(100, 0), set(-50, 5), set(80, -5)])).toEqual([])
+  })
+
+  it('gives a tied weight to the earliest date', () => {
+    const ladder = repMaxLadder([
+      set(100, 5, 'normal', '2026-02-01T00:00:00.000Z'),
+      set(100, 5, 'normal', '2026-01-01T00:00:00.000Z'),
+    ])
+    expect(ladder[0].achieved_at).toBe('2026-01-01T00:00:00.000Z')
+  })
+
+  it('omits a rung nothing reaches', () => {
+    expect(repMaxLadder([set(100, 8)]).some((r) => r.reps === 10)).toBe(false)
+  })
+
+  it('returns rungs ascending even when asked out of order', () => {
+    const ladder = repMaxLadder([set(100, 12)], [10, 1, 5])
+    expect(ladder.map((r) => r.reps)).toEqual([1, 5, 10])
+  })
+
+  it('does not mutate its input', () => {
+    const sets = [set(100, 8), set(120, 3, 'warmup'), set(null, 5)]
+    const before = JSON.stringify(sets)
+    repMaxLadder(sets)
+    expect(JSON.stringify(sets)).toBe(before)
   })
 })

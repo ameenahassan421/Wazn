@@ -192,6 +192,33 @@ body {
   font-feature-settings: 'tnum' 1;
 }
 
+/* Rep-range bars: one hue, five steps, heaviest range brightest — plates
+   stepping down toward the sleeve (docs/design-philosophy.md).
+
+   These are classes rather than `var(--color-accent-${step})` composed in the
+   component, and that is not a style preference. Tailwind v4 drops any
+   `@theme` token nothing statically references, so a variable name built at
+   runtime resolves to NOTHING: accent-400 and accent-700 were absent from the
+   built CSS and two bars with 31 and 11 sets in them rendered as empty
+   tracks. Same failure as `inset-block-0` — a reference that emits no CSS,
+   fails no check, and is invisible until somebody looks at a screenshot. A
+   static class is what makes the token survive the build. */
+.rep-fill-1 {
+  background-color: var(--color-accent-400);
+}
+.rep-fill-2 {
+  background-color: var(--color-accent-500);
+}
+.rep-fill-3 {
+  background-color: var(--color-accent-600);
+}
+.rep-fill-4 {
+  background-color: var(--color-accent-700);
+}
+.rep-fill-5 {
+  background-color: var(--color-accent-800);
+}
+
 /* Native controls inherit the app's type rather than rendering in the
    browser's default face at the browser's default size.
 
