@@ -4359,3 +4359,65 @@ with no sets behind it, and that is named in the file rather than left to be
 discovered. The alternative was giving the lift sets, which would make Delete
 correctly refused by `on delete restrict` and leave that control
 unphotographable.
+
+## 2026-08-09: STATUS was wrong on five counts, and reality won again
+
+§6 says trust reality over STATUS and fix STATUS. This is the third time that
+rule has earned its place, and the first time the drift was in the project's
+favour.
+
+Read live from production rather than recited:
+
+| STATUS said                                    | production said                             |
+| ---------------------------------------------- | ------------------------------------------- |
+| 4 auth users, 4 profiles                       | 6 and 6, two created in the previous 4 days |
+| usernames 0                                    | 2                                           |
+| routines 0                                     | 8, across 2 users                           |
+| `generate-routine` never succeeded in its life | 7 successful generations                    |
+| migrations at 0022                             | 0024                                        |
+
+**The routine generator works.** That bullet had sat open as "the acceptance test"
+since 2026-08-05, and `ai_generations` holds 7 rows with `feature = 'routine'`
+while `recordGeneration` writes only after a success. Nothing recorded the moment
+it started working, so a question that had been answered stayed open for four
+days and would have been re-investigated by the next session.
+
+That is the actual lesson, and it is not about routines. **Every one of these
+five is a fact the app itself already knew.** A session that trusts a stale
+STATUS makes worse decisions than one that reads the database, which is why the
+superseded bullets now point at the reconciled block rather than being quietly
+edited: someone reading the history should be able to see that the file was
+wrong, not just that it is now right.
+
+### The number that matters is the one nobody had looked at
+
+Six accounts exist, three signed in within two days, and **one person logged a
+workout in the last seven**. Two workouts in seven days. GATE 3 asks for a third
+of testers still logging unprompted at week 6 and §4 pre-declares it as the
+stop-building line, so that single figure governs R8, Stage 6's ads and Stage 7,
+and no amount of building moves it. It is now the first thing STATUS says about
+the beta rather than something derivable from a query nobody runs.
+
+### Spend is zero by luck, not by control
+
+All 10 `ai_generations` used the free model, so real OpenRouter cost to date is
+nothing. The §10 hard cap has been asked for since before B1 and is still unset,
+three releases later. One free-tier outage converts four live model-calling
+surfaces into uncapped paid traffic. Recorded here because "spend is fine" and
+"spend is controlled" have been the same sentence in this project for four days
+and they are not the same thing.
+
+### `client_errors` has never had a row
+
+Either nothing has crashed since 0018 landed, or nothing reaches the table. An
+error ledger with no row ever written is not yet an instrument, and the error
+boundary's whole purpose was that the 2026-08-08 deploy break was invisible until
+a user mentioned it. One deliberate crash would settle it.
+
+### R4 and R5 are now complete
+
+The offense plan's §11 ladder listed both as PARTIAL because R4 lacked E1 and R5
+lacked U4. Both shipped, so both sentences a tester would say are now true. The
+paragraph explaining the drift is kept rather than deleted: a phase ID in a
+commit message is not a release, and that table is the only thing that says which
+is which.

@@ -455,26 +455,35 @@ before B3/B4, because a coach whose log loses sets is a clown.
 | **R1 Finished**  | "This feels like a real app."                | U1c + U7 (feel)              | nothing                                | shipped                               |
 | **R2 The board** | "I can see my whole workout."                | U2                           | design addendum                        | shipped                               |
 | **R3 Trust**     | "It works in the basement gym."              | U3                           | U2 preferred                           | shipped                               |
-| **R4 It knows**  | "It told me what to do before I asked."      | B1 + B2 + **E1 rest canvas** | beta live; OpenRouter cap              | **PARTIAL — B1+B2 shipped, E1 not**   |
-| **R5 Switch**    | "I brought three years of history in a tap." | **F1 import** + U4           | nothing                                | **PARTIAL — F1 shipped, U4 not**      |
+| **R4 It knows**  | "It told me what to do before I asked."      | B1 + B2 + **E1 rest canvas** | beta live; OpenRouter cap              | **COMPLETE (2026-08-08)**             |
+| **R5 Switch**    | "I brought three years of history in a tap." | **F1 import** + U4           | nothing                                | **COMPLETE (2026-08-08)**             |
 | **R6 Ask it**    | "I asked why my bench stalled and it knew."  | B3 + **E2 adaptive order**   | Ameen's no-chat reversal; eval harness | not started                           |
 | **R7 Programs**  | "It runs my training now."                   | B4                           | U2, U3                                 | not started                           |
 | **R8 Crew**      | "My friends are in it."                      | U5 + B5                      | GATE 3 retention data                  | not started                           |
 | **R9 Native**    | "The timer wakes my phone."                  | U6 + B6                      | store accounts                         | not started                           |
 | **R10 Found**    | "People I don't know are signing up."        | **F2 Arabic SEO** + Stage 7  | Stage 5 strings                        | not started                           |
 
-**Two releases carry a label they have not earned, and the state column above
-is why it was added (2026-08-08).** The commit that shipped the Hevy import is
-titled `R5: bring your history from Hevy`, and STATUS records "R5 is BUILT" —
-but this table defines R5 as F1 **and U4**, and U4 has never been started. R4
-is the same shape one step earlier: B1 and B2 shipped without E1. Nothing was
-mis-built; the accounting drifted because phase IDs are what gets committed and
-releases are what this table promises. A release is done when a tester would
-say its sentence, and neither of those two would yet.
+**~~Two releases carry a label they have not earned.~~ BOTH ARE NOW EARNED
+(2026-08-08), and the paragraph is kept because the accounting failure it
+describes is the lesson.** R5 was recorded as BUILT while this table defines it
+as F1 **and U4**, and U4 had never been started. R4 was the same shape one step
+earlier: B1 and B2 shipped without E1. Nothing was mis-built; the accounting
+drifted because phase IDs are what gets committed and releases are what this
+table promises. E1 shipped, then U4 shipped, so both sentences a tester would say
+are now true. **The habit worth keeping: a phase ID in a commit message is not a
+release, and this table is the only thing that says which is which.**
 
-**On R4's stated dependencies, both are still open.** "Beta live" has not
-happened, and the OpenRouter hard cap §10 asks to be set _before B1_ was still
-unset when B1 merged.
+**On R4's stated dependencies: one closed, one still open.** The beta IS live as
+of 2026-08-09 (six accounts, though only one person logging weekly). The
+OpenRouter hard cap §10 asks to be set _before B1_ is **still unset**, three
+releases later. Real spend is zero only because every generation so far has used
+the free model.
+
+**Remaining releases: R6, R7, R8, R9, R10.** R8 is hard-blocked on GATE 3
+retention data by design, and §4 pre-declares that gate as the stop-building
+line, so it is deliberately last rather than merely later. R6 needs Ameen to
+reverse the no-chat rule. The ordered sequence with paste-ready prompts is at the
+top of `docs/IMPLEMENTATION_PROMPTS.md`.
 
 **Where the lead actually opens: R4.** R1–R3 are Wazn becoming as good
 as Hevy. R4 is the first release Hevy has no answer to, because nothing

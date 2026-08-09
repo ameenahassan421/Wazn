@@ -445,16 +445,19 @@ verbatim, so they survive even if this file isn't read.**
 - **Quality bar: PASSED 2026-08-04**, before any other user could see theirs.
 - **Egress from this environment:** `api.supabase.com`, `api.resend.com`,
   GitHub, npm. NOT the Vercel app, `trywazn.app`, or `openrouter.ai`.
-- **Data, live:** exercises 134, workouts 154, workout_sets 3,201 (335
-  supersetted, **491 records**), profiles 2, routines 0.
+- **~~Data, live:~~ SUPERSEDED, see the RECONCILED block at the foot of this
+  section (2026-08-09).** Said: exercises 134, workouts 154, workout_sets 3,201
+  (335 supersetted, **491 records**), profiles 2, routines 0.
 - **Tests:** 164 passing, plus the SQL RLS suite. CI is green on every run in
   the repo's history — the failures Ameen is seeing are runtime, not build.
 - **Migrations: 0001–0013 are ALL live**, confirmed 2026-08-05 by probing for
   objects — `strength_summary` exists (0012) and `social_feed` returns
   `best_record_name` / `best_record_e1rm_kg` (0013). There is still no
   `schema_migrations` ledger, so this remains a probe rather than a read.
-- **Data, live (2026-08-05):** 4 auth users, 156 workouts and 3,201 sets all on
-  `6da348ed`, exercises 134, routines 0, profiles 4, usernames 0.
+- **~~Data, live (2026-08-05):~~ SUPERSEDED, see the RECONCILED block at the
+  foot of this section (2026-08-09).** Said: 4 auth users, 156 workouts and
+  3,201 sets all on `6da348ed`, exercises 134, routines 0, profiles 4,
+  usernames 0.
 - **Edge Function deploys are automated, and production is current.**
   `coach-notes` and `generate-routine` are at **version 14**, deployed
   2026-08-05 by `.github/workflows/deploy-functions.yml` — merging to `main`
@@ -466,10 +469,13 @@ verbatim, so they survive even if this file isn't read.**
 - **`vercel.json` is validated in CI** (`npm run check:vercel`). A `"//"`
   comment key in a rewrite once made Vercel reject every deploy, main included,
   while CI stayed green and production quietly froze on the previous build.
-- **Not verified yet, and it is the acceptance test:** nobody has generated a
-  routine through the app since the fix. Coach → Build me a routine, on a real
-  account, is what proves it. The ledger says `generate-routine` has never
-  produced a successful generation in its life.
+- **~~Not verified yet, and it is the acceptance test.~~ VERIFIED AND PASSING
+  (2026-08-09).** This said `generate-routine` had never produced a successful
+  generation in its life. The ledger now holds **7 rows with
+  `feature = 'routine'`**, and `recordGeneration` writes only after a success,
+  so the routine builder demonstrably works on real accounts. **8 routines exist
+  across 2 users.** Nothing recorded the moment it started working, which is why
+  this bullet sat here as an open question for four days after it was answered.
 - **CLOSED 2026-08-08 — deleted, and there were ten rather than four.** Open decision for Ameen: four zero-set workouts from desktop testing
   still render as blank History rows. Say "delete all my workouts with zero
   sets" and they go server-side.
@@ -1173,7 +1179,50 @@ coach_surfaces.sql` asserts what the three functions RETURN against a seeded
 - **Wall green on Node 22:** all 11 checks, **704 tests**, `check:sql` executes
   all 23 migrations from empty, Playwright green, `npm run shots` reports no
   uncaught page errors.
-- **Last updated:** 2026-08-08 by Claude Code (U4 part 1: the e1RM trend and its
+- **RECONCILED AGAINST PRODUCTION, 2026-08-09.** Read live, not recited. This
+  section was wrong on five counts and a session that trusts it will make bad
+  calls, which is why the stale bullets above now point here.
+
+  | this file said                     | production says                                 |
+  | ---------------------------------- | ----------------------------------------------- |
+  | 4 auth users, 4 profiles           | **6 and 6**, two created in the previous 4 days |
+  | usernames 0                        | **2**                                           |
+  | routines 0                         | **8**, across 2 users                           |
+  | `generate-routine` never succeeded | **7 successful generations**                    |
+  | migrations at 0022                 | **0024**                                        |
+
+  Full snapshot: 152 workouts, 3,210 sets, **491 records**, 134 exercises (0
+  custom), 8 routines, 6 profiles, 1 follow, 0 unfinished workouts, 10
+  `ai_generations`, 3 `coach_views`, **0 `client_errors`**. Last workout logged
+  2026-08-07.
+
+- **THE BETA HAS STARTED AND RETENTION IS THIN.** Six accounts exist, three
+  signed in within two days, and **one person logged a workout in the last
+  seven**. Two workouts in seven days, both from a routine. That is the only
+  number that matters now and no amount of building moves it. GATE 3 asks for a
+  third of testers still logging unprompted at week 6, and §4 pre-declares it as
+  the stop-building line.
+- **All 10 AI generations used the FREE model**, so real OpenRouter spend is
+  zero to date. The §10 hard cap is still unset, so that is luck rather than
+  control: one free-tier outage turns four live surfaces into uncapped paid
+  traffic.
+- **`client_errors` is empty.** Either nothing has crashed since 0018 landed, or
+  nothing reaches the table. Worth one deliberate crash to find out which,
+  because an error ledger nobody has ever seen a row in is not yet an instrument.
+- **The ledger knows 6 of 24 migrations**, having gained nothing since 0022:
+  tonight's 0024 was applied through the dashboard SQL editor, which writes no
+  ledger row. `supabase db push` or `db reset` still behaves as though the
+  database began at 0016. Backfilling 0001 to 0024 is the first item in the
+  housekeeping prompt in `docs/IMPLEMENTATION_PROMPTS.md`.
+- **Migration 0024 is APPLIED and verified (2026-08-09).** `exercises.archived_at`
+  exists as a nullable `timestamptz` with no default and its comment matches the
+  repo file, checked by reading `information_schema` and `col_description` rather
+  than trusting a success flag. All 134 exercises are active, RLS still on with 4
+  policies, and 3,210 sets and 152 workouts were untouched. **0023 (the
+  preferences WIP) remains the only unapplied file in the repo.**
+- **Last updated:** 2026-08-09 by Claude Code (the production reconciliation
+  above, and the R4/R5 state correction in the offense plan's §11 ladder).
+  Previously 2026-08-08 (U4 part 1: the e1RM trend and its
   verdict, the rep-max ladder and its band merge, the rep-range distribution,
   the shared `SeriesChart`, two e1RM formatting fixes, the five defects a
   screenshot found, and the Node 26 versus 22 trap). Previously 2026-08-08 (E1,
