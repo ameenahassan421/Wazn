@@ -4421,3 +4421,70 @@ lacked U4. Both shipped, so both sentences a tester would say are now true. The
 paragraph explaining the drift is kept rather than deleted: a phase ID in a
 commit message is not a release, and that table is the only thing that says which
 is which.
+
+## 2026-08-09: locale is a per-user preference, not an app-level constant
+
+Stage 5 originally treated Arabic as an environment-level property with no
+visible control: region detection would decide, the user could not override,
+and there was no path back to English. Two problems with that. First, region
+detection is wrong for the large Arabic-speaking diaspora outside Egypt (every
+Arabic speaker in Minnesota gets Arabic by default) and for English-preferring
+Egyptians who want the English UI. Second, an app with no way back to English
+strands a user who mis-taps or simply prefers English after trying Arabic.
+
+**What changed.** Arabic is now a per-user locale preference with an explicit
+toggle in the header, next to the lbs/kg unit toggle. The preference is stored
+server-side in `user_preferences.locale` (values `en` or `ar`, default `en`),
+persisted via the existing `upsert_user_preference` RPC with a third branch in
+its column allowlist, and cached client-side the same way the unit preference
+is. It survives a new device. The initial locale resolves in order: stored
+preference if set, region/browser signal, English as fallback. Setting `ar`
+flips `dir` on the root element and switches strings and exercise names; digits
+stay Latin per the numbering-system decision below. Setting `en` flips back.
+Display only, one stored preference, no data rewritten: the same shape as the
+weight unit toggle.
+
+**Consequences.** GATE 5 now covers both directions: the native speaker never
+involuntarily hits English on the Arabic path, AND the toggle round-trips
+(arabic reloads arabic, english reloads english, same result on a second
+device). The locale column is not in migration 0023 as written and needs either
+an edit to 0023 while it is still unapplied or a new migration at Stage 5; that
+is an open question in STATUS.
+
+## 2026-08-09: the admin script could not read the file the secrets live in
+
+`scripts/supabase_admin.ts` exists so auth setup is a command rather than a
+dashboard click-through, and it could not run at all. `import 'dotenv/config'`
+reads `.env` and only `.env`; the project keeps its secrets in `.env.local`,
+because that is the file Vite loads for the `VITE_*` vars and nobody maintains
+two. So the token sat in the right place for the app and the wrong place for the
+script, and the script's own header told people to use the file it could read
+rather than the one they actually use.
+
+The failure mode was "SUPABASE_ACCESS_TOKEN is not set" while the token was ten
+lines away on disk. It now loads `.env.local` then `.env`, and neither overrides
+a variable already exported in the shell, so CI and any sandbox that injects real
+env vars behave exactly as before. The error message now also says to check the
+line is not commented out, which is what it actually was.
+
+`CLAUDE.md` asserts that `SUPABASE_ACCESS_TOKEN` and `SUPABASE_PROJECT_REF` "are
+in the environment". That was true of earlier sandboxed sessions and is false in a
+plain shell, which is the same shape as the Node 26 trap: a claim about the
+environment that was true once and is now a time sink.
+
+### `set-email-rate-limit`, because this one setting had no command
+
+`rate_limit_email_sent` defaults to **2 per hour, project-wide**, which is not a
+per-user limit. Invite five friends in one evening and three get nothing and have
+no way to say so. Custom SMTP does not raise it; it only earns permission to
+raise it, and mistaking those two for each other is what made this look like a
+Yahoo deliverability problem for three days in August.
+
+It was also the one auth setting `show` could not display, because it was missing
+from `INTERESTING`, so the command meant to audit auth config was silent about
+the field most likely to swallow an invite wave. Added, along with a setter that
+reads the value back and fails if the write was clamped rather than trusting a
+200, the same posture as every other setter in the file.
+
+The ceiling above it is the provider's, not Supabase's: Resend's free plan is 100
+a day and 3,000 a month, so 30 an hour does not mean 720 a day.
