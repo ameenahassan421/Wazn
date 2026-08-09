@@ -1095,11 +1095,35 @@ coach_surfaces.sql` asserts what the three functions RETURN against a seeded
   answers nothing, because the result looks real. The first records fixture also
   showed a state production cannot reach (the same lift flagged three times at
   one weight, which `pr_weight` makes impossible).
-- **Still open in U4:** full past-workout editing only. Its five parts are set
-  type and RPE in `EditSetDialog`, adding a set, adding an exercise, deleting a
-  workout, and duplicate-as-routine. Workout rename and notes already shipped in
-  U1. This is the part that writes to `workout_sets`, which every chart, record
-  and PR flag derives from, so it gets the strictest review.
+- **PAST-WORKOUT EDITING IS BUILT (2026-08-08), so U4's build list is COMPLETE.**
+  Set type and RPE in `EditSetDialog`, per-exercise add-set, add-exercise through
+  the real picker, delete-workout, and duplicate-as-routine. Rename and notes
+  already shipped in U1.
+- **The old "weight and reps only" reasoning was reversed on purpose.** The
+  dialog's own comment said changing a set type after the fact is rewriting
+  history. Half right: marking a set as the warm-up it always was is a
+  CORRECTION, and leaving it uncorrectable meant a mislabelled warm-up inflated
+  every record, chart and volume figure it touched with no way to fix it. The
+  EXERCISE still cannot be changed, because that is rewriting rather than
+  correcting.
+- **A screenshot found an app defect in that work.** The History breakdown
+  grouped sets by exercise NAME with the literal string "Exercise" as the
+  fallback, so **18 sets of four different lifts merged into one block** when the
+  embed was missing. Grouping is by `exercise_id` now: the id is the identity,
+  the name is only display. Two harness gaps closed with it (the to-one
+  `exercises(...)` embed, and the fact that the editing surface had never been
+  photographed at all, since all five controls sit behind two taps).
+- **U4 GATE, reportable:** "is my bench actually progressing?" is answerable from
+  the exercise page in one glance, from a series that has been live since
+  migration 0001 and had no reader. **Ameen still has to run it against his own
+  152 workouts on a phone**, which is the half of the gate no sandbox can do.
+- **NOT built in U4, and flagged rather than skipped:** custom exercise ARCHIVE.
+  It needs a column, so a migration, so approval. It is also not what protects
+  history: `workout_sets.exercise_id` is `on delete restrict`, which already
+  makes losing logged sets impossible.
+- **Wall green on Node 22, all 11 checks, 754 tests.** `test:smoke` passes
+  locally again now that the machine is quiet, confirming the earlier failure was
+  load, as suspected.
 - **A screenshot run found five defects the eleven checks cannot see**, and
   `ExerciseDetail` had never been photographed at all: the fifth blind spot in
   that harness. Two of five rep-range bars rendered EMPTY because Tailwind v4

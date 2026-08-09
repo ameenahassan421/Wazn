@@ -4215,3 +4215,77 @@ is not cosmetic: the muscle group is what puts a lift on the weekly-sets chart
 and the equipment is what the routine generator filters by. Two copies would
 eventually offer different fields, and the one that drifted would write rows the
 rest of the app reads differently.
+
+## 2026-08-08: U4's past-workout editing, and the reasoning it reversed
+
+`EditSetDialog` was weight and reps only, and its own comment said why:
+"changing a set type after the fact is rewriting what happened rather than
+fixing a typo". That was half right, and the half it got wrong was costly.
+Marking a set as the warm-up it always was is a CORRECTION, and leaving it
+uncorrectable meant a mislabelled warm-up inflated every record, chart and
+volume figure it touched with no way to fix it. Set type and RPE are now
+editable. The EXERCISE still is not, because that genuinely is rewriting
+history rather than correcting a label.
+
+The consequence is handled rather than hoped about: a set type change moves a
+set in and out of the record and chart maths exactly as a weight change does, so
+the same `refreshRecords` self-heal covers both. Tapping a selected RPE clears
+it, so "I should not have recorded an RPE here" needs no separate control.
+
+### Set numbers are per workout, and max plus one
+
+`nextSetNumber` takes the highest `set_number` in the workout and adds one, not
+the count. A workout that has had a set deleted has a gap, and counting would
+collide with a number already there. Per workout rather than per exercise
+because that is what the column has always meant: `previous_session` and the
+History breakdown both order by it across the whole session.
+
+### A new set is prefilled from that lift's last WORKING set that day
+
+Somebody adding a set to a past session is almost always recording one they
+forgot, at the weight they were using that day. Prefilling from the last set of
+any exercise would put a bench weight onto a curl; prefilling from a warm-up
+would seed a number nobody lifted for that many reps, so a warm-up is the
+fallback rather than the source. The row opens straight into the editor, because
+the reason to add a set is usually that the numbers were different.
+
+### Adding an exercise is picking one and adding its first set
+
+There is nothing else to write. An exercise is present in a workout only by
+virtue of its sets, so "add exercise" with no set would be a no-op against the
+schema. It reuses the real picker rather than a lighter chooser: that one already
+knows how to search and filter, and a second one would be a worse version of it.
+
+### Duplicate-as-routine carries reps and set types, never weight
+
+`RoutineDraft` has no weight field and that was a decision recorded in 2026-08-01:
+a routine hard-coding 60 kg is wrong the week after you progress and then lies to
+you mid-workout. Exercise order follows first appearance, which is the order it
+was performed in. Warm-ups are dropped, because a routine prescribes the work and
+the ramp is generated from the working weight. Returns null when nothing survives
+that filter, so the caller says so rather than saving an empty routine. The new
+routine is NOT started or activated, matching the rule the AI generator follows.
+
+### The screenshot found a real defect, again, and it was in the app
+
+The History breakdown grouped sets by exercise NAME, falling back to the literal
+string "Exercise" when the embedded exercise was missing. A screenshot showed
+**18 sets of four different lifts merged into one block headed "Exercise"**,
+because the harness stub had no `exercises(...)` embed. The stub was the reason
+it was visible, but the merge is an app defect: the id is the identity and the
+name is only how it is displayed. Grouping is by `exercise_id` now.
+
+Two harness gaps closed with it: the to-one `exercises(...)` embed on
+`workout_sets`, and a screenshot of the editing surface at all. Every one of
+U4's five controls lives behind two taps (expand a workout, then "Edit
+workout"), so the entire surface would have shipped unphotographed. It also took
+two tries to frame: a fixed wheel distance overshot past the expanded workout
+into the collapsed rows below and photographed a list, so the second frame is
+anchored on the control with `scrollIntoViewIfNeeded`.
+
+### `test:smoke` passed locally this time
+
+The offline test that failed consistently earlier, on a clean `HEAD` and in
+every combination, passes now that the machine is not running three builds at
+once. It was load, as the earlier entry guessed. The entry stays, because the
+diagnosis is the useful part.

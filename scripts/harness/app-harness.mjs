@@ -1102,6 +1102,28 @@ export async function installSupabaseStub(
        * returning what the real API would.
        */
       const select = url.searchParams.get('select') ?? ''
+      // `workout_sets?select=*,exercises(id, name, ...)`: a to-one embed, so an
+      // OBJECT. Without it the History breakdown read every group header as
+      // "Exercise" and merged 18 sets of four different lifts into one block.
+      if (table === 'workout_sets' && select.includes('exercises(')) {
+        const byExercise = new Map(data.exercises.map((e) => [e.id, e]))
+        rows = rows.map((r) => {
+          const e = byExercise.get(r.exercise_id)
+          return {
+            ...r,
+            exercises: e
+              ? {
+                  id: e.id,
+                  name: e.name,
+                  muscle_group: e.muscle_group,
+                  equipment: e.equipment,
+                  image_url: e.image_url,
+                }
+              : null,
+          }
+        })
+      }
+
       if (table === 'workout_sets' && select.includes('workouts')) {
         const byId = new Map(data.workouts.map((w) => [w.id, w]))
         rows = rows.map((r) => {
