@@ -4,10 +4,12 @@ import { useBackLayer } from '../lib/use-back'
 import { useUnit } from '../lib/unit-context'
 import { formatEstimate, formatWeight } from '../lib/units'
 import { formatRelativeDay, formatVolume } from '../lib/format'
-import type { Exercise, OneRepMaxPoint } from '../lib/types'
+import type { Exercise, MuscleGroup, OneRepMaxPoint } from '../lib/types'
 import { describeRest, resolveRest, stepRest } from '../lib/rest'
 import { REST_STEP_SECONDS } from '../lib/use-rest-timer'
 import { e1rmProgress, ladderBands, repMaxLadder } from '../lib/progress'
+import { deleteCustomExercise, updateCustomExercise } from '../lib/exercises'
+import { ExerciseFields } from './ExerciseFields'
 import { ExerciseThumb } from './ExerciseThumb'
 import { SeriesChart } from './SeriesChart'
 
@@ -86,9 +88,14 @@ function num(value: number | string | null | undefined): number | null {
 export function ExerciseDetail({
   exercise,
   onBack,
+  onChanged,
+  onDeleted,
 }: {
   exercise: Exercise
   onBack: () => void
+  /** A renamed exercise has to reach the catalogue the caller is holding. */
+  onChanged?: (exercise: Exercise) => void
+  onDeleted?: (exerciseId: string) => void
 }) {
   const { unit } = useUnit()
   useBackLayer(true, onBack)
@@ -129,6 +136,15 @@ export function ExerciseDetail({
     override: number | null
   } | null>(null)
   const [restDirty, setRestDirty] = useState(false)
+  // Editing a custom exercise. Held here rather than in a dialog: this is
+  // already the lift's own page, and §2.1's objection to modals is about
+  // interrupting, which nothing here does.
+  const [editing, setEditing] = useState(false)
+  const [draftName, setDraftName] = useState(exercise.name)
+  const [draftGroup, setDraftGroup] = useState<MuscleGroup>(exercise.muscle_group)
+  const [draftEquipment, setDraftEquipment] = useState(exercise.equipment)
+  const [savingEdit, setSavingEdit] = useState(false)
+  const [confirmDeleteExercise, setConfirmDeleteExercise] = useState(false)
 
   const exerciseId = exercise.id
 
@@ -394,6 +410,52 @@ export function ExerciseDetail({
       ]
     : []
 
+  // The draft follows the exercise during render rather than through an effect,
+  // the pattern CLAUDE.md's state section requires: switching lifts while an
+  // editor is open must not save one lift's name onto another.
+  const [draftFor, setDraftFor] = useState(exerciseId)
+  if (draftFor !== exerciseId) {
+    setDraftFor(exerciseId)
+    setEditing(false)
+    setConfirmDeleteExercise(false)
+    setDraftName(exercise.name)
+    setDraftGroup(exercise.muscle_group)
+    setDraftEquipment(exercise.equipment)
+  }
+
+  async function saveEdit() {
+    setSavingEdit(true)
+    setError(null)
+    try {
+      const updated = await updateCustomExercise(exerciseId, {
+        name: draftName,
+        muscleGroup: draftGroup,
+        equipment: draftEquipment,
+      })
+      onChanged?.(updated)
+      setEditing(false)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Could not save that exercise.')
+    }
+    setSavingEdit(false)
+  }
+
+  async function removeExercise() {
+    setSavingEdit(true)
+    setError(null)
+    try {
+      await deleteCustomExercise(exerciseId)
+      onDeleted?.(exerciseId)
+      onBack()
+    } catch (e) {
+      // The on-delete-restrict refusal lands here, and it is not a failure so
+      // much as an answer: the exercise is part of logged history.
+      setError(e instanceof Error ? e.message : 'Could not delete that exercise.')
+      setConfirmDeleteExercise(false)
+    }
+    setSavingEdit(false)
+  }
+
   const buckets = spread?.exerciseId === exerciseId ? spread.rows : null
   const bucketMax = buckets
     ? Math.max(1, ...buckets.map((b) => Number(b.set_count)))
@@ -573,6 +635,65 @@ export function ExerciseDetail({
               </li>
             ))}
           </ul>
+        </section>
+      )}
+
+      {/* Only a custom exercise is editable. `exercises` is a shared catalogue
+          and `exercises_update_own` (0014) refuses a seeded row, so offering
+          the control would be offering a button that cannot work. */}
+      {exercise.is_custom && (
+        <section>
+          <div className="flex items-center gap-2">
+            <h3 className="kicker flex-1">Your exercise</h3>
+            <button
+              type="button"
+              onClick={() => setEditing((v) => !v)}
+              className="btn-base btn-secondary h-12 px-4 text-sm"
+            >
+              {editing ? 'Cancel' : 'Edit'}
+            </button>
+          </div>
+
+          {editing && (
+            <div className="mt-3 flex flex-col gap-4">
+              <ExerciseFields
+                idPrefix="edit-exercise"
+                name={draftName}
+                muscleGroup={draftGroup}
+                equipment={draftEquipment}
+                onName={setDraftName}
+                onMuscleGroup={setDraftGroup}
+                onEquipment={setDraftEquipment}
+                nameHint="Renaming keeps every set you have logged against it."
+              />
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => void saveEdit()}
+                  disabled={savingEdit}
+                  className="btn-base btn-hero h-14 flex-1 text-base"
+                >
+                  {savingEdit ? 'Saving…' : 'Save'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!confirmDeleteExercise) {
+                      setConfirmDeleteExercise(true)
+                      return
+                    }
+                    void removeExercise()
+                  }}
+                  disabled={savingEdit}
+                  className={`btn-base h-14 px-4 text-sm ${
+                    confirmDeleteExercise ? 'btn-primary' : 'btn-quiet'
+                  }`}
+                >
+                  {confirmDeleteExercise ? 'Delete?' : 'Delete'}
+                </button>
+              </div>
+            </div>
+          )}
         </section>
       )}
 

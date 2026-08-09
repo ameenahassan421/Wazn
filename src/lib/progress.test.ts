@@ -6,6 +6,7 @@ import {
   ladderBands,
   liftBalance,
   monthlyVolume,
+  recentRecords,
   repMaxLadder,
   sessionsPerWeek,
   trainingCalendar,
@@ -319,6 +320,90 @@ describe('e1rmProgress', () => {
     ])
     expect(p?.sessions).toBe(2)
     expect(p?.delta_kg).toBe(5)
+  })
+})
+
+describe('recentRecords', () => {
+  const NAMES: Record<string, string> = { e1: 'Bench Press', e2: 'Squat' }
+  const nameFor = (id: string) => NAMES[id]
+  const rec = (
+    exercise_id: string,
+    started_at: string,
+    { weight = 100, reps = 5, pr_weight = true, pr_e1rm = false } = {},
+  ) => ({ exercise_id, started_at, weight_kg: weight, reps, pr_weight, pr_e1rm })
+
+  it('is empty when nothing is flagged', () => {
+    expect(
+      recentRecords([rec('e1', '2026-01-01', { pr_weight: false })], nameFor),
+    ).toEqual([])
+  })
+
+  it('orders newest first', () => {
+    const out = recentRecords(
+      [rec('e1', '2026-01-01T00:00:00Z'), rec('e2', '2026-03-01T00:00:00Z')],
+      nameFor,
+    )
+    expect(out.map((r) => r.name)).toEqual(['Squat', 'Bench Press'])
+  })
+
+  it('reports one set that beat both as a single entry', () => {
+    const out = recentRecords(
+      [rec('e1', '2026-01-01', { pr_weight: true, pr_e1rm: true })],
+      nameFor,
+    )
+    expect(out).toHaveLength(1)
+    expect(out[0].kind).toBe('both')
+  })
+
+  it('distinguishes a load record from an estimate record', () => {
+    const out = recentRecords(
+      [
+        rec('e1', '2026-02-01', { pr_weight: true, pr_e1rm: false }),
+        rec('e2', '2026-01-01', { pr_weight: false, pr_e1rm: true }),
+      ],
+      nameFor,
+    )
+    expect(out.map((r) => r.kind)).toEqual(['weight', 'e1rm'])
+  })
+
+  it('excludes a bodyweight set, which cannot be a load record', () => {
+    expect(
+      recentRecords([{ ...rec('e1', '2026-01-01'), weight_kg: null }], nameFor),
+    ).toEqual([])
+  })
+
+  it('excludes a set with no reps', () => {
+    expect(
+      recentRecords([{ ...rec('e1', '2026-01-01'), reps: null }], nameFor),
+    ).toEqual([])
+  })
+
+  it('skips an exercise the catalogue does not know yet', () => {
+    expect(recentRecords([rec('missing', '2026-01-01')], nameFor)).toEqual([])
+  })
+
+  it('honours the limit after sorting, not before', () => {
+    const out = recentRecords(
+      [
+        rec('e1', '2026-01-01T00:00:00Z'),
+        rec('e2', '2026-05-01T00:00:00Z'),
+        rec('e1', '2026-03-01T00:00:00Z'),
+      ],
+      nameFor,
+      2,
+    )
+    expect(out.map((r) => r.at)).toEqual([
+      '2026-05-01T00:00:00Z',
+      '2026-03-01T00:00:00Z',
+    ])
+  })
+
+  it('parses the numeric strings PostgREST returns', () => {
+    const out = recentRecords(
+      [{ ...rec('e1', '2026-01-01'), weight_kg: '102.5' }],
+      nameFor,
+    )
+    expect(out[0].weight_kg).toBe(102.5)
   })
 })
 

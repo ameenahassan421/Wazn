@@ -296,8 +296,22 @@ export function fixtures({ empty = false, active = false } = {}) {
           distance_meters: null,
           set_type: s === 0 ? 'warmup' : 'normal',
           superset_group: null,
-          pr_weight: wi === 0 && li === 0 && s === 3,
-          pr_e1rm: wi === 0 && li === 0 && s === 3,
+          /*
+           * Records across several lifts and kinds. One set carried both flags
+           * and nothing else carried any, which drew a one-row block: enough
+           * to prove it renders, not enough to prove it orders or that a load
+           * record reads differently from an estimate record.
+           *
+           * Only the MOST RECENT session carries them, and that is not
+           * laziness. `pr_weight` means the set beat every earlier qualifying
+           * set of that exercise, so the same lift cannot be flagged twice at
+           * the same weight — production genuinely cannot produce the repeated
+           * identical rows an earlier version of this fixture drew. A fixture
+           * that shows an impossible state invites fixing a defect that is not
+           * there.
+           */
+          pr_weight: s === 3 && wi === 0 && li < 3 && li !== 1,
+          pr_e1rm: s === 3 && wi === 0 && li < 3 && li !== 0,
         })
       }
     })
@@ -742,6 +756,32 @@ function applyQuery(rows, params) {
     if (['select', 'order', 'limit', 'offset', 'on_conflict'].includes(key)) continue
     const [op, ...rest] = raw.split('.')
     const value = rest.join('.')
+
+    /*
+     * `or=(pr_weight.eq.true,pr_e1rm.eq.true)`, which the Progress records
+     * query uses. Without this the key fell through as a filter on a column
+     * literally named "or", every row failed it, and the Records block drew
+     * nothing while looking like an app with no records in it.
+     */
+    if (key === 'or') {
+      const clauses = raw
+        .replace(/^\(|\)$/g, '')
+        .split(',')
+        .map((clause) => clause.split('.'))
+      out = out.filter((r) =>
+        clauses.some(([col, clauseOp, ...v]) => {
+          const want = v.join('.')
+          if (clauseOp === 'eq') return String(r[col] ?? '') === want
+          if (clauseOp === 'is')
+            return want === 'null' ? r[col] == null : r[col] != null
+          // An unsupported operator must not silently pass every row: a stub
+          // that answers a filter it does not implement is worse than one that
+          // answers nothing, because the result looks real.
+          throw new Error(`harness stub: unsupported or() operator ${clauseOp}`)
+        }),
+      )
+      continue
+    }
 
     if (op === 'eq') {
       out = out.filter((r) => String(r[key] ?? '') === value)

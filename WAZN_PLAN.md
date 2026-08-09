@@ -1075,8 +1075,31 @@ coach_surfaces.sql` asserts what the three functions RETURN against a seeded
   second deadline on a machine that had been running builds, Postgres and
   Playwright for hours. **CI is the authority for that one.** Do not spend
   another hour bisecting it.
-- **Still open in U4:** the all-time PR list block in Progress, full
-  past-workout editing, custom exercise edit plus archive.
+- **The records list is BUILT (2026-08-08)**, second on Progress above the
+  diagnostics, because it is the only block there that answers "am I getting
+  stronger" without being read. It shapes migration 0009's trigger-written
+  flags and computes nothing. Five rows, not eight: at eight it pushed the
+  muscle-balance chart off a phone, which a screenshot showed and no test would.
+- **Custom exercise EDIT is built; ARCHIVE is not, and the reason matters.**
+  `workout_sets.exercise_id` is **`on delete restrict`** (0001), so the database
+  already refuses to delete an exercise with any logged set. Logged history is
+  structurally unlosable and archive was never what protected it. What archive
+  would add is tidiness, getting a used custom lift out of the picker, and that
+  needs a column, a migration, and Ameen. **Flagged, not quietly skipped.** What
+  the app owed instead was the reason for the refusal, which is now in plain
+  words rather than a constraint code.
+- **The stub had no `or=` support**, so the records query matched nothing and the
+  block drew empty while looking like an account with no records. It now
+  implements `or()` and **throws on an unsupported operator**: a stub that
+  silently answers a filter it has not implemented is worse than one that
+  answers nothing, because the result looks real. The first records fixture also
+  showed a state production cannot reach (the same lift flagged three times at
+  one weight, which `pr_weight` makes impossible).
+- **Still open in U4:** full past-workout editing only. Its five parts are set
+  type and RPE in `EditSetDialog`, adding a set, adding an exercise, deleting a
+  workout, and duplicate-as-routine. Workout rename and notes already shipped in
+  U1. This is the part that writes to `workout_sets`, which every chart, record
+  and PR flag derives from, so it gets the strictest review.
 - **A screenshot run found five defects the eleven checks cannot see**, and
   `ExerciseDetail` had never been photographed at all: the fifth blind spot in
   that harness. Two of five rep-range bars rendered EMPTY because Tailwind v4
