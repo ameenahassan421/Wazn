@@ -50,6 +50,16 @@ export interface Exercise {
    * empty one.
    */
   instructions?: string[] | null
+  /**
+   * When the owner archived this custom exercise (migration 0024). Null or
+   * absent means active, and those two read the same on purpose: until 0024 is
+   * applied the field simply is not in the row, and `!archived_at` is true
+   * either way, so every exercise stays listed exactly as it does today.
+   *
+   * Archived rows are still readable, because History has to name the exercise
+   * a past set was performed against. Only the picker filters them.
+   */
+  archived_at?: string | null
 }
 
 export interface Workout {

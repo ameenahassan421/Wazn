@@ -138,3 +138,37 @@ export async function deleteCustomExercise(exerciseId: string): Promise<void> {
   }
   throw new Error(describeError('Deleting that exercise', error))
 }
+
+/**
+ * Archive or restore a custom exercise (migration 0024).
+ *
+ * Archiving is NOT what protects logged history: `workout_sets.exercise_id` is
+ * `on delete restrict`, so the database already refuses to delete an exercise
+ * with any set against it. What this adds is getting a lift you have finished
+ * with out of a picker that is scanned one-handed mid-workout.
+ *
+ * `42703` is Postgres for "column does not exist", which is what comes back
+ * until 0024 is applied. It is reported as the missing migration rather than as
+ * a failure, the same way the app already handles 0008 and 0015 being absent:
+ * the feature is unavailable, nothing is broken, and the message says which.
+ */
+export async function setExerciseArchived(
+  exerciseId: string,
+  archived: boolean,
+): Promise<string | null> {
+  const archivedAt = archived ? new Date().toISOString() : null
+  const { data, error } = await supabase
+    .from('exercises')
+    .update({ archived_at: archivedAt })
+    .eq('id', exerciseId)
+    .select('archived_at')
+    .single()
+
+  if (error) {
+    if ((error as { code?: string }).code === '42703') {
+      throw new Error('Archiving needs migration 0024. Apply it and reload.')
+    }
+    throw new Error(describeError(archived ? 'Archiving' : 'Restoring', error))
+  }
+  return (data as { archived_at: string | null }).archived_at
+}

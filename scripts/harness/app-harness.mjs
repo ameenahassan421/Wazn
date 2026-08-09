@@ -179,7 +179,36 @@ export function fixtures({ empty = false, active = false } = {}) {
     image_url: null,
     default_rest_seconds: null,
     instructions: ['Set up.', 'Brace.', 'Move the bar.', 'Reset.'],
+    archived_at: null,
   }))
+
+  /*
+   * One exercise the user owns.
+   *
+   * Every lift here was seeded (`is_custom: false`), and the whole edit,
+   * archive and delete section on the exercise page is gated on `is_custom`,
+   * so that surface was invisible to `npm run shots` the moment it was built.
+   * That is the same blind spot as the missing Edge Function routes, the
+   * missing in-progress workout, the missing routines and the never-opened
+   * exercise page: a control that only appears for data the fixture does not
+   * have cannot be photographed.
+   *
+   * No sets are logged against it, deliberately. That is the state where Delete
+   * is actually permitted, since `on delete restrict` refuses it the moment one
+   * set exists, and it is the case worth being able to look at.
+   */
+  exercises.push({
+    id: uuid(199),
+    name: 'Hack Squat (Machine)',
+    muscle_group: 'quads',
+    equipment: 'machine',
+    is_custom: true,
+    owner_id: USER_ID,
+    image_url: null,
+    default_rest_seconds: null,
+    instructions: null,
+    archived_at: null,
+  })
 
   if (empty) {
     return {
@@ -400,6 +429,36 @@ export function fixtures({ empty = false, active = false } = {}) {
     last_trained_at: iso(i + 1),
   }))
 
+  /*
+   * The custom exercise appears in the strength list too, or its own page is
+   * unreachable: that list is `strength_summary`, which only knows exercises
+   * with sets, and Progress is the only door to the exercise page.
+   *
+   * Trained rather than untouched, which is also the more honest case to look
+   * at: `on delete restrict` refuses Delete the moment one set exists, so
+   * archive is precisely the control that matters here.
+   */
+  /*
+   * Third, not last: `StrengthList` caps at `STRENGTH_SHOWN`, so a row appended
+   * to the end of thirteen is below the cut and the page is unreachable.
+   *
+   * Named honestly, because this IS a state production cannot reach: a strength
+   * row exists while no sets do, so the page says "trained 4 days ago" in the
+   * list and "No sets logged for this exercise yet" in Recent. It is a harness
+   * affordance to make the page reachable, not a claim about the data. The
+   * alternative was giving the lift sets, which would make Delete correctly
+   * refused by `on delete restrict` and leave that control unphotographable.
+   */
+  strength.splice(2, 0, {
+    exercise_id: exercises.at(-1).id,
+    name: exercises.at(-1).name,
+    muscle_group: 'quads',
+    image_url: null,
+    best_e1rm_kg: 160,
+    delta_kg: 2.5,
+    last_trained_at: iso(4),
+  })
+
   const feed = [0, 1, 2].map((i) => ({
     workout_id: uuid(3000 + i),
     user_id: uuid(900 + i),
@@ -505,6 +564,10 @@ export function fixtures({ empty = false, active = false } = {}) {
      * row-to-row comparison in the overview read as zero.
      */
     previousSession: exercises.flatMap((exercise, i) => {
+      // The custom exercise is appended past the end of LIFTS and has no sets
+      // logged against it, so it correctly has no previous session. Indexing
+      // LIFTS blindly threw here the moment it was added.
+      if (!LIFTS[i]) return []
       const top = LIFTS[i][3]
       return [
         { setNumber: 1, weight: top * 0.55, reps: 10, type: 'warmup' },

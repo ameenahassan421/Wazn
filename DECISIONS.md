@@ -4289,3 +4289,73 @@ The offline test that failed consistently earlier, on a clean `HEAD` and in
 every combination, passes now that the machine is not running three builds at
 once. It was load, as the earlier entry guessed. The entry stays, because the
 diagnosis is the useful part.
+
+## 2026-08-08: 0024, archive, and a column I could not apply
+
+Migration 0024 adds `exercises.archived_at timestamptz`, nullable. A nullable
+timestamp rather than a boolean because `archived_at is null` means active,
+which needs no default and no backfill: every existing row is correct the
+instant it runs. It also records WHEN, which a boolean throws away.
+
+No index: `exercises` is 134 rows and this file already refused three indexes on
+that table for the same reason. No RLS change: `exercises_update_own` (0014)
+already covers setting it, and `exercises_select_visible` is left alone ON
+PURPOSE. **An archived exercise must stay readable**, because History has to
+render the name of a set performed against it. Hiding archived rows at the
+database would blank the exercise name on every past workout that used one,
+which is the exact opposite of the guarantee "archive rather than delete" is
+named after. Filtering belongs in the picker's query, where it is a product
+decision rather than a permission.
+
+### I could not apply it, and did not route around that
+
+Ameen said "apply it". The Supabase connector's `apply_migration` was refused by
+the harness's own permission classifier, twice, including after that explicit
+authorization. Production DDL is exactly what that guard exists for, so the SQL
+is in the repo, verified by execution locally, and applying it is Ameen's. **The
+column is NOT in production**, which makes 0023 and 0024 both unapplied while
+production sits at 0022.
+
+The client is built to make that harmless rather than to depend on it:
+`archived_at` is optional in the `Exercise` type, `!archived_at` is true for both
+null and absent, so until 0024 lands every exercise stays listed exactly as it
+does today. Writing it returns Postgres `42703` ("column does not exist"), which
+is translated to "Archiving needs migration 0024" rather than a failure, the same
+way the app already reports 0008 and 0015 being absent.
+
+### The picker count was quietly wrong for a moment
+
+Filtering archived rows out of the list left the denominator reading
+`exercises.length`, so "12 of 14" could describe a total the list can never
+reach. It counts what could be shown now.
+
+### `check:sql` runs ONE of the three files in supabase/tests
+
+Worth knowing, because the phrase it prints is "the SQL suites pass". The
+`rls_*.sql` suites are excluded deliberately, which the script's own header
+explains: they need two real profiles, and the local shim starts from an empty
+database. Adding them to the runner was tried and they fail immediately with
+"need two profiles and a seeded exercise to test with", so the exclusion is
+correct and the change was reverted.
+
+The consequence is real: the two archive assertions added to
+`rls_custom_exercises.sql`, and the eight social assertions STATUS cites as proof
+of Stage 3's visibility model, run only when somebody runs them by hand against a
+project with real accounts. Nothing automatic re-verifies them.
+
+### The harness could not see the feature at all
+
+Every fixture lift was seeded (`is_custom: false`), and the entire edit, archive
+and delete section is gated on `is_custom`, so that surface was invisible to
+`npm run shots` from the moment it was built one PR ago. That is the sixth blind
+spot of this shape. Adding one custom lift took three tries and each failure was
+its own small lesson: it broke `previousSession`, which indexed `LIFTS` by
+position past its end; then the page was unreachable because
+`strength_summary` only knows exercises with sets; then the row sat below
+`STRENGTH_SHOWN` and was cut off.
+
+The resulting fixture carries a state production cannot reach, a strength row
+with no sets behind it, and that is named in the file rather than left to be
+discovered. The alternative was giving the lift sets, which would make Delete
+correctly refused by `on delete restrict` and leave that control
+unphotographable.
