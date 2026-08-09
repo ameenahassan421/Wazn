@@ -8,7 +8,11 @@ import type { Exercise, MuscleGroup, OneRepMaxPoint } from '../lib/types'
 import { describeRest, resolveRest, stepRest } from '../lib/rest'
 import { REST_STEP_SECONDS } from '../lib/use-rest-timer'
 import { e1rmProgress, ladderBands, repMaxLadder } from '../lib/progress'
-import { deleteCustomExercise, updateCustomExercise } from '../lib/exercises'
+import {
+  deleteCustomExercise,
+  setExerciseArchived,
+  updateCustomExercise,
+} from '../lib/exercises'
 import { ExerciseFields } from './ExerciseFields'
 import { ExerciseThumb } from './ExerciseThumb'
 import { SeriesChart } from './SeriesChart'
@@ -440,6 +444,22 @@ export function ExerciseDetail({
     setSavingEdit(false)
   }
 
+  async function toggleArchived() {
+    setSavingEdit(true)
+    setError(null)
+    try {
+      const next = await setExerciseArchived(exerciseId, !exercise.archived_at)
+      // The picker filters on this, so the catalogue upstream has to hear about
+      // it or an archived lift stays listed until the tab is reloaded.
+      onChanged?.({ ...exercise, archived_at: next })
+    } catch (e) {
+      // Until 0024 is applied this is the "needs migration" message, which is
+      // how the app already reports 0008 and 0015 being absent.
+      setError(e instanceof Error ? e.message : 'Could not archive that exercise.')
+    }
+    setSavingEdit(false)
+  }
+
   async function removeExercise() {
     setSavingEdit(true)
     setError(null)
@@ -674,6 +694,19 @@ export function ExerciseDetail({
                   className="btn-base btn-hero h-14 flex-1 text-base"
                 >
                   {savingEdit ? 'Saving…' : 'Save'}
+                </button>
+                {/* Archive is the everyday exit and needs no confirmation:
+                    it is reversible from this same screen, and the lift keeps
+                    every set logged against it. Delete is the rare one, and
+                    the database refuses it outright once anything has been
+                    logged, so it sits behind a second tap. */}
+                <button
+                  type="button"
+                  onClick={() => void toggleArchived()}
+                  disabled={savingEdit}
+                  className="btn-base btn-secondary h-14 px-4 text-sm"
+                >
+                  {exercise.archived_at ? 'Restore' : 'Archive'}
                 </button>
                 <button
                   type="button"

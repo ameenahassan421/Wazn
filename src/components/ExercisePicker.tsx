@@ -20,21 +20,35 @@ function orderExercises(
   exercises: Exercise[],
   usage: Map<string, ExerciseUsageRow>,
 ): Exercise[] {
-  return [...exercises].sort((a, b) => {
-    const ua = usage.get(a.id)
-    const ub = usage.get(b.id)
-    if (ua && ub) {
-      const byRecency =
-        new Date(ub.last_used ?? 0).getTime() - new Date(ua.last_used ?? 0).getTime()
-      if (byRecency !== 0) return byRecency
-      if (ub.set_count !== ua.set_count) return ub.set_count - ua.set_count
-    } else if (ua) {
-      return -1
-    } else if (ub) {
-      return 1
-    }
-    return a.name.localeCompare(b.name)
-  })
+  /*
+   * Archived exercises leave the picker and nowhere else (migration 0024).
+   *
+   * Filtered here rather than in RLS on purpose: an archived exercise must stay
+   * readable, because History has to name the lift a past set was performed
+   * against. Hiding it at the database would blank the exercise name on every
+   * old workout that used one, which is the opposite of what "archive rather
+   * than delete" promises.
+   *
+   * `!archived_at` covers both null and absent, so this is inert until 0024 is
+   * applied rather than filtering on a field that is not there.
+   */
+  return [...exercises]
+    .filter((e) => !e.archived_at)
+    .sort((a, b) => {
+      const ua = usage.get(a.id)
+      const ub = usage.get(b.id)
+      if (ua && ub) {
+        const byRecency =
+          new Date(ub.last_used ?? 0).getTime() - new Date(ua.last_used ?? 0).getTime()
+        if (byRecency !== 0) return byRecency
+        if (ub.set_count !== ua.set_count) return ub.set_count - ua.set_count
+      } else if (ua) {
+        return -1
+      } else if (ub) {
+        return 1
+      }
+      return a.name.localeCompare(b.name)
+    })
 }
 
 /**
@@ -191,8 +205,11 @@ export function ExercisePicker({
 
       {filtered && (
         <div className="flex items-center gap-2 pt-2">
+          {/* `ordered`, not `exercises`: the denominator has to be what could
+              be shown, and archived rows never can be. "12 of 14" while two of
+              the fourteen are archived is a count that cannot be reached. */}
           <span className="tnum flex-1 font-mono text-[11px] text-muted">
-            {results.length} of {exercises.length}
+            {results.length} of {ordered.length}
           </span>
           <button
             type="button"

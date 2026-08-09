@@ -1117,10 +1117,33 @@ coach_surfaces.sql` asserts what the three functions RETURN against a seeded
   the exercise page in one glance, from a series that has been live since
   migration 0001 and had no reader. **Ameen still has to run it against his own
   152 workouts on a phone**, which is the half of the gate no sandbox can do.
-- **NOT built in U4, and flagged rather than skipped:** custom exercise ARCHIVE.
-  It needs a column, so a migration, so approval. It is also not what protects
-  history: `workout_sets.exercise_id` is `on delete restrict`, which already
-  makes losing logged sets impossible.
+- **ARCHIVE IS BUILT, and migration 0024 IS NOT APPLIED.** Ameen said to apply
+  it; the harness permission classifier refused `apply_migration` twice,
+  including after that authorization, and production DDL is exactly what that
+  guard is for, so it was not routed around. **Production is still at 0022 with
+  0023 and 0024 both unapplied.** The SQL is in the repo and executes from empty.
+- **The client is built so that is harmless.** `archived_at` is optional on
+  `Exercise`, `!archived_at` is true for both null and absent, so until 0024
+  lands every exercise stays listed exactly as today. Writing it returns
+  Postgres `42703` and is reported as "Archiving needs migration 0024", the same
+  way the app already handles 0008 and 0015 being absent.
+- **`exercises_select_visible` is deliberately unchanged.** An archived exercise
+  must stay READABLE or History would blank the exercise name on every past
+  workout that used one, which is the opposite of what archive-rather-than-delete
+  promises. The picker filters; RLS does not.
+- **`check:sql` runs ONE of the three files in `supabase/tests`**, while printing
+  "the SQL suites pass". The `rls_*.sql` suites are excluded deliberately (they
+  need two real profiles; adding them to the runner was tried and fails
+  immediately against the empty shim). So the two new archive assertions, and
+  the eight social assertions STATUS cites as proof of Stage 3's visibility
+  model, run only by hand against a real project. Nothing automatic re-verifies
+  them.
+- **The harness could not see the edit section at all** because every fixture
+  lift was seeded and the whole surface is gated on `is_custom`. Sixth blind spot
+  of that shape. Adding one custom lift took three tries: it broke
+  `previousSession` (which indexed `LIFTS` past its end), then the page was
+  unreachable because `strength_summary` only knows exercises with sets, then the
+  row sat below `STRENGTH_SHOWN`.
 - **Wall green on Node 22, all 11 checks, 754 tests.** `test:smoke` passes
   locally again now that the machine is quiet, confirming the earlier failure was
   load, as suspected.

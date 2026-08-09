@@ -263,6 +263,33 @@ async function shoot(browser, origin, { width, empty, active }) {
       }
     }
 
+    /*
+     * The custom exercise's own page with its editor open. Edit, Archive and
+     * Delete are gated on `is_custom`, so without a custom lift in the fixture
+     * and a click to reveal them, that whole surface goes unphotographed.
+     */
+    if (tab === 'Progress' && !empty) {
+      const custom = page.getByRole('button', { name: /Hack Squat/i })
+      if (await custom.count()) {
+        await custom.first().click()
+        await page.waitForTimeout(1000)
+        const editBtn = page.getByRole('button', { name: 'Edit', exact: true })
+        if (await editBtn.count()) {
+          await editBtn.first().click()
+          await page.waitForTimeout(500)
+          const save = page.getByRole('button', { name: 'Save', exact: true })
+          if (await save.count()) await save.first().scrollIntoViewIfNeeded()
+          await page.waitForTimeout(300)
+          await page.screenshot({
+            path: `${OUT}/${state}-${width}-custom-exercise.png`,
+            fullPage: false,
+          })
+        }
+        await page.goBack()
+        await page.waitForTimeout(800)
+      }
+    }
+
     if (tab === 'Progress' && !empty) {
       const lift = page.getByRole('button', { name: /Bench Press/i })
       if (await lift.count()) {

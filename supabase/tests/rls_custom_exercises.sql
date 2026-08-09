@@ -118,6 +118,38 @@ begin
     raise exception 'FAIL: the shared exercise library is not visible to B';
   end if;
 
+  -- ── 9. Archiving (0024) is an owner update, and never a way to hide ──────
+  -- Archived rows must stay READABLE or History would blank the exercise name
+  -- on every past workout that used one, which is the opposite of the
+  -- guarantee "archive not delete" is named after.
+  set local role authenticated;
+  perform set_config('request.jwt.claims',
+    json_build_object('sub', user_a, 'role', 'authenticated')::text, true);
+  update public.exercises set archived_at = now() where id = mine;
+  select count(*) into visible from public.exercises
+   where id = mine and archived_at is not null;
+  if visible <> 1 then
+    raise exception 'FAIL: the owner could not archive their own custom exercise';
+  end if;
+
+  -- Still selectable by its owner while archived.
+  select count(*) into visible from public.exercises where id = mine;
+  if visible <> 1 then
+    raise exception 'FAIL: archiving hid the exercise from its own owner';
+  end if;
+
+  -- ── 10. B cannot archive A's exercise ────────────────────────────────────
+  update public.exercises set archived_at = null where id = mine;
+  perform set_config('request.jwt.claims',
+    json_build_object('sub', user_b, 'role', 'authenticated')::text, true);
+  update public.exercises set archived_at = now() where id = mine;
+  reset role;
+  select count(*) into visible from public.exercises
+   where id = mine and archived_at is not null;
+  if visible <> 0 then
+    raise exception 'FAIL: B archived A''s custom exercise';
+  end if;
+
   reset role;
   raise notice 'all custom-exercise RLS assertions passed';
 end
