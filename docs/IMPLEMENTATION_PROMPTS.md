@@ -4,6 +4,87 @@ Copy-paste prompts for Claude Code sessions, one per work session, that
 implement `docs/HEVY_PARITY_UPGRADE_PLAN.md` (U-series) and
 `docs/BEATING_HEVY_PLAN.md` (B-series).
 
+---
+
+## WHAT IS NEXT (2026-08-09), in order
+
+U4 completed on 2026-08-08, which finished releases R4 and R5. **Five releases
+remain: R6, R7, R8, R9, R10.** The order below is not the numbering; it is what
+can actually be worked given the gates.
+
+**Read this first, because it is the thing that decides everything else:** two of
+the five are gated on evidence rather than on code. **R8 Crew (U5 + B5) depends
+on GATE 3 retention data, and §4 of the plan pre-declares GATE 3 as the
+stop-building line.** As of 2026-08-09 six people have accounts and **one logged
+a workout in the last seven days**. No amount of building moves that number.
+Invites and the email rate limit do.
+
+| #   | Work                        | Release     | Blocked on                                                      |
+| --- | --------------------------- | ----------- | --------------------------------------------------------------- |
+| 1   | Housekeeping (prompt below) | none        | nothing                                                         |
+| 2   | B3a + B3b                   | R6 Ask it   | **Ameen reversing the no-chat rule**, and 0019 applied (item 1) |
+| 3   | Stage 5 Arabic + RTL        | feeds R10   | nothing to build; the gate needs a native speaker               |
+| 4   | U6a Capacitor, then B6 push | R9 Native   | Ameen's Mac, $25 Play, $99 Apple                                |
+| 5   | B4                          | R7 Programs | nothing to build; the gate is a 4-week wear test                |
+| 6   | Stage 6 Pro and Paymob      | none        | ads half gated on retention vs the Stage 3 baseline             |
+| 7   | U5 + B5                     | R8 Crew     | **GATE 3 retention data. Deliberately last.**                   |
+| 8   | F2 Arabic SEO + Stage 7     | R10 Found   | Stage 5 strings, and a named Egypt contact                      |
+
+**Stage 5 before R9 on purpose**, against the plan's own numbering: Stage 4B's
+store listings want the Arabic strings and screenshots, so building the language
+first avoids doing the listings twice.
+
+### Session 1: housekeeping (short, no gates, do it before anything else)
+
+Removes four traps that will otherwise cost time in every session after it.
+
+```
+Read WAZN_PLAN.md in full, DECISIONS.md, the STATUS section at the bottom,
+and CLAUDE.md. Node: prefix PATH with
+~/.local/share/fnm/node-versions/v22.23.2/installation/bin per command.
+The global node is 26 and its built-in localStorage shadows jsdom's, which
+fails 18 tests in three suites that CI calls green.
+
+Housekeeping only, no new features:
+
+(1) Apply migration 0019 (the five stat-tool functions B3 needs) and
+backfill supabase_migrations.schema_migrations for 0001 to 0024. The
+ledger knows 6 of 24 because everything else was applied by hand, so
+"what is live" is still a probe rather than a read, and `supabase db push`
+would behave as though the database began at 0016. Ask me before each
+apply, and verify against information_schema afterwards rather than
+trusting a success flag: `[]` means "no rows returned", not "it worked".
+
+(2) Make the rls_*.sql suites run in check:sql by seeding two profiles
+into scripts/pg_shim.sql. Today check:sql runs ONE of the three files in
+supabase/tests while printing "the SQL suites pass", so the eight social
+assertions that are the only proof of Stage 3's visibility model, plus the
+two archive assertions added in 0024, re-verify nowhere. Adding them
+without seeding fails with "need two profiles and a seeded exercise to
+test with". That was tried on 2026-08-08.
+
+(3) Commit deno.lock and pin the Edge Function imports. `deno check`
+fetches @supabase/supabase-js from esm.sh at CI time and a 522 from that
+CDN turned main red on 2026-08-08 with nothing wrong in the repo.
+
+(4) One honest attempt at the cold-start budget: 2.2s against the 2.0s in
+U7, the only standing perf miss, stable across nine measurements. If it
+cannot be met, say so and record why rather than moving the budget.
+
+Full wall (lint, format:check, typecheck, check:vercel, check:coverage,
+check:migrations, check:sql, typecheck:functions, test, build, test:smoke),
+push, report, stop.
+```
+
+### Before session 2, one decision is needed
+
+**B3b is a conversational Ask surface and §2.4 forbids chat.** The B3 prompt
+below will not be started until Ameen reverses that rule explicitly. Everything
+else B3 needs already exists: the bounded tool loop, the grounding gate, the
+circuit breaker and the eval harness all shipped with H2 and H3.
+
+---
+
 ## How to use this file
 
 - **Pasting a prompt IS the approval.** Both plans are proposals until
