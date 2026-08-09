@@ -14,13 +14,30 @@
  *
  * Requires SUPABASE_ACCESS_TOKEN (a personal access token from
  * https://supabase.com/dashboard/account/tokens) and SUPABASE_PROJECT_REF.
- * Keep both in .env — the token is org-wide and can modify every project on
- * the account.
+ * Keep both in `.env.local` or `.env` — the token is org-wide and can modify
+ * every project on the account. Both files are gitignored.
  */
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import 'dotenv/config'
+import { config as loadEnv } from 'dotenv'
+
+/*
+ * `.env.local` FIRST, then `.env`.
+ *
+ * This was `import 'dotenv/config'`, which reads `.env` and only `.env`. The
+ * project keeps its secrets in `.env.local`, because that is the file Vite
+ * loads for the `VITE_*` vars and nobody maintains two. So the token sat in the
+ * right place for the app and the wrong place for this script, and the script's
+ * own header told people to use the file it could read rather than the one they
+ * use. The failure mode was "SUPABASE_ACCESS_TOKEN is not set" while the token
+ * was ten lines away on disk.
+ *
+ * Earlier entries win in dotenv, and neither file overrides a variable already
+ * exported in the shell, so CI and a sandbox that inject real env vars are
+ * unaffected.
+ */
+loadEnv({ path: ['.env.local', '.env'] })
 
 const API = 'https://api.supabase.com/v1'
 
@@ -81,6 +98,10 @@ const INTERESTING = [
   'smtp_admin_email',
   'smtp_sender_name',
   'smtp_max_frequency',
+  // Project-wide, per hour, and Supabase's default of 2 is low enough to
+  // swallow most of an invite wave silently. It belongs in this list because
+  // the one command meant to audit auth config could not display the setting.
+  'rate_limit_email_sent',
   'mailer_templates_confirmation_content',
   'mailer_templates_magic_link_content',
   'mailer_templates_recovery_content',
@@ -102,7 +123,9 @@ function config() {
   if (!token) {
     fail(
       'SUPABASE_ACCESS_TOKEN is not set. Create one at ' +
-        'https://supabase.com/dashboard/account/tokens and put it in .env. ' +
+        'https://supabase.com/dashboard/account/tokens and put it in ' +
+        '.env.local (or .env). If the line is already there, check it is not ' +
+        'commented out. ' +
         'It is org-wide — never commit it and never expose it to the client.',
     )
   }
@@ -323,6 +346,40 @@ async function setOtpLength(raw: string | undefined) {
 }
 
 /**
+ * How many auth emails the project may send per hour.
+ *
+ * Supabase's default is **2, project-wide**, which is not a per-user limit: it
+ * is the whole project. Invite five friends in one evening and three of them get
+ * nothing and have no way to tell you. Configuring custom SMTP does NOT raise
+ * it, it only earns you permission to raise it, which is the detail that made
+ * this look like a deliverability problem for three days in August.
+ *
+ * The real ceiling above this is the SMTP provider's own. Resend's free plan is
+ * 100 a day and 3,000 a month, so 30 an hour does not mean 720 a day.
+ */
+async function setEmailRateLimit(raw: string | undefined) {
+  const limit = Number(raw ?? 30)
+  if (!Number.isInteger(limit) || limit < 1 || limit > 1000) {
+    fail(`Usage: set-email-rate-limit [1-1000] (default 30). Got "${raw}".`)
+  }
+
+  await request('PATCH', '/config/auth', { rate_limit_email_sent: limit })
+
+  // Read it back. A PATCH that returns 200 having silently clamped or ignored
+  // the value is the failure this project has been bitten by before, which is
+  // why every setter here verifies instead of trusting the status code.
+  const auth = await request('GET', '/config/auth')
+  const applied = auth.rate_limit_email_sent
+  if (applied !== limit) {
+    fail(
+      `rate_limit_email_sent is ${JSON.stringify(applied)} after the write, expected ${limit}. ` +
+        'Supabase refuses to raise this above 2 unless custom SMTP is configured.',
+    )
+  }
+  console.log(`rate_limit_email_sent set to ${limit} per hour (verified)`)
+}
+
+/**
  * Password policy, per the 2026-08-07 auth decisions.
  *
  * Length plus a breach check, and deliberately no
@@ -381,11 +438,14 @@ async function main() {
       return setOtpLength(rest[0])
     case 'set-password-policy':
       return setPasswordPolicy(rest[0])
+    case 'set-email-rate-limit':
+      return setEmailRateLimit(rest[0])
     default:
       fail(
         `Unknown command ${command ? `"${command}"` : ''}. ` +
           'Use: show | set-site-url <url> | set-smtp | set-templates | ' +
-          'set-otp-length [6-10] | set-password-policy [8-72]',
+          'set-otp-length [6-10] | set-password-policy [8-72] | ' +
+          'set-email-rate-limit [1-1000]',
       )
   }
 }
