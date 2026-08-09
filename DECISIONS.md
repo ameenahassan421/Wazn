@@ -4076,3 +4076,72 @@ diagnoses were published before the environment was probed instead of the code,
 the 0F lesson about suspecting the instrument first, relearned. Prefix `PATH`
 with the fnm v22 bin per command; do not change the global node, which the
 OmniRoute LaunchAgent depends on.
+
+## 2026-08-08: U4's four parity items, and one rule that existed twice
+
+**L3.** The workout duration re-rendered every 30s, so a glance between sets
+could read half a minute stale on a figure people check constantly. Now 10s.
+1s was considered and refused: the figure renders in whole minutes, so a
+seconds-accurate clock on the hot path buys nothing and costs 60 renders a
+minute.
+
+**L8.** Discard was reachable only from inside the armed Finish row, which is
+why Ameen went looking and could not find it. It is now also in the header
+overflow, two taps, and only while a workout is open.
+
+That needed the header to know a workout exists, and the header is a sibling of
+the screens rather than a parent. Threading it up through `App` would put
+active-workout state in the component that owns auth and tabs; a context whose
+child pushes the value in an effect is a synchronous setState inside an effect,
+which `eslint-plugin-react-hooks` v7 forbids and which CLAUDE.md records a real
+defect for. So `lib/active-workout.ts` is an external store read with
+`useSyncExternalStore`: publishing is a function call rather than a state
+update. It carries an id and a discard callback and nothing else, because
+nothing else is what stops it becoming a second home for workout state. The
+callback goes through a ref, or the header would hold whichever closure existed
+when the workout id last changed and could delete against stale state.
+
+**O15.** `listRoutines` has always sorted on `routines.position` and nothing
+ever wrote it, so every routine sat at the column default and the "user's own
+order" the sort falls back to did not exist. New routines now take
+`max(position) + 1`. A failed read of the max falls back to 0 rather than
+throwing: a duplicate position sorts by date instead, and refusing to save
+somebody's routine over a transient error would be a far worse answer.
+
+**L9, and the part worth remembering.** The briefing card computes a due routine
+in SQL and says "Core & Conditioning is up". The list underneath it was in
+`position` order, so the card named a day the list did not reflect and the
+obvious tap was the wrong one.
+
+Fixing it meant expressing the rotation rule on the client, which is a second
+implementation of a rule that already exists in `session_brief()`. That is the
+two-matchers hazard this file has warned about twice. Two things kept it honest.
+First, the rule was transcribed from migration 0021 rather than invented:
+`order by max(f.started_at) asc nulls first, r.position, r.id` over workouts
+with `ended_at is not null`. The first draft tie-broke on `created_at` and
+counted every workout finished or not, either of which would have drifted, and
+the second would have made abandoning a session look like completing it.
+Second, the alternative was worse: reading the due routine off the briefing card
+would make list order depend on a dismissible card that may not have loaded.
+
+**A screenshot caught the drift while it was still only in the fixtures.** The
+harness had no routines at all, so the idle Log screen had only ever been
+photographed in its empty state. With three added, the card said "Upper A is up"
+above a list headed by Core & Conditioning, because the `coach-brief` and
+`session_brief` fixtures were hand-written before routines existed here. Both
+are corrected. The real lesson is the one the render made visible: a phrased
+model sentence overrides the deterministic line, and the routine NAME reaches
+the model, so grounding is the only thing standing between a paraphrase and a
+card naming a routine the list does not.
+
+### One wall check is failing locally and passing in CI
+
+`e2e/offline.spec.ts` "killing the tab mid-workout loses nothing" fails on this
+machine and passes in CI on the same commit. It was bisected properly rather
+than assumed: it fails with this batch stashed, with the preferences WIP
+stashed, and on a completely clean `HEAD`. So it belongs to neither, and the
+page snapshot shows the reload landing on the idle screen, meaning the restore
+lost a race rather than returning wrong data. The load path has a six second
+deadline and this machine had been running builds, Postgres and Playwright for
+hours. CI is the authority for this one; it is recorded here so the next session
+does not spend the same hour bisecting it.

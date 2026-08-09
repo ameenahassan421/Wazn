@@ -1,6 +1,8 @@
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { describeError, supabase } from '../lib/supabase'
 import { useBackLayer } from '../lib/use-back'
+import { publishActiveWorkout } from '../lib/active-workout'
+import type { RoutineWithRun } from '../lib/rotation'
 import { lazyScreen } from '../lib/lazy-screen'
 import { useUnit } from '../lib/unit-context'
 import { formatWeight } from '../lib/units'
@@ -120,7 +122,7 @@ interface CatalogueSnapshot {
   usage: [string, ExerciseUsageRow][]
   restOverrides: [string, number][]
   exerciseNotes: [string, string][]
-  routines: Routine[]
+  routines: RoutineWithRun[]
   hasHistory: boolean
   lastSession: { startedAt: string; sets: WorkoutSet[] } | null
 }
@@ -203,7 +205,7 @@ export function LogScreen({
   // cleared, so the summary can name and annotate the thing just logged.
   const [summaryWorkout, setSummaryWorkout] = useState<Workout | null>(null)
   const [streak, setStreak] = useState<WeeklyStreakRow | null>(null)
-  const [routines, setRoutines] = useState<Routine[]>([])
+  const [routines, setRoutines] = useState<RoutineWithRun[]>([])
   const [editing, setEditing] = useState<RoutineDetail | null>(null)
   const [routineBusy, setRoutineBusy] = useState<string | null>(null)
   // Exercise ids the active routine planned, in order. The workout itself
@@ -358,14 +360,40 @@ export function LogScreen({
     }, 6000)
     return () => clearTimeout(id)
   }, [confirmFinish, confirmDiscard])
-  // Re-render each half-minute while a workout is open, so the duration in
-  // the status row moves. The value itself is derived at render time.
+  /*
+   * Re-render while a workout is open, so the duration in the status row
+   * moves. The value itself is derived at render time.
+   *
+   * L3: the tick was 30s, so the elapsed figure was up to half a minute stale
+   * and a glance between sets could read a minute behind. 10s costs three
+   * cheap re-renders a minute against a number people check constantly, and
+   * the alternative considered and rejected was 1s: a seconds-accurate clock
+   * on the hot path buys nothing when the figure is rendered in whole minutes.
+   */
   const [, setDurationTick] = useState(0)
   useEffect(() => {
     if (!workout) return
-    const id = setInterval(() => setDurationTick((t) => t + 1), 30_000)
+    const id = setInterval(() => setDurationTick((t) => t + 1), 10_000)
     return () => clearInterval(id)
   }, [workout])
+
+  /*
+   * Tell the header a workout is open, so Discard is reachable from the
+   * overflow menu (L8). The callback goes through a ref rather than being
+   * captured, or the header would hold whichever `discardWorkout` closure
+   * existed when the workout id last changed and could delete against stale
+   * state. See `lib/active-workout.ts` for why this is a store and not a
+   * context.
+   */
+  const discardRef = useRef<() => void>(() => {})
+  discardRef.current = () => void discardWorkout()
+  const workoutId = workout?.id ?? null
+  useEffect(() => {
+    publishActiveWorkout(
+      workoutId ? { id: workoutId, discard: () => discardRef.current() } : null,
+    )
+    return () => publishActiveWorkout(null)
+  }, [workoutId])
   /**
    * Last session per exercise, for every block on the board — not only the one
    * being logged. The overview ghosts last time on every row, which is the
@@ -939,7 +967,7 @@ export function LogScreen({
     setExerciseNotes(new Map(noteEntries))
     // Routines are only needed on the idle screen; a failure there must not
     // stop an in-progress workout from loading.
-    const routineList = await listRoutines().catch<Routine[]>(() => [])
+    const routineList = await listRoutines().catch<RoutineWithRun[]>(() => [])
     setRoutines(routineList)
     const catalogueRows = (catalogue.data ?? []) as Exercise[]
     setExercises(catalogueRows)
