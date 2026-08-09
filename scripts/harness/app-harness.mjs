@@ -431,9 +431,52 @@ export function fixtures({ empty = false, active = false } = {}) {
     },
   ]
 
+  /*
+   * Routines, which this harness had none of, so the idle Log screen always
+   * photographed its empty state and L9's rotation order and "Up next" label
+   * would have shipped unseen.
+   *
+   * Deliberately three with different histories, because one routine proves
+   * nothing about an ordering rule: one never run (which must lead), one stale,
+   * one done yesterday (which must come last). `position` is descending
+   * against that order so a list still sorted by `position` looks obviously
+   * wrong rather than accidentally right.
+   */
+  const routines = [
+    { name: 'Upper A', position: 0, ranDaysAgo: 1 },
+    { name: 'Lower A', position: 1, ranDaysAgo: 9 },
+    { name: 'Core & Conditioning', position: 2, ranDaysAgo: null },
+  ].map((r, i) => ({
+    id: uuid(700 + i),
+    user_id: USER_ID,
+    name: r.name,
+    position: r.position,
+    created_at: iso(120 - i),
+    updated_at: iso(120 - i),
+    ranDaysAgo: r.ranDaysAgo,
+  }))
+
+  // A workout per routine that has been run, so the `workouts(started_at)`
+  // embed `listRoutines` reads has something real to reduce.
+  const routineRuns = routines
+    .filter((r) => r.ranDaysAgo !== null)
+    .map((r, i) => ({
+      id: uuid(750 + i),
+      user_id: USER_ID,
+      name: r.name,
+      routine_id: r.id,
+      started_at: iso(r.ranDaysAgo),
+      ended_at: iso(r.ranDaysAgo),
+      notes: null,
+      exercise_order: null,
+    }))
+
   return {
     exercises,
-    workouts: active ? [activeWorkout, ...workouts] : workouts,
+    routines: routines.map(({ ranDaysAgo: _drop, ...row }) => row),
+    workouts: active
+      ? [activeWorkout, ...workouts, ...routineRuns]
+      : [...workouts, ...routineRuns],
     workout_sets: active ? [...activeSets, ...workout_sets] : workout_sets,
     // Migration 0008's table, read by the overview's block meta line. It was
     // stubbed as `[]` here for as long as nothing rendered it.
@@ -554,7 +597,7 @@ export function fixtures({ empty = false, active = false } = {}) {
       kg: {
         briefing: {
           surface: 'briefing',
-          line: 'Upper A is up. Bench Press was 102.5 kg × 5 last time, so 105 × 5 takes the estimate past 119.6.',
+          line: 'Core & Conditioning is up. Bench Press was 102.5 kg × 5 last time, so 105 × 5 takes the estimate past 119.6.',
           chip: '105 kg × 5 · beats 119.6 e1RM',
         },
         debrief: {
@@ -566,7 +609,7 @@ export function fixtures({ empty = false, active = false } = {}) {
       lbs: {
         briefing: {
           surface: 'briefing',
-          line: 'Upper A is up. Bench Press was 226 lbs × 5 last time, so 231.5 × 5 takes the estimate past 263.7.',
+          line: 'Core & Conditioning is up. Bench Press was 226 lbs × 5 last time, so 231.5 × 5 takes the estimate past 263.7.',
           chip: '231.5 lbs × 5 · beats 263.7 e1RM',
         },
         debrief: {
@@ -595,7 +638,15 @@ export function fixtures({ empty = false, active = false } = {}) {
       sessions_last_7: 4,
       sessions_last_28: 16,
       total_sets_90d: 604,
-      due_routine: { name: 'Upper A', exercises: 5, days_since_run: 6 },
+      /*
+       * Must agree with the routine fixtures below, and it did not: this said
+       * "Upper A" while the never-run "Core & Conditioning" is what both the
+       * SQL rule and the list's rotation pick. A screenshot showed the briefing
+       * card naming one routine above a list headed by another, which is
+       * exactly the L9 defect the list ordering was built to fix, staged by the
+       * harness. `days_since_run` is null because it has never been run.
+       */
+      due_routine: { name: 'Core & Conditioning', exercises: 5, days_since_run: null },
       target: {
         exercise: 'Bench Press (Barbell)',
         last_weight_kg: 102.5,
@@ -990,7 +1041,7 @@ export async function installSupabaseStub(
         profiles: data.profiles,
         follows: data.follows,
         workout_likes: [],
-        routines: [],
+        routines: data.routines ?? [],
         routine_exercises: [],
         routine_sets: [],
         exercise_notes: data.exerciseNotes ?? [],
@@ -1017,6 +1068,17 @@ export async function installSupabaseStub(
           const w = byId.get(r.workout_id)
           return { ...r, workouts: w ? { id: w.id, started_at: w.started_at } : null }
         })
+      }
+      // The reverse direction: `routines?select=*,workouts(started_at)` is a
+      // one-to-many, so the embed is an ARRAY. Returning an object here would
+      // let `listRoutines` iterate a non-iterable and take the Log tab down.
+      if (table === 'routines' && select.includes('workouts')) {
+        rows = rows.map((r) => ({
+          ...r,
+          workouts: data.workouts
+            .filter((w) => w.routine_id === r.id)
+            .map((w) => ({ started_at: w.started_at })),
+        }))
       }
 
       return json(wantsObject ? (rows[0] ?? null) : rows)

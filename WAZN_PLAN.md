@@ -1051,8 +1051,32 @@ coach_surfaces.sql` asserts what the three functions RETURN against a seeded
   deliberately unapplied; the ladder is computed on the client from sets the
   page already fetches. Stated honestly in the code: it is best-in-window, not a
   guaranteed all-time record, and SQL is where that would belong.
+- **L3, L8, L9 and O15 are DONE (2026-08-08).** The duration tick is 10s, not
+  30s. Discard is in the header overflow as well as the armed Finish row, via
+  `lib/active-workout.ts`, an external store rather than a context, because
+  pushing a value up from a child in an effect is the setState-in-effect the
+  hooks rule forbids. `routines.position` is finally written on create. And the
+  routine list is in rotation order with the head labelled "Up next", with the
+  rule **transcribed from migration 0021** rather than invented:
+  `max(started_at) asc nulls first, position, id` over FINISHED workouts only.
+  The first draft counted unfinished ones, which would have made abandoning a
+  session look like completing it.
+- **The harness had no routines at all**, so the idle Log screen had only ever
+  been photographed empty. With three added, a screenshot showed the briefing
+  card saying "Upper A is up" above a list headed by Core & Conditioning:
+  fixture drift, corrected, but it is the real risk in miniature, because the
+  phrased model sentence overrides the deterministic line and the routine name
+  does reach the model.
+- **`e2e/offline.spec.ts` "killing the tab mid-workout loses nothing" FAILS on
+  this laptop and PASSES in CI on the same commit.** Bisected properly: it fails
+  with the U4 batch stashed, with the preferences WIP stashed, and on a
+  completely clean `HEAD`. The reload lands on the idle screen, so the restore
+  lost a race rather than returning wrong data, and the load path has a six
+  second deadline on a machine that had been running builds, Postgres and
+  Playwright for hours. **CI is the authority for that one.** Do not spend
+  another hour bisecting it.
 - **Still open in U4:** the all-time PR list block in Progress, full
-  past-workout editing, custom exercise edit plus archive, then L9, O15, L8, L3.
+  past-workout editing, custom exercise edit plus archive.
 - **A screenshot run found five defects the eleven checks cannot see**, and
   `ExerciseDetail` had never been photographed at all: the fifth blind spot in
   that harness. Two of five rep-range bars rendered EMPTY because Tailwind v4

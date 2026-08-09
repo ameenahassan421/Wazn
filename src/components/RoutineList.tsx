@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react'
 import type { Routine } from '../lib/types'
+import { dueRoutine } from '../lib/rotation'
+import type { RoutineWithRun } from '../lib/rotation'
 import { IconMore } from './icons'
 
 /**
@@ -14,6 +16,11 @@ import { IconMore } from './icons'
  * nothing else. Housekeeping — edit, duplicate, delete — sits behind one ⋯
  * per row rather than three permanent text buttons: those made every routine
  * read as a settings row, and put a naked one-tap delete on the home screen.
+ *
+ * Rows arrive in rotation order (`lib/rotation.ts`), and the head of it is
+ * labelled. Before L9 this list was in stored `position` order while the
+ * briefing card above it said "Core & Conditioning is up" — a card naming a
+ * day the list did not reflect, so the obvious tap was the wrong one.
  */
 export function RoutineList({
   routines,
@@ -25,7 +32,7 @@ export function RoutineList({
   onNew,
   onGenerate,
 }: {
-  routines: Routine[]
+  routines: RoutineWithRun[]
   busyId: string | null
   onStart: (routine: Routine) => void
   onEdit: (routine: Routine) => void
@@ -34,6 +41,7 @@ export function RoutineList({
   onNew: () => void
   onGenerate: () => void
 }) {
+  const due = dueRoutine(routines)
   const [actionsFor, setActionsFor] = useState<string | null>(null)
   // Delete needs a second tap; the armed state relaxes on its own.
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
@@ -84,11 +92,19 @@ export function RoutineList({
                     type="button"
                     onClick={() => onStart(routine)}
                     disabled={busyId !== null}
-                    className={`h-14 flex-1 truncate text-start text-[15px] font-medium ${
+                    className={`flex h-14 flex-1 items-center gap-2 overflow-hidden text-start text-[15px] font-medium ${
                       busy ? 'text-accent' : ''
                     }`}
                   >
-                    {busy ? 'Starting…' : routine.name}
+                    <span className="truncate">
+                      {busy ? 'Starting…' : routine.name}
+                    </span>
+                    {/* A label, not a second hero button: the accent carries
+                        the meaning and "Start workout" below stays the only
+                        filled control on the screen (§2.4). */}
+                    {due?.id === routine.id && !busy && (
+                      <span className="kicker shrink-0 text-accent">Up next</span>
+                    )}
                   </button>
                   <button
                     type="button"

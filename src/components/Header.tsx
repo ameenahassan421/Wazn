@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useUnit } from '../lib/unit-context'
 import { supabase } from '../lib/supabase'
 import { useBackLayer } from '../lib/use-back'
+import { useActiveWorkout } from '../lib/active-workout'
 import { Wordmark } from './Wordmark'
 import { IconMore } from './icons'
 
@@ -17,8 +18,15 @@ import { IconMore } from './icons'
 export function Header({ title }: { title?: string }) {
   const { unit, toggleUnit } = useUnit()
   const [menuOpen, setMenuOpen] = useState(false)
+  const [confirmDiscard, setConfirmDiscard] = useState(false)
+  const active = useActiveWorkout()
   // The menu is a layer: the system back gesture closes it, not the app.
   useBackLayer(menuOpen, () => setMenuOpen(false))
+
+  // Closing the menu disarms, so reopening it never presents a primed
+  // destructive control. Adjusted during render rather than in an effect, the
+  // pattern CLAUDE.md's state-handling section requires.
+  if (!menuOpen && confirmDiscard) setConfirmDiscard(false)
 
   return (
     <header className="header-band sticky top-0 z-20">
@@ -66,6 +74,29 @@ export function Header({ title }: { title?: string }) {
                   className="ring-edge absolute end-0 top-full z-40 min-w-[176px] overflow-hidden bg-raised py-1"
                   style={{ borderRadius: 'var(--radius-md)' }}
                 >
+                  {/* Only while a workout is open, and two taps, matching the
+                      armed Finish row it duplicates. L8 exists because Ameen
+                      went looking for Discard and the only door was inside
+                      the finish control. */}
+                  {active && (
+                    <button
+                      type="button"
+                      role="menuitem"
+                      onClick={() => {
+                        if (!confirmDiscard) {
+                          setConfirmDiscard(true)
+                          return
+                        }
+                        setMenuOpen(false)
+                        active.discard()
+                      }}
+                      className={`flex h-12 w-full items-center px-4 text-start text-sm ${
+                        confirmDiscard ? 'text-accent' : ''
+                      }`}
+                    >
+                      {confirmDiscard ? 'Discard workout?' : 'Discard workout'}
+                    </button>
+                  )}
                   <button
                     type="button"
                     role="menuitem"
