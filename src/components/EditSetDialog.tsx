@@ -2,21 +2,40 @@ import { useState } from 'react'
 import { formatWeight, fromDisplayWeight } from '../lib/units'
 import type { Unit } from '../lib/units'
 import { useBackLayer } from '../lib/use-back'
+import { SET_TYPE_CYCLE, SET_TYPE_NAME } from '../lib/types'
+import type { SetType } from '../lib/types'
 
 /**
- * Correct one logged set.
+ * Correct one logged set: weight, reps, set type, RPE.
  *
- * Weight and reps only. Changing an exercise or a set type after the fact is
- * rewriting what happened rather than fixing a typo, and the charts are built
- * from this — so the blast radius stays small on purpose.
+ * It was weight and reps only, on the reasoning that changing a set type after
+ * the fact is rewriting what happened rather than fixing a typo. U4 widens it,
+ * and the earlier reasoning was half right: marking a set as the warm-up it
+ * always was is a CORRECTION, and leaving it uncorrectable meant a mislabelled
+ * warm-up inflated every record and chart it touched with no way to fix it. The
+ * exercise still cannot be changed here, because that genuinely is rewriting
+ * history rather than correcting a label.
+ *
+ * The consequence is real and handled: a set type change moves a set in and out
+ * of the record and chart calculations, which is why the caller re-runs
+ * `refreshRecords` afterwards exactly as it does for weight.
  *
  * This is History, not the logging flow, so a dialog is fine here: §2.1
  * protects logging, and nothing is being interrupted mid-set.
  */
+export interface SetEdit {
+  weightKg: number | null
+  reps: number | null
+  setType: SetType
+  rpe: number | null
+}
+
 export function EditSetDialog({
   exerciseName,
   weightKg,
   reps,
+  setType,
+  rpe,
   unit,
   busy,
   onSave,
@@ -25,27 +44,34 @@ export function EditSetDialog({
   exerciseName: string
   weightKg: number | null
   reps: number | null
+  setType: SetType
+  rpe: number | null
   unit: Unit
   busy: boolean
-  onSave: (weightKg: number | null, reps: number | null) => void
+  onSave: (edit: SetEdit) => void
   onCancel: () => void
 }) {
   const [weight, setWeight] = useState(
     weightKg === null ? '' : formatWeight(weightKg, unit),
   )
   const [repsText, setRepsText] = useState(reps === null ? '' : String(reps))
+  const [kind, setKind] = useState<SetType>(setType)
+  const [rpeValue, setRpeValue] = useState<number | null>(rpe)
   // The system back gesture dismisses the dialog, as it would any sheet.
   useBackLayer(true, onCancel)
 
   function submit() {
     const parsedWeight = weight.trim() === '' ? null : Number.parseFloat(weight)
     const parsedReps = repsText.trim() === '' ? null : Number.parseInt(repsText, 10)
-    onSave(
-      parsedWeight === null || !Number.isFinite(parsedWeight)
-        ? null
-        : Number(fromDisplayWeight(parsedWeight, unit).toFixed(2)),
-      parsedReps === null || !Number.isFinite(parsedReps) ? null : parsedReps,
-    )
+    onSave({
+      weightKg:
+        parsedWeight === null || !Number.isFinite(parsedWeight)
+          ? null
+          : Number(fromDisplayWeight(parsedWeight, unit).toFixed(2)),
+      reps: parsedReps === null || !Number.isFinite(parsedReps) ? null : parsedReps,
+      setType: kind,
+      rpe: rpeValue,
+    })
   }
 
   return (
@@ -89,6 +115,62 @@ export function EditSetDialog({
             />
           </div>
         </div>
+
+        <fieldset className="mt-3">
+          <legend className="text-xs text-muted">Set type</legend>
+          <div className="mt-1 flex gap-2">
+            {SET_TYPE_CYCLE.map((t) => (
+              <button
+                key={t}
+                type="button"
+                aria-pressed={kind === t}
+                aria-label={SET_TYPE_NAME[t]}
+                onClick={() => setKind(t)}
+                className={`btn-base h-12 flex-1 text-sm capitalize ${
+                  kind === t ? 'btn-primary' : 'btn-secondary'
+                }`}
+              >
+                {t}
+              </button>
+            ))}
+          </div>
+          {kind === 'warmup' && (
+            <p className="mt-1 text-[11px] text-muted">
+              Warm-ups stay out of records, charts and volume.
+            </p>
+          )}
+        </fieldset>
+
+        <fieldset className="mt-3">
+          <legend className="text-xs text-muted">RPE</legend>
+          <div className="mt-1 flex flex-wrap gap-2">
+            {/* Tapping the selected value clears it, so "I should not have
+                recorded an RPE here" is reachable without a separate control. */}
+            <button
+              type="button"
+              aria-pressed={rpeValue === null}
+              onClick={() => setRpeValue(null)}
+              className={`btn-base h-12 px-3.5 text-sm ${
+                rpeValue === null ? 'btn-primary' : 'btn-secondary'
+              }`}
+            >
+              None
+            </button>
+            {[6, 7, 8, 9, 10].map((value) => (
+              <button
+                key={value}
+                type="button"
+                aria-pressed={rpeValue === value}
+                onClick={() => setRpeValue(rpeValue === value ? null : value)}
+                className={`btn-base tnum h-12 w-12 text-sm ${
+                  rpeValue === value ? 'btn-primary' : 'btn-secondary'
+                }`}
+              >
+                {value}
+              </button>
+            ))}
+          </div>
+        </fieldset>
 
         <div className="mt-4 flex gap-2">
           <button

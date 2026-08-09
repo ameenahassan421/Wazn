@@ -223,6 +223,46 @@ async function shoot(browser, origin, { width, empty, active }) {
      * Two frames because the page is taller than a phone: the top carries the
      * records and the verdict, and the scrolled frame carries the ladder.
      */
+    /*
+     * A past workout with its editor open. U4 added five controls in here and
+     * every one of them lives behind two taps (expand a workout, then "Edit
+     * workout"), so without this the whole surface would be invisible to a
+     * screenshot run: the same shape as the exercise detail page, which had
+     * never been photographed either.
+     */
+    if (tab === 'History' && !empty) {
+      // The row's accessible name is the date, time and workout name, so it is
+      // matched by the one word every fixture session carries.
+      const row = page.getByRole('button', { name: /Workout|Upper A|Leg day/ })
+      if (await row.count()) {
+        await row.first().click()
+        await page.waitForTimeout(900)
+        const edit = page.getByRole('button', { name: 'Edit workout' })
+        if (await edit.count()) {
+          await edit.first().click()
+          await page.waitForTimeout(600)
+          await page.screenshot({
+            path: `${OUT}/${state}-${width}-history-editing.png`,
+            fullPage: false,
+          })
+          /*
+           * The whole-session actions sit under the set list, which on a real
+           * session is longer than a phone screen, so the first frame cannot
+           * see them. Anchored on the control rather than a pixel guess: a
+           * fixed wheel distance overshot straight past the expanded workout
+           * into the collapsed rows below it, and photographed a list.
+           */
+          const actions = page.getByRole('button', { name: 'Save as routine' })
+          if (await actions.count()) await actions.first().scrollIntoViewIfNeeded()
+          await page.waitForTimeout(400)
+          await page.screenshot({
+            path: `${OUT}/${state}-${width}-history-editing-actions.png`,
+            fullPage: false,
+          })
+        }
+      }
+    }
+
     if (tab === 'Progress' && !empty) {
       const lift = page.getByRole('button', { name: /Bench Press/i })
       if (await lift.count()) {

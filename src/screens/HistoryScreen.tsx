@@ -13,7 +13,11 @@ import {
 import type { Exercise, Workout, WorkoutSet } from '../lib/types'
 import { isRecord } from '../lib/types'
 import type { SessionVolumeRow } from '../lib/progress'
+import { nextSetNumber, prefillFor, routineFromWorkout } from '../lib/history-edit'
+import { saveRoutine } from '../lib/routines'
+import { ExercisePicker } from '../components/ExercisePicker'
 import { EditSetDialog } from '../components/EditSetDialog'
+import type { SetEdit } from '../components/EditSetDialog'
 import { ExerciseThumb } from '../components/ExerciseThumb'
 import { TrainingCalendar } from '../components/TrainingCalendar'
 import { WorkoutNotes } from '../components/WorkoutNotes'
@@ -59,6 +63,14 @@ export function HistoryScreen() {
   const [error, setError] = useState<string | null>(null)
 
   const [expanded, setExpanded] = useState<string | null>(null)
+  // Confirmation for the two destructive controls, and the one-line receipt
+  // after a routine is saved. Both clear when edit mode closes.
+  const [confirmDeleteWorkout, setConfirmDeleteWorkout] = useState<string | null>(null)
+  const [savedRoutine, setSavedRoutine] = useState<string | null>(null)
+  const [addingTo, setAddingTo] = useState<string | null>(null)
+  // Fetched the first time the picker is opened, not on every History open:
+  // this screen is a reading surface and 134 rows is not free on gym data.
+  const [catalogue, setCatalogue] = useState<Exercise[]>([])
   // Which expanded workout is showing its per-row correction buttons.
   const [correcting, setCorrecting] = useState<string | null>(null)
   const [editing, setEditing] = useState<SetWithExercise | null>(null)
@@ -95,15 +107,17 @@ export function HistoryScreen() {
    * in sync, and a correction is a single field. The local copy is patched
    * rather than refetched so an open workout does not collapse under you.
    */
-  async function saveSet(
-    set: SetWithExercise,
-    weightKg: number | null,
-    reps: number | null,
-  ) {
+  async function saveSet(set: SetWithExercise, edit: SetEdit) {
     setBusy(true)
+    const patch = {
+      weight_kg: edit.weightKg,
+      reps: edit.reps,
+      set_type: edit.setType,
+      rpe: edit.rpe,
+    }
     const { error: updateError } = await supabase
       .from('workout_sets')
-      .update({ weight_kg: weightKg, reps })
+      .update(patch)
       .eq('id', set.id)
     setBusy(false)
     if (updateError) {
@@ -113,10 +127,12 @@ export function HistoryScreen() {
     setSetsByWorkout((prev) => ({
       ...prev,
       [set.workout_id]: (prev[set.workout_id] ?? []).map((s) =>
-        s.id === set.id ? { ...s, weight_kg: weightKg, reps } : s,
+        s.id === set.id ? { ...s, ...patch } : s,
       ),
     }))
     setEditing(null)
+    // A set type change moves a set in or out of the record and chart maths,
+    // exactly as a weight change does, so the same self-heal covers both.
     void refreshRecords(set.workout_id)
   }
 
@@ -150,6 +166,112 @@ export function HistoryScreen() {
     }
     setTotals(totalRows)
     if (history.data) setSessions(history.data as SessionVolumeRow[])
+  }
+
+  /**
+   * Add a set to a finished workout, prefilled from the last working set of
+   * that exercise that day. The id is client-generated for the same reason
+   * U3a's are: it is the primary key, so a replay is idempotent.
+   */
+  async function addSet(workoutId: string, exerciseId: string) {
+    const sets = setsByWorkout[workoutId] ?? []
+    const prefill = prefillFor(sets, exerciseId)
+    setBusy(true)
+    const { data, error: insertError } = await supabase
+      .from('workout_sets')
+      .insert({
+        id: crypto.randomUUID(),
+        workout_id: workoutId,
+        exercise_id: exerciseId,
+        set_number: nextSetNumber(sets),
+        weight_kg: prefill.weightKg,
+        reps: prefill.reps,
+        set_type: 'normal',
+      })
+      .select('*, exercises(id, name, muscle_group, equipment, image_url)')
+      .single()
+    setBusy(false)
+    if (insertError || !data) {
+      setError(describeError('Adding the set', insertError))
+      return
+    }
+    setSetsByWorkout((prev) => ({
+      ...prev,
+      [workoutId]: [...(prev[workoutId] ?? []), data as SetWithExercise],
+    }))
+    // Opened straight into the editor: a prefilled set is a starting point, and
+    // the reason to add one is almost always that the numbers were different.
+    setEditing(data as SetWithExercise)
+    void refreshRecords(workoutId)
+  }
+
+  /**
+   * Delete a whole workout.
+   *
+   * `workout_sets.workout_id` cascades, so its sets go with it. That is the
+   * intent: this is the exit for a session that should not be in the history at
+   * all. Two taps, and the row leaves the list immediately rather than after a
+   * refetch, so it cannot be tapped twice.
+   */
+  async function removeWorkout(workoutId: string) {
+    setBusy(true)
+    const { error: deleteError } = await supabase
+      .from('workouts')
+      .delete()
+      .eq('id', workoutId)
+    setBusy(false)
+    if (deleteError) {
+      setError(describeError('Deleting the workout', deleteError))
+      return
+    }
+    setWorkouts((prev) => prev.filter((w) => w.id !== workoutId))
+    setCorrecting(null)
+    setExpanded(null)
+    const [totalRows, history] = await Promise.all([
+      loadTotals(),
+      supabase.rpc('session_volume_history'),
+    ])
+    setTotals(totalRows)
+    if (history.data) setSessions(history.data as SessionVolumeRow[])
+  }
+
+  /**
+   * Save this session's shape as a routine.
+   *
+   * Reps and set types carry, weight does not: see `routineFromWorkout`. The
+   * new routine is NOT started or activated, matching the rule the AI generator
+   * follows, because turning "save this as a routine" into "you are now doing
+   * this" would be a decision the user did not make.
+   */
+  async function saveAsRoutine(workout: Workout) {
+    const sets = setsByWorkout[workout.id] ?? []
+    const draft = routineFromWorkout(
+      sets,
+      workout.name,
+      formatWorkoutDate(workout.started_at),
+    )
+    if (!draft) {
+      setError('That session has no working sets to build a routine from.')
+      return
+    }
+    setBusy(true)
+    try {
+      const { data: user } = await supabase.auth.getUser()
+      const userId = user.user?.id
+      if (!userId) throw new Error('Sign in to save a routine.')
+      await saveRoutine(userId, draft)
+      setSavedRoutine(draft.name)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Could not save that routine.')
+    }
+    setBusy(false)
+  }
+
+  /** Loads the exercise list once, the first time the picker is opened. */
+  async function openCatalogue() {
+    if (catalogue.length > 0) return
+    const { data } = await supabase.from('exercises').select('*').order('name')
+    setCatalogue((data ?? []) as Exercise[])
   }
 
   async function removeSet(set: SetWithExercise) {
@@ -351,6 +473,12 @@ export function HistoryScreen() {
                         editable={correcting === workout.id}
                         onEditSet={setEditing}
                         onDeleteSet={(s) => void removeSet(s)}
+                        onAddSet={
+                          correcting === workout.id
+                            ? (exerciseId) => void addSet(workout.id, exerciseId)
+                            : undefined
+                        }
+                        busy={busy}
                       />
                     )}
 
@@ -371,6 +499,61 @@ export function HistoryScreen() {
                       </div>
                     )}
 
+                    {/* Whole-session actions, revealed with the per-set ones.
+                        Adding an exercise reuses the picker rather than a
+                        second chooser: it already knows how to filter and
+                        search, and a lighter one here would be a worse
+                        version of it. */}
+                    {correcting === workout.id && (
+                      <div className="mt-3 flex flex-wrap items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setAddingTo(workout.id)
+                            void openCatalogue()
+                          }}
+                          disabled={busy}
+                          className="btn-base btn-secondary h-11 px-4 text-sm"
+                        >
+                          Add exercise
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => void saveAsRoutine(workout)}
+                          disabled={busy}
+                          className="btn-base btn-secondary h-11 px-4 text-sm"
+                        >
+                          Save as routine
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (confirmDeleteWorkout !== workout.id) {
+                              setConfirmDeleteWorkout(workout.id)
+                              return
+                            }
+                            void removeWorkout(workout.id)
+                          }}
+                          disabled={busy}
+                          className={`btn-base h-11 px-4 text-sm ${
+                            confirmDeleteWorkout === workout.id
+                              ? 'btn-primary'
+                              : 'btn-quiet'
+                          }`}
+                        >
+                          {confirmDeleteWorkout === workout.id
+                            ? 'Delete workout?'
+                            : 'Delete workout'}
+                        </button>
+                      </div>
+                    )}
+
+                    {savedRoutine && correcting === workout.id && (
+                      <p role="status" className="mt-2 text-[13px] text-accent">
+                        Saved “{savedRoutine}” to your routines. It is not started.
+                      </p>
+                    )}
+
                     {/* Correcting a session is rare and destructive; it does
                         not deserve buttons on every row of every workout. One
                         entry point per workout reveals them — and now the
@@ -378,9 +561,15 @@ export function HistoryScreen() {
                         two competing ones. */}
                     <button
                       type="button"
-                      onClick={() =>
-                        setCorrecting(correcting === workout.id ? null : workout.id)
-                      }
+                      onClick={() => {
+                        const leaving = correcting === workout.id
+                        setCorrecting(leaving ? null : workout.id)
+                        // Leaving edit mode disarms and clears the receipt, so
+                        // reopening never presents a primed destructive control
+                        // or a stale confirmation.
+                        setConfirmDeleteWorkout(null)
+                        setSavedRoutine(null)
+                      }}
                       className="btn-base btn-secondary mt-3 h-11 px-4 text-sm"
                     >
                       {correcting === workout.id ? 'Done editing' : 'Edit workout'}
@@ -404,6 +593,28 @@ export function HistoryScreen() {
         </button>
       )}
 
+      {/* Adding an exercise to a finished session is picking one, then adding
+          its first set: an exercise is present in a workout only by virtue of
+          its sets, so there is nothing else to write. Reuses the real picker
+          rather than a lighter chooser, which would be a worse version of the
+          one that already knows how to search and filter. */}
+      {addingTo && (
+        <div className="fixed inset-0 z-30 overflow-y-auto bg-ink px-[18px]">
+          <div className="mx-auto w-full max-w-[430px]">
+            <ExercisePicker
+              exercises={catalogue}
+              usage={new Map()}
+              onPick={(exercise) => {
+                const workoutId = addingTo
+                setAddingTo(null)
+                void addSet(workoutId, exercise.id)
+              }}
+              onCancel={() => setAddingTo(null)}
+            />
+          </div>
+        </div>
+      )}
+
       {editing && (
         <EditSetDialog
           exerciseName={editing.exercises?.name ?? 'Exercise'}
@@ -411,7 +622,9 @@ export function HistoryScreen() {
           reps={editing.reps}
           unit={unit}
           busy={busy}
-          onSave={(w, r) => void saveSet(editing, w, r)}
+          setType={editing.set_type}
+          rpe={editing.rpe}
+          onSave={(edit) => void saveSet(editing, edit)}
           onCancel={() => setEditing(null)}
         />
       )}
@@ -425,6 +638,8 @@ function ExerciseBreakdown({
   editable,
   onEditSet,
   onDeleteSet,
+  onAddSet,
+  busy,
 }: {
   sets: SetWithExercise[]
   unit: 'lbs' | 'kg'
@@ -432,25 +647,37 @@ function ExerciseBreakdown({
   editable: boolean
   onEditSet: (set: SetWithExercise) => void
   onDeleteSet: (set: SetWithExercise) => void
+  /** Absent outside edit mode, which is what hides the control. */
+  onAddSet?: (exerciseId: string) => void
+  busy?: boolean
 }) {
+  /*
+   * Grouped by exercise_id, not by name.
+   *
+   * Keying on the name meant a set whose embedded exercise was missing fell
+   * back to the literal string "Exercise", and every such set from every
+   * different lift collapsed into ONE block under that header. A screenshot
+   * showed 18 sets of four lifts merged into a single group called "Exercise".
+   * The id is the identity; the name is only how it is displayed.
+   */
   const order: string[] = []
   const grouped = new Map<string, SetWithExercise[]>()
   for (const set of sets) {
-    const name = set.exercises?.name ?? 'Exercise'
-    if (!grouped.has(name)) {
-      grouped.set(name, [])
-      order.push(name)
+    if (!grouped.has(set.exercise_id)) {
+      grouped.set(set.exercise_id, [])
+      order.push(set.exercise_id)
     }
-    grouped.get(name)!.push(set)
+    grouped.get(set.exercise_id)!.push(set)
   }
 
   return (
     <div className="flex flex-col gap-3.5">
-      {order.map((name) => {
-        const rows = grouped.get(name)!
+      {order.map((exerciseId) => {
+        const rows = grouped.get(exerciseId)!
         const exercise = rows.find((s) => s.exercises)?.exercises ?? null
+        const name = exercise?.name ?? 'Exercise'
         return (
-          <div key={name} className="flex gap-3">
+          <div key={exerciseId} className="flex gap-3">
             {exercise && <ExerciseThumb exercise={thumbExercise(exercise)} size={48} />}
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-medium">{name}</p>
@@ -504,6 +731,19 @@ function ExerciseBreakdown({
                   </li>
                 ))}
               </ul>
+              {/* Per exercise, because "I forgot a set" is always about one
+                  lift. Prefilled from that lift's last working set that day
+                  and opened straight into the editor. */}
+              {onAddSet && exercise && (
+                <button
+                  type="button"
+                  onClick={() => onAddSet(exercise.id)}
+                  disabled={busy}
+                  className="btn-base btn-quiet mt-1 h-11 px-3 text-xs"
+                >
+                  Add set
+                </button>
+              )}
             </div>
           </div>
         )
