@@ -212,6 +212,34 @@ async function shoot(browser, origin, { width, empty, active }) {
       // Viewport, not fullPage — see the header comment. This is the rule.
       fullPage: false,
     })
+
+    /*
+     * The exercise detail page, reached the only way a user can: tapping a row
+     * in Progress > Strength. It had never been photographed, so U4's trend
+     * chart, rep ranges and rep-max ladder would all have shipped unseen —
+     * the fifth blind spot this harness has produced, and the same shape as
+     * the missing Edge Function routes and the missing in-progress workout.
+     *
+     * Two frames because the page is taller than a phone: the top carries the
+     * records and the verdict, and the scrolled frame carries the ladder.
+     */
+    if (tab === 'Progress' && !empty) {
+      const lift = page.getByRole('button', { name: /Bench Press/i })
+      if (await lift.count()) {
+        await lift.first().click()
+        await page.waitForTimeout(1200)
+        await page.screenshot({
+          path: `${OUT}/${state}-${width}-exercise.png`,
+          fullPage: false,
+        })
+        await page.mouse.wheel(0, 520)
+        await page.waitForTimeout(400)
+        await page.screenshot({
+          path: `${OUT}/${state}-${width}-exercise-scrolled.png`,
+          fullPage: false,
+        })
+      }
+    }
   }
 
   await context.close()

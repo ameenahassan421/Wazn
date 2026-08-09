@@ -3969,3 +3969,110 @@ Anthropic's own container and cannot reach a gateway on a laptop, and the web
 client has no custom-endpoint setting — a public VPS would not change that.
 Routing is a local-Claude-Code capability. Wazn is a repo rather than a "cloud
 project", so that costs the web surface, not the work.
+
+## 2026-08-08: U4 part 1, the gate's answer existed in production and nothing drew it
+
+`exercise_1rm_history(p_exercise_id)` has been live since migration **0001**,
+returns one row per session with that lift's best estimated 1RM, and is listed
+in `CLAUDE.md` as one of "three security-invoker functions the app calls as
+RPCs". The app did not call it. The only reference anywhere outside the
+migrations was `e2e/stub.ts`, stubbing it as `[]`. `OneRepMaxPoint` was already
+in `types.ts`, matching its return shape exactly.
+
+So GATE U4, "is my bench actually progressing?" from one screen, was answerable
+only as three scalars in `StrengthList` and three stat tiles on the exercise
+page. There was no time series for any single lift anywhere in the app. The RPC,
+its type, and the screen that wanted it were all written, and the line between
+them was never drawn. Same shape as the muscle-balance chart and the superset
+round-rest.
+
+`exercise_rep_distribution` (0007) and `exercise_best_e1rm` (0007) were also
+live with no callers. The rep-range section now renders the first of those.
+
+### The ladder is computed on the client, so 0019 stays unapplied
+
+`records_ladder` and `rep_distribution` exist in **0019**, which is deliberately
+unapplied because its stat tools have no caller until B3. Rather than ask for a
+migration to get a rep-max ladder, `repMaxLadder` computes it from the sets the
+exercise page already fetches. U4 therefore needs no database change at all.
+
+Scope stated honestly in the function's own comment: it is "best in the sets you
+pass it", not a guaranteed all-time record, because that query is capped. A true
+all-time answer belongs in SQL, and 0019 is where it will be when something
+needs it.
+
+### A verdict sentence, because a line is not an answer
+
+The gate says five seconds. A chart answers "is this progressing?" only if you
+read a chart, so `e1rmProgress` computes the delta across the series and the
+section leads with `+43 lbs since 8 months ago`. Both the sentence and the line
+come off the same series, so they cannot disagree, the same construction the
+coach's data chips use. `best_kg` is carried separately, because a lift can be up
+over the window and still under its best, and hiding that would make the
+sentence a cheerleader rather than an instrument.
+
+### Two e1RM formatting bugs, one live
+
+`formatEstimate` exists precisely so an estimate is not snapped to the nearest
+plate. That fix was made for the coach on 2026-08-08 and recorded above, and
+only `coach.ts` was using it. `ExerciseDetail`'s "est. 1RM" tile went through
+`formatWeight`, so the coach said 116.7 where the exercise page said 116.75.
+That is exactly the disagreement `formatEstimate`'s own comment warns teaches
+users the chips are approximate. Fixed.
+
+And mine: the ladder initially read `hist`, which is sliced to eight sessions
+for the list, so a "1 rep max" was the heaviest recent set wearing the word max.
+The full window now lives in state and the list slices at render.
+
+### What the screenshot run found, and it is the whole argument for the rule
+
+Five defects, none visible to any of the eleven checks:
+
+1. **Two of five rep-range bars rendered as empty tracks** holding 31 and 11
+   sets. Tailwind v4 prunes `@theme` tokens nothing statically references, so
+   `var(--color-accent-${step})` composed in the component resolved to nothing:
+   `accent-400` and `accent-700` were absent from the built CSS. This is
+   `inset-block-0` again, a reference that emits no CSS, fails no check, and is
+   invisible until somebody looks. Static `.rep-fill-1..5` classes in
+   `index.css` are what make the tokens survive the build.
+2. **Nine months and +43 lbs read as a flat line.** An e1RM sits between 98 and
+   118 kg; on a zero axis that is a horizontal line across the top, and the
+   chart answers the gate with "no". `SeriesChart` grew a `baseline` prop, and
+   the area fill is dropped in `data` mode on purpose: an area implies magnitude
+   from zero and there is no zero here to measure from. Volume keeps its zero.
+3. **The latest-point dot was clipped in half** at the right edge, on the
+   volume trend too, since the day it was written, because the last point
+   plotted at exactly `x = W`.
+4. **"Loading..." forever with the Rep maxes section absent.** The harness stub
+   does not implement PostgREST embeds, so `workout_sets` returned without its
+   nested `workouts` and `row.workouts.id` threw inside a `.then`, which no
+   error boundary can catch. `setHistory` was never reached. Fixed in the stub,
+   and guarded in the app too, because the same hang shape has already bitten
+   the Log tab once.
+5. **`exercise_records` was stubbed with three of its six columns**, so
+   `total_sets > 0` compared `undefined` and the page read "Not logged yet"
+   directly above a full set of records.
+
+**`ExerciseDetail` had never been photographed**, the fifth blind spot this
+harness has produced, after the Edge Function routes, the in-progress workout,
+the network cut and the idle gate. It now has two frames per width.
+
+### The render forced a design change
+
+The ladder first read `1 rep 226, 3 rep 226, 5 rep 226`. That is correct, since a
+set counts toward every rung at or below its reps, and it is three rows carrying
+one fact, which on a screen read at arm's length looks like a bug. `ladderBands`
+merges tied neighbours, so it reads `1-5 rep, 226 lbs`. The same claim, stated
+once, still true: a 226 lb five is a proven 226 lb single.
+
+### Node 26 versus 22, which cost two wrong diagnoses
+
+A sandboxed Bash shell does not load fnm's shell hook, so it runs the global
+Node 26 rather than the 22 in `.nvmrc`. Node 26 ships an experimental built-in
+`localStorage` global that shadows jsdom's and is unavailable without
+`--localstorage-file`, so 18 tests across `RestCanvas`, `lazy-screen` and
+`unit-context` fail on `beforeEach` in a tree CI calls green. Two wrong
+diagnoses were published before the environment was probed instead of the code,
+the 0F lesson about suspecting the instrument first, relearned. Prefix `PATH`
+with the fnm v22 bin per command; do not change the global node, which the
+OmniRoute LaunchAgent depends on.

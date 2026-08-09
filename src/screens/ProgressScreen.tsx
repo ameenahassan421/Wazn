@@ -15,6 +15,7 @@ import type { Exercise } from '../lib/types'
 import { ExerciseDetail } from '../components/ExerciseDetail'
 import { ExerciseThumb } from '../components/ExerciseThumb'
 import { RangeChips } from '../components/RangeChips'
+import { SeriesChart } from '../components/SeriesChart'
 import {
   SET_BAND,
   bandState,
@@ -562,53 +563,16 @@ function VolumeTrend({
   range: RangeKey
   onRange: (key: RangeKey) => void
 }) {
-  const W = 320
-  const H = 96
   const max = Math.max(1, ...points.map((p) => p.volumeKg))
-  const step = points.length > 1 ? W / (points.length - 1) : W
-  const plotted = points.map((p, i) => ({
-    x: i * step,
-    y: H - (p.volumeKg / max) * (H - 8) - 4,
-  }))
-  const line = plotted.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x} ${p.y}`).join(' ')
-  const area = `${line} L${W} ${H} L0 ${H} Z`
-  const last = plotted.at(-1)
   const bucket = span.bucket === 'week' ? 'week' : 'month'
 
   return (
     <section>
       <h2 className="kicker mb-2.5">Volume · {describeSpan(span)}</h2>
-      <svg
-        viewBox={`0 0 ${W} ${H}`}
-        className="block w-full"
-        style={{ aspectRatio: `${W} / ${H}` }}
-        role="img"
-        aria-label={`Volume per ${bucket} over the ${describeSpan(span)}, peaking at ${formatVolumeWithUnit(max, unit)}`}
-      >
-        {[0.25, 0.5, 0.75].map((f) => (
-          <line
-            key={f}
-            x1="0"
-            x2={W}
-            y1={H * f}
-            y2={H * f}
-            stroke="var(--divider)"
-            strokeWidth="1"
-            strokeDasharray="2 4"
-          />
-        ))}
-        <line x1="0" x2={W} y1={H} y2={H} stroke="var(--divider)" strokeWidth="1" />
-        <path d={area} fill="var(--color-accent)" opacity="0.08" />
-        <path
-          d={line}
-          fill="none"
-          stroke="var(--color-accent)"
-          strokeWidth="2"
-          strokeLinejoin="round"
-          strokeLinecap="round"
-        />
-        {last && <circle cx={last.x} cy={last.y} r="3.5" fill="var(--color-accent)" />}
-      </svg>
+      <SeriesChart
+        values={points.map((p) => p.volumeKg)}
+        ariaLabel={`Volume per ${bucket} over the ${describeSpan(span)}, peaking at ${formatVolumeWithUnit(max, unit)}`}
+      />
       <p className="tnum mb-2.5 mt-1 text-[11px] text-muted">
         one point per {bucket} · peak {formatVolume(max, unit)} · this {bucket}{' '}
         {formatVolume(points.at(-1)?.volumeKg ?? 0, unit)}

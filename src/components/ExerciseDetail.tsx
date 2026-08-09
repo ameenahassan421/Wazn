@@ -2,18 +2,27 @@ import { useEffect, useState } from 'react'
 import { describeError, supabase } from '../lib/supabase'
 import { useBackLayer } from '../lib/use-back'
 import { useUnit } from '../lib/unit-context'
-import { formatWeight } from '../lib/units'
+import { formatEstimate, formatWeight } from '../lib/units'
 import { formatRelativeDay, formatVolume } from '../lib/format'
-import type { Exercise } from '../lib/types'
+import type { Exercise, OneRepMaxPoint } from '../lib/types'
 import { describeRest, resolveRest, stepRest } from '../lib/rest'
 import { REST_STEP_SECONDS } from '../lib/use-rest-timer'
+import { e1rmProgress, ladderBands, repMaxLadder } from '../lib/progress'
 import { ExerciseThumb } from './ExerciseThumb'
+import { SeriesChart } from './SeriesChart'
 
 /** One session's worth of this exercise, newest first. */
 interface HistoryRow {
   workoutId: string
   startedAt: string
   sets: { weight_kg: number | null; reps: number | null; set_type: string }[]
+}
+
+/** `exercise_rep_distribution` (0007): one row per fixed rep bucket. */
+interface RepBucketRow {
+  bucket: string
+  bucket_order: number
+  set_count: number | string
 }
 
 interface Records {
@@ -43,6 +52,22 @@ function IconBack() {
     </svg>
   )
 }
+
+/**
+ * Accent-ramp class per rep bucket, heaviest range brightest.
+ *
+ * Classes, not `var(--color-accent-${step})` composed here: Tailwind v4 prunes
+ * theme tokens nothing statically references, so a runtime-built variable name
+ * resolves to nothing and the bar renders empty. Defined in `index.css`, where
+ * the reason is written out in full.
+ */
+const REP_RANGE_FILL = [
+  'rep-fill-1',
+  'rep-fill-2',
+  'rep-fill-3',
+  'rep-fill-4',
+  'rep-fill-5',
+]
 
 function num(value: number | string | null | undefined): number | null {
   if (value === null || value === undefined) return null
@@ -78,6 +103,21 @@ export function ExerciseDetail({
   const [history, setHistory] = useState<{
     exerciseId: string
     rows: HistoryRow[]
+  } | null>(null)
+  // The estimated-1RM series, one point per session. Server-computed over the
+  // lift's whole history rather than derived from the capped set query below,
+  // because a trend that silently stops at 300 sets is a trend that lies.
+  const [trend, setTrend] = useState<{
+    exerciseId: string
+    points: OneRepMaxPoint[]
+  } | null>(null)
+  // Which rep ranges this lift actually gets trained in. Server-computed
+  // (migration 0007, live and until now unrendered) rather than bucketed on
+  // the client: two implementations of one histogram is two sets of
+  // boundaries to disagree about.
+  const [spread, setSpread] = useState<{
+    exerciseId: string
+    rows: RepBucketRow[]
   } | null>(null)
   const [note, setNote] = useState<{ exerciseId: string; text: string } | null>(null)
   const [noteSaving, setNoteSaving] = useState(false)
@@ -115,6 +155,43 @@ export function ExerciseDetail({
   useEffect(() => {
     let active = true
     void supabase
+      .rpc('exercise_1rm_history', { p_exercise_id: exerciseId })
+      .then(({ data, error: rpcError }) => {
+        if (!active) return
+        // No card rather than an error: the records above and the history
+        // below do not depend on this, and a lift with no series is a lift
+        // with nothing to say about its trend.
+        setTrend({
+          exerciseId,
+          points: rpcError ? [] : ((data as OneRepMaxPoint[] | null) ?? []),
+        })
+      })
+    return () => {
+      active = false
+    }
+  }, [exerciseId])
+
+  useEffect(() => {
+    let active = true
+    void supabase
+      .rpc('exercise_rep_distribution', { p_exercise_id: exerciseId })
+      .then(({ data, error: rpcError }) => {
+        if (!active) return
+        // Same posture as the trend: no section rather than an error, because
+        // nothing else on the page depends on it.
+        setSpread({
+          exerciseId,
+          rows: rpcError ? [] : ((data as RepBucketRow[] | null) ?? []),
+        })
+      })
+    return () => {
+      active = false
+    }
+  }, [exerciseId])
+
+  useEffect(() => {
+    let active = true
+    void supabase
       .from('workout_sets')
       .select('weight_kg, reps, set_type, set_number, workouts!inner(id, started_at)')
       .eq('exercise_id', exerciseId)
@@ -133,8 +210,14 @@ export function ExerciseDetail({
             weight_kg: number | null
             reps: number | null
             set_type: string
-            workouts: { id: string; started_at: string }
+            workouts: { id: string; started_at: string } | null
           }
+          // A row whose embedded workout is missing is skipped, not thrown on.
+          // Reading `row.workouts.id` unguarded rejected the promise, so
+          // `setHistory` never ran and the section sat on "Loading…" for good
+          // — the same hang shape as the Log tab's, and the error boundary
+          // cannot catch a throw inside a `.then`.
+          if (!row.workouts?.id) continue
           const existing = bySession.get(row.workouts.id)
           const set = {
             weight_kg: num(row.weight_kg),
@@ -153,7 +236,11 @@ export function ExerciseDetail({
           b.startedAt.localeCompare(a.startedAt),
         )
         setError(null)
-        setHistory({ exerciseId, rows: rows.slice(0, 8) })
+        // Every session in the fetched window, not the eight the list shows.
+        // The rep-max ladder reads these, and a ladder computed from the last
+        // eight sessions is not a record — it is the heaviest recent set
+        // wearing the word "max". The list slices at render instead.
+        setHistory({ exerciseId, rows })
       })
     return () => {
       active = false
@@ -300,9 +387,31 @@ export function ExerciseDetail({
   const stats: [string, string][] = rec?.value
     ? [
         [formatWeight(num(rec.value.best_weight_kg), unit), 'best set'],
-        [formatWeight(num(rec.value.best_e1rm_kg), unit), 'est. 1RM'],
+        // An estimate, not a load. `formatWeight` would snap it to the nearest
+        // plate and print 116.75 where the coach says 116.7 — see units.ts.
+        [formatEstimate(num(rec.value.best_e1rm_kg), unit), 'est. 1RM'],
         [formatVolume(num(rec.value.best_session_volume_kg), unit), 'best session'],
       ]
+    : []
+
+  const buckets = spread?.exerciseId === exerciseId ? spread.rows : null
+  const bucketMax = buckets
+    ? Math.max(1, ...buckets.map((b) => Number(b.set_count)))
+    : 1
+  const bucketTotal = buckets
+    ? buckets.reduce((sum, b) => sum + Number(b.set_count), 0)
+    : 0
+
+  const points = trend?.exerciseId === exerciseId ? trend.points : null
+  const progress = points ? e1rmProgress(points) : null
+  const ladder = hist
+    ? ladderBands(
+        repMaxLadder(
+          hist.flatMap((row) =>
+            row.sets.map((s) => ({ ...s, started_at: row.startedAt })),
+          ),
+        ),
+      )
     : []
 
   return (
@@ -371,6 +480,100 @@ export function ExerciseDetail({
         <p className="text-sm text-muted">
           Records and notes need migration 0008. Apply it and reload.
         </p>
+      )}
+
+      {/* The gate: "is this lift actually progressing?" answered in one
+          sentence and one line, both off the same series so they cannot
+          disagree. One session is not a trend, so the card waits for two. */}
+      {points && progress && progress.sessions > 1 && (
+        <section>
+          <h3 className="kicker mb-2">Estimated 1RM</h3>
+          <p className="tnum text-2xl font-medium">
+            {progress.delta_kg === 0
+              ? 'Level'
+              : `${progress.delta_kg > 0 ? '+' : '−'}${formatEstimate(Math.abs(progress.delta_kg), unit)} ${unit}`}
+            <span className="ms-2 text-xs font-normal text-muted">
+              since {formatRelativeDay(progress.since_at)}
+            </span>
+          </p>
+          <SeriesChart
+            values={points.map((p) => Number(p.best_1rm_kg))}
+            baseline="data"
+            ariaLabel={`Estimated 1RM across ${progress.sessions} sessions, from ${formatEstimate(progress.earliest_kg, unit)} to ${formatEstimate(progress.latest_kg, unit)} ${unit}`}
+          />
+          <p className="tnum mt-1 text-[11px] text-muted">
+            {progress.sessions} sessions · now{' '}
+            {formatEstimate(progress.latest_kg, unit)} {unit}
+            {progress.best_kg > progress.latest_kg &&
+              ` · best ${formatEstimate(progress.best_kg, unit)} ${formatRelativeDay(progress.best_at)}`}
+          </p>
+        </section>
+      )}
+
+      {/* Where the work actually happens. The bars step down the accent ramp
+          the way plates step down toward the sleeve (docs/design-philosophy),
+          heaviest range brightest — one hue, five steps, no second colour. */}
+      {buckets && bucketTotal > 0 && (
+        <section>
+          <h3 className="kicker mb-2">Rep ranges</h3>
+          <div className="flex flex-col gap-1.5">
+            {buckets.map((b, i) => {
+              const count = Number(b.set_count)
+              return (
+                <div key={b.bucket} className="flex items-center gap-2">
+                  <span className="tnum w-[46px] shrink-0 text-[13px] text-muted">
+                    {b.bucket}
+                  </span>
+                  <span
+                    className="relative block h-[14px] flex-1 overflow-hidden rounded-[3px]"
+                    style={{ backgroundColor: 'var(--color-tile-1)' }}
+                  >
+                    <span
+                      className={`absolute inset-block-0 start-0 block rounded-[3px] ${
+                        REP_RANGE_FILL[i] ?? 'rep-fill-2'
+                      }`}
+                      style={{ width: `${(count / bucketMax) * 100}%` }}
+                    />
+                  </span>
+                  <span className="tnum w-7 shrink-0 text-end font-mono text-[13px]">
+                    {count}
+                  </span>
+                </div>
+              )
+            })}
+          </div>
+          <p className="tnum mt-1.5 text-[11px] text-muted">
+            {bucketTotal} working sets · warm-ups excluded
+          </p>
+        </section>
+      )}
+
+      {ladder.length > 0 && (
+        <section>
+          <h3 className="kicker mb-2">Rep maxes</h3>
+          <ul
+            className="ring-edge bg-surface"
+            style={{ borderRadius: 'var(--radius-md)' }}
+          >
+            {ladder.map((rung) => (
+              <li
+                key={rung.label}
+                className="flex items-baseline gap-3 border-b border-line px-3 py-2 last:border-b-0"
+              >
+                <span className="tnum w-12 shrink-0 text-xs text-muted">
+                  {rung.label} rep
+                </span>
+                <span className="tnum flex-1 text-2xl font-medium">
+                  {formatWeight(rung.best_weight_kg, unit)}
+                  <span className="ms-1 text-xs font-normal text-muted">{unit}</span>
+                </span>
+                <span className="text-xs text-muted">
+                  {formatRelativeDay(rung.achieved_at)}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </section>
       )}
 
       {/* Rest lives here because this is the lift's page, and in the timer bar
@@ -463,7 +666,7 @@ export function ExerciseDetail({
           </p>
         ) : (
           <ul>
-            {hist.map((session, i) => {
+            {hist.slice(0, 8).map((session, i) => {
               const working = session.sets.filter((s) => s.set_type !== 'warmup')
               const shown = working.length > 0 ? working : session.sets
               return (

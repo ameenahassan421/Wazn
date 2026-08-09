@@ -1037,7 +1037,53 @@ coach_surfaces.sql` asserts what the three functions RETURN against a seeded
   whether Ameen can answer "is my bench actually progressing?" from one screen
   against the 152 workouts already in production. The four items above ride
   with it.
-- **Last updated:** 2026-08-08 by Claude Code (E1, the rest canvas; the idle
+- **U4 IS PART BUILT (2026-08-08), and the gate is already answerable.** The
+  exercise page now draws an estimated-1RM series from `exercise_1rm_history`,
+  **live since migration 0001 and called by nothing.** Its type
+  (`OneRepMaxPoint`) was already in `types.ts` too, so the RPC, the type and the
+  screen that wanted it were all written and the line between them never was.
+  Above the line is one sentence (`+43 lbs since 8 months ago`), computed from
+  the same series so the two cannot disagree. Plus a rep-max ladder, and the
+  rep-range distribution off `exercise_rep_distribution`, **also live in 0007
+  with no caller.** `SeriesChart` is extracted and shared with the Progress
+  volume trend.
+- **U4 needs NO migration.** `records_ladder` lives in 0019, which stays
+  deliberately unapplied; the ladder is computed on the client from sets the
+  page already fetches. Stated honestly in the code: it is best-in-window, not a
+  guaranteed all-time record, and SQL is where that would belong.
+- **Still open in U4:** the all-time PR list block in Progress, full
+  past-workout editing, custom exercise edit plus archive, then L9, O15, L8, L3.
+- **A screenshot run found five defects the eleven checks cannot see**, and
+  `ExerciseDetail` had never been photographed at all: the fifth blind spot in
+  that harness. Two of five rep-range bars rendered EMPTY because Tailwind v4
+  prunes `@theme` tokens nothing statically references, so a runtime-composed
+  `var(--color-accent-400)` emitted no CSS. That is `inset-block-0` all over
+  again. Nine months of progress read as a flat line on a zero axis. The
+  latest-point dot had been clipped in half on the volume trend since the day it
+  was written. The harness stub does not implement PostgREST embeds, so the page
+  hung on "Loading..." forever, a throw inside a `.then`, which no error
+  boundary can catch. See DECISIONS.md.
+- **`formatEstimate` was reaching only the coach.** Every other e1RM in the app
+  went through `formatWeight`, which snaps to the nearest plate, so the coach
+  said 116.7 where the exercise page said 116.75. That is the exact
+  disagreement that function's own comment warns about. Fixed on the exercise
+  page.
+- **A SANDBOXED SHELL RUNS NODE 26, NOT THE 22 IN `.nvmrc`.** fnm's hook is not
+  loaded in a non-interactive shell. Node 26 ships an experimental built-in
+  `localStorage` that shadows jsdom's and is unavailable without
+  `--localstorage-file`, so **18 tests across three suites fail in a tree CI
+  calls green**, and two wrong diagnoses were published before the environment
+  was probed rather than the code. Prefix `PATH` with
+  `~/.local/share/fnm/node-versions/v22.23.2/installation/bin` per command. Do
+  NOT change the global node; the OmniRoute LaunchAgent depends on that path.
+- **Wall green on Node 22:** all 11 checks, **704 tests**, `check:sql` executes
+  all 23 migrations from empty, Playwright green, `npm run shots` reports no
+  uncaught page errors.
+- **Last updated:** 2026-08-08 by Claude Code (U4 part 1: the e1RM trend and its
+  verdict, the rep-max ladder and its band merge, the rep-range distribution,
+  the shared `SeriesChart`, two e1RM formatting fixes, the five defects a
+  screenshot found, and the Node 26 versus 22 trap). Previously 2026-08-08 (E1,
+  the rest canvas; the idle
   gate; migration 0022; the truncated kicker a screenshot found — merged with
   the release-ladder accounting, the four verified gap items, and U4 marked
   next). Previously 2026-08-08 (B1's briefing and debrief; B2's
