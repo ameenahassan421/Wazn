@@ -1,0 +1,2103 @@
+{
+  "_draft": "Arabic names are machine-drafted, unreviewed",
+  "generatedAt": "2026-08-10T02:14:16.312Z",
+  "count": 134,
+  "exercises": [
+    {
+      "id": "9763fce8-df18-48a4-afba-a3282e515653",
+      "slug": "21s-bicep-curl",
+      "name_en": "21s Bicep Curl",
+      "name_ar": "تجديع 21 للبايسيبس",
+      "muscle_group": "biceps",
+      "muscle_group_ar": "البايسيبس",
+      "equipment": "bodyweight",
+      "equipment_ar": "وزن الجسم",
+      "instructions": []
+    },
+    {
+      "id": "f0499e4c-be65-407c-8946-7c0e1730821e",
+      "slug": "air-bike",
+      "name_en": "Air Bike",
+      "name_ar": "الدراجة الهوائية",
+      "muscle_group": "cardio",
+      "muscle_group_ar": "القلب",
+      "equipment": "other",
+      "equipment_ar": "أخرى",
+      "instructions": [
+        "Lie flat on the floor with your lower back pressed to the ground. For this exercise, you will need to put your hands beside your head. Be careful however to not strain with the neck as you perform it. Now lift your shoulders into the crunch position.",
+        "Bring knees up to where they are perpendicular to the floor, with your lower legs parallel to the floor. This will be your starting position.",
+        "Now simultaneously, slowly go through a cycle pedal motion kicking forward with the right leg and bringing in the knee of the left leg. Bring your right elbow close to your left knee by crunching to the side, as you breathe out.",
+        "Go back to the initial position as you breathe in.",
+        "Crunch to the opposite side as you cycle your legs and bring closer your left elbow to your right knee and exhale.",
+        "Continue alternating in this manner until all of the recommended repetitions for each side have been completed."
+      ]
+    },
+    {
+      "id": "a2dee8e3-8c51-473b-9ade-62005c8fa5b1",
+      "slug": "around-the-world",
+      "name_en": "Around The World",
+      "name_ar": "حول العالم",
+      "muscle_group": "chest",
+      "muscle_group_ar": "الصدر",
+      "equipment": "bodyweight",
+      "equipment_ar": "وزن الجسم",
+      "instructions": [
+        "Lay down on a flat bench holding a dumbbell in each hand with the palms of the hands facing towards the ceiling. Tip: Your arms should be parallel to the floor and next to your thighs. To avoid injury, make sure that you keep your elbows slightly bent. This will be your starting position.",
+        "Now move the dumbbells by creating a semi-circle as you displace them from the initial position to over the head. All of the movement should happen with the arms parallel to the floor at all times. Breathe in as you perform this portion of the movement.",
+        "Reverse the movement to return the weight to the starting position as you exhale."
+      ]
+    },
+    {
+      "id": "a2fa5532-0a63-4715-8817-c26833426f83",
+      "slug": "back-extension-machine",
+      "name_en": "Back Extension (Machine)",
+      "name_ar": "امتداد الظهر (جهاز)",
+      "muscle_group": "back",
+      "muscle_group_ar": "الظهر",
+      "equipment": "machine",
+      "equipment_ar": "جهاز",
+      "instructions": []
+    },
+    {
+      "id": "48e356b8-f493-46ce-959f-731756fb6594",
+      "slug": "back-extension-weighted-hyperextension",
+      "name_en": "Back Extension (Weighted Hyperextension)",
+      "name_ar": "امتداد الظهر (بأوزان)",
+      "muscle_group": "back",
+      "muscle_group_ar": "الظهر",
+      "equipment": "bodyweight",
+      "equipment_ar": "وزن الجسم",
+      "instructions": []
+    },
+    {
+      "id": "10afd4cc-b397-4806-b458-9af5df4748f2",
+      "slug": "behind-the-back-curl-cable",
+      "name_en": "Behind the Back Curl (Cable)",
+      "name_ar": "تجديع خلف الظهر (كابل)",
+      "muscle_group": "biceps",
+      "muscle_group_ar": "البايسيبس",
+      "equipment": "cable",
+      "equipment_ar": "كابل",
+      "instructions": [
+        "Start by standing straight and holding a barbell behind your glutes at arm's length while using a pronated grip (palms will be facing back away from the glutes) and having your hands shoulder width apart from each other.",
+        "You should be looking straight forward while your feet are shoulder width apart from each other. This is the starting position.",
+        "While exhaling, slowly elevate the barbell up by curling your wrist in a semi-circular motion towards the ceiling. Note: Your wrist should be the only body part moving for this exercise.",
+        "Hold the contraction for a second and lower the barbell back down to the starting position while inhaling.",
+        "Repeat for the recommended amount of repetitions.",
+        "When finished, lower the barbell down to the squat rack or the floor by bending the knees. Tip: It is easiest to either pick it up from a squat rack or have a partner hand it to you."
+      ]
+    },
+    {
+      "id": "f5eed9bd-959e-4d24-97b5-78c011c63dbe",
+      "slug": "behind-the-back-wrist-curl-barbell",
+      "name_en": "Behind the Back Wrist Curl (Barbell)",
+      "name_ar": "تجديع المعصم خلف الظهر (بار)",
+      "muscle_group": "biceps",
+      "muscle_group_ar": "البايسيبس",
+      "equipment": "barbell",
+      "equipment_ar": "بار",
+      "instructions": [
+        "Start by standing straight and holding a barbell behind your glutes at arm's length while using a pronated grip (palms will be facing back away from the glutes) and having your hands shoulder width apart from each other.",
+        "You should be looking straight forward while your feet are shoulder width apart from each other. This is the starting position.",
+        "While exhaling, slowly elevate the barbell up by curling your wrist in a semi-circular motion towards the ceiling. Note: Your wrist should be the only body part moving for this exercise.",
+        "Hold the contraction for a second and lower the barbell back down to the starting position while inhaling.",
+        "Repeat for the recommended amount of repetitions.",
+        "When finished, lower the barbell down to the squat rack or the floor by bending the knees. Tip: It is easiest to either pick it up from a squat rack or have a partner hand it to you."
+      ]
+    },
+    {
+      "id": "2f9b3c4a-08f8-4ad3-a454-36e071c10333",
+      "slug": "bench-dip",
+      "name_en": "Bench Dip",
+      "name_ar": "غطس على البنش",
+      "muscle_group": "triceps",
+      "muscle_group_ar": "الترايسيبس",
+      "equipment": "bodyweight",
+      "equipment_ar": "وزن الجسم",
+      "instructions": [
+        "For this exercise you will need to place a bench behind your back. With the bench perpendicular to your body, and while looking away from it, hold on to the bench on its edge with the hands fully extended, separated at shoulder width. The legs will be extended forward, bent at the waist and perpendicular to your torso. This will be your starting position.",
+        "Slowly lower your body as you inhale by bending at the elbows until you lower yourself far enough to where there is an angle slightly smaller than 90 degrees between the upper arm and the forearm. Tip: Keep the elbows as close as possible throughout the movement. Forearms should always be pointing down.",
+        "Using your triceps to bring your torso up again, lift yourself back to the starting position.",
+        "Repeat for the recommended amount of repetitions."
+      ]
+    },
+    {
+      "id": "b72a4691-d53e-46e0-b9e6-2b69ec13b420",
+      "slug": "bench-press-close-grip-barbell",
+      "name_en": "Bench Press - Close Grip (Barbell)",
+      "name_ar": "بنش برس بقبضة ضيقة (بار)",
+      "muscle_group": "triceps",
+      "muscle_group_ar": "الترايسيبس",
+      "equipment": "barbell",
+      "equipment_ar": "بار",
+      "instructions": [
+        "Lie back on a flat bench. Using a close grip (around shoulder width), lift the bar from the rack and hold it straight over you with your arms locked. This will be your starting position.",
+        "As you breathe in, come down slowly until you feel the bar on your middle chest. Tip: Make sure that - as opposed to a regular bench press - you keep the elbows close to the torso at all times in order to maximize triceps involvement.",
+        "After a second pause, bring the bar back to the starting position as you breathe out and push the bar using your triceps muscles. Lock your arms in the contracted position, hold for a second and then start coming down slowly again. Tip: It should take at least twice as long to go down than to come up.",
+        "Repeat the movement for the prescribed amount of repetitions.",
+        "When you are done, place the bar back in the rack."
+      ]
+    },
+    {
+      "id": "087637f5-96b4-4f26-b30c-ab9b70f537de",
+      "slug": "bench-press-barbell",
+      "name_en": "Bench Press (Barbell)",
+      "name_ar": "بنش برس (بار)",
+      "muscle_group": "chest",
+      "muscle_group_ar": "الصدر",
+      "equipment": "barbell",
+      "equipment_ar": "بار",
+      "instructions": [
+        "Lie back on a flat bench. Using a medium width grip (a grip that creates a 90-degree angle in the middle of the movement between the forearms and the upper arms), lift the bar from the rack and hold it straight over you with your arms locked. This will be your starting position.",
+        "From the starting position, breathe in and begin coming down slowly until the bar touches your middle chest.",
+        "After a brief pause, push the bar back to the starting position as you breathe out. Focus on pushing the bar using your chest muscles. Lock your arms and squeeze your chest in the contracted position at the top of the motion, hold for a second and then start coming down slowly again. Tip: Ideally, lowering the weight should take about twice as long as raising it.",
+        "Repeat the movement for the prescribed amount of repetitions.",
+        "When you are done, place the bar back in the rack."
+      ]
+    },
+    {
+      "id": "d1ce64ba-d28c-40b5-accb-7427193ec6d7",
+      "slug": "bench-press-cable",
+      "name_en": "Bench Press (Cable)",
+      "name_ar": "بنش برس (كابل)",
+      "muscle_group": "chest",
+      "muscle_group_ar": "الصدر",
+      "equipment": "cable",
+      "equipment_ar": "كابل",
+      "instructions": [
+        "Lie back on a flat bench. Using a medium width grip (a grip that creates a 90-degree angle in the middle of the movement between the forearms and the upper arms), lift the bar from the rack and hold it straight over you with your arms locked. This will be your starting position.",
+        "From the starting position, breathe in and begin coming down slowly until the bar touches your middle chest.",
+        "After a brief pause, push the bar back to the starting position as you breathe out. Focus on pushing the bar using your chest muscles. Lock your arms and squeeze your chest in the contracted position at the top of the motion, hold for a second and then start coming down slowly again. Tip: Ideally, lowering the weight should take about twice as long as raising it.",
+        "Repeat the movement for the prescribed amount of repetitions.",
+        "When you are done, place the bar back in the rack."
+      ]
+    },
+    {
+      "id": "8363ce60-822e-4aae-a12e-386cda4bc684",
+      "slug": "bench-press-dumbbell",
+      "name_en": "Bench Press (Dumbbell)",
+      "name_ar": "بنش برس (دمبل)",
+      "muscle_group": "chest",
+      "muscle_group_ar": "الصدر",
+      "equipment": "dumbbell",
+      "equipment_ar": "دمبل",
+      "instructions": [
+        "Lie down on a flat bench with a dumbbell in each hand resting on top of your thighs. The palms of your hands will be facing each other.",
+        "Then, using your thighs to help raise the dumbbells up, lift the dumbbells one at a time so that you can hold them in front of you at shoulder width.",
+        "Once at shoulder width, rotate your wrists forward so that the palms of your hands are facing away from you. The dumbbells should be just to the sides of your chest, with your upper arm and forearm creating a 90 degree angle. Be sure to maintain full control of the dumbbells at all times. This will be your starting position.",
+        "Then, as you breathe out, use your chest to push the dumbbells up. Lock your arms at the top of the lift and squeeze your chest, hold for a second and then begin coming down slowly. Tip: Ideally, lowering the weight should take about twice as long as raising it.",
+        "Repeat the movement for the prescribed amount of repetitions of your training program."
+      ]
+    },
+    {
+      "id": "8b0f9720-a2ec-409f-ab9d-56c718f68423",
+      "slug": "bent-over-row-barbell",
+      "name_en": "Bent Over Row (Barbell)",
+      "name_ar": "سحب منحني (بار)",
+      "muscle_group": "back",
+      "muscle_group_ar": "الظهر",
+      "equipment": "barbell",
+      "equipment_ar": "بار",
+      "instructions": [
+        "Holding a barbell with a pronated grip (palms facing down), bend your knees slightly and bring your torso forward, by bending at the waist, while keeping the back straight until it is almost parallel to the floor. Tip: Make sure that you keep the head up. The barbell should hang directly in front of you as your arms hang perpendicular to the floor and your torso. This is your starting position.",
+        "Now, while keeping the torso stationary, breathe out and lift the barbell to you. Keep the elbows close to the body and only use the forearms to hold the weight. At the top contracted position, squeeze the back muscles and hold for a brief pause.",
+        "Then inhale and slowly lower the barbell back to the starting position.",
+        "Repeat for the recommended amount of repetitions."
+      ]
+    },
+    {
+      "id": "fc492c2d-4af0-43c2-a055-649fa4558597",
+      "slug": "bicep-curl-barbell",
+      "name_en": "Bicep Curl (Barbell)",
+      "name_ar": "تجديع البايسيبس (بار)",
+      "muscle_group": "biceps",
+      "muscle_group_ar": "البايسيبس",
+      "equipment": "barbell",
+      "equipment_ar": "بار",
+      "instructions": [
+        "Stand (torso upright) with a dumbbell in each hand held at arms length. The elbows should be close to the torso and the palms of your hand should be facing your thighs.",
+        "While holding the upper arm stationary, curl the right weight as you rotate the palm of the hands until they are facing forward. At this point continue contracting the biceps as you breathe out until your biceps is fully contracted and the dumbbells are at shoulder level. Hold the contracted position for a second as you squeeze the biceps. Tip: Only the forearms should move.",
+        "Slowly begin to bring the dumbbell back to the starting position as your breathe in. Tip: Remember to twist the palms back to the starting position (facing your thighs) as you come down.",
+        "Repeat the movement with the left hand. This equals one repetition.",
+        "Continue alternating in this manner for the recommended amount of repetitions."
+      ]
+    },
+    {
+      "id": "d37d39f7-3b35-4882-9b50-770ea0303e31",
+      "slug": "bicep-curl-cable",
+      "name_en": "Bicep Curl (Cable)",
+      "name_ar": "تجديع البايسيبس (كابل)",
+      "muscle_group": "biceps",
+      "muscle_group_ar": "البايسيبس",
+      "equipment": "cable",
+      "equipment_ar": "كابل",
+      "instructions": [
+        "Stand up with your torso upright while holding a cable curl bar that is attached to a low pulley. Grab the cable bar at shoulder width and keep the elbows close to the torso. The palm of your hands should be facing up (supinated grip). This will be your starting position.",
+        "While holding the upper arms stationary, curl the weights while contracting the biceps as you breathe out. Only the forearms should move. Continue the movement until your biceps are fully contracted and the bar is at shoulder level. Hold the contracted position for a second as you squeeze the muscle.",
+        "Slowly begin to bring the curl bar back to starting position as your breathe in.",
+        "Repeat for the recommended amount of repetitions."
+      ]
+    },
+    {
+      "id": "5e0fb213-e4da-486d-9933-20c3659dfc5d",
+      "slug": "bicep-curl-dumbbell",
+      "name_en": "Bicep Curl (Dumbbell)",
+      "name_ar": "تجديع البايسيبس (دمبل)",
+      "muscle_group": "biceps",
+      "muscle_group_ar": "البايسيبس",
+      "equipment": "dumbbell",
+      "equipment_ar": "دمبل",
+      "instructions": [
+        "Stand (torso upright) with a dumbbell in each hand held at arms length. The elbows should be close to the torso and the palms of your hand should be facing your thighs.",
+        "While holding the upper arm stationary, curl the right weight as you rotate the palm of the hands until they are facing forward. At this point continue contracting the biceps as you breathe out until your biceps is fully contracted and the dumbbells are at shoulder level. Hold the contracted position for a second as you squeeze the biceps. Tip: Only the forearms should move.",
+        "Slowly begin to bring the dumbbell back to the starting position as your breathe in. Tip: Remember to twist the palms back to the starting position (facing your thighs) as you come down.",
+        "Repeat the movement with the left hand. This equals one repetition.",
+        "Continue alternating in this manner for the recommended amount of repetitions."
+      ]
+    },
+    {
+      "id": "05987e7e-4372-430f-b46e-97a76300dadc",
+      "slug": "bicycle-crunch",
+      "name_en": "Bicycle Crunch",
+      "name_ar": "كرنش الدراجة",
+      "muscle_group": "core",
+      "muscle_group_ar": "الجذع",
+      "equipment": "bodyweight",
+      "equipment_ar": "وزن الجسم",
+      "instructions": [
+        "Lie flat on the floor with your lower back pressed to the ground. For this exercise, you will need to put your hands beside your head. Be careful however to not strain with the neck as you perform it. Now lift your shoulders into the crunch position.",
+        "Bring knees up to where they are perpendicular to the floor, with your lower legs parallel to the floor. This will be your starting position.",
+        "Now simultaneously, slowly go through a cycle pedal motion kicking forward with the right leg and bringing in the knee of the left leg. Bring your right elbow close to your left knee by crunching to the side, as you breathe out.",
+        "Go back to the initial position as you breathe in.",
+        "Crunch to the opposite side as you cycle your legs and bring closer your left elbow to your right knee and exhale.",
+        "Continue alternating in this manner until all of the recommended repetitions for each side have been completed."
+      ]
+    },
+    {
+      "id": "ccbfc07b-6efe-4d37-91d4-057a50251c9a",
+      "slug": "bulgarian-split-squat-dumbbell",
+      "name_en": "Bulgarian Split Squat (Dumbbell)",
+      "name_ar": "سكوات بلغاري (دمبل)",
+      "muscle_group": "quads",
+      "muscle_group_ar": "الفخذ الأمامي",
+      "equipment": "dumbbell",
+      "equipment_ar": "دمبل",
+      "instructions": [
+        "Position yourself into a staggered stance with the rear foot elevated and front foot forward.",
+        "Hold a dumbbell in each hand, letting them hang at the sides. This will be your starting position.",
+        "Begin by descending, flexing your knee and hip to lower your body down. Maintain good posture througout the movement. Keep the front knee in line with the foot as you perform the exercise.",
+        "At the bottom of the movement, drive through the heel to extend the knee and hip to return to the starting position."
+      ]
+    },
+    {
+      "id": "14bc135c-2dec-495b-b492-1ba545a43077",
+      "slug": "cable-crunch",
+      "name_en": "Cable Crunch",
+      "name_ar": "كرنش (كابل)",
+      "muscle_group": "core",
+      "muscle_group_ar": "الجذع",
+      "equipment": "bodyweight",
+      "equipment_ar": "وزن الجسم",
+      "instructions": [
+        "Kneel below a high pulley that contains a rope attachment.",
+        "Grasp cable rope attachment and lower the rope until your hands are placed next to your face.",
+        "Flex your hips slightly and allow the weight to hyperextend the lower back. This will be your starting position.",
+        "With the hips stationary, flex the waist as you contract the abs so that the elbows travel towards the middle of the thighs. Exhale as you perform this portion of the movement and hold the contraction for a second.",
+        "Slowly return to the starting position as you inhale. Tip: Make sure that you keep constant tension on the abs throughout the movement. Also, do not choose a weight so heavy that the lower back handles the brunt of the work.",
+        "Repeat for the recommended amount of repetitions."
+      ]
+    },
+    {
+      "id": "b15bfc97-298c-4b86-8994-8f045b76d6fb",
+      "slug": "cable-fly-crossovers",
+      "name_en": "Cable Fly Crossovers",
+      "name_ar": "فراشة الكابل",
+      "muscle_group": "chest",
+      "muscle_group_ar": "الصدر",
+      "equipment": "bodyweight",
+      "equipment_ar": "وزن الجسم",
+      "instructions": []
+    },
+    {
+      "id": "23ed8cf2-7ef3-42e5-9e99-db7fba9b53a4",
+      "slug": "calf-press-machine",
+      "name_en": "Calf Press (Machine)",
+      "name_ar": "ضغط السمانة (جهاز)",
+      "muscle_group": "calves",
+      "muscle_group_ar": "السمانة",
+      "equipment": "machine",
+      "equipment_ar": "جهاز",
+      "instructions": [
+        "Adjust the seat so that your legs are only slightly bent in the start position. The balls of your feet should be firmly on the platform.",
+        "Select an appropriate weight, and grasp the handles. This will be your starting position.",
+        "Straighten the legs by extending the knees, just barely lifting the weight from the stack. Your ankle should be fully flexed, toes pointing up. Execute the movement by pressing downward through the balls of your feet as far as possible.",
+        "After a brief pause, reverse the motion and repeat."
+      ]
+    },
+    {
+      "id": "c1a69426-fcc6-405b-bd1a-8b1f88bba6dc",
+      "slug": "chest-dip",
+      "name_en": "Chest Dip",
+      "name_ar": "غطس الصدر",
+      "muscle_group": "chest",
+      "muscle_group_ar": "الصدر",
+      "equipment": "bodyweight",
+      "equipment_ar": "وزن الجسم",
+      "instructions": [
+        "For this exercise you will need access to parallel bars. To get yourself into the starting position, hold your body at arms length (arms locked) above the bars.",
+        "While breathing in, lower yourself slowly with your torso leaning forward around 30 degrees or so and your elbows flared out slightly until you feel a slight stretch in the chest.",
+        "Once you feel the stretch, use your chest to bring your body back to the starting position as you breathe out. Tip: Remember to squeeze the chest at the top of the movement for a second.",
+        "Repeat the movement for the prescribed amount of repetitions."
+      ]
+    },
+    {
+      "id": "bcec8a00-5de2-4046-a1ca-2446067b4907",
+      "slug": "chest-fly-dumbbell",
+      "name_en": "Chest Fly (Dumbbell)",
+      "name_ar": "فراشة الصدر (دمبل)",
+      "muscle_group": "chest",
+      "muscle_group_ar": "الصدر",
+      "equipment": "dumbbell",
+      "equipment_ar": "دمبل",
+      "instructions": []
+    },
+    {
+      "id": "9a6a382b-dbf7-4d91-a010-5f13bf9e73ab",
+      "slug": "chest-fly-machine",
+      "name_en": "Chest Fly (Machine)",
+      "name_ar": "فراشة الصدر (جهاز)",
+      "muscle_group": "chest",
+      "muscle_group_ar": "الصدر",
+      "equipment": "machine",
+      "equipment_ar": "جهاز",
+      "instructions": [
+        "Sit on the machine with your back flat on the pad.",
+        "Take hold of the handles. Tip: Your upper arms should be positioned parallel to the floor; adjust the machine accordingly. This will be your starting position.",
+        "Push the handles together slowly as you squeeze your chest in the middle. Breathe out during this part of the motion and hold the contraction for a second.",
+        "Return back to the starting position slowly as you inhale until your chest muscles are fully stretched.",
+        "Repeat for the recommended amount of repetitions."
+      ]
+    },
+    {
+      "id": "a56226b9-81c9-42f2-9117-b530cbb66ece",
+      "slug": "chest-press-machine",
+      "name_en": "Chest Press (Machine)",
+      "name_ar": "ضغط الصدر (جهاز)",
+      "muscle_group": "chest",
+      "muscle_group_ar": "الصدر",
+      "equipment": "machine",
+      "equipment_ar": "جهاز",
+      "instructions": [
+        "Load an appropriate weight onto the pins and adjust the seat for your height. The handles should be near the bottom or middle of the pectorals at the beginning of the motion.",
+        "Your chest and head should be up and your shoulder blades retracted. This will be your starting position.",
+        "Press the handles forward by extending through the elbow.",
+        "After a brief pause at the top, return the weight just above the start position, keeping tension on the muscles by not returning the weight to the stops until the set is complete."
+      ]
+    },
+    {
+      "id": "90f06ba3-ab97-4811-8243-aa41660f16c5",
+      "slug": "chest-supported-incline-row-dumbbell",
+      "name_en": "Chest Supported Incline Row (Dumbbell)",
+      "name_ar": "سحب مائل مستند للصدر (دمبل)",
+      "muscle_group": "back",
+      "muscle_group_ar": "الظهر",
+      "equipment": "dumbbell",
+      "equipment_ar": "دمبل",
+      "instructions": [
+        "Using a neutral grip, lean into an incline bench.",
+        "Take a dumbbell in each hand with a neutral grip, beginning with the arms straight. This will be your starting position.",
+        "Retract the shoulder blades and flex the elbows to row the dumbbells to your side.",
+        "Pause at the top of the motion, and then return to the starting position."
+      ]
+    },
+    {
+      "id": "7204ca5a-772a-4a72-be15-f1243afda4f5",
+      "slug": "chest-supported-row-machine",
+      "name_en": "Chest Supported Row (Machine)",
+      "name_ar": "سحب مستند للصدر (جهاز)",
+      "muscle_group": "back",
+      "muscle_group_ar": "الظهر",
+      "equipment": "machine",
+      "equipment_ar": "جهاز",
+      "instructions": []
+    },
+    {
+      "id": "dbf24ae4-d9df-4688-b927-548dd1084766",
+      "slug": "chin-up",
+      "name_en": "Chin Up",
+      "name_ar": "شد بالذقن",
+      "muscle_group": "back",
+      "muscle_group_ar": "الظهر",
+      "equipment": "bodyweight",
+      "equipment_ar": "وزن الجسم",
+      "instructions": [
+        "Grab the pull-up bar with the palms facing your torso and a grip closer than the shoulder width.",
+        "As you have both arms extended in front of you holding the bar at the chosen grip width, keep your torso as straight as possible while creating a curvature on your lower back and sticking your chest out. This is your starting position. Tip: Keeping the torso as straight as possible maximizes biceps stimulation while minimizing back involvement.",
+        "As you breathe out, pull your torso up until your head is around the level of the pull-up bar. Concentrate on using the biceps muscles in order to perform the movement. Keep the elbows close to your body. Tip: The upper torso should remain stationary as it moves through space and only the arms should move. The forearms should do no other work other than hold the bar.",
+        "After a second of squeezing the biceps in the contracted position, slowly lower your torso back to the starting position; when your arms are fully extended. Breathe in as you perform this portion of the movement.",
+        "Repeat this motion for the prescribed amount of repetitions."
+      ]
+    },
+    {
+      "id": "16a2108c-2bab-4061-8eb1-ca55ce2f81a9",
+      "slug": "concentration-curl",
+      "name_en": "Concentration Curl",
+      "name_ar": "تجديع التركيز",
+      "muscle_group": "biceps",
+      "muscle_group_ar": "البايسيبس",
+      "equipment": "bodyweight",
+      "equipment_ar": "وزن الجسم",
+      "instructions": [
+        "Sit down on a flat bench with one dumbbell in front of you between your legs. Your legs should be spread with your knees bent and feet on the floor.",
+        "Use your right arm to pick the dumbbell up. Place the back of your right upper arm on the top of your inner right thigh. Rotate the palm of your hand until it is facing forward away from your thigh. Tip: Your arm should be extended and the dumbbell should be above the floor. This will be your starting position.",
+        "While holding the upper arm stationary, curl the weights forward while contracting the biceps as you breathe out. Only the forearms should move. Continue the movement until your biceps are fully contracted and the dumbbells are at shoulder level. Tip: At the top of the movement make sure that the little finger of your arm is higher than your thumb. This guarantees a good contraction. Hold the contracted position for a second as you squeeze the biceps.",
+        "Slowly begin to bring the dumbbells back to starting position as your breathe in. Caution: Avoid swinging motions at any time.",
+        "Repeat for the recommended amount of repetitions. Then repeat the movement with the left arm."
+      ]
+    },
+    {
+      "id": "dd72645b-4f9e-46a3-997b-61e386320be4",
+      "slug": "crunch",
+      "name_en": "Crunch",
+      "name_ar": "كرنش",
+      "muscle_group": "core",
+      "muscle_group_ar": "الجذع",
+      "equipment": "bodyweight",
+      "equipment_ar": "وزن الجسم",
+      "instructions": [
+        "Lie flat on your back with your feet flat on the ground, or resting on a bench with your knees bent at a 90 degree angle. If you are resting your feet on a bench, place them three to four inches apart and point your toes inward so they touch.",
+        "Now place your hands lightly on either side of your head keeping your elbows in. Tip: Don't lock your fingers behind your head.",
+        "While pushing the small of your back down in the floor to better isolate your abdominal muscles, begin to roll your shoulders off the floor.",
+        "Continue to push down as hard as you can with your lower back as you contract your abdominals and exhale. Your shoulders should come up off the floor only about four inches, and your lower back should remain on the floor. At the top of the movement, contract your abdominals hard and keep the contraction for a second. Tip: Focus on slow, controlled movement - don't cheat yourself by using momentum.",
+        "After the one second contraction, begin to come down slowly again to the starting position as you inhale.",
+        "Repeat for the recommended amount of repetitions."
+      ]
+    },
+    {
+      "id": "74f878fc-c643-465c-8b88-849dd61f2101",
+      "slug": "crunch-machine",
+      "name_en": "Crunch (Machine)",
+      "name_ar": "كرنش (جهاز)",
+      "muscle_group": "core",
+      "muscle_group_ar": "الجذع",
+      "equipment": "machine",
+      "equipment_ar": "جهاز",
+      "instructions": [
+        "Lie flat on your back with your feet flat on the ground, or resting on a bench with your knees bent at a 90 degree angle. If you are resting your feet on a bench, place them three to four inches apart and point your toes inward so they touch.",
+        "Now place your hands lightly on either side of your head keeping your elbows in. Tip: Don't lock your fingers behind your head.",
+        "While pushing the small of your back down in the floor to better isolate your abdominal muscles, begin to roll your shoulders off the floor.",
+        "Continue to push down as hard as you can with your lower back as you contract your abdominals and exhale. Your shoulders should come up off the floor only about four inches, and your lower back should remain on the floor. At the top of the movement, contract your abdominals hard and keep the contraction for a second. Tip: Focus on slow, controlled movement - don't cheat yourself by using momentum.",
+        "After the one second contraction, begin to come down slowly again to the starting position as you inhale.",
+        "Repeat for the recommended amount of repetitions."
+      ]
+    },
+    {
+      "id": "e61a57e3-d37e-430f-88f5-f2af7d1a09af",
+      "slug": "crunch-weighted",
+      "name_en": "Crunch (Weighted)",
+      "name_ar": "كرنش (بأوزان)",
+      "muscle_group": "core",
+      "muscle_group_ar": "الجذع",
+      "equipment": "bodyweight",
+      "equipment_ar": "وزن الجسم",
+      "instructions": [
+        "Lie flat on your back with your feet flat on the ground, or resting on a bench with your knees bent at a 90 degree angle. If you are resting your feet on a bench, place them three to four inches apart and point your toes inward so they touch.",
+        "Now place your hands lightly on either side of your head keeping your elbows in. Tip: Don't lock your fingers behind your head.",
+        "While pushing the small of your back down in the floor to better isolate your abdominal muscles, begin to roll your shoulders off the floor.",
+        "Continue to push down as hard as you can with your lower back as you contract your abdominals and exhale. Your shoulders should come up off the floor only about four inches, and your lower back should remain on the floor. At the top of the movement, contract your abdominals hard and keep the contraction for a second. Tip: Focus on slow, controlled movement - don't cheat yourself by using momentum.",
+        "After the one second contraction, begin to come down slowly again to the starting position as you inhale.",
+        "Repeat for the recommended amount of repetitions."
+      ]
+    },
+    {
+      "id": "bd94e084-3e88-408c-9db9-8659bfa2ab3e",
+      "slug": "deadlift-barbell",
+      "name_en": "Deadlift (Barbell)",
+      "name_ar": "الرفعة الميتة (بار)",
+      "muscle_group": "back",
+      "muscle_group_ar": "الظهر",
+      "equipment": "barbell",
+      "equipment_ar": "بار",
+      "instructions": [
+        "Stand in front of a loaded barbell.",
+        "While keeping the back as straight as possible, bend your knees, bend forward and grasp the bar using a medium (shoulder width) overhand grip. This will be the starting position of the exercise. Tip: If it is difficult to hold on to the bar with this grip, alternate your grip or use wrist straps.",
+        "While holding the bar, start the lift by pushing with your legs while simultaneously getting your torso to the upright position as you breathe out. In the upright position, stick your chest out and contract the back by bringing the shoulder blades back. Think of how the soldiers in the military look when they are in standing in attention.",
+        "Go back to the starting position by bending at the knees while simultaneously leaning the torso forward at the waist while keeping the back straight. When the weights on the bar touch the floor you are back at the starting position and ready to perform another repetition.",
+        "Perform the amount of repetitions prescribed in the program."
+      ]
+    },
+    {
+      "id": "4b0f8aaf-4188-45f3-bd5c-c15700e75dab",
+      "slug": "deadlift-dumbbell",
+      "name_en": "Deadlift (Dumbbell)",
+      "name_ar": "الرفعة الميتة (دمبل)",
+      "muscle_group": "back",
+      "muscle_group_ar": "الظهر",
+      "equipment": "dumbbell",
+      "equipment_ar": "دمبل",
+      "instructions": [
+        "Approach the bar so that it is centered over your feet. You feet should be about hip width apart. Bend at the hip to grip the bar at shoulder width, allowing your shoulder blades to protract. Typically, you would use an over/under grip.",
+        "With your feet and your grip set, take a big breath and then lower your hips and flex the knees until your shins contact the bar. Look forward with your head, keep your chest up and your back arched, and begin driving through the heels to move the weight upward.",
+        "After the bar passes the knees, aggressively pull the bar back, pulling your shoulder blades together as you drive your hips forward into the bar.",
+        "Lower the bar by bending at the hips and guiding it to the floor."
+      ]
+    },
+    {
+      "id": "5f38ea0c-3cf1-496e-a379-4071350f2af2",
+      "slug": "decline-crunch-weighted",
+      "name_en": "Decline Crunch (Weighted)",
+      "name_ar": "كرنش منخفض (بأوزان)",
+      "muscle_group": "core",
+      "muscle_group_ar": "الجذع",
+      "equipment": "bodyweight",
+      "equipment_ar": "وزن الجسم",
+      "instructions": [
+        "Secure your legs at the end of the decline bench and lie down.",
+        "Now place your hands lightly on either side of your head keeping your elbows in. Tip: Don't lock your fingers behind your head.",
+        "While pushing the small of your back down in the bench to better isolate your abdominal muscles, begin to roll your shoulders off it.",
+        "Continue to push down as hard as you can with your lower back as you contract your abdominals and exhale. Your shoulders should come up off the bench only about four inches, and your lower back should remain on the bench. At the top of the movement, contract your abdominals hard and keep the contraction for a second. Tip: Focus on slow, controlled movement - don't cheat yourself by using momentum.",
+        "After the one second contraction, begin to come down slowly again to the starting position as you inhale.",
+        "Repeat for the recommended amount of repetitions."
+      ]
+    },
+    {
+      "id": "45f4fd8f-255a-4f88-8fe4-e25caea88ca7",
+      "slug": "dumbbell-row",
+      "name_en": "Dumbbell Row",
+      "name_ar": "سحب دمبل",
+      "muscle_group": "back",
+      "muscle_group_ar": "الظهر",
+      "equipment": "bodyweight",
+      "equipment_ar": "وزن الجسم",
+      "instructions": [
+        "Using a neutral grip, lean into an incline bench.",
+        "Take a dumbbell in each hand with a neutral grip, beginning with the arms straight. This will be your starting position.",
+        "Retract the shoulder blades and flex the elbows to row the dumbbells to your side.",
+        "Pause at the top of the motion, and then return to the starting position."
+      ]
+    },
+    {
+      "id": "0b79e736-b2f7-4562-8914-259723b40cfe",
+      "slug": "dumbbell-squeeze-press",
+      "name_en": "Dumbbell Squeeze Press",
+      "name_ar": "ضغط الضغط (دمبل)",
+      "muscle_group": "chest",
+      "muscle_group_ar": "الصدر",
+      "equipment": "bodyweight",
+      "equipment_ar": "وزن الجسم",
+      "instructions": []
+    },
+    {
+      "id": "1d4d847f-054c-445a-8485-98041c4068fb",
+      "slug": "elliptical-trainer",
+      "name_en": "Elliptical Trainer",
+      "name_ar": "الجهاز البيضاوي",
+      "muscle_group": "cardio",
+      "muscle_group_ar": "القلب",
+      "equipment": "other",
+      "equipment_ar": "أخرى",
+      "instructions": [
+        "To begin, step onto the elliptical and select the desired option from the menu. Most ellipticals have a manual setting, or you can select a program to run. Typically, you can enter your age and weight to estimate the amount of calories burned during exercise. Elevation can be adjusted to change the intensity of the workout.",
+        "The handles can be used to monitor your heart rate to help you stay at an appropriate intensity."
+      ]
+    },
+    {
+      "id": "45b6e9a2-7a57-44e8-9f6e-9c404671d3b6",
+      "slug": "ez-bar-biceps-curl",
+      "name_en": "EZ Bar Biceps Curl",
+      "name_ar": "تجديع البايسيبس (بار EZ)",
+      "muscle_group": "biceps",
+      "muscle_group_ar": "البايسيبس",
+      "equipment": "bodyweight",
+      "equipment_ar": "وزن الجسم",
+      "instructions": [
+        "Stand up straight while holding an EZ curl bar at the wide outer handle. The palms of your hands should be facing forward and slightly tilted inward due to the shape of the bar. Keep your elbows close to your torso. This will be your starting position.",
+        "Now, while keeping your upper arms stationary, exhale and curl the weights forward while contracting the biceps. Focus on only moving your forearms.",
+        "Continue to raise the weight until your biceps are fully contracted and the bar is at shoulder level. Hold the top contracted position for a moment and squeeze the biceps.",
+        "Then inhale and slowly lower the bar back to the starting position.",
+        "Repeat for the recommended amount of repetitions."
+      ]
+    },
+    {
+      "id": "ba14fa93-276f-40d2-a5cb-a41aa5c63f56",
+      "slug": "face-pull",
+      "name_en": "Face Pull",
+      "name_ar": "شد الوجه",
+      "muscle_group": "shoulders",
+      "muscle_group_ar": "الكتفين",
+      "equipment": "bodyweight",
+      "equipment_ar": "وزن الجسم",
+      "instructions": [
+        "Facing a high pulley with a rope or dual handles attached, pull the weight directly towards your face, separating your hands as you do so. Keep your upper arms parallel to the ground."
+      ]
+    },
+    {
+      "id": "67e55a82-9890-4062-999f-1dc393e4ec4c",
+      "slug": "front-raise-cable",
+      "name_en": "Front Raise (Cable)",
+      "name_ar": "رفع أمامي (كابل)",
+      "muscle_group": "shoulders",
+      "muscle_group_ar": "الكتفين",
+      "equipment": "cable",
+      "equipment_ar": "كابل",
+      "instructions": [
+        "Select the weight on a low pulley machine and grasp the single hand cable attachment that is attached to the low pulley with your left hand.",
+        "Face away from the pulley and put your arm straight down with the hand cable attachment in front of your thighs at arms' length with the palms of the hand facing your thighs. This will be your starting position.",
+        "While maintaining the torso stationary (no swinging), lift the left arm to the front with a slight bend on the elbow and the palms of the hand always faces down. Continue to go up until you arm is slightly above parallel to the floor. Exhale as you execute this portion of the movement and pause for a second at the top.",
+        "Now as you inhale lower the arm back down slowly to the starting position.",
+        "Once all of the recommended amount of repetitions have been performed for this arm, switch arms and perform the exercise with the right one."
+      ]
+    },
+    {
+      "id": "22044e2a-bf4b-442e-a073-d9a7820bd085",
+      "slug": "front-raise-dumbbell",
+      "name_en": "Front Raise (Dumbbell)",
+      "name_ar": "رفع أمامي (دمبل)",
+      "muscle_group": "shoulders",
+      "muscle_group_ar": "الكتفين",
+      "equipment": "dumbbell",
+      "equipment_ar": "دمبل",
+      "instructions": [
+        "Pick a couple of dumbbells and stand with a straight torso and the dumbbells on front of your thighs at arms length with the palms of the hand facing your thighs. This will be your starting position.",
+        "While maintaining the torso stationary (no swinging), lift the left dumbbell to the front with a slight bend on the elbow and the palms of the hands always facing down. Continue to go up until you arm is slightly above parallel to the floor. Exhale as you execute this portion of the movement and pause for a second at the top. Inhale after the second pause.",
+        "Now lower the dumbbell back down slowly to the starting position as you simultaneously lift the right dumbbell.",
+        "Continue alternating in this fashion until all of the recommended amount of repetitions have been performed for each arm."
+      ]
+    },
+    {
+      "id": "48edf9ae-fda5-456b-814d-7661d0bb3123",
+      "slug": "front-squat",
+      "name_en": "Front Squat",
+      "name_ar": "سكوات أمامي",
+      "muscle_group": "quads",
+      "muscle_group_ar": "الفخذ الأمامي",
+      "equipment": "bodyweight",
+      "equipment_ar": "وزن الجسم",
+      "instructions": [
+        "To begin, first set the bar in a rack slightly below shoulder level. Rest the bar on top of the deltoids, pushing into the clavicles, and lightly touching the throat. Your hands should be in a clean grip, touching the bar only with your fingers to help keep it in position.",
+        "Lift the bar off the rack by first pushing with your legs and at the same time straightening your torso. Step away from the rack and position your legs using a shoulder width medium stance with the toes slightly pointed out. Keep your head and elbows up at all times. This will be your starting position.",
+        "Bend at the knees, sitting down between your legs. Continue down until your hamstrings are on your calves. Keep your knees aligned with your feet by consciously using your abductors to push your knees out as you squat.",
+        "Begin to raise the bar as you exhale by pushing the floor mainly with the heel or middle of your foot as you straighten the legs again and return to the starting position."
+      ]
+    },
+    {
+      "id": "d8f0c3ed-bef2-44d8-905d-8b39494b6a28",
+      "slug": "full-squat",
+      "name_en": "Full Squat",
+      "name_ar": "سكوات كامل",
+      "muscle_group": "quads",
+      "muscle_group_ar": "الفخذ الأمامي",
+      "equipment": "bodyweight",
+      "equipment_ar": "وزن الجسم",
+      "instructions": [
+        "This exercise is best performed inside a squat rack for safety purposes. To begin, first set the bar on a rack just above shoulder level. Once the correct height is chosen and the bar is loaded, step under the bar and place the back of your shoulders (slightly below the neck) across it.",
+        "Hold on to the bar using both arms at each side and lift it off the rack by first pushing with your legs and at the same time straightening your torso.",
+        "Step away from the rack and position your legs using a shoulder-width medium stance with the toes slightly pointed out. Keep your head up at all times and maintain a straight back. This will be your starting position.",
+        "Begin to slowly lower the bar by bending the knees and sitting back with your hips as you maintain a straight posture with the head up. Continue down until your hamstrings are on your calves. Inhale as you perform this portion of the movement.",
+        "Begin to raise the bar as you exhale by pushing the floor with the heel or middle of your foot as you straighten the legs and extend the hips to go back to the starting position.",
+        "Repeat for the recommended amount of repetitions."
+      ]
+    },
+    {
+      "id": "30a7d198-600b-4b3a-9b03-679c0b9c3f51",
+      "slug": "glute-bridge",
+      "name_en": "Glute Bridge",
+      "name_ar": "جسر الألوية",
+      "muscle_group": "glutes",
+      "muscle_group_ar": "الألوية",
+      "equipment": "bodyweight",
+      "equipment_ar": "وزن الجسم",
+      "instructions": [
+        "Lay on the floor with your feet flat and knees bent.",
+        "Raise one leg off of the ground, pulling the knee to your chest. This will be your starting position.",
+        "Execute the movement by driving through the heel, extending your hip upward and raising your glutes off of the ground.",
+        "Extend as far as possible, pause and then return to the starting position."
+      ]
+    },
+    {
+      "id": "daffa288-bc50-47b3-a68d-9f403add9802",
+      "slug": "glute-ham-raise",
+      "name_en": "Glute Ham Raise",
+      "name_ar": "رفع الألوية مع أوتار الركبة",
+      "muscle_group": "hamstrings",
+      "muscle_group_ar": "أوتار الركبة",
+      "equipment": "bodyweight",
+      "equipment_ar": "وزن الجسم",
+      "instructions": [
+        "Using the leg pad of a lat pulldown machine or a preacher bench, position yourself so that your ankles are under the pads, knees on the seat, and you are facing away from the machine. You should be upright and maintaining good posture.",
+        "This will be your starting position. Lower yourself under control until your knees are almost completely straight.",
+        "Remaining in control, raise yourself back up to the starting position.",
+        "If you are unable to complete a rep, use a band, a partner, or push off of a box to aid in completing a repetition."
+      ]
+    },
+    {
+      "id": "ae0c7eee-b525-4fee-b5f0-70fef1a9d266",
+      "slug": "hammer-curl-dumbbell",
+      "name_en": "Hammer Curl (Dumbbell)",
+      "name_ar": "تجديع المطرقة (دمبل)",
+      "muscle_group": "biceps",
+      "muscle_group_ar": "البايسيبس",
+      "equipment": "dumbbell",
+      "equipment_ar": "دمبل",
+      "instructions": [
+        "Stand up with your torso upright and a dumbbell in each hand being held at arms length. The elbows should be close to the torso.",
+        "The palms of the hands should be facing your torso. This will be your starting position.",
+        "While holding the upper arm stationary, curl the right weight forward while contracting the biceps as you breathe out. Continue the movement until your biceps is fully contracted and the dumbbells are at shoulder level. Hold the contracted position for a second as you squeeze the biceps. Tip: Only the forearms should move.",
+        "Slowly begin to bring the dumbbells back to starting position as your breathe in.",
+        "Repeat the movement with the left hand. This equals one repetition.",
+        "Continue alternating in this manner for the recommended amount of repetitions."
+      ]
+    },
+    {
+      "id": "b7d62efa-5a92-4e94-8e18-5ab931d84da9",
+      "slug": "hanging-knee-raise",
+      "name_en": "Hanging Knee Raise",
+      "name_ar": "رفع الركبة معلقاً",
+      "muscle_group": "core",
+      "muscle_group_ar": "الجذع",
+      "equipment": "bodyweight",
+      "equipment_ar": "وزن الجسم",
+      "instructions": [
+        "Hang from a chin-up bar with both arms extended at arms length in top of you using either a wide grip or a medium grip. The legs should be straight down with the pelvis rolled slightly backwards. This will be your starting position.",
+        "Raise your legs until the torso makes a 90-degree angle with the legs. Exhale as you perform this movement and hold the contraction for a second or so.",
+        "Go back slowly to the starting position as you breathe in.",
+        "Repeat for the recommended amount of repetitions."
+      ]
+    },
+    {
+      "id": "12808ad0-12d6-43a6-a114-f2415183d342",
+      "slug": "hex-press-dumbbell",
+      "name_en": "Hex Press (Dumbbell)",
+      "name_ar": "هركس برس (دمبل)",
+      "muscle_group": "chest",
+      "muscle_group_ar": "الصدر",
+      "equipment": "dumbbell",
+      "equipment_ar": "دمبل",
+      "instructions": []
+    },
+    {
+      "id": "e602d781-91c5-4939-b989-120954fcdae1",
+      "slug": "hip-abduction-machine",
+      "name_en": "Hip Abduction (Machine)",
+      "name_ar": "تبعيد الورك (جهاز)",
+      "muscle_group": "glutes",
+      "muscle_group_ar": "الألوية",
+      "equipment": "machine",
+      "equipment_ar": "جهاز",
+      "instructions": []
+    },
+    {
+      "id": "333b57a2-968a-4a49-b61e-8d2390df1a01",
+      "slug": "hip-adduction-machine",
+      "name_en": "Hip Adduction (Machine)",
+      "name_ar": "إضافة الورك (جهاز)",
+      "muscle_group": "quads",
+      "muscle_group_ar": "الفخذ الأمامي",
+      "equipment": "machine",
+      "equipment_ar": "جهاز",
+      "instructions": [
+        "Anchor a band around a solid post or other object.",
+        "Stand with your left side to the post, and put your right foot through the band, getting it around the ankle.",
+        "Stand up straight and hold onto the post if needed. This will be your starting position.",
+        "Keeping the knee straight, raise your right legs out to the side as far as you can.",
+        "Return to the starting position and repeat for the desired rep count.",
+        "Switch sides."
+      ]
+    },
+    {
+      "id": "0b102234-159d-472b-b5c5-c01c098c21ee",
+      "slug": "hip-thrust-machine",
+      "name_en": "Hip Thrust (Machine)",
+      "name_ar": "دفع الورك (جهاز)",
+      "muscle_group": "glutes",
+      "muscle_group_ar": "الألوية",
+      "equipment": "machine",
+      "equipment_ar": "جهاز",
+      "instructions": [
+        "Begin seated on the ground with a bench directly behind you. Have a loaded barbell over your legs. Using a fat bar or having a pad on the bar can greatly reduce the discomfort caused by this exercise.",
+        "Roll the bar so that it is directly above your hips, and lean back against the bench so that your shoulder blades are near the top of it.",
+        "Begin the movement by driving through your feet, extending your hips vertically through the bar. Your weight should be supported by your shoulder blades and your feet. Extend as far as possible, then reverse the motion to return to the starting position."
+      ]
+    },
+    {
+      "id": "8761ab40-fe54-492a-841a-761e1dec077b",
+      "slug": "hip-thrust-smith-machine",
+      "name_en": "Hip Thrust (Smith Machine)",
+      "name_ar": "دفع الورك (جهاز سميث)",
+      "muscle_group": "glutes",
+      "muscle_group_ar": "الألوية",
+      "equipment": "machine",
+      "equipment_ar": "جهاز",
+      "instructions": [
+        "Begin seated on the ground with a bench directly behind you. Have a loaded barbell over your legs. Using a fat bar or having a pad on the bar can greatly reduce the discomfort caused by this exercise.",
+        "Roll the bar so that it is directly above your hips, and lean back against the bench so that your shoulder blades are near the top of it.",
+        "Begin the movement by driving through your feet, extending your hips vertically through the bar. Your weight should be supported by your shoulder blades and your feet. Extend as far as possible, then reverse the motion to return to the starting position."
+      ]
+    },
+    {
+      "id": "58b6de5c-47e1-49dc-8979-3620eb7ab0cf",
+      "slug": "incline-bench-press-barbell",
+      "name_en": "Incline Bench Press (Barbell)",
+      "name_ar": "الصدر بار",
+      "muscle_group": "chest",
+      "muscle_group_ar": "الصدر",
+      "equipment": "barbell",
+      "equipment_ar": "بار",
+      "instructions": [
+        "Lie back on an incline bench. Using a medium-width grip (a grip that creates a 90-degree angle in the middle of the movement between the forearms and the upper arms), lift the bar from the rack and hold it straight over you with your arms locked. This will be your starting position.",
+        "As you breathe in, come down slowly until you feel the bar on you upper chest.",
+        "After a second pause, bring the bar back to the starting position as you breathe out and push the bar using your chest muscles. Lock your arms in the contracted position, squeeze your chest, hold for a second and then start coming down slowly again. Tip: it should take at least twice as long to go down than to come up.",
+        "Repeat the movement for the prescribed amount of repetitions.",
+        "When you are done, place the bar back in the rack."
+      ]
+    },
+    {
+      "id": "af3c336f-b6cb-4ed8-88f2-d430c32ea3c7",
+      "slug": "incline-bench-press-dumbbell",
+      "name_en": "Incline Bench Press (Dumbbell)",
+      "name_ar": "الصدر دمبل",
+      "muscle_group": "chest",
+      "muscle_group_ar": "الصدر",
+      "equipment": "dumbbell",
+      "equipment_ar": "دمبل",
+      "instructions": [
+        "Lie back on an incline bench with a dumbbell on each hand on top of your thighs. The palms of your hand will be facing each other.",
+        "By using your thighs to help you get the dumbbells up, clean the dumbbells one arm at a time so that you can hold them at shoulder width.",
+        "Once at shoulder width, keep the palms of your hands with a neutral grip (palms facing each other). Keep your elbows flared out with the upper arms in line with the shoulders (perpendicular to the torso) and the elbows bent creating a 90-degree angle between the upper arm and the forearm. This will be your starting position.",
+        "Now bring down the weights slowly to your side as you breathe in. Keep full control of the dumbbells at all times.",
+        "As you breathe out, push the dumbbells up using your pectoral muscles. Lock your arms in the contracted position, hold for a second and then start coming down slowly. Tip: It should take at least twice as long to go down than to come up.",
+        "Repeat the movement for the prescribed amount of repetitions.",
+        "When you are done, place the dumbbells back in your thighs and then on the floor. This is the safest manner to dispose of the dumbbells."
+      ]
+    },
+    {
+      "id": "26fb69ad-b275-4be0-80c0-c8cb6c3dbdb6",
+      "slug": "incline-bench-press-smith-machine",
+      "name_en": "Incline Bench Press (Smith Machine)",
+      "name_ar": "الصدر جهاز",
+      "muscle_group": "chest",
+      "muscle_group_ar": "الصدر",
+      "equipment": "machine",
+      "equipment_ar": "جهاز",
+      "instructions": [
+        "Place an incline bench underneath the smith machine. Place the barbell at a height that you can reach when lying down and your arms are almost fully extended. Once the weight you need is selected, lie down on the incline bench and make sure your upper chest is aligned with the barbell. Using a pronated grip (palms facing forward) that is wider than shoulder width, unlock the bar from the rack and hold it straight over you with your arms locked. This will be your starting position.",
+        "As you breathe in, come down slowly until you feel the bar on your upper chest.",
+        "After a second pause, bring the bar back to the starting position as you breathe out and push the bar using your chest muscles. Lock your arms in the contracted position, hold for a second and then start coming down slowly again. Tip: It should take at least twice as long to go down than to come up.",
+        "Repeat the movement for the prescribed amount of repetitions.",
+        "When you are done, place the bar back in the rack."
+      ]
+    },
+    {
+      "id": "8e1b22e6-f82d-4cc1-ad52-cf04ea1063ff",
+      "slug": "iso-lateral-chest-press-machine",
+      "name_en": "Iso-Lateral Chest Press (Machine)",
+      "name_ar": "ضغط الصدر الجانبي (جهاز)",
+      "muscle_group": "chest",
+      "muscle_group_ar": "الصدر",
+      "equipment": "machine",
+      "equipment_ar": "جهاز",
+      "instructions": [
+        "Load an appropriate weight onto the pins and adjust the seat for your height. The handles should be near the bottom or middle of the pectorals at the beginning of the motion.",
+        "Your chest and head should be up and your shoulder blades retracted. This will be your starting position.",
+        "Press the handles forward by extending through the elbow.",
+        "After a brief pause at the top, return the weight just above the start position, keeping tension on the muscles by not returning the weight to the stops until the set is complete."
+      ]
+    },
+    {
+      "id": "c6c7e54b-51bd-4911-82a9-3242366a604e",
+      "slug": "iso-lateral-high-row-machine",
+      "name_en": "Iso-Lateral High Row (Machine)",
+      "name_ar": "سحب مرتفع الجانبي (جهاز)",
+      "muscle_group": "back",
+      "muscle_group_ar": "الظهر",
+      "equipment": "machine",
+      "equipment_ar": "جهاز",
+      "instructions": [
+        "Load an appropriate weight onto the pins and adjust the seat height so that you can just reach the handles above you. Adjust the knee pad to help keep you down. Grasp the handles with a pronated grip. This will be your starting position.",
+        "Pull the handles towards your torso, retracting your shoulder blades as you flex the elbow.",
+        "Pause at the bottom of the motion, and then slowly return the handles to the starting position.",
+        "For multiple repetitions, avoid completely returning the weight to the stops to keep tension on the muscles being worked."
+      ]
+    },
+    {
+      "id": "9d094097-11a1-4a3a-a108-b53ccb6f7335",
+      "slug": "iso-lateral-row-machine",
+      "name_en": "Iso-Lateral Row (Machine)",
+      "name_ar": "سحب جانبي (جهاز)",
+      "muscle_group": "back",
+      "muscle_group_ar": "الظهر",
+      "equipment": "machine",
+      "equipment_ar": "جهاز",
+      "instructions": [
+        "Load an appropriate weight onto the pins and adjust the seat height so that the handles are at chest level. Grasp the handles with either a neutral or pronated grip. This will be your starting position.",
+        "Pull the handles towards your torso, retracting your shoulder blades as you flex the elbow.",
+        "Pause at the bottom of the motion, and then slowly return the handles to the starting position. For multiple repetitions, avoid completely returning the weight to the stops to keep tension on the muscles being worked."
+      ]
+    },
+    {
+      "id": "cb9facfa-b4b0-463d-937c-61b3606f6c66",
+      "slug": "knee-raise-parallel-bars",
+      "name_en": "Knee Raise Parallel Bars",
+      "name_ar": "رفع الركبة على القضبان المتوازية",
+      "muscle_group": "core",
+      "muscle_group_ar": "الجذع",
+      "equipment": "bodyweight",
+      "equipment_ar": "وزن الجسم",
+      "instructions": [
+        "Position your body on the vertical leg raise bench so that your forearms are resting on the pads next to the torso and holding on to the handles. Your arms will be bent at a 90 degree angle.",
+        "The torso should be straight with the lower back pressed against the pad of the machine and the legs extended pointing towards the floor. This will be your starting position.",
+        "Now as you breathe out, lift your legs up as you keep them extended. Continue this movement until your legs are roughly parallel to the floor and then hold the contraction for a second. Tip: Do not use any momentum or swinging as you perform this exercise.",
+        "Slowly go back to the starting position as you breathe in.",
+        "Repeat for the recommended amount of repetitions."
+      ]
+    },
+    {
+      "id": "5d54e6f6-6549-4c25-83f5-26cde0b8b59b",
+      "slug": "landmine-row",
+      "name_en": "Landmine Row",
+      "name_ar": "سحب لاندمين",
+      "muscle_group": "back",
+      "muscle_group_ar": "الظهر",
+      "equipment": "bodyweight",
+      "equipment_ar": "وزن الجسم",
+      "instructions": []
+    },
+    {
+      "id": "5c269701-d4cd-45ac-bb9d-00f9f3455ec7",
+      "slug": "lat-pulldown-close-grip-cable",
+      "name_en": "Lat Pulldown - Close Grip (Cable)",
+      "name_ar": "سحب لات بقبضة ضيقة (كابل)",
+      "muscle_group": "back",
+      "muscle_group_ar": "الظهر",
+      "equipment": "cable",
+      "equipment_ar": "كابل",
+      "instructions": [
+        "Sit down on a pull-down machine with a wide bar attached to the top pulley. Make sure that you adjust the knee pad of the machine to fit your height. These pads will prevent your body from being raised by the resistance attached to the bar.",
+        "Grab the bar with the palms facing forward using the prescribed grip. Note on grips: For a wide grip, your hands need to be spaced out at a distance wider than your shoulder width. For a medium grip, your hands need to be spaced out at a distance equal to your shoulder width and for a close grip at a distance smaller than your shoulder width.",
+        "As you have both arms extended in front of you - while holding the bar at the chosen grip width - bring your torso back around 30 degrees or so while creating a curvature on your lower back and sticking your chest out. This is your starting position.",
+        "As you breathe out, bring the bar down until it touches your upper chest by drawing the shoulders and the upper arms down and back. Tip: Concentrate on squeezing the back muscles once you reach the full contracted position. The upper torso should remain stationary (only the arms should move). The forearms should do no other work except for holding the bar; therefore do not try to pull the bar down using the forearms.",
+        "After a second in the contracted position, while squeezing your shoulder blades together, slowly raise the bar back to the starting position when your arms are fully extended and the lats are fully stretched. Inhale during this portion of the movement.",
+        "6. Repeat this motion for the prescribed amount of repetitions."
+      ]
+    },
+    {
+      "id": "988c3f3b-e94c-4f89-b74c-013d739d459e",
+      "slug": "lat-pulldown-cable",
+      "name_en": "Lat Pulldown (Cable)",
+      "name_ar": "سحب لات (كابل)",
+      "muscle_group": "back",
+      "muscle_group_ar": "الظهر",
+      "equipment": "cable",
+      "equipment_ar": "كابل",
+      "instructions": [
+        "Sit down on a pull-down machine with a wide bar attached to the top pulley. Make sure that you adjust the knee pad of the machine to fit your height. These pads will prevent your body from being raised by the resistance attached to the bar.",
+        "Grab the bar with the palms facing forward using the prescribed grip. Note on grips: For a wide grip, your hands need to be spaced out at a distance wider than shoulder width. For a medium grip, your hands need to be spaced out at a distance equal to your shoulder width and for a close grip at a distance smaller than your shoulder width.",
+        "As you have both arms extended in front of you holding the bar at the chosen grip width, bring your torso back around 30 degrees or so while creating a curvature on your lower back and sticking your chest out. This is your starting position.",
+        "As you breathe out, bring the bar down until it touches your upper chest by drawing the shoulders and the upper arms down and back. Tip: Concentrate on squeezing the back muscles once you reach the full contracted position. The upper torso should remain stationary and only the arms should move. The forearms should do no other work except for holding the bar; therefore do not try to pull down the bar using the forearms.",
+        "After a second at the contracted position squeezing your shoulder blades together, slowly raise the bar back to the starting position when your arms are fully extended and the lats are fully stretched. Inhale during this portion of the movement.",
+        "Repeat this motion for the prescribed amount of repetitions."
+      ]
+    },
+    {
+      "id": "5169b68e-0beb-47d9-9982-948101f5cbdf",
+      "slug": "lat-pulldown-machine",
+      "name_en": "Lat Pulldown (Machine)",
+      "name_ar": "سحب لات (جهاز)",
+      "muscle_group": "back",
+      "muscle_group_ar": "الظهر",
+      "equipment": "machine",
+      "equipment_ar": "جهاز",
+      "instructions": [
+        "Sit down on a pull-down machine with a wide bar attached to the top pulley. Make sure that you adjust the knee pad of the machine to fit your height. These pads will prevent your body from being raised by the resistance attached to the bar.",
+        "Grab the bar with the palms facing forward using the prescribed grip. Note on grips: For a wide grip, your hands need to be spaced out at a distance wider than shoulder width. For a medium grip, your hands need to be spaced out at a distance equal to your shoulder width and for a close grip at a distance smaller than your shoulder width.",
+        "As you have both arms extended in front of you holding the bar at the chosen grip width, bring your torso back around 30 degrees or so while creating a curvature on your lower back and sticking your chest out. This is your starting position.",
+        "As you breathe out, bring the bar down until it touches your upper chest by drawing the shoulders and the upper arms down and back. Tip: Concentrate on squeezing the back muscles once you reach the full contracted position. The upper torso should remain stationary and only the arms should move. The forearms should do no other work except for holding the bar; therefore do not try to pull down the bar using the forearms.",
+        "After a second at the contracted position squeezing your shoulder blades together, slowly raise the bar back to the starting position when your arms are fully extended and the lats are fully stretched. Inhale during this portion of the movement.",
+        "Repeat this motion for the prescribed amount of repetitions."
+      ]
+    },
+    {
+      "id": "2cbac1c2-da32-4d81-b523-d47f11e8fb2e",
+      "slug": "lateral-raise-dumbbell",
+      "name_en": "Lateral Raise (Dumbbell)",
+      "name_ar": "رفع جانبي (دمبل)",
+      "muscle_group": "shoulders",
+      "muscle_group_ar": "الكتفين",
+      "equipment": "dumbbell",
+      "equipment_ar": "دمبل",
+      "instructions": [
+        "Pick a couple of dumbbells and stand with a straight torso and the dumbbells by your side at arms length with the palms of the hand facing you. This will be your starting position.",
+        "While maintaining the torso in a stationary position (no swinging), lift the dumbbells to your side with a slight bend on the elbow and the hands slightly tilted forward as if pouring water in a glass. Continue to go up until you arms are parallel to the floor. Exhale as you execute this movement and pause for a second at the top.",
+        "Lower the dumbbells back down slowly to the starting position as you inhale.",
+        "Repeat for the recommended amount of repetitions."
+      ]
+    },
+    {
+      "id": "7d815315-eda6-48ab-9256-74c570778fe2",
+      "slug": "leg-extension-machine",
+      "name_en": "Leg Extension (Machine)",
+      "name_ar": "تمديد الساق (جهاز)",
+      "muscle_group": "quads",
+      "muscle_group_ar": "الفخذ الأمامي",
+      "equipment": "machine",
+      "equipment_ar": "جهاز",
+      "instructions": [
+        "Using your quadriceps, extend your legs to the maximum as you exhale. Ensure that the rest of the body remains stationary on the seat. Pause a second on the contracted position.",
+        "Slowly lower the weight back to the original position as you inhale, ensuring that you do not go past the 90-degree angle limit.",
+        "Repeat for the recommended amount of times."
+      ]
+    },
+    {
+      "id": "efa5d6c6-4a5e-4310-bb7b-e5c5a0bab21d",
+      "slug": "leg-press-machine",
+      "name_en": "Leg Press (Machine)",
+      "name_ar": "ضغط الساق (جهاز)",
+      "muscle_group": "quads",
+      "muscle_group_ar": "الفخذ الأمامي",
+      "equipment": "machine",
+      "equipment_ar": "جهاز",
+      "instructions": [
+        "Using a leg press machine, sit down on the machine and place your legs on the platform directly in front of you at a medium (shoulder width) foot stance. (Note: For the purposes of this discussion we will use the medium stance described above which targets overall development; however you can choose any of the three stances described in the foot positioning section).",
+        "Lower the safety bars holding the weighted platform in place and press the platform all the way up until your legs are fully extended in front of you. Tip: Make sure that you do not lock your knees. Your torso and the legs should make a perfect 90-degree angle. This will be your starting position.",
+        "As you inhale, slowly lower the platform until your upper and lower legs make a 90-degree angle.",
+        "Pushing mainly with the heels of your feet and using the quadriceps go back to the starting position as you exhale.",
+        "Repeat for the recommended amount of repetitions and ensure to lock the safety pins properly once you are done. You do not want that platform falling on you fully loaded."
+      ]
+    },
+    {
+      "id": "332c70fa-1d3e-4c18-b6bc-9fdbad8e61f9",
+      "slug": "low-cable-fly-crossovers",
+      "name_en": "Low Cable Fly Crossovers",
+      "name_ar": "فراشة الكابل المنخفضة",
+      "muscle_group": "chest",
+      "muscle_group_ar": "الصدر",
+      "equipment": "bodyweight",
+      "equipment_ar": "وزن الجسم",
+      "instructions": [
+        "To move into the starting position, place the pulleys at the low position, select the resistance to be used and grasp a handle in each hand.",
+        "Step forward, gaining tension in the pulleys. Your palms should be facing forward, hands below the waist, and your arms straight. This will be your starting position.",
+        "With a slight bend in your arms, draw your hands upward and toward the midline of your body. Your hands should come together in front of your chest, palms facing up.",
+        "Return your arms back to the starting position after a brief pause."
+      ]
+    },
+    {
+      "id": "a920528b-c019-4bd5-b886-b8537ce1233f",
+      "slug": "lunge",
+      "name_en": "Lunge",
+      "name_ar": "لنج",
+      "muscle_group": "quads",
+      "muscle_group_ar": "الفخذ الأمامي",
+      "equipment": "bodyweight",
+      "equipment_ar": "وزن الجسم",
+      "instructions": [
+        "Begin standing with your feet shoulder width apart and your hands on your hips.",
+        "Step forward with one leg, flexing the knees to drop your hips. Descend until your rear knee nearly touches the ground. Your posture should remain upright, and your front knee should stay above the front foot.",
+        "Drive through the heel of your lead foot and extend both knees to raise yourself back up.",
+        "Step forward with your rear foot, repeating the lunge on the opposite leg."
+      ]
+    },
+    {
+      "id": "71b369e6-1b15-474c-8234-7537dc0edb1a",
+      "slug": "lunge-barbell",
+      "name_en": "Lunge (Barbell)",
+      "name_ar": "لنج (بار)",
+      "muscle_group": "quads",
+      "muscle_group_ar": "الفخذ الأمامي",
+      "equipment": "barbell",
+      "equipment_ar": "بار",
+      "instructions": [
+        "This exercise is best performed inside a squat rack for safety purposes. To begin, first set the bar on a rack just below shoulder level. Once the correct height is chosen and the bar is loaded, step under the bar and place the back of your shoulders (slightly below the neck) across it.",
+        "Hold on to the bar using both arms at each side and lift it off the rack by first pushing with your legs and at the same time straightening your torso.",
+        "Step away from the rack and step forward with your right leg and squat down through your hips, while keeping the torso upright and maintaining balance. Inhale as you go down. Note: Do not allow your knee to go forward beyond your toes as you come down, as this will put undue stress on the knee joint. li>",
+        "Using mainly the heel of your foot, push up and go back to the starting position as you exhale.",
+        "Repeat the movement for the recommended amount of repetitions and then perform with the left leg."
+      ]
+    },
+    {
+      "id": "aecdc6a0-5532-418b-85f4-91fc2a60ae16",
+      "slug": "lunge-dumbbell",
+      "name_en": "Lunge (Dumbbell)",
+      "name_ar": "لنج (دمبل)",
+      "muscle_group": "quads",
+      "muscle_group_ar": "الفخذ الأمامي",
+      "equipment": "dumbbell",
+      "equipment_ar": "دمبل",
+      "instructions": [
+        "Stand with your torso upright holding two dumbbells in your hands by your sides. This will be your starting position.",
+        "Step backward with your right leg around two feet or so from the left foot and lower your upper body down, while keeping the torso upright and maintaining balance. Inhale as you go down. Tip: As in the other exercises, do not allow your knee to go forward beyond your toes as you come down, as this will put undue stress on the knee joint. Make sure that you keep your front shin perpendicular to the ground. Keep the torso upright during the lunge; flexible hip flexors are important. A long lunge emphasizes the Gluteus Maximus; a short lunge emphasizes Quadriceps.",
+        "Push up and go back to the starting position as you exhale. Tip: Use the ball of your feet to push in order to accentuate the quadriceps. To focus on the glutes, press with your heels.",
+        "Now repeat with the opposite leg."
+      ]
+    },
+    {
+      "id": "38031926-e3ca-4922-ac4f-b4f07ac71d76",
+      "slug": "lying-leg-curl-machine",
+      "name_en": "Lying Leg Curl (Machine)",
+      "name_ar": "ثني الساق راقد (جهاز)",
+      "muscle_group": "hamstrings",
+      "muscle_group_ar": "أوتار الركبة",
+      "equipment": "machine",
+      "equipment_ar": "جهاز",
+      "instructions": [
+        "Adjust the machine lever to fit your height and lie face down on the leg curl machine with the pad of the lever on the back of your legs (just a few inches under the calves). Tip: Preferably use a leg curl machine that is angled as opposed to flat since an angled position is more favorable for hamstrings recruitment.",
+        "Keeping the torso flat on the bench, ensure your legs are fully stretched and grab the side handles of the machine. Position your toes straight (or you can also use any of the other two stances described on the foot positioning section). This will be your starting position.",
+        "As you exhale, curl your legs up as far as possible without lifting the upper legs from the pad. Once you hit the fully contracted position, hold it for a second.",
+        "As you inhale, bring the legs back to the initial position. Repeat for the recommended amount of repetitions."
+      ]
+    },
+    {
+      "id": "d2266e19-7103-45b3-bc4e-d1dd5980301f",
+      "slug": "overhead-press-barbell",
+      "name_en": "Overhead Press (Barbell)",
+      "name_ar": "الضغط العلوي (بار)",
+      "muscle_group": "shoulders",
+      "muscle_group_ar": "الكتفين",
+      "equipment": "barbell",
+      "equipment_ar": "بار",
+      "instructions": [
+        "To begin, place a flat bench (or preferably one with back support) underneath a smith machine. Position the barbell at a height so that when seated on the flat bench, the arms must be almost fully extended to reach the barbell.",
+        "Once you have the correct height, sit slightly in behind the barbell so that there is an imaginary straight line from the tip of your nose to the barbell. Your feet should be stationary. Grab the barbell with the palms facing forward, unlock it and lift it up so that your arms are fully extended. This is the starting position.",
+        "Slowly begin to lower the barbell until it is level with your chin while inhaling.",
+        "Then lift the barbell back to the starting position using your shoulders while exhaling.",
+        "Repeat for the recommended amount of repetitions."
+      ]
+    },
+    {
+      "id": "09b36aa5-a228-418e-a8d4-bab7e0b4730c",
+      "slug": "overhead-triceps-extension-cable",
+      "name_en": "Overhead Triceps Extension (Cable)",
+      "name_ar": "تمديد الترايسبس علوي (كابل)",
+      "muscle_group": "triceps",
+      "muscle_group_ar": "الترايسيبس",
+      "equipment": "cable",
+      "equipment_ar": "كابل",
+      "instructions": [
+        "Attach a rope to a low pulley. After selecting an appropriate weight, grasp the rope with both hands and face away from the cable.",
+        "Position your hands behind your head with your elbows point straight up. Your elbows should start out flexed, and you can stagger your stance and lean gently away from the machine to create greater stability. This will be your starting position.",
+        "To perform the movement, extend through the elbow while keeping the upper arm in position, raising your hands above your head.",
+        "Squeeze your triceps at the top of the movement, and slowly lower the weight back to the start position."
+      ]
+    },
+    {
+      "id": "f8e5ffd9-3390-43d5-bb0a-ff54cbd2e2f1",
+      "slug": "pendlay-row-barbell",
+      "name_en": "Pendlay Row (Barbell)",
+      "name_ar": "سحب بندلاي (بار)",
+      "muscle_group": "back",
+      "muscle_group_ar": "الظهر",
+      "equipment": "barbell",
+      "equipment_ar": "بار",
+      "instructions": [
+        "Holding a barbell with a pronated grip (palms facing down), bend your knees slightly and bring your torso forward, by bending at the waist, while keeping the back straight until it is almost parallel to the floor. Tip: Make sure that you keep the head up. The barbell should hang directly in front of you as your arms hang perpendicular to the floor and your torso. This is your starting position.",
+        "Now, while keeping the torso stationary, breathe out and lift the barbell to you. Keep the elbows close to the body and only use the forearms to hold the weight. At the top contracted position, squeeze the back muscles and hold for a brief pause.",
+        "Then inhale and slowly lower the barbell back to the starting position.",
+        "Repeat for the recommended amount of repetitions."
+      ]
+    },
+    {
+      "id": "c0426125-8567-48c4-8187-029b43aec9d4",
+      "slug": "plank",
+      "name_en": "Plank",
+      "name_ar": "بلانك",
+      "muscle_group": "core",
+      "muscle_group_ar": "الجذع",
+      "equipment": "bodyweight",
+      "equipment_ar": "وزن الجسم",
+      "instructions": [
+        "Get into a prone position on the floor, supporting your weight on your toes and your forearms. Your arms are bent and directly below the shoulder.",
+        "Keep your body straight at all times, and hold this position as long as possible. To increase difficulty, an arm or leg can be raised."
+      ]
+    },
+    {
+      "id": "2a3fdc90-b20f-4f95-ba37-aca7620e82c8",
+      "slug": "preacher-curl-dumbbell",
+      "name_en": "Preacher Curl (Dumbbell)",
+      "name_ar": "تجديع على المقعد (دمبل)",
+      "muscle_group": "biceps",
+      "muscle_group_ar": "البايسيبس",
+      "equipment": "dumbbell",
+      "equipment_ar": "دمبل",
+      "instructions": [
+        "Grab a dumbbell in each hand and place your upper arms on top of the preacher bench or the incline bench. The dumbbells should be held at shoulder height and the elbows should be flexed. Hold the dumbbells with the palms of your hands facing down. This will be your starting position.",
+        "As you breathe in, slowly lower the dumbbells keeping the palms down until your upper arm is extended and your biceps are fully stretched.",
+        "Now rotate your wrists once you are at the bottom of the movement so that the palms of the hands are facing up.",
+        "As you exhale, use your biceps to curl the weights up until they are fully contracted and the dumbbells are at shoulder height. Again, remember that to ensure full contraction you need to bring that small finger higher than the thumb.",
+        "Squeeze the biceps hard for a second at the contracted position and rotate your wrists so that the palms are facing down again.",
+        "Repeat for the recommended amount of repetitions."
+      ]
+    },
+    {
+      "id": "7fe68d2f-f5f4-4e7f-af25-345ddff954b8",
+      "slug": "preacher-curl-machine",
+      "name_en": "Preacher Curl (Machine)",
+      "name_ar": "تجديع على المقعد (جهاز)",
+      "muscle_group": "biceps",
+      "muscle_group_ar": "البايسيبس",
+      "equipment": "machine",
+      "equipment_ar": "جهاز",
+      "instructions": [
+        "Sit down on the Preacher Curl Machine and select the weight.",
+        "Place the back of your upper arms (your triceps) on the preacher pad provided and grab the handles using an underhand grip (palms facing up). Tip: Make sure that when you place the arms on the pad you keep the elbows in. This will be your starting position.",
+        "Now lift the handles as you exhale and you contract the biceps. At the top of the position make sure that you hold the contraction for a second. Tip: Only the forearms should move. The upper arms should remain stationary and on the pad at all times.",
+        "Lower the handles slowly back to the starting position as you inhale.",
+        "Repeat for the recommended amount of repetitions."
+      ]
+    },
+    {
+      "id": "8fb970d5-ac3f-4570-990e-ec3bacdff865",
+      "slug": "pull-up",
+      "name_en": "Pull Up",
+      "name_ar": "شد علوي",
+      "muscle_group": "back",
+      "muscle_group_ar": "الظهر",
+      "equipment": "bodyweight",
+      "equipment_ar": "وزن الجسم",
+      "instructions": [
+        "Grab the pull-up bar with the palms facing forward using a wide grip.",
+        "As you have both arms extended in front of you holding the bar, bring your torso forward and head so that there is an imaginary line from the pull-up bar to the back of your neck. This is your starting position.",
+        "Pull your torso up until the bar is near the back of your neck. To do this, draw the shoulders and upper arms down and back while slightly leaning your head forward. Exhale as you perform this portion of the movement. Tip: Concentrate on squeezing the back muscles once you reach the full contracted position. The upper torso should remain stationary as it moves through space and only the arms should move. The forearms should do no other work other than hold the bar.",
+        "After a second on the contracted position, start to inhale and slowly lower your torso back to the starting position when your arms are fully extended and the lats are fully stretched.",
+        "Repeat this motion for the prescribed amount of repetitions."
+      ]
+    },
+    {
+      "id": "9ab73a26-1a18-40a7-92b0-bcbbb6037d4b",
+      "slug": "pullover-dumbbell",
+      "name_en": "Pullover (Dumbbell)",
+      "name_ar": "بول أوفر (دمبل)",
+      "muscle_group": "back",
+      "muscle_group_ar": "الظهر",
+      "equipment": "dumbbell",
+      "equipment_ar": "دمبل",
+      "instructions": []
+    },
+    {
+      "id": "7c4b123f-78ff-41c4-830d-7cc472e42663",
+      "slug": "pullover-machine",
+      "name_en": "Pullover (Machine)",
+      "name_ar": "بول أوفر (جهاز)",
+      "muscle_group": "back",
+      "muscle_group_ar": "الظهر",
+      "equipment": "machine",
+      "equipment_ar": "جهاز",
+      "instructions": []
+    },
+    {
+      "id": "337b01e2-077c-4b6c-a997-82f994bf9f42",
+      "slug": "push-up",
+      "name_en": "Push Up",
+      "name_ar": "تمرين الضغط",
+      "muscle_group": "chest",
+      "muscle_group_ar": "الصدر",
+      "equipment": "bodyweight",
+      "equipment_ar": "وزن الجسم",
+      "instructions": [
+        "Move into a prone position on the floor, supporting your weight on your hands and toes.",
+        "Your arms should be fully extended with the hands around shoulder width. Keep your body straight throughout the movement. This will be your starting position.",
+        "Descend by flexing at the elbow, lowering your chest toward the ground.",
+        "At the bottom, reverse the motion by pushing yourself up through elbow extension as quickly as possible until you are air borne. Aim to \"jump\" 12-18 inches to one side.",
+        "As you accelerate up, move your outside foot away from your direction of travel. Leaving the ground, shift your body about 30 degrees for the next repetition.",
+        "Return to the starting position and repeat the exercise, working all the way around until you are back where you started."
+      ]
+    },
+    {
+      "id": "3868a074-c4d8-4b2b-8e36-fe16fcd9b1f5",
+      "slug": "rear-delt-reverse-fly-cable",
+      "name_en": "Rear Delt Reverse Fly (Cable)",
+      "name_ar": "فراشة عكسية للدلت الخلفية (كابل)",
+      "muscle_group": "shoulders",
+      "muscle_group_ar": "الكتفين",
+      "equipment": "cable",
+      "equipment_ar": "كابل",
+      "instructions": [
+        "Adjust the pulleys to the appropriate height and adjust the weight. The pulleys should be above your head.",
+        "Grab the left pulley with your right hand and the right pulley with your left hand, crossing them in front of you. This will be your starting position.",
+        "Initiate the movement by moving your arms back and outward, keeping your arms straight as you execute the movement.",
+        "Pause at the end of the motion before returning the handles to the start position."
+      ]
+    },
+    {
+      "id": "9c71a53b-bc95-4bde-bcc0-01c857956af1",
+      "slug": "rear-delt-reverse-fly-machine",
+      "name_en": "Rear Delt Reverse Fly (Machine)",
+      "name_ar": "فراشة عكسية للدلت الخلفية (جهاز)",
+      "muscle_group": "shoulders",
+      "muscle_group_ar": "الكتفين",
+      "equipment": "machine",
+      "equipment_ar": "جهاز",
+      "instructions": [
+        "Adjust the handles so that they are fully to the rear. Make an appropriate weight selection and adjust the seat height so the handles are at shoulder level. Grasp the handles with your hands facing inwards. This will be your starting position.",
+        "In a semicircular motion, pull your hands out to your side and back, contracting your rear delts.",
+        "Keep your arms slightly bent throughout the movement, with all of the motion occurring at the shoulder joint.",
+        "Pause at the rear of the movement, and slowly return the weight to the starting position."
+      ]
+    },
+    {
+      "id": "5ed4b468-2ed6-4be8-bdb8-ae5eeaea7eca",
+      "slug": "rear-kick-machine",
+      "name_en": "Rear Kick (Machine)",
+      "name_ar": "ركلة خلفية (جهاز)",
+      "muscle_group": "glutes",
+      "muscle_group_ar": "الألوية",
+      "equipment": "machine",
+      "equipment_ar": "جهاز",
+      "instructions": []
+    },
+    {
+      "id": "50873ef5-1031-47e7-a423-eadc4bb6f807",
+      "slug": "reverse-curl-cable",
+      "name_en": "Reverse Curl (Cable)",
+      "name_ar": "تجديع عكسي (كابل)",
+      "muscle_group": "biceps",
+      "muscle_group_ar": "البايسيبس",
+      "equipment": "cable",
+      "equipment_ar": "كابل",
+      "instructions": [
+        "Stand up with your torso upright while holding a bar attachment that is attached to a low pulley using a pronated (palms down) and shoulder width grip. Make sure also that you keep the elbows close to the torso. This will be your starting position.",
+        "While holding the upper arms stationary, curl the weights while contracting the biceps as you breathe out. Only the forearms should move. Continue the movement until your biceps are fully contracted and the bar is at shoulder level. Hold the contracted position for a second as you squeeze the muscle.",
+        "Slowly begin to bring the bar back to starting position as your breathe in.",
+        "Repeat for the recommended amount of repetitions."
+      ]
+    },
+    {
+      "id": "1a710eb6-72b3-4bad-b333-c8a4dc4db493",
+      "slug": "reverse-grip-concentration-curl",
+      "name_en": "Reverse Grip Concentration Curl",
+      "name_ar": "تجديع التركيز بقبضة عكسية",
+      "muscle_group": "biceps",
+      "muscle_group_ar": "البايسيبس",
+      "equipment": "bodyweight",
+      "equipment_ar": "وزن الجسم",
+      "instructions": []
+    },
+    {
+      "id": "8f0ab418-3f16-40e1-b48c-04ae0b66062b",
+      "slug": "reverse-grip-lat-pulldown-cable",
+      "name_en": "Reverse Grip Lat Pulldown (Cable)",
+      "name_ar": "سحب لات بقبضة عكسية (كابل)",
+      "muscle_group": "back",
+      "muscle_group_ar": "الظهر",
+      "equipment": "cable",
+      "equipment_ar": "كابل",
+      "instructions": [
+        "Sit down on a pull-down machine with a wide bar attached to the top pulley. Make sure that you adjust the knee pad of the machine to fit your height. These pads will prevent your body from being raised by the resistance attached to the bar.",
+        "Grab the bar with the palms facing forward using the prescribed grip. Note on grips: For a wide grip, your hands need to be spaced out at a distance wider than shoulder width. For a medium grip, your hands need to be spaced out at a distance equal to your shoulder width and for a close grip at a distance smaller than your shoulder width.",
+        "As you have both arms extended in front of you holding the bar at the chosen grip width, bring your torso back around 30 degrees or so while creating a curvature on your lower back and sticking your chest out. This is your starting position.",
+        "As you breathe out, bring the bar down until it touches your upper chest by drawing the shoulders and the upper arms down and back. Tip: Concentrate on squeezing the back muscles once you reach the full contracted position. The upper torso should remain stationary and only the arms should move. The forearms should do no other work except for holding the bar; therefore do not try to pull down the bar using the forearms.",
+        "After a second at the contracted position squeezing your shoulder blades together, slowly raise the bar back to the starting position when your arms are fully extended and the lats are fully stretched. Inhale during this portion of the movement.",
+        "Repeat this motion for the prescribed amount of repetitions."
+      ]
+    },
+    {
+      "id": "ded31910-dace-4e7d-b182-bf32b31d5e83",
+      "slug": "romanian-deadlift-barbell",
+      "name_en": "Romanian Deadlift (Barbell)",
+      "name_ar": "الرفعة الرومانية (بار)",
+      "muscle_group": "hamstrings",
+      "muscle_group_ar": "أوتار الركبة",
+      "equipment": "barbell",
+      "equipment_ar": "بار",
+      "instructions": [
+        "Put a barbell in front of you on the ground and grab it using a pronated (palms facing down) grip that a little wider than shoulder width. Tip: Depending on the weight used, you may need wrist wraps to perform the exercise and also a raised platform in order to allow for better range of motion.",
+        "Bend the knees slightly and keep the shins vertical, hips back and back straight. This will be your starting position.",
+        "Keeping your back and arms completely straight at all times, use your hips to lift the bar as you exhale. Tip: The movement should not be fast but steady and under control.",
+        "Once you are standing completely straight up, lower the bar by pushing the hips back, only slightly bending the knees, unlike when squatting. Tip: Take a deep breath at the start of the movement and keep your chest up. Hold your breath as you lower and exhale as you complete the movement.",
+        "Repeat for the recommended amount of repetitions."
+      ]
+    },
+    {
+      "id": "7d48e9fd-b89e-435c-ab58-f3642caba0e1",
+      "slug": "romanian-deadlift-dumbbell",
+      "name_en": "Romanian Deadlift (Dumbbell)",
+      "name_ar": "الرفعة الرومانية (دمبل)",
+      "muscle_group": "hamstrings",
+      "muscle_group_ar": "أوتار الركبة",
+      "equipment": "dumbbell",
+      "equipment_ar": "دمبل",
+      "instructions": [
+        "Put a barbell in front of you on the ground and grab it using a pronated (palms facing down) grip that a little wider than shoulder width. Tip: Depending on the weight used, you may need wrist wraps to perform the exercise and also a raised platform in order to allow for better range of motion.",
+        "Bend the knees slightly and keep the shins vertical, hips back and back straight. This will be your starting position.",
+        "Keeping your back and arms completely straight at all times, use your hips to lift the bar as you exhale. Tip: The movement should not be fast but steady and under control.",
+        "Once you are standing completely straight up, lower the bar by pushing the hips back, only slightly bending the knees, unlike when squatting. Tip: Take a deep breath at the start of the movement and keep your chest up. Hold your breath as you lower and exhale as you complete the movement.",
+        "Repeat for the recommended amount of repetitions."
+      ]
+    },
+    {
+      "id": "b810a701-2bb3-4c25-8eac-2262ec9d4402",
+      "slug": "seated-cable-row-bar-grip",
+      "name_en": "Seated Cable Row - Bar Grip",
+      "name_ar": "سحب كابل جالس بقبضة مستقيمة",
+      "muscle_group": "back",
+      "muscle_group_ar": "الظهر",
+      "equipment": "bodyweight",
+      "equipment_ar": "وزن الجسم",
+      "instructions": [
+        "For this exercise you will need access to a low pulley row machine with a V-bar. Note: The V-bar will enable you to have a neutral grip where the palms of your hands face each other. To get into the starting position, first sit down on the machine and place your feet on the front platform or crossbar provided making sure that your knees are slightly bent and not locked.",
+        "Lean over as you keep the natural alignment of your back and grab the V-bar handles.",
+        "With your arms extended pull back until your torso is at a 90-degree angle from your legs. Your back should be slightly arched and your chest should be sticking out. You should be feeling a nice stretch on your lats as you hold the bar in front of you. This is the starting position of the exercise.",
+        "Keeping the torso stationary, pull the handles back towards your torso while keeping the arms close to it until you touch the abdominals. Breathe out as you perform that movement. At that point you should be squeezing your back muscles hard. Hold that contraction for a second and slowly go back to the original position while breathing in.",
+        "Repeat for the recommended amount of repetitions."
+      ]
+    },
+    {
+      "id": "0bf7c4ca-e22d-4521-9469-83ec36922976",
+      "slug": "seated-cable-row-bar-wide-grip",
+      "name_en": "Seated Cable Row - Bar Wide Grip",
+      "name_ar": "سحب كابل جالس بقبضة عريضة",
+      "muscle_group": "back",
+      "muscle_group_ar": "الظهر",
+      "equipment": "bodyweight",
+      "equipment_ar": "وزن الجسم",
+      "instructions": []
+    },
+    {
+      "id": "e878ac3f-4301-4372-b0dd-047f1865c90a",
+      "slug": "seated-cable-row-v-grip-cable",
+      "name_en": "Seated Cable Row - V Grip (Cable)",
+      "name_ar": "سحب كابل جالس بقبضة V (كابل)",
+      "muscle_group": "back",
+      "muscle_group_ar": "الظهر",
+      "equipment": "cable",
+      "equipment_ar": "كابل",
+      "instructions": [
+        "For this exercise you will need access to a low pulley row machine with a V-bar. Note: The V-bar will enable you to have a neutral grip where the palms of your hands face each other. To get into the starting position, first sit down on the machine and place your feet on the front platform or crossbar provided making sure that your knees are slightly bent and not locked.",
+        "Lean over as you keep the natural alignment of your back and grab the V-bar handles.",
+        "With your arms extended pull back until your torso is at a 90-degree angle from your legs. Your back should be slightly arched and your chest should be sticking out. You should be feeling a nice stretch on your lats as you hold the bar in front of you. This is the starting position of the exercise.",
+        "Keeping the torso stationary, pull the handles back towards your torso while keeping the arms close to it until you touch the abdominals. Breathe out as you perform that movement. At that point you should be squeezing your back muscles hard. Hold that contraction for a second and slowly go back to the original position while breathing in.",
+        "Repeat for the recommended amount of repetitions."
+      ]
+    },
+    {
+      "id": "7314ff22-e2ae-4742-a9b7-316c922ce18c",
+      "slug": "seated-calf-raise",
+      "name_en": "Seated Calf Raise",
+      "name_ar": "رفع السمانة جالس",
+      "muscle_group": "calves",
+      "muscle_group_ar": "السمانة",
+      "equipment": "bodyweight",
+      "equipment_ar": "وزن الجسم",
+      "instructions": [
+        "Sit on the machine and place your toes on the lower portion of the platform provided with the heels extending off. Choose the toe positioning of your choice (forward, in, or out) as per the beginning of this chapter.",
+        "Place your lower thighs under the lever pad, which will need to be adjusted according to the height of your thighs. Now place your hands on top of the lever pad in order to prevent it from slipping forward.",
+        "Lift the lever slightly by pushing your heels up and release the safety bar. This will be your starting position.",
+        "Slowly lower your heels by bending at the ankles until the calves are fully stretched. Inhale as you perform this movement.",
+        "Raise the heels by extending the ankles as high as possible as you contract the calves and breathe out. Hold the top contraction for a second.",
+        "Repeat for the recommended amount of repetitions."
+      ]
+    },
+    {
+      "id": "876b28fd-acf5-4440-9774-0fc96648a89e",
+      "slug": "seated-dip-machine",
+      "name_en": "Seated Dip Machine",
+      "name_ar": "غطس جالس (جهاز)",
+      "muscle_group": "triceps",
+      "muscle_group_ar": "الترايسيبس",
+      "equipment": "bodyweight",
+      "equipment_ar": "وزن الجسم",
+      "instructions": []
+    },
+    {
+      "id": "d6b74ac7-eb11-402f-9924-770d4f09649d",
+      "slug": "seated-incline-curl-dumbbell",
+      "name_en": "Seated Incline Curl (Dumbbell)",
+      "name_ar": "تجديع مائل جالس (دمبل)",
+      "muscle_group": "biceps",
+      "muscle_group_ar": "البايسيبس",
+      "equipment": "dumbbell",
+      "equipment_ar": "دمبل",
+      "instructions": [
+        "Sit down on an incline bench with a dumbbell in each hand being held at arms length. Tip: Keep the elbows close to the torso.This will be your starting position.",
+        "While holding the upper arm stationary, curl the right weight forward while contracting the biceps as you breathe out. As you do so, rotate the hand so that the palm is facing up. Continue the movement until your biceps is fully contracted and the dumbbells are at shoulder level. Hold the contracted position for a second as you squeeze the biceps. Tip: Only the forearms should move.",
+        "Slowly begin to bring the dumbbell back to starting position as your breathe in.",
+        "Repeat the movement with the left hand. This equals one repetition.",
+        "Continue alternating in this manner for the recommended amount of repetitions."
+      ]
+    },
+    {
+      "id": "38db2fed-1c98-40ca-afae-4c9ec9b151d8",
+      "slug": "seated-lateral-raise-dumbbell",
+      "name_en": "Seated Lateral Raise (Dumbbell)",
+      "name_ar": "رفع جانبي جالس (دمبل)",
+      "muscle_group": "shoulders",
+      "muscle_group_ar": "الكتفين",
+      "equipment": "dumbbell",
+      "equipment_ar": "دمبل",
+      "instructions": [
+        "Pick a couple of dumbbells and sit at the end of a flat bench with your feet firmly on the floor. Hold the dumbbells with your palms facing in and your arms straight down at your sides at arms' length. This will be your starting position.",
+        "While maintaining the torso stationary (no swinging), lift the dumbbells to your side with a slight bend on the elbow and the hands slightly tilted forward as if pouring water in a glass. Continue to go up until you arms are parallel to the floor. Exhale as you execute this movement and pause for a second at the top.",
+        "Lower the dumbbells back down slowly to the starting position as you inhale.",
+        "Repeat for the recommended amount of repetitions."
+      ]
+    },
+    {
+      "id": "05b1e38a-5b28-4e70-94d4-4ef6657b3310",
+      "slug": "seated-leg-curl-machine",
+      "name_en": "Seated Leg Curl (Machine)",
+      "name_ar": "ثني الساق جالس (جهاز)",
+      "muscle_group": "hamstrings",
+      "muscle_group_ar": "أوتار الركبة",
+      "equipment": "machine",
+      "equipment_ar": "جهاز",
+      "instructions": [
+        "Adjust the machine lever to fit your height and sit on the machine with your back against the back support pad.",
+        "Place the back of lower leg on top of padded lever (just a few inches under the calves) and secure the lap pad against your thighs, just above the knees. Then grasp the side handles on the machine as you point your toes straight (or you can also use any of the other two stances) and ensure that the legs are fully straight right in front of you. This will be your starting position.",
+        "As you exhale, pull the machine lever as far as possible to the back of your thighs by flexing at the knees. Keep your torso stationary at all times. Hold the contracted position for a second.",
+        "Slowly return to the starting position as you breathe in.",
+        "Repeat for the recommended amount of repetitions."
+      ]
+    },
+    {
+      "id": "e5ab4068-922b-4ef4-ac3b-06030f3a42d6",
+      "slug": "seated-row-machine",
+      "name_en": "Seated Row (Machine)",
+      "name_ar": "سحب جالس (جهاز)",
+      "muscle_group": "back",
+      "muscle_group_ar": "الظهر",
+      "equipment": "machine",
+      "equipment_ar": "جهاز",
+      "instructions": [
+        "For this exercise you will need access to a low pulley row machine with a V-bar. Note: The V-bar will enable you to have a neutral grip where the palms of your hands face each other. To get into the starting position, first sit down on the machine and place your feet on the front platform or crossbar provided making sure that your knees are slightly bent and not locked.",
+        "Lean over as you keep the natural alignment of your back and grab the V-bar handles.",
+        "With your arms extended pull back until your torso is at a 90-degree angle from your legs. Your back should be slightly arched and your chest should be sticking out. You should be feeling a nice stretch on your lats as you hold the bar in front of you. This is the starting position of the exercise.",
+        "Keeping the torso stationary, pull the handles back towards your torso while keeping the arms close to it until you touch the abdominals. Breathe out as you perform that movement. At that point you should be squeezing your back muscles hard. Hold that contraction for a second and slowly go back to the original position while breathing in.",
+        "Repeat for the recommended amount of repetitions."
+      ]
+    },
+    {
+      "id": "c9965a61-a8d2-40e7-9522-6a80cc0b856c",
+      "slug": "seated-shoulder-press-machine",
+      "name_en": "Seated Shoulder Press (Machine)",
+      "name_ar": "ضغط الكتف جالس (جهاز)",
+      "muscle_group": "shoulders",
+      "muscle_group_ar": "الكتفين",
+      "equipment": "machine",
+      "equipment_ar": "جهاز",
+      "instructions": [
+        "Adjust the weight to an appropriate amount and be seated, grasping the handles. Your upper arms should be about 90 degrees to the body, with your head and chest up. The elbows should also be bent to about 90 degrees. This will be your starting position.",
+        "Begin by extending through the elbow, pressing the handles together above your head.",
+        "After pausing at the top, return the handles to the starting position. Ensure that you maintain tension on the cables.",
+        "You can also execute this movement with your back off the pad and alternate hands."
+      ]
+    },
+    {
+      "id": "9145d66c-b6a0-4b41-ba4c-f6dfd9f45029",
+      "slug": "seated-wrist-extension-barbell",
+      "name_en": "Seated Wrist Extension (Barbell)",
+      "name_ar": "تمديد المعصم جالس (بار)",
+      "muscle_group": "triceps",
+      "muscle_group_ar": "الترايسيبس",
+      "equipment": "barbell",
+      "equipment_ar": "بار",
+      "instructions": []
+    },
+    {
+      "id": "9f8eb74e-0d60-4998-aff1-7c27e3d8c812",
+      "slug": "shoulder-press-dumbbell",
+      "name_en": "Shoulder Press (Dumbbell)",
+      "name_ar": "ضغط الكتف (دمبل)",
+      "muscle_group": "shoulders",
+      "muscle_group_ar": "الكتفين",
+      "equipment": "dumbbell",
+      "equipment_ar": "دمبل",
+      "instructions": [
+        "While holding a dumbbell in each hand, sit on a military press bench or utility bench that has back support. Place the dumbbells upright on top of your thighs.",
+        "Now raise the dumbbells to shoulder height one at a time using your thighs to help propel them up into position.",
+        "Make sure to rotate your wrists so that the palms of your hands are facing forward. This is your starting position.",
+        "Now, exhale and push the dumbbells upward until they touch at the top.",
+        "Then, after a brief pause at the top contracted position, slowly lower the weights back down to the starting position while inhaling.",
+        "Repeat for the recommended amount of repetitions."
+      ]
+    },
+    {
+      "id": "bb8f05e2-38c3-47d5-a13e-a78667474143",
+      "slug": "shoulder-press-machine-plates",
+      "name_en": "Shoulder Press (Machine Plates)",
+      "name_ar": "ضغط الكتف (جهاز)",
+      "muscle_group": "shoulders",
+      "muscle_group_ar": "الكتفين",
+      "equipment": "machine",
+      "equipment_ar": "جهاز",
+      "instructions": [
+        "Load an appropriate weight onto the pins and adjust the seat for your height. The handles should be near the top of the shoulders at the beginning of the motion. Your chest and head should be up and handles held with a pronated grip. This will be your starting position.",
+        "Press the handles upward by extending through the elbow.",
+        "After a brief pause at the top, return the weight to just above the start position, keeping tension on the muscles by not returning the weight to the stops until the set is complete."
+      ]
+    },
+    {
+      "id": "3c686618-72b9-45b7-8c52-5ee3e84535b6",
+      "slug": "shrug-barbell",
+      "name_en": "Shrug (Barbell)",
+      "name_ar": "هزة الكتفين (بار)",
+      "muscle_group": "back",
+      "muscle_group_ar": "الظهر",
+      "equipment": "barbell",
+      "equipment_ar": "بار",
+      "instructions": [
+        "Stand up straight with your feet at shoulder width as you hold a barbell with both hands in front of you using a pronated grip (palms facing the thighs). Tip: Your hands should be a little wider than shoulder width apart. You can use wrist wraps for this exercise for a better grip. This will be your starting position.",
+        "Raise your shoulders up as far as you can go as you breathe out and hold the contraction for a second. Tip: Refrain from trying to lift the barbell by using your biceps.",
+        "Slowly return to the starting position as you breathe in.",
+        "Repeat for the recommended amount of repetitions."
+      ]
+    },
+    {
+      "id": "4136be1e-2e9d-48db-8cf2-8044fc17de81",
+      "slug": "shrug-dumbbell",
+      "name_en": "Shrug (Dumbbell)",
+      "name_ar": "هزة الكتفين (دمبل)",
+      "muscle_group": "back",
+      "muscle_group_ar": "الظهر",
+      "equipment": "dumbbell",
+      "equipment_ar": "دمبل",
+      "instructions": [
+        "Stand erect with a dumbbell on each hand (palms facing your torso), arms extended on the sides.",
+        "Lift the dumbbells by elevating the shoulders as high as possible while you exhale. Hold the contraction at the top for a second. Tip: The arms should remain extended at all times. Refrain from using the biceps to help lift the dumbbells. Only the shoulders should be moving up and down.",
+        "Lower the dumbbells back to the original position.",
+        "Repeat for the recommended amount of repetitions."
+      ]
+    },
+    {
+      "id": "a0f6ac00-dc0c-440a-8d3d-bc53581896c6",
+      "slug": "shrug-machine",
+      "name_en": "Shrug (Machine)",
+      "name_ar": "هزة الكتفين (جهاز)",
+      "muscle_group": "back",
+      "muscle_group_ar": "الظهر",
+      "equipment": "machine",
+      "equipment_ar": "جهاز",
+      "instructions": [
+        "Load the pins to an appropriate weight. Position yourself directly between the handles.",
+        "Grasp the top handles with a comfortable grip, and then lower your hips as you take a breath. Look forward with your head and keep your chest up.",
+        "Drive through the floor with your heels, extending your hips and knees as you rise to a standing position. Keep your arms straight throughout the movement, finishing with your shoulders back. This will be your starting position.",
+        "Raise the weight by shrugging the shoulders towards your ears, moving straight up and down.",
+        "Pause at the top of the motion, and then return the weight to the starting position."
+      ]
+    },
+    {
+      "id": "bc6fdda2-0202-457a-ad69-a7fd26d9c94b",
+      "slug": "side-bend",
+      "name_en": "Side Bend",
+      "name_ar": "انحناء جانبي",
+      "muscle_group": "core",
+      "muscle_group_ar": "الجذع",
+      "equipment": "bodyweight",
+      "equipment_ar": "وزن الجسم",
+      "instructions": [
+        "Stand up straight while holding a barbell placed on the back of your shoulders (slightly below the neck). Your feet should be shoulder width apart. This will be your starting position.",
+        "While keeping your back straight and your head up, bend only at the waist to the right as far as possible. Breathe in as you bend to the side. Then hold for a second and come back up to the starting position as you exhale. Tip: Keep the rest of the body stationary.",
+        "Now repeat the movement but bending to the left instead. Hold for a second and come back to the starting position.",
+        "Repeat for the recommended amount of repetitions."
+      ]
+    },
+    {
+      "id": "2a74a47a-8227-4be9-9729-5d3e82b9c6fe",
+      "slug": "side-bend-dumbbell",
+      "name_en": "Side Bend (Dumbbell)",
+      "name_ar": "انحناء جانبي (دمبل)",
+      "muscle_group": "core",
+      "muscle_group_ar": "الجذع",
+      "equipment": "dumbbell",
+      "equipment_ar": "دمبل",
+      "instructions": [
+        "Stand up straight while holding a dumbbell on the left hand (palms facing the torso) as you have the right hand holding your waist. Your feet should be placed at shoulder width. This will be your starting position.",
+        "While keeping your back straight and your head up, bend only at the waist to the right as far as possible. Breathe in as you bend to the side. Then hold for a second and come back up to the starting position as you exhale. Tip: Keep the rest of the body stationary.",
+        "Now repeat the movement but bending to the left instead. Hold for a second and come back to the starting position.",
+        "Repeat for the recommended amount of repetitions and then change hands."
+      ]
+    },
+    {
+      "id": "1f7db3b3-92f7-4a75-9cfd-3970b6e38504",
+      "slug": "single-arm-cable-row",
+      "name_en": "Single Arm Cable Row",
+      "name_ar": "سحب كابل بذراع واحدة",
+      "muscle_group": "back",
+      "muscle_group_ar": "الظهر",
+      "equipment": "bodyweight",
+      "equipment_ar": "وزن الجسم",
+      "instructions": []
+    },
+    {
+      "id": "42ccd037-7a93-40e6-b6c7-8a6e367b95a5",
+      "slug": "single-arm-landmine-press-barbell",
+      "name_en": "Single Arm Landmine Press (Barbell)",
+      "name_ar": "ضغط لاندمين بذراع واحدة (بار)",
+      "muscle_group": "shoulders",
+      "muscle_group_ar": "الكتفين",
+      "equipment": "barbell",
+      "equipment_ar": "بار",
+      "instructions": []
+    },
+    {
+      "id": "6318b8ec-b436-47ba-b5c5-c0c59e10f1ba",
+      "slug": "single-arm-lateral-raise-cable",
+      "name_en": "Single Arm Lateral Raise (Cable)",
+      "name_ar": "رفع جانبي بذراع واحدة (كابل)",
+      "muscle_group": "shoulders",
+      "muscle_group_ar": "الكتفين",
+      "equipment": "cable",
+      "equipment_ar": "كابل",
+      "instructions": []
+    },
+    {
+      "id": "b2263dcc-ca37-44cd-8ed0-d7a1153f6873",
+      "slug": "single-leg-standing-calf-raise-machine",
+      "name_en": "Single Leg Standing Calf Raise (Machine)",
+      "name_ar": "رفع السمانة بساق واحدة واقفاً (جهاز)",
+      "muscle_group": "calves",
+      "muscle_group_ar": "السمانة",
+      "equipment": "machine",
+      "equipment_ar": "جهاز",
+      "instructions": [
+        "Adjust the padded lever of the calf raise machine to fit your height.",
+        "Place your shoulders under the pads provided and position your toes facing forward (or using any of the two other positions described at the beginning of the chapter). The balls of your feet should be secured on top of the calf block with the heels extending off it. Push the lever up by extending your hips and knees until your torso is standing erect. The knees should be kept with a slight bend; never locked. Toes should be facing forward, outwards or inwards as described at the beginning of the chapter. This will be your starting position.",
+        "Raise your heels as you breathe out by extending your ankles as high as possible and flexing your calf. Ensure that the knee is kept stationary at all times. There should be no bending at any time. Hold the contracted position by a second before you start to go back down.",
+        "Go back slowly to the starting position as you breathe in by lowering your heels as you bend the ankles until calves are stretched.",
+        "Repeat for the recommended amount of repetitions."
+      ]
+    },
+    {
+      "id": "659548e3-ce1e-41f1-8495-0955fe919a13",
+      "slug": "sit-up-weighted",
+      "name_en": "Sit Up (Weighted)",
+      "name_ar": "جلسة (بأوزان)",
+      "muscle_group": "core",
+      "muscle_group_ar": "الجذع",
+      "equipment": "bodyweight",
+      "equipment_ar": "وزن الجسم",
+      "instructions": [
+        "Lie down on the floor and secure your feet. Your legs should be bent at the knees.",
+        "Place your hands behind or to the side of your head. You will begin with your back on the ground. This will be your starting position.",
+        "Flex your hips and spine to raise your torso toward your knees.",
+        "At the top of the contraction your torso should be perpendicular to the ground. Reverse the motion, going only ¾ of the way down.",
+        "Repeat for the recommended amount of repetitions."
+      ]
+    },
+    {
+      "id": "ae5c0f23-36a3-4952-bce1-9e215680078e",
+      "slug": "skullcrusher-barbell",
+      "name_en": "Skullcrusher (Barbell)",
+      "name_ar": "سكركرشر (بار)",
+      "muscle_group": "triceps",
+      "muscle_group_ar": "الترايسيبس",
+      "equipment": "barbell",
+      "equipment_ar": "بار",
+      "instructions": [
+        "Using a close grip, lift the EZ bar and hold it with your elbows in as you lie on the bench. Your arms should be perpendicular to the floor. This will be your starting position.",
+        "Keeping the upper arms stationary, lower the bar by allowing the elbows to flex. Inhale as you perform this portion of the movement. Pause once the bar is directly above the forehead.",
+        "Lift the bar back to the starting position by extending the elbow and exhaling.",
+        "Repeat."
+      ]
+    },
+    {
+      "id": "f49bc3ca-2dff-4ef5-b69d-901fdc7a044c",
+      "slug": "skullcrusher-dumbbell",
+      "name_en": "Skullcrusher (Dumbbell)",
+      "name_ar": "سكركرشر (دمبل)",
+      "muscle_group": "triceps",
+      "muscle_group_ar": "الترايسيبس",
+      "equipment": "dumbbell",
+      "equipment_ar": "دمبل",
+      "instructions": [
+        "Using a close grip, lift the EZ bar and hold it with your elbows in as you lie on the bench. Your arms should be perpendicular to the floor. This will be your starting position.",
+        "Keeping the upper arms stationary, lower the bar by allowing the elbows to flex. Inhale as you perform this portion of the movement. Pause once the bar is directly above the forehead.",
+        "Lift the bar back to the starting position by extending the elbow and exhaling.",
+        "Repeat."
+      ]
+    },
+    {
+      "id": "1d79a2be-7274-4050-ada6-add48cf68eb3",
+      "slug": "squat-barbell",
+      "name_en": "Squat (Barbell)",
+      "name_ar": "سكوات (بار)",
+      "muscle_group": "quads",
+      "muscle_group_ar": "الفخذ الأمامي",
+      "equipment": "barbell",
+      "equipment_ar": "بار",
+      "instructions": [
+        "This exercise is best performed inside a squat rack for safety purposes. To begin, first set the bar on a rack to just below shoulder level. Once the correct height is chosen and the bar is loaded, step under the bar and place the back of your shoulders (slightly below the neck) across it.",
+        "Hold on to the bar using both arms at each side and lift it off the rack by first pushing with your legs and at the same time straightening your torso.",
+        "Step away from the rack and position your legs using a shoulder width medium stance with the toes slightly pointed out. Keep your head up at all times and also maintain a straight back. This will be your starting position. (Note: For the purposes of this discussion we will use the medium stance described above which targets overall development; however you can choose any of the three stances discussed in the foot stances section).",
+        "Begin to slowly lower the bar by bending the knees and hips as you maintain a straight posture with the head up. Continue down until the angle between the upper leg and the calves becomes slightly less than 90-degrees. Inhale as you perform this portion of the movement. Tip: If you performed the exercise correctly, the front of the knees should make an imaginary straight line with the toes that is perpendicular to the front. If your knees are past that imaginary line (if they are past your toes) then you are placing undue stress on the knee and the exercise has been performed incorrectly.",
+        "Begin to raise the bar as you exhale by pushing the floor with the heel of your foot as you straighten the legs again and go back to the starting position.",
+        "Repeat for the recommended amount of repetitions."
+      ]
+    },
+    {
+      "id": "c3fe5ec2-5aba-4283-92b6-b3f072fc4780",
+      "slug": "squat-smith-machine",
+      "name_en": "Squat (Smith Machine)",
+      "name_ar": "سكوات (جهاز سميث)",
+      "muscle_group": "quads",
+      "muscle_group_ar": "الفخذ الأمامي",
+      "equipment": "machine",
+      "equipment_ar": "جهاز",
+      "instructions": [
+        "To begin, first set the bar to a position that best matches your height. Once the bar is loaded, step under it and position it across the back of your shoulders.",
+        "Take the bar with your hands facing forward, unlock it and lift it off the rack by extending your legs.",
+        "Move your feet forward about 18 inches in front of the bar. Position your legs using a shoulder width stance with the toes slightly pointed out. Look forward at all times and maintain a neutral or slightly arched spine. This will be your starting position.",
+        "Slowly lower the bar by bending the knees as you maintain a straight posture with the head up. Continue down until the angle between the upper and lower leg breaks 90 degrees.",
+        "Begin to raise the bar as you exhale by pushing the floor with the heels of your feet, extending the knees and returning to the starting position.",
+        "Repeat for the recommended amount of repetitions."
+      ]
+    },
+    {
+      "id": "1108f799-6af6-427c-a8c8-7755e90868fd",
+      "slug": "stair-machine-floors",
+      "name_en": "Stair Machine (Floors)",
+      "name_ar": "جهاز الدرج (طوابق)",
+      "muscle_group": "cardio",
+      "muscle_group_ar": "القلب",
+      "equipment": "other",
+      "equipment_ar": "أخرى",
+      "instructions": []
+    },
+    {
+      "id": "4c773c6d-d654-4e86-bef5-2954ee298086",
+      "slug": "stair-machine-steps",
+      "name_en": "Stair Machine (Steps)",
+      "name_ar": "جهاز الدرج (درجات)",
+      "muscle_group": "cardio",
+      "muscle_group_ar": "القلب",
+      "equipment": "other",
+      "equipment_ar": "أخرى",
+      "instructions": []
+    },
+    {
+      "id": "fb439a23-f902-4c7a-97f4-3db81eace277",
+      "slug": "standing-calf-raise",
+      "name_en": "Standing Calf Raise",
+      "name_ar": "رفع السمانة واقفاً",
+      "muscle_group": "calves",
+      "muscle_group_ar": "السمانة",
+      "equipment": "bodyweight",
+      "equipment_ar": "وزن الجسم",
+      "instructions": [
+        "Adjust the padded lever of the calf raise machine to fit your height.",
+        "Place your shoulders under the pads provided and position your toes facing forward (or using any of the two other positions described at the beginning of the chapter). The balls of your feet should be secured on top of the calf block with the heels extending off it. Push the lever up by extending your hips and knees until your torso is standing erect. The knees should be kept with a slight bend; never locked. Toes should be facing forward, outwards or inwards as described at the beginning of the chapter. This will be your starting position.",
+        "Raise your heels as you breathe out by extending your ankles as high as possible and flexing your calf. Ensure that the knee is kept stationary at all times. There should be no bending at any time. Hold the contracted position by a second before you start to go back down.",
+        "Go back slowly to the starting position as you breathe in by lowering your heels as you bend the ankles until calves are stretched.",
+        "Repeat for the recommended amount of repetitions."
+      ]
+    },
+    {
+      "id": "3b53b5f2-a719-4fcc-a37a-c83bddbc3f9c",
+      "slug": "standing-calf-raise-machine",
+      "name_en": "Standing Calf Raise (Machine)",
+      "name_ar": "رفع السمانة واقفاً (جهاز)",
+      "muscle_group": "calves",
+      "muscle_group_ar": "السمانة",
+      "equipment": "machine",
+      "equipment_ar": "جهاز",
+      "instructions": [
+        "Adjust the padded lever of the calf raise machine to fit your height.",
+        "Place your shoulders under the pads provided and position your toes facing forward (or using any of the two other positions described at the beginning of the chapter). The balls of your feet should be secured on top of the calf block with the heels extending off it. Push the lever up by extending your hips and knees until your torso is standing erect. The knees should be kept with a slight bend; never locked. Toes should be facing forward, outwards or inwards as described at the beginning of the chapter. This will be your starting position.",
+        "Raise your heels as you breathe out by extending your ankles as high as possible and flexing your calf. Ensure that the knee is kept stationary at all times. There should be no bending at any time. Hold the contracted position by a second before you start to go back down.",
+        "Go back slowly to the starting position as you breathe in by lowering your heels as you bend the ankles until calves are stretched.",
+        "Repeat for the recommended amount of repetitions."
+      ]
+    },
+    {
+      "id": "2d68c432-e2cb-4197-920f-a6458e162d2b",
+      "slug": "straight-arm-lat-pulldown-cable",
+      "name_en": "Straight Arm Lat Pulldown (Cable)",
+      "name_ar": "سحب لات بذراع ممدودة (كابل)",
+      "muscle_group": "back",
+      "muscle_group_ar": "الظهر",
+      "equipment": "cable",
+      "equipment_ar": "كابل",
+      "instructions": [
+        "You will start by grabbing the wide bar from the top pulley of a pulldown machine and using a wider than shoulder-width pronated (palms down) grip. Step backwards two feet or so.",
+        "Bend your torso forward at the waist by around 30-degrees with your arms fully extended in front of you and a slight bend at the elbows. If your arms are not fully extended then you need to step a bit more backwards until they are. Once your arms are fully extended and your torso is slightly bent at the waist, tighten the lats and then you are ready to begin.",
+        "While keeping the arms straight, pull the bar down by contracting the lats until your hands are next to the side of the thighs. Breathe out as you perform this step.",
+        "While keeping the arms straight, go back to the starting position while breathing in.",
+        "Repeat for the recommended amount of repetitions."
+      ]
+    },
+    {
+      "id": "cbeb50a9-7000-4176-81ae-908ec30b1186",
+      "slug": "sumo-squat-dumbbell",
+      "name_en": "Sumo Squat (Dumbbell)",
+      "name_ar": "سكوات سومو (دمبل)",
+      "muscle_group": "quads",
+      "muscle_group_ar": "الفخذ الأمامي",
+      "equipment": "dumbbell",
+      "equipment_ar": "دمبل",
+      "instructions": []
+    },
+    {
+      "id": "fe1ea9ec-5ae3-482a-9b1b-8cbc6b15cd87",
+      "slug": "t-bar-row",
+      "name_en": "T Bar Row",
+      "name_ar": "سحب بار T",
+      "muscle_group": "back",
+      "muscle_group_ar": "الظهر",
+      "equipment": "bodyweight",
+      "equipment_ar": "وزن الجسم",
+      "instructions": [
+        "Load up the T-bar Row Machine with the desired weight and adjust the leg height so that your upper chest is at the top of the pad. Tip: In some machines all you can do is stand on the appropriate step that allows you to be at a height that has the upper chest at the top of the pad.",
+        "Lay face down on the pad and grab the handles. You can either use a palms down, palms up, or palms in position depending on what part of your back you want to emphasize.",
+        "Lift the bar off the rack and extend your arms in front of you. This will be your starting position.",
+        "As you exhale slowly pull the weight up and squeeze your back at the top of the movement. Tip: Keep the upper arms as close to the torso as possible throughout the movement in order to better engage the back muscles. Also, do not lift your body off of the pad at any time and refrain from using the biceps to lift the weight.",
+        "After a second contraction at the top of the movement, as you inhale, slowly go back down to the starting position.",
+        "Repeat for the recommended amount of repetitions."
+      ]
+    },
+    {
+      "id": "5a8ba560-0e75-40fa-8f9d-e6d3a0c0a099",
+      "slug": "treadmill",
+      "name_en": "Treadmill",
+      "name_ar": "جهاز المشي",
+      "muscle_group": "cardio",
+      "muscle_group_ar": "القلب",
+      "equipment": "other",
+      "equipment_ar": "أخرى",
+      "instructions": [
+        "To begin, step onto the treadmill and select the desired option from the menu. Most treadmills have a manual setting, or you can select a program to run. Typically, you can enter your age and weight to estimate the amount of calories burned during exercise. Elevation can be adjusted to change the intensity of the workout.",
+        "Treadmills offer convenience, cardiovascular benefits, and usually have less impact than jogging outside. A 150 lb person will burn almost 250 calories jogging for 30 minutes, compared to more than 450 calories running. Maintain proper posture as you jog, and only hold onto the handles when necessary, such as when dismounting or checking your heart rate."
+      ]
+    },
+    {
+      "id": "58a647e5-9918-4299-836a-f433ffafaff8",
+      "slug": "triceps-extension-cable",
+      "name_en": "Triceps Extension (Cable)",
+      "name_ar": "تمديد الترايسبس (كابل)",
+      "muscle_group": "triceps",
+      "muscle_group_ar": "الترايسيبس",
+      "equipment": "cable",
+      "equipment_ar": "كابل",
+      "instructions": [
+        "Lie on incline an bench facing away from a high pulley machine that has a straight bar attachment on it.",
+        "Grasp the straight bar attachment overhead with a pronated (overhand; palms down) narrow grip (less than shoulder width) and keep your elbows tucked in to your sides. Your upper arms should create around a 25 degree angle when measured from the floor.",
+        "Keeping the upper arms stationary, extend the arms as you flex the triceps. Breathe out during this portion of the movement and hold the contraction for a second.",
+        "Slowly go back to the starting position.",
+        "Repeat for the recommended amount of repetitions."
+      ]
+    },
+    {
+      "id": "3d88e069-34ba-49e7-8b7a-f7c7669e0e81",
+      "slug": "triceps-extension-dumbbell",
+      "name_en": "Triceps Extension (Dumbbell)",
+      "name_ar": "تمديد الترايسبس (دمبل)",
+      "muscle_group": "triceps",
+      "muscle_group_ar": "الترايسيبس",
+      "equipment": "dumbbell",
+      "equipment_ar": "دمبل",
+      "instructions": [
+        "Secure your legs at the end of the decline bench and lie down with a dumbbell on each hand on top of your thighs. The palms of your hand will be facing each other.",
+        "Once you are laying down, move the dumbbells in front of you at shoulder width. The palms of the hands should be facing each other and the arms should be perpendicular to the floor and fully extended. This will be your starting position.",
+        "As you breathe in and you keep the upper arms stationary (and elbows in), bring the dumbbells down slowly by moving your forearms in a semicircular motion towards you until your thumbs are next to your ears. Breathe in as you perform this portion of the movement.",
+        "Lift the dumbbells back to the starting position by contracting the triceps and exhaling.",
+        "Repeat for the recommended amount of repetitions."
+      ]
+    },
+    {
+      "id": "4d38a5e6-fec8-4a1f-be2d-af129c8f4bcf",
+      "slug": "triceps-kickback-cable",
+      "name_en": "Triceps Kickback (Cable)",
+      "name_ar": "ركلة الترايسبس (كابل)",
+      "muscle_group": "triceps",
+      "muscle_group_ar": "الترايسيبس",
+      "equipment": "cable",
+      "equipment_ar": "كابل",
+      "instructions": [
+        "Start with a dumbbell in each hand and your palms facing your torso. Keep your back straight with a slight bend in the knees and bend forward at the waist. Your torso should be almost parallel to the floor. Make sure to keep your head up. Your upper arms should be close to your torso and parallel to the floor. Your forearms should be pointed towards the floor as you hold the weights. There should be a 90-degree angle formed between your forearm and upper arm. This is your starting position.",
+        "Now, while keeping your upper arms stationary, exhale and use your triceps to lift the weights until the arm is fully extended. Focus on moving the forearm.",
+        "After a brief pause at the top contraction, inhale and slowly lower the dumbbells back down to the starting position.",
+        "Repeat the movement for the prescribed amount of repetitions."
+      ]
+    },
+    {
+      "id": "a984e74b-6db0-4062-98f5-bd9339401f16",
+      "slug": "triceps-kickback-dumbbell",
+      "name_en": "Triceps Kickback (Dumbbell)",
+      "name_ar": "ركلة الترايسبس (دمبل)",
+      "muscle_group": "triceps",
+      "muscle_group_ar": "الترايسيبس",
+      "equipment": "dumbbell",
+      "equipment_ar": "دمبل",
+      "instructions": [
+        "Start with a dumbbell in each hand and your palms facing your torso. Keep your back straight with a slight bend in the knees and bend forward at the waist. Your torso should be almost parallel to the floor. Make sure to keep your head up. Your upper arms should be close to your torso and parallel to the floor. Your forearms should be pointed towards the floor as you hold the weights. There should be a 90-degree angle formed between your forearm and upper arm. This is your starting position.",
+        "Now, while keeping your upper arms stationary, exhale and use your triceps to lift the weights until the arm is fully extended. Focus on moving the forearm.",
+        "After a brief pause at the top contraction, inhale and slowly lower the dumbbells back down to the starting position.",
+        "Repeat the movement for the prescribed amount of repetitions."
+      ]
+    },
+    {
+      "id": "a730a99b-e68d-4625-a7ce-077a71121805",
+      "slug": "triceps-pressdown",
+      "name_en": "Triceps Pressdown",
+      "name_ar": "دفع الترايسبس للأسفل",
+      "muscle_group": "triceps",
+      "muscle_group_ar": "الترايسيبس",
+      "equipment": "bodyweight",
+      "equipment_ar": "وزن الجسم",
+      "instructions": [
+        "Attach a straight or angled bar to a high pulley and grab with an overhand grip (palms facing down) at shoulder width.",
+        "Standing upright with the torso straight and a very small inclination forward, bring the upper arms close to your body and perpendicular to the floor. The forearms should be pointing up towards the pulley as they hold the bar. This is your starting position.",
+        "Using the triceps, bring the bar down until it touches the front of your thighs and the arms are fully extended perpendicular to the floor. The upper arms should always remain stationary next to your torso and only the forearms should move. Exhale as you perform this movement.",
+        "After a second hold at the contracted position, bring the bar slowly up to the starting point. Breathe in as you perform this step.",
+        "Repeat for the recommended amount of repetitions."
+      ]
+    },
+    {
+      "id": "bb32e00b-8c80-406b-a196-5c19d05a8d4a",
+      "slug": "triceps-pushdown",
+      "name_en": "Triceps Pushdown",
+      "name_ar": "دفع الترايسبس للأسفل",
+      "muscle_group": "triceps",
+      "muscle_group_ar": "الترايسيبس",
+      "equipment": "bodyweight",
+      "equipment_ar": "وزن الجسم",
+      "instructions": [
+        "Attach a straight or angled bar to a high pulley and grab with an overhand grip (palms facing down) at shoulder width.",
+        "Standing upright with the torso straight and a very small inclination forward, bring the upper arms close to your body and perpendicular to the floor. The forearms should be pointing up towards the pulley as they hold the bar. This is your starting position.",
+        "Using the triceps, bring the bar down until it touches the front of your thighs and the arms are fully extended perpendicular to the floor. The upper arms should always remain stationary next to your torso and only the forearms should move. Exhale as you perform this movement.",
+        "After a second hold at the contracted position, bring the bar slowly up to the starting point. Breathe in as you perform this step.",
+        "Repeat for the recommended amount of repetitions."
+      ]
+    },
+    {
+      "id": "ee0768fb-24c2-405a-9b01-534e40d7dac2",
+      "slug": "triceps-rope-pushdown",
+      "name_en": "Triceps Rope Pushdown",
+      "name_ar": "دفع الترايسبس بالحبل",
+      "muscle_group": "triceps",
+      "muscle_group_ar": "الترايسيبس",
+      "equipment": "bodyweight",
+      "equipment_ar": "وزن الجسم",
+      "instructions": [
+        "Attach a rope attachment to a high pulley and grab with a neutral grip (palms facing each other).",
+        "Standing upright with the torso straight and a very small inclination forward, bring the upper arms close to your body and perpendicular to the floor. The forearms should be pointing up towards the pulley as they hold the rope with the palms facing each other. This is your starting position.",
+        "Using the triceps, bring the rope down as you bring each side of the rope to the side of your thighs. At the end of the movement the arms are fully extended and perpendicular to the floor. The upper arms should always remain stationary next to your torso and only the forearms should move. Exhale as you perform this movement.",
+        "After holding for a second, at the contracted position, bring the rope slowly up to the starting point. Breathe in as you perform this step.",
+        "Repeat for the recommended amount of repetitions."
+      ]
+    },
+    {
+      "id": "ec224e91-8bfb-4b3b-a3a6-43113eecc302",
+      "slug": "walking-lunge-dumbbell",
+      "name_en": "Walking Lunge (Dumbbell)",
+      "name_ar": "لنج المشي (دمبل)",
+      "muscle_group": "quads",
+      "muscle_group_ar": "الفخذ الأمامي",
+      "equipment": "dumbbell",
+      "equipment_ar": "دمبل",
+      "instructions": [
+        "Begin standing with your feet shoulder width apart and your hands on your hips.",
+        "Step forward with one leg, flexing the knees to drop your hips. Descend until your rear knee nearly touches the ground. Your posture should remain upright, and your front knee should stay above the front foot.",
+        "Drive through the heel of your lead foot and extend both knees to raise yourself back up.",
+        "Step forward with your rear foot, repeating the lunge on the opposite leg."
+      ]
+    },
+    {
+      "id": "d03aa411-644b-4e86-8a92-c35d4d72c914",
+      "slug": "warm-up",
+      "name_en": "Warm Up",
+      "name_ar": "إحماء",
+      "muscle_group": "cardio",
+      "muscle_group_ar": "القلب",
+      "equipment": "other",
+      "equipment_ar": "أخرى",
+      "instructions": []
+    }
+  ]
+}

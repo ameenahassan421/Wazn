@@ -15,9 +15,25 @@ import { resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { parse } from 'csv-parse/sync'
 import { createClient } from '@supabase/supabase-js'
-import 'dotenv/config'
+import { config as loadEnv } from 'dotenv'
 import type { MuscleGroup } from '../src/lib/types'
 import { deriveEquipment, EXTRA_EXERCISES, MUSCLE_GROUPS } from './muscle_groups'
+
+/*
+ * `.env.local` FIRST, then `.env`.
+ *
+ * This was `import 'dotenv/config'`, which reads `.env` and only `.env`. This
+ * project keeps its secrets in `.env.local`, because that is the file Vite
+ * loads for the `VITE_*` vars and nobody maintains two, so the script failed
+ * with "SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required" while both
+ * sat a few lines away on disk. `supabase_admin.ts` was fixed for exactly
+ * this; these three were missed.
+ *
+ * Earlier entries win in dotenv, and neither file overrides a variable already
+ * exported in the shell, so CI and any sandbox injecting real env vars are
+ * unaffected.
+ */
+loadEnv({ path: ['.env.local', '.env'] })
 
 export const LBS_TO_KG = 0.453592
 export const MILES_TO_METERS = 1609.34

@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "build": "tsc --noEmit && vite build",
+    "postbuild": "node scripts/build_seo_pages.mjs",
     "check:coverage": "node scripts/check_coverage_floor.mjs",
     "check:deploy": "node scripts/deploy-check.mjs",
     "check:migrations": "python3 scripts/check_migrations.py",

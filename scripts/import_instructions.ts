@@ -20,9 +20,25 @@
 import { resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { createClient } from '@supabase/supabase-js'
-import 'dotenv/config'
+import { config as loadEnv } from 'dotenv'
 import { bestMatch } from './match_exercise_images'
 import type { FreeExercise, OurExercise } from './match_exercise_images'
+
+/*
+ * `.env.local` FIRST, then `.env`.
+ *
+ * This was `import 'dotenv/config'`, which reads `.env` and only `.env`. This
+ * project keeps its secrets in `.env.local`, because that is the file Vite
+ * loads for the `VITE_*` vars and nobody maintains two, so the script failed
+ * with "SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required" while both
+ * sat a few lines away on disk. `supabase_admin.ts` was fixed for exactly
+ * this; these three were missed.
+ *
+ * Earlier entries win in dotenv, and neither file overrides a variable already
+ * exported in the shell, so CI and any sandbox injecting real env vars are
+ * unaffected.
+ */
+loadEnv({ path: ['.env.local', '.env'] })
 
 const DB_URL =
   'https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/dist/exercises.json'
@@ -105,6 +121,39 @@ export function summarise(resolved: Resolved[]): {
   return { total: resolved.length, withSteps, noMatch, matchedButNoSteps }
 }
 
+/**
+ * Fetch the free-exercise-db catalogue with a status check and a timeout.
+ *
+ * `fetch(DB_URL).then(r => r.json())` trusted the response: a 404 or a 502 from
+ * raw.githubusercontent went to `.json()` and failed as an unexpected-token
+ * parse error naming neither the URL nor the status, and a stalled connection
+ * hung with no output at all.
+ */
+async function fetchCatalogue(): Promise<FreeExercise[]> {
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), 60_000)
+  try {
+    const response = await fetch(DB_URL, { signal: controller.signal })
+    if (!response.ok) {
+      throw new Error(
+        `free-exercise-db returned ${response.status} ${response.statusText} for ${DB_URL}`,
+      )
+    }
+    return (await response.json()) as FreeExercise[]
+  } catch (error: unknown) {
+    if (error instanceof Error && error.name === 'AbortError') {
+      throw new Error(
+        `free-exercise-db did not respond within 60s (${DB_URL}). ` +
+          'Check the connection and re-run; nothing was written.',
+        { cause: error },
+      )
+    }
+    throw error
+  } finally {
+    clearTimeout(timer)
+  }
+}
+
 async function main() {
   const dry = process.argv.includes('--dry')
 
@@ -115,7 +164,22 @@ async function main() {
     process.exit(1)
   }
 
-  const db = createClient(url, key, { auth: { persistSession: false } })
+  // A timeout on every request this client makes. Without one, an unreachable
+  // host or a dead key can leave the read hanging with no output and no error,
+  // which is indistinguishable from a slow query.
+  const db = createClient(url, key, {
+    auth: { persistSession: false },
+    global: {
+      fetch: (input, init) =>
+        fetch(input, { ...init, signal: AbortSignal.timeout(20_000) }),
+    },
+  })
+
+  // Progress, because everything below is two network round trips and the
+  // first report only prints once both have finished. Without these lines the
+  // command looks hung for several seconds and then prints everything at
+  // once, which reads as a broken script rather than a slow one.
+  console.log(dry ? 'Dry run. Reading exercises...' : 'Reading exercises...')
 
   // Seeded rows only. A custom exercise someone typed is theirs, and guessing
   // instructions for it would be inventing content under their own name.
@@ -125,7 +189,15 @@ async function main() {
     .is('owner_id', null)
     .order('name')
 
-  if (error) throw new Error(`Could not read exercises: ${error.message}`)
+  if (error) {
+    throw new Error(
+      `Could not read exercises: ${error.message}. ` +
+        'A timeout here usually means SUPABASE_URL is unreachable or ' +
+        'SUPABASE_SERVICE_ROLE_KEY is stale (rotating the key invalidates the ' +
+        'one in .env.local).',
+      { cause: error },
+    )
+  }
 
   const current = new Map<string, string[] | null>(
     (rows ?? []).map((r) => [
@@ -140,7 +212,11 @@ async function main() {
     equipment: r.equipment as string,
   }))
 
-  const pool: FreeExercise[] = await fetch(DB_URL).then((r) => r.json())
+  // The slow half, and it used to be silent: several MB from raw.githubusercontent
+  // with no status check and no timeout, so a 404 surfaced as a JSON parse error
+  // and a stalled connection looked like a hung script.
+  console.log('Fetching free-exercise-db (a few MB)...')
+  const pool: FreeExercise[] = await fetchCatalogue()
   const resolved = resolveAll(ours, pool)
   const stats = summarise(resolved)
 
