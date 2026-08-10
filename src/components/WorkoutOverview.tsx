@@ -756,14 +756,22 @@ function Previous({ row, unit }: { row: OverviewRow; unit: Unit }) {
   return (
     <span
       dir="ltr"
-      // `↺` is directional, so unlike the clock and trend icons it DOES flip
-      // in RTL — the `icon-start` rule handles that.
-      className="tnum icon-start shrink-0 font-mono text-[11px] text-muted"
+      className="tnum shrink-0 font-mono text-[11px] text-muted"
       aria-label={t('overview.last_session', {
         values: values(row.previous.weightKg, row.previous.reps, unit),
       })}
     >
-      ↺ {values(row.previous.weightKg, row.previous.reps, unit)}
+      {/*
+        `icon-start` mirrors with `scaleX(-1)`, so it must wrap the GLYPH and
+        nothing else. It used to sit on the parent span, which mirrored the
+        numbers too: "24 × 15" rendered backwards on every ghost row in Arabic,
+        on the logging board, which is the hot path. `inline-block` because a
+        transform does not apply to an inline box.
+      */}
+      <span aria-hidden="true" className="icon-start inline-block">
+        ↺
+      </span>{' '}
+      {values(row.previous.weightKg, row.previous.reps, unit)}
     </span>
   )
 }
