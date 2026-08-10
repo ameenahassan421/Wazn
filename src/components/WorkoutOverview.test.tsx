@@ -207,6 +207,40 @@ describe('WorkoutOverview — the row-state ladder', () => {
     expect(screen.getByLabelText('Last session: 100 × 8')).toBeVisible()
   })
 
+  it('shows the exercise image on the board, like every other surface', () => {
+    renderOverview([block(BENCH, { exerciseId: BENCH.id, sets: [], previous: [] })])
+    // ExerciseThumb renders the initial tile when there is no image_url, so
+    // assert the thumb is present rather than asserting on an <img>.
+    const header = screen.getByRole('heading', { name: BENCH.name })
+    expect(header.parentElement?.querySelector('span[style]')).toBeTruthy()
+  })
+
+  /**
+   * Regression: the mirror must wrap the glyph, not the numbers.
+   *
+   * `icon-start` applies `scaleX(-1)` under `[dir='rtl']`, and it used to sit
+   * on the span containing "↺ 100 × 8". In Arabic that rendered the weights and
+   * reps backwards on every planned row of the logging board, which is the hot
+   * path. Nothing in the wall caught it; a screenshot did.
+   */
+  it('mirrors the ghost glyph without mirroring the numbers', () => {
+    renderOverview([
+      block(BENCH, {
+        exerciseId: BENCH.id,
+        sets: [],
+        previous: [previous(100, 8)],
+      }),
+    ])
+
+    const ghost = screen.getByLabelText('Last session: 100 × 8')
+    expect(ghost.className).not.toContain('icon-start')
+
+    const mirrored = ghost.querySelector('.icon-start')
+    expect(mirrored?.textContent?.trim()).toBe('↺')
+    expect(mirrored?.textContent).not.toMatch(/[0-9]/)
+    expect(ghost.textContent).toContain('100 × 8')
+  })
+
   it('never marks a lighter day as an error — down is muted, not red', () => {
     renderOverview([
       block(BENCH, {

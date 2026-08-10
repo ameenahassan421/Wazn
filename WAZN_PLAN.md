@@ -452,6 +452,43 @@ file that calls the beta started and retention thin. GATE 3 cannot be
 evaluated until the app is actually distributed, and no session should treat
 low usage as evidence about the product.
 
+**F2 Arabic SEO SHIPPED 2026-08-09** and is verified on production: 110
+English and 110 Arabic exercise pages, 222 sitemap URLs linked from
+`robots.txt`, clean extensionless URLs, `dir="rtl"` and real translated steps
+on the Arabic side. `exercises.instructions` was filled for 110 of 134 rows
+from free-exercise-db (24 unmatched are machine variants and non-lifts, and
+they get NO page rather than a stub). Arabic instructions live in
+`scripts/arabic_instructions.ts`, Arabic names in `scripts/arabic_exercises.ts`;
+both are SEO-only and the database stays the app's source of truth.
+`npx tsx scripts/build_seo_data.ts --offline` re-applies the Arabic layer with
+no network, so a copy edit never needs credentials. **Ameen reviewed the Arabic
+and approved it**, which is the review GATE 5 asked for.
+
+**QUEUED, not started: Arabic exercise names in the app.** In Arabic the whole
+interface is Arabic and every exercise name still renders English. Stage 5 asked
+for "Arabic exercise names alongside English" and it was never built. The 134
+names already exist and are approved; they only feed the SEO pages. The work is
+a nullable `name_ar` column, a manual seeding script, and ONE `displayName`
+helper threaded through the nine surfaces that render a name. A custom exercise
+has no `name_ar` and must render the user's own text in either locale. Not
+urgent: it is an omission, not a breakage, and nobody is using the app yet.
+
+**Three defects came out of ONE screenshot Ameen took (2026-08-09), and every
+automated gate was green for all three.** `icon-start` mirrors with
+`scaleX(-1)` and sat on the span holding "↺ 100 × 8", so weights and reps
+rendered backwards on every ghost row of the Arabic logging board.
+`ExerciseThumb` was used on nine surfaces but not the workout board. Exercise
+names were English in Arabic mode. Lint, typecheck, 818 tests, a production
+build and a Playwright smoke run all passed throughout. **Screenshot the app
+after any locale or layout work; the wall cannot see this class of defect.**
+
+**The OmniRoute gateway failed 7 times on 2026-08-09** across three causes:
+`502 ERR_HTTP2_INVALID_SESSION` on three different upstreams, a stall partway
+through a long run, a `402` (Kimi membership inactive), and a mid-response
+connection close on a pinned, known-good model. Two runs did complete useful
+work. Pin a concrete model rather than an `auto/` route, batch long jobs so a
+drop costs one batch, and expect to finish the tail by hand.
+
 **Blocked on Ameen:** run `LAUNCH.md` on a real phone with a second account
 (also GATE U7's last item, not reachable from a sandboxed session); rotate the
 OpenRouter key, which was shared in a chat session and is compromised by
