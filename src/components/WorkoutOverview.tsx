@@ -7,6 +7,7 @@ import type { Unit } from '../lib/units'
 import { formatWeight } from '../lib/units'
 import { describeRest, REST_MAX_SECONDS, stepRest } from '../lib/rest'
 import { REST_STEP_SECONDS } from '../lib/use-rest-timer'
+import { ExerciseThumb } from './ExerciseThumb'
 import { IconMore } from './icons'
 import { useLocale } from '../lib/locale-context'
 
@@ -394,6 +395,18 @@ function BlockHeader({
           </span>
         </button>
 
+        {/* The board was the only surface that showed a lift without its
+            picture: History, Progress, the picker, the detail page, the finish
+            summary and the routine editor all had one. Mid-workout is where
+            recognising the next lift at a glance matters most. 36px rather
+            than the 48px default because this row is dense and its height is
+            set by the 52px controls either side of it. */}
+        {block.exercise && (
+          <span className="me-2 shrink-0">
+            <ExerciseThumb exercise={block.exercise} size={36} />
+          </span>
+        )}
+
         {/* The name gets the whole header row. With the progress count sharing
             the line, "Bench Press (Barbell)" and "Lat Pulldown (Cable)" — the
             two most common lifts in this app — both truncated. Identity does
@@ -413,7 +426,7 @@ function BlockHeader({
 
       {/* The meta line always exists, because progress always exists — so a
           block with a note and a block without are the same height. */}
-      <p className="mb-1 ms-11 flex min-w-0 items-baseline gap-1.5 pe-2">
+      <p className="mb-1 ms-[88px] flex min-w-0 items-baseline gap-1.5 pe-2">
         <span
           className={`tnum shrink-0 font-mono text-[11px] ${
             complete ? 'text-accent' : 'text-muted'

@@ -207,6 +207,14 @@ describe('WorkoutOverview — the row-state ladder', () => {
     expect(screen.getByLabelText('Last session: 100 × 8')).toBeVisible()
   })
 
+  it('shows the exercise image on the board, like every other surface', () => {
+    renderOverview([block(BENCH, { exerciseId: BENCH.id, sets: [], previous: [] })])
+    // ExerciseThumb renders the initial tile when there is no image_url, so
+    // assert the thumb is present rather than asserting on an <img>.
+    const header = screen.getByRole('heading', { name: BENCH.name })
+    expect(header.parentElement?.querySelector('span[style]')).toBeTruthy()
+  })
+
   /**
    * Regression: the mirror must wrap the glyph, not the numbers.
    *
