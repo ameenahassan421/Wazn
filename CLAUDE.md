@@ -1,8 +1,9 @@
 # Wazn — working notes for Claude
 
 > **`WAZN_PLAN.md` is the source of truth for this project.** Read it in full
-> at the start of every session, along with `DECISIONS.md` and the **STATUS**
-> section at the bottom of the plan. Do not begin work until you know which
+> at the start of every session, along with `DECISIONS.md` and **§7.0**, the
+> authoritative current-state block. (§7.1 below it is a chronological log that
+> contradicts itself in places. §7.0 wins, and the database beats both.) Do not begin work until you know which
 > phase is active and what its gate is. This file is the working notes; where
 > the two disagree, the plan wins.
 

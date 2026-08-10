@@ -4599,3 +4599,33 @@ just is not a precondition any more.
 The other Stage 5 limitations are unaffected by this waiver and still stand:
 plurals are two keys against Arabic's six categories, `ErrorBoundary` stays
 English, and charts are not mirrored.
+
+## 2026-08-09: STATUS reconciled by precedence, not by deletion
+
+`WAZN_PLAN.md` §7 had grown to 133 bullets appended over the project's life and
+had started contradicting itself. One bullet said production was at 0022 with
+0023 and 0024 unapplied; a later one's reconciliation table said 0024. Both
+could not be true and the first was false when written.
+
+The fix is precedence. §7 is now **§7.0 CURRENT STATE**, a short authoritative
+block verified against production and dated, followed by **§7.1 Log**, which is
+every existing bullet untouched and explicitly labelled history rather than
+state. §6's session protocol and `CLAUDE.md` both now point at §7.0, and the
+end-of-session step says to keep §7.0 from growing into a second log.
+
+**Nothing was deleted.** The log carries hard-won lessons that read as noise
+until the day they save an afternoon: `inset-block-0` emitting no CSS, Tailwind
+v4 pruning unreferenced `@theme` tokens, Node 26's built-in `localStorage`
+shadowing jsdom's, the three lazy tabs dying on every deploy. This project also
+deliberately keeps wrong-once markers, so deleting superseded bullets would
+have destroyed the thing they exist for.
+
+Two claims were actively false rather than merely stale, so they were struck
+through and corrected in place, keeping the record that they were believed:
+
+1. The migration bullet above.
+2. **"THE BETA HAS STARTED AND RETENTION IS THIN."** Ameen has not shared the
+   app. The 7 accounts are him and people he already knows, so they are not a
+   cohort and say nothing about retention. I repeated this inference myself in
+   a status report before he corrected it, which is exactly why the wrong
+   premise is preserved rather than quietly removed.

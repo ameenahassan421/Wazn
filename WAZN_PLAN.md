@@ -386,7 +386,8 @@ is no longer parked — it is Stage 4B.)
 **Starting any new session:**
 
 1. Read `WAZN_PLAN.md` (this file), `DECISIONS.md`, and `CLAUDE.md`.
-2. Read the STATUS section below. The active stage and its next
+2. Read **§7.0**, the authoritative current-state block. §7.1 below it is a
+   chronological log that contradicts itself; §7.0 wins. The active stage and its next
    unchecked item is where work resumes.
 3. Verify reality matches STATUS before building (e.g. query row
    counts, check deploy state). If they disagree, trust reality,
@@ -394,8 +395,10 @@ is no longer parked — it is Stage 4B.)
 
 **Ending any work session:**
 
-1. Update STATUS below: check off completed items, set "Next action",
-   date-stamp it.
+1. Update **§7.0** with what is now true, and date-stamp it. Append narrative
+   to §7.1 if it carries a lesson. Do not let §7.0 grow into another log:
+   if a bullet there is no longer current state, it belongs in §7.1 or
+   nowhere.
 2. Append significant choices/deviations to `DECISIONS.md`.
 3. Commit with a message referencing the stage (e.g. `stage0: import
    - rename`), push, confirm Vercel deploy is green.
@@ -407,7 +410,60 @@ verbatim, so they survive even if this file isn't read.**
 
 ## 7. STATUS
 
-> Claude Code: keep this section current. It is the project's memory.
+> Claude Code: **§7.0 below is authoritative. Everything in §7.1 is a
+> chronological log, newest last, and it contradicts itself in places.** Where
+> the two disagree, §7.0 wins. Do not resolve a conflict by reading further
+> down the log; the log is history, not state. Verify against the database
+> before trusting either.
+
+### 7.0 CURRENT STATE — verified 2026-08-09 against production
+
+Read live via the Management API, not recited. Re-verify before relying on it.
+
+|                         |                                   |
+| ----------------------- | --------------------------------- |
+| Accounts / profiles     | 7 / 7 (2 with usernames)          |
+| Workouts                | 150, of which 1 is unfinished     |
+| Routines                | 12                                |
+| Exercises               | 134 (0 custom)                    |
+| AI generations          | 17                                |
+| `client_errors`         | 0, including since today's deploy |
+| `user_preferences` rows | 1 (locale `en`, unit `kg`)        |
+| Last workout            | 2026-08-09                        |
+
+**Migrations, the only reliable account.** Production has **0001 through 0024
+applied, including 0023**, confirmed against `information_schema`.
+`supabase_migrations.schema_migrations` holds 7 entries and has never known
+about 0020, 0021, 0023's predecessors or 0024, so **the ledger is not a record
+of what is applied and must never be treated as one**. `0019` is the one
+deliberate hold: its five stat-tool functions have no caller until B3 exists.
+
+**Stage 5 shipped 2026-08-09.** Per-user locale, 520-key catalogue, EN/AR
+toggle in the header and on the pre-auth surface, root `dir`/`lang` flip.
+Verified on the deployed build: tap AR gives `dir=rtl` and Arabic, a reload
+holds it, tapping EN returns. GATE 5's native-speaker review was **waived by
+Ameen**. Arabic is machine-drafted. `ErrorBoundary` stays English (class
+component, no hook) and chart axes are not mirrored, both deliberate.
+
+**THE APP HAS NOT BEEN SHARED YET (Ameen, 2026-08-09).** The 7 accounts are
+Ameen and people he already knows, not a beta cohort. **Any reading of these
+numbers as a retention signal is wrong**, including the one further down this
+file that calls the beta started and retention thin. GATE 3 cannot be
+evaluated until the app is actually distributed, and no session should treat
+low usage as evidence about the product.
+
+**Blocked on Ameen:** run `LAUNCH.md` on a real phone with a second account
+(also GATE U7's last item, not reachable from a sandboxed session); rotate the
+OpenRouter key, which was shared in a chat session and is compromised by
+construction; raise `rate_limit_email_sent` from 2 before any invite wave.
+
+**Next action:** nothing in the build queue is load-bearing until the app is
+shared. Stage 4B (store publishing) is the sequenced next stage and needs
+Ameen's Mac plus the $25 Play and $99 Apple accounts.
+
+### 7.1 Log (chronological, newest last)
+
+> History, not state. Items here may be superseded, and several are. §7.0 wins.
 
 - **Strategy:** Launch Bundle (§4 header). Group beta replaces solo gating; 2C
   is launch-required; store publishing (4B) follows beta.
@@ -1150,8 +1206,9 @@ coach_surfaces.sql` asserts what the three functions RETURN against a seeded
 - **ARCHIVE IS BUILT, and migration 0024 IS NOT APPLIED.** Ameen said to apply
   it; the harness permission classifier refused `apply_migration` twice,
   including after that authorization, and production DDL is exactly what that
-  guard is for, so it was not routed around. **Production is still at 0022 with
-  0023 and 0024 both unapplied.** The SQL is in the repo and executes from empty.
+  guard is for, so it was not routed around. ~~**Production is still at 0022 with 0023 and 0024 both unapplied.**~~
+  **FALSE as of 2026-08-09: 0024 was already applied when this was written, and
+  0023 was applied 2026-08-09. See §7.0.** The SQL is in the repo and executes from empty.
 - **The client is built so that is harmless.** `archived_at` is optional on
   `Exercise`, `!archived_at` is true for both null and absent, so until 0024
   lands every exercise stays listed exactly as today. Writing it returns
@@ -1220,7 +1277,10 @@ coach_surfaces.sql` asserts what the three functions RETURN against a seeded
   `ai_generations`, 3 `coach_views`, **0 `client_errors`**. Last workout logged
   2026-08-07.
 
-- **THE BETA HAS STARTED AND RETENTION IS THIN.** Six accounts exist, three
+- ~~**THE BETA HAS STARTED AND RETENTION IS THIN.**~~ **WRONG PREMISE, corrected
+  2026-08-09: Ameen has not shared the app. These accounts are not a cohort and
+  the numbers below say nothing about retention. Kept because the inference is
+  an easy one to repeat.** Six accounts exist, three
   signed in within two days, and **one person logged a workout in the last
   seven**. Two workouts in seven days, both from a routine. That is the only
   number that matters now and no amount of building moves it. GATE 3 asks for a
