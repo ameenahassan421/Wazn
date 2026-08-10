@@ -4,6 +4,7 @@ import { useIdle } from '../lib/use-idle'
 import { restCanvasEnabled, setRestCanvasEnabled } from '../lib/rest-canvas'
 import type { RestCard } from '../lib/rest-canvas'
 import { IconClose } from './icons'
+import { useLocale } from '../lib/locale-context'
 
 /**
  * The rest canvas — E1, offense plan §8-E1.
@@ -79,6 +80,7 @@ export function RestCanvas({
   /** Fired on the permanent dismissal. Not on the undo. */
   onDismiss?: () => void
 }) {
+  const { t } = useLocale()
   const [enabled, setEnabled] = useState(() => restCanvasEnabled(browserStorage()))
   const [undo, setUndo] = useState(false)
 
@@ -117,7 +119,7 @@ export function RestCanvas({
         }}
         className="btn-base btn-quiet h-12 w-full justify-start px-3 text-[13px]"
       >
-        Rest canvas off · Bring it back
+        {t('canvas.undo')}
       </button>
     )
   }
@@ -131,7 +133,7 @@ export function RestCanvas({
       // each look like a different feature.
       className="ring-edge bg-surface coach-in ps-3 pe-1 py-2.5"
       style={{ borderRadius: 'var(--radius-md)' }}
-      aria-label="While you rest"
+      aria-label={t('canvas.label')}
       // Never announced. It appears and leaves repeatedly across a two-minute
       // rest, and a screen reader narrating each transition would be the
       // interruption the whole surface is built to avoid. It is readable on
@@ -171,7 +173,7 @@ export function RestCanvas({
           // on the bar below. Fifty pixels apart, so the tap that turns the
           // canvas off and the tap that ends the rest are never neighbours.
           className="press -mt-1 grid h-12 w-12 shrink-0 place-items-center text-muted"
-          aria-label="Turn off the rest canvas"
+          aria-label={t('canvas.off')}
         >
           <IconClose size={18} />
         </button>

@@ -34,7 +34,7 @@ export default tseslint.config(
         'warn',
         // useUnit lives beside its provider on purpose; splitting the hook into
         // its own file to satisfy fast refresh would not make it clearer.
-        { allowConstantExport: true, allowExportNames: ['useUnit'] },
+        { allowConstantExport: true, allowExportNames: ['useUnit', 'useLocale'] },
       ],
       '@typescript-eslint/no-unused-vars': [
         'error',

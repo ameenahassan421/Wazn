@@ -4,6 +4,7 @@ import type { RoutineDetail, RoutineDraft } from '../lib/routines'
 import { ExercisePicker } from './ExercisePicker'
 import { ExerciseThumb } from './ExerciseThumb'
 import { IconBack } from './icons'
+import { useLocale } from '../lib/locale-context'
 
 /**
  * Build or edit a routine: name, ordered exercises, planned sets per exercise.
@@ -39,6 +40,7 @@ export function RoutineEditor({
   onSave: (draft: RoutineDraft) => void
   onCancel: () => void
 }) {
+  const { t } = useLocale()
   const [name, setName] = useState(routine?.name ?? '')
   const [items, setItems] = useState<DraftExercise[]>(() => toDraftExercises(routine))
   const [picking, setPicking] = useState(false)
@@ -91,11 +93,11 @@ export function RoutineEditor({
 
   function submit() {
     if (name.trim() === '') {
-      setError('Give the routine a name — you will be picking it from a list.')
+      setError(t('editor.error.name'))
       return
     }
     if (items.length === 0) {
-      setError('Add at least one exercise.')
+      setError(t('editor.error.empty'))
       return
     }
     setError(null)
@@ -125,25 +127,25 @@ export function RoutineEditor({
         <button
           type="button"
           onClick={onCancel}
-          aria-label="Back"
+          aria-label={t('editor.back')}
           className="btn-base btn-quiet -ms-2 h-12 w-12 shrink-0"
         >
           <IconBack />
         </button>
         <h2 className="flex-1 text-base font-semibold">
-          {routine ? 'Edit routine' : 'New routine'}
+          {routine ? t('editor.title.edit') : t('editor.title.new')}
         </h2>
       </div>
 
       <div>
         <label htmlFor="routine-name" className="text-xs text-muted">
-          Name
+          {t('editor.name')}
         </label>
         <input
           id="routine-name"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          placeholder="Upper A"
+          placeholder={t('editor.name.placeholder')}
           className="h-12 w-full rounded-lg border border-line bg-surface px-3 text-start text-base outline-none placeholder:text-muted focus:border-accent"
         />
       </div>
@@ -160,12 +162,12 @@ export function RoutineEditor({
                 <div className="flex items-center gap-3">
                   {exercise && <ExerciseThumb exercise={exercise} />}
                   <span className="flex-1 truncate text-base">
-                    {exercise?.name ?? 'Exercise'}
+                    {exercise?.name ?? t('editor.exercise_fallback')}
                   </span>
                   <button
                     type="button"
                     onClick={() => move(index, -1)}
-                    aria-label="Move up"
+                    aria-label={t('editor.move_up')}
                     className="h-12 w-10 rounded-md border border-line text-sm"
                   >
                     ↑
@@ -173,7 +175,7 @@ export function RoutineEditor({
                   <button
                     type="button"
                     onClick={() => move(index, 1)}
-                    aria-label="Move down"
+                    aria-label={t('editor.move_down')}
                     className="h-12 w-10 rounded-md border border-line text-sm"
                   >
                     ↓
@@ -181,7 +183,9 @@ export function RoutineEditor({
                   <button
                     type="button"
                     onClick={() => setItems((p) => p.filter((_, i) => i !== index))}
-                    aria-label={`Remove ${exercise?.name ?? 'exercise'}`}
+                    aria-label={t('editor.remove', {
+                      name: exercise?.name ?? t('editor.exercise_fallback'),
+                    })}
                     className="h-12 w-10 rounded-md px-1 text-sm text-muted"
                   >
                     ×
@@ -231,7 +235,7 @@ export function RoutineEditor({
         onClick={() => setPicking(true)}
         className="h-12 w-full rounded-lg border border-line text-base font-semibold"
       >
-        Add exercise
+        {t('editor.add_exercise')}
       </button>
 
       {error && (
@@ -246,7 +250,7 @@ export function RoutineEditor({
         disabled={saving}
         className="h-12 w-full rounded-lg bg-accent text-base font-bold text-accent-ink disabled:opacity-60"
       >
-        {saving ? 'Saving…' : 'Save routine'}
+        {saving ? t('editor.saving') : t('editor.save')}
       </button>
     </section>
   )

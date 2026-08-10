@@ -11,6 +11,7 @@ import type { ExerciseFilter } from '../lib/exercise-filter'
 import { ExerciseThumb } from './ExerciseThumb'
 import { IconBack } from './icons'
 import { NewExercise } from './NewExercise'
+import { useLocale } from '../lib/locale-context'
 
 /**
  * Recently used first, then most used, then everything else alphabetically.
@@ -117,6 +118,7 @@ export function ExercisePicker({
    *  create affordance — Progress, for instance, is a reading surface. */
   onCreated?: (exercise: Exercise) => void
 }) {
+  const { t } = useLocale()
   const [query, setQuery] = useState('')
   const [filter, setFilter] = useState<ExerciseFilter>(NO_FILTER)
   const [creating, setCreating] = useState(false)
@@ -166,7 +168,7 @@ export function ExercisePicker({
         <button
           type="button"
           onClick={onCancel}
-          aria-label="Back"
+          aria-label={t('picker.back')}
           className="btn-base btn-quiet -ms-2 h-12 w-12 shrink-0"
         >
           <IconBack />
@@ -176,7 +178,7 @@ export function ExercisePicker({
           type="search"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search exercises"
+          placeholder={t('picker.search')}
           autoComplete="off"
           autoCapitalize="none"
           spellCheck={false}
@@ -190,13 +192,13 @@ export function ExercisePicker({
           reading the list. */}
       <div className="flex flex-col gap-1.5 pt-2.5">
         <ChipScroller
-          label="Filter by muscle group"
+          label={t('picker.filter.muscle')}
           options={options.muscleGroups}
           value={filter.muscleGroup}
           onChange={(next) => setFilter((f) => ({ ...f, muscleGroup: next }))}
         />
         <ChipScroller
-          label="Filter by equipment"
+          label={t('picker.filter.equipment')}
           options={options.equipment}
           value={filter.equipment}
           onChange={(next) => setFilter((f) => ({ ...f, equipment: next }))}
@@ -216,7 +218,7 @@ export function ExercisePicker({
             onClick={() => setFilter(NO_FILTER)}
             className="btn-base btn-quiet h-12 px-2 text-[13px]"
           >
-            Clear filters
+            {t('picker.clear')}
           </button>
         </div>
       )}
@@ -236,7 +238,7 @@ export function ExercisePicker({
               onClick={() => setFilter(NO_FILTER)}
               className="btn-base btn-secondary mt-3 h-12 w-full text-sm"
             >
-              Clear filters
+              {t('picker.clear')}
             </button>
           )}
           {/* The moment the gap is felt is the moment to offer the fix: a

@@ -6,6 +6,7 @@ import { lazyScreen } from './lib/lazy-screen'
 import { supabaseConfigError } from './lib/supabase'
 import { useAuth } from './lib/use-auth'
 import { useBackLayer } from './lib/use-back'
+import { LocaleProvider, useLocale } from './lib/locale-context'
 import { UnitProvider } from './lib/unit-context'
 import { AuthScreen } from './components/AuthScreen'
 import { ErrorBoundary } from './components/ErrorBoundary'
@@ -36,6 +37,16 @@ const FriendsScreen = lazyScreen(() =>
 const CoachScreen = lazyScreen(() =>
   import('./screens/CoachScreen').then((m) => ({ default: m.CoachScreen })),
 )
+
+/**
+ * The lazy-screen fallback, as its own component so `t()` runs INSIDE
+ * LocaleProvider. Calling it from App would resolve against the default
+ * context and print the raw key.
+ */
+function ScreenFallback() {
+  const { t } = useLocale()
+  return <p className="py-10 text-sm text-muted">{t('chrome.loading')}</p>
+}
 
 export default function App() {
   const { loading, userId } = useAuth()
@@ -74,20 +85,26 @@ export default function App() {
   }
 
   if (!userId) {
-    return <AuthScreen />
+    // LocaleProvider wraps AuthScreen so the pre-auth surface can offer the
+    // language toggle — a signed-out user has no Header to put it in.
+    return (
+      <LocaleProvider>
+        <AuthScreen />
+      </LocaleProvider>
+    )
   }
 
   // The Log tab carries the mark; the others carry their name.
-  const title =
+  const titleKey =
     tab === 'history'
-      ? 'History'
+      ? 'nav.history'
       : tab === 'progress'
-        ? 'Progress'
+        ? 'nav.progress'
         : tab === 'coach'
-          ? 'Coach'
+          ? 'nav.coach'
           : tab === 'friends'
-            ? 'Friends'
-            : undefined
+            ? 'nav.friends'
+            : null
 
   return (
     // Two boundaries. The inner one is keyed to the tab, so a crashed screen
@@ -96,37 +113,39 @@ export default function App() {
     // header and tab bar can throw too, and a boundary inside `main` cannot
     // catch its own chrome. See components/ErrorBoundary.tsx.
     <ErrorBoundary boundary="root">
-      <UnitProvider>
-        <Header title={title} />
-        <main className="mx-auto w-full max-w-[430px] px-[18px] pb-28">
-          <ErrorBoundary boundary={tab} resetKey={tab}>
-            {tab === 'log' && (
-              <LogScreen userId={userId} onOpenCoach={() => setTab('coach')} />
-            )}
-            {tab === 'history' && <HistoryScreen />}
-            {tab === 'progress' && (
-              <Suspense fallback={<p className="py-10 text-sm text-muted">Loading…</p>}>
-                <ProgressScreen onOpenCoach={() => setTab('coach')} />
-              </Suspense>
-            )}
-            {tab === 'coach' && (
-              <Suspense fallback={<p className="py-10 text-sm text-muted">Loading…</p>}>
-                {/* Saving generated routines sends you to Log, where routines
+      <LocaleProvider userId={userId}>
+        <UnitProvider userId={userId}>
+          <Header titleKey={titleKey} />
+          <main className="mx-auto w-full max-w-[430px] px-[18px] pb-28">
+            <ErrorBoundary boundary={tab} resetKey={tab}>
+              {tab === 'log' && (
+                <LogScreen userId={userId} onOpenCoach={() => setTab('coach')} />
+              )}
+              {tab === 'history' && <HistoryScreen />}
+              {tab === 'progress' && (
+                <Suspense fallback={<ScreenFallback />}>
+                  <ProgressScreen onOpenCoach={() => setTab('coach')} />
+                </Suspense>
+              )}
+              {tab === 'coach' && (
+                <Suspense fallback={<ScreenFallback />}>
+                  {/* Saving generated routines sends you to Log, where routines
                     live — the thing you just made is one tap from being
                     started. */}
-                <CoachScreen onRoutinesSaved={() => setTab('log')} />
-              </Suspense>
-            )}
-            {tab === 'friends' && (
-              <Suspense fallback={<p className="py-10 text-sm text-muted">Loading…</p>}>
-                <FriendsScreen userId={userId} />
-              </Suspense>
-            )}
-          </ErrorBoundary>
-        </main>
-        <TabBar active={tab} onChange={setTab} />
-        <Analytics />
-      </UnitProvider>
+                  <CoachScreen onRoutinesSaved={() => setTab('log')} />
+                </Suspense>
+              )}
+              {tab === 'friends' && (
+                <Suspense fallback={<ScreenFallback />}>
+                  <FriendsScreen userId={userId} />
+                </Suspense>
+              )}
+            </ErrorBoundary>
+          </main>
+          <TabBar active={tab} onChange={setTab} />
+          <Analytics />
+        </UnitProvider>
+      </LocaleProvider>
     </ErrorBoundary>
   )
 }

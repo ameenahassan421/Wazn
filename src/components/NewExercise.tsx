@@ -3,6 +3,7 @@ import { createCustomExercise } from '../lib/exercises'
 import type { Exercise, MuscleGroup } from '../lib/types'
 import { IconBack } from './icons'
 import { ExerciseFields } from './ExerciseFields'
+import { useLocale } from '../lib/locale-context'
 
 /**
  * Add an exercise the catalogue does not have.
@@ -27,6 +28,7 @@ export function NewExercise({
   onCreated: (exercise: Exercise) => void
   onCancel: () => void
 }) {
+  const { t } = useLocale()
   const [name, setName] = useState(initialName)
   const [muscleGroup, setMuscleGroup] = useState<MuscleGroup>('chest')
   const [equipment, setEquipment] = useState<string>('machine')
@@ -39,7 +41,7 @@ export function NewExercise({
     try {
       onCreated(await createCustomExercise({ name, muscleGroup, equipment }))
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Could not add that exercise.')
+      setError(e instanceof Error ? e.message : t('exercise.new.error'))
       setBusy(false)
     }
   }
@@ -50,12 +52,12 @@ export function NewExercise({
         <button
           type="button"
           onClick={onCancel}
-          aria-label="Back"
+          aria-label={t('exercise.new.back')}
           className="btn-base btn-quiet -ms-2 h-12 w-12 shrink-0"
         >
           <IconBack size={20} />
         </button>
-        <h2 className="flex-1 text-base font-medium">New exercise</h2>
+        <h2 className="flex-1 text-base font-medium">{t('exercise.new.title')}</h2>
       </div>
 
       {error && (
@@ -86,7 +88,7 @@ export function NewExercise({
         disabled={busy || name.trim().length < 2}
         className="btn-base btn-hero h-[60px] w-full text-[17px] disabled:opacity-45"
       >
-        {busy ? 'Adding…' : 'Add and use it'}
+        {busy ? t('exercise.new.adding') : t('exercise.new.add')}
       </button>
     </div>
   )

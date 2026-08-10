@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
 import { describeError, supabase } from '../lib/supabase'
+import { useLocale } from '../lib/locale-context'
 import { useBackLayer } from '../lib/use-back'
 import { useUnit } from '../lib/unit-context'
 import { formatWeight, toDisplayWeight } from '../lib/units'
@@ -86,6 +87,7 @@ const FREQUENCY_WEEKS = 13
 
 export function ProgressScreen({ onOpenCoach }: { onOpenCoach: () => void }) {
   const { unit } = useUnit()
+  const { t } = useLocale()
 
   const [sessions, setSessions] = useState<SessionVolumeRow[]>([])
   const [groups, setGroups] = useState<MuscleGroupSets[]>([])
@@ -142,7 +144,7 @@ export function ProgressScreen({ onOpenCoach }: { onOpenCoach: () => void }) {
         streakRows.error ??
         catalogue.error
       if (failure) {
-        setError(describeError('Loading your progress', failure))
+        setError(describeError(t('progress.error.load'), failure))
         setLoading(false)
         return
       }
@@ -170,7 +172,7 @@ export function ProgressScreen({ onOpenCoach }: { onOpenCoach: () => void }) {
     return () => {
       active = false
     }
-  }, [])
+  }, [t])
 
   // `session_volume_history` comes back oldest first, so the first row is the
   // first workout ever — which is how far "All" has to reach.
@@ -227,7 +229,7 @@ export function ProgressScreen({ onOpenCoach }: { onOpenCoach: () => void }) {
     }
   }, [sessions])
 
-  if (loading) return <p className="py-10 text-sm text-muted">Loading…</p>
+  if (loading) return <p className="py-10 text-sm text-muted">{t('chrome.loading')}</p>
   if (detail)
     return (
       <ExerciseDetail
@@ -329,10 +331,7 @@ export function ProgressScreen({ onOpenCoach }: { onOpenCoach: () => void }) {
         /* "Log a workout to load the bar" already sits under the balance
            chart; with four blocks between them, saying it twice reads as a
            stutter. What is left is the part only this line says. */
-        <p className="text-sm text-muted">
-          Every chart here is built from your own sets — nothing on this screen is a
-          sample.
-        </p>
+        <p className="text-sm text-muted">{t('progress.empty_notice')}</p>
       )}
     </div>
   )
@@ -351,20 +350,21 @@ function ThisWeek({
   streakWeeks: number
   unit: Unit
 }) {
+  const { t } = useLocale()
   return (
     <section
       className="ring-edge bg-surface px-3 py-3"
       style={{ borderRadius: 'var(--radius-md)' }}
     >
-      <h2 className="kicker mb-2.5">This week</h2>
+      <h2 className="kicker mb-2.5">{t('progress.this_week')}</h2>
       <div className="flex items-stretch">
-        <Figure label="Sessions" value={formatCount(sessions)} />
+        <Figure label={t('progress.sessions')} value={formatCount(sessions)} />
         <span aria-hidden="true" className="w-px shrink-0 bg-[var(--divider)]" />
-        <Figure label="Volume" value={formatVolume(volumeKg, unit)} />
+        <Figure label={t('progress.volume')} value={formatVolume(volumeKg, unit)} />
         <span aria-hidden="true" className="w-px shrink-0 bg-[var(--divider)]" />
         <Figure
-          label="Streak"
-          value={`${streakWeeks} wk`}
+          label={t('progress.streak')}
+          value={`${formatCount(streakWeeks)} ${t('progress.wk')}`}
           extra={<StreakPlates weeks={streakWeeks} />}
         />
       </div>
@@ -422,13 +422,14 @@ function MuscleBalance({
   onOpenCoach: () => void
   empty: boolean
 }) {
+  const { t } = useLocale()
   const lagging = underBand(groups)
   const rows = [...groups].sort((a, b) => num(b.set_count) - num(a.set_count))
 
   return (
     <section>
       <div className="mb-2.5 flex items-baseline gap-2">
-        <h2 className="kicker flex-1">Weekly sets · target band</h2>
+        <h2 className="kicker flex-1">{t('progress.balance.title')}</h2>
         <span className="font-mono text-[11px] text-muted">
           {SET_BAND[0]}–{SET_BAND[1]}
         </span>
@@ -440,7 +441,7 @@ function MuscleBalance({
               information, and a screen that shows the target explains itself.
               What it never does is draw a fill that is not there. */}
           <BalanceRow label="—" sets={0} />
-          <p className="mt-2 text-sm text-muted">Log a workout to load the bar.</p>
+          <p className="mt-2 text-sm text-muted">{t('progress.balance.empty')}</p>
         </>
       ) : (
         <div className="flex flex-col gap-1.5">
@@ -454,25 +455,36 @@ function MuscleBalance({
         </div>
       )}
 
-      {!empty && lagging.length > 0 && (
-        <button
-          type="button"
-          onClick={onOpenCoach}
-          className="record-row mt-2.5 flex w-full items-center gap-2 rounded-[6px] px-3 py-2.5 text-start"
-        >
-          <span className="min-w-0 flex-1 text-[13px]">
-            <span className="font-mono text-[11px] text-accent">FOCUS</span>{' '}
-            <span className="text-text">
-              {lagging.slice(0, 2).join(' and ')}{' '}
-              {lagging.slice(0, 2).length === 1 ? 'sits' : 'sit'} under the band.
-            </span>{' '}
-            <span className="text-muted">The coach has a fix</span>
-          </span>
-          <span aria-hidden="true" className="shrink-0 text-accent">
-            ›
-          </span>
-        </button>
-      )}
+      {!empty &&
+        lagging.length > 0 &&
+        (() => {
+          const laggingTwo = lagging.slice(0, 2)
+          const joined = joinList(laggingTwo, t('progress.and'))
+          const verb =
+            laggingTwo.length === 1
+              ? t('progress.balance.verb.sits')
+              : t('progress.balance.verb.sit')
+          return (
+            <button
+              type="button"
+              onClick={onOpenCoach}
+              className="record-row mt-2.5 flex w-full items-center gap-2 rounded-[6px] px-3 py-2.5 text-start"
+            >
+              <span className="min-w-0 flex-1 text-[13px]">
+                <span className="font-mono text-[11px] text-accent">
+                  {t('progress.balance.focus')}
+                </span>{' '}
+                <span className="text-text">
+                  {joined} {verb} {t('progress.balance.under_band')}
+                </span>{' '}
+                <span className="text-muted">{t('progress.balance.coach_hint')}</span>
+              </span>
+              <span aria-hidden="true" className="shrink-0 text-accent">
+                ›
+              </span>
+            </button>
+          )
+        })()}
     </section>
   )
 }
@@ -535,6 +547,7 @@ function BalanceRow({ label, sets }: { label: string; sets: number }) {
  * quietly forgave.
  */
 function SessionFrequency({ weeks }: { weeks: WeekBucket[] }) {
+  const { t } = useLocale()
   const W = 320
   const H = 72
   const total = weeks.reduce((sum, w) => sum + w.sessions, 0)
@@ -549,8 +562,10 @@ function SessionFrequency({ weeks }: { weeks: WeekBucket[] }) {
   return (
     <section>
       <div className="mb-2.5 flex items-baseline gap-2">
-        <h2 className="kicker flex-1">Sessions · per week</h2>
-        <span className="tnum font-mono text-[11px] text-muted">{weeks.length} wk</span>
+        <h2 className="kicker flex-1">{t('progress.frequency.title')}</h2>
+        <span className="tnum font-mono text-[11px] text-muted">
+          {formatCount(weeks.length)} {t('progress.wk')}
+        </span>
       </div>
       <svg
         viewBox={`0 0 ${W} ${H}`}
@@ -563,8 +578,12 @@ function SessionFrequency({ weeks }: { weeks: WeekBucket[] }) {
         role="img"
         aria-label={
           total === 0
-            ? `Sessions per week, last ${weeks.length} weeks: nothing logged yet`
-            : `Sessions per week, last ${weeks.length} weeks: ${formatCount(total)} sessions, averaging ${average.toFixed(1)} a week`
+            ? t('progress.frequency.aria.empty', { weeks: String(weeks.length) })
+            : t('progress.frequency.aria.data', {
+                weeks: String(weeks.length),
+                count: formatCount(total),
+                avg: average.toFixed(1),
+              })
         }
       >
         {weeks.map((week, i) => (
@@ -606,8 +625,15 @@ function SessionFrequency({ weeks }: { weeks: WeekBucket[] }) {
       </svg>
       <p className="tnum mt-1 text-[11px] text-muted">
         {total === 0
-          ? 'One bar a week. The dashed line arrives with your average.'
-          : `avg ${average.toFixed(1)}/wk · ${formatCount(total)} ${total === 1 ? 'session' : 'sessions'} · dashed line is the average`}
+          ? t('progress.frequency.empty_caption')
+          : t('progress.frequency.caption', {
+              avg: average.toFixed(1),
+              count: formatCount(total),
+              sessions:
+                total === 1
+                  ? t('progress.frequency.session')
+                  : t('progress.frequency.sessions'),
+            })}
       </p>
     </section>
   )
@@ -638,21 +664,35 @@ function VolumeTrend({
   range: RangeKey
   onRange: (key: RangeKey) => void
 }) {
+  const { t } = useLocale()
   const max = Math.max(1, ...points.map((p) => p.volumeKg))
   const bucket = span.bucket === 'week' ? 'week' : 'month'
 
   return (
     <section>
-      <h2 className="kicker mb-2.5">Volume · {describeSpan(span)}</h2>
+      <h2 className="kicker mb-2.5">
+        {t('progress.volume.heading', { span: describeSpan(span) })}
+      </h2>
       <SeriesChart
         values={points.map((p) => p.volumeKg)}
-        ariaLabel={`Volume per ${bucket} over the ${describeSpan(span)}, peaking at ${formatVolumeWithUnit(max, unit)}`}
+        ariaLabel={t('progress.volume.aria', {
+          bucket: t(`progress.volume.bucket.${bucket}`),
+          span: describeSpan(span),
+          peak: formatVolumeWithUnit(max, unit),
+        })}
       />
       <p className="tnum mb-2.5 mt-1 text-[11px] text-muted">
-        one point per {bucket} · peak {formatVolume(max, unit)} · this {bucket}{' '}
-        {formatVolume(points.at(-1)?.volumeKg ?? 0, unit)}
+        {t('progress.volume.caption', {
+          bucket: t(`progress.volume.bucket.${bucket}`),
+          peak: formatVolume(max, unit),
+          current: formatVolume(points.at(-1)?.volumeKg ?? 0, unit),
+        })}
       </p>
-      <RangeChips value={range} onChange={onRange} label="Volume range" />
+      <RangeChips
+        value={range}
+        onChange={onRange}
+        label={t('progress.volume.range_label')}
+      />
     </section>
   )
 }
@@ -670,10 +710,10 @@ function VolumeTrend({
  * `both` is one set that beat the load and the estimate at once. It gets one
  * row and one label rather than two entries, because it was one set.
  */
-const RECORD_LABEL: Record<'weight' | 'e1rm' | 'both', string> = {
-  weight: 'heaviest',
-  e1rm: 'best est.',
-  both: 'heaviest · best est.',
+const RECORD_LABEL_KEY: Record<'weight' | 'e1rm' | 'both', string> = {
+  weight: 'progress.record.weight',
+  e1rm: 'progress.record.e1rm',
+  both: 'progress.record.both',
 }
 
 function Records({
@@ -685,9 +725,10 @@ function Records({
   unit: Unit
   onOpen: (exerciseId: string) => void
 }) {
+  const { t } = useLocale()
   return (
     <section>
-      <h2 className="kicker mb-2.5">Records</h2>
+      <h2 className="kicker mb-2.5">{t('progress.records.title')}</h2>
       <ul className="ring-edge bg-surface" style={{ borderRadius: 'var(--radius-md)' }}>
         {entries.map((entry) => (
           <li key={`${entry.exercise_id}-${entry.at}-${entry.kind}`}>
@@ -701,7 +742,7 @@ function Records({
                   {entry.name}
                 </span>
                 <span className="block truncate text-[11px] text-muted">
-                  {RECORD_LABEL[entry.kind]} · {formatRelativeDay(entry.at)}
+                  {t(RECORD_LABEL_KEY[entry.kind])} · {formatRelativeDay(entry.at)}
                 </span>
               </span>
               <span className="tnum shrink-0 text-2xl font-medium">
@@ -735,12 +776,13 @@ function Records({
  * than shouting.
  */
 /** "Squat, Bench and Overhead" — never "Squat and Bench and Overhead". */
-function joinList(items: string[]): string {
-  if (items.length <= 2) return items.join(' and ')
-  return `${items.slice(0, -1).join(', ')} and ${items.at(-1)}`
+function joinList(items: string[], conjunction = 'and'): string {
+  if (items.length <= 2) return items.join(` ${conjunction} `)
+  return `${items.slice(0, -1).join(', ')} ${conjunction} ${items.at(-1)}`
 }
 
 function AnchorLifts({ rows, unit }: { rows: AnchorRow[]; unit: Unit }) {
+  const { t } = useLocale()
   const scale = Math.max(
     1,
     ...rows.flatMap((r) => [r.measuredKg ?? 0, r.predictedKg ?? 0]),
@@ -757,8 +799,10 @@ function AnchorLifts({ rows, unit }: { rows: AnchorRow[]; unit: Unit }) {
   return (
     <section>
       <div className="mb-2.5 flex items-baseline gap-2">
-        <h2 className="kicker flex-1">Anchor lifts · vs predicted</h2>
-        <span className="font-mono text-[11px] text-muted">est. 1RM</span>
+        <h2 className="kicker flex-1">{t('progress.anchor.title')}</h2>
+        <span className="font-mono text-[11px] text-muted">
+          {t('progress.anchor.1rm')}
+        </span>
       </div>
 
       <div className="flex flex-col gap-1.5">
@@ -769,16 +813,25 @@ function AnchorLifts({ rows, unit }: { rows: AnchorRow[]; unit: Unit }) {
 
       <p className="mt-2 text-[11px] leading-relaxed text-muted">
         {measured.length === 0
-          ? 'Four lifts, one bar each. Log a deadlift, a squat, a bench and an overhead press and the bars fill.'
+          ? t('progress.anchor.empty')
           : !predicted
-            ? 'The tick is what your deadlift predicts each lift should be. Log a deadlift and the ticks appear.'
+            ? t('progress.anchor.no_predict')
             : behind.length > 0
-              ? `Ticks are predicted off your deadlift — squat 0.85, bench 0.75, overhead 0.45. ${joinList(
-                  behind.map((r) => r.label),
-                )} ${behind.length === 1 ? 'sits' : 'sit'} behind ${
-                  behind.length === 1 ? 'its' : 'their'
-                } tick. A guide, not a target.`
-              : 'Ticks are predicted off your deadlift — squat 0.85, bench 0.75, overhead 0.45. A guide, not a target.'}
+              ? t('progress.anchor.behind', {
+                  names: joinList(
+                    behind.map((r) => r.label),
+                    t('progress.and'),
+                  ),
+                  verb:
+                    behind.length === 1
+                      ? t('progress.anchor.verb.sits')
+                      : t('progress.anchor.verb.sit'),
+                  possessive:
+                    behind.length === 1
+                      ? t('progress.anchor.its')
+                      : t('progress.anchor.their'),
+                })
+              : t('progress.anchor.on_track')}
       </p>
     </section>
   )
@@ -871,17 +924,30 @@ function StrengthList({
   onRange: (key: RangeKey) => void
   onOpen: (exerciseId: string) => void
 }) {
+  const { t } = useLocale()
   const shown = rows.slice(0, STRENGTH_SHOWN)
-  const scope = range === 'ALL' ? '' : ` trained in ${describeRange(range)}`
+  const scope =
+    range === 'ALL' ? '' : t('progress.strength.scope', { range: describeRange(range) })
   const caption =
     rows.length > shown.length
-      ? `top ${shown.length} of ${rows.length} lifts${scope} · est. 1RM is your all-time best`
-      : `${rows.length} ${rows.length === 1 ? 'lift' : 'lifts'}${scope} · est. 1RM is your all-time best`
+      ? t('progress.strength.caption.many', {
+          shown: String(shown.length),
+          total: String(rows.length),
+          scope,
+        })
+      : t('progress.strength.caption.few', {
+          count: String(rows.length),
+          lifts:
+            rows.length === 1
+              ? t('progress.strength.lift')
+              : t('progress.strength.lifts'),
+          scope,
+        })
 
   return (
     <section>
       <div className="mb-2 flex items-baseline gap-2">
-        <h2 className="kicker flex-1">Strength · est. 1RM</h2>
+        <h2 className="kicker flex-1">{t('progress.strength.title')}</h2>
         {rows.length < total && (
           <span className="tnum font-mono text-[11px] text-muted">
             {rows.length}/{total}
@@ -891,7 +957,7 @@ function StrengthList({
 
       {rows.length === 0 && (
         <p className="py-2 text-sm text-muted">
-          Nothing trained in {describeRange(range)}. Widen the range to see older lifts.
+          {t('progress.strength.empty', { range: describeRange(range) })}
         </p>
       )}
 
@@ -931,7 +997,7 @@ function StrengthList({
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-sm font-medium">{row.name}</span>
                   <span className="block text-[11px] text-muted">
-                    last:{' '}
+                    {t('progress.strength.last')}{' '}
                     {row.last_trained_at ? formatRelativeDay(row.last_trained_at) : '—'}
                   </span>
                 </span>
@@ -950,7 +1016,11 @@ function StrengthList({
       {rows.length > 0 && <p className="mt-1.5 text-[11px] text-muted">{caption}</p>}
 
       <div className="mt-2.5">
-        <RangeChips value={range} onChange={onRange} label="Strength range" />
+        <RangeChips
+          value={range}
+          onChange={onRange}
+          label={t('progress.strength.range_label')}
+        />
       </div>
     </section>
   )

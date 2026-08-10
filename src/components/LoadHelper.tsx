@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { platesFor, describePlates, DEFAULT_BAR, BAR_WEIGHTS } from '../lib/plates'
 import { warmupRamp } from '../lib/warmup'
 import type { Unit } from '../lib/units'
+import { useLocale } from '../lib/locale-context'
 
 /**
  * Plate breakdown and warm-up ramp for the weight currently typed.
@@ -33,6 +34,7 @@ export function LoadHelper({
   loggedWeights?: number[]
   busy?: boolean
 }) {
+  const { t } = useLocale()
   const [open, setOpen] = useState(false)
   const [bar, setBar] = useState<number>(DEFAULT_BAR[unit])
 
@@ -56,7 +58,7 @@ export function LoadHelper({
         aria-expanded={open}
         className="flex h-12 w-full items-center gap-2 px-3 text-start"
       >
-        <span className="text-xs text-muted">Plates &amp; warm-up</span>
+        <span className="text-xs text-muted">{t('load.title')}</span>
         <span className="tnum ms-auto text-sm text-muted">
           {plates ? describePlates(plates) : `under the ${bar} ${unit} bar`}
         </span>
@@ -85,7 +87,7 @@ export function LoadHelper({
           </div>
 
           <div>
-            <p className="text-xs text-muted">Per side</p>
+            <p className="text-xs text-muted">{t('load.per_side')}</p>
             <p className="tnum text-2xl font-semibold">
               {plates ? describePlates(plates) : '—'}
             </p>
@@ -148,9 +150,7 @@ export function LoadHelper({
                 })}
               </ul>
             ) : (
-              <p className="text-sm text-muted">
-                Nothing to ramp through at this weight.
-              </p>
+              <p className="text-sm text-muted">{t('load.no_ramp')}</p>
             )}
           </div>
         </div>

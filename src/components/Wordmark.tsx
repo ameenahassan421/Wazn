@@ -7,6 +7,7 @@ import {
   MARK_W,
   SHAFT,
 } from './wordmark-paths'
+import { useLocale } from '../lib/locale-context'
 
 /** The Wazn mark: وزن composed as a barbell — "Loaded Ink".
  *
@@ -28,6 +29,7 @@ export function Wordmark({
   className?: string
   style?: CSSProperties
 }) {
+  const { t } = useLocale()
   return (
     <svg
       viewBox={`0 0 ${MARK_W} ${MARK_H}`}
@@ -35,7 +37,7 @@ export function Wordmark({
       className={className}
       style={{ width: 'auto', display: 'block', ...style }}
       role="img"
-      aria-label="Wazn"
+      aria-label={t('wordmark.label')}
     >
       <line
         x1={SHAFT.x0}

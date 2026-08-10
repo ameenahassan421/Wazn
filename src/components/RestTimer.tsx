@@ -1,6 +1,7 @@
 import { formatRest, REST_STEP_SECONDS } from '../lib/use-rest-timer'
 import type { RestTimer as Timer } from '../lib/use-rest-timer'
 import { describeRest } from '../lib/rest'
+import { useLocale } from '../lib/locale-context'
 
 /**
  * The countdown, shown inside the logging flow rather than over it.
@@ -24,6 +25,7 @@ export function RestTimerBar({
   defaultSeconds?: number
   onSaveDefault?: (seconds: number) => void
 }) {
+  const { t } = useLocale()
   if (timer.remaining === null) return null
 
   const done = timer.remaining === 0
@@ -83,7 +85,7 @@ export function RestTimerBar({
         }}
       />
       <div className="relative flex min-h-[50px] items-center gap-2 px-3 py-1">
-        <span className="kicker">{done ? 'Rest done' : 'Rest'}</span>
+        <span className="kicker">{done ? t('rest.done') : t('rest.title')}</span>
         <span
           className={`tnum text-[23px] font-medium ${done ? 'text-accent' : 'text-text'}`}
           role="timer"
@@ -114,7 +116,7 @@ export function RestTimerBar({
             onClick={timer.stop}
             className="btn-base btn-quiet h-12 px-2 text-sm"
           >
-            Skip
+            {t('rest.skip')}
           </button>
         </div>
       </div>
@@ -126,7 +128,9 @@ export function RestTimerBar({
             onClick={() => onSaveDefault(timer.total as number)}
             className="btn-base btn-ghost h-12 w-full justify-start px-3 text-[13px]"
           >
-            Keep {describeRest(timer.total as number)} as the rest for this lift
+            {t('rest.keep_default', {
+              duration: describeRest(timer.total as number),
+            })}
           </button>
         </div>
       )}

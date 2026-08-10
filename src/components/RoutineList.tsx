@@ -3,6 +3,7 @@ import type { Routine } from '../lib/types'
 import { dueRoutine } from '../lib/rotation'
 import type { RoutineWithRun } from '../lib/rotation'
 import { IconMore } from './icons'
+import { useLocale } from '../lib/locale-context'
 
 /**
  * Routines on the idle Log screen, above "Start empty workout".
@@ -41,6 +42,7 @@ export function RoutineList({
   onNew: () => void
   onGenerate: () => void
 }) {
+  const { t } = useLocale()
   const due = dueRoutine(routines)
   const [actionsFor, setActionsFor] = useState<string | null>(null)
   // Delete needs a second tap; the armed state relaxes on its own.
@@ -54,28 +56,25 @@ export function RoutineList({
   return (
     <section className="flex flex-col gap-2">
       <div className="flex items-center gap-2">
-        <h2 className="kicker flex-1">Routines</h2>
+        <h2 className="kicker flex-1">{t('routines.title')}</h2>
         <button
           type="button"
           onClick={onGenerate}
           className="btn-base btn-secondary h-12 px-4 text-sm"
         >
-          Generate
+          {t('routines.generate')}
         </button>
         <button
           type="button"
           onClick={onNew}
           className="btn-base btn-secondary h-12 px-4 text-sm"
         >
-          New
+          {t('routines.new')}
         </button>
       </div>
 
       {routines.length === 0 ? (
-        <p className="text-sm text-muted">
-          No routines yet. Build one and your usual session is two taps away — or let
-          Generate draft a week for you.
-        </p>
+        <p className="text-sm text-muted">{t('routines.empty')}</p>
       ) : (
         <ul className="flex flex-col gap-2">
           {routines.map((routine) => {
@@ -97,13 +96,15 @@ export function RoutineList({
                     }`}
                   >
                     <span className="truncate">
-                      {busy ? 'Starting…' : routine.name}
+                      {busy ? t('routines.starting') : routine.name}
                     </span>
                     {/* A label, not a second hero button: the accent carries
                         the meaning and "Start workout" below stays the only
                         filled control on the screen (§2.4). */}
                     {due?.id === routine.id && !busy && (
-                      <span className="kicker shrink-0 text-accent">Up next</span>
+                      <span className="kicker shrink-0 text-accent">
+                        {t('routines.up_next')}
+                      </span>
                     )}
                   </button>
                   <button
@@ -132,7 +133,7 @@ export function RoutineList({
                       disabled={busyId !== null}
                       className="btn-base btn-quiet h-12 flex-1 text-sm"
                     >
-                      Edit
+                      {t('routines.edit')}
                     </button>
                     <button
                       type="button"
@@ -143,7 +144,7 @@ export function RoutineList({
                       disabled={busyId !== null}
                       className="btn-base btn-quiet h-12 flex-1 text-sm"
                     >
-                      Duplicate
+                      {t('routines.duplicate')}
                     </button>
                     <button
                       type="button"
@@ -161,7 +162,9 @@ export function RoutineList({
                         confirmDelete === routine.id ? 'btn-primary' : 'btn-quiet'
                       }`}
                     >
-                      {confirmDelete === routine.id ? 'Delete?' : 'Delete'}
+                      {confirmDelete === routine.id
+                        ? t('routines.delete.confirm')
+                        : t('routines.delete')}
                     </button>
                   </div>
                 )}

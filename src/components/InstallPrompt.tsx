@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useLocale } from '../lib/locale-context'
 
 /**
  * "Add Wazn to your home screen", offered once, at a moment when it makes
@@ -55,6 +56,7 @@ function isIos(): boolean {
 }
 
 export function InstallPrompt({ earned }: { earned: boolean }) {
+  const { t } = useLocale()
   const [deferred, setDeferred] = useState<BeforeInstallPromptEvent | null>(null)
   const [hidden, setHidden] = useState(() => alreadyDismissed() || isStandalone())
 
@@ -94,11 +96,9 @@ export function InstallPrompt({ earned }: { earned: boolean }) {
       className="ring-edge bg-surface px-3 py-3"
       style={{ borderRadius: 'var(--radius-md)' }}
     >
-      <p className="kicker mb-1">Add to home screen</p>
+      <p className="kicker mb-1">{t('install.title')}</p>
       <p className="text-sm text-muted">
-        {isIos() && !deferred
-          ? 'Tap Share, then "Add to Home Screen". Wazn opens full screen and loads instantly.'
-          : 'Wazn opens full screen, loads instantly, and keeps your place mid-workout.'}
+        {isIos() && !deferred ? t('install.ios') : t('install.generic')}
       </p>
       <div className="mt-2.5 flex gap-2">
         {deferred && (
@@ -113,7 +113,7 @@ export function InstallPrompt({ earned }: { earned: boolean }) {
             }}
             className="btn-base btn-primary h-12 flex-1 px-4 text-sm"
           >
-            Install
+            {t('install.action')}
           </button>
         )}
         <button
@@ -121,7 +121,7 @@ export function InstallPrompt({ earned }: { earned: boolean }) {
           onClick={dismiss}
           className="btn-base btn-quiet h-12 px-4 text-sm"
         >
-          Not now
+          {t('install.dismiss')}
         </button>
       </div>
     </section>

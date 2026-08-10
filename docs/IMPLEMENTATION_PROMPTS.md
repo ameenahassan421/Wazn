@@ -19,16 +19,16 @@ stop-building line.** As of 2026-08-09 six people have accounts and **one logged
 a workout in the last seven days**. No amount of building moves that number.
 Invites and the email rate limit do.
 
-| #   | Work                        | Release     | Blocked on                                                      |
-| --- | --------------------------- | ----------- | --------------------------------------------------------------- |
-| 1   | Housekeeping (prompt below) | none        | nothing                                                         |
-| 2   | B3a + B3b                   | R6 Ask it   | **Ameen reversing the no-chat rule**, and 0019 applied (item 1) |
-| 3   | Stage 5 Arabic + RTL        | feeds R10   | nothing to build; the gate needs a native speaker               |
-| 4   | U6a Capacitor, then B6 push | R9 Native   | Ameen's Mac, $25 Play, $99 Apple                                |
-| 5   | B4                          | R7 Programs | nothing to build; the gate is a 4-week wear test                |
-| 6   | Stage 6 Pro and Paymob      | none        | ads half gated on retention vs the Stage 3 baseline             |
-| 7   | U5 + B5                     | R8 Crew     | **GATE 3 retention data. Deliberately last.**                   |
-| 8   | F2 Arabic SEO + Stage 7     | R10 Found   | Stage 5 strings, and a named Egypt contact                      |
+| #   | Work                                 | Release     | Blocked on                                                      |
+| --- | ------------------------------------ | ----------- | --------------------------------------------------------------- |
+| 1   | Housekeeping (prompt below)          | none        | nothing                                                         |
+| 2   | B3a + B3b                            | R6 Ask it   | **Ameen reversing the no-chat rule**, and 0019 applied (item 1) |
+| 3   | Stage 5 Arabic + RTL + locale toggle | feeds R10   | 0023 applied (it now carries locale); gate needs native speaker |
+| 4   | U6a Capacitor, then B6 push          | R9 Native   | Ameen's Mac, $25 Play, $99 Apple                                |
+| 5   | B4                                   | R7 Programs | nothing to build; the gate is a 4-week wear test                |
+| 6   | Stage 6 Pro and Paymob               | none        | ads half gated on retention vs the Stage 3 baseline             |
+| 7   | U5 + B5                              | R8 Crew     | **GATE 3 retention data. Deliberately last.**                   |
+| 8   | F2 Arabic SEO + Stage 7              | R10 Found   | Stage 5 strings, and a named Egypt contact                      |
 
 **Stage 5 before R9 on purpose**, against the plan's own numbering: Stage 4B's
 store listings want the Arabic strings and screenshots, so building the language

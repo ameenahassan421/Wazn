@@ -5,6 +5,7 @@ import { publishActiveWorkout } from '../lib/active-workout'
 import type { RoutineWithRun } from '../lib/rotation'
 import { lazyScreen } from '../lib/lazy-screen'
 import { useUnit } from '../lib/unit-context'
+import { useLocale } from '../lib/locale-context'
 import { formatWeight } from '../lib/units'
 import {
   formatDuration,
@@ -179,6 +180,19 @@ export function LogScreen({
   onOpenCoach: () => void
 }) {
   const { unit } = useUnit()
+  const { t } = useLocale()
+  /**
+   * `t` changes identity when the locale does. `load` and `drain` must NOT:
+   * an effect calls `load()` whenever its identity changes, so putting `t` in
+   * its deps meant toggling the language mid-workout re-ran the whole load —
+   * seven fetches and a state restore, on the one screen that must never lose
+   * a set. Read through a ref instead, assigned in an effect: the
+   * `react-hooks/refs` rule rejects a render-time ref write.
+   */
+  const tRef = useRef(t)
+  useEffect(() => {
+    tRef.current = t
+  }, [t])
   // Owned by the screen, not by SetEntry: leaving the exercise to pick the
   // next one must not cancel the rest you are still taking.
   const timer = useRestTimer()
@@ -567,8 +581,10 @@ export function LogScreen({
           setError(
             describeError(
               item.kind === 'set'
-                ? `Saving set ${item.setNumber}. It is on screen and will be retried`
-                : 'Saving your workout. It is safe on this device and will be retried',
+                ? tRef.current('log.queue.set_retry', {
+                    number: String(item.setNumber),
+                  })
+                : tRef.current('log.queue.workout_retry'),
               writeError,
             ),
           )
@@ -932,7 +948,10 @@ export function LogScreen({
     if (!answered) {
       if (await restoreFromCache()) return
       setError(
-        describeError('Loading your workout', new Error('the server did not answer')),
+        describeError(
+          tRef.current('log.error.load_workout'),
+          new Error('the server did not answer'),
+        ),
       )
       setLoading(false)
       return
@@ -946,7 +965,7 @@ export function LogScreen({
       // exists for. Fall back to what the device already knows, and only say
       // something went wrong if there is genuinely nothing to fall back to.
       if (classifyFailure(failure) === 'offline' && (await restoreFromCache())) return
-      setError(describeError('Loading your workout', failure))
+      setError(describeError(tRef.current('log.error.load_workout'), failure))
       setLoading(false)
       return
     }
@@ -991,7 +1010,7 @@ export function LogScreen({
         .eq('workout_id', active.id)
         .order('set_number')
       if (setsError) {
-        setError(describeError('Loading the sets in this workout', setsError))
+        setError(describeError(tRef.current('log.error.load_sets'), setsError))
       } else {
         restoredSets = (data ?? []) as WorkoutSet[]
         setSets(restoredSets)
@@ -1212,7 +1231,7 @@ export function LogScreen({
       // guess at the rest of the plan. Design v2.2: the overview is the spine.
       setView(detail && detail.exercises.length > 0 ? 'overview' : 'picker')
     } catch (err) {
-      setError(describeError('Starting that routine', err))
+      setError(describeError(t('log.error.start_routine'), err))
     } finally {
       setRoutineBusy(null)
     }
@@ -1236,7 +1255,7 @@ export function LogScreen({
           .update({ superset_group: group })
           .in('id', ids)
         if (updateError) {
-          setError(describeError('Grouping the superset', updateError))
+          setError(describeError(t('log.error.group_superset'), updateError))
           return
         }
         setSets((prev) =>
@@ -1273,7 +1292,7 @@ export function LogScreen({
     // Quiet when there is no network: the value is on screen, it is in the
     // checkpoint, and an error banner between sets is what §2.1 forbids.
     if (writeError && classifyFailure(writeError) !== 'offline') {
-      setError(describeError('Saving the rest time', writeError))
+      setError(describeError(t('log.error.save_rest'), writeError))
     }
   }
 
@@ -1287,7 +1306,7 @@ export function LogScreen({
       setRoutines(await listRoutines())
       setRoutineUpdate(null)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not update that routine.')
+      setError(err instanceof Error ? err.message : t('log.error.update_routine'))
     } finally {
       setSaving(false)
     }
@@ -1302,7 +1321,7 @@ export function LogScreen({
       setEditing(null)
       setView('overview')
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not save the routine.')
+      setError(err instanceof Error ? err.message : t('log.error.save_routine'))
     } finally {
       setSaving(false)
     }
@@ -1314,7 +1333,7 @@ export function LogScreen({
       setEditing(await loadRoutine(routine.id))
       setView('routine')
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not open that routine.')
+      setError(err instanceof Error ? err.message : t('log.error.open_routine'))
     }
   }
 
@@ -1324,7 +1343,7 @@ export function LogScreen({
       await duplicateRoutine(userId, routine.id)
       setRoutines(await listRoutines())
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not duplicate that routine.')
+      setError(err instanceof Error ? err.message : t('log.error.duplicate_routine'))
     } finally {
       setRoutineBusy(null)
     }
@@ -1336,7 +1355,7 @@ export function LogScreen({
       await deleteRoutine(routine.id)
       setRoutines(await listRoutines())
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not delete that routine.')
+      setError(err instanceof Error ? err.message : t('log.error.delete_routine'))
     } finally {
       setRoutineBusy(null)
     }
@@ -1450,7 +1469,7 @@ export function LogScreen({
         .delete()
         .in('id', ids)
       if (deleteError) {
-        setError(describeError('Removing the exercise', deleteError))
+        setError(describeError(t('log.error.remove_exercise'), deleteError))
         return
       }
       setSets((prev) => prev.filter((s) => !ids.includes(s.id)))
@@ -1490,7 +1509,7 @@ export function LogScreen({
             { onConflict: 'user_id,exercise_id' },
           )
     if (writeError && classifyFailure(writeError) !== 'offline') {
-      setError(describeError('Saving the note', writeError))
+      setError(describeError(t('log.error.save_note'), writeError))
     }
   }
 
@@ -1555,7 +1574,7 @@ export function LogScreen({
       .update({ superset_group: null })
       .in('id', ids)
     if (updateError) {
-      setError(describeError('Leaving the superset', updateError))
+      setError(describeError(t('log.error.leave_superset'), updateError))
       return
     }
     setSets((prev) =>
@@ -1651,9 +1670,13 @@ export function LogScreen({
       // Marking the workout ended now would put those sets beyond reach.
       setSaving(false)
       setError(
-        `${queueRef.current.length} ${
-          queueRef.current.length === 1 ? 'set is' : 'sets are'
-        } still saving. They are safe — stay on this screen a moment and press Finish again.`,
+        queueRef.current.length === 1
+          ? t('log.finish_still_saving.set', {
+              count: String(queueRef.current.length),
+            })
+          : t('log.finish_still_saving.sets', {
+              count: String(queueRef.current.length),
+            }),
       )
       return
     }
@@ -1666,7 +1689,7 @@ export function LogScreen({
 
       if (updateError) {
         setSaving(false)
-        setError(describeError('Finishing the workout', updateError))
+        setError(describeError(t('log.error.finish'), updateError))
         return
       }
     }
@@ -1713,7 +1736,7 @@ export function LogScreen({
     setSkipped(
       displayOrder
         .filter((id) => !sets.some((s) => s.exercise_id === id))
-        .map((id) => exercisesById.get(id)?.name ?? 'Exercise'),
+        .map((id) => exercisesById.get(id)?.name ?? t('log.exercise_fallback')),
     )
     setRoutineUpdate(routineDiff(workout))
     setSaving(false)
@@ -2007,14 +2030,16 @@ export function LogScreen({
   }, [lastSession, exercisesById, unit])
 
   if (loading) {
-    return <p className="py-10 text-sm text-muted">Loading…</p>
+    return <p className="py-10 text-sm text-muted">{t('log.loading')}</p>
   }
 
   // Ahead of the empty state and the welcome screen, because both of them are
   // where it is reached from and neither should draw underneath it.
   if (view === 'import') {
     return (
-      <Suspense fallback={<p className="py-10 text-sm text-muted">Loading…</p>}>
+      <Suspense
+        fallback={<p className="py-10 text-sm text-muted">{t('log.loading')}</p>}
+      >
         <HevyImport
           userId={userId}
           exercises={exercises}
@@ -2120,19 +2145,19 @@ export function LogScreen({
             disabled={saving}
             className="btn-base btn-hero press h-[62px] w-full text-[18px] disabled:opacity-45"
           >
-            {hasHistory ? 'Start workout' : 'Start your first workout'}
+            {hasHistory ? t('log.start') : t('log.start_first')}
           </button>
 
           {streak && streak.weeks > 0 && (
             <p className="mt-2.5 flex items-center gap-2 whitespace-nowrap text-[13px] text-muted">
               <StreakPlates weeks={streak.weeks} />
               <span>
-                <span className="tnum font-medium text-text">{streak.weeks}</span> week
-                streak ·{' '}
+                <span className="tnum font-medium text-text">{streak.weeks}</span>{' '}
+                {t('log.streak.week_streak')} ·{' '}
                 <span className="tnum font-medium text-text">
                   {streak.current_week_sessions}
                 </span>{' '}
-                this week
+                {t('log.streak.this_week')}
               </span>
             </p>
           )}
@@ -2166,7 +2191,7 @@ export function LogScreen({
             onClick={() => setView('import')}
             className="btn-base btn-secondary h-12 w-full text-sm"
           >
-            Coming from Hevy? Bring your history
+            {t('log.import')}
           </button>
         )}
 
@@ -2177,7 +2202,7 @@ export function LogScreen({
         {lastSummary.length > 0 && lastSession && (
           <section>
             <h2 className="kicker mb-2">
-              Last session · {formatRelativeDay(lastSession.startedAt)}
+              {t('log.last_session', { day: formatRelativeDay(lastSession.startedAt) })}
             </h2>
             <ul>
               {lastSummary.map(({ exercise, summary: text }, i) => (
@@ -2210,11 +2235,15 @@ export function LogScreen({
               aria-hidden="true"
               className="inline-block h-[7px] w-[7px] shrink-0 rounded-full bg-accent"
             />
-            <span className="truncate">{workout.name ?? 'Workout'} · in progress</span>
+            <span className="truncate">
+              {t('log.in_progress', {
+                name: workout.name ?? t('log.workout_fallback'),
+              })}
+            </span>
           </p>
           <p className="tnum text-xs text-muted">
             {formatDuration(workout.started_at, new Date().toISOString())} ·{' '}
-            {sets.length} {sets.length === 1 ? 'set' : 'sets'}
+            {sets.length} {sets.length === 1 ? t('log.set') : t('log.sets')}
           </p>
           {/* Under the duration, not over the board: the state of the network
               is context, and the board is the thing being lifted from. */}
@@ -2241,7 +2270,7 @@ export function LogScreen({
             confirmFinish ? 'btn-primary' : 'btn-secondary'
           }`}
         >
-          {confirmFinish ? 'Finish?' : 'Finish'}
+          {confirmFinish ? t('log.finish_confirm') : t('log.finish')}
         </button>
       </div>
 
@@ -2251,9 +2280,7 @@ export function LogScreen({
       {confirmFinish && (
         <div className="flex items-center gap-2">
           <p className="min-w-0 flex-1 text-[11px] text-muted">
-            {sets.length === 0
-              ? 'Nothing logged yet — finishing throws this one away.'
-              : 'Finish saves it. Discard deletes it and its sets.'}
+            {sets.length === 0 ? t('log.finish_hint_empty') : t('log.finish_hint')}
           </p>
           <button
             type="button"
@@ -2266,7 +2293,7 @@ export function LogScreen({
               confirmDiscard ? 'btn-primary' : 'btn-quiet'
             }`}
           >
-            {confirmDiscard ? 'Discard?' : 'Discard workout'}
+            {confirmDiscard ? t('log.discard_confirm') : t('log.discard')}
           </button>
         </div>
       )}
@@ -2334,9 +2361,7 @@ export function LogScreen({
       {view === 'overview' && (
         <>
           {blocks.length === 0 ? (
-            <p className="text-sm text-muted">
-              No exercises yet. Add one to put it on the board.
-            </p>
+            <p className="text-sm text-muted">{t('log.empty')}</p>
           ) : (
             <WorkoutOverview
               blocks={blocks}
@@ -2376,7 +2401,7 @@ export function LogScreen({
             onClick={() => setView('picker')}
             className="btn-base btn-secondary h-[54px] w-full text-[15px]"
           >
-            Add exercise
+            {t('log.add_exercise')}
           </button>
 
           {/* The timer lives here as well as in the focused view, because a
@@ -2481,16 +2506,17 @@ function SyncNote({
   pending: number
   cached?: boolean
 }) {
+  const { t } = useLocale()
   if (online && pending === 0 && !cached) return null
-  const sets = (n: number) => `${n} ${n === 1 ? 'set' : 'sets'}`
+  const sets = (n: number) => `${n} ${n === 1 ? t('log.set') : t('log.sets')}`
   const label =
     pending > 0
       ? online
-        ? `Saving ${sets(pending)}…`
-        : `Offline · ${sets(pending)} saved on this device`
+        ? t('log.sync.saving', { count: sets(pending) })
+        : t('log.sync.offline_pending', { count: sets(pending) })
       : !online
-        ? 'Offline · logging as normal'
-        : 'Offline · showing saved data'
+        ? t('log.sync.offline')
+        : t('log.sync.cached')
   return (
     <p className="tnum text-xs text-muted" aria-live="polite" data-testid="sync-note">
       {label}
@@ -2505,10 +2531,10 @@ function SyncNote({
  * showing it with the time it was true is what makes it useful in a basement.
  */
 function CachedNote({ savedAt }: { savedAt: number }) {
+  const { t } = useLocale()
   return (
     <p className="text-xs text-muted" aria-live="polite" data-testid="cached-note">
-      Offline · showing what this device last synced{' '}
-      <span className="tnum">{formatSyncedAt(savedAt)}</span>
+      {t('log.cache.prefix')} <span className="tnum">{formatSyncedAt(savedAt)}</span>
     </p>
   )
 }

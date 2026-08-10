@@ -5,6 +5,7 @@ import type { ImportPlan, PlannedWorkout } from '../lib/hevy-import'
 import { formatCount, formatWorkoutDate } from '../lib/format'
 import type { Exercise } from '../lib/types'
 import { deriveEquipment, deriveMuscleGroup } from '../lib/exercise-guess'
+import { useLocale } from '../lib/locale-context'
 
 /**
  * "Bring your history from Hevy" — offense plan §9-F1.
@@ -50,6 +51,7 @@ export function HevyImport({
   onImported: () => void
   onCancel: () => void
 }) {
+  const { t } = useLocale()
   const [phase, setPhase] = useState<Phase>('idle')
   const [plan, setPlan] = useState<ImportPlan | null>(null)
   const [fileName, setFileName] = useState<string | null>(null)
@@ -72,7 +74,7 @@ export function HevyImport({
       setPlan(next)
       setPhase('preview')
     } catch {
-      setError('That file could not be read from disk. Try exporting it again.')
+      setError(t('import.error.read'))
       setPhase('idle')
     }
   }
@@ -111,9 +113,7 @@ export function HevyImport({
         )
         .select('id, name')
       if (createError) {
-        setError(
-          describeError('Creating the exercises this app did not have', createError),
-        )
+        setError(describeError(t('import.error.create_exercises'), createError))
         setPhase('preview')
         return
       }
@@ -132,7 +132,7 @@ export function HevyImport({
     setProgress({ done: from, total: startPlan.workouts.length })
 
     for (let i = from; i < startPlan.workouts.length; i += 1) {
-      const failure = await writeWorkout(startPlan.workouts[i], userId, byName)
+      const failure = await writeWorkout(startPlan.workouts[i], userId, byName, t)
       if (failure) {
         setError(failure)
         setProgress({ done: i, total: startPlan.workouts.length })
@@ -179,16 +179,13 @@ export function HevyImport({
             className="ring-edge bg-surface px-3 py-3"
             style={{ borderRadius: 'var(--radius-md)' }}
           >
-            <p className="kicker">How to get the file</p>
+            <p className="kicker">{t('import.how')}</p>
             <ol className="mt-2 flex list-inside list-decimal flex-col gap-1 text-[13px] text-muted">
-              <li>Open Hevy and go to Profile → Settings.</li>
-              <li>Tap Export Data. Hevy emails you a .csv file.</li>
-              <li>Come back here and choose it.</li>
+              <li>{t('import.step1')}</li>
+              <li>{t('import.step2')}</li>
+              <li>{t('import.step3')}</li>
             </ol>
-            <p className="mt-2.5 text-[11px] text-muted">
-              The file is read on your phone and never uploaded anywhere. Only the
-              workouts you confirm are saved, to your account.
-            </p>
+            <p className="mt-2.5 text-[11px] text-muted">{t('import.privacy')}</p>
           </div>
 
           <input
@@ -204,7 +201,7 @@ export function HevyImport({
             disabled={phase === 'reading'}
             className="btn-base btn-hero press h-[60px] w-full text-[17px] disabled:opacity-45"
           >
-            {phase === 'reading' ? 'Reading…' : 'Choose your Hevy export'}
+            {phase === 'reading' ? t('import.reading') : t('import.choose')}
           </button>
           <button
             type="button"
@@ -293,6 +290,7 @@ function Preview({
   onConfirm: () => void
   onCancel: () => void
 }) {
+  const { t } = useLocale()
   const remaining = plan.workouts.length - alreadyDone
 
   if (plan.fatal) {
@@ -323,16 +321,16 @@ function Preview({
         style={{ borderRadius: 'var(--radius-md)' }}
       >
         <p className="kicker">
-          {resuming ? 'Left to bring across' : 'Found in that file'}
+          {resuming ? t('import.found.resuming') : t('import.found')}
         </p>
         <div className="mt-2 flex items-stretch">
-          <Figure value={formatCount(remaining)} label="Workouts" />
+          <Figure value={formatCount(remaining)} label={t('import.workouts')} />
           <span aria-hidden="true" className="w-px shrink-0 bg-[var(--divider)]" />
-          <Figure value={formatCount(plan.setCount)} label="Sets" />
+          <Figure value={formatCount(plan.setCount)} label={t('import.sets')} />
           <span aria-hidden="true" className="w-px shrink-0 bg-[var(--divider)]" />
           <Figure
             value={formatCount(plan.matched.length + plan.unmatched.length)}
-            label="Exercises"
+            label={t('import.exercises')}
           />
         </div>
         {plan.range && (
@@ -382,8 +380,8 @@ function Preview({
         className="btn-base btn-hero press h-[60px] w-full text-[17px]"
       >
         {resuming
-          ? `Carry on — ${formatCount(remaining)} to go`
-          : `Bring in ${formatCount(remaining)} workouts`}
+          ? t('import.resume', { count: formatCount(remaining) })
+          : t('import.start', { count: formatCount(remaining) })}
       </button>
       <button
         type="button"
@@ -416,6 +414,7 @@ async function writeWorkout(
   planned: PlannedWorkout,
   userId: string,
   exerciseIds: Map<string, string>,
+  t: (key: string, params?: Record<string, string>) => string,
 ): Promise<string | null> {
   const { data, error: workoutError } = await supabase
     .from('workouts')
@@ -429,7 +428,7 @@ async function writeWorkout(
     .single()
 
   if (workoutError || !data) {
-    return describeError('Creating an imported workout', workoutError)
+    return describeError(t('import.error.create_workout'), workoutError)
   }
   const workoutId = (data as { id: string }).id
 
@@ -463,7 +462,7 @@ async function writeWorkout(
   if (setsError) {
     // Roll the workout back so the boundary stays between whole sessions.
     await supabase.from('workouts').delete().eq('id', workoutId)
-    return describeError('Saving an imported workout’s sets', setsError)
+    return describeError(t('import.error.save_sets'), setsError)
   }
 
   return null

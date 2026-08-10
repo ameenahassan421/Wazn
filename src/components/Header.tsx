@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useUnit } from '../lib/unit-context'
+import { useLocale } from '../lib/locale-context'
 import { supabase } from '../lib/supabase'
 import { useBackLayer } from '../lib/use-back'
 import { useActiveWorkout } from '../lib/active-workout'
@@ -15,8 +16,15 @@ import { IconMore } from './icons'
  * where a thumb rests, tappable mid-workout, and paying rent on every screen
  * for something used a few times a year.
  */
-export function Header({ title }: { title?: string }) {
+/**
+ * `titleKey` is a catalogue key, not a rendered string. App sits ABOVE
+ * LocaleProvider, so a `t()` call up there resolves against the default
+ * context and returns the key itself — the title read "nav.history" on
+ * screen. Translating here, inside the provider, is what makes it correct.
+ */
+export function Header({ titleKey }: { titleKey?: string | null }) {
   const { unit, toggleUnit } = useUnit()
+  const { locale, setLocale, t } = useLocale()
   const [menuOpen, setMenuOpen] = useState(false)
   const [confirmDiscard, setConfirmDiscard] = useState(false)
   const active = useActiveWorkout()
@@ -28,6 +36,8 @@ export function Header({ title }: { title?: string }) {
   // pattern CLAUDE.md's state-handling section requires.
   if (!menuOpen && confirmDiscard) setConfirmDiscard(false)
 
+  const toggleLocale = () => setLocale(locale === 'en' ? 'ar' : 'en')
+
   return (
     <header className="header-band sticky top-0 z-20">
       <div
@@ -35,14 +45,25 @@ export function Header({ title }: { title?: string }) {
         style={{ paddingTop: 'max(env(safe-area-inset-top), 10px)' }}
       >
         <h1 className="flex items-center text-[17px] font-medium tracking-tight">
-          {title ?? <Wordmark height={34} className="text-text" />}
+          {titleKey ? t(titleKey) : <Wordmark height={34} className="text-text" />}
         </h1>
 
         <div className="ms-auto flex items-center">
           <button
             type="button"
+            onClick={toggleLocale}
+            aria-label={t('toggle.locale.name')}
+            className="flex h-12 items-center px-1"
+          >
+            <span className="btn-base btn-secondary tnum h-[34px] min-w-[52px] px-3 text-sm">
+              {t('toggle.locale.label')}
+            </span>
+          </button>
+
+          <button
+            type="button"
             onClick={toggleUnit}
-            aria-label={`Weight unit: ${unit}. Tap to switch.`}
+            aria-label={t('toggle.unit.name', { unit })}
             className="flex h-12 items-center px-1"
           >
             <span className="btn-base btn-secondary tnum h-[34px] min-w-[52px] px-3 text-sm">
@@ -54,7 +75,7 @@ export function Header({ title }: { title?: string }) {
             <button
               type="button"
               onClick={() => setMenuOpen((v) => !v)}
-              aria-label="Menu"
+              aria-label={t('header.menu.open')}
               aria-expanded={menuOpen}
               className="btn-base btn-quiet h-12 w-12"
             >
@@ -65,7 +86,7 @@ export function Header({ title }: { title?: string }) {
               <>
                 <button
                   type="button"
-                  aria-label="Close menu"
+                  aria-label={t('header.menu.close')}
                   onClick={() => setMenuOpen(false)}
                   className="fixed inset-0 z-30 cursor-default"
                 />
@@ -94,7 +115,9 @@ export function Header({ title }: { title?: string }) {
                         confirmDiscard ? 'text-accent' : ''
                       }`}
                     >
-                      {confirmDiscard ? 'Discard workout?' : 'Discard workout'}
+                      {confirmDiscard
+                        ? t('header.menu.discard.confirm')
+                        : t('header.menu.discard')}
                     </button>
                   )}
                   <button
@@ -106,7 +129,7 @@ export function Header({ title }: { title?: string }) {
                     }}
                     className="flex h-12 w-full items-center px-4 text-start text-sm"
                   >
-                    Sign out
+                    {t('header.menu.signout')}
                   </button>
                 </div>
               </>

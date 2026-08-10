@@ -4440,13 +4440,13 @@ its column allowlist, and cached client-side the same way the unit preference
 is. It survives a new device. The initial locale resolves in order: stored
 preference if set, region/browser signal, English as fallback. Setting `ar`
 flips `dir` on the root element and switches strings and exercise names; digits
-stay Latin per the numbering-system decision below. Setting `en` flips back.
+stay Latin per the numbering-system decision above. Setting `en` flips back.
 Display only, one stored preference, no data rewritten: the same shape as the
 weight unit toggle.
 
 **Consequences.** GATE 5 now covers both directions: the native speaker never
 involuntarily hits English on the Arabic path, AND the toggle round-trips
-(arabic reloads arabic, english reloads english, same result on a second
+(Arabic reloads Arabic, English reloads English, same result on a second
 device). The locale column is not in migration 0023 as written and needs either
 an edit to 0023 while it is still unapplied or a new migration at Stage 5; that
 is an open question in STATUS.
@@ -4488,3 +4488,92 @@ reads the value back and fails if the write was clamped rather than trusting a
 
 The ceiling above it is the provider's, not Supabase's: Resend's free plan is 100
 a day and 3,000 a month, so 30 an hour does not mean 720 a day.
+
+## 2026-08-09: Stage 5 locale, built — what landed and what is deliberately unfinished
+
+The picker decided earlier the same day is now implemented. `user_preferences`
+carries a `locale` column (`en` / `ar`, default `en`) with a third branch in
+`upsert_user_preference`; migration 0023 was edited in place because it is
+written but still unapplied, so there is no ledger to respect. `src/lib/i18n.ts`
+is a hand-rolled catalogue of **520 keys** with `t()` and `{param}`
+interpolation, no library and no `Intl`. `src/lib/locale-context.tsx` mirrors
+`UnitProvider`, resolves stored preference then `navigator.language` then
+English, and flips `dir`/`lang` on the root. The EN/AR toggle sits beside the
+lbs/kg toggle in the header, and again on the pre-auth surface because the
+header does not exist before sign-in and GATE 5 starts at onboarding.
+
+**Three bugs this work produced, all invisible to the test suite.** Worth
+recording because each passed lint, typecheck and the full suite while being
+wrong.
+
+1. `App.tsx` called `useLocale()` while mounting `LocaleProvider` in its own
+   return. The hook resolved against the default context, so the header title
+   rendered literally as `nav.history`. Fixed by passing the KEY to `Header`
+   and translating inside the provider. Rule: never call the hook in the
+   component that mounts the provider.
+2. `t` was added to the dependency arrays of `LogScreen`'s `load` and `drain`.
+   `t` changes identity with the locale and an effect calls `load()` on
+   identity change, so toggling language mid-workout re-ran the whole load —
+   seven fetches and a state restore, on the screen that must never lose a set.
+   Fixed with a `tRef`. Rule: `t` never goes in the deps of anything that
+   fetches, writes, subscribes, or restores state.
+3. The ref was first assigned during render, which `react-hooks/refs` rejects
+   as an error. It is assigned in an effect instead, in all four files that
+   need it.
+
+**The default context returns ENGLISH, not the key.** Echoing the key broke 26
+component tests that render a component on its own, and it would ship
+`entry.back` to a user if a provider were ever missing. Detection of a missing
+provider now lives in the tests that assert a locale _switch_, which only pass
+with a real provider above the component.
+
+**Deliberately unfinished, all of it flagged rather than faked:**
+
+- **Every Arabic value is machine-drafted.** GATE 5's native-speaker review is
+  not a formality here; it is the only thing standing between this and shipping
+  bad copy to Egypt.
+- **Plurals are two keys** (`.one` / `.other`) wherever English marks the noun.
+  Arabic has six plural categories. Two keys is a placeholder for a real
+  decision, not a solution.
+- **`ErrorBoundary` stays English.** It is the one class component in the
+  codebase, so it cannot call the hook, and threading locale into the crash
+  path would add failure modes to the code that runs when everything else has
+  already failed.
+- **Charts are not mirrored.** Time runs left to right under RTL; only labels
+  were translated, per the earlier decision on the calendar and trend SVGs.
+- **The toggle shows the current locale in Latin** (`EN` / `AR`), matching how
+  the unit toggle shows the current unit. Whether an Arabic UI should read
+  `ع` or `عربي` is a question for the same native speaker.
+
+## 2026-08-09: 0023 applied, with `locale` made nullable on the way in
+
+Applied to production after Ameen asked for it, and after four decisions he
+was given the choice on. The one that changed the file: **`locale` is nullable
+with no default**, not `not null default 'en'` as reviewed.
+
+The bug that forced it. `handle_new_user` inserts a preferences row for every
+new signup. With a non-null default that row says `'en'`, and `LocaleProvider`
+adopts a valid server locale on sign-in — so the first sign-in would overwrite
+whatever `navigator.language` had detected, permanently, before the user had
+expressed any preference at all. An Arabic phone in Cairo lands in English and
+the detection never runs again. NULL means "has never chosen", which is a
+different fact from "chose English", and the client's existing adopt condition
+(`=== 'en' || === 'ar'`) already ignores NULL, so no client change was needed.
+
+**No backfill.** The 7 existing users have no row. Backfilling would have made
+the server authoritative with `weight_unit` defaulting to `kg`, silently
+flipping anyone whose localStorage says `lbs` — real users with 153 logged
+workouts behind them. The RPC bootstraps a row on first write instead, so the
+preference each person already has survives.
+
+**Verified against `information_schema`, not the success flag**, per CLAUDE.md:
+table present, RLS on, 3 policies, 2 RPCs, 3 check constraints, trigger
+rewritten, 0 rows created, and 153 workouts / 7 profiles / 134 exercises
+untouched.
+
+**The ledger lies, and now demonstrably so.** It had 6 entries and knew about
+neither 0020, 0021 nor 0024, yet `exercises.archived_at` is present in
+production — 0024 is applied while this repo still says it is not. 0023 was
+applied through `apply_migration` so it at least records itself. The lesson is
+the one already in CLAUDE.md, now with a second proof: query
+`information_schema`, never the ledger and never a STATUS note.
