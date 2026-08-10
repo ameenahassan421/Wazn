@@ -4577,3 +4577,25 @@ production — 0024 is applied while this repo still says it is not. 0023 was
 applied through `apply_migration` so it at least records itself. The lesson is
 the one already in CLAUDE.md, now with a second proof: query
 `information_schema`, never the ledger and never a STATUS note.
+
+## 2026-08-09: Ameen waived GATE 5's native-speaker review
+
+GATE 5 says a native Arabic speaker completes onboarding through progress
+review before Stage 5 ships. Ameen approved the Arabic as it stands and told
+me to disregard the gate, so the machine-drafted copy ships to production
+without that review.
+
+Recording it because the gate is still written in `WAZN_PLAN.md` and a future
+session reading the plan would otherwise treat this as an unmet blocker, or
+worse, quietly re-add it. The waiver is Ameen's call to make and it is made.
+
+What that means in practice: every `ar` value in `src/lib/i18n.ts` is
+machine-drafted and now user-facing for anyone whose browser reports `ar-*`.
+The copy is not wrong-by-construction, but it has not been read by anyone who
+speaks the language. The catalogue is one file with English and Arabic side by
+side, so a review pass remains cheap whenever someone wants to do one — it
+just is not a precondition any more.
+
+The other Stage 5 limitations are unaffected by this waiver and still stand:
+plurals are two keys against Arabic's six categories, `ErrorBoundary` stays
+English, and charts are not mirrored.

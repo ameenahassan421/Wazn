@@ -315,6 +315,10 @@ the RPC and cached client-side the same way the unit preference is,
 so it survives a new device. This is display only, like the unit
 toggle: one stored preference, no data rewritten.
 
+**GATE 5 — WAIVED by Ameen 2026-08-09.** The review below was not done; the
+machine-drafted Arabic shipped without it. Kept here as the standard to meet
+whenever someone does read it, not as an open blocker. Original text:
+
 **GATE 5:** a native Arabic speaker completes onboarding → routine →
 logged workout → progress review without involuntarily hitting English
 on the Arabic path (region detection is not infallible, and the
