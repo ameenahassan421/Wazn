@@ -1,7 +1,29 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "rewrites": [
-    { "source": "/privacy", "destination": "/privacy.html" },
-    { "source": "/((?!assets/|.*\\..*).*)", "destination": "/index.html" }
+    {
+      "source": "/privacy",
+      "destination": "/privacy.html"
+    },
+    {
+      "source": "/exercises",
+      "destination": "/exercises.html"
+    },
+    {
+      "source": "/ar/exercises",
+      "destination": "/ar/exercises.html"
+    },
+    {
+      "source": "/exercises/((?!.*\\.).*)",
+      "destination": "/exercises/$1.html"
+    },
+    {
+      "source": "/ar/exercises/((?!.*\\.).*)",
+      "destination": "/ar/exercises/$1.html"
+    },
+    {
+      "source": "/((?!assets/|.*\\..*).*)",
+      "destination": "/index.html"
+    }
   ]
 }
