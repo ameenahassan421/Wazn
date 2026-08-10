@@ -56,6 +56,12 @@ export const ARABIC_EQUIPMENT: Record<string, string> = {
 // ---------------------------------------------------------------------------
 
 export const ARABIC_NAMES: Record<string, string> = {
+  // These three fell through to the muscle+equipment fallback, which produced
+  // "الصدر بار" ("chest bar") as a page title. Named properly, matching the
+  // flat-bench entry's style.
+  'Incline Bench Press (Barbell)': 'بنش برس مائل (بار)',
+  'Incline Bench Press (Dumbbell)': 'بنش برس مائل (دمبل)',
+  'Incline Bench Press (Smith Machine)': 'بنش برس مائل (سميث)',
   // --- Biceps ---
   '21s Bicep Curl': 'تجديع 21 للبايسيبس',
   'Bicep Curl (Barbell)': 'تجديع البايسيبس (بار)',

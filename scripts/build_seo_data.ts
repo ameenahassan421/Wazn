@@ -4,7 +4,8 @@
  *
  * Run manually (NOT wired to `npm run build`):
  *
- *   npx tsx scripts/build_seo_data.ts
+ *   npx tsx scripts/build_seo_data.ts             # snapshot from Supabase
+ *   npx tsx scripts/build_seo_data.ts --offline   # re-apply Arabic copy only
  *
  * Reads through supabase-js with SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY,
  * the same pair import_instructions.ts uses. It was written against the
@@ -21,7 +22,7 @@
  * Supabase at build time, so CI (which has no credentials) works fine
  * once the snapshot exists.
  */
-import { mkdirSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { createClient } from '@supabase/supabase-js'
 import { config as loadEnv } from 'dotenv'
@@ -86,7 +87,51 @@ interface OutputFile {
   exercises: ExerciseSnapshot[]
 }
 
+/**
+ * Re-apply the local Arabic layer to an existing snapshot, with no network.
+ *
+ * Names and instruction translations live in `arabic_exercises.ts` and
+ * `arabic_instructions.ts`, which are ordinary files in this repo. Requiring a
+ * Supabase round trip to pick up a copy edit meant a credential and a reachable
+ * host for a change that touches neither, and Arabic copy will be edited far
+ * more often than the exercise catalogue changes.
+ */
+function offlineMerge() {
+  const outPath = resolve('build/seo', 'exercises.json')
+  if (!existsSync(outPath)) {
+    console.error(
+      `${outPath} does not exist. Run without --offline once to snapshot the ` +
+        'catalogue from Supabase, then --offline picks up copy edits.',
+    )
+    process.exit(1)
+  }
+  const file = JSON.parse(readFileSync(outPath, 'utf8')) as OutputFile
+  let names = 0
+  let steps = 0
+  for (const ex of file.exercises) {
+    const nameAr = draftArabicName(ex.name_en, ex.muscle_group, ex.equipment)
+    if (nameAr !== ex.name_ar) names++
+    ex.name_ar = nameAr
+    ex.muscle_group_ar = ARABIC_MUSCLE_GROUPS[ex.muscle_group] ?? ex.muscle_group
+    ex.equipment_ar = ARABIC_EQUIPMENT[ex.equipment] ?? ex.equipment
+    const before = ex.instructions_ar?.length ?? 0
+    ex.instructions_ar = arabicInstructions(ex.name_en)
+    if ((ex.instructions_ar?.length ?? 0) !== before) steps++
+  }
+  const translated = file.exercises.filter((e) => e.instructions_ar).length
+  writeFileSync(outPath, JSON.stringify(file, null, 2) + '\n')
+  console.log(
+    `Offline merge: ${names} name(s) changed, ${steps} instruction set(s) changed. ` +
+      `${translated}/${file.exercises.length} now have Arabic instructions.`,
+  )
+}
+
 async function main() {
+  if (process.argv.includes('--offline')) {
+    offlineMerge()
+    return
+  }
+
   console.log('Querying Supabase for seeded exercises...')
 
   const { data, error } = await client()

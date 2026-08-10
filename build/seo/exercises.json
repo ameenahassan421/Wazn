@@ -12,7 +12,8 @@
       "muscle_group_ar": "البايسيبس",
       "equipment": "bodyweight",
       "equipment_ar": "وزن الجسم",
-      "instructions": []
+      "instructions": [],
+      "instructions_ar": null
     },
     {
       "id": "f0499e4c-be65-407c-8946-7c0e1730821e",
@@ -30,6 +31,14 @@
         "Go back to the initial position as you breathe in.",
         "Crunch to the opposite side as you cycle your legs and bring closer your left elbow to your right knee and exhale.",
         "Continue alternating in this manner until all of the recommended repetitions for each side have been completed."
+      ],
+      "instructions_ar": [
+        "استلقِ على الأرض بشكل مسطح مع الضغط بأسفل الظهر على الأرض. لهذا التمرين، ستحتاج إلى وضع يديك بجانب رأسك. احرص مع ذلك على ألا تجهد رقبتك أثناء الأداء. الآن ارفع كتفيك إلى وضع الكرنش.",
+        "ارفع ركبتيك حتى يصبحا عموديين على الأرض مع بقاء ساقيك موازيتين للأرض. سيكون هذا هو وضع البداية.",
+        "الآن، وبحركة متزامنة، مرّ ببطء بحركة بدّال دائرية مع ركل الساق اليمنى للأمام وسحب ركبة الساق اليسرى للداخل. قرّب مرفقك الأيمن من ركبتك اليسرى بأداء حركة الكرنش إلى الجانب أثناء الزفير.",
+        "عد إلى الوضع الأولي أثناء الشهيق.",
+        "أدِّ حركة الكرنش إلى الجانب المقابل مع تحريك ساقيك بحركة بدّال، وقرّب مرفقك الأيسر من ركبتك اليمنى مع الزفير.",
+        "واصل التبديل بين الجانبين بهذه الطريقة حتى تكتمل جميع التكرارات الموصى بها لكل جانب."
       ]
     },
     {
@@ -45,6 +54,11 @@
         "Lay down on a flat bench holding a dumbbell in each hand with the palms of the hands facing towards the ceiling. Tip: Your arms should be parallel to the floor and next to your thighs. To avoid injury, make sure that you keep your elbows slightly bent. This will be your starting position.",
         "Now move the dumbbells by creating a semi-circle as you displace them from the initial position to over the head. All of the movement should happen with the arms parallel to the floor at all times. Breathe in as you perform this portion of the movement.",
         "Reverse the movement to return the weight to the starting position as you exhale."
+      ],
+      "instructions_ar": [
+        "استلقِ على بنش مسطح مع إمساك دمبل في كل يد، بحيث تكون راحتا اليدين متجهتين نحو السقف. نصيحة: يجب أن يكون ذراعاك موازيين للأرض وبجانب فخذيك. لتجنب الإصابة، تأكد من إبقاء مرفقيك مثنيين قليلاً. سيكون هذا هو وضع البداية.",
+        "الآن حرّك الدمبلين بحركة نصف دائرية من الوضع الأولي إلى ما فوق الرأس. يجب أن تتم الحركة بأكملها مع بقاء الذراعين موازيين للأرض طوال الوقت. استنشق أثناء أداء هذا الجزء من الحركة.",
+        "اعكس الحركة لإعادة الوزن إلى وضع البداية أثناء الزفير."
       ]
     },
     {
@@ -56,7 +70,8 @@
       "muscle_group_ar": "الظهر",
       "equipment": "machine",
       "equipment_ar": "جهاز",
-      "instructions": []
+      "instructions": [],
+      "instructions_ar": null
     },
     {
       "id": "48e356b8-f493-46ce-959f-731756fb6594",
@@ -67,7 +82,8 @@
       "muscle_group_ar": "الظهر",
       "equipment": "bodyweight",
       "equipment_ar": "وزن الجسم",
-      "instructions": []
+      "instructions": [],
+      "instructions_ar": null
     },
     {
       "id": "10afd4cc-b397-4806-b458-9af5df4748f2",
@@ -85,6 +101,14 @@
         "Hold the contraction for a second and lower the barbell back down to the starting position while inhaling.",
         "Repeat for the recommended amount of repetitions.",
         "When finished, lower the barbell down to the squat rack or the floor by bending the knees. Tip: It is easiest to either pick it up from a squat rack or have a partner hand it to you."
+      ],
+      "instructions_ar": [
+        "ابدأ بالوقوف بشكل مستقيم مع إمساك بار خلف الألوية بذراعين ممدودتين، باستخدام قبضة علوية (راحتا اليدين متجهتان للخلف بعيداً عن الألوية)، مع إبقاء يديك متباعدتين بعرض الكتفين.",
+        "يجب أن تنظر إلى الأمام مباشرة بينما تكون قدميك متباعدتين بعرض الكتفين. هذا هو وضع البداية.",
+        "أثناء الزفير، ارفع البار ببطء إلى الأعلى بثني معصمك بحركة نصف دائرية نحو السقف. ملاحظة: يجب أن يكون معصمك هو الجزء الوحيد الذي يتحرك في هذا التمرين.",
+        "اثبت على الانقباض لثانية ثم أنزل البار إلى وضع البداية أثناء الشهيق.",
+        "كرر الحركة لعدد التكرارات الموصى به.",
+        "عند الانتهاء، أنزل البار إلى حامل السكوات أو الأرض بثني الركبتين. نصيحة: من الأسهل إما التقاط البار من حامل السكوات أو أن يناوله لك شريك التدريب."
       ]
     },
     {
@@ -103,6 +127,14 @@
         "Hold the contraction for a second and lower the barbell back down to the starting position while inhaling.",
         "Repeat for the recommended amount of repetitions.",
         "When finished, lower the barbell down to the squat rack or the floor by bending the knees. Tip: It is easiest to either pick it up from a squat rack or have a partner hand it to you."
+      ],
+      "instructions_ar": [
+        "ابدأ بالوقوف بشكل مستقيم مع إمساك بار خلف الألوية بذراعين ممدودتين، باستخدام قبضة علوية (راحتا اليدين متجهتان للخلف بعيداً عن الألوية)، مع إبقاء يديك متباعدتين بعرض الكتفين.",
+        "يجب أن تنظر إلى الأمام مباشرة بينما تكون قدميك متباعدتين بعرض الكتفين. هذا هو وضع البداية.",
+        "أثناء الزفير، ارفع البار ببطء إلى الأعلى بثني معصمك بحركة نصف دائرية نحو السقف. ملاحظة: يجب أن يكون معصمك هو الجزء الوحيد الذي يتحرك في هذا التمرين.",
+        "اثبت على الانقباض لثانية ثم أنزل البار إلى وضع البداية أثناء الشهيق.",
+        "كرر الحركة لعدد التكرارات الموصى به.",
+        "عند الانتهاء، أنزل البار إلى حامل السكوات أو الأرض بثني الركبتين. نصيحة: من الأسهل إما التقاط البار من حامل السكوات أو أن يناوله لك شريك التدريب."
       ]
     },
     {
@@ -119,6 +151,12 @@
         "Slowly lower your body as you inhale by bending at the elbows until you lower yourself far enough to where there is an angle slightly smaller than 90 degrees between the upper arm and the forearm. Tip: Keep the elbows as close as possible throughout the movement. Forearms should always be pointing down.",
         "Using your triceps to bring your torso up again, lift yourself back to the starting position.",
         "Repeat for the recommended amount of repetitions."
+      ],
+      "instructions_ar": [
+        "لهذا التمرين ستحتاج إلى وضع بنش خلف ظهرك. مع جعل البنش عمودياً على جسمك، وبينما تنظر بعيداً عنه، أمسك بحافة البنش بيدين ممدودتين بالكامل ومتباعدتين بعرض الكتفين. تمد الساقان إلى الأمام، وتكونان مثنيتين عند الخصر وعموديتين على جذعك. سيكون هذا هو وضع البداية.",
+        "أنزل جسمك ببطء أثناء الشهيق بثني المرفقين حتى تنزل بما يكفي لتكوين زاوية أصغر قليلاً من 90 درجة بين الذراع العلوي والساعد. نصيحة: أبقِ المرفقين قريبين من الجسم قدر الإمكان طوال الحركة. يجب أن تشير الساعدان إلى الأسفل دائماً.",
+        "باستخدام الترايسبس لرفع جذعك إلى الأعلى مرة أخرى، ادفع نفسك إلى وضع البداية.",
+        "كرر الحركة لعدد التكرارات الموصى به."
       ]
     },
     {
@@ -136,6 +174,13 @@
         "After a second pause, bring the bar back to the starting position as you breathe out and push the bar using your triceps muscles. Lock your arms in the contracted position, hold for a second and then start coming down slowly again. Tip: It should take at least twice as long to go down than to come up.",
         "Repeat the movement for the prescribed amount of repetitions.",
         "When you are done, place the bar back in the rack."
+      ],
+      "instructions_ar": [
+        "استلقِ على بنش مسطح. باستخدام قبضة ضيقة (بعرض الكتفين تقريباً)، ارفع البار من الحامل وأمسكه بشكل مستقيم فوقك مع فرد ذراعيك بالكامل. سيكون هذا هو وضع البداية.",
+        "أثناء الشهيق، انزل ببطء حتى تشعر بالبار يلمس منتصف صدرك. نصيحة: تأكد، على عكس البنش برس العادي، من إبقاء المرفقين قريبين من الجذع طوال الوقت لزيادة مشاركة الترايسبس إلى أقصى حد.",
+        "بعد توقف لثانية، أعد البار إلى وضع البداية أثناء الزفير وادفعه باستخدام عضلات الترايسبس. افرد ذراعيك بالكامل في وضع الانقباض، واثبت لثانية، ثم ابدأ بالنزول ببطء مرة أخرى. نصيحة: يجب أن يستغرق النزول ضعف مدة الصعود على الأقل.",
+        "كرر الحركة لعدد التكرارات المحدد.",
+        "عند الانتهاء، أعد البار إلى الحامل."
       ]
     },
     {
@@ -153,6 +198,13 @@
         "After a brief pause, push the bar back to the starting position as you breathe out. Focus on pushing the bar using your chest muscles. Lock your arms and squeeze your chest in the contracted position at the top of the motion, hold for a second and then start coming down slowly again. Tip: Ideally, lowering the weight should take about twice as long as raising it.",
         "Repeat the movement for the prescribed amount of repetitions.",
         "When you are done, place the bar back in the rack."
+      ],
+      "instructions_ar": [
+        "استلقِ على بنش مسطح. باستخدام قبضة متوسطة العرض (قبضة تُكوّن زاوية 90 درجة في منتصف الحركة بين الساعدين والذراعين العلويين)، ارفع البار من الحامل وأمسكه بشكل مستقيم فوقك مع فرد ذراعيك بالكامل. سيكون هذا هو وضع البداية.",
+        "من وضع البداية، استنشق وابدأ بالنزول ببطء حتى يلمس البار منتصف صدرك.",
+        "بعد توقف قصير، ادفع البار إلى وضع البداية أثناء الزفير. ركّز على دفع البار باستخدام عضلات الصدر. افرد ذراعيك بالكامل واضغط صدرك في وضع الانقباض في أعلى الحركة، واثبت لثانية، ثم ابدأ بالنزول ببطء مرة أخرى. نصيحة: من الأفضل أن يستغرق إنزال الوزن ضعف مدة رفعه تقريباً.",
+        "كرر الحركة لعدد التكرارات المحدد.",
+        "عند الانتهاء، أعد البار إلى الحامل."
       ]
     },
     {
@@ -170,6 +222,13 @@
         "After a brief pause, push the bar back to the starting position as you breathe out. Focus on pushing the bar using your chest muscles. Lock your arms and squeeze your chest in the contracted position at the top of the motion, hold for a second and then start coming down slowly again. Tip: Ideally, lowering the weight should take about twice as long as raising it.",
         "Repeat the movement for the prescribed amount of repetitions.",
         "When you are done, place the bar back in the rack."
+      ],
+      "instructions_ar": [
+        "استلقِ على بنش مسطح. باستخدام قبضة متوسطة العرض (قبضة تُكوّن زاوية 90 درجة في منتصف الحركة بين الساعدين والذراعين العلويين)، ارفع البار من الحامل وأمسكه بشكل مستقيم فوقك مع فرد ذراعيك بالكامل. سيكون هذا هو وضع البداية.",
+        "من وضع البداية، استنشق وابدأ بالنزول ببطء حتى يلمس البار منتصف صدرك.",
+        "بعد توقف قصير، ادفع البار إلى وضع البداية أثناء الزفير. ركّز على دفع البار باستخدام عضلات الصدر. افرد ذراعيك بالكامل واضغط صدرك في وضع الانقباض في أعلى الحركة، واثبت لثانية، ثم ابدأ بالنزول ببطء مرة أخرى. نصيحة: من الأفضل أن يستغرق إنزال الوزن ضعف مدة رفعه تقريباً.",
+        "كرر الحركة لعدد التكرارات المحدد.",
+        "عند الانتهاء، أعد البار إلى الحامل."
       ]
     },
     {
@@ -187,6 +246,13 @@
         "Once at shoulder width, rotate your wrists forward so that the palms of your hands are facing away from you. The dumbbells should be just to the sides of your chest, with your upper arm and forearm creating a 90 degree angle. Be sure to maintain full control of the dumbbells at all times. This will be your starting position.",
         "Then, as you breathe out, use your chest to push the dumbbells up. Lock your arms at the top of the lift and squeeze your chest, hold for a second and then begin coming down slowly. Tip: Ideally, lowering the weight should take about twice as long as raising it.",
         "Repeat the movement for the prescribed amount of repetitions of your training program."
+      ],
+      "instructions_ar": [
+        "استلقِ على بنش مسطح مع وضع دمبل في كل يد يستريح على أعلى فخذيك. ستكون راحتا اليدين متجهتين نحو بعضهما.",
+        "بعد ذلك، وبمساعدة فخذيك على رفع الدمبلين، ارفع الدمبلين واحداً تلو الآخر حتى تمسكهما أمامك بعرض الكتفين.",
+        "عند الوصول إلى عرض الكتفين، لفّ معصميك إلى الأمام بحيث تتجه راحتا اليدين بعيداً عنك. يجب أن يكون الدمبلان بجانب صدرك تماماً، مع تشكيل الذراع العلوي والساعد زاوية 90 درجة. تأكد من الحفاظ على السيطرة الكاملة على الدمبلين طوال الوقت. سيكون هذا هو وضع البداية.",
+        "بعد ذلك، أثناء الزفير، استخدم صدرك لدفع الدمبلين إلى الأعلى. افرد ذراعيك بالكامل في أعلى الرفعة واضغط صدرك، واثبت لثانية، ثم ابدأ بالنزول ببطء. نصيحة: من الأفضل أن يستغرق إنزال الوزن ضعف مدة رفعه تقريباً.",
+        "كرر الحركة لعدد التكرارات المحدد في برنامجك التدريبي."
       ]
     },
     {
@@ -203,6 +269,12 @@
         "Now, while keeping the torso stationary, breathe out and lift the barbell to you. Keep the elbows close to the body and only use the forearms to hold the weight. At the top contracted position, squeeze the back muscles and hold for a brief pause.",
         "Then inhale and slowly lower the barbell back to the starting position.",
         "Repeat for the recommended amount of repetitions."
+      ],
+      "instructions_ar": [
+        "أمسك البار بقبضة علوية (راحتا اليدين متجهتان للأسفل)، واثنِ ركبتيك قليلاً وملِ جذعك إلى الأمام بالانحناء عند الخصر، مع إبقاء الظهر مستقيماً حتى يصبح موازياً للأرض تقريباً. نصيحة: تأكد من إبقاء رأسك مرفوعاً. يجب أن يتدلى البار أمامك مباشرة بينما يتدلى ذراعاك عمودياً على الأرض وجذعك. هذا هو وضع البداية.",
+        "الآن، مع إبقاء الجذع ثابتاً، ازفر وارفع البار نحوك. أبقِ المرفقين قريبين من الجسم واستخدم الساعدين فقط لحمل الوزن. في وضع الانقباض الأعلى، اضغط عضلات الظهر واثبت لتوقف قصير.",
+        "ثم استنشق وأنزل البار ببطء إلى وضع البداية.",
+        "كرر الحركة لعدد التكرارات الموصى به."
       ]
     },
     {
@@ -220,6 +292,13 @@
         "Slowly begin to bring the dumbbell back to the starting position as your breathe in. Tip: Remember to twist the palms back to the starting position (facing your thighs) as you come down.",
         "Repeat the movement with the left hand. This equals one repetition.",
         "Continue alternating in this manner for the recommended amount of repetitions."
+      ],
+      "instructions_ar": [
+        "قف (مع جذع مستقيم) مع إمساك دمبل في كل يد بذراعين ممدودتين. يجب أن يكون المرفقان قريبين من الجذع، وراحتا اليدين متجهتين نحو فخذيك.",
+        "مع إبقاء الذراع العلوي ثابتاً، ثنِ الدمبل الأيمن لأعلى مع لفّ راحة اليد حتى تتجه إلى الأمام. عند هذه النقطة، واصل انقباض البايسيبس أثناء الزفير حتى ينقبض البايسيبس بالكامل ويصبح الدمبلان عند مستوى الكتفين. اثبت على وضع الانقباض لثانية مع الضغط على البايسيبس. نصيحة: يجب أن يتحرك الساعدان فقط.",
+        "ابدأ بإعادة الدمبل ببطء إلى وضع البداية أثناء الشهيق. نصيحة: تذكر أن تلفّ راحتي اليدين إلى وضع البداية (متجهتين نحو فخذيك) أثناء النزول.",
+        "كرر الحركة باليد اليسرى. هذا يعادل تكراراً واحداً.",
+        "واصل التبديل بهذه الطريقة لعدد التكرارات الموصى به."
       ]
     },
     {
@@ -236,6 +315,12 @@
         "While holding the upper arms stationary, curl the weights while contracting the biceps as you breathe out. Only the forearms should move. Continue the movement until your biceps are fully contracted and the bar is at shoulder level. Hold the contracted position for a second as you squeeze the muscle.",
         "Slowly begin to bring the curl bar back to starting position as your breathe in.",
         "Repeat for the recommended amount of repetitions."
+      ],
+      "instructions_ar": [
+        "قف مع جذع مستقيم مع إمساك بار تجديع كابل متصل ببكرة سفلية. أمسك بار الكابل بعرض الكتفين وأبقِ المرفقين قريبين من الجذع. يجب أن تكون راحتا اليدين متجهتين إلى الأعلى (قبضة سفلية). سيكون هذا هو وضع البداية.",
+        "مع إبقاء الذراعين العلويين ثابتين، ثنِ الوزن مع انقباض البايسيبس أثناء الزفير. يجب أن يتحرك الساعدان فقط. واصل الحركة حتى ينقبض البايسيبس بالكامل ويصبح البار عند مستوى الكتفين. اثبت على وضع الانقباض لثانية مع الضغط على العضلة.",
+        "ابدأ بإعادة بار التجديع ببطء إلى وضع البداية أثناء الشهيق.",
+        "كرر الحركة لعدد التكرارات الموصى به."
       ]
     },
     {
@@ -253,6 +338,13 @@
         "Slowly begin to bring the dumbbell back to the starting position as your breathe in. Tip: Remember to twist the palms back to the starting position (facing your thighs) as you come down.",
         "Repeat the movement with the left hand. This equals one repetition.",
         "Continue alternating in this manner for the recommended amount of repetitions."
+      ],
+      "instructions_ar": [
+        "قف (مع جذع مستقيم) مع إمساك دمبل في كل يد بذراعين ممدودتين. يجب أن يكون المرفقان قريبين من الجذع، وراحتا اليدين متجهتين نحو فخذيك.",
+        "مع إبقاء الذراع العلوي ثابتاً، ثنِ الدمبل الأيمن لأعلى مع لفّ راحة اليد حتى تتجه إلى الأمام. عند هذه النقطة، واصل انقباض البايسيبس أثناء الزفير حتى ينقبض البايسيبس بالكامل ويصبح الدمبلان عند مستوى الكتفين. اثبت على وضع الانقباض لثانية مع الضغط على البايسيبس. نصيحة: يجب أن يتحرك الساعدان فقط.",
+        "ابدأ بإعادة الدمبل ببطء إلى وضع البداية أثناء الشهيق. نصيحة: تذكر أن تلفّ راحتي اليدين إلى وضع البداية (متجهتين نحو فخذيك) أثناء النزول.",
+        "كرر الحركة باليد اليسرى. هذا يعادل تكراراً واحداً.",
+        "واصل التبديل بهذه الطريقة لعدد التكرارات الموصى به."
       ]
     },
     {
@@ -271,6 +363,14 @@
         "Go back to the initial position as you breathe in.",
         "Crunch to the opposite side as you cycle your legs and bring closer your left elbow to your right knee and exhale.",
         "Continue alternating in this manner until all of the recommended repetitions for each side have been completed."
+      ],
+      "instructions_ar": [
+        "استلقِ على الأرض بشكل مسطح مع الضغط بأسفل الظهر على الأرض. لهذا التمرين، ستحتاج إلى وضع يديك بجانب رأسك. احرص مع ذلك على ألا تجهد رقبتك أثناء الأداء. الآن ارفع كتفيك إلى وضع الكرنش.",
+        "ارفع ركبتيك حتى يصبحا عموديين على الأرض مع بقاء ساقيك موازيتين للأرض. سيكون هذا هو وضع البداية.",
+        "الآن، وبحركة متزامنة، مرّ ببطء بحركة بدّال دائرية مع ركل الساق اليمنى للأمام وسحب ركبة الساق اليسرى للداخل. قرّب مرفقك الأيمن من ركبتك اليسرى بأداء حركة الكرنش إلى الجانب أثناء الزفير.",
+        "عد إلى الوضع الأولي أثناء الشهيق.",
+        "أدِّ حركة الكرنش إلى الجانب المقابل مع تحريك ساقيك بحركة بدّال، وقرّب مرفقك الأيسر من ركبتك اليمنى مع الزفير.",
+        "واصل التبديل بين الجانبين بهذه الطريقة حتى تكتمل جميع التكرارات الموصى بها لكل جانب."
       ]
     },
     {
@@ -287,6 +387,12 @@
         "Hold a dumbbell in each hand, letting them hang at the sides. This will be your starting position.",
         "Begin by descending, flexing your knee and hip to lower your body down. Maintain good posture througout the movement. Keep the front knee in line with the foot as you perform the exercise.",
         "At the bottom of the movement, drive through the heel to extend the knee and hip to return to the starting position."
+      ],
+      "instructions_ar": [
+        "اتخذ وضعية وقفة متدرجة مع رفع القدم الخلفية وتقديم القدم الأمامية إلى الأمام.",
+        "أمسك دمبل في كل يد واتركهما يتدليان بجانب جسمك. سيكون هذا هو وضع البداية.",
+        "ابدأ بالنزول بثني الركبة والورك لخفض جسمك. حافظ على وضعية جيدة طوال الحركة. أبقِ الركبة الأمامية بمحاذاة القدم أثناء أداء التمرين.",
+        "في أسفل الحركة، ادفع من الكعب لتمديد الركبة والورك والعودة إلى وضع البداية."
       ]
     },
     {
@@ -305,6 +411,14 @@
         "With the hips stationary, flex the waist as you contract the abs so that the elbows travel towards the middle of the thighs. Exhale as you perform this portion of the movement and hold the contraction for a second.",
         "Slowly return to the starting position as you inhale. Tip: Make sure that you keep constant tension on the abs throughout the movement. Also, do not choose a weight so heavy that the lower back handles the brunt of the work.",
         "Repeat for the recommended amount of repetitions."
+      ],
+      "instructions_ar": [
+        "اركع تحت بكرة عالية مزودة بمشبك حبل.",
+        "أمسك مشبك حبل الكابل وأنزل الحبل حتى توضع يديك بجانب وجهك.",
+        "اثنِ وركك قليلاً واترك الوزن لتمديد أسفل الظهر إلى الخلف. سيكون هذا هو وضع البداية.",
+        "مع إبقاء الورك ثابتاً، اثنِ الخصر مع انقباض العضلات البطنية حتى يتجه المرفقان نحو منتصف الفخذين. ازفر أثناء أداء هذا الجزء من الحركة واثبت على الانقباض لثانية.",
+        "عد إلى وضع البداية ببطء أثناء الشهيق. نصيحة: تأكد من الحفاظ على توتر مستمر على العضلات البطنية طوال الحركة. كذلك، لا تختار وزناً ثقيلاً بحيث يتحمل أسفل الظهر الجزء الأكبر من العمل.",
+        "كرر الحركة لعدد التكرارات الموصى به."
       ]
     },
     {
@@ -316,7 +430,8 @@
       "muscle_group_ar": "الصدر",
       "equipment": "bodyweight",
       "equipment_ar": "وزن الجسم",
-      "instructions": []
+      "instructions": [],
+      "instructions_ar": null
     },
     {
       "id": "23ed8cf2-7ef3-42e5-9e99-db7fba9b53a4",
@@ -332,6 +447,12 @@
         "Select an appropriate weight, and grasp the handles. This will be your starting position.",
         "Straighten the legs by extending the knees, just barely lifting the weight from the stack. Your ankle should be fully flexed, toes pointing up. Execute the movement by pressing downward through the balls of your feet as far as possible.",
         "After a brief pause, reverse the motion and repeat."
+      ],
+      "instructions_ar": [
+        "اضبط المقعد بحيث تكون ساقاك مثنيتين قليلاً فقط في وضع البداية. يجب أن تكون أطراف أقدامك ثابتة على اللوحة.",
+        "اختر وزناً مناسباً وأمسك المقبضين. سيكون هذا هو وضع البداية.",
+        "افرد ساقيك بتمديد الركبتين مع رفع الوزن من المكدس قليلاً فقط. يجب أن يكون كاحلك مثنياً بالكامل وأصابع قدمك متجهة إلى الأعلى. نفّذ الحركة بالضغط نحو الأسفل من خلال أطراف قدميك بأقصى مدى.",
+        "بعد توقف قصير، اعكس الحركة وكررها."
       ]
     },
     {
@@ -348,6 +469,12 @@
         "While breathing in, lower yourself slowly with your torso leaning forward around 30 degrees or so and your elbows flared out slightly until you feel a slight stretch in the chest.",
         "Once you feel the stretch, use your chest to bring your body back to the starting position as you breathe out. Tip: Remember to squeeze the chest at the top of the movement for a second.",
         "Repeat the movement for the prescribed amount of repetitions."
+      ],
+      "instructions_ar": [
+        "لهذا التمرين ستحتاج إلى قضبان متوازية. للوصول إلى وضع البداية، ثبّت جسمك فوق القضبان بذراعين ممدودتين بالكامل.",
+        "أثناء الشهيق، أنزل نفسك ببطء مع ميلان جذعك إلى الأمام بنحو 30 درجة تقريباً وانفتاح مرفقيك قليلاً حتى تشعر بشد خفيف في الصدر.",
+        "بمجرد الشعور بالشد، استخدم صدرك لإعادة جسمك إلى وضع البداية أثناء الزفير. نصيحة: تذكر الضغط على الصدر في أعلى الحركة لثانية.",
+        "كرر الحركة لعدد التكرارات المحدد."
       ]
     },
     {
@@ -359,7 +486,8 @@
       "muscle_group_ar": "الصدر",
       "equipment": "dumbbell",
       "equipment_ar": "دمبل",
-      "instructions": []
+      "instructions": [],
+      "instructions_ar": null
     },
     {
       "id": "9a6a382b-dbf7-4d91-a010-5f13bf9e73ab",
@@ -376,6 +504,13 @@
         "Push the handles together slowly as you squeeze your chest in the middle. Breathe out during this part of the motion and hold the contraction for a second.",
         "Return back to the starting position slowly as you inhale until your chest muscles are fully stretched.",
         "Repeat for the recommended amount of repetitions."
+      ],
+      "instructions_ar": [
+        "اجلس على الجهاز مع ظهرك مسطحاً على المسند.",
+        "أمسك المقبضين. نصيحة: يجب أن يكون ذراعاك العلويان موازيين للأرض؛ اضبط الجهاز وفقاً لذلك. سيكون هذا هو وضع البداية.",
+        "ادفع المقبضين ببطء نحو بعضهما مع الضغط على الصدر في المنتصف. ازفر أثناء هذا الجزء من الحركة واثبت على الانقباض لثانية.",
+        "عد إلى وضع البداية ببطء أثناء الشهيق حتى تعود عضلات الصدر إلى وضع التمدد الكامل.",
+        "كرر الحركة لعدد التكرارات الموصى به."
       ]
     },
     {
@@ -392,6 +527,12 @@
         "Your chest and head should be up and your shoulder blades retracted. This will be your starting position.",
         "Press the handles forward by extending through the elbow.",
         "After a brief pause at the top, return the weight just above the start position, keeping tension on the muscles by not returning the weight to the stops until the set is complete."
+      ],
+      "instructions_ar": [
+        "ضع وزناً مناسباً على المسامير واضبط المقعد بحسب طولك. يجب أن يكون المقبضان بالقرب من أسفل أو منتصف عضلات الصدر في بداية الحركة.",
+        "يجب أن يكون صدرك ورأسك مرفوعين وعظمتا لوحي الكتف منسحبتين إلى الخلف. سيكون هذا هو وضع البداية.",
+        "ادفع المقبضين إلى الأمام بتمديد المرفقين.",
+        "بعد توقف قصير في الأعلى، أعد الوزن إلى ما فوق وضع البداية، مع الحفاظ على التوتر في العضلات بعدم إرجاع الوزن إلى نقاط التوقف حتى تكتمل المجموعة."
       ]
     },
     {
@@ -408,6 +549,12 @@
         "Take a dumbbell in each hand with a neutral grip, beginning with the arms straight. This will be your starting position.",
         "Retract the shoulder blades and flex the elbows to row the dumbbells to your side.",
         "Pause at the top of the motion, and then return to the starting position."
+      ],
+      "instructions_ar": [
+        "باستخدام قبضة محايدة، استند إلى بنش مائل.",
+        "أمسك دمبل في كل يد بقبضة محايدة، مع بدء الحركة بذراعين مستقيمتين. سيكون هذا هو وضع البداية.",
+        "اسحب عظمتي لوحي الكتف إلى الخلف واثنِ المرفقين لسحب الدمبلين إلى جانبك.",
+        "توقف لحظة في أعلى الحركة، ثم عد إلى وضع البداية."
       ]
     },
     {
@@ -419,7 +566,8 @@
       "muscle_group_ar": "الظهر",
       "equipment": "machine",
       "equipment_ar": "جهاز",
-      "instructions": []
+      "instructions": [],
+      "instructions_ar": null
     },
     {
       "id": "dbf24ae4-d9df-4688-b927-548dd1084766",
@@ -436,6 +584,13 @@
         "As you breathe out, pull your torso up until your head is around the level of the pull-up bar. Concentrate on using the biceps muscles in order to perform the movement. Keep the elbows close to your body. Tip: The upper torso should remain stationary as it moves through space and only the arms should move. The forearms should do no other work other than hold the bar.",
         "After a second of squeezing the biceps in the contracted position, slowly lower your torso back to the starting position; when your arms are fully extended. Breathe in as you perform this portion of the movement.",
         "Repeat this motion for the prescribed amount of repetitions."
+      ],
+      "instructions_ar": [
+        "أمسك بار الشد العلوي براحتي اليدين متجهتين نحو جذعك وبقبضة أضيق من عرض الكتفين.",
+        "بينما يكون ذراعاك مفرودين أمامك تمسكان بالبار بعرض القبضة المختار، حافظ على جذعك مستقيماً قدر الإمكان مع تكوين قوس في أسفل ظهرك وإخراج صدرك إلى الأمام. هذا هو وضع البداية. نصيحة: الحفاظ على الجذع مستقيماً قدر الإمكان يزيد تحفيز البايسيبس إلى أقصى حد مع تقليل مشاركة الظهر.",
+        "أثناء الزفير، اسحب جذعك إلى الأعلى حتى يصل رأسك إلى مستوى بار الشد العلوي تقريباً. ركّز على استخدام عضلات البايسيبس لأداء الحركة. أبقِ المرفقين قريبين من جسمك. نصيحة: يجب أن يبقى الجذع العلوي ثابتاً أثناء حركته في الفضاء، ولا يجب أن يتحرك إلا الذراعان. الساعدان لا يقومان بأي عمل آخر سوى الإمساك بالبار.",
+        "بعد ثانية من الضغط على البايسيبس في وضع الانقباض، أنزل جذعك ببطء إلى وضع البداية؛ عند فرد ذراعيك بالكامل. استنشق أثناء أداء هذا الجزء من الحركة.",
+        "كرر هذه الحركة لعدد التكرارات المحدد."
       ]
     },
     {
@@ -453,6 +608,13 @@
         "While holding the upper arm stationary, curl the weights forward while contracting the biceps as you breathe out. Only the forearms should move. Continue the movement until your biceps are fully contracted and the dumbbells are at shoulder level. Tip: At the top of the movement make sure that the little finger of your arm is higher than your thumb. This guarantees a good contraction. Hold the contracted position for a second as you squeeze the biceps.",
         "Slowly begin to bring the dumbbells back to starting position as your breathe in. Caution: Avoid swinging motions at any time.",
         "Repeat for the recommended amount of repetitions. Then repeat the movement with the left arm."
+      ],
+      "instructions_ar": [
+        "اجلس على بنش مسطح مع دمبل واحد أمامك بين ساقيك. يجب أن تكون ساقاك متباعدتين مع ثني الركبتين ووضع القدمين على الأرض.",
+        "استخدم ذراعك اليمنى لرفع الدمبل. ضع الجزء الخلفي من ذراعك العلوي الأيمن على أعلى الفخذ الداخلي الأيمن. لفّ راحة يدك حتى تتجه إلى الأمام بعيداً عن الفخذ. نصيحة: يجب أن تكون ذراعك مفرودة والدمبل فوق الأرض. سيكون هذا هو وضع البداية.",
+        "مع إبقاء الذراع العلوي ثابتاً، ثنِ الدمبل إلى الأمام مع انقباض البايسيبس أثناء الزفير. يجب أن يتحرك الساعدان فقط. واصل الحركة حتى ينقبض البايسيبس بالكامل ويصبح الدمبل عند مستوى الكتفين. نصيحة: في أعلى الحركة تأكد من أن الإصبع الصغير لذراعك أعلى من إبهامك. هذا يضمن انقباضاً جيداً. اثبت على وضع الانقباض لثانية مع الضغط على البايسيبس.",
+        "ابدأ بإعادة الدمبل ببطء إلى وضع البداية أثناء الشهيق. تحذير: تجنب الحركات الهزّية في أي وقت.",
+        "كرر الحركة لعدد التكرارات الموصى به. ثم كرر الحركة باليد اليسرى."
       ]
     },
     {
@@ -471,6 +633,14 @@
         "Continue to push down as hard as you can with your lower back as you contract your abdominals and exhale. Your shoulders should come up off the floor only about four inches, and your lower back should remain on the floor. At the top of the movement, contract your abdominals hard and keep the contraction for a second. Tip: Focus on slow, controlled movement - don't cheat yourself by using momentum.",
         "After the one second contraction, begin to come down slowly again to the starting position as you inhale.",
         "Repeat for the recommended amount of repetitions."
+      ],
+      "instructions_ar": [
+        "استلقِ على ظهرك بشكل مسطح مع وضع قدميك على الأرض بشكل مسطح، أو على بنش مع ثني الركبتين بزاوية 90 درجة. إذا كانت قدميك على بنش، ضعهما بمسافة 3 إلى 4 بوصات من بعضهما ووجّه أصابع قدميك إلى الداخل حتى تلامس.",
+        "الآن ضع يديك برفق على جانبي رأسك مع إبقاء المرفقين إلى الداخل. نصيحة: لا تقفل أصابعك خلف رأسك.",
+        "مع الضغط بأسفل الظهر على الأرض لعزل عضلات البطن بشكل أفضل، ابدأ برفع كتفيك عن الأرض.",
+        "واصل الضغط بأقصى حد بأسفل ظهرك أثناء انقباض عضلات البطن والزفير. يجب أن ترتفع كتفيك عن الأرض بمسافة 4 بوصات فقط، ويجب أن يبقى أسفل ظهرك على الأرض. في أعلى الحركة، اضغط عضلات البطن بقوة واحبس الانقباض لثانية. نصيحة: ركّز على حركة بطيئة ومتحكّم بها، ولا تغشّ نفسك باستخدام الزخم.",
+        "بعد انقباض ثانية واحدة، ابدأ بالنزول ببطء مرة أخرى إلى وضع البداية أثناء الشهيق.",
+        "كرر الحركة لعدد التكرارات الموصى به."
       ]
     },
     {
@@ -489,6 +659,14 @@
         "Continue to push down as hard as you can with your lower back as you contract your abdominals and exhale. Your shoulders should come up off the floor only about four inches, and your lower back should remain on the floor. At the top of the movement, contract your abdominals hard and keep the contraction for a second. Tip: Focus on slow, controlled movement - don't cheat yourself by using momentum.",
         "After the one second contraction, begin to come down slowly again to the starting position as you inhale.",
         "Repeat for the recommended amount of repetitions."
+      ],
+      "instructions_ar": [
+        "استلقِ على ظهرك بشكل مسطح مع وضع قدميك على الأرض بشكل مسطح، أو على بنش مع ثني الركبتين بزاوية 90 درجة. إذا كانت قدميك على بنش، ضعهما بمسافة 3 إلى 4 بوصات من بعضهما ووجّه أصابع قدميك إلى الداخل حتى تلامس.",
+        "الآن ضع يديك برفق على جانبي رأسك مع إبقاء المرفقين إلى الداخل. نصيحة: لا تقفل أصابعك خلف رأسك.",
+        "مع الضغط بأسفل الظهر على الأرض لعزل عضلات البطن بشكل أفضل، ابدأ برفع كتفيك عن الأرض.",
+        "واصل الضغط بأقصى حد بأسفل ظهرك أثناء انقباض عضلات البطن والزفير. يجب أن ترتفع كتفيك عن الأرض بمسافة 4 بوصات فقط، ويجب أن يبقى أسفل ظهرك على الأرض. في أعلى الحركة، اضغط عضلات البطن بقوة واحبس الانقباض لثانية. نصيحة: ركّز على حركة بطيئة ومتحكّم بها، ولا تغشّ نفسك باستخدام الزخم.",
+        "بعد انقباض ثانية واحدة، ابدأ بالنزول ببطء مرة أخرى إلى وضع البداية أثناء الشهيق.",
+        "كرر الحركة لعدد التكرارات الموصى به."
       ]
     },
     {
@@ -507,6 +685,14 @@
         "Continue to push down as hard as you can with your lower back as you contract your abdominals and exhale. Your shoulders should come up off the floor only about four inches, and your lower back should remain on the floor. At the top of the movement, contract your abdominals hard and keep the contraction for a second. Tip: Focus on slow, controlled movement - don't cheat yourself by using momentum.",
         "After the one second contraction, begin to come down slowly again to the starting position as you inhale.",
         "Repeat for the recommended amount of repetitions."
+      ],
+      "instructions_ar": [
+        "استلقِ على ظهرك بشكل مسطح مع وضع قدميك على الأرض بشكل مسطح، أو على بنش مع ثني الركبتين بزاوية 90 درجة. إذا كانت قدميك على بنش، ضعهما بمسافة 3 إلى 4 بوصات من بعضهما ووجّه أصابع قدميك إلى الداخل حتى تلامس.",
+        "الآن ضع يديك برفق على جانبي رأسك مع إبقاء المرفقين إلى الداخل. نصيحة: لا تقفل أصابعك خلف رأسك.",
+        "مع الضغط بأسفل الظهر على الأرض لعزل عضلات البطن بشكل أفضل، ابدأ برفع كتفيك عن الأرض.",
+        "واصل الضغط بأقصى حد بأسفل ظهرك أثناء انقباض عضلات البطن والزفير. يجب أن ترتفع كتفيك عن الأرض بمسافة 4 بوصات فقط، ويجب أن يبقى أسفل ظهرك على الأرض. في أعلى الحركة، اضغط عضلات البطن بقوة واحبس الانقباض لثانية. نصيحة: ركّز على حركة بطيئة ومتحكّم بها، ولا تغشّ نفسك باستخدام الزخم.",
+        "بعد انقباض ثانية واحدة، ابدأ بالنزول ببطء مرة أخرى إلى وضع البداية أثناء الشهيق.",
+        "كرر الحركة لعدد التكرارات الموصى به."
       ]
     },
     {
@@ -524,6 +710,13 @@
         "While holding the bar, start the lift by pushing with your legs while simultaneously getting your torso to the upright position as you breathe out. In the upright position, stick your chest out and contract the back by bringing the shoulder blades back. Think of how the soldiers in the military look when they are in standing in attention.",
         "Go back to the starting position by bending at the knees while simultaneously leaning the torso forward at the waist while keeping the back straight. When the weights on the bar touch the floor you are back at the starting position and ready to perform another repetition.",
         "Perform the amount of repetitions prescribed in the program."
+      ],
+      "instructions_ar": [
+        "قف أمام بار محمّل بالأوزان.",
+        "مع الحفاظ على الظهر مستقيماً قدر الإمكان، اثنِ ركبتيك وملِ إلى الأمام وأمسك البار بقبضة متوسطة العرض (بعرض الكتفين) علوية. سيكون هذا هو وضع البداية للتمرين. نصيحة: إذا كان من الصعب الإمساك بالبار بهذه القبضة، بدّل قبضتك أو استخدم أحزمة المعصم.",
+        "أثناء الإمساك بالبار، ابدأ الرفعة بالدفع بساقيك مع رفع جذعك إلى الوضع العمودي في الوقت نفسه أثناء الزفير. في الوضع العمودي، أخرج صدرك وانقبض في الظهر بسحب عظمتي لوحي الكتف إلى الخلف. تخيّل كيف يبدو الجنود عندما يقفون في وضع الاستعداد.",
+        "عد إلى وضع البداية بثني الركبتين مع ميلان الجذع إلى الأمام عند الخصر مع الحفاظ على الظهر مستقيماً. عندما تلمس الأوزان الأرض، تعود إلى وضع البداية وتكون مستعداً لتكرار آخر.",
+        "نفّذ عدد التكرارات المحدد في البرنامج."
       ]
     },
     {
@@ -540,6 +733,12 @@
         "With your feet and your grip set, take a big breath and then lower your hips and flex the knees until your shins contact the bar. Look forward with your head, keep your chest up and your back arched, and begin driving through the heels to move the weight upward.",
         "After the bar passes the knees, aggressively pull the bar back, pulling your shoulder blades together as you drive your hips forward into the bar.",
         "Lower the bar by bending at the hips and guiding it to the floor."
+      ],
+      "instructions_ar": [
+        "اقترب من البار بحيث يكون متوسطاً فوق قدميك. يجب أن تكون قدميك بعرض الورك تقريباً. اثنِ عند الورك للإمساك بالبار بعرض الكتفين، مع السماح لعظمتي لوحي الكتف بالانتباج. عادةً، تستخدم القبضة العلوية والسفلية معاً.",
+        "بعد تثبيت قدميك وقبضتك، خذ نفساً عميقاً ثم أنزل وركك واثنِ ركبتيك حتى تلامس ساقاك البار. انظر إلى الأمام مع إبقاء رأسك مرفوعاً وصدرك مرتفعاً وظهرك مقوّساً، وابدأ بالدفع من الكعبين لرفع الوزن إلى الأعلى.",
+        "بعد أن يتجاوز البار الركبتين، اسحب البار إلى الخلف بقوة مع ضم عظمتي لوحي الكتف معاً وأنت تدفع وركك إلى الأمام نحو البار.",
+        "أنزل البار بالثني عند الورك وتوجيهه نحو الأرض."
       ]
     },
     {
@@ -558,6 +757,14 @@
         "Continue to push down as hard as you can with your lower back as you contract your abdominals and exhale. Your shoulders should come up off the bench only about four inches, and your lower back should remain on the bench. At the top of the movement, contract your abdominals hard and keep the contraction for a second. Tip: Focus on slow, controlled movement - don't cheat yourself by using momentum.",
         "After the one second contraction, begin to come down slowly again to the starting position as you inhale.",
         "Repeat for the recommended amount of repetitions."
+      ],
+      "instructions_ar": [
+        "ثبّت ساقيك في نهاية البنش المنخفض واستلقِ.",
+        "الآن ضع يديك برفق على جانبي رأسك مع إبقاء المرفقين إلى الداخل. نصيحة: لا تقفل أصابعك خلف رأسك.",
+        "مع الضغط بأسفل ظهرك على البنش لعزل عضلات البطن بشكل أفضل، ابدأ برفع كتفيك عن البنش.",
+        "واصل الضغط بأقصى حد بأسفل ظهرك أثناء انقباض عضلات البطن والزفير. يجب أن ترتفع كتفيك عن البنش بمسافة 4 بوصات فقط، ويجب أن يبقى أسفل ظهرك على البنش. في أعلى الحركة، اضغط عضلات البطن بقوة واحبس الانقباض لثانية. نصيحة: ركّز على حركة بطيئة ومتحكّم بها، ولا تغشّ نفسك باستخدام الزخم.",
+        "بعد انقباض ثانية واحدة، ابدأ بالنزول ببطء مرة أخرى إلى وضع البداية أثناء الشهيق.",
+        "كرر الحركة لعدد التكرارات الموصى به."
       ]
     },
     {
@@ -574,6 +781,12 @@
         "Take a dumbbell in each hand with a neutral grip, beginning with the arms straight. This will be your starting position.",
         "Retract the shoulder blades and flex the elbows to row the dumbbells to your side.",
         "Pause at the top of the motion, and then return to the starting position."
+      ],
+      "instructions_ar": [
+        "باستخدام قبضة محايدة، استند إلى بنش مائل.",
+        "أمسك دمبل في كل يد بقبضة محايدة، مع بدء الحركة بذراعين مستقيمتين. سيكون هذا هو وضع البداية.",
+        "اسحب عظمتي لوحي الكتف إلى الخلف واثنِ المرفقين لسحب الدمبلين إلى جانبك.",
+        "توقف لحظة في أعلى الحركة، ثم عد إلى وضع البداية."
       ]
     },
     {
@@ -585,7 +798,8 @@
       "muscle_group_ar": "الصدر",
       "equipment": "bodyweight",
       "equipment_ar": "وزن الجسم",
-      "instructions": []
+      "instructions": [],
+      "instructions_ar": null
     },
     {
       "id": "1d4d847f-054c-445a-8485-98041c4068fb",
@@ -599,6 +813,10 @@
       "instructions": [
         "To begin, step onto the elliptical and select the desired option from the menu. Most ellipticals have a manual setting, or you can select a program to run. Typically, you can enter your age and weight to estimate the amount of calories burned during exercise. Elevation can be adjusted to change the intensity of the workout.",
         "The handles can be used to monitor your heart rate to help you stay at an appropriate intensity."
+      ],
+      "instructions_ar": [
+        "للبدء، اصعد على الجهاز البيضاوي واختر الخيار المطلوب من القائمة. معظم الأجهزة البيضاوية تحتوي على إعداد يدوي، أو يمكنك اختيار برنامج للتشغيل. عادةً، يمكنك إدخال عمرك ووزنك لتقدير عدد السعرات الحرارية المحروقة أثناء التمرين. يمكن ضبط ميلان الجهاز لتغيير شدة التمرين.",
+        "يمكن استخدام المقبضين لمراقبة معدل ضربات القلب لمساعدتك على البقاء في شدة مناسبة."
       ]
     },
     {
@@ -616,6 +834,13 @@
         "Continue to raise the weight until your biceps are fully contracted and the bar is at shoulder level. Hold the top contracted position for a moment and squeeze the biceps.",
         "Then inhale and slowly lower the bar back to the starting position.",
         "Repeat for the recommended amount of repetitions."
+      ],
+      "instructions_ar": [
+        "قف بشكل مستقيم مع إمساك بار تجديع EZ من المقبض الخارجي العريض. يجب أن تكون راحتا اليدين متجهتين إلى الأمام ومائلتين قليلاً إلى الداخل بسبب شكل البار. أبقِ مرفقيك قريبين من جذعك. سيكون هذا هو وضع البداية.",
+        "الآن، مع إبقاء ذراعيك العلويين ثابتين، ازفر وثنِ الوزن إلى الأمام مع انقباض البايسيبس. ركّز على تحريك ساعديك فقط.",
+        "واصل رفع الوزن حتى ينقبض البايسيبس بالكامل ويصبح البار عند مستوى الكتفين. اثبت على وضع الانقباض الأعلى لحظة واضغط البايسيبس.",
+        "ثم استنشق وأنزل البار ببطء إلى وضع البداية.",
+        "كرر الحركة لعدد التكرارات الموصى به."
       ]
     },
     {
@@ -629,6 +854,9 @@
       "equipment_ar": "وزن الجسم",
       "instructions": [
         "Facing a high pulley with a rope or dual handles attached, pull the weight directly towards your face, separating your hands as you do so. Keep your upper arms parallel to the ground."
+      ],
+      "instructions_ar": [
+        "مواجهاً بكرة عالية مزودة بحبل أو مقبضين مزدوجين، اسحب الوزن مباشرة نحو وجهك مع تباعد يديك أثناء السحب. أبقِ ذراعيك العلويين موازيين للأرض."
       ]
     },
     {
@@ -646,6 +874,13 @@
         "While maintaining the torso stationary (no swinging), lift the left arm to the front with a slight bend on the elbow and the palms of the hand always faces down. Continue to go up until you arm is slightly above parallel to the floor. Exhale as you execute this portion of the movement and pause for a second at the top.",
         "Now as you inhale lower the arm back down slowly to the starting position.",
         "Once all of the recommended amount of repetitions have been performed for this arm, switch arms and perform the exercise with the right one."
+      ],
+      "instructions_ar": [
+        "اختر الوزن على جهاز بكرة سفلية وأمسك بمقبض الكابل المفرد المتصل بالبكرة السفلية بيدك اليسرى.",
+        "أدر ظهرك إلى البكرة ومدّ ذراعك إلى الأسفل مع إبقاء مقبض الكابل أمام فخذيك بذراع ممدودة، بحيث تكون راحة اليد متجهة نحو فخذيك. سيكون هذا هو وضع البداية.",
+        "مع الحفاظ على الجذع ثابتاً (بدون تمايل)، ارفع الذراع اليسرى إلى الأمام مع ثني خفيف في المرفق وراحة اليد متجهة إلى الأسفل دائماً. واصل الصعود حتى يصبح ذراعك أعلى قليلاً من المستوى الموازي للأرض. ازفر أثناء تنفيذ هذا الجزء من الحركة وتوقف لثانية في الأعلى.",
+        "الآن، أثناء الشهيق، أنزل الذراع ببطء إلى وضع البداية.",
+        "بمجرد أداء جميع التكرارات الموصى بها لهذا الذراع، بدّل الذراعين ونفّذ التمرين باليد اليمنى."
       ]
     },
     {
@@ -662,6 +897,12 @@
         "While maintaining the torso stationary (no swinging), lift the left dumbbell to the front with a slight bend on the elbow and the palms of the hands always facing down. Continue to go up until you arm is slightly above parallel to the floor. Exhale as you execute this portion of the movement and pause for a second at the top. Inhale after the second pause.",
         "Now lower the dumbbell back down slowly to the starting position as you simultaneously lift the right dumbbell.",
         "Continue alternating in this fashion until all of the recommended amount of repetitions have been performed for each arm."
+      ],
+      "instructions_ar": [
+        "اختر دمبلين وقف مع جذع مستقيم والدمبلين أمام فخذيك بذراعين ممدودتين بحيث تكون راحتا اليدين متجهتين نحو فخذيك. سيكون هذا هو وضع البداية.",
+        "مع الحفاظ على الجذع ثابتاً (بدون تمايل)، ارفع الدمبل الأيسر إلى الأمام مع ثني خفيف في المرفق وراحتي اليدين متجهتين إلى الأسفل دائماً. واصل الصعود حتى يصبح ذراعك أعلى قليلاً من المستوى الموازي للأرض. ازفر أثناء تنفيذ هذا الجزء من الحركة وتوقف لثانية في الأعلى. استنشق بعد التوقف.",
+        "الآن أنزل الدمبل الأيسر ببطء إلى وضع البداية مع رفع الدمبل الأيمن في الوقت نفسه.",
+        "واصل التبديل بهذه الطريقة حتى يتم أداء جميع التكرارات الموصى بها لكل ذراع."
       ]
     },
     {
@@ -678,6 +919,12 @@
         "Lift the bar off the rack by first pushing with your legs and at the same time straightening your torso. Step away from the rack and position your legs using a shoulder width medium stance with the toes slightly pointed out. Keep your head and elbows up at all times. This will be your starting position.",
         "Bend at the knees, sitting down between your legs. Continue down until your hamstrings are on your calves. Keep your knees aligned with your feet by consciously using your abductors to push your knees out as you squat.",
         "Begin to raise the bar as you exhale by pushing the floor mainly with the heel or middle of your foot as you straighten the legs again and return to the starting position."
+      ],
+      "instructions_ar": [
+        "للبدء، ضع البار أولاً على حامل أقل قليلاً من مستوى الكتفين. أرح البار على أعلى العضلة الدالية، مدفوعاً نحو الترقوة، ولمساً خفيفاً للحلق. يجب أن تكون يداك بقبضة خفيفة، بحيث تلامس البار بأصابعك فقط للمساعدة في تثبيته في مكانه.",
+        "ارفع البار عن الحامل بالدفع بساقيك أولاً واستقامة جذعك في الوقت نفسه. ابتعد عن الحامل واجعل ساقيك في وقفة متوسطة بعرض الكتفين مع توجيه أصابع القدم قليلاً إلى الخارج. أبقِ رأسك ومرفقيك مرفوعين طوال الوقت. سيكون هذا هو وضع البداية.",
+        "اثنِ الركبتين جالساً بين ساقيك. واصل النزول حتى تلامس أوتار الركبة ساقيك. أبقِ ركبتيك بمحاذاة قدميك باستخدام عضلات التبعيد لدفع ركبتيك إلى الخارج بوعي أثناء السكوات.",
+        "ابدأ برفع البار أثناء الزفير بدفع الأرض بكعب القدم أو منتصفها بشكل أساسي مع فرد الساقين مرة أخرى والعودة إلى وضع البداية."
       ]
     },
     {
@@ -696,6 +943,14 @@
         "Begin to slowly lower the bar by bending the knees and sitting back with your hips as you maintain a straight posture with the head up. Continue down until your hamstrings are on your calves. Inhale as you perform this portion of the movement.",
         "Begin to raise the bar as you exhale by pushing the floor with the heel or middle of your foot as you straighten the legs and extend the hips to go back to the starting position.",
         "Repeat for the recommended amount of repetitions."
+      ],
+      "instructions_ar": [
+        "من الأفضل أداء هذا التمرين داخل حامل سكوات لأسباب تتعلق بالسلامة. للبدء، ضع البار أولاً على الحامل أعلى مستوى الكتفين بقليل. بمجرد اختيار الارتفاع الصحيح وتحميل البار، قف تحته وضع الجزء الخلفي من كتفيك (أسفل الرقبة قليلاً) عليه.",
+        "أمسك البار بكلتا يديك على كل جانب وارفعه عن الحامل بالدفع بساقيك أولاً واستقامة جذعك في الوقت نفسه.",
+        "ابتعد عن الحامل واجعل ساقيك في وقفة متوسطة بعرض الكتفين مع توجيه أصابع القدم قليلاً إلى الخارج. أبقِ رأسك مرفوعاً طوال الوقت وحافظ على استقامة ظهرك. سيكون هذا هو وضع البداية.",
+        "ابدأ بإنزال البار ببطء بثني الركبتين والجلوس للخلف بوركيك مع الحفاظ على وضعية مستقيمة ورأس مرفوع. واصل النزول حتى تلامس أوتار الركبة ساقيك. استنشق أثناء أداء هذا الجزء من الحركة.",
+        "ابدأ برفع البار أثناء الزفير بدفع الأرض بالكعب أو منتصف القدم مع فرد الساقين وتمديد الوركين للعودة إلى وضع البداية.",
+        "كرر الحركة لعدد التكرارات الموصى به."
       ]
     },
     {
@@ -712,6 +967,12 @@
         "Raise one leg off of the ground, pulling the knee to your chest. This will be your starting position.",
         "Execute the movement by driving through the heel, extending your hip upward and raising your glutes off of the ground.",
         "Extend as far as possible, pause and then return to the starting position."
+      ],
+      "instructions_ar": [
+        "استلقِ على الأرض مع وضع قدميك بشكل مسطح والركبتين مثنيتين.",
+        "ارفع ساقاً واحدة عن الأرض مع سحب الركبة نحو صدرك. سيكون هذا هو وضع البداية.",
+        "نفّذ الحركة بالدفع من الكعب، وتمديد وركك إلى الأعلى ورفع ألويةك عن الأرض.",
+        "مدّ إلى أقصى حد ممكن، وتوقف قليلاً ثم عد إلى وضع البداية."
       ]
     },
     {
@@ -728,6 +989,12 @@
         "This will be your starting position. Lower yourself under control until your knees are almost completely straight.",
         "Remaining in control, raise yourself back up to the starting position.",
         "If you are unable to complete a rep, use a band, a partner, or push off of a box to aid in completing a repetition."
+      ],
+      "instructions_ar": [
+        "باستخدام مسند ساقي جهاز سحب اللات أو مقعد التجديع، اتخذ وضعاً يكون فيه كاحلاك تحت المساند وركبتاك على المقعد ووجهك بعيداً عن الجهاز. يجب أن تكون منتصباً وتحافظ على وضعية جيدة.",
+        "سيكون هذا هو وضع البداية. أنزل نفسك بتحكم حتى تصبح ركبتاك مستقيمتين بالكامل تقريباً.",
+        "مع بقائك متحكماً، ارفع نفسك إلى وضع البداية.",
+        "إذا لم تستطع إكمال تكرار، استخدم شريطاً مطاطياً أو شريكاً أو ادفع من صندوق للمساعدة في إكمال التكرار."
       ]
     },
     {
@@ -746,6 +1013,14 @@
         "Slowly begin to bring the dumbbells back to starting position as your breathe in.",
         "Repeat the movement with the left hand. This equals one repetition.",
         "Continue alternating in this manner for the recommended amount of repetitions."
+      ],
+      "instructions_ar": [
+        "قف مع جذع مستقيم ودمبل في كل يد بذراعين ممدودتين. يجب أن يكون المرفقان قريبين من الجذع.",
+        "يجب أن تكون راحتا اليدين متجهتين نحو جذعك. سيكون هذا هو وضع البداية.",
+        "مع إبقاء الذراع العلوي ثابتاً، ثنِ الدمبل الأيمن إلى الأمام مع انقباض البايسيبس أثناء الزفير. واصل الحركة حتى ينقبض البايسيبس بالكامل ويصبح الدمبلان عند مستوى الكتفين. اثبت على وضع الانقباض لثانية مع الضغط على البايسيبس. نصيحة: يجب أن يتحرك الساعدان فقط.",
+        "ابدأ بإعادة الدمبلين ببطء إلى وضع البداية أثناء الشهيق.",
+        "كرر الحركة باليد اليسرى. هذا يعادل تكراراً واحداً.",
+        "واصل التبديل بهذه الطريقة لعدد التكرارات الموصى به."
       ]
     },
     {
@@ -762,6 +1037,12 @@
         "Raise your legs until the torso makes a 90-degree angle with the legs. Exhale as you perform this movement and hold the contraction for a second or so.",
         "Go back slowly to the starting position as you breathe in.",
         "Repeat for the recommended amount of repetitions."
+      ],
+      "instructions_ar": [
+        "تعلّق من بار الشد العلوي بكلتا ذراعيك مفرودتين بالكامل فوقك باستخدام قبضة عريضة أو قبضة متوسطة. يجب أن تكون الساقان مفرودتين إلى الأسفل مع ميل الحوض قليلاً إلى الخلف. سيكون هذا هو وضع البداية.",
+        "ارفع ساقيك حتى يشكل الجذع زاوية 90 درجة مع الساقين. ازفر أثناء أداء هذه الحركة واثبت على الانقباض لثانية تقريباً.",
+        "عد ببطء إلى وضع البداية أثناء الشهيق.",
+        "كرر الحركة لعدد التكرارات الموصى به."
       ]
     },
     {
@@ -773,7 +1054,8 @@
       "muscle_group_ar": "الصدر",
       "equipment": "dumbbell",
       "equipment_ar": "دمبل",
-      "instructions": []
+      "instructions": [],
+      "instructions_ar": null
     },
     {
       "id": "e602d781-91c5-4939-b989-120954fcdae1",
@@ -784,7 +1066,8 @@
       "muscle_group_ar": "الألوية",
       "equipment": "machine",
       "equipment_ar": "جهاز",
-      "instructions": []
+      "instructions": [],
+      "instructions_ar": null
     },
     {
       "id": "333b57a2-968a-4a49-b61e-8d2390df1a01",
@@ -802,6 +1085,14 @@
         "Keeping the knee straight, raise your right legs out to the side as far as you can.",
         "Return to the starting position and repeat for the desired rep count.",
         "Switch sides."
+      ],
+      "instructions_ar": [
+        "ثبّت شريطاً مطاطياً حول عمود ثابت أو أي جسم آخر.",
+        "قف بحيث يكون جانبك الأيسر نحو العمود، وأدخل قدمك اليمنى عبر الشريط ليلتف حول الكاحل.",
+        "قف بشكل مستقيم وأمسك بالعمود إذا لزم الأمر. سيكون هذا هو وضع البداية.",
+        "مع إبقاء الركبة مستقيمة، ارفع ساقك اليمنى إلى الجانب بأقصى مدى.",
+        "عد إلى وضع البداية وكرر لعدد التكرارات المطلوب.",
+        "بدّل الجانبين."
       ]
     },
     {
@@ -817,6 +1108,11 @@
         "Begin seated on the ground with a bench directly behind you. Have a loaded barbell over your legs. Using a fat bar or having a pad on the bar can greatly reduce the discomfort caused by this exercise.",
         "Roll the bar so that it is directly above your hips, and lean back against the bench so that your shoulder blades are near the top of it.",
         "Begin the movement by driving through your feet, extending your hips vertically through the bar. Your weight should be supported by your shoulder blades and your feet. Extend as far as possible, then reverse the motion to return to the starting position."
+      ],
+      "instructions_ar": [
+        "ابدأ جالساً على الأرض مع بنش خلفك مباشرة. ضع باراً محملاً فوق ساقيك. استخدام بار سميك أو وضع وسادة على البار يمكن أن يقلل بشكل كبير من الانزعاج الذي يسببه هذا التمرين.",
+        "دحرج البار بحيث يكون مباشرة فوق وركيك، واستند إلى الخلف على البنش بحيث تكون عظمتا لوحي الكتف قرب أعلاه.",
+        "ابدأ الحركة بالدفع من قدميك، وتمديد وركيك عمودياً عبر البار. يجب أن يستند وزنك على عظمتي لوحي الكتف وقدميك. مدّ إلى أقصى حد ممكن، ثم اعكس الحركة للعودة إلى وضع البداية."
       ]
     },
     {
@@ -832,13 +1128,18 @@
         "Begin seated on the ground with a bench directly behind you. Have a loaded barbell over your legs. Using a fat bar or having a pad on the bar can greatly reduce the discomfort caused by this exercise.",
         "Roll the bar so that it is directly above your hips, and lean back against the bench so that your shoulder blades are near the top of it.",
         "Begin the movement by driving through your feet, extending your hips vertically through the bar. Your weight should be supported by your shoulder blades and your feet. Extend as far as possible, then reverse the motion to return to the starting position."
+      ],
+      "instructions_ar": [
+        "ابدأ جالساً على الأرض مع بنش خلفك مباشرة. ضع باراً محملاً فوق ساقيك. استخدام بار سميك أو وضع وسادة على البار يمكن أن يقلل بشكل كبير من الانزعاج الذي يسببه هذا التمرين.",
+        "دحرج البار بحيث يكون مباشرة فوق وركيك، واستند إلى الخلف على البنش بحيث تكون عظمتا لوحي الكتف قرب أعلاه.",
+        "ابدأ الحركة بالدفع من قدميك، وتمديد وركيك عمودياً عبر البار. يجب أن يستند وزنك على عظمتي لوحي الكتف وقدميك. مدّ إلى أقصى حد ممكن، ثم اعكس الحركة للعودة إلى وضع البداية."
       ]
     },
     {
       "id": "58b6de5c-47e1-49dc-8979-3620eb7ab0cf",
       "slug": "incline-bench-press-barbell",
       "name_en": "Incline Bench Press (Barbell)",
-      "name_ar": "الصدر بار",
+      "name_ar": "بنش برس مائل (بار)",
       "muscle_group": "chest",
       "muscle_group_ar": "الصدر",
       "equipment": "barbell",
@@ -849,13 +1150,20 @@
         "After a second pause, bring the bar back to the starting position as you breathe out and push the bar using your chest muscles. Lock your arms in the contracted position, squeeze your chest, hold for a second and then start coming down slowly again. Tip: it should take at least twice as long to go down than to come up.",
         "Repeat the movement for the prescribed amount of repetitions.",
         "When you are done, place the bar back in the rack."
+      ],
+      "instructions_ar": [
+        "استلقِ على بنش مائل. باستخدام قبضة متوسطة العرض (قبضة تُكوّن زاوية 90 درجة في منتصف الحركة بين الساعدين والذراعين العلويين)، ارفع البار من الحامل وأمسكه بشكل مستقيم فوقك مع فرد ذراعيك بالكامل. سيكون هذا هو وضع البداية.",
+        "أثناء الشهيق، انزل ببطء حتى تشعر بالبار يلمس أعلى صدرك.",
+        "بعد توقف لثانية، أعد البار إلى وضع البداية أثناء الزفير وادفعه باستخدام عضلات الصدر. افرد ذراعيك بالكامل في وضع الانقباض، واضغط صدرك، واثبت لثانية، ثم ابدأ بالنزول ببطء مرة أخرى. نصيحة: يجب أن يستغرق النزول ضعف مدة الصعود على الأقل.",
+        "كرر الحركة لعدد التكرارات المحدد.",
+        "عند الانتهاء، أعد البار إلى الحامل."
       ]
     },
     {
       "id": "af3c336f-b6cb-4ed8-88f2-d430c32ea3c7",
       "slug": "incline-bench-press-dumbbell",
       "name_en": "Incline Bench Press (Dumbbell)",
-      "name_ar": "الصدر دمبل",
+      "name_ar": "بنش برس مائل (دمبل)",
       "muscle_group": "chest",
       "muscle_group_ar": "الصدر",
       "equipment": "dumbbell",
@@ -868,13 +1176,22 @@
         "As you breathe out, push the dumbbells up using your pectoral muscles. Lock your arms in the contracted position, hold for a second and then start coming down slowly. Tip: It should take at least twice as long to go down than to come up.",
         "Repeat the movement for the prescribed amount of repetitions.",
         "When you are done, place the dumbbells back in your thighs and then on the floor. This is the safest manner to dispose of the dumbbells."
+      ],
+      "instructions_ar": [
+        "استلقِ على بنش مائل مع إمساك دمبل في كل يد فوق فخذيك. راحة يديك ستكون متوجهتان نحو بعضهما.",
+        "باستخدام فخذيك للمساعدة في رفع الدمبلين، ارفعهما واحداً في كل مرة إلى وضع يمكن فيه إمساكهما بعرض الكتفين.",
+        "بمجرد الوصول إلى عرض الكتفين، أبقِ راحة يديك بقبضة محايدة (راحتا اليدين متوجهتان نحو بعضهما). أبقِ مرفقيك منفتحين مع الذراعين العلويين في خط مع الكتفين (عمودي على الجذع) والمرفقين مثنيين بزاوية 90 درجة بين الذراع العلوي والساعد. سيكون هذا هو وضع البداية.",
+        "الآن أنزل الأوزان ببطء إلى جانبك أثناء الشهيق. أبقِ تحكّماً كاملاً بالدمبلين طوال الوقت.",
+        "أثناء الزفير، ادفع الدمبلين إلى الأعلى باستخدام عضلات الصدر. افرد ذراعيك بالكامل في وضع الانقباض، وأبقِ لثانية ثم ابدأ بالنزول ببطء. نصيحة: يجب أن يستغرق النزول ضعف مدة الصعود على الأقل.",
+        "كرر الحركة لعدد التكرارات المحدد.",
+        "عند الانتهاء، ضع الدمبلين فوق فخذيك ثم على الأرض. هذه هي الطريقة الآمنة للتخلص من الدمبلين."
       ]
     },
     {
       "id": "26fb69ad-b275-4be0-80c0-c8cb6c3dbdb6",
       "slug": "incline-bench-press-smith-machine",
       "name_en": "Incline Bench Press (Smith Machine)",
-      "name_ar": "الصدر جهاز",
+      "name_ar": "بنش برس مائل (سميث)",
       "muscle_group": "chest",
       "muscle_group_ar": "الصدر",
       "equipment": "machine",
@@ -885,6 +1202,13 @@
         "After a second pause, bring the bar back to the starting position as you breathe out and push the bar using your chest muscles. Lock your arms in the contracted position, hold for a second and then start coming down slowly again. Tip: It should take at least twice as long to go down than to come up.",
         "Repeat the movement for the prescribed amount of repetitions.",
         "When you are done, place the bar back in the rack."
+      ],
+      "instructions_ar": [
+        "ضع بنشاً مائلاً تحت جهاز سميث. ضع البار على ارتفاع يمكنك الوصول إليه عند الاستلقاء وذراعيك ممدودتان تقريباً بالكامل. بمجرد تحديد الوزن المطلوب، استلقِ على البنش المائل وتأكد من أن أعلى صدرك محاذي مع البار. باستخدام قبضة علوية (راحتا اليدين متوجهتان للأمام) أوسع من عرض الكتفين، أطلق البار من الحامل وأمسكه مستقيماً فوقك مع فرد ذراعيك بالكامل. سيكون هذا هو وضع البداية.",
+        "أثناء الشهيق، أنزل ببطء حتى تشعر بالبار على أعلى صدرك.",
+        "بعد توقف لثانية، أعد البار إلى وضع البداية أثناء الزفير وادفعه باستخدام عضلات الصدر. افرد ذراعيك بالكامل في وضع الانقباض، وأبقِ لثانية ثم ابدأ بالنزول ببطء مرة أخرى. نصيحة: يجب أن يستغرق النزول ضعف مدة الصعود على الأقل.",
+        "كرر الحركة لعدد التكرارات المحدد.",
+        "عند الانتهاء، أعد البار إلى الحامل."
       ]
     },
     {
@@ -901,6 +1225,12 @@
         "Your chest and head should be up and your shoulder blades retracted. This will be your starting position.",
         "Press the handles forward by extending through the elbow.",
         "After a brief pause at the top, return the weight just above the start position, keeping tension on the muscles by not returning the weight to the stops until the set is complete."
+      ],
+      "instructions_ar": [
+        "حمّل وزناً مناسباً على الأوتاد واضبط المقعد حسب ارتفاعك. يجب أن تكون المقبضان قرب الجزء السفلي أو الأوسط من عضلات الصدر في بداية الحركة.",
+        "يجب أن يكون صدرك ورأسك مرفوعين وعظمتا لوحي الكتفين متقاربتين. سيكون هذا هو وضع البداية.",
+        "ادفع المقبضان للأمام بفرد المرفقين.",
+        "بعد توقف قصير في الأعلى، أعد الوزن إلى ما فوق نقطة البداية مع الحفاظ على التوتر في العضلات بعدم إعادة الوزن إلى الحوامل حتى تكتمل المجموعة."
       ]
     },
     {
@@ -917,6 +1247,12 @@
         "Pull the handles towards your torso, retracting your shoulder blades as you flex the elbow.",
         "Pause at the bottom of the motion, and then slowly return the handles to the starting position.",
         "For multiple repetitions, avoid completely returning the weight to the stops to keep tension on the muscles being worked."
+      ],
+      "instructions_ar": [
+        "حمّل وزناً مناسباً على الأوتاد واضبط ارتفاع المقعد بحيث يمكنك الوصول إلى المقبضين فوقك بالضبط. واضبط الوسادة الساقية للمساعدة في إبقائك ثابتاً. أمسك المقبضين بقبضة علوية. سيكون هذا هو وضع البداية.",
+        "اسحب المقبضين نحو جذعك مع تقاربت عظمتي لوحي الكتفين أثناء ثني المرفقين.",
+        "توقف لحظة في نهاية الحركة، ثم أعد المقبضين ببطء إلى وضع البداية.",
+        "لعدد من التكرارات، تجنب إعادة الوزن بالكامل إلى الحوامل للحفاظ على التوتر في العضلات المستهدفة."
       ]
     },
     {
@@ -932,6 +1268,11 @@
         "Load an appropriate weight onto the pins and adjust the seat height so that the handles are at chest level. Grasp the handles with either a neutral or pronated grip. This will be your starting position.",
         "Pull the handles towards your torso, retracting your shoulder blades as you flex the elbow.",
         "Pause at the bottom of the motion, and then slowly return the handles to the starting position. For multiple repetitions, avoid completely returning the weight to the stops to keep tension on the muscles being worked."
+      ],
+      "instructions_ar": [
+        "حمّل وزناً مناسباً على الأوتاد واضبط ارتفاع المقعد بحيث تكون المقبضين على مستوى الصدر. أمسك المقبضين بقبضة محايدة أو علوية. سيكون هذا هو وضع البداية.",
+        "اسحب المقبضين نحو جذعك مع تقاربت عظمتي لوحي الكتفين أثناء ثني المرفقين.",
+        "توقف لحظة في نهاية الحركة، ثم أعد المقبضين ببطء إلى وضع البداية. لعدد من التكرارات، تجنب إعادة الوزن بالكامل إلى الحوامل للحفاظ على التوتر في العضلات المستهدفة."
       ]
     },
     {
@@ -949,6 +1290,13 @@
         "Now as you breathe out, lift your legs up as you keep them extended. Continue this movement until your legs are roughly parallel to the floor and then hold the contraction for a second. Tip: Do not use any momentum or swinging as you perform this exercise.",
         "Slowly go back to the starting position as you breathe in.",
         "Repeat for the recommended amount of repetitions."
+      ],
+      "instructions_ar": [
+        "ضع جسمك على جهاز رفع الساق العمودي بحيث يكون ساعدك مستنداً على الوسادات بجانب الجذع وتمسك بالمقابض. ذراعيك ستكونان مثنتين بزاوية 90 درجة.",
+        "يجب أن يكون جذعك مستقيماً مع أسفل ظهرك مضغوطاً على وسادة الجهاز والساقين ممدودتين متوجهتين نحو الأرض. سيكون هذا هو وضع البداية.",
+        "الآن أثناء الزفير، ارفع ساقيك وأنت تبقيهما ممدودتين. واصل هذه الحركة حتى تصبح ساقيك موازيتين للأرض تقريباً ثم أبقِ الانقباض لثانية. نصيحة: لا تستخدم أي دفع أو تأرجح أثناء أداء هذا التمرين.",
+        "عد ببطء إلى وضع البداية أثناء الشهيق.",
+        "كرر الحركة لعدد التكرارات الموصى به."
       ]
     },
     {
@@ -960,7 +1308,8 @@
       "muscle_group_ar": "الظهر",
       "equipment": "bodyweight",
       "equipment_ar": "وزن الجسم",
-      "instructions": []
+      "instructions": [],
+      "instructions_ar": null
     },
     {
       "id": "5c269701-d4cd-45ac-bb9d-00f9f3455ec7",
@@ -978,6 +1327,14 @@
         "As you breathe out, bring the bar down until it touches your upper chest by drawing the shoulders and the upper arms down and back. Tip: Concentrate on squeezing the back muscles once you reach the full contracted position. The upper torso should remain stationary (only the arms should move). The forearms should do no other work except for holding the bar; therefore do not try to pull the bar down using the forearms.",
         "After a second in the contracted position, while squeezing your shoulder blades together, slowly raise the bar back to the starting position when your arms are fully extended and the lats are fully stretched. Inhale during this portion of the movement.",
         "6. Repeat this motion for the prescribed amount of repetitions."
+      ],
+      "instructions_ar": [
+        "اجلس على جهاز السحب مع بار عريض متصل بالبكرة العلوية. تأكد من ضبط الوسادة الساقية على الجهاز لتتناسب مع ارتفاعك. هذه الوسادات ستمنع جسمك من الرفع بالمقاومة المتصلة بالبار.",
+        "امسك البار براحتي يدين متوجهتان للأمام باستخدام القبضة المحددة. ملاحظة حول القبض: للقبضة العريضة، يجب أن يكون يديك متباعدتين بمسافة أوسع من عرض الكتفين. للقبضة المتوسطة، بمسافة مساوية لعرض الكتفين. وللقبضة الضيقة، بمسافة أصغر من عرض الكتفين.",
+        "بمجرد أن تكون ذراعاك ممدودتين أمامك وأنت تمسك البار بعرض القبضة المختار، أعد جذعك للخلف حوالي 30 درجة مع إنشاء تقوّس في أسفل ظهرك وإبراز صدرك. هذا هو وضع البداية.",
+        "أثناء الزفير، أنزل البار حتى يلمس أعلى صدرك بسحب الكتفين والذراعين العلويين للأسفل وللخلف. نصيحة: ركّز على ضغط عضلات الظهر بمجرد الوصول إلى وضع الانقباض الكامل. يجب أن يبقى الجذع العلوي ثابتاً (الذراعين فقط هما من تتحرك). لا يجب أن выполня الساعدان أي عمل سوى إمساك البار؛ لذلك لا تحاول سحب البار بالساعد.",
+        "بعد ثانية في وضع الانقباض وأنت تضغط على عظمتي لوحي الكتفين معاً، ارفع البار ببطء إلى وضع البداية مع فرد ذراعيك بالكامل ومد عضلات اللات بالكامل. استنشق أثناء هذا الجزء من الحركة.",
+        "كرر هذه الحركة لعدد التكرارات المحدد."
       ]
     },
     {
@@ -996,6 +1353,14 @@
         "As you breathe out, bring the bar down until it touches your upper chest by drawing the shoulders and the upper arms down and back. Tip: Concentrate on squeezing the back muscles once you reach the full contracted position. The upper torso should remain stationary and only the arms should move. The forearms should do no other work except for holding the bar; therefore do not try to pull down the bar using the forearms.",
         "After a second at the contracted position squeezing your shoulder blades together, slowly raise the bar back to the starting position when your arms are fully extended and the lats are fully stretched. Inhale during this portion of the movement.",
         "Repeat this motion for the prescribed amount of repetitions."
+      ],
+      "instructions_ar": [
+        "اجلس على جهاز السحب مع بار عريض متصل بالبكرة العلوية. تأكد من ضبط الوسادة الساقية على الجهاز لتتناسب مع ارتفاعك. هذه الوسادات ستمنع جسمك من الرفع بالمقاومة المتصلة بالبار.",
+        "امسك البار براحتي يدين متوجهتان للأمام باستخدام القبضة المحددة. ملاحظة حول القبض: للقبضة العريضة، يجب أن يكون يديك متباعدتين بمسافة أوسع من عرض الكتفين. للقبضة المتوسطة، بمسافة مساوية لعرض الكتفين. وللقبضة الضيقة، بمسافة أصغر من عرض الكتفين.",
+        "بمجرد أن تكون ذراعاك ممدودتين أمامك وأنت تمسك البار بعرض القبضة المختار، أعد جذعك للخلف حوالي 30 درجة مع إنشاء تقوّس في أسفل ظهرك وإبراز صدرك. هذا هو وضع البداية.",
+        "أثناء الزفير، أنزل البار حتى يلمس أعلى صدرك بسحب الكتفين والذراعين العلويين للأسفل وللخلف. نصيحة: ركّز على ضغط عضلات الظهر بمجرد الوصول إلى وضع الانقباض الكامل. يجب أن يبقى الجذع العلوي ثابتاً والذراعين فقط هما من تتحرك. لا يجب أن выполня الساعدان أي عمل سوى إمساك البار؛ لذلك لا تحاول سحب البار بالساعد.",
+        "بعد ثانية في وضع الانقباض وأنت تضغط على عظمتي لوحي الكتفين معاً، ارفع البار ببطء إلى وضع البداية مع فرد ذراعيك بالكامل ومد عضلات اللات بالكامل. استنشق أثناء هذا الجزء من الحركة.",
+        "كرر هذه الحركة لعدد التكرارات المحدد."
       ]
     },
     {
@@ -1014,6 +1379,14 @@
         "As you breathe out, bring the bar down until it touches your upper chest by drawing the shoulders and the upper arms down and back. Tip: Concentrate on squeezing the back muscles once you reach the full contracted position. The upper torso should remain stationary and only the arms should move. The forearms should do no other work except for holding the bar; therefore do not try to pull down the bar using the forearms.",
         "After a second at the contracted position squeezing your shoulder blades together, slowly raise the bar back to the starting position when your arms are fully extended and the lats are fully stretched. Inhale during this portion of the movement.",
         "Repeat this motion for the prescribed amount of repetitions."
+      ],
+      "instructions_ar": [
+        "اجلس على جهاز السحب مع بار عريض متصل بالبكرة العلوية. تأكد من ضبط الوسادة الساقية على الجهاز لتتناسب مع ارتفاعك. هذه الوسادات ستمنع جسمك من الرفع بالمقاومة المتصلة بالبار.",
+        "امسك البار براحتي يدين متوجهتان للأمام باستخدام القبضة المحددة. ملاحظة حول القبض: للقبضة العريضة، يجب أن يكون يديك متباعدتين بمسافة أوسع من عرض الكتفين. للقبضة المتوسطة، بمسافة مساوية لعرض الكتفين. وللقبضة الضيقة، بمسافة أصغر من عرض الكتفين.",
+        "بمجرد أن تكون ذراعاك ممدودتين أمامك وأنت تمسك البار بعرض القبضة المختار، أعد جذعك للخلف حوالي 30 درجة مع إنشاء تقوّس في أسفل ظهرك وإبراز صدرك. هذا هو وضع البداية.",
+        "أثناء الزفير، أنزل البار حتى يلمس أعلى صدرك بسحب الكتفين والذراعين العلويين للأسفل وللخلف. نصيحة: ركّز على ضغط عضلات الظهر بمجرد الوصول إلى وضع الانقباض الكامل. يجب أن يبقى الجذع العلوي ثابتاً والذراعين فقط هما من تتحرك. لا يجب أن выполня الساعدان أي عمل سوى إمساك البار؛ لذلك لا تحاول سحب البار بالساعد.",
+        "بعد ثانية في وضع الانقباض وأنت تضغط على عظمتي لوحي الكتفين معاً، ارفع البار ببطء إلى وضع البداية مع فرد ذراعيك بالكامل ومد عضلات اللات بالكامل. استنشق أثناء هذا الجزء من الحركة.",
+        "كرر هذه الحركة لعدد التكرارات المحدد."
       ]
     },
     {
@@ -1030,6 +1403,12 @@
         "While maintaining the torso in a stationary position (no swinging), lift the dumbbells to your side with a slight bend on the elbow and the hands slightly tilted forward as if pouring water in a glass. Continue to go up until you arms are parallel to the floor. Exhale as you execute this movement and pause for a second at the top.",
         "Lower the dumbbells back down slowly to the starting position as you inhale.",
         "Repeat for the recommended amount of repetitions."
+      ],
+      "instructions_ar": [
+        "التقط زوجاً من الدمبلات وقف بجذع مستقيم والدمبلات بجانبك مع فرد ذراعيك وراحتا يديك متوجهتان نحوك. سيكون هذا هو وضع البداية.",
+        "مع الحفاظ على الجذع ثابتاً (بدون تأرجح)، ارفع الدمبلات إلى جانبك مع انحناء طفيف في المرفق وميلان خفيف للأصابع للأمام كأنك تسكب الماء في كأس. واصل الرفع حتى تصبح ذراعيك موازيتين للأرض. زفير أثناء تنفيذ هذه الحركة وتوقف لثانية في الأعلى.",
+        "أنزل الدمبلات ببطء إلى وضع البداية أثناء الشهيق.",
+        "كرر الحركة لعدد التكرارات الموصى به."
       ]
     },
     {
@@ -1045,6 +1424,11 @@
         "Using your quadriceps, extend your legs to the maximum as you exhale. Ensure that the rest of the body remains stationary on the seat. Pause a second on the contracted position.",
         "Slowly lower the weight back to the original position as you inhale, ensuring that you do not go past the 90-degree angle limit.",
         "Repeat for the recommended amount of times."
+      ],
+      "instructions_ar": [
+        "باستخدام عضلات الفخذ الأمامي، مدّ ساقيك إلى أقصى حد أثناء الزفير. تأكد من بقاء باقي الجسم ثابتاً على المقعد. توقف لثانية في وضع الانقباض.",
+        "أنزل الوزن ببطء إلى وضع البداية أثناء الشهيق، مع التأكد من عدم تجاوز زاوية 90 درجة.",
+        "كرر الحركة لعدد التكرارات الموصى به."
       ]
     },
     {
@@ -1062,6 +1446,13 @@
         "As you inhale, slowly lower the platform until your upper and lower legs make a 90-degree angle.",
         "Pushing mainly with the heels of your feet and using the quadriceps go back to the starting position as you exhale.",
         "Repeat for the recommended amount of repetitions and ensure to lock the safety pins properly once you are done. You do not want that platform falling on you fully loaded."
+      ],
+      "instructions_ar": [
+        "باستخدام جهاز ضغط الساق، اجلس على الجهاز وضع ساقيك على المنصة مباشرة أمامك بوضع قدمين متوسط (عرض الكتفين). ملاحظة: لغرض هذه المناقشة سنستخدم الوضع المتوسط الموضّح أعلاه الذي يستهدف التنمية الشاملة؛ لكن يمكنك اختيار أي من الأوضاع الثلاثة الموضحة في قسم وضع القدمين.",
+        "أنزل أعمدة الأمان التي تحمل المنصة المحملة واضغط المنصة إلى الأعلى بالكامل حتى تصبح ساقيك ممدودتان بالكامل أمامك. نصيحة: تأكد من عدم قفل ركبتيك. يجب أن يكون جذعك وساقيك بزاوية 90 درجة مثالية. سيكون هذا هو وضع البداية.",
+        "أثناء الشهيق، أنزل المنصة ببطء حتى تصبح ساقيك العلوي والسفلي بزاوية 90 درجة.",
+        "ادفع بشكل رئيسي بكعب قدمك واستخدم عضلات الفخذ الأمامي للعودة إلى وضع البداية أثناء الزفير.",
+        "كرر الحركة لعدد التكرارات الموصى به وتأكد من قفل دبابيس الأمان بشكل صحيح بمجرد الانتهاء. لا تريد أن تسقط تلك المنصة عليك وهي محملة بالكامل."
       ]
     },
     {
@@ -1078,6 +1469,12 @@
         "Step forward, gaining tension in the pulleys. Your palms should be facing forward, hands below the waist, and your arms straight. This will be your starting position.",
         "With a slight bend in your arms, draw your hands upward and toward the midline of your body. Your hands should come together in front of your chest, palms facing up.",
         "Return your arms back to the starting position after a brief pause."
+      ],
+      "instructions_ar": [
+        "للانتقال إلى وضع البداية، ضع البكرين في الموضع المنخفض، حدد المقاومة المطلوبة وامسك مقبضاً في كل يد.",
+        "خط للأمام للحصول على التوتر في البكرين. يجب أن تكون راحتا يديك متوجهتان للأمام، يديك أسفل الخصر، وذراعيك مستقيمة. سيكون هذا هو وضع البداية.",
+        "بانحناء طفيف في ذراعيك، ارفع يديك إلى الأعلى نحو خط المنتصف من جسمك. يجب أن تلتقي يديك أمام صدرك، راحتا يديك متوجهتان نحو الأعلى.",
+        "أعد ذراعيك إلى وضع البداية بعد توقف قصير."
       ]
     },
     {
@@ -1094,6 +1491,12 @@
         "Step forward with one leg, flexing the knees to drop your hips. Descend until your rear knee nearly touches the ground. Your posture should remain upright, and your front knee should stay above the front foot.",
         "Drive through the heel of your lead foot and extend both knees to raise yourself back up.",
         "Step forward with your rear foot, repeating the lunge on the opposite leg."
+      ],
+      "instructions_ar": [
+        "ابدأ بالوقوف بقدميك متباعدتين بعرض الكتفين ويديك على وركيك.",
+        "خط بقدمك للأمام مع ثني الركبتين لخفض وركيك. أنزل حتى يقترب ركبتك الخلفية من لمس الأرض. يجب أن تبقى وقتك منتصبة، وركبتك الأمامية فوق قدمك الأمامية.",
+        "ادفع بكعب قدمك الأمامية وافرد ركبتيك معاً للعودة إلى وضع البداية.",
+        "خط بقدمك الخلفية للأمام مع تكرار الحركة بالساق المقابلة."
       ]
     },
     {
@@ -1111,6 +1514,13 @@
         "Step away from the rack and step forward with your right leg and squat down through your hips, while keeping the torso upright and maintaining balance. Inhale as you go down. Note: Do not allow your knee to go forward beyond your toes as you come down, as this will put undue stress on the knee joint. li>",
         "Using mainly the heel of your foot, push up and go back to the starting position as you exhale.",
         "Repeat the movement for the recommended amount of repetitions and then perform with the left leg."
+      ],
+      "instructions_ar": [
+        "يُفضّل أداء هذا التمرين داخل حامل السكوات لأسباب تتعلق بالأمان. للبدء، ضع البار على حامل أسفل مستوى الكتفين مباشرة. بمجرد تحديد الارتفاع الصحيح وتحميل البار، انزل تحت البار وضع الجزء الخلفي من كتفيك (أسفل الرقبة قليلاً) عليه.",
+        "امسك البار بذراعيك على الجانبين وارفعه من الحامل أولاً بالدفع بساقيك ومع استقامة جذعك.",
+        "ابتعد عن الحامل وخط بقدمك اليمنى وانزل بوركك مع الحفاظ على انتصاب الجذع والتوازن. استنشق أثناء النزول. ملاحظة: لا تسمح لركبتك بالتقدم إلى ما وراء أصابع قدمك أثناء النزول، لأن ذلك سيسبب ضغطاً غير لازم على مفصل الركبة.",
+        "باستخدام كعب قدمك بشكل رئيسي، ادفع للأعلى وعُد إلى وضع البداية أثناء الزفير.",
+        "كرر الحركة لعدد التكرارات الموصى به ثم نفّذها بالساق اليسرى."
       ]
     },
     {
@@ -1127,6 +1537,12 @@
         "Step backward with your right leg around two feet or so from the left foot and lower your upper body down, while keeping the torso upright and maintaining balance. Inhale as you go down. Tip: As in the other exercises, do not allow your knee to go forward beyond your toes as you come down, as this will put undue stress on the knee joint. Make sure that you keep your front shin perpendicular to the ground. Keep the torso upright during the lunge; flexible hip flexors are important. A long lunge emphasizes the Gluteus Maximus; a short lunge emphasizes Quadriceps.",
         "Push up and go back to the starting position as you exhale. Tip: Use the ball of your feet to push in order to accentuate the quadriceps. To focus on the glutes, press with your heels.",
         "Now repeat with the opposite leg."
+      ],
+      "instructions_ar": [
+        "قف بجذع منتصب مع إمساك دمبلين بيديك بجانبك. سيكون هذا هو وضع البداية.",
+        "خط بقدمك اليمنى إلى الخلف حوالي قدمين من القدم اليسرى وأنزل الجزء العلوي من جسمك إلى الأسفل، مع الحفاظ على انتصاب الجذع والتوازن. استنشق أثناء النزول. نصيحة: كما في التمارين الأخرى، لا تسمح لركبتك بالتقدم إلى ما وراء أصابع قدمك أثناء النزول، لأن ذلك سيسبب ضغطاً غير لازم على مفصل الركبة. تأكد من إبقاء قصبة ساقك الأمامية عمودية على الأرض. حافظ على انتصاب الجذع أثناء اللنج؛ مرونة ثنيات الورك مهمة. اللنج الطويل يركز على العضلة الألوية الكبرى؛ اللنج القصير يركز على الفخذ الأمامي.",
+        "ادفع للأعلى وعُد إلى وضع البداية أثناء الزفير. نصيحة: استخدم مقدمة قدمك للدفع لإبراز عضلات الفخذ الأمامي. وللتركيز على الألوية، اضغط بكعبيك.",
+        "الآن كرر الحركة بالساق المقابلة."
       ]
     },
     {
@@ -1143,6 +1559,12 @@
         "Keeping the torso flat on the bench, ensure your legs are fully stretched and grab the side handles of the machine. Position your toes straight (or you can also use any of the other two stances described on the foot positioning section). This will be your starting position.",
         "As you exhale, curl your legs up as far as possible without lifting the upper legs from the pad. Once you hit the fully contracted position, hold it for a second.",
         "As you inhale, bring the legs back to the initial position. Repeat for the recommended amount of repetitions."
+      ],
+      "instructions_ar": [
+        "اضبط ذراع الجهاز ليتناسب مع طولك واستلقِ على بطنك على جهاز ثني الساق مع وضع وسادة الذراع على الجزء الخلفي من ساقيك (بضعة بوصات أسفل السمانة). نصيحة: يُفضّل استخدام جهاز ثني الساق المائل بدلاً من المسطح، لأن الوضع المائل أفضل لتنشيط أوتار الركبة.",
+        "مع إبقاء الجذع مسطحاً على البنش، تأكد من فرد ساقيك بالكامل وامسك المقابض الجانبية للجهاز. وجّه أصابع قدميك بشكل مستقيم (أو يمكنك استخدام أي من الوضعين الآخرين الموضحين في قسم وضع القدمين). سيكون هذا هو وضع البداية.",
+        "أثناء الزفير، ثنِ ساقيك إلى الأعلى قدر الإمكان دون رفع الفخذين عن الوسادة. بمجرد الوصول إلى وضع الانقباض الكامل، أبقِ عليه لثانية.",
+        "أثناء الشهيق، أعد الساقين إلى وضع البداية. كرر الحركة لعدد التكرارات الموصى به."
       ]
     },
     {
@@ -1160,6 +1582,13 @@
         "Slowly begin to lower the barbell until it is level with your chin while inhaling.",
         "Then lift the barbell back to the starting position using your shoulders while exhaling.",
         "Repeat for the recommended amount of repetitions."
+      ],
+      "instructions_ar": [
+        "للبدء، ضع بنشاً مسطحاً (أو يفضَّل بنش بمسند للظهر) تحت جهاز سميث. ضع البار على ارتفاع بحيث تكون الذراعان ممدودتان بالكامل تقريباً للوصول إليه عند الجلوس على البنش المسطح.",
+        "بمجرد تحديد الارتفاع الصحيح، اجلس قليلاً خلف البار بحيث يكون هناك خط وهمي مستقيم من طرف أنفك إلى البار. يجب أن تكون قدماك ثابتتين. أمسك البار براحتي يدين متوجهتين للأمام، أطلق القفل وارفعه إلى الأعلى حتى تمد ذراعيك بالكامل. هذا هو وضع البداية.",
+        "ابدأ بإنزال البار ببطء حتى يصبح بمستوى ذقنك أثناء الشهيق.",
+        "ثم ارفع البار إلى وضع البداية باستخدام كتفيك أثناء الزفير.",
+        "كرر الحركة لعدد التكرارات الموصى به."
       ]
     },
     {
@@ -1176,6 +1605,12 @@
         "Position your hands behind your head with your elbows point straight up. Your elbows should start out flexed, and you can stagger your stance and lean gently away from the machine to create greater stability. This will be your starting position.",
         "To perform the movement, extend through the elbow while keeping the upper arm in position, raising your hands above your head.",
         "Squeeze your triceps at the top of the movement, and slowly lower the weight back to the start position."
+      ],
+      "instructions_ar": [
+        "اربط حبلاً ببكرة منخفضة. بعد اختيار وزن مناسب، أمسك الحبل بكلتا يديك واستدر بعيداً عن الكابل.",
+        "ضع يديك خلف رأسك مع توجيه المرفقين للأعلى مباشرة. يجب أن يبدأ مرفقاك مثنيين، ويمكنك تباعد قدميك والميل بلطف بعيداً عن الجهاز لتحقيق ثبات أكبر. سيكون هذا هو وضع البداية.",
+        "لتنفيذ الحركة، مدّ المرفقين مع إبقاء الذراع العلوي في مكانه، وارفع يديك فوق رأسك.",
+        "اضغط على عضلات الترايسبس في أعلى الحركة، ثم أنزل الوزن ببطء إلى وضع البداية."
       ]
     },
     {
@@ -1192,6 +1627,12 @@
         "Now, while keeping the torso stationary, breathe out and lift the barbell to you. Keep the elbows close to the body and only use the forearms to hold the weight. At the top contracted position, squeeze the back muscles and hold for a brief pause.",
         "Then inhale and slowly lower the barbell back to the starting position.",
         "Repeat for the recommended amount of repetitions."
+      ],
+      "instructions_ar": [
+        "أمسك البار بقبضة علوية (راحتا اليدين للأسفل)، واثنِ ركبتيك قليلاً وقدّم جذعك إلى الأمام بالانحناء عند الخصر، مع إبقاء الظهر مستقيماً حتى يصبح موازياً للأرض تقريباً. نصيحة: تأكد من إبقاء رأسك مرفوعاً. يجب أن يتدلى البار مباشرة أمامك بينما تتدلى ذراعاك عمودياً على الأرض وجذعك. سيكون هذا هو وضع البداية.",
+        "الآن، مع الحفاظ على ثبات الجذع، زفر وارفع البار إليك. أبقِ المرفقين قريبين من الجسم واستخدم الساعدين فقط لإمساك الوزن. في وضع الانقباض الأعلى، اضغط على عضلات الظهر وأبقِ على توقف قصير.",
+        "ثم استنشق وأنزل البار ببطء إلى وضع البداية.",
+        "كرر الحركة لعدد التكرارات الموصى به."
       ]
     },
     {
@@ -1206,6 +1647,10 @@
       "instructions": [
         "Get into a prone position on the floor, supporting your weight on your toes and your forearms. Your arms are bent and directly below the shoulder.",
         "Keep your body straight at all times, and hold this position as long as possible. To increase difficulty, an arm or leg can be raised."
+      ],
+      "instructions_ar": [
+        "اتخذ وضع الانبطاح على الأرض، مستنداً بوزنك على أصابع قدميك وساعديك. ذراعاك مثنيتان ومباشرة أسفل الكتف.",
+        "أبقِ جسمك مستقيماً طوال الوقت، واثبت على هذا الوضع لأطول فترة ممكنة. لزيادة الصعوبة، يمكن رفع ذراع أو ساق."
       ]
     },
     {
@@ -1224,6 +1669,14 @@
         "As you exhale, use your biceps to curl the weights up until they are fully contracted and the dumbbells are at shoulder height. Again, remember that to ensure full contraction you need to bring that small finger higher than the thumb.",
         "Squeeze the biceps hard for a second at the contracted position and rotate your wrists so that the palms are facing down again.",
         "Repeat for the recommended amount of repetitions."
+      ],
+      "instructions_ar": [
+        "أمسك دمبل في كل يد وضع ذراعيك العلويين على قمة بنش الكيرل أو البنش المائل. يجب إمساك الدمبلين عند مستوى الكتفين مع ثني المرفقين. أمسك الدمبلين براحتي يدين متوجهتين للأسفل. سيكون هذا هو وضع البداية.",
+        "أثناء الشهيق، أنزل الدمبلين ببطء مع إبقاء الراحتين للأسفل حتى يتمدد ذراعك العلوي بالكامل ويتمدد البايسيبس بالكامل.",
+        "الآن لفّ معصميك بمجرد الوصول إلى أسفل الحركة بحيث تتوجه راحتا اليدين إلى الأعلى.",
+        "أثناء الزفير، استخدم البايسيبس لرفع الأوزان حتى تنقبض بالكامل ويصبح الدمبلان عند مستوى الكتفين. ومرة أخرى، تذكّر أنه لضمان الانقباض الكامل عليك رفع الإصبع الصغير أعلى من الإبهام.",
+        "اضغط على البايسيبس بقوة لثانية في وضع الانقباض ولفّ معصميك بحيث تتوجه الراحتان إلى الأسفل مرة أخرى.",
+        "كرر الحركة لعدد التكرارات الموصى به."
       ]
     },
     {
@@ -1241,6 +1694,13 @@
         "Now lift the handles as you exhale and you contract the biceps. At the top of the position make sure that you hold the contraction for a second. Tip: Only the forearms should move. The upper arms should remain stationary and on the pad at all times.",
         "Lower the handles slowly back to the starting position as you inhale.",
         "Repeat for the recommended amount of repetitions."
+      ],
+      "instructions_ar": [
+        "اجلس على جهاز تمرين تجعيد البايسيبس وحدد الوزن.",
+        "ضع الجزء الخلفي من ذراعيك العلويين (الترايسبس) على الوسادة المتوفرة وأمسك المقابض بقبضة سفلية (راحتا اليدين للأعلى). نصيحة: تأكد من إبقاء المرفقين للداخل عند وضع الذراعين على الوسادة. سيكون هذا هو وضع البداية.",
+        "الآن ارفع المقابض أثناء الزفير مع انقباض البايسيبس. في أعلى الوضع تأكد من إبقاء الانقباض لثانية. نصيحة: يجب أن يتحرك الساعدان فقط. يجب أن يبقى الذراعان العلويان ثابتين على الوسادة طوال الوقت.",
+        "أنزل المقابض ببطء إلى وضع البداية أثناء الشهيق.",
+        "كرر الحركة لعدد التكرارات الموصى به."
       ]
     },
     {
@@ -1258,6 +1718,13 @@
         "Pull your torso up until the bar is near the back of your neck. To do this, draw the shoulders and upper arms down and back while slightly leaning your head forward. Exhale as you perform this portion of the movement. Tip: Concentrate on squeezing the back muscles once you reach the full contracted position. The upper torso should remain stationary as it moves through space and only the arms should move. The forearms should do no other work other than hold the bar.",
         "After a second on the contracted position, start to inhale and slowly lower your torso back to the starting position when your arms are fully extended and the lats are fully stretched.",
         "Repeat this motion for the prescribed amount of repetitions."
+      ],
+      "instructions_ar": [
+        "أمسك بار السحب براحتي يدين متوجهتين للأمام باستخدام قبضة عريضة.",
+        "بمجرد أن تكون ذراعاك ممدودتين أمامك وأنت تمسك البار، قدّم جذعك ورأسك إلى الأمام بحيث يكون هناك خط وهمي من بار السحب إلى مؤخرة رقبتك. هذا هو وضع البداية.",
+        "اسحب جذعك إلى الأعلى حتى يصبح البار قريباً من مؤخرة رقبتك. للقيام بذلك، اسحب كتفيك وذراعيك العلويين للأسفل وللخلف مع إمالة رأسك قليلاً إلى الأمام. زفر أثناء أداء هذا الجزء من الحركة. نصيحة: ركّز على ضغط عضلات الظهر بمجرد الوصول إلى وضع الانقباض الكامل. يجب أن يبقى الجذع العلوي ثابتاً أثناء تحركه في الفراغ وأن تتحرك الذراعان فقط. لا يجب أن يقوم الساعدان بأي عمل سوى إمساك البار.",
+        "بعد ثانية في وضع الانقباض، ابدأ بالشهيق وأنزل جذعك ببطء إلى وضع البداية مع فرد ذراعيك بالكامل وتمدد عضلات اللات بالكامل.",
+        "كرر هذه الحركة لعدد التكرارات المحدد."
       ]
     },
     {
@@ -1269,7 +1736,8 @@
       "muscle_group_ar": "الظهر",
       "equipment": "dumbbell",
       "equipment_ar": "دمبل",
-      "instructions": []
+      "instructions": [],
+      "instructions_ar": null
     },
     {
       "id": "7c4b123f-78ff-41c4-830d-7cc472e42663",
@@ -1280,7 +1748,8 @@
       "muscle_group_ar": "الظهر",
       "equipment": "machine",
       "equipment_ar": "جهاز",
-      "instructions": []
+      "instructions": [],
+      "instructions_ar": null
     },
     {
       "id": "337b01e2-077c-4b6c-a997-82f994bf9f42",
@@ -1298,6 +1767,14 @@
         "At the bottom, reverse the motion by pushing yourself up through elbow extension as quickly as possible until you are air borne. Aim to \"jump\" 12-18 inches to one side.",
         "As you accelerate up, move your outside foot away from your direction of travel. Leaving the ground, shift your body about 30 degrees for the next repetition.",
         "Return to the starting position and repeat the exercise, working all the way around until you are back where you started."
+      ],
+      "instructions_ar": [
+        "انتقل إلى وضع الانبطاح على الأرض، مستنداً بوزنك على يديك وأصابع قدميك.",
+        "يجب أن تكون ذراعيك ممدودتين بالكامل مع اليدين بعرض الكتفين تقريباً. أبقِ جسمك مستقيماً طوال الحركة. سيكون هذا هو وضع البداية.",
+        "انزل بثني المرفقين، مخفضاً صدرك نحو الأرض.",
+        "في الأسفل، اعكس الحركة بدفع نفسك للأعلى بفرد المرفقين بأسرع ما يمكن حتى ترتفع عن الأرض. هدفك هو «القفز» 12 إلى 18 بوصة إلى أحد الجانبين.",
+        "أثناء تسارعك إلى الأعلى، حرّك قدمك الخارجية بعيداً عن اتجاه حركتك. وعند مغادرة الأرض، انقل جسمك حوالي 30 درجة للتكرار التالي.",
+        "عد إلى وضع البداية وكرر التمرين، متنقلاً في دائرة كاملة حتى تعود إلى حيث بدأت."
       ]
     },
     {
@@ -1314,6 +1791,12 @@
         "Grab the left pulley with your right hand and the right pulley with your left hand, crossing them in front of you. This will be your starting position.",
         "Initiate the movement by moving your arms back and outward, keeping your arms straight as you execute the movement.",
         "Pause at the end of the motion before returning the handles to the start position."
+      ],
+      "instructions_ar": [
+        "اضبط البكرتين على الارتفاع المناسب واضبط الوزن. يجب أن تكون البكرتان فوق رأسك.",
+        "أمسك البكرة اليسرى بيدك اليمنى والبكرة اليمنى بيدك اليسرى، مع تقاطعهما أمامك. سيكون هذا هو وضع البداية.",
+        "ابدأ الحركة بتحريك ذراعيك إلى الخلف وإلى الخارج، مع إبقائهما مستقيمين أثناء تنفيذ الحركة.",
+        "توقف في نهاية الحركة قبل إعادة المقبضين إلى وضع البداية."
       ]
     },
     {
@@ -1330,6 +1813,12 @@
         "In a semicircular motion, pull your hands out to your side and back, contracting your rear delts.",
         "Keep your arms slightly bent throughout the movement, with all of the motion occurring at the shoulder joint.",
         "Pause at the rear of the movement, and slowly return the weight to the starting position."
+      ],
+      "instructions_ar": [
+        "اضبط المقبضين بحيث يكونان في أقصى الخلف. اختر وزناً مناسباً واضبط ارتفاع المقعد بحيث تكون المقابض عند مستوى الكتفين. أمسك المقبضين بيديك متوجهتين للداخل. سيكون هذا هو وضع البداية.",
+        "بحركة نصف دائرية، اسحب يديك إلى جانبك وإلى الخلف مع انقباض الدلتا الخلفية.",
+        "أبقِ ذراعيك مثنيين قليلاً طوال الحركة، مع حدوث كل الحركة في مفصل الكتف.",
+        "توقف في الجزء الخلفي من الحركة، ثم أعد الوزن ببطء إلى وضع البداية."
       ]
     },
     {
@@ -1341,7 +1830,8 @@
       "muscle_group_ar": "الألوية",
       "equipment": "machine",
       "equipment_ar": "جهاز",
-      "instructions": []
+      "instructions": [],
+      "instructions_ar": null
     },
     {
       "id": "50873ef5-1031-47e7-a423-eadc4bb6f807",
@@ -1357,6 +1847,12 @@
         "While holding the upper arms stationary, curl the weights while contracting the biceps as you breathe out. Only the forearms should move. Continue the movement until your biceps are fully contracted and the bar is at shoulder level. Hold the contracted position for a second as you squeeze the muscle.",
         "Slowly begin to bring the bar back to starting position as your breathe in.",
         "Repeat for the recommended amount of repetitions."
+      ],
+      "instructions_ar": [
+        "قف بجذع منتصب مع إمساك ملحق بار متصل ببكرة منخفضة بقبضة علوية (راحتا اليدين للأسفل) بعرض الكتفين. تأكد أيضاً من إبقاء المرفقين قريبين من الجذع. سيكون هذا هو وضع البداية.",
+        "مع إبقاء الذراعين العلويين ثابتين، ثنِ الأوزان مع انقباض البايسيبس أثناء الزفير. يجب أن يتحرك الساعدان فقط. واصل الحركة حتى ينقبض البايسيبس بالكامل ويصبح البار بمستوى الكتفين. أبقِ على وضع الانقباض لثانية مع الضغط على العضلة.",
+        "ابدأ ببطء في إعادة البار إلى وضع البداية أثناء الشهيق.",
+        "كرر الحركة لعدد التكرارات الموصى به."
       ]
     },
     {
@@ -1368,7 +1864,8 @@
       "muscle_group_ar": "البايسيبس",
       "equipment": "bodyweight",
       "equipment_ar": "وزن الجسم",
-      "instructions": []
+      "instructions": [],
+      "instructions_ar": null
     },
     {
       "id": "8f0ab418-3f16-40e1-b48c-04ae0b66062b",
@@ -1386,6 +1883,14 @@
         "As you breathe out, bring the bar down until it touches your upper chest by drawing the shoulders and the upper arms down and back. Tip: Concentrate on squeezing the back muscles once you reach the full contracted position. The upper torso should remain stationary and only the arms should move. The forearms should do no other work except for holding the bar; therefore do not try to pull down the bar using the forearms.",
         "After a second at the contracted position squeezing your shoulder blades together, slowly raise the bar back to the starting position when your arms are fully extended and the lats are fully stretched. Inhale during this portion of the movement.",
         "Repeat this motion for the prescribed amount of repetitions."
+      ],
+      "instructions_ar": [
+        "اجلس على جهاز السحب مع بار عريض متصل بالبكرة العلوية. تأكد من ضبط الوسادة الساقية على الجهاز لتتناسب مع ارتفاعك. هذه الوسادات ستمنع جسمك من الرفع بالمقاومة المتصلة بالبار.",
+        "امسك البار براحتي يدين متوجهتين للأمام باستخدام القبضة المحددة. ملاحظة حول القبض: للقبضة العريضة، يجب أن يكون يديك متباعدتين بمسافة أوسع من عرض الكتفين. للقبضة المتوسطة، بمسافة مساوية لعرض الكتفين. وللقبضة الضيقة، بمسافة أصغر من عرض الكتفين.",
+        "بمجرد أن تكون ذراعاك ممدودتين أمامك وأنت تمسك البار بعرض القبضة المختار، أعد جذعك للخلف حوالي 30 درجة مع إنشاء تقوّس في أسفل ظهرك وإبراز صدرك. هذا هو وضع البداية.",
+        "أثناء الزفير، أنزل البار حتى يلمس أعلى صدرك بسحب الكتفين والذراعين العلويين للأسفل وللخلف. نصيحة: ركّز على ضغط عضلات الظهر بمجرد الوصول إلى وضع الانقباض الكامل. يجب أن يبقى الجذع العلوي ثابتاً والذراعين فقط هما من تتحرك. لا يجب أن يقوم الساعدان بأي عمل سوى إمساك البار؛ لذلك لا تحاول سحب البار بالساعد.",
+        "بعد ثانية في وضع الانقباض وأنت تضغط على عظمتي لوحي الكتفين معاً، ارفع البار ببطء إلى وضع البداية مع فرد ذراعيك بالكامل ومد عضلات اللات بالكامل. استنشق أثناء هذا الجزء من الحركة.",
+        "كرر هذه الحركة لعدد التكرارات المحدد."
       ]
     },
     {
@@ -1403,6 +1908,13 @@
         "Keeping your back and arms completely straight at all times, use your hips to lift the bar as you exhale. Tip: The movement should not be fast but steady and under control.",
         "Once you are standing completely straight up, lower the bar by pushing the hips back, only slightly bending the knees, unlike when squatting. Tip: Take a deep breath at the start of the movement and keep your chest up. Hold your breath as you lower and exhale as you complete the movement.",
         "Repeat for the recommended amount of repetitions."
+      ],
+      "instructions_ar": [
+        "ضع باراً أمامك على الأرض وأمسكه بقبضة علوية (راحتا اليدين للأسفل) أوسع قليلاً من عرض الكتفين. نصيحة: حسب الوزن المستخدم، قد تحتاج إلى أربطة معصم لأداء التمرين وأيضاً إلى منصة مرتفعة للسماح بنطاق حركة أفضل.",
+        "اثنِ الركبتين قليلاً وأبقِ قصبتي الساقين عموديتين، والوركين للخلف، والظهر مستقيماً. سيكون هذا هو وضع البداية.",
+        "مع إبقاء ظهرك وذراعيك مستقيمين تماماً طوال الوقت، استخدم وركيك لرفع البار أثناء الزفير. نصيحة: يجب ألا تكون الحركة سريعة بل ثابتة ومتحكماً بها.",
+        "بمجرد الوقوف منتصباً تماماً، أنزل البار بدفع الوركين للخلف مع ثني الركبتين قليلاً فقط، بخلاف حركة السكوات. نصيحة: خذ نفساً عميقاً في بداية الحركة وأبقِ صدرك مرفوعاً. احبس أنفاسك أثناء النزول وزفر عند إكمال الحركة.",
+        "كرر الحركة لعدد التكرارات الموصى به."
       ]
     },
     {
@@ -1420,6 +1932,13 @@
         "Keeping your back and arms completely straight at all times, use your hips to lift the bar as you exhale. Tip: The movement should not be fast but steady and under control.",
         "Once you are standing completely straight up, lower the bar by pushing the hips back, only slightly bending the knees, unlike when squatting. Tip: Take a deep breath at the start of the movement and keep your chest up. Hold your breath as you lower and exhale as you complete the movement.",
         "Repeat for the recommended amount of repetitions."
+      ],
+      "instructions_ar": [
+        "ضع باراً أمامك على الأرض وأمسكه بقبضة علوية (راحتا اليدين للأسفل) أوسع قليلاً من عرض الكتفين. نصيحة: حسب الوزن المستخدم، قد تحتاج إلى أربطة معصم لأداء التمرين وأيضاً إلى منصة مرتفعة للسماح بنطاق حركة أفضل.",
+        "اثنِ الركبتين قليلاً وأبقِ قصبتي الساقين عموديتين، والوركين للخلف، والظهر مستقيماً. سيكون هذا هو وضع البداية.",
+        "مع إبقاء ظهرك وذراعيك مستقيمين تماماً طوال الوقت، استخدم وركيك لرفع البار أثناء الزفير. نصيحة: يجب ألا تكون الحركة سريعة بل ثابتة ومتحكماً بها.",
+        "بمجرد الوقوف منتصباً تماماً، أنزل البار بدفع الوركين للخلف مع ثني الركبتين قليلاً فقط، بخلاف حركة السكوات. نصيحة: خذ نفساً عميقاً في بداية الحركة وأبقِ صدرك مرفوعاً. احبس أنفاسك أثناء النزول وزفر عند إكمال الحركة.",
+        "كرر الحركة لعدد التكرارات الموصى به."
       ]
     },
     {
@@ -1437,6 +1956,13 @@
         "With your arms extended pull back until your torso is at a 90-degree angle from your legs. Your back should be slightly arched and your chest should be sticking out. You should be feeling a nice stretch on your lats as you hold the bar in front of you. This is the starting position of the exercise.",
         "Keeping the torso stationary, pull the handles back towards your torso while keeping the arms close to it until you touch the abdominals. Breathe out as you perform that movement. At that point you should be squeezing your back muscles hard. Hold that contraction for a second and slowly go back to the original position while breathing in.",
         "Repeat for the recommended amount of repetitions."
+      ],
+      "instructions_ar": [
+        "لأداء هذا التمرين ستحتاج إلى جهاز سحب سفلي ببكرة منخفضة وبار V. ملاحظة: بار V سيتيح لك استخدام قبضة محايدة حيث تتوجه راحتا يديك نحو بعضهما. للوصول إلى وضع البداية، اجلس أولاً على الجهاز وضع قدميك على المنصة الأمامية أو العارضة المتوفرة مع التأكد من ثني ركبتيك قليلاً وعدم قفلهما.",
+        "انحنِ إلى الأمام مع الحفاظ على المحاذاة الطبيعية لظهرك وأمسك مقابض بار V.",
+        "بما أن ذراعيك ممدودتين، اسحب للخلف حتى يكون جذعك بزاوية 90 درجة مع ساقيك. يجب أن يكون ظهرك مقوساً قليلاً وصدرك بارزاً. يجب أن تشعر بمد جيد في عضلات اللات وأنت تمسك البار أمامك. هذا هو وضع البداية للتمرين.",
+        "مع الحفاظ على ثبات الجذع، اسحب المقابض نحو جذعك مع إبقاء الذراعين قريبتين منه حتى تلمس عضلات البطن. زفر أثناء أداء هذه الحركة. عند تلك النقطة يجب أن تكون تضغط على عضلات ظهرك بقوة. أبقِ على هذا الانقباض لثانية ثم عُد ببطء إلى الأصل أثناء الشهيق.",
+        "كرر الحركة لعدد التكرارات الموصى به."
       ]
     },
     {
@@ -1448,7 +1974,8 @@
       "muscle_group_ar": "الظهر",
       "equipment": "bodyweight",
       "equipment_ar": "وزن الجسم",
-      "instructions": []
+      "instructions": [],
+      "instructions_ar": null
     },
     {
       "id": "e878ac3f-4301-4372-b0dd-047f1865c90a",
@@ -1465,6 +1992,13 @@
         "With your arms extended pull back until your torso is at a 90-degree angle from your legs. Your back should be slightly arched and your chest should be sticking out. You should be feeling a nice stretch on your lats as you hold the bar in front of you. This is the starting position of the exercise.",
         "Keeping the torso stationary, pull the handles back towards your torso while keeping the arms close to it until you touch the abdominals. Breathe out as you perform that movement. At that point you should be squeezing your back muscles hard. Hold that contraction for a second and slowly go back to the original position while breathing in.",
         "Repeat for the recommended amount of repetitions."
+      ],
+      "instructions_ar": [
+        "لأداء هذا التمرين ستحتاج إلى جهاز سحب سفلي ببكرة منخفضة وبار V. ملاحظة: بار V سيتيح لك استخدام قبضة محايدة حيث تتوجه راحتا يديك نحو بعضهما. للوصول إلى وضع البداية، اجلس أولاً على الجهاز وضع قدميك على المنصة الأمامية أو العارضة المتوفرة مع التأكد من ثني ركبتيك قليلاً وعدم قفلهما.",
+        "انحنِ إلى الأمام مع الحفاظ على المحاذاة الطبيعية لظهرك وأمسك مقابض بار V.",
+        "بما أن ذراعيك ممدودتين، اسحب للخلف حتى يكون جذعك بزاوية 90 درجة مع ساقيك. يجب أن يكون ظهرك مقوساً قليلاً وصدرك بارزاً. يجب أن تشعر بمد جيد في عضلات اللات وأنت تمسك البار أمامك. هذا هو وضع البداية للتمرين.",
+        "مع الحفاظ على ثبات الجذع، اسحب المقابض نحو جذعك مع إبقاء الذراعين قريبتين منه حتى تلمس عضلات البطن. زفر أثناء أداء هذه الحركة. عند تلك النقطة يجب أن تكون تضغط على عضلات ظهرك بقوة. أبقِ على هذا الانقباض لثانية ثم عُد ببطء إلى الأصل أثناء الشهيق.",
+        "كرر الحركة لعدد التكرارات الموصى به."
       ]
     },
     {
@@ -1483,6 +2017,14 @@
         "Slowly lower your heels by bending at the ankles until the calves are fully stretched. Inhale as you perform this movement.",
         "Raise the heels by extending the ankles as high as possible as you contract the calves and breathe out. Hold the top contraction for a second.",
         "Repeat for the recommended amount of repetitions."
+      ],
+      "instructions_ar": [
+        "اجلس على الجهاز وضع أصابع قدمك على الجزء السفلي من المنصة المتوفرة مع امتداد الكعبين للخارج. اختر وضع أصابع قدميك (للأمام، للداخل، أو للخارج) كما ورد في بداية هذا الفصل.",
+        "ضع أسفل فخذيك تحت ذراع الوسادة، التي تحتاج إلى ضبطها حسب ارتفاع فخذيك. الآن ضع يديك فوق ذراع الوسادة لمنعه من الانزلاق إلى الأمام.",
+        "ارفع الذراع قليلاً بدفع كعبيك للأعلى وأطلق دبوس الأمان. سيكون هذا هو وضع البداية.",
+        "أنزل كعبيك ببطء بثني الكاحل حتى يتمدد السمانة بالكامل. استنشق أثناء أداء هذه الحركة.",
+        "ارفع الكعبين بفرد الكاحلين بأقصى حد مع انقباض السمانة والزفير. أبقِ على الانقباض الأعلى لثانية.",
+        "كرر الحركة لعدد التكرارات الموصى به."
       ]
     },
     {
@@ -1494,7 +2036,8 @@
       "muscle_group_ar": "الترايسيبس",
       "equipment": "bodyweight",
       "equipment_ar": "وزن الجسم",
-      "instructions": []
+      "instructions": [],
+      "instructions_ar": null
     },
     {
       "id": "d6b74ac7-eb11-402f-9924-770d4f09649d",
@@ -1511,6 +2054,13 @@
         "Slowly begin to bring the dumbbell back to starting position as your breathe in.",
         "Repeat the movement with the left hand. This equals one repetition.",
         "Continue alternating in this manner for the recommended amount of repetitions."
+      ],
+      "instructions_ar": [
+        "اجلس على بنش مائل مع إمساك دمبل في كل يد والذراعان ممدودتان بالكامل. نصيحة: أبقِ المرفقين قريبين من الجذع. سيكون هذا هو وضع البداية.",
+        "مع إبقاء الذراع العلوي ثابتاً، ثنِ الوزن الأيمن إلى الأمام مع انقباض البايسيبس أثناء الزفير. أثناء ذلك، لفّ اليد بحيث تتوجه راحة اليد إلى الأعلى. واصل الحركة حتى ينقبض البايسيبس بالكامل ويصبح الدمبل عند مستوى الكتفين. أبقِ على وضع الانقباض لثانية مع الضغط على البايسيبس. نصيحة: يجب أن يتحرك الساعدان فقط.",
+        "ابدأ ببطء في إعادة الدمبل إلى وضع البداية أثناء الشهيق.",
+        "كرر الحركة باليد اليسرى. هذا يساوي تكراراً واحداً.",
+        "واصل التبديل بهذه الطريقة لعدد التكرارات الموصى به."
       ]
     },
     {
@@ -1527,6 +2077,12 @@
         "While maintaining the torso stationary (no swinging), lift the dumbbells to your side with a slight bend on the elbow and the hands slightly tilted forward as if pouring water in a glass. Continue to go up until you arms are parallel to the floor. Exhale as you execute this movement and pause for a second at the top.",
         "Lower the dumbbells back down slowly to the starting position as you inhale.",
         "Repeat for the recommended amount of repetitions."
+      ],
+      "instructions_ar": [
+        "التقط زوجاً من الدمبلات واجلس في نهاية بنش مسطح مع قدميك ثابتتين على الأرض. أمسك الدمبلات براحتي يدين متوجهتين للداخل وذراعيك متدليتين بجانبك بطول الذراع. سيكون هذا هو وضع البداية.",
+        "مع الحفاظ على الجذع ثابتاً (بدون تأرجح)، ارفع الدمبلات إلى جانبك مع انحناء طفيف في المرفق وميلان خفيف للأصابع للأمام كأنك تسكب الماء في كأس. واصل الرفع حتى تصبح ذراعيك موازيتين للأرض. زفير أثناء تنفيذ هذه الحركة وتوقف لثانية في الأعلى.",
+        "أنزل الدمبلات ببطء إلى وضع البداية أثناء الشهيق.",
+        "كرر الحركة لعدد التكرارات الموصى به."
       ]
     },
     {
@@ -1544,6 +2100,13 @@
         "As you exhale, pull the machine lever as far as possible to the back of your thighs by flexing at the knees. Keep your torso stationary at all times. Hold the contracted position for a second.",
         "Slowly return to the starting position as you breathe in.",
         "Repeat for the recommended amount of repetitions."
+      ],
+      "instructions_ar": [
+        "اضبط ذراع الجهاز ليتناسب مع طولك واجلس على الجهاز مع ظهرك مستنداً إلى الوسادة الخلفية.",
+        "ضع الجزء الخلفي من أسفل الساق فوق ذراع الوسادة (بضعة بوصات أسفل السمانة) وثبّت وسادة الفخذ على فخذيك، فوق الركبتين مباشرة. ثم أمسك المقابض الجانبية للجهاز مع توجيه أصابع قدميك بشكل مستقيم (أو يمكنك استخدام أي من الوضعين الآخرين) وتأكد من أن ساقيك ممدودتان بالكامل أمامك. سيكون هذا هو وضع البداية.",
+        "أثناء الزفير، اسحب ذراع الجهاز إلى الخلف قدر الإمكان نحو الفخذين بثني الركبتين. حافظ على ثبات الجذع طوال الوقت. أبقِ على وضع الانقباض لثانية.",
+        "عُد ببطء إلى وضع البداية أثناء الشهيق.",
+        "كرر الحركة لعدد التكرارات الموصى به."
       ]
     },
     {
@@ -1561,6 +2124,13 @@
         "With your arms extended pull back until your torso is at a 90-degree angle from your legs. Your back should be slightly arched and your chest should be sticking out. You should be feeling a nice stretch on your lats as you hold the bar in front of you. This is the starting position of the exercise.",
         "Keeping the torso stationary, pull the handles back towards your torso while keeping the arms close to it until you touch the abdominals. Breathe out as you perform that movement. At that point you should be squeezing your back muscles hard. Hold that contraction for a second and slowly go back to the original position while breathing in.",
         "Repeat for the recommended amount of repetitions."
+      ],
+      "instructions_ar": [
+        "لأداء هذا التمرين ستحتاج إلى جهاز سحب سفلي ببكرة منخفضة وبار V. ملاحظة: بار V سيتيح لك استخدام قبضة محايدة حيث تتوجه راحتا يديك نحو بعضهما. للوصول إلى وضع البداية، اجلس أولاً على الجهاز وضع قدميك على المنصة الأمامية أو العارضة المتوفرة مع التأكد من ثني ركبتيك قليلاً وعدم قفلهما.",
+        "انحنِ إلى الأمام مع الحفاظ على المحاذاة الطبيعية لظهرك وأمسك مقابض بار V.",
+        "بما أن ذراعيك ممدودتين، اسحب للخلف حتى يكون جذعك بزاوية 90 درجة مع ساقيك. يجب أن يكون ظهرك مقوساً قليلاً وصدرك بارزاً. يجب أن تشعر بمد جيد في عضلات اللات وأنت تمسك البار أمامك. هذا هو وضع البداية للتمرين.",
+        "مع الحفاظ على ثبات الجذع، اسحب المقابض نحو جذعك مع إبقاء الذراعين قريبتين منه حتى تلمس عضلات البطن. زفر أثناء أداء هذه الحركة. عند تلك النقطة يجب أن تكون تضغط على عضلات ظهرك بقوة. أبقِ على هذا الانقباض لثانية ثم عُد ببطء إلى الأصل أثناء الشهيق.",
+        "كرر الحركة لعدد التكرارات الموصى به."
       ]
     },
     {
@@ -1577,6 +2147,12 @@
         "Begin by extending through the elbow, pressing the handles together above your head.",
         "After pausing at the top, return the handles to the starting position. Ensure that you maintain tension on the cables.",
         "You can also execute this movement with your back off the pad and alternate hands."
+      ],
+      "instructions_ar": [
+        "اضبط الوزن على مبلغ مناسب واجلس ماسكاً المقابض. يجب أن يكون ذراعاك العلويان بزاوية حوالي 90 درجة مع الجسم، مع رأسك وصدرك مرفوعين. يجب أن يكون المرفقان مثنيين بزاوية 90 درجة أيضاً. سيكون هذا هو وضع البداية.",
+        "ابدأ بفرد المرفقين ودفع المقابض معاً فوق رأسك.",
+        "بعد التوقف في الأعلى، أعد المقابض إلى وضع البداية. تأكد من الحفاظ على التوتر في الكابلات.",
+        "يمكنك أيضاً تنفيذ هذه الحركة مع ظهرك خارج الوسادة وتبديل الأيدي."
       ]
     },
     {
@@ -1588,7 +2164,8 @@
       "muscle_group_ar": "الترايسيبس",
       "equipment": "barbell",
       "equipment_ar": "بار",
-      "instructions": []
+      "instructions": [],
+      "instructions_ar": null
     },
     {
       "id": "9f8eb74e-0d60-4998-aff1-7c27e3d8c812",
@@ -1606,6 +2183,14 @@
         "Now, exhale and push the dumbbells upward until they touch at the top.",
         "Then, after a brief pause at the top contracted position, slowly lower the weights back down to the starting position while inhaling.",
         "Repeat for the recommended amount of repetitions."
+      ],
+      "instructions_ar": [
+        "أمسك دمبل في كل يد واجلس على بنش ضغط عسكري أو بنش مساعد بمسند ظهر. ضع الدمبلين منتصبين فوق فخذيك.",
+        "الآن ارفع الدمبلين إلى مستوى الكتفين واحداً في كل مرة باستخدام فخذيك للمساعدة في دفعهما إلى وضعهما.",
+        "تأكد من لفّ معصميك بحيث تتوجه راحتا يديك للأمام. هذا هو وضع البداية.",
+        "الآن، زفير وادفع الدمبلين إلى الأعلى حتى يلتقيا في الأعلى.",
+        "ثم، بعد توقف قصير في وضع الانقباض الأعلى، أنزل الأوزان ببطء إلى وضع البداية أثناء الشهيق.",
+        "كرر الحركة لعدد التكرارات الموصى به."
       ]
     },
     {
@@ -1621,6 +2206,11 @@
         "Load an appropriate weight onto the pins and adjust the seat for your height. The handles should be near the top of the shoulders at the beginning of the motion. Your chest and head should be up and handles held with a pronated grip. This will be your starting position.",
         "Press the handles upward by extending through the elbow.",
         "After a brief pause at the top, return the weight to just above the start position, keeping tension on the muscles by not returning the weight to the stops until the set is complete."
+      ],
+      "instructions_ar": [
+        "حمّل وزناً مناسباً على الأوتاد واضبط المقعد حسب ارتفاعك. يجب أن تكون المقابض قرب أعلى الكتفين في بداية الحركة. يجب أن يكون صدرك ورأسك مرفوعين والمقبضان ممسوكان بقبضة علوية. سيكون هذا هو وضع البداية.",
+        "ادفع المقابض إلى الأعلى بفرد المرفقين.",
+        "بعد توقف قصير في الأعلى، أعد الوزن إلى ما فوق نقطة البداية مع الحفاظ على التوتر في العضلات بعدم إعادة الوزن إلى الحوامل حتى تكتمل المجموعة."
       ]
     },
     {
@@ -1637,6 +2227,12 @@
         "Raise your shoulders up as far as you can go as you breathe out and hold the contraction for a second. Tip: Refrain from trying to lift the barbell by using your biceps.",
         "Slowly return to the starting position as you breathe in.",
         "Repeat for the recommended amount of repetitions."
+      ],
+      "instructions_ar": [
+        "قف منتصباً بقدميك بعرض الكتفين وأمسك باراً بكلتا يديك أمامك بقبضة علوية (راحتا اليدين متوجهتان نحو الفخذين). نصيحة: يجب أن تكون يديك أوسع قليلاً من عرض الكتفين. يمكنك استخدام أربطة المعصم لهذا التمرين للحصول على قبضة أفضل. سيكون هذا هو وضع البداية.",
+        "ارفع كتفيك إلى أعلى حد ممكن أثناء الزفير وأبقِ على الانقباض لثانية. نصيحة: امتنع عن محاولة رفع البار باستخدام البايسيبس.",
+        "عُد ببطء إلى وضع البداية أثناء الشهيق.",
+        "كرر الحركة لعدد التكرارات الموصى به."
       ]
     },
     {
@@ -1653,6 +2249,12 @@
         "Lift the dumbbells by elevating the shoulders as high as possible while you exhale. Hold the contraction at the top for a second. Tip: The arms should remain extended at all times. Refrain from using the biceps to help lift the dumbbells. Only the shoulders should be moving up and down.",
         "Lower the dumbbells back to the original position.",
         "Repeat for the recommended amount of repetitions."
+      ],
+      "instructions_ar": [
+        "قف منتصباً بدمبل في كل يد (راحتا اليدين متوجهتان نحو الجذع)، والذراعين ممدودتين على الجانبين.",
+        "ارفع الدمبلين برفع الكتفيين بأقصى حد ممكن أثناء الزفير. أبقِ على الانقباض الأعلى لثانية. نصيحة: يجب أن تبقى الذاعمان ممدودتين طوال الوقت. امتنع عن استخدام البايسيبس للمساعدة في رفع الدمبلين. يجب أن تتحرك الكتفين فقط إلى الأعلى والأسفل.",
+        "أنزل الدمبلين إلى وضع البداية.",
+        "كرر الحركة لعدد التكرارات الموصى به."
       ]
     },
     {
@@ -1670,6 +2272,13 @@
         "Drive through the floor with your heels, extending your hips and knees as you rise to a standing position. Keep your arms straight throughout the movement, finishing with your shoulders back. This will be your starting position.",
         "Raise the weight by shrugging the shoulders towards your ears, moving straight up and down.",
         "Pause at the top of the motion, and then return the weight to the starting position."
+      ],
+      "instructions_ar": [
+        "حمّل الأوتاد بوزن مناسب. ضع نفسك مباشرة بين المقابض.",
+        "أمسك المقابض العلوية بقبضة مريحة، ثم أنزل وركيك مع أخذ نفس. انظر إلى الأمام بأعلى رأسك وأبقِ صدرك مرفوعاً.",
+        "ادفع من الأرض بكعبيك مع فرد وركيك وركبتيك أثناء الوقوف. أبقِ ذراعيك مستقيمين طوال الحركة، وانتهِ بدفع الكتفين للخلف. سيكون هذا هو وضع البداية.",
+        "ارفع الوزن بهزة الكتفين نحو الأذنيين، بحركة مستقيمة للأعلى والأسفل.",
+        "توقف في أعلى الحركة، ثم أعد الوزن إلى وضع البداية."
       ]
     },
     {
@@ -1686,6 +2295,12 @@
         "While keeping your back straight and your head up, bend only at the waist to the right as far as possible. Breathe in as you bend to the side. Then hold for a second and come back up to the starting position as you exhale. Tip: Keep the rest of the body stationary.",
         "Now repeat the movement but bending to the left instead. Hold for a second and come back to the starting position.",
         "Repeat for the recommended amount of repetitions."
+      ],
+      "instructions_ar": [
+        "قف منتصباً وأمسك باراً موضوعاً على ظهر كتفيك (أسفل الرقبة قليلاً). يجب أن تكون قدماك بعرض الكتفين. سيكون هذا هو وضع البداية.",
+        "مع الحفاظ على ظهرك مستقيماً ورأسك مرفوعاً، انحنِ عند الخصر فقط إلى اليمين قدر الإمكان. استنشق أثناء الانحناء إلى الجانب. ثم ثبت لثانية وعُد إلى وضع البداية أثناء الزفير. نصيحة: أبقِ باقي الجسم ثابتاً.",
+        "الآن كرر الحركة بالانحناء إلى اليسار بدلاً من ذلك. ثبت لثانية ثم عُد إلى وضع البداية.",
+        "كرر الحركة لعدد التكرارات الموصى به."
       ]
     },
     {
@@ -1702,6 +2317,12 @@
         "While keeping your back straight and your head up, bend only at the waist to the right as far as possible. Breathe in as you bend to the side. Then hold for a second and come back up to the starting position as you exhale. Tip: Keep the rest of the body stationary.",
         "Now repeat the movement but bending to the left instead. Hold for a second and come back to the starting position.",
         "Repeat for the recommended amount of repetitions and then change hands."
+      ],
+      "instructions_ar": [
+        "قف منتصباً وأمسك دمبلاً في اليد اليسرى (راحة اليد متجهة نحو الجذع) بينما تمسك اليد اليمنى خصرك. يجب وضع قدميك بعرض الكتفين. سيكون هذا هو وضع البداية.",
+        "مع الحفاظ على ظهرك مستقيماً ورأسك مرفوعاً، انحنِ عند الخصر فقط إلى اليمين قدر الإمكان. استنشق أثناء الانحناء إلى الجانب. ثم ثبت لثانية وعُد إلى وضع البداية أثناء الزفير. نصيحة: أبقِ باقي الجسم ثابتاً.",
+        "الآن كرر الحركة بالانحناء إلى اليسار بدلاً من ذلك. ثبت لثانية ثم عُد إلى وضع البداية.",
+        "كرر الحركة لعدد التكرارات الموصى به ثم بدّل اليدين."
       ]
     },
     {
@@ -1713,7 +2334,8 @@
       "muscle_group_ar": "الظهر",
       "equipment": "bodyweight",
       "equipment_ar": "وزن الجسم",
-      "instructions": []
+      "instructions": [],
+      "instructions_ar": null
     },
     {
       "id": "42ccd037-7a93-40e6-b6c7-8a6e367b95a5",
@@ -1724,7 +2346,8 @@
       "muscle_group_ar": "الكتفين",
       "equipment": "barbell",
       "equipment_ar": "بار",
-      "instructions": []
+      "instructions": [],
+      "instructions_ar": null
     },
     {
       "id": "6318b8ec-b436-47ba-b5c5-c0c59e10f1ba",
@@ -1735,7 +2358,8 @@
       "muscle_group_ar": "الكتفين",
       "equipment": "cable",
       "equipment_ar": "كابل",
-      "instructions": []
+      "instructions": [],
+      "instructions_ar": null
     },
     {
       "id": "b2263dcc-ca37-44cd-8ed0-d7a1153f6873",
@@ -1752,6 +2376,13 @@
         "Raise your heels as you breathe out by extending your ankles as high as possible and flexing your calf. Ensure that the knee is kept stationary at all times. There should be no bending at any time. Hold the contracted position by a second before you start to go back down.",
         "Go back slowly to the starting position as you breathe in by lowering your heels as you bend the ankles until calves are stretched.",
         "Repeat for the recommended amount of repetitions."
+      ],
+      "instructions_ar": [
+        "اضبط الذراع المبطن لجهاز رفع السمانة ليتناسب مع طولك.",
+        "ضع كتفيك تحت الوسادات المتوفرة ووجّه أصابع قدميك للأمام (أو استخدم أي من الوضعين الآخرين الموضحين في بداية الفصل). يجب تثبيت مقدمة قدمك فوق كتلة السمانة مع امتداد الكعبين خلفها. ادفع الذراع لأعلى بفرد وركيك وركبتيك حتى يقف جذعك منتصباً. يجب إبقاء الركبتين بثني طفيف؛ لا تُقفل أبداً. يجب أن تتوجه أصابع القدمين للأمام أو للخارج أو للداخل كما ورد في بداية الفصل. سيكون هذا هو وضع البداية.",
+        "ارفع كعبيك أثناء الزفير بفرد كاحليك إلى أعلى حد ممكن وانقباض السمانة. تأكد من إبقاء الركبة ثابتة طوال الوقت. يجب ألا يكون هناك أي ثني في أي وقت. أبقِ على وضع الانقباض لثانية قبل البدء بالنزول.",
+        "عُد ببطء إلى وضع البداية أثناء الشهيق بإنزال كعبيك مع ثني الكاحلين حتى تتمدد السمانة.",
+        "كرر الحركة لعدد التكرارات الموصى به."
       ]
     },
     {
@@ -1769,6 +2400,13 @@
         "Flex your hips and spine to raise your torso toward your knees.",
         "At the top of the contraction your torso should be perpendicular to the ground. Reverse the motion, going only ¾ of the way down.",
         "Repeat for the recommended amount of repetitions."
+      ],
+      "instructions_ar": [
+        "استلقِ على الأرض وثبّت قدميك. يجب أن تكون ساقاك مثنيتين عند الركبتين.",
+        "ضع يديك خلف رأسك أو بجانبه. ستبدأ بظهرك على الأرض. سيكون هذا هو وضع البداية.",
+        "اثنِ وركيك وعمودك الفقري لرفع جذعك نحو ركبتيك.",
+        "في أعلى الانقباض يجب أن يكون جذعك عمودياً على الأرض. اعكس الحركة، نازلاً ثلاثة أرباع الطريق فقط.",
+        "كرر الحركة لعدد التكرارات الموصى به."
       ]
     },
     {
@@ -1785,6 +2423,12 @@
         "Keeping the upper arms stationary, lower the bar by allowing the elbows to flex. Inhale as you perform this portion of the movement. Pause once the bar is directly above the forehead.",
         "Lift the bar back to the starting position by extending the elbow and exhaling.",
         "Repeat."
+      ],
+      "instructions_ar": [
+        "بقبضة ضيقة، ارفع بار EZ وأمسكه مع إبقاء مرفقيك للداخل أثناء الاستلقاء على البنش. يجب أن تكون ذراعيك عموديتين على الأرض. سيكون هذا هو وضع البداية.",
+        "مع إبقاء الذراعين العلويين ثابتين، أنزل البار بالسماح للمرفقين بالثني. استنشق أثناء أداء هذا الجزء من الحركة. توقف بمجرد أن يصبح البار مباشرة فوق الجبهة.",
+        "ارفع البار إلى وضع البداية بفرد المرفقين والزفير.",
+        "كرر."
       ]
     },
     {
@@ -1801,6 +2445,12 @@
         "Keeping the upper arms stationary, lower the bar by allowing the elbows to flex. Inhale as you perform this portion of the movement. Pause once the bar is directly above the forehead.",
         "Lift the bar back to the starting position by extending the elbow and exhaling.",
         "Repeat."
+      ],
+      "instructions_ar": [
+        "بقبضة ضيقة، ارفع بار EZ وأمسكه مع إبقاء مرفقيك للداخل أثناء الاستلقاء على البنش. يجب أن تكون ذراعيك عموديتين على الأرض. سيكون هذا هو وضع البداية.",
+        "مع إبقاء الذراعين العلويين ثابتين، أنزل البار بالسماح للمرفقين بالثني. استنشق أثناء أداء هذا الجزء من الحركة. توقف بمجرد أن يصبح البار مباشرة فوق الجبهة.",
+        "ارفع البار إلى وضع البداية بفرد المرفقين والزفير.",
+        "كرر."
       ]
     },
     {
@@ -1819,6 +2469,14 @@
         "Begin to slowly lower the bar by bending the knees and hips as you maintain a straight posture with the head up. Continue down until the angle between the upper leg and the calves becomes slightly less than 90-degrees. Inhale as you perform this portion of the movement. Tip: If you performed the exercise correctly, the front of the knees should make an imaginary straight line with the toes that is perpendicular to the front. If your knees are past that imaginary line (if they are past your toes) then you are placing undue stress on the knee and the exercise has been performed incorrectly.",
         "Begin to raise the bar as you exhale by pushing the floor with the heel of your foot as you straighten the legs again and go back to the starting position.",
         "Repeat for the recommended amount of repetitions."
+      ],
+      "instructions_ar": [
+        "يُفضّل أداء هذا التمرين داخل حامل السكوات لأسباب تتعلق بالأمان. للبدء، ضع البار على حامل أسفل مستوى الكتفين مباشرة. بمجرد تحديد الارتفاع الصحيح وتحميل البار، انزل تحت البار وضع الجزء الخلفي من كتفيك (أسفل الرقبة قليلاً) عليه.",
+        "امسك البار بذراعيك على الجانبين وارفعه من الحامل أولاً بالدفع بساقيك مع استقامة جذعك في الوقت نفسه.",
+        "ابتعد عن الحامل وضع ساقيك بوضعية متوسطة بعرض الكتفين مع توجيه أصابع القدمين قليلاً إلى الخارج. أبقِ رأسك مرفوعاً طوال الوقت وحافظ أيضاً على استقامة ظهرك. سيكون هذا هو وضع البداية. ملاحظة: لغرض هذه المناقشة سنستخدم الوضعية المتوسطة الموضحة أعلاه التي تستهدف التنمية الشاملة؛ لكن يمكنك اختيار أي من الوضعيات الثلاث الموضحة في قسم وضعيات القدمين.",
+        "ابدأ بإنزال البار ببطء بثني الركبتين والوركين مع الحفاظ على وضعية مستقيمة ورأس مرفوع. واصل النزول حتى تصبح الزاوية بين الفخذ وأعلى الساق أقل قليلاً من 90 درجة. استنشق أثناء أداء هذا الجزء من الحركة. نصيحة: إذا أديت التمرين بشكل صحيح، يجب أن يشكل مقدما الركبتين خطاً وهمياً مستقيماً مع أصابع القدمين عمودياً على الأمام. إذا تجاوزت ركبتيك ذلك الخط الوهمي (إذا تجاوزتا أصابع قدميك) فأنت تضع ضغطاً غير لازم على الركبة ويكون التمرين قد نُفذ بشكل غير صحيح.",
+        "ابدأ برفع البار أثناء الزفير بدفع الأرض بكعب قدمك مع فرد الساقين مرة أخرى والعودة إلى وضع البداية.",
+        "كرر الحركة لعدد التكرارات الموصى به."
       ]
     },
     {
@@ -1837,6 +2495,14 @@
         "Slowly lower the bar by bending the knees as you maintain a straight posture with the head up. Continue down until the angle between the upper and lower leg breaks 90 degrees.",
         "Begin to raise the bar as you exhale by pushing the floor with the heels of your feet, extending the knees and returning to the starting position.",
         "Repeat for the recommended amount of repetitions."
+      ],
+      "instructions_ar": [
+        "للبدء، اضبط البار على وضع يتناسب مع طولك. بمجرد تحميل البار، انزل تحته وضعه عبر الجزء الخلفي من كتفيك.",
+        "أمسك البار بيديك متوجهتين للأمام، أطلق القفل وارفعه من الحامل بفرد ساقيك.",
+        "حرّك قدميك إلى الأمام حوالي 18 بوصة أمام البار. ضع ساقيك بوضعية بعرض الكتفين مع توجيه أصابع القدمين قليلاً إلى الخارج. انظر إلى الأمام طوال الوقت وحافظ على عمود فقري محايد أو مقوس قليلاً. سيكون هذا هو وضع البداية.",
+        "أنزل البار ببطء بثني الركبتين مع الحفاظ على وضعية مستقيمة ورأس مرفوع. واصل النزول حتى تتجاوز الزاوية بين الفخذ وأسفل الساق 90 درجة.",
+        "ابدأ برفع البار أثناء الزفير بدفع الأرض بكعبي قدميك مع فرد الركبتين والعودة إلى وضع البداية.",
+        "كرر الحركة لعدد التكرارات الموصى به."
       ]
     },
     {
@@ -1848,7 +2514,8 @@
       "muscle_group_ar": "القلب",
       "equipment": "other",
       "equipment_ar": "أخرى",
-      "instructions": []
+      "instructions": [],
+      "instructions_ar": null
     },
     {
       "id": "4c773c6d-d654-4e86-bef5-2954ee298086",
@@ -1859,7 +2526,8 @@
       "muscle_group_ar": "القلب",
       "equipment": "other",
       "equipment_ar": "أخرى",
-      "instructions": []
+      "instructions": [],
+      "instructions_ar": null
     },
     {
       "id": "fb439a23-f902-4c7a-97f4-3db81eace277",
@@ -1876,6 +2544,13 @@
         "Raise your heels as you breathe out by extending your ankles as high as possible and flexing your calf. Ensure that the knee is kept stationary at all times. There should be no bending at any time. Hold the contracted position by a second before you start to go back down.",
         "Go back slowly to the starting position as you breathe in by lowering your heels as you bend the ankles until calves are stretched.",
         "Repeat for the recommended amount of repetitions."
+      ],
+      "instructions_ar": [
+        "اضبط الذراع المبطن لجهاز رفع السمانة ليتناسب مع طولك.",
+        "ضع كتفيك تحت الوسادات المتوفرة ووجّه أصابع قدميك للأمام (أو استخدم أي من الوضعين الآخرين الموضحين في بداية الفصل). يجب تثبيت مقدمة قدمك فوق كتلة السمانة مع امتداد الكعبين خلفها. ادفع الذراع لأعلى بفرد وركيك وركبتيك حتى يقف جذعك منتصباً. يجب إبقاء الركبتين بثني طفيف؛ لا تُقفل أبداً. يجب أن تتوجه أصابع القدمين للأمام أو للخارج أو للداخل كما ورد في بداية الفصل. سيكون هذا هو وضع البداية.",
+        "ارفع كعبيك أثناء الزفير بفرد كاحليك إلى أعلى حد ممكن وانقباض السمانة. تأكد من إبقاء الركبة ثابتة طوال الوقت. يجب ألا يكون هناك أي ثني في أي وقت. أبقِ على وضع الانقباض لثانية قبل البدء بالنزول.",
+        "عُد ببطء إلى وضع البداية أثناء الشهيق بإنزال كعبيك مع ثني الكاحلين حتى تتمدد السمانة.",
+        "كرر الحركة لعدد التكرارات الموصى به."
       ]
     },
     {
@@ -1893,6 +2568,13 @@
         "Raise your heels as you breathe out by extending your ankles as high as possible and flexing your calf. Ensure that the knee is kept stationary at all times. There should be no bending at any time. Hold the contracted position by a second before you start to go back down.",
         "Go back slowly to the starting position as you breathe in by lowering your heels as you bend the ankles until calves are stretched.",
         "Repeat for the recommended amount of repetitions."
+      ],
+      "instructions_ar": [
+        "اضبط الذراع المبطن لجهاز رفع السمانة ليتناسب مع طولك.",
+        "ضع كتفيك تحت الوسادات المتوفرة ووجّه أصابع قدميك للأمام (أو استخدم أي من الوضعين الآخرين الموضحين في بداية الفصل). يجب تثبيت مقدمة قدمك فوق كتلة السمانة مع امتداد الكعبين خلفها. ادفع الذراع لأعلى بفرد وركيك وركبتيك حتى يقف جذعك منتصباً. يجب إبقاء الركبتين بثني طفيف؛ لا تُقفل أبداً. يجب أن تتوجه أصابع القدمين للأمام أو للخارج أو للداخل كما ورد في بداية الفصل. سيكون هذا هو وضع البداية.",
+        "ارفع كعبيك أثناء الزفير بفرد كاحليك إلى أعلى حد ممكن وانقباض السمانة. تأكد من إبقاء الركبة ثابتة طوال الوقت. يجب ألا يكون هناك أي ثني في أي وقت. أبقِ على وضع الانقباض لثانية قبل البدء بالنزول.",
+        "عُد ببطء إلى وضع البداية أثناء الشهيق بإنزال كعبيك مع ثني الكاحلين حتى تتمدد السمانة.",
+        "كرر الحركة لعدد التكرارات الموصى به."
       ]
     },
     {
@@ -1910,6 +2592,13 @@
         "While keeping the arms straight, pull the bar down by contracting the lats until your hands are next to the side of the thighs. Breathe out as you perform this step.",
         "While keeping the arms straight, go back to the starting position while breathing in.",
         "Repeat for the recommended amount of repetitions."
+      ],
+      "instructions_ar": [
+        "ستبدأ بإمساك البار العريض من البكرة العلوية لجهاز السحب باستخدام قبضة علوية (راحتا اليدين للأسفل) أوسع من عرض الكتفين. خط للخلف حوالي قدمين.",
+        "اثنِ جذعك إلى الأمام عند الخصر بحوالي 30 درجة مع ذراعيك ممدودتين بالكامل أمامك وثني طفيف في المرفقين. إذا لم تكن ذراعيك ممدودتين بالكامل فستحتاج إلى التراجع قليلاً حتى تكون كذلك. بمجرد تمدد ذراعيك بالكامل وانحناء جذعك قليلاً عند الخصر، اشدُد عضلات اللات وستكون جاهزاً للبدء.",
+        "مع إبقاء الذراعين مستقيمين، اسحب البار للأسفل بانقباض عضلات اللات حتى تصبح يديك بجانب الفخذين. زفر أثناء أداء هذه الخطوة.",
+        "مع إبقاء الذراعين مستقيمين، عُد إلى وضع البداية أثناء الشهيق.",
+        "كرر الحركة لعدد التكرارات الموصى به."
       ]
     },
     {
@@ -1921,7 +2610,8 @@
       "muscle_group_ar": "الفخذ الأمامي",
       "equipment": "dumbbell",
       "equipment_ar": "دمبل",
-      "instructions": []
+      "instructions": [],
+      "instructions_ar": null
     },
     {
       "id": "fe1ea9ec-5ae3-482a-9b1b-8cbc6b15cd87",
@@ -1939,6 +2629,14 @@
         "As you exhale slowly pull the weight up and squeeze your back at the top of the movement. Tip: Keep the upper arms as close to the torso as possible throughout the movement in order to better engage the back muscles. Also, do not lift your body off of the pad at any time and refrain from using the biceps to lift the weight.",
         "After a second contraction at the top of the movement, as you inhale, slowly go back down to the starting position.",
         "Repeat for the recommended amount of repetitions."
+      ],
+      "instructions_ar": [
+        "حمّل جهاز سحب T بالوزن المطلوب واضبط ارتفاع الساق بحيث يكون أعلى صدرك عند قمة الوسادة. نصيحة: في بعض الأجهزة كل ما يمكنك فعله هو الوقوف على الدرجة المناسبة التي تتيح لك ارتفاعاً يجعل أعلى صدرك عند قمة الوسادة.",
+        "استلقِ على وجهك على الوسادة وأمسك المقابض. يمكنك استخدام وضع راحتي اليدين للأسفل أو للأعلى أو للداخل حسب الجزء من ظهرك الذي تريد التركيز عليه.",
+        "ارفع البار عن الحامل ومدّ ذراعيك أمامك. سيكون هذا هو وضع البداية.",
+        "أثناء الزفير اسحب الوزن ببطء إلى الأعلى واضغط على ظهرك في أعلى الحركة. نصيحة: أبقِ الذراعين العلويين قريبين من الجذع قدر الإمكان طوال الحركة لإشراك عضلات الظهر بشكل أفضل. أيضاً، لا ترفع جسمك عن الوسادة في أي وقت وامتنع عن استخدام البايسيبس لرفع الوزن.",
+        "بعد ثانية من الانقباض في أعلى الحركة، وأثناء الشهيق، انزل ببطء إلى وضع البداية.",
+        "كرر الحركة لعدد التكرارات الموصى به."
       ]
     },
     {
@@ -1953,6 +2651,10 @@
       "instructions": [
         "To begin, step onto the treadmill and select the desired option from the menu. Most treadmills have a manual setting, or you can select a program to run. Typically, you can enter your age and weight to estimate the amount of calories burned during exercise. Elevation can be adjusted to change the intensity of the workout.",
         "Treadmills offer convenience, cardiovascular benefits, and usually have less impact than jogging outside. A 150 lb person will burn almost 250 calories jogging for 30 minutes, compared to more than 450 calories running. Maintain proper posture as you jog, and only hold onto the handles when necessary, such as when dismounting or checking your heart rate."
+      ],
+      "instructions_ar": [
+        "للبدء، اصعد على جهاز المشي واختر الخيار المطلوب من القائمة. معظم أجهزة المشي لديها إعداد يدوي، أو يمكنك اختيار برنامج للتشغيل. عادةً، يمكنك إدخال عمرك ووزنك لتقدير كمية السعرات الحرارية المحروقة أثناء التمرين. يمكن ضبط الارتفاع لتغيير شدة التمرين.",
+        "توفر أجهزة المشي الراحة وفوائد للقلب والأوعية الدموية، وعادةً ما يكون تأثيرها أقل من الهرولة في الخارج. سيحترق شخص بوزن 150 رطلاً حوالي 250 سعرة حرارية بالهرولة لمدة 30 دقيقة، مقارنة بأكثر من 450 سعرة حرارية بالجري. حافظ على وضعية صحيحة أثناء الهرولة، ولا تمسك بالمقابض إلا عند الحاجة، مثل عند النزول أو فحص معدل ضربات قلبك."
       ]
     },
     {
@@ -1970,6 +2672,13 @@
         "Keeping the upper arms stationary, extend the arms as you flex the triceps. Breathe out during this portion of the movement and hold the contraction for a second.",
         "Slowly go back to the starting position.",
         "Repeat for the recommended amount of repetitions."
+      ],
+      "instructions_ar": [
+        "استلقِ على بنش مائل مبتعداً بوجهك عن جهاز بكرة علوي يحتوي على ملحق بار مستقيم.",
+        "أمسك ملحق البار المستقيم فوق رأسك بقبضة علوية ضيقة (راحتا اليدين للأسفل، أضيق من عرض الكتفين) وأبقِ مرفقيك مطويين على جانبيك. يجب أن تُشكّل ذراعيك العلويين زاوية حوالي 25 درجة عند قياسها من الأرض.",
+        "مع إبقاء الذراعين العلويين ثابتين، مدّ الذراعين مع انقباض الترايسبس. زفر أثناء هذا الجزء من الحركة وأبقِ على الانقباض لثانية.",
+        "عُد ببطء إلى وضع البداية.",
+        "كرر الحركة لعدد التكرارات الموصى به."
       ]
     },
     {
@@ -1987,6 +2696,13 @@
         "As you breathe in and you keep the upper arms stationary (and elbows in), bring the dumbbells down slowly by moving your forearms in a semicircular motion towards you until your thumbs are next to your ears. Breathe in as you perform this portion of the movement.",
         "Lift the dumbbells back to the starting position by contracting the triceps and exhaling.",
         "Repeat for the recommended amount of repetitions."
+      ],
+      "instructions_ar": [
+        "ثبّت ساقيك عند نهاية البنش المنخفض واستلقِ مع إمساك دمبل في كل يد فوق فخذيك. راحة يديك ستكون متوجهتان نحو بعضهما.",
+        "بمجرد الاستلقاء، حرّك الدمبلين أمامك بعرض الكتفين. يجب أن تتوجه راحتا اليدين نحو بعضهما وأن تكون الذراعان عموديتين على الأرض وممدودتين بالكامل. سيكون هذا هو وضع البداية.",
+        "أثناء الشهيق ومع إبقاء الذراعين العلويين ثابتين (والمرفقين للداخل)، أنزل الدمبلين ببطء بتحريك ساعديك بحركة نصف دائرية نحوك حتى يصبح إبهاماك بجانب أذنيك. استنشق أثناء أداء هذا الجزء من الحركة.",
+        "ارفع الدمبلين إلى وضع البداية بانقباض الترايسبس والزفير.",
+        "كرر الحركة لعدد التكرارات الموصى به."
       ]
     },
     {
@@ -2003,6 +2719,12 @@
         "Now, while keeping your upper arms stationary, exhale and use your triceps to lift the weights until the arm is fully extended. Focus on moving the forearm.",
         "After a brief pause at the top contraction, inhale and slowly lower the dumbbells back down to the starting position.",
         "Repeat the movement for the prescribed amount of repetitions."
+      ],
+      "instructions_ar": [
+        "ابدأ بدمبل في كل يد وراحتي يديك متجهتين نحو جذعك. أبقِ ظهرك مستقيماً مع ثني طفيف في الركبتين وانحنِ إلى الأمام عند الخصر. يجب أن يكون جذعك موازياً للأرض تقريباً. تأكد من إبقاء رأسك مرفوعاً. يجب أن يكون ذراعاك العلويان قريبين من جذعك وموازيين للأرض. يجب أن تكون ساعداك متجهتين نحو الأرض وأنت تمسك الأوزان. يجب أن تتشكل زاوية 90 درجة بين ساعدك وذراعك العلوي. سيكون هذا هو وضع البداية.",
+        "الآن، مع إبقاء ذراعيك العلويين ثابتين، زفر واستخدم الترايسبس لرفع الأوزان حتى يتمدد الذراع بالكامل. ركّز على تحريك الساعد.",
+        "بعد توقف قصير في الانقباض الأعلى، استنشق وأنزل الدمبلين ببطء إلى وضع البداية.",
+        "كرر الحركة لعدد التكرارات المحدد."
       ]
     },
     {
@@ -2019,6 +2741,12 @@
         "Now, while keeping your upper arms stationary, exhale and use your triceps to lift the weights until the arm is fully extended. Focus on moving the forearm.",
         "After a brief pause at the top contraction, inhale and slowly lower the dumbbells back down to the starting position.",
         "Repeat the movement for the prescribed amount of repetitions."
+      ],
+      "instructions_ar": [
+        "ابدأ بحمل دمبل في كل يد وراحتا اليدين تواجهان جذعك. حافظ على استقامة ظهرك مع ثني بسيط في الركبتين، ثم انحنِ للأمام من الخصر حتى يصبح جذعك موازياً للأرض تقريباً. احرص على إبقاء رأسك مرفوعاً. يجب أن يكون العضدان قريبين من جذعك وموازيين للأرض، والساعدان متجهين نحو الأرض أثناء حمل الأوزان، بحيث تتكوّن زاوية 90 درجة بين الساعد والعضد. سيكون هذا هو وضع البداية.",
+        "الآن، مع إبقاء العضدين ثابتين، ازفر واستخدم الترايسبس لرفع الأوزان حتى تفرد ذراعك بالكامل. ركّز على تحريك الساعد فقط.",
+        "بعد توقف قصير عند أقصى انقباض، استنشق وأنزل الدمبل ببطء إلى وضع البداية.",
+        "كرر الحركة لعدد التكرارات المحدد."
       ]
     },
     {
@@ -2036,6 +2764,13 @@
         "Using the triceps, bring the bar down until it touches the front of your thighs and the arms are fully extended perpendicular to the floor. The upper arms should always remain stationary next to your torso and only the forearms should move. Exhale as you perform this movement.",
         "After a second hold at the contracted position, bring the bar slowly up to the starting point. Breathe in as you perform this step.",
         "Repeat for the recommended amount of repetitions."
+      ],
+      "instructions_ar": [
+        "ثبّت باراً مستقيماً أو مائلاً في بكرة عالية وأمسكه بقبضة علوية (راحتا اليدين للأسفل) بعرض الكتفين.",
+        "قف منتصباً مع استقامة الجذع وميل بسيط جداً للأمام، وقرّب العضدين من جسمك بحيث يكونان عموديين على الأرض. يجب أن يتجه الساعدان لأعلى نحو البكرة أثناء حمل البار. سيكون هذا هو وضع البداية.",
+        "باستخدام الترايسبس، أنزل البار حتى يلامس مقدمة فخذيك وتُفرد الذراعان بالكامل عمودياً على الأرض. يجب أن يبقى العضدان ثابتين بجانب الجذع طوال الحركة، ولا يتحرك سوى الساعدين. ازفر أثناء أداء هذه الحركة.",
+        "بعد الثبات لثانية عند وضع الانقباض، أعد البار ببطء إلى نقطة البداية. استنشق أثناء أداء هذه الخطوة.",
+        "كرر لعدد التكرارات الموصى به."
       ]
     },
     {
@@ -2053,6 +2788,13 @@
         "Using the triceps, bring the bar down until it touches the front of your thighs and the arms are fully extended perpendicular to the floor. The upper arms should always remain stationary next to your torso and only the forearms should move. Exhale as you perform this movement.",
         "After a second hold at the contracted position, bring the bar slowly up to the starting point. Breathe in as you perform this step.",
         "Repeat for the recommended amount of repetitions."
+      ],
+      "instructions_ar": [
+        "ثبّت باراً مستقيماً أو مائلاً في بكرة عالية وأمسكه بقبضة علوية (راحتا اليدين للأسفل) بعرض الكتفين.",
+        "قف منتصباً مع استقامة الجذع وميل بسيط جداً للأمام، وقرّب العضدين من جسمك بحيث يكونان عموديين على الأرض. يجب أن يتجه الساعدان لأعلى نحو البكرة أثناء حمل البار. سيكون هذا هو وضع البداية.",
+        "باستخدام الترايسبس، أنزل البار حتى يلامس مقدمة فخذيك وتُفرد الذراعان بالكامل عمودياً على الأرض. يجب أن يبقى العضدان ثابتين بجانب الجذع طوال الحركة، ولا يتحرك سوى الساعدين. ازفر أثناء أداء هذه الحركة.",
+        "بعد الثبات لثانية عند وضع الانقباض، أعد البار ببطء إلى نقطة البداية. استنشق أثناء أداء هذه الخطوة.",
+        "كرر لعدد التكرارات الموصى به."
       ]
     },
     {
@@ -2070,6 +2812,13 @@
         "Using the triceps, bring the rope down as you bring each side of the rope to the side of your thighs. At the end of the movement the arms are fully extended and perpendicular to the floor. The upper arms should always remain stationary next to your torso and only the forearms should move. Exhale as you perform this movement.",
         "After holding for a second, at the contracted position, bring the rope slowly up to the starting point. Breathe in as you perform this step.",
         "Repeat for the recommended amount of repetitions."
+      ],
+      "instructions_ar": [
+        "ثبّت حبلاً في بكرة عالية وأمسكه بقبضة محايدة (راحتا اليدين تتقابلان).",
+        "قف منتصباً مع استقامة الجذع وميل بسيط جداً للأمام، وقرّب العضدين من جسمك بحيث يكونان عموديين على الأرض. يجب أن يتجه الساعدان لأعلى نحو البكرة أثناء حمل الحبل وراحتا اليدين تتقابلان. سيكون هذا هو وضع البداية.",
+        "باستخدام الترايسبس، أنزل الحبل مع إبعاد طرفيه إلى جانبي فخذيك. في نهاية الحركة تكون الذراعان مفرودتين بالكامل وعموديتين على الأرض. يجب أن يبقى العضدان ثابتين بجانب الجذع طوال الحركة، ولا يتحرك سوى الساعدين. ازفر أثناء أداء هذه الحركة.",
+        "بعد الثبات لثانية عند وضع الانقباض، أعد الحبل ببطء إلى نقطة البداية. استنشق أثناء أداء هذه الخطوة.",
+        "كرر لعدد التكرارات الموصى به."
       ]
     },
     {
@@ -2086,6 +2835,12 @@
         "Step forward with one leg, flexing the knees to drop your hips. Descend until your rear knee nearly touches the ground. Your posture should remain upright, and your front knee should stay above the front foot.",
         "Drive through the heel of your lead foot and extend both knees to raise yourself back up.",
         "Step forward with your rear foot, repeating the lunge on the opposite leg."
+      ],
+      "instructions_ar": [
+        "ابدأ بالوقوف وقدماك بعرض الكتفين ويداك على خصرك.",
+        "اخطُ للأمام بإحدى ساقيك مع ثني الركبتين لإنزال الوركين. انزل حتى تكاد ركبتك الخلفية تلامس الأرض. حافظ على استقامة جذعك، ويجب أن تبقى ركبتك الأمامية فوق القدم الأمامية.",
+        "ادفع من كعب قدمك الأمامية وافرد الركبتين للعودة إلى الأعلى.",
+        "اخطُ للأمام بقدمك الخلفية، وكرر اللنج على الساق المقابلة."
       ]
     },
     {
@@ -2097,7 +2852,8 @@
       "muscle_group_ar": "القلب",
       "equipment": "other",
       "equipment_ar": "أخرى",
-      "instructions": []
+      "instructions": [],
+      "instructions_ar": null
     }
   ]
 }
