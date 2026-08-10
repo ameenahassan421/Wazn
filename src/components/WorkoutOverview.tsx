@@ -8,6 +8,7 @@ import { formatWeight } from '../lib/units'
 import { describeRest, REST_MAX_SECONDS, stepRest } from '../lib/rest'
 import { REST_STEP_SECONDS } from '../lib/use-rest-timer'
 import { IconMore } from './icons'
+import { useLocale } from '../lib/locale-context'
 
 /**
  * The workout overview — design v2.2, the spine of a session.
@@ -90,6 +91,7 @@ export function WorkoutOverview({
   onUngroup: (exerciseId: string) => void
   onRemove: (exerciseId: string) => void
 }) {
+  const { t } = useLocale()
   const [openMenu, setOpenMenu] = useState<string | null>(null)
   const [drag, setDrag] = useState<DragState | null>(null)
   const itemRefs = useRef(new Map<string, HTMLLIElement>())
@@ -324,7 +326,7 @@ export function WorkoutOverview({
                         block.rows.length === 1 &&
                         block.rows[0].reps === null && (
                           <p className="px-1 pt-0.5 text-[11px] text-muted">
-                            Tap the numbers to enter your first set.
+                            {t('overview.first_set')}
                           </p>
                         )}
 
@@ -364,7 +366,8 @@ function BlockHeader({
   onGripMove: (event: React.PointerEvent<HTMLButtonElement>) => void
   onGripUp: () => void
 }) {
-  const name = block.exercise?.name ?? 'Exercise'
+  const { t } = useLocale()
+  const name = block.exercise?.name ?? t('overview.exercise_fallback')
   const complete = block.committed >= block.planned && block.planned > 0
   return (
     <div className="px-1 pt-1">
@@ -376,7 +379,7 @@ function BlockHeader({
             gesture once the long-press has landed. */}
         <button
           type="button"
-          aria-label={`Reorder ${name}`}
+          aria-label={t('overview.reorder', { name })}
           onPointerDown={onGripDown}
           onPointerMove={onGripMove}
           onPointerUp={onGripUp}
@@ -401,7 +404,7 @@ function BlockHeader({
           type="button"
           onClick={onToggleMenu}
           aria-expanded={menuOpen}
-          aria-label={`More for ${name}`}
+          aria-label={t('overview.more', { name })}
           className="flex h-[52px] w-12 shrink-0 items-center justify-center text-muted"
         >
           <IconMore size={18} />
@@ -454,6 +457,7 @@ function BlockMenu({
   onUngroup?: () => void
   onRemove: () => void
 }) {
+  const { t } = useLocale()
   const [note, setNote] = useState(block.note ?? '')
   const [confirmRemove, setConfirmRemove] = useState(false)
   const noteId = `note-${block.exerciseId}`
@@ -468,14 +472,14 @@ function BlockMenu({
     <div className="mx-2 mb-2 flex flex-col gap-2 border-t border-line pt-2">
       <div>
         <label htmlFor={noteId} className="mb-1 block text-[11px] text-muted">
-          Note for this lift
+          {t('overview.note_label')}
         </label>
         <div className="flex items-center gap-2">
           <input
             id={noteId}
             value={note}
             onChange={(e) => setNote(e.target.value)}
-            placeholder="seat position 4"
+            placeholder={t('overview.note.placeholder')}
             className="h-12 min-w-0 flex-1 border border-line bg-ink px-3 text-[13px] outline-none placeholder:text-muted focus:border-accent"
             style={{ borderRadius: 'var(--radius-md)' }}
           />
@@ -491,10 +495,10 @@ function BlockMenu({
       </div>
 
       <div className="flex items-center gap-2">
-        <span className="text-[11px] text-muted">Rest</span>
+        <span className="text-[11px] text-muted">{t('overview.rest')}</span>
         <button
           type="button"
-          aria-label="Shorter rest for this lift"
+          aria-label={t('overview.rest.shorter')}
           onClick={() => onSaveRest(stepRest(block.restSeconds, -1, REST_STEP_SECONDS))}
           className="btn-base btn-secondary h-12 w-12 text-lg"
         >
@@ -505,7 +509,7 @@ function BlockMenu({
         </span>
         <button
           type="button"
-          aria-label="Longer rest for this lift"
+          aria-label={t('overview.rest.longer')}
           disabled={block.restSeconds >= REST_MAX_SECONDS}
           onClick={() => onSaveRest(stepRest(block.restSeconds, 1, REST_STEP_SECONDS))}
           className="btn-base btn-secondary h-12 w-12 text-lg disabled:opacity-45"
@@ -524,7 +528,7 @@ function BlockMenu({
           onClick={() => onMove(-1)}
           className="btn-base btn-secondary h-12 px-3 text-[13px] disabled:opacity-45"
         >
-          Move up
+          {t('overview.move_up')}
         </button>
         <button
           type="button"
@@ -532,7 +536,7 @@ function BlockMenu({
           onClick={() => onMove(1)}
           className="btn-base btn-secondary h-12 px-3 text-[13px] disabled:opacity-45"
         >
-          Move down
+          {t('overview.move_down')}
         </button>
         {onUngroup && (
           <button
@@ -540,7 +544,7 @@ function BlockMenu({
             onClick={onUngroup}
             className="btn-base btn-secondary h-12 px-3 text-[13px]"
           >
-            Un-superset
+            {t('overview.unsuperset')}
           </button>
         )}
         <button
@@ -555,9 +559,9 @@ function BlockMenu({
         >
           {confirmRemove
             ? block.committed > 0
-              ? 'Remove and delete sets?'
-              : 'Remove?'
-            : 'Remove exercise'}
+              ? t('overview.remove.confirm_sets')
+              : t('overview.remove.confirm')
+            : t('overview.remove')}
         </button>
       </div>
     </div>
@@ -591,6 +595,7 @@ function SetRow({
   onCommit: () => void
   onOpen: () => void
 }) {
+  const { t } = useLocale()
   const committed = row.kind === 'committed'
   const record = committed && row.set !== null && isRecord(row.set)
   // Nothing to commit without reps. The check goes quiet rather than lying
@@ -644,7 +649,7 @@ function SetRow({
         </span>
 
         {record && (
-          <span className="tag-pr h-[22px] shrink-0" title="Personal record">
+          <span className="tag-pr h-[22px] shrink-0" title={t('overview.pr')}>
             PR
           </span>
         )}
@@ -667,7 +672,7 @@ function SetRow({
         // than a mark that says the row is done.
         <span
           role="img"
-          aria-label="Logged"
+          aria-label={t('overview.logged')}
           className="flex h-14 w-14 shrink-0 items-center justify-center"
         >
           <span
@@ -685,8 +690,12 @@ function SetRow({
           disabled={busy || !committable}
           aria-label={
             committable
-              ? `Log ${exerciseName} set ${row.label}: ${values(row.weightKg, row.reps, unit)}`
-              : `Set ${row.label} needs reps before it can be logged`
+              ? t('overview.log_row', {
+                  name: exerciseName,
+                  label: row.label,
+                  values: values(row.weightKg, row.reps, unit),
+                })
+              : t('overview.row_needs_reps', { label: row.label })
           }
           className="press flex h-14 w-14 shrink-0 items-center justify-center disabled:opacity-40"
         >
@@ -715,13 +724,14 @@ function SetRow({
  * down: a lighter day is not a failure, and §2.4 has no red at all.
  */
 function Previous({ row, unit }: { row: OverviewRow; unit: Unit }) {
+  const { t } = useLocale()
   if (row.kind === 'committed') {
     if (row.delta === null) return null
     if (row.delta === 0) {
       return (
         <span
           className="shrink-0 font-mono text-[11px] text-muted"
-          aria-label="Matched last session"
+          aria-label={t('overview.matched')}
         >
           →
         </span>
@@ -749,7 +759,9 @@ function Previous({ row, unit }: { row: OverviewRow; unit: Unit }) {
       // `↺` is directional, so unlike the clock and trend icons it DOES flip
       // in RTL — the `icon-start` rule handles that.
       className="tnum icon-start shrink-0 font-mono text-[11px] text-muted"
-      aria-label={`Last session: ${values(row.previous.weightKg, row.previous.reps, unit)}`}
+      aria-label={t('overview.last_session', {
+        values: values(row.previous.weightKg, row.previous.reps, unit),
+      })}
     >
       ↺ {values(row.previous.weightKg, row.previous.reps, unit)}
     </span>

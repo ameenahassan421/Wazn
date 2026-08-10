@@ -1,5 +1,6 @@
 import { useId, useState } from 'react'
 import { describeError, supabase } from '../lib/supabase'
+import { useLocale } from '../lib/locale-context'
 
 /**
  * Name and note for one workout.
@@ -32,6 +33,7 @@ export function WorkoutNotes({
   /** Lets the caller patch its own copy, so a list row updates in place. */
   onSaved?: (values: { name: string | null; notes: string | null }) => void
 }) {
+  const { t } = useLocale()
   const id = useId()
   const [name, setName] = useState(initialName ?? '')
   const [note, setNote] = useState(initialNote ?? '')
@@ -53,7 +55,7 @@ export function WorkoutNotes({
     const { error } = await supabase.from('workouts').update(next).eq('id', workoutId)
     setSaving(false)
     if (error) {
-      setStatus(describeError('Saving the workout note', error))
+      setStatus(describeError(t('notes.error.save'), error))
       return
     }
     setStatus(null)
@@ -64,7 +66,7 @@ export function WorkoutNotes({
     <div className="flex flex-col gap-2.5">
       <div>
         <label htmlFor={`${id}-name`} className="kicker mb-1 block">
-          Name
+          {t('notes.name')}
         </label>
         <input
           id={`${id}-name`}
@@ -73,7 +75,7 @@ export function WorkoutNotes({
           maxLength={120}
           onChange={(e) => setName(e.target.value)}
           onBlur={(e) => void save({ name: e.target.value })}
-          placeholder="Upper A"
+          placeholder={t('notes.name.placeholder')}
           className="ring-edge h-12 w-full bg-surface px-3 text-start text-base outline-none placeholder:text-muted focus:border-accent"
           style={{ borderRadius: 'var(--radius-md)' }}
         />
@@ -81,7 +83,7 @@ export function WorkoutNotes({
 
       <div>
         <label htmlFor={`${id}-note`} className="kicker mb-1 block">
-          Note
+          {t('notes.note')}
         </label>
         <textarea
           id={`${id}-note`}
@@ -90,7 +92,7 @@ export function WorkoutNotes({
           maxLength={2000}
           onChange={(e) => setNote(e.target.value)}
           onBlur={(e) => void save({ notes: e.target.value })}
-          placeholder="Bar felt heavy, sleep was bad. Anything you would want to know next time."
+          placeholder={t('notes.note.placeholder')}
           className="ring-edge w-full resize-y bg-surface px-3 py-2.5 text-sm outline-none placeholder:text-muted focus:border-accent"
           style={{ borderRadius: 'var(--radius-md)' }}
         />
@@ -100,7 +102,7 @@ export function WorkoutNotes({
         className={`text-[11px] ${status ? 'text-accent' : 'text-muted'}`}
         role="status"
       >
-        {status ?? (saving ? 'Saving…' : 'Saved when you tap away.')}
+        {status ?? (saving ? t('notes.saving') : t('notes.saved'))}
       </p>
     </div>
   )

@@ -32,3 +32,12 @@ playwright-report
 # out against a running page. It cleans up after itself; this covers the run
 # that was interrupted.
 .deploy-check
+
+# `deno` here only typechecks the two Edge Functions, and running it locally
+# drops a lockfile whose `workspace.packageJson.dependencies` block mirrors
+# every npm dep in package.json. Committed, it goes stale on the next
+# dependency bump and fails `deno check` in CI looking like a code error in
+# whatever change happened to touch it. CI has always run `deno check`
+# without it. Pin deliberately, with a step that verifies the lock, or not
+# at all.
+deno.lock

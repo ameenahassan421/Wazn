@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
 import {
-  AI_DISCLAIMER,
   ROUTINE_EQUIPMENT,
   ROUTINE_GOALS,
   generateRoutines,
@@ -9,12 +8,12 @@ import {
 } from '../lib/ai'
 import {
   REVIEW_SECTIONS,
-  REVIEW_SECTION_LABELS,
   fetchWeeklyReview,
   recordCoachView,
   type CoachNotes,
 } from '../lib/coach'
 import { formatWorkoutDate } from '../lib/format'
+import { useLocale } from '../lib/locale-context'
 import { useUnit } from '../lib/unit-context'
 
 /**
@@ -29,13 +28,14 @@ import { useUnit } from '../lib/unit-context'
  */
 
 export function CoachScreen({ onRoutinesSaved }: { onRoutinesSaved: () => void }) {
+  const { t } = useLocale()
   return (
     <div className="flex flex-col gap-5 py-3">
       <NotesCard />
       <RoutineBuilder onSaved={onRoutinesSaved} />
       {/* One footer for the screen, not one per tool: the disclaimer is about
           the tab, and repeating it twice would make it decoration. */}
-      <p className="text-[11px] text-muted">{AI_DISCLAIMER}</p>
+      <p className="text-[11px] text-muted">{t('coach.disclaimer')}</p>
     </div>
   )
 }
@@ -43,6 +43,17 @@ export function CoachScreen({ onRoutinesSaved }: { onRoutinesSaved: () => void }
 /* ── The weekly review ────────────────────────────────────────────────────── */
 
 function NotesCard() {
+  const { t } = useLocale()
+  /**
+   * `t` changes identity with the locale, and the effect below fetches.
+   * Adding it to the deps would re-run that load on every language toggle.
+   * Assigned in an effect, not during render: `react-hooks/refs` rejects a
+   * render-time ref write.
+   */
+  const tRef = useRef(t)
+  useEffect(() => {
+    tRef.current = t
+  }, [t])
   // The review quotes e1RM figures, so it is written in whichever unit the
   // header toggle is showing — see `_shared/display-units.ts`. Flipping the
   // toggle refetches; the function caches per unit, so a unit already seen
@@ -76,7 +87,11 @@ function NotesCard() {
         }
       } catch (error) {
         if (!active) return
-        setMessage(error instanceof Error ? error.message : 'Notes are unavailable.')
+        setMessage(
+          error instanceof Error
+            ? error.message
+            : tRef.current('coach.notes.unavailable'),
+        )
         setState('failed')
       }
     })()
@@ -106,10 +121,10 @@ function NotesCard() {
           {state === 'loading'
             ? // v2.1: the loading state is a kicker, not a skeleton. A shimmer
               // implies a layout is coming; this is waiting on a sentence.
-              'Reading your log…'
+              t('coach.loading')
             : // B2: it is a review of a week, and saying so is what tells a
               // reader the shape will be the same next week.
-              'This week'}
+              t('coach.this_week')}
         </h2>
         {state === 'ready' && (
           <button
@@ -122,22 +137,20 @@ function NotesCard() {
             }}
             className="btn-base btn-quiet h-9 px-2 text-[13px] disabled:opacity-45"
           >
-            Regenerate
+            {t('coach.regenerate')}
           </button>
         )}
       </div>
 
       {state === 'loading' && (
-        <p className="text-sm text-muted">Reading the last few weeks of your log.</p>
+        <p className="text-sm text-muted">{t('coach.loading.body')}</p>
       )}
 
       {state === 'failed' && <p className="text-sm text-muted">{message}</p>}
 
       {state === 'ready' && notes && !notes.review && !notes.insights?.length && (
         <p className="text-sm text-muted">
-          {notes.degraded
-            ? 'The review is quiet right now. Your numbers are all still here.'
-            : 'Log 3 workouts and the coach will have something to say.'}
+          {notes.degraded ? t('coach.quiet') : t('coach.empty')}
         </p>
       )}
 
@@ -181,13 +194,17 @@ function NotesCard() {
 
       {state === 'ready' && (
         <p className="mt-3 text-[11px] text-muted">
-          {notes?.generatedAt && `As of ${formatWorkoutDate(notes.generatedAt)} · `}
-          {left} regenerate{left === 1 ? '' : 's'} left this week
-          {spent ? ' · resets weekly' : ''}
+          {notes?.generatedAt &&
+            t('coach.as_of', { date: formatWorkoutDate(notes.generatedAt) })}
+          {t(
+            left === 1 ? 'coach.regenerates_left.one' : 'coach.regenerates_left.other',
+            { count: String(left) },
+          )}
+          {spent ? t('coach.resets_weekly') : ''}
           {/* An older answer served because the week's regenerate is spent.
               Said plainly here rather than dressed as an error: the numbers in
               it were true when it was written, and it refreshes on its own. */}
-          {notes?.stale ? ' · in the previous format' : ''}
+          {notes?.stale ? t('coach.stale') : ''}
         </p>
       )}
     </section>
@@ -208,6 +225,14 @@ function NotesCard() {
  * screen marks the recommendation, because that is the row to act on.
  */
 function Review({ review }: { review: NonNullable<CoachNotes['review']> }) {
+  const { t } = useLocale()
+  const REVIEW_SECTION_KEY: Record<string, string> = {
+    adherence: 'coach.review.section.adherence',
+    bands: 'coach.review.section.bands',
+    plateaus: 'coach.review.section.plateaus',
+    wins: 'coach.review.section.wins',
+    recommendation: 'coach.review.section.recommendation',
+  }
   return (
     <div>
       {review.headline && (
@@ -229,7 +254,7 @@ function Review({ review }: { review: NonNullable<CoachNotes['review']> }) {
                     className="knurl absolute inset-block-0 start-0 block w-[4px] rounded-[2px]"
                   />
                 )}
-                <p className="kicker">{REVIEW_SECTION_LABELS[key]}</p>
+                <p className="kicker">{t(REVIEW_SECTION_KEY[key])}</p>
                 <p
                   className={`mt-1 leading-snug ${
                     isRecommendation
@@ -255,7 +280,18 @@ function Review({ review }: { review: NonNullable<CoachNotes['review']> }) {
 
 const DAYS = [3, 4, 5] as const
 
+// `ROUTINE_GOALS` ids are the `../lib/ai` constants; they are data, not UI
+// strings, so the chip labels are looked up here rather than editing the
+// catalogue that produces the routine.
+const GOAL_KEY: Record<string, string> = {
+  strength: 'coach.goal.strength',
+  muscle: 'coach.goal.muscle',
+  'general fitness': 'coach.goal.general',
+  endurance: 'coach.goal.endurance',
+}
+
 function RoutineBuilder({ onSaved }: { onSaved: () => void }) {
+  const { t } = useLocale()
   const [goal, setGoal] = useState<string>('muscle')
   const [days, setDays] = useState<number>(4)
   const [equipment, setEquipment] = useState<string>('')
@@ -271,7 +307,7 @@ function RoutineBuilder({ onSaved }: { onSaved: () => void }) {
         await generateRoutines({ goal, days, equipment: equipment ? [equipment] : [] }),
       )
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Could not generate a routine.')
+      setError(e instanceof Error ? e.message : t('coach.generate.error'))
     } finally {
       setBusy(false)
     }
@@ -286,7 +322,7 @@ function RoutineBuilder({ onSaved }: { onSaved: () => void }) {
       setPreview(null)
       onSaved()
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Could not save the routine.')
+      setError(e instanceof Error ? e.message : t('coach.save.error'))
     } finally {
       setBusy(false)
     }
@@ -314,7 +350,7 @@ function RoutineBuilder({ onSaved }: { onSaved: () => void }) {
         borderRadius: 'var(--radius-md)',
       }}
     >
-      <h2 className="kicker mb-2.5">Build me a routine</h2>
+      <h2 className="kicker mb-2.5">{t('coach.build')}</h2>
 
       {error && (
         <p
@@ -327,21 +363,33 @@ function RoutineBuilder({ onSaved }: { onSaved: () => void }) {
       )}
 
       <ChipRow
-        options={ROUTINE_GOALS.map((g) => ({ id: g.id, label: g.label }))}
+        options={ROUTINE_GOALS.map((g) => ({
+          id: g.id,
+          label: t(GOAL_KEY[g.id] ?? g.id),
+        }))}
         value={goal}
         onChange={setGoal}
       />
       <ChipRow
-        options={DAYS.map((n) => ({ id: String(n), label: `${n} days` }))}
+        options={DAYS.map((n) => ({
+          id: String(n),
+          label: t('coach.days', { count: String(n) }),
+        }))}
         value={String(days)}
         onChange={(v) => setDays(Number(v))}
       />
       <ChipRow
         options={[
-          { id: '', label: 'Full gym' },
+          { id: '', label: t('coach.equipment.full_gym') },
           ...ROUTINE_EQUIPMENT.filter(
             (e) => e.id === 'dumbbell' || e.id === 'bodyweight',
-          ).map((e) => ({ id: e.id, label: e.id === 'bodyweight' ? 'Home' : e.label })),
+          ).map((e) => ({
+            id: e.id,
+            label:
+              e.id === 'bodyweight'
+                ? t('coach.equipment.home')
+                : t('coach.equipment.dumbbell'),
+          })),
         ]}
         value={equipment}
         onChange={setEquipment}
@@ -354,7 +402,7 @@ function RoutineBuilder({ onSaved }: { onSaved: () => void }) {
         disabled={busy}
         className="btn-base btn-hero mt-1 h-[60px] w-full text-[17px] disabled:opacity-45"
       >
-        {busy ? 'Building…' : 'Generate routine'}
+        {busy ? t('coach.building') : t('coach.generate')}
       </button>
     </section>
   )
@@ -402,9 +450,10 @@ function RoutinePreviewScreen({
   onSave: () => void
   onAdjust: () => void
 }) {
+  const { t } = useLocale()
   return (
     <section className="flex flex-col gap-3">
-      <h2 className="kicker">Your routine · not saved yet</h2>
+      <h2 className="kicker">{t('coach.preview.title')}</h2>
 
       {error && (
         <p
@@ -441,9 +490,12 @@ function RoutinePreviewScreen({
 
       {plan.droppedExercises.length > 0 && (
         <p className="text-[11px] text-muted">
-          {plan.droppedExercises.length} suggested exercise
-          {plan.droppedExercises.length === 1 ? '' : 's'} were left out because they are
-          not in the exercise list.
+          {t(
+            plan.droppedExercises.length === 1
+              ? 'coach.dropped.one'
+              : 'coach.dropped.other',
+            { count: String(plan.droppedExercises.length) },
+          )}
         </p>
       )}
 
@@ -453,7 +505,9 @@ function RoutinePreviewScreen({
         disabled={busy}
         className="btn-base btn-hero h-[60px] w-full text-[17px] disabled:opacity-45"
       >
-        {busy ? 'Saving…' : `Save ${plan.preview.length} routines`}
+        {busy
+          ? t('coach.preview.saving')
+          : t('coach.preview.save', { count: String(plan.preview.length) })}
       </button>
       <button
         type="button"
@@ -461,12 +515,9 @@ function RoutinePreviewScreen({
         disabled={busy}
         className="btn-base btn-secondary h-12 w-full text-sm disabled:opacity-45"
       >
-        Adjust
+        {t('coach.preview.adjust')}
       </button>
-      <p className="text-[11px] text-muted">
-        Saved routines are ordinary routines — edit or delete them like any other.
-        Nothing starts until you start it.
-      </p>
+      <p className="text-[11px] text-muted">{t('coach.preview.helper')}</p>
     </section>
   )
 }

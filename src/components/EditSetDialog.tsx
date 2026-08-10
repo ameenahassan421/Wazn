@@ -4,6 +4,7 @@ import type { Unit } from '../lib/units'
 import { useBackLayer } from '../lib/use-back'
 import { SET_TYPE_CYCLE, SET_TYPE_NAME } from '../lib/types'
 import type { SetType } from '../lib/types'
+import { useLocale } from '../lib/locale-context'
 
 /**
  * Correct one logged set: weight, reps, set type, RPE.
@@ -51,6 +52,7 @@ export function EditSetDialog({
   onSave: (edit: SetEdit) => void
   onCancel: () => void
 }) {
+  const { t } = useLocale()
   const [weight, setWeight] = useState(
     weightKg === null ? '' : formatWeight(weightKg, unit),
   )
@@ -102,7 +104,7 @@ export function EditSetDialog({
           </div>
           <div className="flex-1">
             <label htmlFor="edit-reps" className="text-xs text-muted">
-              Reps
+              {t('set.edit.reps')}
             </label>
             <input
               id="edit-reps"
@@ -117,32 +119,30 @@ export function EditSetDialog({
         </div>
 
         <fieldset className="mt-3">
-          <legend className="text-xs text-muted">Set type</legend>
+          <legend className="text-xs text-muted">{t('set.edit.type')}</legend>
           <div className="mt-1 flex gap-2">
-            {SET_TYPE_CYCLE.map((t) => (
+            {SET_TYPE_CYCLE.map((option) => (
               <button
-                key={t}
+                key={option}
                 type="button"
-                aria-pressed={kind === t}
-                aria-label={SET_TYPE_NAME[t]}
-                onClick={() => setKind(t)}
+                aria-pressed={kind === option}
+                aria-label={SET_TYPE_NAME[option]}
+                onClick={() => setKind(option)}
                 className={`btn-base h-12 flex-1 text-sm capitalize ${
-                  kind === t ? 'btn-primary' : 'btn-secondary'
+                  kind === option ? 'btn-primary' : 'btn-secondary'
                 }`}
               >
-                {t}
+                {option}
               </button>
             ))}
           </div>
           {kind === 'warmup' && (
-            <p className="mt-1 text-[11px] text-muted">
-              Warm-ups stay out of records, charts and volume.
-            </p>
+            <p className="mt-1 text-[11px] text-muted">{t('set.edit.warmup_note')}</p>
           )}
         </fieldset>
 
         <fieldset className="mt-3">
-          <legend className="text-xs text-muted">RPE</legend>
+          <legend className="text-xs text-muted">{t('set.edit.rpe')}</legend>
           <div className="mt-1 flex flex-wrap gap-2">
             {/* Tapping the selected value clears it, so "I should not have
                 recorded an RPE here" is reachable without a separate control. */}
@@ -154,7 +154,7 @@ export function EditSetDialog({
                 rpeValue === null ? 'btn-primary' : 'btn-secondary'
               }`}
             >
-              None
+              {t('set.edit.rpe.none')}
             </button>
             {[6, 7, 8, 9, 10].map((value) => (
               <button
@@ -178,7 +178,7 @@ export function EditSetDialog({
             onClick={onCancel}
             className="h-12 flex-1 rounded-lg border border-line text-base font-semibold"
           >
-            Cancel
+            {t('set.edit.cancel')}
           </button>
           <button
             type="button"
@@ -186,7 +186,7 @@ export function EditSetDialog({
             disabled={busy}
             className="h-12 flex-1 rounded-lg bg-accent text-base font-bold text-accent-ink disabled:opacity-60"
           >
-            {busy ? 'Saving…' : 'Save'}
+            {busy ? t('set.edit.saving') : t('set.edit.save')}
           </button>
         </div>
       </div>

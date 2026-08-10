@@ -9,6 +9,7 @@ import { RestTimerBar } from './RestTimer'
 import { LoadHelper } from './LoadHelper'
 import { ExerciseThumb } from './ExerciseThumb'
 import { IconBack } from './icons'
+import { useLocale } from '../lib/locale-context'
 
 /** Stepper increments, in the unit on screen. */
 const WEIGHT_STEP: Record<Unit, number> = { lbs: 5, kg: 2.5 }
@@ -30,11 +31,13 @@ function draftFromWeight(kg: number | null, reps: number | null, unit: Unit): Dr
 
 function StepperButton({
   label,
+  sign,
   onPress,
   disabled,
 }: {
   label: string
   onPress: () => void
+  sign: 'up' | 'down'
   disabled?: boolean
 }) {
   return (
@@ -45,7 +48,7 @@ function StepperButton({
       aria-label={label}
       className="btn-base btn-secondary h-[62px] w-[58px] shrink-0 bg-surface text-2xl disabled:opacity-45"
     >
-      {label.startsWith('Decrease') ? '−' : '+'}
+      {sign === 'down' ? '−' : '+'}
     </button>
   )
 }
@@ -89,6 +92,7 @@ export function SetEntry({
   /** Clears this exercise's group for the whole workout. Omit to hide. */
   onUngroup?: () => void
 }) {
+  const { t } = useLocale()
   const [draft, setDraft] = useState<Draft>({ weight: '', reps: '' })
   const [error, setError] = useState<string | null>(null)
   const [setType, setSetType] = useState<SetType>('normal')
@@ -186,7 +190,7 @@ export function SetEntry({
   async function submit() {
     const reps = Number.parseInt(draft.reps, 10)
     if (!Number.isFinite(reps) || reps <= 0) {
-      setError('Enter the reps you did. Weight can stay empty for bodyweight sets.')
+      setError(t('entry.error.reps'))
       return
     }
 
@@ -194,7 +198,7 @@ export function SetEntry({
     if (draft.weight.trim() !== '') {
       const parsed = Number.parseFloat(draft.weight)
       if (!Number.isFinite(parsed) || parsed < 0) {
-        setError(`Weight must be a number in ${unit}, or empty for bodyweight.`)
+        setError(t('entry.error.weight', { unit }))
         return
       }
       weightKg = Number(fromDisplayWeight(parsed, unit).toFixed(2))
@@ -254,7 +258,7 @@ export function SetEntry({
         <button
           type="button"
           onClick={onBack}
-          aria-label="Back to workout"
+          aria-label={t('entry.back')}
           className="btn-base btn-quiet -ms-2 h-12 w-12 shrink-0"
         >
           <IconBack />
@@ -273,7 +277,7 @@ export function SetEntry({
         style={{ borderRadius: 'var(--radius-md)' }}
       >
         {previousLoading ? (
-          <p className="text-[11px] text-muted">Loading previous session…</p>
+          <p className="text-[11px] text-muted">{t('entry.previous.loading')}</p>
         ) : previousSession.length > 0 ? (
           <>
             <p className="kicker">
@@ -287,9 +291,7 @@ export function SetEntry({
             <p className="tnum mt-1 text-[19px] font-medium">{previousSummary}</p>
           </>
         ) : (
-          <p className="text-[11px] text-muted">
-            First time logging this exercise. No previous session yet.
-          </p>
+          <p className="text-[11px] text-muted">{t('entry.previous.none')}</p>
         )}
       </div>
 
@@ -344,7 +346,7 @@ export function SetEntry({
                 <span className="tnum text-figure">{set.reps ?? '—'}</span>
                 <span className="text-[11px] text-muted">reps</span>
                 {isRecord(set) && (
-                  <span className="tag-pr h-[22px] shrink-0" title="Personal record">
+                  <span className="tag-pr h-[22px] shrink-0" title={t('entry.pr')}>
                     PR
                   </span>
                 )}
@@ -373,7 +375,11 @@ export function SetEntry({
             Weight ({unit}) · optional
           </label>
           <div className="flex items-center gap-2">
-            <StepperButton label="Decrease weight" onPress={() => stepWeight(-1)} />
+            <StepperButton
+              label={t('entry.weight.decrease')}
+              sign="down"
+              onPress={() => stepWeight(-1)}
+            />
             <input
               id="weight"
               type="number"
@@ -386,7 +392,11 @@ export function SetEntry({
               className="tnum h-[62px] w-full flex-1 border border-line bg-surface px-3 text-start text-[30px] font-medium outline-none placeholder:text-muted focus:border-accent"
               style={{ borderRadius: 'var(--radius-md)' }}
             />
-            <StepperButton label="Increase weight" onPress={() => stepWeight(1)} />
+            <StepperButton
+              label={t('entry.weight.increase')}
+              sign="up"
+              onPress={() => stepWeight(1)}
+            />
           </div>
         </div>
 
@@ -395,7 +405,11 @@ export function SetEntry({
             Reps
           </label>
           <div className="flex items-center gap-2">
-            <StepperButton label="Decrease reps" onPress={() => stepReps(-1)} />
+            <StepperButton
+              label={t('entry.reps.decrease')}
+              sign="down"
+              onPress={() => stepReps(-1)}
+            />
             <input
               id="reps"
               type="number"
@@ -408,7 +422,11 @@ export function SetEntry({
               className="tnum h-[62px] w-full flex-1 border border-line bg-surface px-3 text-start text-[30px] font-medium outline-none placeholder:text-muted focus:border-accent"
               style={{ borderRadius: 'var(--radius-md)' }}
             />
-            <StepperButton label="Increase reps" onPress={() => stepReps(1)} />
+            <StepperButton
+              label={t('entry.reps.increase')}
+              sign="up"
+              onPress={() => stepReps(1)}
+            />
           </div>
         </div>
       </div>
@@ -436,7 +454,11 @@ export function SetEntry({
         <button
           type="button"
           onClick={cycleRpe}
-          aria-label={rpe === null ? 'Add RPE' : `RPE ${rpe}. Tap to change.`}
+          aria-label={
+            rpe === null
+              ? t('entry.rpe.add')
+              : t('entry.rpe.change', { value: String(rpe) })
+          }
           className={`btn-base tnum h-12 min-w-14 px-3 text-sm ${
             rpe === null ? 'btn-secondary' : 'btn-primary'
           }`}
@@ -450,14 +472,16 @@ export function SetEntry({
             onClick={onSuperset}
             aria-label={
               supersetGroup != null
-                ? `Superset ${supersetGroup}. Add another exercise to it.`
-                : 'Start a superset'
+                ? t('entry.superset.add', { group: String(supersetGroup) })
+                : t('entry.superset.start')
             }
             className={`btn-base h-12 px-3 text-sm ${
               supersetGroup != null ? 'btn-primary' : 'btn-secondary'
             }`}
           >
-            {supersetGroup != null ? `SS ${supersetGroup}` : 'Superset'}
+            {supersetGroup != null
+              ? t('entry.superset.badge', { group: String(supersetGroup) })
+              : t('entry.superset.label')}
           </button>
         )}
 
@@ -474,12 +498,12 @@ export function SetEntry({
                 setConfirmUngroup(true)
               }
             }}
-            aria-label={`Leave superset ${supersetGroup}`}
+            aria-label={t('entry.superset.leave', { group: String(supersetGroup) })}
             className={`btn-base h-12 px-2.5 text-[13px] ${
               confirmUngroup ? 'btn-primary' : 'btn-quiet'
             }`}
           >
-            {confirmUngroup ? 'Ungroup?' : 'Ungroup'}
+            {confirmUngroup ? t('entry.ungroup.confirm') : t('entry.ungroup')}
           </button>
         )}
 
@@ -513,10 +537,10 @@ export function SetEntry({
         }`}
       >
         {saving
-          ? 'Saving…'
+          ? t('entry.saving')
           : setType === 'warmup'
-            ? `Log warm-up ${warmupCount + 1}`
-            : `Log set ${workingCount + 1}`}
+            ? t('entry.log.warmup', { number: String(warmupCount + 1) })
+            : t('entry.log.set', { number: String(workingCount + 1) })}
       </button>
     </section>
   )

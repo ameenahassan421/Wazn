@@ -10,6 +10,7 @@ import {
 } from '../lib/coach'
 import type { BriefBlock } from '../lib/coach'
 import { IconClose } from './icons'
+import { useLocale } from '../lib/locale-context'
 
 /**
  * The pre-workout briefing — B1, offense plan §4-A1.
@@ -33,6 +34,7 @@ import { IconClose } from './icons'
  * not render at all while a workout is open. Nothing here needs to check.
  */
 export function CoachBrief() {
+  const { t } = useLocale()
   const { unit } = useUnit()
   const [block, setBlock] = useState<BriefBlock | null>(null)
   /**
@@ -97,11 +99,11 @@ export function CoachBrief() {
     <section
       className="ring-edge bg-surface ps-3 pe-1 py-2.5"
       style={{ borderRadius: 'var(--radius-md)' }}
-      aria-label="Before you start"
+      aria-label={t('brief.label')}
     >
       <div className="flex items-start gap-1">
         <div className="min-w-0 flex-1 pe-1">
-          <h2 className="kicker">Before you start</h2>
+          <h2 className="kicker">{t('brief.title')}</h2>
           {/* Keyed on the text so the sentence arriving is an authored moment
               — it settles in rather than swapping under the eye. The skeleton
               is already correct, so this is the only motion the card has. */}
@@ -119,7 +121,7 @@ export function CoachBrief() {
           // 48px of target on a 22px glyph. The card is quiet, so the control
           // that removes it should be quieter still — but never smaller.
           className="press -mt-1 grid h-12 w-12 shrink-0 place-items-center text-muted"
-          aria-label="Hide the briefing"
+          aria-label={t('brief.hide')}
         >
           <IconClose size={18} />
         </button>

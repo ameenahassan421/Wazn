@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { describeError, supabase } from '../lib/supabase'
 import { useBackLayer } from '../lib/use-back'
 import { useUnit } from '../lib/unit-context'
@@ -16,6 +16,7 @@ import {
 import { ExerciseFields } from './ExerciseFields'
 import { ExerciseThumb } from './ExerciseThumb'
 import { SeriesChart } from './SeriesChart'
+import { useLocale } from '../lib/locale-context'
 
 /** One session's worth of this exercise, newest first. */
 interface HistoryRow {
@@ -101,6 +102,18 @@ export function ExerciseDetail({
   onChanged?: (exercise: Exercise) => void
   onDeleted?: (exerciseId: string) => void
 }) {
+  const { t } = useLocale()
+  /**
+   * `t` changes identity with the locale, and the effects below fetch. Adding
+   * it to their deps would re-run a network load every time the language is
+   * toggled, which is the bug LogScreen shipped and had to undo. The ref is
+   * assigned in an effect rather than during render because
+   * `react-hooks/refs` rejects a render-time write.
+   */
+  const tRef = useRef(t)
+  useEffect(() => {
+    tRef.current = t
+  }, [t])
   const { unit } = useUnit()
   useBackLayer(true, onBack)
 
@@ -220,7 +233,7 @@ export function ExerciseDetail({
       .then(({ data, error: queryError }) => {
         if (!active) return
         if (queryError) {
-          setError(describeError('Loading the history for that exercise', queryError))
+          setError(describeError(tRef.current('detail.error.history'), queryError))
           setHistory({ exerciseId, rows: [] })
           return
         }
@@ -330,7 +343,11 @@ export function ExerciseDetail({
           },
           { onConflict: 'user_id,exercise_id' },
         )
-        setError(writeError ? describeError('Saving the rest time', writeError) : null)
+        setError(
+          writeError
+            ? describeError(tRef.current('detail.error.rest_save'), writeError)
+            : null,
+        )
         setRestDirty(false)
       })()
     }, 600)
@@ -348,7 +365,7 @@ export function ExerciseDetail({
       .delete()
       .eq('exercise_id', exerciseId)
       .eq('user_id', userId)
-    if (deleteError) setError(describeError('Clearing the rest time', deleteError))
+    if (deleteError) setError(describeError(t('detail.error.rest_clear'), deleteError))
   }
 
   async function saveNote(text: string) {
@@ -381,7 +398,7 @@ export function ExerciseDetail({
           )
 
     setNoteSaving(false)
-    setError(writeError ? describeError('Saving your note', writeError) : null)
+    setError(writeError ? describeError(t('detail.error.note'), writeError) : null)
   }
 
   const restState = rest?.exerciseId === exerciseId ? rest : null
@@ -439,7 +456,7 @@ export function ExerciseDetail({
       onChanged?.(updated)
       setEditing(false)
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Could not save that exercise.')
+      setError(e instanceof Error ? e.message : t('detail.error.save'))
     }
     setSavingEdit(false)
   }
@@ -455,7 +472,7 @@ export function ExerciseDetail({
     } catch (e) {
       // Until 0024 is applied this is the "needs migration" message, which is
       // how the app already reports 0008 and 0015 being absent.
-      setError(e instanceof Error ? e.message : 'Could not archive that exercise.')
+      setError(e instanceof Error ? e.message : t('detail.error.archive'))
     }
     setSavingEdit(false)
   }
@@ -470,7 +487,7 @@ export function ExerciseDetail({
     } catch (e) {
       // The on-delete-restrict refusal lands here, and it is not a failure so
       // much as an answer: the exercise is part of logged history.
-      setError(e instanceof Error ? e.message : 'Could not delete that exercise.')
+      setError(e instanceof Error ? e.message : t('detail.error.delete'))
       setConfirmDeleteExercise(false)
     }
     setSavingEdit(false)
@@ -502,7 +519,7 @@ export function ExerciseDetail({
         <button
           type="button"
           onClick={onBack}
-          aria-label="Back to progress"
+          aria-label={t('detail.back')}
           className="btn-base btn-quiet -ms-2 h-12 w-12 shrink-0"
         >
           <IconBack />
@@ -538,7 +555,7 @@ export function ExerciseDetail({
               )}
             </>
           ) : (
-            <p className="mt-0.5 text-[15px] text-muted">Not logged yet</p>
+            <p className="mt-0.5 text-[15px] text-muted">{t('detail.not_logged')}</p>
           )}
         </div>
       </div>
@@ -569,7 +586,7 @@ export function ExerciseDetail({
           disagree. One session is not a trend, so the card waits for two. */}
       {points && progress && progress.sessions > 1 && (
         <section>
-          <h3 className="kicker mb-2">Estimated 1RM</h3>
+          <h3 className="kicker mb-2">{t('detail.e1rm')}</h3>
           <p className="tnum text-2xl font-medium">
             {progress.delta_kg === 0
               ? 'Level'
@@ -581,7 +598,12 @@ export function ExerciseDetail({
           <SeriesChart
             values={points.map((p) => Number(p.best_1rm_kg))}
             baseline="data"
-            ariaLabel={`Estimated 1RM across ${progress.sessions} sessions, from ${formatEstimate(progress.earliest_kg, unit)} to ${formatEstimate(progress.latest_kg, unit)} ${unit}`}
+            ariaLabel={t('detail.chart.aria', {
+              sessions: String(progress.sessions),
+              from: formatEstimate(progress.earliest_kg, unit),
+              to: formatEstimate(progress.latest_kg, unit),
+              unit,
+            })}
           />
           <p className="tnum mt-1 text-[11px] text-muted">
             {progress.sessions} sessions · now{' '}
@@ -597,7 +619,7 @@ export function ExerciseDetail({
           heaviest range brightest — one hue, five steps, no second colour. */}
       {buckets && bucketTotal > 0 && (
         <section>
-          <h3 className="kicker mb-2">Rep ranges</h3>
+          <h3 className="kicker mb-2">{t('detail.rep_ranges')}</h3>
           <div className="flex flex-col gap-1.5">
             {buckets.map((b, i) => {
               const count = Number(b.set_count)
@@ -632,7 +654,7 @@ export function ExerciseDetail({
 
       {ladder.length > 0 && (
         <section>
-          <h3 className="kicker mb-2">Rep maxes</h3>
+          <h3 className="kicker mb-2">{t('detail.rep_maxes')}</h3>
           <ul
             className="ring-edge bg-surface"
             style={{ borderRadius: 'var(--radius-md)' }}
@@ -664,13 +686,13 @@ export function ExerciseDetail({
       {exercise.is_custom && (
         <section>
           <div className="flex items-center gap-2">
-            <h3 className="kicker flex-1">Your exercise</h3>
+            <h3 className="kicker flex-1">{t('detail.your_exercise')}</h3>
             <button
               type="button"
               onClick={() => setEditing((v) => !v)}
               className="btn-base btn-secondary h-12 px-4 text-sm"
             >
-              {editing ? 'Cancel' : 'Edit'}
+              {editing ? t('detail.cancel') : t('detail.edit')}
             </button>
           </div>
 
@@ -684,7 +706,7 @@ export function ExerciseDetail({
                 onName={setDraftName}
                 onMuscleGroup={setDraftGroup}
                 onEquipment={setDraftEquipment}
-                nameHint="Renaming keeps every set you have logged against it."
+                nameHint={t('detail.name_hint')}
               />
               <div className="flex items-center gap-2">
                 <button
@@ -693,7 +715,7 @@ export function ExerciseDetail({
                   disabled={savingEdit}
                   className="btn-base btn-hero h-14 flex-1 text-base"
                 >
-                  {savingEdit ? 'Saving…' : 'Save'}
+                  {savingEdit ? t('detail.saving') : t('detail.save')}
                 </button>
                 {/* Archive is the everyday exit and needs no confirmation:
                     it is reversible from this same screen, and the lift keeps
@@ -706,7 +728,7 @@ export function ExerciseDetail({
                   disabled={savingEdit}
                   className="btn-base btn-secondary h-14 px-4 text-sm"
                 >
-                  {exercise.archived_at ? 'Restore' : 'Archive'}
+                  {exercise.archived_at ? t('detail.restore') : t('detail.archive')}
                 </button>
                 <button
                   type="button"
@@ -722,7 +744,9 @@ export function ExerciseDetail({
                     confirmDeleteExercise ? 'btn-primary' : 'btn-quiet'
                   }`}
                 >
-                  {confirmDeleteExercise ? 'Delete?' : 'Delete'}
+                  {confirmDeleteExercise
+                    ? t('detail.delete.confirm')
+                    : t('detail.delete')}
                 </button>
               </div>
             </div>
@@ -734,12 +758,12 @@ export function ExerciseDetail({
           because that is where the opinion forms. Same value, two doors. */}
       {restForThis !== null && (
         <div>
-          <h3 className="kicker mb-2">Rest timer</h3>
+          <h3 className="kicker mb-2">{t('detail.rest_timer')}</h3>
           <div className="flex items-center gap-2">
             <button
               type="button"
               onClick={() => stepRestBy(-1)}
-              aria-label="Shorter rest"
+              aria-label={t('detail.rest.shorter')}
               className="btn-base btn-secondary h-12 w-12 shrink-0 text-xl"
             >
               −
@@ -750,7 +774,7 @@ export function ExerciseDetail({
             <button
               type="button"
               onClick={() => stepRestBy(1)}
-              aria-label="Longer rest"
+              aria-label={t('detail.rest.longer')}
               className="btn-base btn-secondary h-12 w-12 shrink-0 text-xl"
             >
               +
@@ -761,44 +785,46 @@ export function ExerciseDetail({
                 onClick={() => void clearRest()}
                 className="btn-base btn-quiet h-12 shrink-0 px-2.5 text-[13px]"
               >
-                Reset
+                {t('detail.reset')}
               </button>
             )}
           </div>
           <p className="mt-1 text-[11px] text-muted">
             {restState?.override == null
-              ? 'The app default. Change it and the timer uses your number for this lift from the next set on.'
-              : `Yours${
-                  exercise.default_rest_seconds
-                    ? `, over the ${describeRest(exercise.default_rest_seconds)} default`
-                    : ''
-                }. Zero turns the timer off for this lift.`}
+              ? t('detail.rest.default_note')
+              : t('detail.rest.yours', {
+                  over: exercise.default_rest_seconds
+                    ? t('detail.rest.over_default', {
+                        default: describeRest(exercise.default_rest_seconds),
+                      })
+                    : '',
+                })}
           </p>
         </div>
       )}
 
       {!rec?.missing && (
         <div>
-          <h3 className="kicker mb-2">Notes</h3>
+          <h3 className="kicker mb-2">{t('detail.notes')}</h3>
           <textarea
             value={noteText}
             onChange={(e) => setNote({ exerciseId, text: e.target.value })}
             onBlur={(e) => void saveNote(e.target.value)}
             rows={2}
             maxLength={2000}
-            placeholder="Seat position, grip width, anything you keep re-deriving."
+            placeholder={t('detail.note.placeholder')}
             className="ring-edge w-full resize-y bg-surface px-3 py-2.5 text-sm text-text outline-none placeholder:text-muted focus:border-accent"
             style={{ borderRadius: 'var(--radius-md)' }}
           />
           <p className="mt-1 text-[11px] text-muted">
-            {noteSaving ? 'Saving…' : 'Saved when you tap away.'}
+            {noteSaving ? t('detail.saving') : t('detail.note.saved')}
           </p>
         </div>
       )}
 
       {instructions && instructions.length > 0 && (
         <div>
-          <h3 className="kicker mb-2">How to</h3>
+          <h3 className="kicker mb-2">{t('detail.how_to')}</h3>
           <ol className="flex flex-col gap-2.5">
             {instructions.map((step, i) => (
               <li key={step} className="flex gap-3">
@@ -811,13 +837,11 @@ export function ExerciseDetail({
       )}
 
       <div>
-        <h3 className="kicker mb-2">Recent</h3>
+        <h3 className="kicker mb-2">{t('detail.recent')}</h3>
         {hist === null ? (
-          <p className="py-2 text-sm text-muted">Loading…</p>
+          <p className="py-2 text-sm text-muted">{t('chrome.loading')}</p>
         ) : hist.length === 0 ? (
-          <p className="py-2 text-sm text-muted">
-            No sets logged for this exercise yet.
-          </p>
+          <p className="py-2 text-sm text-muted">{t('detail.empty')}</p>
         ) : (
           <ul>
             {hist.slice(0, 8).map((session, i) => {

@@ -1,5 +1,6 @@
 import { EQUIPMENT, MUSCLE_GROUPS } from '../lib/exercises'
 import type { MuscleGroup } from '../lib/types'
+import { useLocale } from '../lib/locale-context'
 
 /**
  * The three things a custom exercise is: a name, a muscle group, an equipment
@@ -32,17 +33,18 @@ export function ExerciseFields({
   idPrefix: string
   nameHint?: string
 }) {
+  const { t } = useLocale()
   return (
     <>
       <div>
         <label htmlFor={`${idPrefix}-name`} className="kicker mb-2 block">
-          Name
+          {t('exercise.name')}
         </label>
         <input
           id={`${idPrefix}-name`}
           value={name}
           onChange={(e) => onName(e.target.value)}
-          placeholder="Hack Squat (Machine)"
+          placeholder={t('exercise.new.name.placeholder')}
           autoComplete="off"
           autoCorrect="off"
           className="ring-edge h-14 w-full bg-surface px-3 text-base outline-none focus:border-accent"
@@ -52,7 +54,7 @@ export function ExerciseFields({
       </div>
 
       <fieldset>
-        <legend className="kicker mb-2">Muscle group</legend>
+        <legend className="kicker mb-2">{t('exercise.new.muscle')}</legend>
         <div className="flex flex-wrap gap-2">
           {MUSCLE_GROUPS.map((g) => (
             <button
@@ -68,14 +70,11 @@ export function ExerciseFields({
             </button>
           ))}
         </div>
-        <p className="mt-1 text-[11px] text-muted">
-          This is what puts it on the weekly-sets chart, so pick the one it actually
-          trains.
-        </p>
+        <p className="mt-1 text-[11px] text-muted">{t('exercise.muscle_hint')}</p>
       </fieldset>
 
       <fieldset>
-        <legend className="kicker mb-2">Equipment</legend>
+        <legend className="kicker mb-2">{t('exercise.new.equipment')}</legend>
         <div className="flex flex-wrap gap-2">
           {EQUIPMENT.map((e) => (
             <button

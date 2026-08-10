@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useState, useRef } from 'react'
+import { useLocale } from '../lib/locale-context'
 import { useUnit } from '../lib/unit-context'
 import { formatWeight } from '../lib/units'
 import {
@@ -52,6 +53,17 @@ import { IconBack, IconHeart } from '../components/icons'
 type Panel = 'main' | 'you'
 
 export function FriendsScreen({ userId }: { userId: string }) {
+  const { t } = useLocale()
+  /**
+   * `t` changes identity with the locale, and the effect below fetches.
+   * Adding it to the deps would re-run that load on every language toggle.
+   * Assigned in an effect, not during render: `react-hooks/refs` rejects a
+   * render-time ref write.
+   */
+  const tRef = useRef(t)
+  useEffect(() => {
+    tRef.current = t
+  }, [t])
   const { unit } = useUnit()
   const [panel, setPanel] = useState<Panel>('main')
 
@@ -88,7 +100,7 @@ export function FriendsScreen({ userId }: { userId: string }) {
         setFollowing(follows)
       } catch (e) {
         if (!active) return
-        setError(e instanceof Error ? e.message : 'Could not load this.')
+        setError(e instanceof Error ? e.message : tRef.current('friends.load_error'))
       } finally {
         if (active) setLoading(false)
       }
@@ -98,7 +110,7 @@ export function FriendsScreen({ userId }: { userId: string }) {
     }
   }, [userId, reloadToken])
 
-  if (loading) return <p className="py-10 text-sm text-muted">Loading…</p>
+  if (loading) return <p className="py-10 text-sm text-muted">{t('friends.loading')}</p>
 
   return (
     <div className="flex flex-col gap-4 py-3">
@@ -118,12 +130,12 @@ export function FriendsScreen({ userId }: { userId: string }) {
             <button
               type="button"
               onClick={() => setPanel('main')}
-              aria-label="Back"
+              aria-label={t('friends.you.back')}
               className="btn-base btn-quiet h-12 w-12"
             >
               <IconBack size={20} />
             </button>
-            <h2 className="flex-1 text-base font-medium">You</h2>
+            <h2 className="flex-1 text-base font-medium">{t('friends.you')}</h2>
           </div>
           <You
             userId={userId}
@@ -136,7 +148,7 @@ export function FriendsScreen({ userId }: { userId: string }) {
       ) : (
         <>
           <div className="flex items-center gap-2">
-            <h2 className="kicker flex-1">This week · volume</h2>
+            <h2 className="kicker flex-1">{t('friends.main_title')}</h2>
             <button
               type="button"
               onClick={() => setPanel('you')}
@@ -200,6 +212,7 @@ function Feed({
   onError: (message: string | null) => void
   onInvite: () => void
 }) {
+  const { t } = useLocale()
   // Likes are optimistic. The write is small, the failure is recoverable, and
   // a like that waits for a round trip feels broken on gym wifi.
   const [likes, setLikes] = useState<Record<string, { liked: boolean; count: number }>>(
@@ -220,18 +233,18 @@ function Feed({
       await setLiked(row.workout_id, next.liked)
     } catch (e) {
       setLikes((prev) => ({ ...prev, [row.workout_id]: current }))
-      onError(e instanceof Error ? e.message : 'Could not save that.')
+      onError(e instanceof Error ? e.message : t('friends.feed.error.save'))
     }
   }
 
   if (rows.length === 0) {
     return (
       <section>
-        <h2 className="kicker mb-2">Feed</h2>
+        <h2 className="kicker mb-2">{t('friends.feed')}</h2>
         <p className="text-sm text-muted">
           {following === 0
-            ? 'Nobody to watch yet.'
-            : 'Nobody you follow has finished a workout yet. It shows up here when they do.'}
+            ? t('friends.feed.empty.nobody')
+            : t('friends.feed.empty.pending')}
         </p>
         {following === 0 && (
           <button
@@ -239,7 +252,7 @@ function Feed({
             onClick={onInvite}
             className="btn-base btn-hero mt-3 h-[60px] w-full text-[17px]"
           >
-            Invite someone
+            {t('friends.feed.invite')}
           </button>
         )}
       </section>
@@ -248,7 +261,7 @@ function Feed({
 
   return (
     <section className="flex flex-col gap-3">
-      <h2 className="kicker">Feed</h2>
+      <h2 className="kicker">{t('friends.feed')}</h2>
       {rows.map((row) => {
         const like = likes[row.workout_id] ?? {
           liked: row.liked_by_me,
@@ -275,28 +288,40 @@ function Feed({
                   there stops meaning anything. */}
               {row.record_count > 0 && (
                 <span className="tag-pr h-[22px] shrink-0">
-                  {row.record_count === 1 ? 'PR' : `${row.record_count} PR`}
+                  {row.record_count === 1
+                    ? t('friends.feed.pr_single')
+                    : t('friends.feed.pr_many', {
+                        count: String(row.record_count),
+                      })}
                 </span>
               )}
             </div>
 
             <div className="mt-2.5 flex items-stretch">
               <FeedStat
-                label="Duration"
+                label={t('friends.feed.duration')}
                 value={formatDuration(row.started_at, row.ended_at)}
               />
               <span aria-hidden="true" className="w-px shrink-0 bg-[var(--divider)]" />
-              <FeedStat label={`Volume`} value={formatVolume(row.volume_kg, unit)} />
+              <FeedStat
+                label={t('friends.feed.volume')}
+                value={formatVolume(row.volume_kg, unit)}
+              />
               <span aria-hidden="true" className="w-px shrink-0 bg-[var(--divider)]" />
-              <FeedStat label="Sets" value={formatCount(row.set_count)} />
+              <FeedStat
+                label={t('friends.feed.sets')}
+                value={formatCount(row.set_count)}
+              />
             </div>
 
             {/* The fact line quotes the session's best moment — computed in
                 SQL, never phrased by a model, and never per-set data. */}
             {row.best_record_name && row.best_record_e1rm_kg !== null && (
               <p className="mt-2.5 text-[13px] text-accent-300">
-                {row.best_record_name} — new e1RM{' '}
-                {formatWeight(row.best_record_e1rm_kg, unit)}
+                {t('friends.feed.new_e1rm', {
+                  name: row.best_record_name,
+                  weight: formatWeight(row.best_record_e1rm_kg, unit),
+                })}
               </p>
             )}
 
@@ -304,7 +329,9 @@ function Feed({
               type="button"
               onClick={() => void toggle(row)}
               aria-pressed={like.liked}
-              aria-label={like.liked ? 'Remove your like' : 'Like this workout'}
+              aria-label={
+                like.liked ? t('friends.feed.unlike') : t('friends.feed.like')
+              }
               className={`mt-1 flex h-12 items-center gap-2 ${
                 like.liked ? 'text-accent' : 'text-muted'
               }`}
@@ -335,6 +362,7 @@ function FeedStat({ label, value }: { label: string; value: string }) {
 /* ── Leaderboard ──────────────────────────────────────────────────────── */
 
 function Leaderboard({ rows, unit }: { rows: LeaderRow[]; unit: 'lbs' | 'kg' }) {
+  const { t } = useLocale()
   return (
     <section
       className="ring-edge overflow-hidden bg-surface"
@@ -344,9 +372,7 @@ function Leaderboard({ rows, unit }: { rows: LeaderRow[]; unit: 'lbs' | 'kg' }) 
       <span aria-hidden="true" className="knurl block h-[6px] w-full" />
       <div className="px-3 py-2.5">
         {rows.length <= 1 ? (
-          <p className="text-sm text-muted">
-            A leaderboard of one. Invite someone to chase.
-          </p>
+          <p className="text-sm text-muted">{t('friends.leaderboard.empty')}</p>
         ) : (
           <ol>
             {rows.map((row, i) => (
@@ -367,14 +393,18 @@ function Leaderboard({ rows, unit }: { rows: LeaderRow[]; unit: 'lbs' | 'kg' }) 
                     {i + 1}
                   </span>
                   <span className="min-w-0 flex-1 truncate text-sm font-medium">
-                    {row.is_me ? 'You' : nameOf(row)}
+                    {row.is_me ? t('friends.leaderboard.you') : nameOf(row)}
                   </span>
                   <span className="tnum shrink-0 text-[15px] font-medium">
                     {formatVolume(row.volume_kg, unit)}
                   </span>
                   <span className="tnum w-16 shrink-0 text-end text-[11px] text-muted">
-                    {formatCount(row.session_count)} session
-                    {row.session_count === 1 ? '' : 's'}
+                    {t(
+                      row.session_count === 1
+                        ? 'friends.leaderboard.sessions.one'
+                        : 'friends.leaderboard.sessions.other',
+                      { count: formatCount(row.session_count) },
+                    )}
                   </span>
                 </div>
               </li>
@@ -388,21 +418,23 @@ function Leaderboard({ rows, unit }: { rows: LeaderRow[]; unit: 'lbs' | 'kg' }) 
 
 /* ── You ──────────────────────────────────────────────────────────────── */
 
-const VISIBILITY: { id: Visibility; label: string; blurb: string }[] = [
+// Keys, not strings: module scope cannot call a hook, so the catalogue lookup
+// happens at the render site. Same shape as the label maps in ProgressScreen.
+const VISIBILITY: { id: Visibility; labelKey: string; blurbKey: string }[] = [
   {
     id: 'private',
-    label: 'Private',
-    blurb: 'Nobody can find you or see your training.',
+    labelKey: 'friends.visibility.private',
+    blurbKey: 'friends.visibility.private.blurb',
   },
   {
     id: 'followers',
-    label: 'Followers',
-    blurb: 'People can find you and ask to follow. Followers see finished workouts.',
+    labelKey: 'friends.visibility.followers',
+    blurbKey: 'friends.visibility.followers.blurb',
   },
   {
     id: 'public',
-    label: 'Public',
-    blurb: 'Any signed-in Wazn user can see finished workouts.',
+    labelKey: 'friends.visibility.public',
+    blurbKey: 'friends.visibility.public.blurb',
   },
 ]
 
@@ -419,6 +451,7 @@ function You({
   onChanged: () => void
   onError: (message: string | null) => void
 }) {
+  const { t } = useLocale()
   const [username, setUsername] = useState(profile?.username ?? '')
   const [busy, setBusy] = useState(false)
   const [saved, setSaved] = useState(false)
@@ -437,7 +470,7 @@ function You({
       setSaved(true)
       onChanged()
     } catch (e) {
-      onError(e instanceof Error ? e.message : 'Could not save that.')
+      onError(e instanceof Error ? e.message : t('friends.username.error'))
     } finally {
       setBusy(false)
     }
@@ -450,7 +483,7 @@ function You({
       await saveProfile(userId, { visibility: next })
       onChanged()
     } catch (e) {
-      onError(e instanceof Error ? e.message : 'Could not save that.')
+      onError(e instanceof Error ? e.message : t('friends.username.error'))
     } finally {
       setBusy(false)
     }
@@ -464,7 +497,7 @@ function You({
       setFollowName('')
       onChanged()
     } catch (e) {
-      onError(e instanceof Error ? e.message : 'Could not follow that person.')
+      onError(e instanceof Error ? e.message : t('friends.follow.error'))
     } finally {
       setBusy(false)
     }
@@ -476,7 +509,7 @@ function You({
     try {
       setInvite(inviteUrl(await getOrCreateInvite(userId)))
     } catch (e) {
-      onError(e instanceof Error ? e.message : 'Could not create a link.')
+      onError(e instanceof Error ? e.message : t('friends.invite.error'))
     } finally {
       setBusy(false)
     }
@@ -496,7 +529,7 @@ function You({
   return (
     <div className="flex flex-col gap-5">
       <section>
-        <h2 className="kicker mb-2">Who can see your training</h2>
+        <h2 className="kicker mb-2">{t('friends.visibility.title')}</h2>
         <div className="flex flex-col gap-2">
           {VISIBILITY.map((v) => (
             <button
@@ -516,19 +549,16 @@ function You({
                     : undefined,
               }}
             >
-              <span className="text-sm font-medium">{v.label}</span>
-              <span className="mt-0.5 text-[13px] text-muted">{v.blurb}</span>
+              <span className="text-sm font-medium">{t(v.labelKey)}</span>
+              <span className="mt-0.5 text-[13px] text-muted">{t(v.blurbKey)}</span>
             </button>
           ))}
         </div>
-        <p className="mt-2 text-[11px] text-muted">
-          Private is the default and stays that way until you change it. An in-progress
-          workout is never shown to anyone, at any setting.
-        </p>
+        <p className="mt-2 text-[11px] text-muted">{t('friends.visibility.note')}</p>
       </section>
 
       <section>
-        <h2 className="kicker mb-2">Your username</h2>
+        <h2 className="kicker mb-2">{t('friends.username.title')}</h2>
         <div className="flex items-center gap-2">
           <input
             id="username"
@@ -537,7 +567,7 @@ function You({
               setUsername(e.target.value)
               setSaved(false)
             }}
-            placeholder="ameen"
+            placeholder={t('friends.username.placeholder')}
             autoCapitalize="none"
             autoCorrect="off"
             spellCheck={false}
@@ -550,23 +580,20 @@ function You({
             disabled={busy || !username.trim()}
             className="btn-base btn-secondary h-12 px-4 text-sm disabled:opacity-45"
           >
-            {saved ? 'Saved' : 'Save'}
+            {saved ? t('friends.username.saved') : t('friends.username.save')}
           </button>
         </div>
-        <p className="mt-1 text-[11px] text-muted">
-          Lowercase letters, numbers and underscores. 3–20 characters. This is how
-          friends find you.
-        </p>
+        <p className="mt-1 text-[11px] text-muted">{t('friends.username.hint')}</p>
       </section>
 
       <section>
-        <h2 className="kicker mb-2">Follow someone</h2>
+        <h2 className="kicker mb-2">{t('friends.follow.title')}</h2>
         <div className="flex items-center gap-2">
           <input
             id="follow"
             value={followName}
             onChange={(e) => setFollowName(e.target.value)}
-            placeholder="@username"
+            placeholder={t('friends.follow.placeholder')}
             autoCapitalize="none"
             autoCorrect="off"
             spellCheck={false}
@@ -579,18 +606,15 @@ function You({
             disabled={busy || !followName.trim()}
             className="btn-base btn-secondary h-12 px-4 text-sm disabled:opacity-45"
           >
-            Follow
+            {t('friends.follow.button')}
           </button>
         </div>
       </section>
 
       <section>
-        <h2 className="kicker mb-2">Invite link</h2>
+        <h2 className="kicker mb-2">{t('friends.invite.title')}</h2>
         {!shareable ? (
-          <p className="text-sm text-muted">
-            Turn on Followers or Public above to get a link. A private profile has
-            nothing to invite anyone to.
-          </p>
+          <p className="text-sm text-muted">{t('friends.invite.not_shareable')}</p>
         ) : !invite ? (
           <button
             type="button"
@@ -598,7 +622,7 @@ function You({
             disabled={busy}
             className="btn-base btn-secondary h-12 px-4 text-sm disabled:opacity-45"
           >
-            Get my link
+            {t('friends.invite.get_link')}
           </button>
         ) : (
           <>
@@ -613,7 +637,7 @@ function You({
               onClick={() => void copyInvite()}
               className="btn-base btn-secondary mt-2 h-12 px-4 text-sm"
             >
-              {copied ? 'Copied' : 'Share'}
+              {copied ? t('friends.invite.copied') : t('friends.invite.share')}
             </button>
           </>
         )}
@@ -621,7 +645,9 @@ function You({
 
       {following.length > 0 && (
         <section>
-          <h2 className="kicker mb-2">Following · {following.length}</h2>
+          <h2 className="kicker mb-2">
+            {t('friends.following.title', { count: String(following.length) })}
+          </h2>
 
           <ul>
             {following.map((p, i) => (
@@ -637,13 +663,15 @@ function You({
                         .then(onChanged)
                         .catch((e: unknown) =>
                           onError(
-                            e instanceof Error ? e.message : 'Could not unfollow.',
+                            e instanceof Error
+                              ? e.message
+                              : t('friends.unfollow.error'),
                           ),
                         )
                     }
                     className="btn-base btn-quiet h-12 px-3 text-[13px]"
                   >
-                    Unfollow
+                    {t('friends.unfollow')}
                   </button>
                 </div>
               </li>
@@ -671,6 +699,7 @@ function You({
  * Postgres — but it would put a code entry between someone and their next one.
  */
 function SignOut() {
+  const { t } = useLocale()
   const [armed, setArmed] = useState(false)
 
   useEffect(() => {
@@ -692,7 +721,7 @@ function SignOut() {
           armed ? 'btn-primary' : 'btn-secondary'
         }`}
       >
-        {armed ? 'Sign out?' : 'Sign out'}
+        {armed ? t('friends.signout.confirm') : t('friends.signout')}
       </button>
     </section>
   )

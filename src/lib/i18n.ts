@@ -1,0 +1,1334 @@
+/**
+ * Dependency-free message catalogue and locale resolution.
+ *
+ * Every UI string that changes with the locale passes through `t()`.
+ * Header/nav keys were seeded first; welcome and auth screen strings were
+ * added in Slice 3 of Stage 5.
+ *
+ * CRITICAL: no Intl.NumberFormat, no toLocaleString. Digits stay Latin even
+ * under Arabic — weights and reps are always machine-readable.
+ */
+
+export type Locale = 'en' | 'ar'
+
+/**
+ * Message catalogue. Header/nav strings were seeded first, welcome and auth
+ * strings in Slice 3, history/progress screen strings in Slice 4.
+ *
+ * ar block: ALL values below are DRAFT and REQUIRE native-speaker review
+ * before GATE 5, per WAZN_PLAN.md Stage 5.
+ */
+export const messages: Record<Locale, Record<string, string>> = {
+  en: {
+    // Header, left to right: locale toggle, unit toggle, overflow menu.
+    'toggle.locale.label': 'EN',
+    'toggle.locale.name': 'Switch to Arabic',
+    'toggle.unit.name': 'Weight unit: {unit}. Tap to switch.',
+    'header.menu.open': 'Menu',
+    'header.menu.close': 'Close menu',
+    'header.menu.discard': 'Discard workout',
+    'header.menu.discard.confirm': 'Discard workout?',
+    'header.menu.signout': 'Sign out',
+    // Tab navigation, left to right
+    'nav.log': 'Log',
+    'nav.history': 'History',
+    'nav.progress': 'Progress',
+    'nav.coach': 'Coach',
+    'nav.friends': 'Friends',
+    // Suspense loading fallback
+    'chrome.loading': 'Loading…',
+
+    // Welcome screen — post-signup onboarding
+    'welcome.heading': 'Welcome',
+    'welcome.subhead': 'Log a set in under thirty seconds.',
+    'welcome.body':
+      'That is the whole idea. Everything else in here exists to stay out of the way while you do it.',
+    'welcome.invited.heading': 'You were invited',
+    'welcome.invited.body':
+      'Follow them to see their finished workouts and share a weekly leaderboard. Your own training stays private until you change that on the Friends tab.',
+    'welcome.follow': 'Follow {name}',
+    'welcome.following': 'Following {name}',
+    'welcome.follow.busy': 'Following…',
+    'welcome.follow.error':
+      'That did not go through. You can follow them from the Friends tab.',
+    'welcome.username.label': 'Pick a username — optional',
+    'welcome.username.body':
+      'Sign in with it instead of your email, and let friends find you.',
+    'welcome.username.placeholder': 'your_name',
+    'welcome.username.claim': 'Claim',
+    'welcome.username.claim.busy': 'Saving…',
+    'welcome.username.saved': 'is yours.',
+    'welcome.username.error.length': '3–20 characters: letters, numbers, underscores.',
+    'welcome.username.error.save': 'Could not save that username.',
+    'welcome.start.heading': 'Where to start',
+    'welcome.start.body':
+      'You can start logging right now — pick an exercise and go, no setup. Or have a week of routines drafted for you and edit whatever you disagree with.',
+    'welcome.generate': 'Draft me a routine',
+    'welcome.skip': 'I will just start logging',
+    'welcome.import': 'Coming from Hevy? Bring your history',
+
+    // Auth screen — sign-in / sign-up / codes / reset
+    'auth.subhead': 'Log a set in under thirty seconds.',
+    'auth.privacy.body': 'Your training is private by default.',
+    'auth.privacy.link': 'What Wazn stores',
+    'auth.hevy.hint': 'Coming from Hevy? You can bring every workout with you.',
+    'auth.or': 'or',
+    'auth.google': 'Continue with Google',
+    'auth.google.error': 'Google sign-in did not start — {message}',
+    'auth.email_or_username': 'Email or username',
+    'auth.password': 'Password',
+    'auth.placeholder.email': 'you@example.com',
+    'auth.placeholder.password': '••••••••',
+    'auth.placeholder.code': '000000',
+    'auth.signin': 'Sign in',
+    'auth.signin.busy': 'Signing in…',
+    'auth.signin.error.invalid':
+      'Invalid credentials. Check the email and password, or reset the password below.',
+    'auth.signin.error.empty_ident': 'Enter your email or username.',
+    'auth.signin.error.empty_pass':
+      'Enter your password, or use "Email me a code" below.',
+    'auth.signup': 'Create account',
+    'auth.signup.busy': 'Creating…',
+    'auth.signup.link': 'Create an account',
+    'auth.signup.has_account': 'I already have an account',
+    'auth.signup.email': 'Email',
+    'auth.signup.password.label': 'Password — at least {min} characters',
+    'auth.signup.error.email': 'Enter a full email address, like you@example.com.',
+    'auth.signup.error.password.length':
+      'The password needs at least {min} characters.',
+    'auth.signup.notice.code_sent': 'Code sent to {address}. It expires in 1 hour.',
+    'auth.confirm': 'Confirm and sign in',
+    'auth.confirm.busy': 'Verifying…',
+    'auth.confirm.different_email': 'Use a different email',
+    'auth.confirm.code_label': '6-digit code',
+    'auth.confirm.error.length':
+      'The code is 6 digits. Check the email and re-enter it.',
+    'auth.confirm.error.expired': 'That code expired. Request a new one.',
+    'auth.confirm.error.invalid':
+      'That code is not valid. Re-enter the 6 digits from the newest email. If you already have an account with this address, sign in instead.',
+    'auth.forgot': 'Forgot password?',
+    'auth.code.path': 'Email me a code instead — no password needed',
+    'auth.code.send': 'Send code',
+    'auth.code.send.busy': 'Sending…',
+    'auth.code.back': 'Back to sign in',
+    'auth.code.error.rate': 'Too many codes requested. Wait 60 seconds and try again.',
+    'auth.code.send.error': 'Could not send the code — {message}',
+    'auth.code.notice.sent': 'Code sent to {address}. It expires in 1 hour.',
+    'auth.code.notice.username':
+      'If @{username} has an account, a code is on its way to its email.',
+    'auth.code.verify': 'Verify and sign in',
+    'auth.code.verify.busy': 'Verifying…',
+    'auth.code.verify.different': 'Use a different email or username',
+    'auth.code.verify.error.expired': 'That code expired. Request a new one.',
+    'auth.code.verify.error.invalid':
+      'That code is not valid. Re-enter the 6 digits from the newest email.',
+    'auth.code.verify.error.start_over':
+      'Start over — enter your email or username first.',
+    'auth.reset.email_label': 'Email on the account',
+    'auth.reset.send': 'Send reset code',
+    'auth.reset.send.busy': 'Sending…',
+    'auth.reset.notice.sent':
+      'If {address} has an account, a reset code is on its way.',
+    'auth.reset.error.email': 'Enter the email address on the account.',
+    'auth.reset.code_label': '6-digit reset code',
+    'auth.reset.password.label': 'New password — at least {min} characters',
+    'auth.reset.apply': 'Set password and sign in',
+    'auth.reset.apply.busy': 'Resetting…',
+    'auth.reset.different_email': 'Use a different email',
+    'auth.reset.error.length': 'The code is 6 digits. Check the email and re-enter it.',
+    'auth.reset.error.expired': 'That code expired. Request a new one.',
+    'auth.reset.error.invalid':
+      'That code is not valid. Re-enter the 6 digits from the newest email.',
+    'auth.reset.error.password.length':
+      'The new password needs at least {min} characters.',
+    'auth.error.fallback': 'Something went wrong.',
+
+    // ── History screen (Slice 4) ─────────────────────────────────
+    'history.loading_sets': 'Loading sets…',
+    'history.empty':
+      'No workouts yet. Log one on the Log tab and it will show up here.',
+    'history.no_sets': 'This workout has no sets recorded.',
+    'history.set': 'set',
+    'history.sets': 'sets',
+    'history.pr_title': '{count} personal record',
+    'history.pr_title_plural': '{count} personal records',
+    'history.workout_fallback': 'Workout',
+    'history.exercise_fallback': 'Exercise',
+    'history.add_exercise': 'Add exercise',
+    'history.save_routine': 'Save as routine',
+    'history.delete_workout': 'Delete workout',
+    'history.delete_workout.confirm': 'Delete workout?',
+    'history.routine_saved': 'Saved "{name}" to your routines. It is not started.',
+    'history.edit_done': 'Done editing',
+    'history.edit': 'Edit workout',
+    'history.load_more': 'Load older workouts',
+    'history.add_set': 'Add set',
+    'history.personal_record': 'Personal record',
+    'history.edit_button': 'Edit',
+    'history.edit_set.aria': 'Edit set {number} of {name}',
+    'history.delete_set.aria': 'Delete set {number} of {name}',
+    'history.reps': 'reps',
+    'history.no_routine_sets':
+      'That session has no working sets to build a routine from.',
+    'history.signin_required': 'Sign in to save a routine.',
+    'history.routine_save_error': 'Could not save that routine.',
+    'history.error.load_history': 'Loading your workout history',
+    'history.error.save_correction': 'Saving the correction',
+    'history.error.add_set': 'Adding the set',
+    'history.error.delete_workout': 'Deleting the workout',
+    'history.error.load_sets': 'Loading the sets for that workout',
+    'history.error.delete_set': 'Deleting the set',
+
+    // ── Progress screen (Slice 4) ────────────────────────────────
+    'progress.error.load': 'Loading your progress',
+    'progress.this_week': 'This week',
+    'progress.sessions': 'Sessions',
+    'progress.volume': 'Volume',
+    'progress.streak': 'Streak',
+    'progress.wk': 'wk',
+    'progress.balance.title': 'Weekly sets · target band',
+    'progress.balance.empty': 'Log a workout to load the bar.',
+    'progress.balance.focus': 'FOCUS',
+    'progress.balance.verb.sits': 'sits',
+    'progress.balance.verb.sit': 'sit',
+    'progress.balance.under_band': 'under the band.',
+    'progress.balance.coach_hint': 'The coach has a fix',
+    'progress.frequency.title': 'Sessions · per week',
+    'progress.frequency.empty_caption':
+      'One bar a week. The dashed line arrives with your average.',
+    'progress.frequency.caption':
+      'avg {avg}/wk · {count} {sessions} · dashed line is the average',
+    'progress.frequency.session': 'session',
+    'progress.frequency.sessions': 'sessions',
+    'progress.frequency.aria.empty':
+      'Sessions per week, last {weeks} weeks: nothing logged yet',
+    'progress.frequency.aria.data':
+      'Sessions per week, last {weeks} weeks: {count} sessions, averaging {avg} a week',
+    'progress.volume.heading': 'Volume · {span}',
+    'progress.volume.caption':
+      'one point per {bucket} · peak {peak} · this {bucket} {current}',
+    'progress.volume.bucket.week': 'week',
+    'progress.volume.bucket.month': 'month',
+    'progress.volume.aria': 'Volume per {bucket} over the {span}, peaking at {peak}',
+    'progress.volume.range_label': 'Volume range',
+    'progress.records.title': 'Records',
+    'progress.record.weight': 'heaviest',
+    'progress.record.e1rm': 'best est.',
+    'progress.record.both': 'heaviest · best est.',
+    'progress.and': 'and',
+    'progress.anchor.title': 'Anchor lifts · vs predicted',
+    'progress.anchor.1rm': 'est. 1RM',
+    'progress.anchor.empty':
+      'Four lifts, one bar each. Log a deadlift, a squat, a bench and an overhead press and the bars fill.',
+    'progress.anchor.no_predict':
+      'The tick is what your deadlift predicts each lift should be. Log a deadlift and the ticks appear.',
+    'progress.anchor.behind':
+      'Ticks are predicted off your deadlift — squat 0.85, bench 0.75, overhead 0.45. {names} {verb} behind {possessive} tick. A guide, not a target.',
+    'progress.anchor.on_track':
+      'Ticks are predicted off your deadlift — squat 0.85, bench 0.75, overhead 0.45. A guide, not a target.',
+    'progress.anchor.verb.sits': 'sits',
+    'progress.anchor.verb.sit': 'sit',
+    'progress.anchor.its': 'its',
+    'progress.anchor.their': 'their',
+    'progress.strength.title': 'Strength · est. 1RM',
+    'progress.strength.empty':
+      'Nothing trained in {range}. Widen the range to see older lifts.',
+    'progress.strength.last': 'last:',
+    'progress.strength.range_label': 'Strength range',
+    'progress.strength.caption.many':
+      'top {shown} of {total} lifts{scope} · est. 1RM is your all-time best',
+    'progress.strength.caption.few':
+      '{count} {lifts}{scope} · est. 1RM is your all-time best',
+    'progress.strength.scope': ' trained in {range}',
+    'progress.strength.lift': 'lift',
+    'progress.strength.lifts': 'lifts',
+    'progress.empty_notice':
+      'Every chart here is built from your own sets — nothing on this screen is a sample.',
+
+    // ── Log screen (Slice 5) ──────────────────────────────────────
+    'log.loading': 'Loading…',
+    'log.start': 'Start workout',
+    'log.start_first': 'Start your first workout',
+    'log.streak.week_streak': 'week streak',
+    'log.streak.this_week': 'this week',
+    'log.last_session': 'Last session · {day}',
+    'log.in_progress': '{name} · in progress',
+    'log.workout_fallback': 'Workout',
+    'log.set': 'set',
+    'log.sets': 'sets',
+    'log.finish': 'Finish',
+    'log.finish_confirm': 'Finish?',
+    'log.finish_hint_empty': 'Nothing logged yet — finishing throws this one away.',
+    'log.finish_hint': 'Finish saves it. Discard deletes it and its sets.',
+    'log.discard': 'Discard workout',
+    'log.discard_confirm': 'Discard?',
+    'log.empty': 'No exercises yet. Add one to put it on the board.',
+    'log.add_exercise': 'Add exercise',
+    'log.import': 'Coming from Hevy? Bring your history',
+    // SyncNote — inline status, not a banner (§2.1).
+    // {count} already includes the number; log.set/log.sets handle plural.
+    'log.sync.saving': 'Saving {count}…',
+    'log.sync.offline_pending': 'Offline · {count} saved on this device',
+    'log.sync.offline': 'Offline · logging as normal',
+    'log.sync.cached': 'Offline · showing saved data',
+    // CachedNote — the timestamp stays in a tnum span, so it is a prefix.
+    'log.cache.prefix': 'Offline · showing what this device last synced',
+    // Error context strings passed to describeError().
+    'log.error.load_workout': 'Loading your workout',
+    'log.error.load_sets': 'Loading the sets in this workout',
+    'log.error.start_routine': 'Starting that routine',
+    'log.error.group_superset': 'Grouping the superset',
+    'log.error.save_rest': 'Saving the rest time',
+    'log.error.update_routine': 'Could not update that routine.',
+    'log.error.save_routine': 'Could not save the routine.',
+    'log.error.open_routine': 'Could not open that routine.',
+    'log.error.duplicate_routine': 'Could not duplicate that routine.',
+    'log.error.delete_routine': 'Could not delete that routine.',
+    'log.error.remove_exercise': 'Removing the exercise',
+    'log.error.save_note': 'Saving the note',
+    'log.error.leave_superset': 'Leaving the superset',
+    'log.error.finish': 'Finishing the workout',
+    // Fallback name for a skipped exercise on the Finish summary.
+    'log.exercise_fallback': 'Exercise',
+    // Queue retry context for describeError().
+    'log.queue.set_retry': 'Saving set {number}. It is on screen and will be retried',
+    'log.queue.workout_retry':
+      'Saving your workout. It is safe on this device and will be retried',
+    // Separate keys because English plural marks the verb ("set is" vs
+    // "sets are") and Arabic cannot mirror that with one template.
+    'log.finish_still_saving.set':
+      '{count} set is still saving. They are safe — stay on this screen a moment and press Finish again.',
+    'log.finish_still_saving.sets':
+      '{count} sets are still saving. They are safe — stay on this screen a moment and press Finish again.',
+
+    // ── Coach screen (Slice 6) ─────────────────────────────────
+    'coach.loading': 'Reading your log…',
+    'coach.loading.body': 'Reading the last few weeks of your log.',
+    'coach.this_week': 'This week',
+    'coach.regenerate': 'Regenerate',
+    'coach.notes.unavailable': 'Notes are unavailable.',
+    'coach.quiet': 'The review is quiet right now. Your numbers are all still here.',
+    'coach.empty': 'Log 3 workouts and the coach will have something to say.',
+    // {date} is already a fully formatted date string.
+    'coach.as_of': 'As of {date} · ',
+    // Separate keys because English plural marks the noun ("1 regenerate" vs
+    // "3 regenerates") and Arabic cannot mirror that with one template.
+    'coach.regenerates_left.one': '{count} regenerate left this week',
+    'coach.regenerates_left.other': '{count} regenerates left this week',
+    'coach.resets_weekly': ' · resets weekly',
+    'coach.stale': ' · in the previous format',
+    'coach.build': 'Build me a routine',
+    'coach.generate': 'Generate routine',
+    'coach.building': 'Building…',
+    'coach.generate.error': 'Could not generate a routine.',
+    'coach.save.error': 'Could not save the routine.',
+    'coach.days': '{count} days',
+    'coach.goal.strength': 'Strength',
+    'coach.goal.muscle': 'Muscle',
+    'coach.goal.general': 'General',
+    'coach.goal.endurance': 'Endurance',
+    'coach.equipment.full_gym': 'Full gym',
+    'coach.equipment.home': 'Home',
+    'coach.equipment.dumbbell': 'Dumbbell',
+    'coach.preview.title': 'Your routine · not saved yet',
+    'coach.preview.saving': 'Saving…',
+    'coach.preview.save': 'Save {count} routines',
+    'coach.preview.adjust': 'Adjust',
+    'coach.preview.helper':
+      'Saved routines are ordinary routines — edit or delete them like any other. Nothing starts until you start it.',
+    // Separate keys because English plural marks the noun ("1 suggested
+    // exercise was" vs "3 suggested exercises were") and Arabic cannot mirror
+    // that with one template.
+    'coach.dropped.one':
+      '{count} suggested exercise was left out because it is not in the exercise list.',
+    'coach.dropped.other':
+      '{count} suggested exercises were left out because they are not in the exercise list.',
+    'coach.disclaimer': 'AI-generated — not medical advice.',
+    // Fixed section labels of the weekly review — UI chrome, not model text.
+    'coach.review.section.adherence': 'Turning up',
+    'coach.review.section.bands': 'Volume',
+    'coach.review.section.plateaus': 'Stalled',
+    'coach.review.section.wins': 'Moving',
+    'coach.review.section.recommendation': 'Next week',
+
+    // ── Friends screen (Slice 6) ───────────────────────────────
+    'friends.loading': 'Loading…',
+    'friends.main_title': 'This week · volume',
+    'friends.you': 'You',
+    'friends.you.back': 'Back',
+    'friends.feed': 'Feed',
+    'friends.feed.empty.nobody': 'Nobody to watch yet.',
+    'friends.feed.empty.pending':
+      'Nobody you follow has finished a workout yet. It shows up here when they do.',
+    'friends.feed.invite': 'Invite someone',
+    'friends.feed.duration': 'Duration',
+    'friends.feed.volume': 'Volume',
+    'friends.feed.sets': 'Sets',
+    'friends.feed.pr_single': 'PR',
+    'friends.feed.pr_many': '{count} PR',
+    'friends.feed.like': 'Like this workout',
+    'friends.feed.unlike': 'Remove your like',
+    'friends.feed.error.save': 'Could not save that.',
+    'friends.feed.new_e1rm': '{name} — new e1RM {weight}',
+    'friends.load_error': 'Could not load this.',
+    'friends.leaderboard.empty': 'A leaderboard of one. Invite someone to chase.',
+    'friends.leaderboard.you': 'You',
+    // Separate keys because English plural marks the noun ("1 session" vs
+    // "3 sessions") and Arabic cannot mirror that with one template.
+    'friends.leaderboard.sessions.one': '{count} session',
+    'friends.leaderboard.sessions.other': '{count} sessions',
+    'friends.visibility.title': 'Who can see your training',
+    'friends.visibility.private': 'Private',
+    'friends.visibility.private.blurb': 'Nobody can find you or see your training.',
+    'friends.visibility.followers': 'Followers',
+    'friends.visibility.followers.blurb':
+      'People can find you and ask to follow. Followers see finished workouts.',
+    'friends.visibility.public': 'Public',
+    'friends.visibility.public.blurb':
+      'Any signed-in Wazn user can see finished workouts.',
+    'friends.visibility.note':
+      'Private is the default and stays that way until you change it. An in-progress workout is never shown to anyone, at any setting.',
+    'friends.username.title': 'Your username',
+    'friends.username.placeholder': 'ameen',
+    'friends.username.save': 'Save',
+    'friends.username.saved': 'Saved',
+    'friends.username.hint':
+      'Lowercase letters, numbers and underscores. 3–20 characters. This is how friends find you.',
+    'friends.username.error': 'Could not save that.',
+    'friends.follow.title': 'Follow someone',
+    'friends.follow.placeholder': '@username',
+    'friends.follow.button': 'Follow',
+    'friends.follow.error': 'Could not follow that person.',
+    'friends.invite.title': 'Invite link',
+    'friends.invite.not_shareable':
+      'Turn on Followers or Public above to get a link. A private profile has nothing to invite anyone to.',
+    'friends.invite.get_link': 'Get my link',
+    'friends.invite.share': 'Share',
+    'friends.invite.copied': 'Copied',
+    'friends.invite.error': 'Could not create a link.',
+    'friends.following.title': 'Following · {count}',
+    'friends.unfollow': 'Unfollow',
+    'friends.unfollow.error': 'Could not unfollow.',
+    'friends.signout': 'Sign out',
+    'friends.signout.confirm': 'Sign out?',
+    // Install prompt
+    'install.title': 'Add to home screen',
+    'install.ios':
+      'Tap Share, then "Add to Home Screen". Wazn opens full screen and loads instantly.',
+    'install.generic':
+      'Wazn opens full screen, loads instantly, and keeps your place mid-workout.',
+    'install.action': 'Install',
+    'install.dismiss': 'Not now',
+    // Routine list
+    'routines.title': 'Routines',
+    'routines.generate': 'Generate',
+    'routines.new': 'New',
+    'routines.empty':
+      'No routines yet. Build one and your usual session is two taps away — or let Generate draft a week for you.',
+    'routines.starting': 'Starting…',
+    'routines.up_next': 'Up next',
+    'routines.edit': 'Edit',
+    'routines.duplicate': 'Duplicate',
+    'routines.delete': 'Delete',
+    'routines.delete.confirm': 'Delete?',
+    // Edit set dialog
+    'set.edit.reps': 'Reps',
+    'set.edit.type': 'Set type',
+    'set.edit.warmup_note': 'Warm-ups stay out of records, charts and volume.',
+    'set.edit.rpe': 'RPE',
+    'set.edit.rpe.none': 'None',
+    'set.edit.cancel': 'Cancel',
+    'set.edit.save': 'Save',
+    'set.edit.saving': 'Saving…',
+    // Rest timer
+    'rest.title': 'Rest',
+    'rest.done': 'Rest done',
+    'rest.skip': 'Skip',
+    'rest.keep_default': 'Keep {duration} as the rest for this lift',
+    // Exercise picker
+    'picker.back': 'Back',
+    'picker.search': 'Search exercises',
+    'picker.filter.muscle': 'Filter by muscle group',
+    'picker.filter.equipment': 'Filter by equipment',
+    // Workout notes
+    'notes.name': 'Name',
+    'notes.name.placeholder': 'Upper A',
+    'notes.note': 'Note',
+    'notes.note.placeholder':
+      'Bar felt heavy, sleep was bad. Anything you would want to know next time.',
+    'notes.saving': 'Saving…',
+    'notes.saved': 'Saved when you tap away.',
+    'notes.error.save': 'Saving the workout note',
+    // New exercise
+    'exercise.new.title': 'New exercise',
+    'exercise.new.back': 'Back',
+    'exercise.new.name.placeholder': 'Hack Squat (Machine)',
+    'exercise.new.muscle': 'Muscle group',
+    'exercise.new.equipment': 'Equipment',
+    'exercise.new.adding': 'Adding…',
+    'exercise.new.add': 'Add and use it',
+    'exercise.new.error': 'Could not add that exercise.',
+    // Coach brief
+    'brief.label': 'Before you start',
+    'brief.title': 'Before you start',
+    'brief.hide': 'Hide the briefing',
+    // Rest canvas
+    'canvas.label': 'While you rest',
+    'canvas.off': 'Turn off the rest canvas',
+    // Training calendar
+    'calendar.title': 'Training calendar',
+    'calendar.hint.empty':
+      'One square a day, nine months back. It lights up with the load you move.',
+    'calendar.hint': 'Brighter is a heavier day. Unlit is rest.',
+    // Load helper
+    'load.title': 'Plates & warm-up',
+    'load.per_side': 'Per side',
+    // Exercise detail
+    'detail.back': 'Back to progress',
+    'detail.error.history': 'Loading the history for that exercise',
+    'detail.error.rest_save': 'Saving the rest time',
+    'detail.error.rest_clear': 'Clearing the rest time',
+    'detail.error.note': 'Saving your note',
+    'detail.error.save': 'Could not save that exercise.',
+    'detail.error.archive': 'Could not archive that exercise.',
+    'detail.error.delete': 'Could not delete that exercise.',
+    'detail.chart.aria':
+      'Estimated 1RM across {sessions} sessions, from {from} to {to} {unit}',
+    'detail.edit': 'Edit',
+    'detail.cancel': 'Cancel',
+    'detail.save': 'Save',
+    'detail.saving': 'Saving…',
+    'detail.archive': 'Archive',
+    'detail.restore': 'Restore',
+    'detail.delete': 'Delete',
+    'detail.delete.confirm': 'Delete?',
+    'detail.rest.shorter': 'Shorter rest',
+    'detail.rest.longer': 'Longer rest',
+    'detail.rest.default_note':
+      'The app default. Change it and the timer uses your number for this lift from the next set on.',
+    'detail.note.placeholder':
+      'Seat position, grip width, anything you keep re-deriving.',
+    'detail.note.saved': 'Saved when you tap away.',
+    'detail.notes': 'Notes',
+    'detail.name_hint': 'Renaming keeps every set you have logged against it.',
+    'detail.rest.yours': 'Yours{over}. Zero turns the timer off for this lift.',
+    'detail.rest.over_default': ', over the {default} default',
+    // Hevy import
+    'import.error.read':
+      'That file could not be read from disk. Try exporting it again.',
+    'import.error.create_exercises': 'Creating the exercises this app did not have',
+    'import.error.create_workout': 'Creating an imported workout',
+    'import.error.save_sets': 'Saving an imported workout’s sets',
+    'import.step1': 'Open Hevy and go to Profile → Settings.',
+    'import.step2': 'Tap Export Data. Hevy emails you a .csv file.',
+    'import.step3': 'Come back here and choose it.',
+    'import.reading': 'Reading…',
+    'import.choose': 'Choose your Hevy export',
+    'import.found.resuming': 'Left to bring across',
+    'import.found': 'Found in that file',
+    'import.how': 'How to get the file',
+    'import.privacy':
+      'The file is read on your phone and never uploaded anywhere. Only the workouts you confirm are saved, to your account.',
+    'import.workouts': 'Workouts',
+    'import.sets': 'Sets',
+    'import.exercises': 'Exercises',
+    'import.resume': 'Carry on — {count} to go',
+    'import.start': 'Bring in {count} workouts',
+    // Workout overview
+    'overview.exercise_fallback': 'Exercise',
+    'overview.reorder': 'Reorder {name}',
+    'overview.more': 'More for {name}',
+    'overview.note.placeholder': 'seat position 4',
+    'overview.rest.shorter': 'Shorter rest for this lift',
+    'overview.rest.longer': 'Longer rest for this lift',
+    'overview.remove': 'Remove exercise',
+    'overview.remove.confirm': 'Remove?',
+    'overview.remove.confirm_sets': 'Remove and delete sets?',
+    'overview.rest': 'Rest',
+    'overview.logged': 'Logged',
+    'overview.log_row': 'Log {name} set {label}: {values}',
+    'overview.row_needs_reps': 'Set {label} needs reps before it can be logged',
+    'overview.matched': 'Matched last session',
+    'overview.last_session': 'Last session: {values}',
+    // Routine editor
+    'editor.error.name':
+      'Give the routine a name — you will be picking it from a list.',
+    'editor.error.empty': 'Add at least one exercise.',
+    'editor.back': 'Back',
+    'editor.title.edit': 'Edit routine',
+    'editor.title.new': 'New routine',
+    'editor.name.placeholder': 'Upper A',
+    'editor.exercise_fallback': 'Exercise',
+    'editor.move_up': 'Move up',
+    'editor.move_down': 'Move down',
+    'editor.remove': 'Remove {name}',
+    'editor.saving': 'Saving…',
+    'editor.save': 'Save routine',
+    // Set entry
+    'entry.error.reps':
+      'Enter the reps you did. Weight can stay empty for bodyweight sets.',
+    'entry.error.weight': 'Weight must be a number in {unit}, or empty for bodyweight.',
+    'entry.back': 'Back to workout',
+    'entry.weight.decrease': 'Decrease weight',
+    'entry.weight.increase': 'Increase weight',
+    'entry.reps.decrease': 'Decrease reps',
+    'entry.reps.increase': 'Increase reps',
+    'entry.rpe.add': 'Add RPE',
+    'entry.rpe.change': 'RPE {value}. Tap to change.',
+    'entry.superset.add': 'Superset {group}. Add another exercise to it.',
+    'entry.superset.start': 'Start a superset',
+    'entry.superset.badge': 'SS {group}',
+    'entry.superset.label': 'Superset',
+    'entry.superset.leave': 'Leave superset {group}',
+    'entry.ungroup': 'Ungroup',
+    'entry.ungroup.confirm': 'Ungroup?',
+    'entry.saving': 'Saving…',
+    'entry.log.warmup': 'Log warm-up {number}',
+    'entry.log.set': 'Log set {number}',
+    // Finish summary
+    'finish.share.saved': 'Saved the image — this browser has no share sheet.',
+    'finish.share.error': 'Could not build the image.',
+    'finish.duration': 'Duration',
+    'finish.volume': 'Volume',
+    // Separate keys: English marks the plural on the noun and Arabic cannot
+    // mirror that with one template. Flagged for the GATE 5 review.
+    'finish.set.one': 'Set',
+    'finish.set.other': 'Sets',
+    'finish.not_done': 'Not done today',
+    'finish.preparing': 'Preparing…',
+    'finish.share': 'Share card',
+    // Wordmark
+    'wordmark.label': 'Wazn',
+    // Error boundary
+    'error.title': 'Something broke',
+    'error.body': 'Try it again, or use another tab and come back.',
+    'error.retry': 'Try again',
+    // Exercise detail sections
+    'detail.not_logged': 'Not logged yet',
+    'detail.e1rm': 'Estimated 1RM',
+    'detail.rep_ranges': 'Rep ranges',
+    'detail.rep_maxes': 'Rep maxes',
+    'detail.your_exercise': 'Your exercise',
+    'detail.rest_timer': 'Rest timer',
+    'detail.reset': 'Reset',
+    'detail.how_to': 'How to',
+    'detail.recent': 'Recent',
+    'detail.empty': 'No sets logged for this exercise yet.',
+    // Exercise fields
+    'exercise.name': 'Name',
+    'exercise.muscle_hint':
+      'This is what puts it on the weekly-sets chart, so pick the one it actually trains.',
+    // Picker
+    'picker.clear': 'Clear filters',
+    // Finish
+    'finish.title': 'Workout complete',
+    'finish.done': 'Done',
+    // Import
+    'import.hero.title': 'Coming from Hevy',
+    'import.hero.body': 'Bring your history with you.',
+    'import.hero.cta': 'Bring your history from Hevy',
+    'import.dismiss': 'Not now',
+    'import.running': 'Bringing it across',
+    'import.complete': 'Your history is in.',
+    'import.start_lifting': 'Start lifting',
+    'import.different_file': 'Choose a different file',
+    'import.will_add': 'Will be added as your own exercises',
+    'import.worth_knowing': 'Worth knowing',
+    // Install
+    'install.headline': 'Add Wazn to your home screen',
+    // Load helper
+    'load.no_ramp': 'Nothing to ramp through at this weight.',
+    // Range chips
+    'ranges.title': 'How much am I lifting lately',
+    // Rest canvas
+    'canvas.undo': 'Rest canvas off · Bring it back',
+    // Coach brief
+    'brief.note': 'The moment a workout starts, the coach disappears until Finish.',
+    // Routine editor
+    'editor.name': 'Name',
+    'editor.reps': 'Reps',
+    'editor.add_exercise': 'Add exercise',
+    'routines.start_empty': 'Start empty workout',
+    // Set entry
+    'entry.previous.loading': 'Loading previous session…',
+    'entry.previous.none': 'First time logging this exercise. No previous session yet.',
+    'entry.reps': 'Reps',
+    'entry.pr': 'Personal record',
+    // Workout overview
+    'overview.first_set': 'Tap the numbers to enter your first set.',
+    'overview.note_label': 'Note for this lift',
+    'overview.save': 'Save',
+    'overview.move_up': 'Move up',
+    'overview.move_down': 'Move down',
+    'overview.unsuperset': 'Un-superset',
+    'overview.pr': 'Personal record',
+    // Log screen
+    'log.usual_split': 'Start my usual split',
+    // Progress
+    'progress.empty': 'Log a workout to load the bar',
+  },
+  ar: {
+    // Header
+    'toggle.locale.label': 'AR',
+    'toggle.locale.name': 'تبديل إلى الإنجليزية',
+    'toggle.unit.name': 'وحدة الوزن: {unit}. اضغط للتبديل.',
+    'header.menu.open': 'القائمة',
+    'header.menu.close': 'إغلاق القائمة',
+    'header.menu.discard': 'تجاهل التمرين',
+    'header.menu.discard.confirm': 'تجاهل التمرين؟',
+    'header.menu.signout': 'تسجيل الخروج',
+    // Tab navigation
+    'nav.log': 'التمارين',
+    'nav.history': 'السجل',
+    'nav.progress': 'التقدم',
+    'nav.coach': 'المدرب',
+    'nav.friends': 'الأصدقاء',
+    // Suspense loading fallback
+    'chrome.loading': 'جارٍ التحميل…',
+
+    // Welcome screen
+    'welcome.heading': 'مرحباً',
+    'welcome.subhead': 'سجّل مجموعة في أقل من ثلاثين ثانية.',
+    'welcome.body':
+      'هذا هو الفكرة بالكامل. كل شيء آخر هنا موجود ليكون خارج طريقي وأنت تفعل ذلك.',
+    'welcome.invited.heading': 'لقد تمت دعوتك',
+    'welcome.invited.body':
+      'تابعهم لرؤية تمارينهم المنتهية ومشاركة لوحة صدارة أسبوعية. تدريبك الخاص يبقى خاصاً حتى تغير ذلك من تبويب الأصدقاء.',
+    'welcome.follow': 'تابع {name}',
+    'welcome.following': 'متابَع {name}',
+    'welcome.follow.busy': 'جارٍ المتابعة…',
+    'welcome.follow.error': 'لم يتم الإرسال. يمكنك متابعتهم من تبويب الأصدقاء.',
+    'welcome.username.label': 'اختر اسماً مستعاراً — اختياري',
+    'welcome.username.body':
+      'سجّل الدخول به بدلاً من بريدك الإلكتروني، ودع الأصدقاء يجدونك.',
+    'welcome.username.placeholder': 'your_name',
+    'welcome.username.claim': 'احجزه',
+    'welcome.username.claim.busy': 'جارٍ الحفظ…',
+    'welcome.username.saved': 'لك.',
+    'welcome.username.error.length': '3 إلى 20 حرفاً: أحرف وأرقام وشرطات سفلية.',
+    'welcome.username.error.save': 'تعذّر حفظ اسم المستخدم هذا.',
+    'welcome.start.heading': 'من أين تبدأ',
+    'welcome.start.body':
+      'يمكنك البدء في التسجيل الآن — اختر تمريناً وابدأ، بدون إعداد. أو احصل على أسبوع من الروتينات المسودة وعدّل ما لا توافق عليه.',
+    'welcome.generate': 'أعطني روتيناً مسوداً',
+    'welcome.skip': 'سأبدأ التسجيل مباشرة',
+    'welcome.import': 'جاءت من Hevy؟ أحضر سجلك التدريبي',
+
+    // Auth screen
+    'auth.subhead': 'سجّل مجموعة في أقل من ثلاثين ثانية.',
+    'auth.privacy.body': 'تدريبك خاص بشكل افتراضي.',
+    'auth.privacy.link': 'ما الذي يخزّنه Wazn',
+    'auth.hevy.hint': 'جاءت من Hevy؟ يمكنك إحضار كل تمارينك.',
+    'auth.or': 'أو',
+    'auth.google': 'المتابعة مع Google',
+    'auth.google.error': 'لم تبدأ جلسة تسجيل الدخول عبر Google — {message}',
+    'auth.email_or_username': 'البريد الإلكتروني أو اسم المستخدم',
+    'auth.password': 'كلمة المرور',
+    'auth.placeholder.email': 'you@example.com',
+    'auth.placeholder.password': '••••••••',
+    'auth.placeholder.code': '000000',
+    'auth.signin': 'تسجيل الدخول',
+    'auth.signin.busy': 'جارٍ تسجيل الدخول…',
+    'auth.signin.error.invalid':
+      'بيانات اعتماد غير صالحة. تحقق من البريد الإلكتروني وكلمة المرور، أو أعد تعيين كلمة المرور أدناه.',
+    'auth.signin.error.empty_ident': 'أدخل بريدك الإلكتروني أو اسم المستخدم.',
+    'auth.signin.error.empty_pass':
+      'أدخل كلمة المرور، أو استخدم "أرسل لي رمزاً" أدناه.',
+    'auth.signup': 'إنشاء حساب',
+    'auth.signup.busy': 'جارٍ الإنشاء…',
+    'auth.signup.link': 'إنشاء حساب',
+    'auth.signup.has_account': 'لديّ حساب بالفعل',
+    'auth.signup.email': 'البريد الإلكتروني',
+    'auth.signup.password.label': 'كلمة المرور — على الأقل {min} أحرف',
+    'auth.signup.error.email': 'أدخل عنوان بريد إلكتروني كامل، مثل you@example.com.',
+    'auth.signup.error.password.length': 'تحتاج كلمة المرور إلى {min} أحرف على الأقل.',
+    'auth.signup.notice.code_sent':
+      'تم إرسال الرمز إلى {address}. ينتهي صلاحيته خلال ساعة.',
+    'auth.confirm': 'التأكيد وتسجيل الدخول',
+    'auth.confirm.busy': 'جارٍ التحقق…',
+    'auth.confirm.different_email': 'استخدم بريداً إلكترونياً آخر',
+    'auth.confirm.code_label': 'رمز من 6 أرقام',
+    'auth.confirm.error.length': 'الرمز من 6 أرقام. تحقق من البريد وأدخله مرة أخرى.',
+    'auth.confirm.error.expired': 'انتهت صلاحية الرمز. اطلب رمزاً جديداً.',
+    'auth.confirm.error.invalid':
+      'هذا الرمز غير صالح. أدخل الأرقام الستة من أحدث بريد. إذا كان لديك حساب بهذا العنوان، سجّل الدخول بدلاً من ذلك.',
+    'auth.forgot': 'نسيت كلمة المرور؟',
+    'auth.code.path': 'أرسل لي رمزاً بدلاً من ذلك — لا حاجة لكلمة مرور',
+    'auth.code.send': 'إرسال الرمز',
+    'auth.code.send.busy': 'جارٍ الإرسال…',
+    'auth.code.back': 'العودة لتسجيل الدخول',
+    'auth.code.error.rate': 'تم طلب أكواد كثيرة. انتظر 60 ثانية ثم حاول مرة أخرى.',
+    'auth.code.send.error': 'تعذّر إرسال الرمز — {message}',
+    'auth.code.notice.sent': 'تم إرسال الرمز إلى {address}. ينتهي صلاحيته خلال ساعة.',
+    'auth.code.notice.username':
+      'إذا كان @{username} لديه حساب، فهناك رمز في طريقه إلى بريده الإلكتروني.',
+    'auth.code.verify': 'التحقق وتسجيل الدخول',
+    'auth.code.verify.busy': 'جارٍ التحقق…',
+    'auth.code.verify.different': 'استخدم بريداً إلكترونياً أو اسم مستخدم آخر',
+    'auth.code.verify.error.expired': 'انتهت صلاحية الرمز. اطلب رمزاً جديداً.',
+    'auth.code.verify.error.invalid':
+      'هذا الرمز غير صالح. أدخل الأرقام الستة من أحدث بريد.',
+    'auth.code.verify.error.start_over':
+      'ابدأ من جديد — أدخل بريدك الإلكتروني أو اسم المستخدم أولاً.',
+    'auth.reset.email_label': 'البريد الإلكتروني على الحساب',
+    'auth.reset.send': 'إرسال رمز إعادة التعيين',
+    'auth.reset.send.busy': 'جارٍ الإرسال…',
+    'auth.reset.notice.sent':
+      'إذا كان {address} لديه حساب، فهناك رمز إعادة تعيين في طريقه.',
+    'auth.reset.error.email': 'أدخل عنوان البريد الإلكتروني على الحساب.',
+    'auth.reset.code_label': 'رمز إعادة تعيين من 6 أرقام',
+    'auth.reset.password.label': 'كلمة مرور جديدة — على الأقل {min} أحرف',
+    'auth.reset.apply': 'تعيين كلمة المرور وتسجيل الدخول',
+    'auth.reset.apply.busy': 'جارٍ إعادة التعيين…',
+    'auth.reset.different_email': 'استخدم بريداً إلكترونياً آخر',
+    'auth.reset.error.length': 'الرمز من 6 أرقام. تحقق من البريد وأدخله مرة أخرى.',
+    'auth.reset.error.expired': 'انتهت صلاحية الرمز. اطلب رمزاً جديداً.',
+    'auth.reset.error.invalid': 'هذا الرمز غير صالح. أدخل الأرقام الستة من أحدث بريد.',
+    'auth.reset.error.password.length':
+      'تحتاج كلمة المرور الجديدة إلى {min} أحرف على الأقل.',
+    'auth.error.fallback': 'حدث خطأ ما.',
+
+    // ── History screen (Slice 4) ─────────────────────────────────
+    'history.loading_sets': 'جارٍ تحميل المجموعات…',
+    'history.empty': 'لا توجد تمارين بعد. سجّل تمرينًا من شاشة التسجيل وظهر هنا.',
+    'history.no_sets': 'هذا التمرين ليس له مجموعات مسجلة.',
+    'history.set': 'مجموعة',
+    'history.sets': 'مجموعات',
+    'history.pr_title': '{count} رقم شخصي',
+    'history.pr_title_plural': '{count} أرقام شخصية',
+    'history.workout_fallback': 'تمرين',
+    'history.exercise_fallback': 'تمرين',
+    'history.add_exercise': 'إضافة تمرين',
+    'history.save_routine': 'حفظ كروتين',
+    'history.delete_workout': 'حذف التمرين',
+    'history.delete_workout.confirm': 'حذف التمرين؟',
+    'history.routine_saved': 'تم حفظ "{name}" في روتيناتك. لم يبدأ بعد.',
+    'history.edit_done': 'انتهاء التعديل',
+    'history.edit': 'تعديل التمرين',
+    'history.load_more': 'تحميل تمارين أقدم',
+    'history.add_set': 'إضافة مجموعة',
+    'history.personal_record': 'رقم شخصي',
+    'history.edit_button': 'تعديل',
+    'history.edit_set.aria': 'تعديل المجموعة رقم {number} من {name}',
+    'history.delete_set.aria': 'حذف المجموعة رقم {number} من {name}',
+    'history.reps': 'تكرارات',
+    'history.no_routine_sets': 'لا توجد مجموعات عمل في تلك الجلسة لإنشاء روتين منها.',
+    'history.signin_required': 'سجّل الدخول لحفظ الروتين.',
+    'history.routine_save_error': 'تعذر حفظ هذا الروتين.',
+    'history.error.load_history': 'جارٍ تحميل سجل التمارين',
+    'history.error.save_correction': 'جارٍ حفظ التعديل',
+    'history.error.add_set': 'جارٍ إضافة المجموعة',
+    'history.error.delete_workout': 'جارٍ حذف التمرين',
+    'history.error.load_sets': 'جارٍ تحميل مجموعات ذلك التمرين',
+    'history.error.delete_set': 'جارٍ حذف المجموعة',
+
+    // ── Progress screen (Slice 4) ────────────────────────────────
+    'progress.error.load': 'جارٍ تحميل تقدمك',
+    'progress.this_week': 'هذا الأسبوع',
+    'progress.sessions': 'جلسات',
+    'progress.volume': 'الحجم',
+    'progress.streak': 'تتابع',
+    'progress.wk': 'أ',
+    'progress.balance.title': 'مجموعات أسبوعية · نطاق الهدف',
+    'progress.balance.empty': 'سجّل تمرينًا لتحميل العمود.',
+    'progress.balance.focus': 'التركيز',
+    'progress.balance.verb.sits': 'يقع',
+    'progress.balance.verb.sit': 'يقع',
+    'progress.balance.under_band': 'تحت النطاق.',
+    'progress.balance.coach_hint': 'المرشد لديه حل',
+    'progress.frequency.title': 'الجلسات · بالأسبوع',
+    'progress.frequency.empty_caption':
+      'شريط واحد في الأسبوع. الخط المتقطع يصل مع المتوسط.',
+    'progress.frequency.caption':
+      'متوسط {avg}/أسبوع · {count} {sessions} · الخط المتقطع هو المتوسط',
+    'progress.frequency.session': 'جلسة',
+    'progress.frequency.sessions': 'جلسات',
+    'progress.frequency.aria.empty':
+      'جلسات في الأسبوع، آخر {weeks} أسابيع: لا شيء مسجل بعد',
+    'progress.frequency.aria.data':
+      'جلسات في الأسبوع، آخر {weeks} أسابيع: {count} جلسات، بمتوسط {avg} أسبوعيًا',
+    'progress.volume.heading': 'الحجم · {span}',
+    'progress.volume.caption':
+      'نقطة واحدة لكل {bucket} · ذروة {peak} · هذا {bucket} {current}',
+    'progress.volume.bucket.week': 'أسبوع',
+    'progress.volume.bucket.month': 'شهر',
+    'progress.volume.aria': 'الحجم لكل {bucket} خلال {span}، بذروة {peak}',
+    'progress.volume.range_label': 'نطاق الحجم',
+    'progress.records.title': 'الرقم القياسي',
+    'progress.record.weight': 'الثقل الأعلى',
+    'progress.record.e1rm': 'أفضل تقدير',
+    'progress.record.both': 'الثقل الأعلى · أفضل تقدير',
+    'progress.and': 'و',
+    'progress.anchor.title': 'التمارين المرجعية · مقابل المتوقع',
+    'progress.anchor.1rm': 'تقدير 1RM',
+    'progress.anchor.empty':
+      'أربع تمارين، شريط واحد لكل منها. سجّل رفعة ميتة، وقرفص، وضغط، وضغط علوي وتظهر الأشرطة.',
+    'progress.anchor.no_predict':
+      'العلامة هي ما تتوقعه رفعتك الميتة لكل تمرين. سجّل رفعة ميتة وتظهر العلامات.',
+    'progress.anchor.behind':
+      'العلامات مبنية على رفعتك الميتة — قرفص 0.85، ضغط 0.75، ضغط علوي 0.45. {names} {verb} خلف علامتها. دليل وليس هدفًا.',
+    'progress.anchor.on_track':
+      'العلامات مبنية على رفعتك الميتة — قرفص 0.85، ضغط 0.75، ضغط علوي 0.45. دليل وليس هدفًا.',
+    'progress.anchor.verb.sits': 'يقع',
+    'progress.anchor.verb.sit': 'يقع',
+    'progress.anchor.its': 'علامته',
+    'progress.anchor.their': 'علامتها',
+    'progress.strength.title': 'القوة · تقدير 1RM',
+    'progress.strength.empty': 'لم تتدرب في {range}. وسّع النطاق لرؤية تمارين أقدم.',
+    'progress.strength.last': 'آخر:',
+    'progress.strength.range_label': 'نطاق القوة',
+    'progress.strength.caption.many':
+      'أفضل {shown} من أصل {total} تمارين{scope} · تقدير 1RM هو أفضل رقم شخصي لك',
+    'progress.strength.caption.few':
+      '{count} {lifts}{scope} · تقدير 1RM هو أفضل رقم شخصي لك',
+    'progress.strength.scope': ' تدرّبت فيها خلال {range}',
+    'progress.strength.lift': 'تمرين',
+    'progress.strength.lifts': 'تمارين',
+    'progress.empty_notice':
+      'كل رسم بياني هنا مبني من مجموعاتك الخاصة — لا شيء على هذه الشاشة عينة.',
+
+    // ── Log screen (Slice 5) ──────────────────────────────────────
+    'log.loading': 'جارٍ التحميل…',
+    'log.start': 'ابدأ التمرين',
+    'log.start_first': 'ابدأ أول تمرين لك',
+    'log.streak.week_streak': 'أسبوع متتالٍ',
+    'log.streak.this_week': 'هذا الأسبوع',
+    'log.last_session': 'آخر جلسة · {day}',
+    'log.in_progress': '{name} · في التقدّم',
+    'log.workout_fallback': 'تمرين',
+    'log.set': 'مجموعة',
+    'log.sets': 'مجموعات',
+    'log.finish': 'إنهاء',
+    'log.finish_confirm': 'إنهاء؟',
+    'log.finish_hint_empty': 'لم تُسجَّل أي مجموعة بعد — الإنهاء يلغي هذا التمرين.',
+    'log.finish_hint': 'الإنهاء يحفظه. التجاهل يحذفه ومجموعاته.',
+    'log.discard': 'تجاهل التمرين',
+    'log.discard_confirm': 'تجاهل؟',
+    'log.empty': 'لا توجد تمارين بعد. أضف تمرينًا لوضعه على اللوحة.',
+    'log.add_exercise': 'إضافة تمرين',
+    'log.import': 'جاءت من Hevy؟ أحضر سجلك التدريبي',
+    // SyncNote — inline status, not a banner (§2.1).
+    // {count} already includes the number; log.set/log.sets handle plural.
+    'log.sync.saving': 'جارٍ حفظ {count}…',
+    'log.sync.offline_pending': 'غير متصل · تم حفظ {count} على هذا الجهاز',
+    'log.sync.offline': 'غير متصل · التسجيل كالمعتاد',
+    'log.sync.cached': 'غير متصل · عرض البيانات المحفوظة',
+    // CachedNote — the timestamp stays in a tnum span, so it is a prefix.
+    'log.cache.prefix': 'غير متصل · عرض آخر ما مزامنه هذا الجهاز',
+    // Error context strings passed to describeError().
+    'log.error.load_workout': 'جارٍ تحميل تمرينك',
+    'log.error.load_sets': 'جارٍ تحميل مجموعات هذا التمرين',
+    'log.error.start_routine': 'جارٍ بدء ذلك الروتين',
+    'log.error.group_superset': 'جارٍ تجميع التمرين الفائق',
+    'log.error.save_rest': 'جارٍ حفظ وقت الراحة',
+    'log.error.update_routine': 'تعذّر تحديث ذلك الروتين.',
+    'log.error.save_routine': 'تعذّر حفظ الروتين.',
+    'log.error.open_routine': 'تعذّر فتح ذلك الروتين.',
+    'log.error.duplicate_routine': 'تعذّر تكرار ذلك الروتين.',
+    'log.error.delete_routine': 'تعذّر حذف ذلك الروتين.',
+    'log.error.remove_exercise': 'جارٍ إزالة التمرين',
+    'log.error.save_note': 'جارٍ حفظ الملاحظة',
+    'log.error.leave_superset': 'جارٍ مغادرة التمرين الفائق',
+    'log.error.finish': 'جارٍ إنهاء التمرين',
+    // Fallback name for a skipped exercise on the Finish summary.
+    'log.exercise_fallback': 'تمرين',
+    // Queue retry context for describeError().
+    'log.queue.set_retry': 'جارٍ حفظ المجموعة {number}. هي على الشاشة وستُعاد المحاولة',
+    'log.queue.workout_retry':
+      'جارٍ حفظ تمرينك. هو آمن على هذا الجهاز وستُعاد المحاولة',
+    // Separate keys because English plural marks the verb ("set is" vs
+    // "sets are") and Arabic cannot mirror that with one template.
+    'log.finish_still_saving.set':
+      '{count} مجموعة لا تزال تُحفظ. إنها آمنة — ابقَ على هذه الشاشة لحظة واضغط إنهاء مرة أخرى.',
+    'log.finish_still_saving.sets':
+      '{count} مجموعات لا تزال تُحفظ. إنها آمنة — ابقَ على هذه الشاشة لحظة واضغط إنهاء مرة أخرى.',
+
+    // ── Coach screen (Slice 6) — DRAFT, requires native-speaker review ──
+    'coach.loading': 'جارٍ قراءة سجلك…',
+    'coach.loading.body': 'جارٍ قراءة الأسابيع القليلة الماضية من سجلك.',
+    'coach.this_week': 'هذا الأسبوع',
+    'coach.regenerate': 'إعادة الإنشاء',
+    'coach.notes.unavailable': 'الملاحظات غير متاحة.',
+    'coach.quiet': 'المراجعة هادئة الآن. أرقامك كلها ما زالت موجودة.',
+    'coach.empty': 'سجّل 3 تمارين وسيكون للمدرب ما يقوله.',
+    'coach.as_of': 'اعتباراً من {date} · ',
+    // Separate keys: English plural marks the noun, Arabic cannot mirror it.
+    'coach.regenerates_left.one': '{count} إعادة متبقية هذا الأسبوع',
+    'coach.regenerates_left.other': '{count} إعادات متبقية هذا الأسبوع',
+    'coach.resets_weekly': ' · يُعاد أسبوعياً',
+    'coach.stale': ' · بالصيغة السابقة',
+    'coach.build': 'ابنِ لي روتيناً',
+    'coach.generate': 'إنشاء روتين',
+    'coach.building': 'جارٍ الإنشاء…',
+    'coach.generate.error': 'تعذّر إنشاء روتين.',
+    'coach.save.error': 'تعذّر حفظ الروتين.',
+    'coach.days': '{count} أيام',
+    'coach.goal.strength': 'القوة',
+    'coach.goal.muscle': 'الكتلة العضلية',
+    'coach.goal.general': 'عام',
+    'coach.goal.endurance': 'التحمل',
+    'coach.equipment.full_gym': 'صالة كاملة',
+    'coach.equipment.home': 'المنزل',
+    'coach.equipment.dumbbell': 'دمبل',
+    'coach.preview.title': 'روتينك · لم يُحفظ بعد',
+    'coach.preview.saving': 'جارٍ الحفظ…',
+    'coach.preview.save': 'حفظ {count} روتينات',
+    'coach.preview.adjust': 'تعديل',
+    'coach.preview.helper':
+      'الروتينات المحفوظة روتينات عادية — عدّلها أو احذفها مثل أي روتين آخر. لا يبدأ شيء حتى تبدأه أنت.',
+    // Separate keys: English plural marks the noun, Arabic cannot mirror it.
+    'coach.dropped.one': '{count} تمرين مقترح استُبعد لأنه ليس في قائمة التمارين.',
+    'coach.dropped.other':
+      '{count} تمارين مقترحة استُبعدت لأنها ليست في قائمة التمارين.',
+    'coach.disclaimer': 'مُنشأ بالذكاء الاصطناعي — ليس نصيحة طبية.',
+    'coach.review.section.adherence': 'الالتزام',
+    'coach.review.section.bands': 'الحجم',
+    'coach.review.section.plateaus': 'ثبات',
+    'coach.review.section.wins': 'تقدّم',
+    'coach.review.section.recommendation': 'الأسبوع القادم',
+
+    // ── Friends screen (Slice 6) — DRAFT, requires native-speaker review ──
+    'friends.loading': 'جارٍ التحميل…',
+    'friends.main_title': 'هذا الأسبوع · الحجم',
+    'friends.you': 'أنت',
+    'friends.you.back': 'رجوع',
+    'friends.feed': 'المنشورات',
+    'friends.feed.empty.nobody': 'لا أحد لمتابعته بعد.',
+    'friends.feed.empty.pending':
+      'لا أحد ممن تتابعهم أنهى تمريناً بعد. سيظهر هنا عندما يفعل.',
+    'friends.feed.invite': 'ادعُ شخصاً',
+    'friends.feed.duration': 'المدة',
+    'friends.feed.volume': 'الحجم',
+    'friends.feed.sets': 'المجموعات',
+    'friends.feed.pr_single': 'رقم شخصي',
+    'friends.feed.pr_many': '{count} أرقام شخصية',
+    'friends.feed.like': 'أعجبني هذا التمرين',
+    'friends.feed.unlike': 'إزالة الإعجاب',
+    'friends.feed.error.save': 'تعذّر الحفظ.',
+    'friends.feed.new_e1rm': '{name} — رقم تقديري جديد {weight}',
+    'friends.load_error': 'تعذّر التحميل.',
+    'friends.leaderboard.empty': 'لوحة صدارة من شخص واحد. ادعُ شخصاً لتطارده.',
+    'friends.leaderboard.you': 'أنت',
+    // Separate keys: English plural marks the noun, Arabic cannot mirror it.
+    'friends.leaderboard.sessions.one': '{count} جلسة',
+    'friends.leaderboard.sessions.other': '{count} جلسات',
+    'friends.visibility.title': 'من يمكنه رؤية تدريبك',
+    'friends.visibility.private': 'خاص',
+    'friends.visibility.private.blurb': 'لا يمكن لأحد العثور عليك أو رؤية تدريبك.',
+    'friends.visibility.followers': 'المتابعون',
+    'friends.visibility.followers.blurb':
+      'يمكن للأشخاص العثور عليك وطلب المتابعة. يرى المتابعون التمارين المنتهية.',
+    'friends.visibility.public': 'عام',
+    'friends.visibility.public.blurb':
+      'يمكن لأي مستخدم Wazn مسجّل رؤية التمارين المنتهية.',
+    'friends.visibility.note':
+      'الخاص هو الافتراضي ويبقى كذلك حتى تغيّه. التمرين قيد التنفيذ لا يُعرض لأي شخص، بأي إعداد.',
+    'friends.username.title': 'اسم المستخدم الخاص بك',
+    'friends.username.placeholder': 'ameen',
+    'friends.username.save': 'حفظ',
+    'friends.username.saved': 'تم الحفظ',
+    'friends.username.hint':
+      'أحرف صغيرة وأرقام وشرطات سفلية. من 3 إلى 20 حرفاً. هكذا يجدك الأصدقاء.',
+    'friends.username.error': 'تعذّر الحفظ.',
+    'friends.follow.title': 'تابع شخصاً',
+    'friends.follow.placeholder': '@username',
+    'friends.follow.button': 'متابعة',
+    'friends.follow.error': 'تعذّرت متابعة ذلك الشخص.',
+    'friends.invite.title': 'رابط الدعوة',
+    'friends.invite.not_shareable':
+      'فعّل "المتابعون" أو "عام" أعلاه للحصول على رابط. الملف الخاص ليس لديه ما يدعو إليه أحد.',
+    'friends.invite.get_link': 'احصل على رابطي',
+    'friends.invite.share': 'مشاركة',
+    'friends.invite.copied': 'تم النسخ',
+    'friends.invite.error': 'تعذّر إنشاء رابط.',
+    'friends.following.title': 'المتابَعون · {count}',
+    'friends.unfollow': 'إلغاء المتابعة',
+    'friends.unfollow.error': 'تعذّر إلغاء المتابعة.',
+    'friends.signout': 'تسجيل الخروج',
+    'friends.signout.confirm': 'تسجيل الخروج؟',
+    // Install prompt
+    'install.title': 'أضِف إلى الشاشة الرئيسية',
+    'install.ios':
+      'اضغط مشاركة، ثم "إضافة إلى الشاشة الرئيسية". يفتح وزن بملء الشاشة ويحمّل فوراً.',
+    'install.generic': 'يفتح وزن بملء الشاشة، ويحمّل فوراً، ويحفظ موضعك أثناء التمرين.',
+    'install.action': 'تثبيت',
+    'install.dismiss': 'ليس الآن',
+    // Routine list
+    'routines.title': 'البرامج',
+    'routines.generate': 'توليد',
+    'routines.new': 'جديد',
+    'routines.empty':
+      'لا توجد برامج بعد. أنشئ واحداً وتصبح جلستك المعتادة على بعد ضغطتين، أو دع التوليد يضع لك أسبوعاً.',
+    'routines.starting': 'جارٍ البدء…',
+    'routines.up_next': 'التالي',
+    'routines.edit': 'تعديل',
+    'routines.duplicate': 'نسخ',
+    'routines.delete': 'حذف',
+    'routines.delete.confirm': 'حذف؟',
+    // Edit set dialog
+    'set.edit.reps': 'التكرارات',
+    'set.edit.type': 'نوع المجموعة',
+    'set.edit.warmup_note': 'الإحماء لا يدخل في الأرقام القياسية والرسوم والحجم.',
+    'set.edit.rpe': 'RPE',
+    'set.edit.rpe.none': 'بلا',
+    'set.edit.cancel': 'إلغاء',
+    'set.edit.save': 'حفظ',
+    'set.edit.saving': 'جارٍ الحفظ…',
+    // Rest timer
+    'rest.title': 'راحة',
+    'rest.done': 'انتهت الراحة',
+    'rest.skip': 'تخطٍ',
+    'rest.keep_default': 'اجعل {duration} زمن الراحة لهذا التمرين',
+    // Exercise picker
+    'picker.back': 'رجوع',
+    'picker.search': 'ابحث عن تمرين',
+    'picker.filter.muscle': 'تصفية حسب المجموعة العضلية',
+    'picker.filter.equipment': 'تصفية حسب المعدات',
+    // Workout notes
+    'notes.name': 'الاسم',
+    'notes.name.placeholder': 'علوي أ',
+    'notes.note': 'ملاحظة',
+    'notes.note.placeholder':
+      'البار كان ثقيلاً، النوم كان سيئاً. أي شيء تودّ معرفته لاحقاً.',
+    'notes.saving': 'جارٍ الحفظ…',
+    'notes.saved': 'يُحفظ عند الخروج من الحقل.',
+    'notes.error.save': 'حفظ ملاحظة التمرين',
+    // New exercise
+    'exercise.new.title': 'تمرين جديد',
+    'exercise.new.back': 'رجوع',
+    'exercise.new.name.placeholder': 'هاك سكوات (جهاز)',
+    'exercise.new.muscle': 'المجموعة العضلية',
+    'exercise.new.equipment': 'المعدات',
+    'exercise.new.adding': 'جارٍ الإضافة…',
+    'exercise.new.add': 'أضِفه واستخدمه',
+    'exercise.new.error': 'تعذّرت إضافة هذا التمرين.',
+    // Coach brief
+    'brief.label': 'قبل أن تبدأ',
+    'brief.title': 'قبل أن تبدأ',
+    'brief.hide': 'إخفاء الملخّص',
+    // Rest canvas
+    'canvas.label': 'أثناء راحتك',
+    'canvas.off': 'إيقاف لوحة الراحة',
+    // Training calendar
+    'calendar.title': 'تقويم التمارين',
+    'calendar.hint.empty':
+      'مربع لكل يوم، تسعة أشهر للخلف. يضيء بمقدار الحمل الذي ترفعه.',
+    'calendar.hint': 'الأكثر إضاءة يوم أثقل. غير المضيء راحة.',
+    // Load helper
+    'load.title': 'الأوزان والإحماء',
+    'load.per_side': 'لكل جهة',
+    // Exercise detail
+    'detail.back': 'العودة إلى التقدم',
+    'detail.error.history': 'تحميل سجل هذا التمرين',
+    'detail.error.rest_save': 'حفظ زمن الراحة',
+    'detail.error.rest_clear': 'مسح زمن الراحة',
+    'detail.error.note': 'حفظ ملاحظتك',
+    'detail.error.save': 'تعذّر حفظ هذا التمرين.',
+    'detail.error.archive': 'تعذّرت أرشفة هذا التمرين.',
+    'detail.error.delete': 'تعذّر حذف هذا التمرين.',
+    'detail.chart.aria':
+      'أقصى تكرار مقدَّر عبر {sessions} جلسة، من {from} إلى {to} {unit}',
+    'detail.edit': 'تعديل',
+    'detail.cancel': 'إلغاء',
+    'detail.save': 'حفظ',
+    'detail.saving': 'جارٍ الحفظ…',
+    'detail.archive': 'أرشفة',
+    'detail.restore': 'استعادة',
+    'detail.delete': 'حذف',
+    'detail.delete.confirm': 'حذف؟',
+    'detail.rest.shorter': 'راحة أقصر',
+    'detail.rest.longer': 'راحة أطول',
+    'detail.rest.default_note':
+      'الإعداد الافتراضي. غيّره ليستخدم المؤقّت رقمك لهذا التمرين من المجموعة التالية.',
+    'detail.note.placeholder': 'وضعية المقعد، عرض القبضة، أي شيء تعيد استنتاجه كل مرة.',
+    'detail.note.saved': 'يُحفظ عند الخروج من الحقل.',
+    'detail.notes': 'ملاحظات',
+    'detail.name_hint': 'إعادة التسمية تحتفظ بكل مجموعة سجّلتها عليه.',
+    'detail.rest.yours': 'خاصّتك{over}. الصفر يوقف المؤقّت لهذا التمرين.',
+    'detail.rest.over_default': '، بدل الافتراضي {default}',
+    // Hevy import
+    'import.error.read': 'تعذّرت قراءة هذا الملف من القرص. جرّب تصديره مرة أخرى.',
+    'import.error.create_exercises': 'إنشاء التمارين غير الموجودة في التطبيق',
+    'import.error.create_workout': 'إنشاء تمرين مستورد',
+    'import.error.save_sets': 'حفظ مجموعات تمرين مستورد',
+    'import.step1': 'افتح Hevy واذهب إلى الملف الشخصي ← الإعدادات.',
+    'import.step2': 'اضغط تصدير البيانات. يرسل لك Hevy ملف ‎.csv‎ بالبريد.',
+    'import.step3': 'ارجع إلى هنا واخترْه.',
+    'import.reading': 'جارٍ القراءة…',
+    'import.choose': 'اختر ملف تصدير Hevy',
+    'import.found.resuming': 'المتبقّي للنقل',
+    'import.found': 'الموجود في ذلك الملف',
+    'import.how': 'كيف تحصل على الملف',
+    'import.privacy':
+      'يُقرأ الملف على هاتفك ولا يُرفع إلى أي مكان. تُحفظ التمارين التي تؤكّدها فقط، في حسابك.',
+    'import.workouts': 'تمارين',
+    'import.sets': 'مجموعات',
+    'import.exercises': 'تمارين مختلفة',
+    'import.resume': 'تابع — بقي {count}',
+    'import.start': 'استورد {count} تمريناً',
+    // Workout overview
+    'overview.exercise_fallback': 'تمرين',
+    'overview.reorder': 'إعادة ترتيب {name}',
+    'overview.more': 'المزيد لـ {name}',
+    'overview.note.placeholder': 'وضعية المقعد 4',
+    'overview.rest.shorter': 'راحة أقصر لهذا التمرين',
+    'overview.rest.longer': 'راحة أطول لهذا التمرين',
+    'overview.remove': 'إزالة التمرين',
+    'overview.remove.confirm': 'إزالة؟',
+    'overview.remove.confirm_sets': 'إزالة وحذف المجموعات؟',
+    'overview.rest': 'راحة',
+    'overview.logged': 'مسجَّل',
+    'overview.log_row': 'سجّل {name} المجموعة {label}: {values}',
+    'overview.row_needs_reps': 'المجموعة {label} تحتاج تكرارات قبل تسجيلها',
+    'overview.matched': 'مطابِق للجلسة السابقة',
+    'overview.last_session': 'الجلسة السابقة: {values}',
+    // Routine editor
+    'editor.error.name': 'أعطِ البرنامج اسماً، ستختاره من قائمة.',
+    'editor.error.empty': 'أضِف تمريناً واحداً على الأقل.',
+    'editor.back': 'رجوع',
+    'editor.title.edit': 'تعديل البرنامج',
+    'editor.title.new': 'برنامج جديد',
+    'editor.name.placeholder': 'علوي أ',
+    'editor.exercise_fallback': 'تمرين',
+    'editor.move_up': 'تحريك لأعلى',
+    'editor.move_down': 'تحريك لأسفل',
+    'editor.remove': 'إزالة {name}',
+    'editor.saving': 'جارٍ الحفظ…',
+    'editor.save': 'حفظ البرنامج',
+    // Set entry
+    'entry.error.reps':
+      'أدخل التكرارات التي أدّيتها. يمكن ترك الوزن فارغاً لتمارين وزن الجسم.',
+    'entry.error.weight': 'يجب أن يكون الوزن رقماً بـ {unit}، أو فارغاً لوزن الجسم.',
+    'entry.back': 'العودة إلى التمرين',
+    'entry.weight.decrease': 'إنقاص الوزن',
+    'entry.weight.increase': 'زيادة الوزن',
+    'entry.reps.decrease': 'إنقاص التكرارات',
+    'entry.reps.increase': 'زيادة التكرارات',
+    'entry.rpe.add': 'أضِف RPE',
+    'entry.rpe.change': 'RPE {value}. اضغط للتغيير.',
+    'entry.superset.add': 'سوبرست {group}. أضِف تمريناً آخر إليه.',
+    'entry.superset.start': 'ابدأ سوبرست',
+    'entry.superset.badge': 'SS {group}',
+    'entry.superset.label': 'سوبرست',
+    'entry.superset.leave': 'مغادرة السوبرست {group}',
+    'entry.ungroup': 'فك التجميع',
+    'entry.ungroup.confirm': 'فك التجميع؟',
+    'entry.saving': 'جارٍ الحفظ…',
+    'entry.log.warmup': 'سجّل إحماء {number}',
+    'entry.log.set': 'سجّل المجموعة {number}',
+    // Finish summary
+    'finish.share.saved': 'حُفظت الصورة، هذا المتصفح بلا قائمة مشاركة.',
+    'finish.share.error': 'تعذّر إنشاء الصورة.',
+    'finish.duration': 'المدة',
+    'finish.volume': 'الحجم',
+    'finish.set.one': 'مجموعة',
+    'finish.set.other': 'مجموعات',
+    'finish.not_done': 'لم يُنجز اليوم',
+    'finish.preparing': 'جارٍ التحضير…',
+    'finish.share': 'بطاقة المشاركة',
+    // Wordmark
+    'wordmark.label': 'وزن',
+    // Error boundary
+    'error.title': 'حدث خطأ',
+    'error.body': 'أعِد المحاولة، أو انتقل إلى تبويب آخر ثم عُد.',
+    'error.retry': 'حاول مرة أخرى',
+    // Exercise detail sections
+    'detail.not_logged': 'لم يُسجَّل بعد',
+    'detail.e1rm': 'أقصى تكرار مقدَّر',
+    'detail.rep_ranges': 'نطاقات التكرار',
+    'detail.rep_maxes': 'أقصى التكرارات',
+    'detail.your_exercise': 'تمرينك',
+    'detail.rest_timer': 'مؤقّت الراحة',
+    'detail.reset': 'إعادة ضبط',
+    'detail.how_to': 'طريقة الأداء',
+    'detail.recent': 'الأحدث',
+    'detail.empty': 'لا توجد مجموعات مسجَّلة لهذا التمرين بعد.',
+    // Exercise fields
+    'exercise.name': 'الاسم',
+    'exercise.muscle_hint':
+      'هذا ما يضعه في رسم المجموعات الأسبوعية، فاختر ما يدرّبه فعلاً.',
+    // Picker
+    'picker.clear': 'مسح عوامل التصفية',
+    // Finish
+    'finish.title': 'اكتمل التمرين',
+    'finish.done': 'تم',
+    // Import
+    'import.hero.title': 'قادم من Hevy',
+    'import.hero.body': 'أحضِر سجلّك معك.',
+    'import.hero.cta': 'أحضِر سجلّك من Hevy',
+    'import.dismiss': 'ليس الآن',
+    'import.running': 'جارٍ النقل',
+    'import.complete': 'وصل سجلّك.',
+    'import.start_lifting': 'ابدأ التمرين',
+    'import.different_file': 'اختر ملفاً آخر',
+    'import.will_add': 'ستُضاف كتمارين خاصة بك',
+    'import.worth_knowing': 'جدير بالمعرفة',
+    // Install
+    'install.headline': 'أضِف وزن إلى شاشتك الرئيسية',
+    // Load helper
+    'load.no_ramp': 'لا يوجد ما تتدرّج به عند هذا الوزن.',
+    // Range chips
+    'ranges.title': 'كم أرفع مؤخراً',
+    // Rest canvas
+    'canvas.undo': 'لوحة الراحة متوقفة · أعِدها',
+    // Coach brief
+    'brief.note': 'لحظة بدء التمرين يختفي المدرب حتى الإنهاء.',
+    // Routine editor
+    'editor.name': 'الاسم',
+    'editor.reps': 'التكرارات',
+    'editor.add_exercise': 'أضِف تمريناً',
+    'routines.start_empty': 'ابدأ تمريناً فارغاً',
+    // Set entry
+    'entry.previous.loading': 'جارٍ تحميل الجلسة السابقة…',
+    'entry.previous.none': 'أول مرة تسجّل هذا التمرين. لا توجد جلسة سابقة.',
+    'entry.reps': 'التكرارات',
+    'entry.pr': 'رقم قياسي شخصي',
+    // Workout overview
+    'overview.first_set': 'اضغط الأرقام لإدخال مجموعتك الأولى.',
+    'overview.note_label': 'ملاحظة لهذا التمرين',
+    'overview.save': 'حفظ',
+    'overview.move_up': 'تحريك لأعلى',
+    'overview.move_down': 'تحريك لأسفل',
+    'overview.unsuperset': 'فك السوبرست',
+    'overview.pr': 'رقم قياسي شخصي',
+    // Log screen
+    'log.usual_split': 'ابدأ تقسيمتي المعتادة',
+    // Progress
+    'progress.empty': 'سجّل تمريناً لتحميل البار',
+  },
+}
+
+/**
+ * Replace {name} placeholders in a message string. An unknown key returns the
+ * key itself, so a typo surfaces visually rather than rendering as blank.
+ */
+export function t(
+  locale: Locale,
+  key: string,
+  params?: Record<string, string>,
+): string {
+  let msg = messages[locale]?.[key] ?? messages.en[key] ?? key
+  if (params) {
+    for (const [name, value] of Object.entries(params)) {
+      msg = msg.replace(new RegExp(`\\{${name}\\}`, 'g'), value)
+    }
+  }
+  return msg
+}
+
+/**
+ * Resolve the initial locale without any side effects.
+ *
+ * Resolution order (from the Stage 5 spec):
+ *  1. A valid stored preference wins.
+ *  2. navigator.language whose primary subtag is "ar" gives "ar".
+ *  3. "en" as the fallback.
+ */
+export function resolveInitialLocale(
+  stored: string | null,
+  navigatorLanguage: string,
+): Locale {
+  if (stored === 'en' || stored === 'ar') return stored
+  const primary = navigatorLanguage.split('-')[0]?.toLowerCase()
+  return primary === 'ar' ? 'ar' : 'en'
+}

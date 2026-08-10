@@ -54,7 +54,8 @@ These override anything else in this file or in any prompt:
    (+ `.html`), committed to the repo so it cannot go missing again.
 5. **CSS logical properties only** (`margin-inline-start`, `text-align:
 start`, etc.), `dir="ltr"` on root. Arabic RTL lands in Stage 5 and
-   must be a flip, not a rewrite.
+   must be a flip, not a rewrite. The header language toggle is a
+   named exception to any out-of-scope list, not a settings screen.
 6. **Critical review is mandatory.** Do not implement specs blindly,
    including this file. Where a better approach exists (schema, library,
    UX, query design), implement it and log the deviation with reasoning
@@ -299,8 +300,31 @@ Egypt-region users. Ramadan-aware streaks (a missed daytime pattern
 during Ramadan doesn't break streaks; suhoor/iftar-friendly session
 times treated as normal).
 
+**Locale preference (per-user, display only).** The initial locale is
+resolved in order: (1) stored per-user preference from
+`user_preferences.locale` if set, (2) region/browser signal
+(`navigator.language` or Egypt region), (3) English as the fallback.
+The `locale` column is `text not null default 'en' check (locale in
+('en', 'ar'))` on `user_preferences`, and the existing RPC
+`upsert_user_preference` gets a third branch in its allowlist. The
+toggle lives in the header next to the lbs/kg control: same style,
+same persistence pattern. Setting `ar` flips `dir` on the root element
+and switches all strings and exercise names; digits stay Latin (§2.4).
+Setting `en` flips back. The preference is persisted server-side via
+the RPC and cached client-side the same way the unit preference is,
+so it survives a new device. This is display only, like the unit
+toggle: one stored preference, no data rewritten.
+
+**GATE 5 — WAIVED by Ameen 2026-08-09.** The review below was not done; the
+machine-drafted Arabic shipped without it. Kept here as the standard to meet
+whenever someone does read it, not as an open blocker. Original text:
+
 **GATE 5:** a native Arabic speaker completes onboarding → routine →
-logged workout → progress review without hitting English.
+logged workout → progress review without involuntarily hitting English
+on the Arabic path (region detection is not infallible, and the
+diaspora is large). The locale toggle round-trips: switch to Arabic,
+reload, still Arabic; switch back to English, reload, still English;
+same result on a second device (server-side persistence).
 
 ### Stage 6 — Monetize
 
@@ -1220,6 +1244,45 @@ coach_surfaces.sql` asserts what the three functions RETURN against a seeded
   than trusting a success flag. All 134 exercises are active, RLS still on with 4
   policies, and 3,210 sets and 152 workouts were untouched. **0023 (the
   preferences WIP) remains the only unapplied file in the repo.**
+- **Resolved 2026-08-09: `locale` now lives in migration 0023.** It was edited
+  in place rather than given its own migration, because 0023 is written and
+  still unapplied, so there is no ledger to respect and no second file to
+  keep in step. `user_preferences` gains `locale text not null default 'en'
+check (locale in ('en', 'ar'))` and `upsert_user_preference` gains a third
+  allowlist branch. **Still unapplied**, so this is "applies cleanly from
+  empty" (verified by `check:sql`), not "applies cleanly to production".
+- **0023 IS APPLIED TO PRODUCTION (2026-08-09).** Verified against
+  `information_schema`, not the success flag: `user_preferences` exists with
+  RLS on and 3 policies, both RPCs exist, all 3 check constraints exist, and
+  `handle_new_user` now bootstraps a preferences row. **`locale` is NULLABLE
+  with no default**, deviating from the file as first written — a
+  `not null default 'en'` would have had the signup trigger stamp every new
+  user English, which the client then adopts on sign-in, so an Arabic phone
+  in Cairo would land in English and `navigator.language` would never get a
+  say again. NULL means "never chose", which is a different fact from "chose
+  English". **No backfill**: the 7 existing users have 0 rows, so their
+  localStorage unit stays authoritative instead of being overwritten by the
+  table's `kg` default. Untouched by the apply: 153 workouts, 7 profiles,
+  134 exercises. The ledger gained a `user_preferences` entry.
+- **The ledger is not a record of what is applied.** It lists 7 migrations and
+  has never known about 0020, 0021 or 0024 — yet `exercises.archived_at`
+  exists in production, so 0024 IS applied despite this repo saying it is not.
+  Trust `information_schema`, not the ledger and not the STATUS notes.
+- **Known mismatch, NOT fixed:** `unit-context` falls back to `lbs` when
+  localStorage is empty, while `user_preferences.weight_unit` defaults to
+  `kg`. A brand-new user sees lbs before sign-in and kg after. Left alone on
+  purpose — it belongs to the in-flight U-work, and the plan's Egypt default
+  is kg, so the server side may well be the correct one.
+- **Stage 5 locale is BUILT, not shipped (2026-08-09).** 520 catalogue keys,
+  the EN/AR header toggle, the pre-auth toggle, root `dir`/`lang` flip, and
+  `locale` in migration 0023. Full wall green: lint, typecheck, format,
+  check:coverage, check:vercel, check:sql, build, and 806 tests (the one
+  `lazy-screen` failure predates this work and reproduces on a clean tree).
+  **NOT done:** every Arabic string is machine-drafted and GATE 5's
+  native-speaker review is still the gate; plurals are two keys against
+  Arabic's six categories; `ErrorBoundary` stays English because a class
+  component cannot call the hook; charts are not mirrored, by prior decision.
+  0023 is now applied (see above).
 - **Last updated:** 2026-08-09 by Claude Code (the production reconciliation
   above, and the R4/R5 state correction in the offense plan's §11 ladder).
   Previously 2026-08-08 (U4 part 1: the e1RM trend and its

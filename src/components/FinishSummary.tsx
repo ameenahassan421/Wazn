@@ -14,6 +14,7 @@ import {
 } from '../lib/coach'
 import { ExerciseThumb } from './ExerciseThumb'
 import { WorkoutNotes } from './WorkoutNotes'
+import { useLocale } from '../lib/locale-context'
 
 /** Seconds → "48 min" / "1h 12m". `formatDuration` in lib/format takes ISO
  *  strings; the summary already holds a duration, so it formats that. */
@@ -64,6 +65,7 @@ export function FinishSummary({
    */
   routineUpdate?: { name: string; saving: boolean; onUpdate: () => void }
 }) {
+  const { t } = useLocale()
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [status, setStatus] = useState<string | null>(null)
   const [sharing, setSharing] = useState(false)
@@ -81,8 +83,8 @@ export function FinishSummary({
       outcome === 'shared'
         ? null
         : outcome === 'downloaded'
-          ? 'Saved the image — this browser has no share sheet.'
-          : 'Could not build the image.',
+          ? t('finish.share.saved')
+          : t('finish.share.error'),
     )
   }
 
@@ -97,10 +99,13 @@ export function FinishSummary({
   const stats: [string, string][] = [
     [
       summary.durationSeconds === null ? '—' : fromSeconds(summary.durationSeconds),
-      'Duration',
+      t('finish.duration'),
     ],
-    [formatVolume(summary.totalVolumeKg, unit), 'Volume'],
-    [formatCount(summary.setCount), summary.setCount === 1 ? 'Set' : 'Sets'],
+    [formatVolume(summary.totalVolumeKg, unit), t('finish.volume')],
+    [
+      formatCount(summary.setCount),
+      t(summary.setCount === 1 ? 'finish.set.one' : 'finish.set.other'),
+    ],
   ]
 
   return (
@@ -108,7 +113,7 @@ export function FinishSummary({
       <div>
         <p className="kicker">{dateLabel}</p>
         <h2 className="mt-1 text-[30px] font-medium tracking-tight">
-          Workout complete
+          {t('finish.title')}
         </h2>
       </div>
 
@@ -186,7 +191,7 @@ export function FinishSummary({
           className="ring-edge bg-surface px-3 py-3"
           style={{ borderRadius: 'var(--radius-md)' }}
         >
-          <p className="kicker">Not done today</p>
+          <p className="kicker">{t('finish.not_done')}</p>
           <ul className="mt-2 flex flex-col gap-2">
             {skipped.map((name) => (
               <li key={name} className="flex items-center gap-2">
@@ -225,14 +230,14 @@ export function FinishSummary({
           disabled={sharing}
           className="btn-base btn-hero h-[60px] w-full text-[17px] disabled:opacity-45"
         >
-          {sharing ? 'Preparing…' : 'Share card'}
+          {sharing ? t('finish.preparing') : t('finish.share')}
         </button>
         <button
           type="button"
           onClick={onDone}
           className="btn-base btn-secondary h-12 w-full text-sm"
         >
-          Done
+          {t('finish.done')}
         </button>
         {routineUpdate && (
           <button

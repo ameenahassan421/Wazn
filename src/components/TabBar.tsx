@@ -1,14 +1,19 @@
 import { IconBarbell, IconHistory, IconPeople, IconStar, IconTrend } from './icons'
 import type { ComponentType } from 'react'
+import { useLocale } from '../lib/locale-context'
 
 export type Tab = 'log' | 'history' | 'progress' | 'coach' | 'friends'
 
-const TABS: { id: Tab; label: string; Icon: ComponentType<{ size?: number }> }[] = [
-  { id: 'log', label: 'Log', Icon: IconBarbell },
-  { id: 'history', label: 'History', Icon: IconHistory },
-  { id: 'progress', label: 'Progress', Icon: IconTrend },
-  { id: 'coach', label: 'Coach', Icon: IconStar },
-  { id: 'friends', label: 'Friends', Icon: IconPeople },
+const TABS: {
+  id: Tab
+  key: string
+  Icon: ComponentType<{ size?: number }>
+}[] = [
+  { id: 'log', key: 'nav.log', Icon: IconBarbell },
+  { id: 'history', key: 'nav.history', Icon: IconHistory },
+  { id: 'progress', key: 'nav.progress', Icon: IconTrend },
+  { id: 'coach', key: 'nav.coach', Icon: IconStar },
+  { id: 'friends', key: 'nav.friends', Icon: IconPeople },
 ]
 
 /**
@@ -26,6 +31,8 @@ export function TabBar({
   active: Tab
   onChange: (tab: Tab) => void
 }) {
+  const { t } = useLocale()
+
   return (
     <nav
       className="fixed bottom-0 z-20 w-full bg-ink"
@@ -35,7 +42,7 @@ export function TabBar({
         className="mx-auto flex w-full max-w-[430px]"
         style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 10px)' }}
       >
-        {TABS.map(({ id, label, Icon }) => {
+        {TABS.map(({ id, key, Icon }) => {
           const selected = id === active
           return (
             <button
@@ -56,7 +63,7 @@ export function TabBar({
               <span
                 className={`text-[10px] leading-none whitespace-nowrap ${selected ? 'font-medium' : ''}`}
               >
-                {label}
+                {t(key)}
               </span>
             </button>
           )

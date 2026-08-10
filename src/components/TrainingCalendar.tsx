@@ -8,6 +8,7 @@ import {
   formatVolumeWithUnit,
 } from '../lib/format'
 import type { Unit } from '../lib/units'
+import { useLocale } from '../lib/locale-context'
 
 /**
  * Nine months of training as one grid: a column per week, a row per weekday,
@@ -49,6 +50,7 @@ export function TrainingCalendar({
   sessions: SessionVolumeRow[]
   unit: Unit
 }) {
+  const { t } = useLocale()
   const days = useMemo(() => trainingCalendar(sessions, WEEKS), [sessions])
 
   const max = days.reduce((top, d) => Math.max(top, d.volumeKg), 0)
@@ -68,7 +70,7 @@ export function TrainingCalendar({
   return (
     <section>
       <div className="mb-2 flex items-baseline gap-2">
-        <h2 className="kicker flex-1">Training calendar</h2>
+        <h2 className="kicker flex-1">{t('calendar.title')}</h2>
         <span className="tnum font-mono text-[11px] text-muted">
           {formatCount(trained)} {trained === 1 ? 'day' : 'days'}
         </span>
@@ -123,9 +125,7 @@ export function TrainingCalendar({
 
       <div className="mt-2 flex items-center gap-2">
         <p className="min-w-0 flex-1 text-[11px] text-muted">
-          {trained === 0
-            ? 'One square a day, nine months back. It lights up with the load you move.'
-            : 'Brighter is a heavier day. Unlit is rest.'}
+          {trained === 0 ? t('calendar.hint.empty') : t('calendar.hint')}
         </p>
         <span aria-hidden="true" className="flex shrink-0 items-center gap-[3px]">
           {HEAT.map((color) => (

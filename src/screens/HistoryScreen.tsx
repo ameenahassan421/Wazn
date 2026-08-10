@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import { useLocale } from '../lib/locale-context'
 import { describeError, supabase } from '../lib/supabase'
 import { useUnit } from '../lib/unit-context'
 import { formatWeight } from '../lib/units'
@@ -24,6 +25,9 @@ import { WorkoutNotes } from '../components/WorkoutNotes'
 import { IconChevronDown } from '../components/icons'
 
 const PAGE_SIZE = 30
+
+/** The translator handed to plain functions and child components. */
+type TFunction = (key: string, params?: Record<string, string>) => string
 
 /** The embedded exercise carries enough to draw a thumbnail, not the whole
  *  row — History pages through hundreds of sets and the rest is unused. */
@@ -55,6 +59,7 @@ function thumbExercise(e: EmbeddedExercise): Exercise {
 
 export function HistoryScreen() {
   const { unit } = useUnit()
+  const { t } = useLocale()
 
   const [workouts, setWorkouts] = useState<Workout[]>([])
   const [loading, setLoading] = useState(true)
@@ -88,19 +93,22 @@ export function HistoryScreen() {
   // so the heatmap and the volume chart can never tell different stories.
   const [sessions, setSessions] = useState<SessionVolumeRow[]>([])
 
-  const fetchPage = useCallback(async (offset: number) => {
-    const { data, error: pageError } = await supabase
-      .from('workouts')
-      .select('*')
-      .order('started_at', { ascending: false })
-      .range(offset, offset + PAGE_SIZE - 1)
+  const fetchPage = useCallback(
+    async (offset: number) => {
+      const { data, error: pageError } = await supabase
+        .from('workouts')
+        .select('*')
+        .order('started_at', { ascending: false })
+        .range(offset, offset + PAGE_SIZE - 1)
 
-    if (pageError) {
-      setError(describeError('Loading your workout history', pageError))
-      return null
-    }
-    return (data ?? []) as Workout[]
-  }, [])
+      if (pageError) {
+        setError(describeError(t('history.error.load_history'), pageError))
+        return null
+      }
+      return (data ?? []) as Workout[]
+    },
+    [t],
+  )
 
   /**
    * Editing history writes straight through — there is no draft state to keep
@@ -121,7 +129,7 @@ export function HistoryScreen() {
       .eq('id', set.id)
     setBusy(false)
     if (updateError) {
-      setError(describeError('Saving the correction', updateError))
+      setError(describeError(t('history.error.save_correction'), updateError))
       return
     }
     setSetsByWorkout((prev) => ({
@@ -192,7 +200,7 @@ export function HistoryScreen() {
       .single()
     setBusy(false)
     if (insertError || !data) {
-      setError(describeError('Adding the set', insertError))
+      setError(describeError(t('history.error.add_set'), insertError))
       return
     }
     setSetsByWorkout((prev) => ({
@@ -221,7 +229,7 @@ export function HistoryScreen() {
       .eq('id', workoutId)
     setBusy(false)
     if (deleteError) {
-      setError(describeError('Deleting the workout', deleteError))
+      setError(describeError(t('history.error.delete_workout'), deleteError))
       return
     }
     setWorkouts((prev) => prev.filter((w) => w.id !== workoutId))
@@ -243,7 +251,7 @@ export function HistoryScreen() {
    * follows, because turning "save this as a routine" into "you are now doing
    * this" would be a decision the user did not make.
    */
-  async function saveAsRoutine(workout: Workout) {
+  async function saveAsRoutine(workout: Workout, t: TFunction) {
     const sets = setsByWorkout[workout.id] ?? []
     const draft = routineFromWorkout(
       sets,
@@ -251,18 +259,18 @@ export function HistoryScreen() {
       formatWorkoutDate(workout.started_at),
     )
     if (!draft) {
-      setError('That session has no working sets to build a routine from.')
+      setError(t('history.no_routine_sets'))
       return
     }
     setBusy(true)
     try {
       const { data: user } = await supabase.auth.getUser()
       const userId = user.user?.id
-      if (!userId) throw new Error('Sign in to save a routine.')
+      if (!userId) throw new Error(t('history.signin_required'))
       await saveRoutine(userId, draft)
       setSavedRoutine(draft.name)
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Could not save that routine.')
+      setError(e instanceof Error ? e.message : t('history.routine_save_error'))
     }
     setBusy(false)
   }
@@ -282,7 +290,7 @@ export function HistoryScreen() {
       .eq('id', set.id)
     setBusy(false)
     if (deleteError) {
-      setError(describeError('Deleting the set', deleteError))
+      setError(describeError(t('history.error.delete_set'), deleteError))
       return
     }
     setSetsByWorkout((prev) => ({
@@ -356,7 +364,7 @@ export function HistoryScreen() {
       .order('set_number')
 
     if (setsError) {
-      setError(describeError('Loading the sets for that workout', setsError))
+      setError(describeError(t('history.error.load_sets'), setsError))
       return
     }
     setSetsByWorkout((prev) => ({
@@ -365,7 +373,7 @@ export function HistoryScreen() {
     }))
   }
 
-  if (loading) return <p className="py-10 text-sm text-muted">Loading…</p>
+  if (loading) return <p className="py-10 text-sm text-muted">{t('chrome.loading')}</p>
 
   return (
     <div className="flex flex-col gap-3 py-3">
@@ -382,9 +390,7 @@ export function HistoryScreen() {
       <TrainingCalendar sessions={sessions} unit={unit} />
 
       {workouts.length === 0 ? (
-        <p className="py-6 text-sm text-muted">
-          No workouts yet. Log one on the Log tab and it will show up here.
-        </p>
+        <p className="py-6 text-sm text-muted">{t('history.empty')}</p>
       ) : (
         <ul>
           {workouts.map((workout, i) => {
@@ -409,14 +415,20 @@ export function HistoryScreen() {
                     </span>
                     <span className="mt-1 flex items-center gap-2">
                       <span className="min-w-0 flex-1 truncate text-base font-medium">
-                        {workout.name?.trim() || 'Workout'}
+                        {workout.name?.trim() || t('history.workout_fallback')}
                       </span>
                       {totals[workout.id]?.recordCount ? (
                         <span
                           className="tag-pr h-[22px] shrink-0"
-                          title={`${totals[workout.id].recordCount} personal record${
-                            totals[workout.id].recordCount === 1 ? '' : 's'
-                          }`}
+                          title={
+                            totals[workout.id].recordCount === 1
+                              ? t('history.pr_title', {
+                                  count: String(totals[workout.id].recordCount),
+                                })
+                              : t('history.pr_title_plural', {
+                                  count: String(totals[workout.id].recordCount),
+                                })
+                          }
                         >
                           {totals[workout.id].recordCount === 1
                             ? 'PR'
@@ -435,7 +447,9 @@ export function HistoryScreen() {
                           {formatVolumeWithUnit(totals[workout.id].volumeKg, unit)}
                           {' · '}
                           {formatCount(totals[workout.id].setCount)}{' '}
-                          {totals[workout.id].setCount === 1 ? 'set' : 'sets'}
+                          {totals[workout.id].setCount === 1
+                            ? t('history.set')
+                            : t('history.sets')}
                         </>
                       )}
                     </span>
@@ -461,11 +475,9 @@ export function HistoryScreen() {
                     )}
 
                     {!sets ? (
-                      <p className="text-sm text-muted">Loading sets…</p>
+                      <p className="text-sm text-muted">{t('history.loading_sets')}</p>
                     ) : sets.length === 0 ? (
-                      <p className="text-sm text-muted">
-                        This workout has no sets recorded.
-                      </p>
+                      <p className="text-sm text-muted">{t('history.no_sets')}</p>
                     ) : (
                       <ExerciseBreakdown
                         sets={sets}
@@ -479,6 +491,7 @@ export function HistoryScreen() {
                             : undefined
                         }
                         busy={busy}
+                        t={t}
                       />
                     )}
 
@@ -515,15 +528,15 @@ export function HistoryScreen() {
                           disabled={busy}
                           className="btn-base btn-secondary h-11 px-4 text-sm"
                         >
-                          Add exercise
+                          {t('history.add_exercise')}
                         </button>
                         <button
                           type="button"
-                          onClick={() => void saveAsRoutine(workout)}
+                          onClick={() => void saveAsRoutine(workout, t)}
                           disabled={busy}
                           className="btn-base btn-secondary h-11 px-4 text-sm"
                         >
-                          Save as routine
+                          {t('history.save_routine')}
                         </button>
                         <button
                           type="button"
@@ -542,15 +555,15 @@ export function HistoryScreen() {
                           }`}
                         >
                           {confirmDeleteWorkout === workout.id
-                            ? 'Delete workout?'
-                            : 'Delete workout'}
+                            ? t('history.delete_workout.confirm')
+                            : t('history.delete_workout')}
                         </button>
                       </div>
                     )}
 
                     {savedRoutine && correcting === workout.id && (
                       <p role="status" className="mt-2 text-[13px] text-accent">
-                        Saved “{savedRoutine}” to your routines. It is not started.
+                        {t('history.routine_saved', { name: savedRoutine })}
                       </p>
                     )}
 
@@ -572,7 +585,9 @@ export function HistoryScreen() {
                       }}
                       className="btn-base btn-secondary mt-3 h-11 px-4 text-sm"
                     >
-                      {correcting === workout.id ? 'Done editing' : 'Edit workout'}
+                      {correcting === workout.id
+                        ? t('history.edit_done')
+                        : t('history.edit')}
                     </button>
                   </div>
                 )}
@@ -589,7 +604,7 @@ export function HistoryScreen() {
           disabled={loadingMore}
           className="btn-base btn-secondary mt-2 h-[46px] w-full text-sm disabled:opacity-45"
         >
-          {loadingMore ? 'Loading…' : 'Load older workouts'}
+          {loadingMore ? t('chrome.loading') : t('history.load_more')}
         </button>
       )}
 
@@ -617,7 +632,7 @@ export function HistoryScreen() {
 
       {editing && (
         <EditSetDialog
-          exerciseName={editing.exercises?.name ?? 'Exercise'}
+          exerciseName={editing.exercises?.name ?? t('history.exercise_fallback')}
           weightKg={editing.weight_kg}
           reps={editing.reps}
           unit={unit}
@@ -640,6 +655,7 @@ function ExerciseBreakdown({
   onDeleteSet,
   onAddSet,
   busy,
+  t,
 }: {
   sets: SetWithExercise[]
   unit: 'lbs' | 'kg'
@@ -650,6 +666,7 @@ function ExerciseBreakdown({
   /** Absent outside edit mode, which is what hides the control. */
   onAddSet?: (exerciseId: string) => void
   busy?: boolean
+  t: TFunction
 }) {
   /*
    * Grouped by exercise_id, not by name.
@@ -675,7 +692,7 @@ function ExerciseBreakdown({
       {order.map((exerciseId) => {
         const rows = grouped.get(exerciseId)!
         const exercise = rows.find((s) => s.exercises)?.exercises ?? null
-        const name = exercise?.name ?? 'Exercise'
+        const name = exercise?.name ?? t('history.exercise_fallback')
         return (
           <div key={exerciseId} className="flex gap-3">
             {exercise && <ExerciseThumb exercise={thumbExercise(exercise)} size={48} />}
@@ -692,13 +709,13 @@ function ExerciseBreakdown({
                     <span className="w-4 shrink-0 text-[11px] text-muted">
                       {index + 1}
                     </span>
-                    <span className="flex-1">{describeSet(set, unit)}</span>
+                    <span className="flex-1">{describeSet(set, unit, t)}</span>
                     {/* No flash in History — the record already happened. The
                         persistent tint is the whole point of storing it. */}
                     {isRecord(set) && (
                       <span
                         className="tag-pr h-[20px] shrink-0"
-                        title="Personal record"
+                        title={t('history.personal_record')}
                       >
                         PR
                       </span>
@@ -713,15 +730,21 @@ function ExerciseBreakdown({
                         <button
                           type="button"
                           onClick={() => onEditSet(set)}
-                          aria-label={`Edit set ${index + 1} of ${name}`}
+                          aria-label={t('history.edit_set.aria', {
+                            number: String(index + 1),
+                            name,
+                          })}
                           className="btn-base btn-quiet h-11 w-11 text-xs"
                         >
-                          Edit
+                          {t('history.edit_button')}
                         </button>
                         <button
                           type="button"
                           onClick={() => onDeleteSet(set)}
-                          aria-label={`Delete set ${index + 1} of ${name}`}
+                          aria-label={t('history.delete_set.aria', {
+                            number: String(index + 1),
+                            name,
+                          })}
                           className="btn-base btn-quiet h-11 w-9 text-xs"
                         >
                           ×
@@ -741,7 +764,7 @@ function ExerciseBreakdown({
                   disabled={busy}
                   className="btn-base btn-quiet mt-1 h-11 px-3 text-xs"
                 >
-                  Add set
+                  {t('history.add_set')}
                 </button>
               )}
             </div>
@@ -752,10 +775,10 @@ function ExerciseBreakdown({
   )
 }
 
-function describeSet(set: SetWithExercise, unit: 'lbs' | 'kg'): string {
+function describeSet(set: SetWithExercise, unit: 'lbs' | 'kg', t: TFunction): string {
   const parts: string[] = []
   if (set.weight_kg !== null) parts.push(`${formatWeight(set.weight_kg, unit)} ${unit}`)
-  if (set.reps !== null) parts.push(`${set.reps} reps`)
+  if (set.reps !== null) parts.push(`${set.reps} ${t('history.reps')}`)
   if (set.duration_seconds !== null) parts.push(formatSeconds(set.duration_seconds))
   if (set.distance_meters !== null) parts.push(`${set.distance_meters} m`)
   if (set.rpe !== null) parts.push(`RPE ${set.rpe}`)
