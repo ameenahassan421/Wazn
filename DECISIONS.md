@@ -4800,3 +4800,84 @@ Two changes, both server-side, deployed by merge (deploy-functions.yml):
 Not done, deliberately: a split-picker in the Routine Builder UI. The prompt
 now infers a sensible split from days and goal; a picker is a fast follow if
 Ameen wants explicit control after trying this.
+
+## 2026-08-12: R2 shrank on contact with the code, and that is the point of rule 6
+
+The plan wrote R2 as "rest becomes the prototype's inline chip". The code
+already had something better. RestTimerBar has been inline since it was
+built: it never covers the inputs, auto-starts on commit, counts from a
+stored deadline so screen lock cannot drift it, drains with a composited
+transform for budget Androids, and carries the done-state ring and the
+keep-as-default row. The prototype's chip was the cure for the prototype's
+own full-screen rest, a disease the app never had. Porting it would have
+traded working mechanics for a cosmetic match, so the bar stays and the
+plan's language loses.
+
+What R2 actually was: the numerals voice. R1 wired Sora through the size
+tokens, but 17 figures that predate the tokens sit in raw pixel sizes and
+never picked it up: the weight and reps inputs (30px), the ghost rows on
+the board (15px), the rest countdown (23px), the edit dialog, the finish
+and progress records, the load helper. All now carry font-display. Mono
+figures were left alone on purpose; Plex Mono is the meta voice, and a
+timestamp is not a lift.
+
+## 2026-08-12: R3 became the Arabic pass, and the harness learned to see it
+
+R3's planned re-dress of Home, History and Progress was already done by
+R1's tokens. What the phase actually produced is the thing §7.0 demanded
+after the mirrored-ghost defect: the screenshot harness now runs an Arabic
+sweep (five tabs plus the live board, located by their Arabic accessible
+names), so this class of defect is photographed on every future phase, not
+only when someone remembers.
+
+The sweep caught, and this phase fixed: "Superset · round N of M" and
+"+ Add set" hardcoded in English on the Arabic board; an untranslated
+row aria-label; the workout meta line and the N / M set counter scrambling
+under bidi (isolated now); the coach data chip rendering RTL; the English
+day words ("today", "3 days ago") in every corner of the app, fixed at the
+source by making formatRelativeDay locale-aware over a new when.* key
+family; and the eleven muscle-group names rendering in English on the
+Progress bands and focus line, fixed with a muscle.* key family and a
+muscleLabel helper that falls back to the raw value for anything custom.
+
+Known and deliberate: AI-generated coach content (brief, notes) is model
+output, not catalogue strings; its language is a prompt question for the
+coach functions, not an i18n question, and is out of this stage's scope.
+
+## 2026-08-12: Ameen reversed two of my calls, and the record should say so plainly
+
+1. **Dark-first is dead. Paper is the default.** My delegated decision kept
+   the app dark with the prototype's accent and type; Ameen looked at it and
+   said it is not what we agreed on. He is right about what the agreement
+   was FOR: the prototype IS the design, and the prototype is paper. Dark
+   becomes the toggle, still fully built, still recommended in dim gyms.
+2. **Experience parity, not token parity.** My R2 entry kept the incumbent
+   rest bar and called the prototype's chip a cosmetic trade-down. Ameen's
+   correction: the functions, toggles and flow of the prototype are the
+   spec, not just its palette. The resolution keeps what rule 6 protected
+   (deadline-based timing, composited drain, the write path, the canvas
+   rules) UNDER the prototype's presentation (chip above the commit
+   cluster, tap-to-expand rest view, plate card, warm-up surfacing, coach
+   line in flow). R5 and R6 in docs/REBUILD_PLAN.md carry the itemized
+   scope.
+
+The lesson for the log: a delegated decision is still the owner's decision.
+When the owner sees it and disagrees, the artifact was doing its job.
+
+## 2026-08-12: R4 shipped paper-first. Choices inside the phase.
+
+1. **The ramps are role-mirrored, not value-copied.** In both themes,
+   accent-300 means "small accent text readable on this ground" and 800-900
+   mean "tinted fills". Paper gets the dark embers where dark got the pale
+   ones. Every component keeps its class; the meaning travels with the
+   theme. Same for the neutral ramp and the exercise tiles.
+2. **The share card stays dark.** A canvas cannot read CSS custom
+   properties, and a shared card is a brand artifact, not a screen. It
+   renders ink-and-ember in both themes on purpose.
+3. **Migration 0025 (theme column plus upsert allowlist) is written and
+   executes from empty, but is NOT applied to production.** The client is
+   localStorage-first like locale, so nothing depends on the column
+   existing. Applying it is a production DDL action and waits for Ameen or
+   an explicit go, per the standing rule.
+4. Two hardcoded dark hairlines (TabBar, the overview footer) moved to the
+   divider token; the header band's gradient got a per-theme tint token.

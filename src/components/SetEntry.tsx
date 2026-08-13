@@ -92,7 +92,7 @@ export function SetEntry({
   /** Clears this exercise's group for the whole workout. Omit to hide. */
   onUngroup?: () => void
 }) {
-  const { t } = useLocale()
+  const { t, locale } = useLocale()
   const [draft, setDraft] = useState<Draft>({ weight: '', reps: '' })
   const [error, setError] = useState<string | null>(null)
   const [setType, setSetType] = useState<SetType>('normal')
@@ -281,14 +281,18 @@ export function SetEntry({
         ) : previousSession.length > 0 ? (
           <>
             <p className="kicker">
-              Previous · {formatRelativeDay(previousSession[0].started_at)}
+              {t('entry.previous.kicker', {
+                day: formatRelativeDay(previousSession[0].started_at, locale),
+              })}
             </p>
             {/* 20px, not the 24px minimum in the plan's §2.4. This is a
                 multi-set string ("60 kg × 8 · 60 kg × 6 · 55 kg × 6"), not a
                 single figure — at 24px it wraps to three lines and pushes the
                 weight input below the fold. §2.1 (the logging flow is sacred)
                 outranks §2.4, so it stops here. See DECISIONS.md. */}
-            <p className="tnum mt-1 text-[19px] font-medium">{previousSummary}</p>
+            <p className="tnum font-display mt-1 text-[19px] font-medium">
+              {previousSummary}
+            </p>
           </>
         ) : (
           <p className="text-[11px] text-muted">{t('entry.previous.none')}</p>
@@ -389,7 +393,7 @@ export function SetEntry({
               value={draft.weight}
               onChange={(e) => setDraft((d) => ({ ...d, weight: e.target.value }))}
               placeholder="BW"
-              className="tnum h-[62px] w-full flex-1 border border-line bg-surface px-3 text-start text-[30px] font-medium outline-none placeholder:text-muted focus:border-accent"
+              className="tnum font-display h-[62px] w-full flex-1 border border-line bg-surface px-3 text-start text-[30px] font-medium outline-none placeholder:text-muted focus:border-accent"
               style={{ borderRadius: 'var(--radius-md)' }}
             />
             <StepperButton
@@ -419,7 +423,7 @@ export function SetEntry({
               value={draft.reps}
               onChange={(e) => setDraft((d) => ({ ...d, reps: e.target.value }))}
               placeholder="0"
-              className="tnum h-[62px] w-full flex-1 border border-line bg-surface px-3 text-start text-[30px] font-medium outline-none placeholder:text-muted focus:border-accent"
+              className="tnum font-display h-[62px] w-full flex-1 border border-line bg-surface px-3 text-start text-[30px] font-medium outline-none placeholder:text-muted focus:border-accent"
               style={{ borderRadius: 'var(--radius-md)' }}
             />
             <StepperButton

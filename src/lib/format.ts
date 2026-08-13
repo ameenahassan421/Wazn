@@ -1,3 +1,4 @@
+import { t, type Locale } from './i18n'
 import { toDisplayWeight } from './units'
 import type { Unit } from './units'
 
@@ -91,18 +92,18 @@ export function formatMonthLabel(date: Date): string {
 }
 
 /** "3 days ago" / "today" — the only context needed above a set input. */
-export function formatRelativeDay(iso: string): string {
+export function formatRelativeDay(iso: string, locale: Locale = 'en'): string {
   const then = parse(iso)
   if (!then) return NO_VALUE
   const startOfDay = (d: Date) =>
     new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime()
   const days = Math.round((startOfDay(new Date()) - startOfDay(then)) / 86_400_000)
-  if (days <= 0) return 'today'
-  if (days === 1) return 'yesterday'
-  if (days < 7) return `${days} days ago`
-  if (days < 14) return 'last week'
-  if (days < 60) return `${Math.round(days / 7)} weeks ago`
-  return `${Math.round(days / 30)} months ago`
+  if (days <= 0) return t(locale, 'when.today')
+  if (days === 1) return t(locale, 'when.yesterday')
+  if (days < 7) return t(locale, 'when.days_ago', { n: String(days) })
+  if (days < 14) return t(locale, 'when.last_week')
+  if (days < 60) return t(locale, 'when.weeks_ago', { n: String(Math.round(days / 7)) })
+  return t(locale, 'when.months_ago', { n: String(Math.round(days / 30)) })
 }
 
 export function formatDuration(startIso: string, endIso: string | null): string {

@@ -38,6 +38,10 @@ import {
 
 const WIDTHS = [390, 430]
 const TABS = ['Log', 'History', 'Progress', 'Coach', 'Friends']
+// The Arabic pass: same five tabs by their AR accessible names, because the
+// class of defect this exists to catch (the mirrored ghost rows of 2026-08-09)
+// is invisible in the EN run and to every other check in the wall.
+const TABS_AR = ['التمارين', 'السجل', 'التقدم', 'المدرب', 'الأصدقاء']
 const OUT = 'shots'
 
 function build() {
@@ -53,7 +57,7 @@ function build() {
   if (out.status !== 0) process.exit(out.status ?? 1)
 }
 
-async function shoot(browser, origin, { width, empty, active }) {
+async function shoot(browser, origin, { width, empty, active, locale, theme }) {
   const context = await browser.newContext({
     viewport: { width, height: 844 },
     deviceScaleFactor: 2,
@@ -61,6 +65,19 @@ async function shoot(browser, origin, { width, empty, active }) {
     hasTouch: true,
   })
   await seedSession(context)
+  if (locale === 'ar') {
+    // Same key locale-context.tsx reads; set before any script runs so the
+    // first paint is already RTL rather than a flip mid-shot.
+    await context.addInitScript(() => {
+      window.localStorage.setItem('workout.locale', 'ar')
+    })
+  }
+  if (theme === 'dark') {
+    await context.addInitScript(() => {
+      window.localStorage.setItem('workout.theme', 'dark')
+    })
+  }
+  const pfx = (theme === 'dark' ? 'dark-' : '') + (locale === 'ar' ? 'ar-' : '')
   const page = await context.newPage()
   const crashes = []
   page.on('pageerror', (error) => crashes.push(error.message))
@@ -76,7 +93,7 @@ async function shoot(browser, origin, { width, empty, active }) {
   // the other four are unchanged by an open workout.
   if (active) {
     await page.screenshot({
-      path: `${OUT}/active-${width}-overview.png`,
+      path: `${OUT}/${pfx}active-${width}-overview.png`,
       fullPage: false,
     })
     // Down the board, because the states that are easiest to get wrong live
@@ -85,19 +102,20 @@ async function shoot(browser, origin, { width, empty, active }) {
     await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight))
     await page.waitForTimeout(400)
     await page.screenshot({
-      path: `${OUT}/active-${width}-overview-end.png`,
+      path: `${OUT}/${pfx}active-${width}-overview-end.png`,
       fullPage: false,
     })
     // Commit a ghost for real, against the real build. This is the single most
     // valuable frame in the run: it proves the check writes a set, that the row
     // changes state, and — the part no unit test can see — that the rest timer
     // the commit starts sits above the tab bar without covering a row.
-    const checks = page.getByRole('button', { name: /^Log .+ set \d/ })
+    const logRe = locale === 'ar' ? /^سجّل .+ المجموعة/ : /^Log .+ set \d/
+    const checks = page.getByRole('button', { name: logRe })
     if (await checks.count()) {
       await checks.last().click()
       await page.waitForTimeout(700)
       await page.screenshot({
-        path: `${OUT}/active-${width}-committed.png`,
+        path: `${OUT}/${pfx}active-${width}-committed.png`,
         fullPage: false,
       })
 
@@ -114,13 +132,13 @@ async function shoot(browser, origin, { width, empty, active }) {
        */
       await page.waitForTimeout(2800)
       await page.screenshot({
-        path: `${OUT}/active-${width}-restcanvas.png`,
+        path: `${OUT}/${pfx}active-${width}-restcanvas.png`,
         fullPage: false,
       })
       await page.evaluate(() => window.scrollBy(0, 24))
       await page.waitForTimeout(200)
       await page.screenshot({
-        path: `${OUT}/active-${width}-restcanvas-gone.png`,
+        path: `${OUT}/${pfx}active-${width}-restcanvas-gone.png`,
         fullPage: false,
       })
     }
@@ -141,7 +159,7 @@ async function shoot(browser, origin, { width, empty, active }) {
     // A committed set with nowhere to go. The check writes the row on screen
     // and the queue holds it, which is the frame that proves rung 2 looks
     // like nothing at all — no spinner, no banner, just the set.
-    const offlineChecks = page.getByRole('button', { name: /^Log .+ set \d/ })
+    const offlineChecks = page.getByRole('button', { name: logRe })
     if (await offlineChecks.count()) {
       await offlineChecks.first().click()
       await page.waitForTimeout(600)
@@ -152,7 +170,7 @@ async function shoot(browser, origin, { width, empty, active }) {
     await page.evaluate(() => window.scrollTo(0, 0))
     await page.waitForTimeout(300)
     await page.screenshot({
-      path: `${OUT}/active-${width}-offline.png`,
+      path: `${OUT}/${pfx}active-${width}-offline.png`,
       fullPage: false,
     })
     // And the reopen: same phone, same basement, page reloaded. Everything on
@@ -160,7 +178,7 @@ async function shoot(browser, origin, { width, empty, active }) {
     await page.reload({ waitUntil: 'domcontentloaded' })
     await page.waitForTimeout(8000)
     await page.screenshot({
-      path: `${OUT}/active-${width}-offline-reopen.png`,
+      path: `${OUT}/${pfx}active-${width}-offline-reopen.png`,
       fullPage: false,
     })
     network.offline = false
@@ -172,7 +190,7 @@ async function shoot(browser, origin, { width, empty, active }) {
       await menu.first().click()
       await page.waitForTimeout(300)
       await page.screenshot({
-        path: `${OUT}/active-${width}-blockmenu.png`,
+        path: `${OUT}/${pfx}active-${width}-blockmenu.png`,
         fullPage: false,
       })
       await menu.first().click()
@@ -191,7 +209,7 @@ async function shoot(browser, origin, { width, empty, active }) {
       await bring.first().click()
       await page.waitForTimeout(900)
       await page.screenshot({
-        path: `${OUT}/empty-${width}-import.png`,
+        path: `${OUT}/${pfx}empty-${width}-import.png`,
         fullPage: false,
       })
       await page.reload({ waitUntil: 'networkidle' })
@@ -200,7 +218,8 @@ async function shoot(browser, origin, { width, empty, active }) {
   }
 
   const state = empty ? 'empty' : 'full'
-  for (const tab of TABS) {
+  const tabs = locale === 'ar' ? TABS_AR : TABS
+  for (const [i, tab] of tabs.entries()) {
     const button = page.getByRole('button', { name: tab, exact: true })
     if (await button.count()) {
       await button.first().click()
@@ -208,7 +227,7 @@ async function shoot(browser, origin, { width, empty, active }) {
       await page.waitForTimeout(1400)
     }
     await page.screenshot({
-      path: `${OUT}/${state}-${width}-${tab.toLowerCase()}.png`,
+      path: `${OUT}/${pfx}${state}-${width}-${TABS[i].toLowerCase()}.png`,
       // Viewport, not fullPage — see the header comment. This is the rule.
       fullPage: false,
     })
@@ -242,7 +261,7 @@ async function shoot(browser, origin, { width, empty, active }) {
           await edit.first().click()
           await page.waitForTimeout(600)
           await page.screenshot({
-            path: `${OUT}/${state}-${width}-history-editing.png`,
+            path: `${OUT}/${pfx}${state}-${width}-history-editing.png`,
             fullPage: false,
           })
           /*
@@ -256,7 +275,7 @@ async function shoot(browser, origin, { width, empty, active }) {
           if (await actions.count()) await actions.first().scrollIntoViewIfNeeded()
           await page.waitForTimeout(400)
           await page.screenshot({
-            path: `${OUT}/${state}-${width}-history-editing-actions.png`,
+            path: `${OUT}/${pfx}${state}-${width}-history-editing-actions.png`,
             fullPage: false,
           })
         }
@@ -281,7 +300,7 @@ async function shoot(browser, origin, { width, empty, active }) {
           if (await save.count()) await save.first().scrollIntoViewIfNeeded()
           await page.waitForTimeout(300)
           await page.screenshot({
-            path: `${OUT}/${state}-${width}-custom-exercise.png`,
+            path: `${OUT}/${pfx}${state}-${width}-custom-exercise.png`,
             fullPage: false,
           })
         }
@@ -296,13 +315,13 @@ async function shoot(browser, origin, { width, empty, active }) {
         await lift.first().click()
         await page.waitForTimeout(1200)
         await page.screenshot({
-          path: `${OUT}/${state}-${width}-exercise.png`,
+          path: `${OUT}/${pfx}${state}-${width}-exercise.png`,
           fullPage: false,
         })
         await page.mouse.wheel(0, 520)
         await page.waitForTimeout(400)
         await page.screenshot({
-          path: `${OUT}/${state}-${width}-exercise-scrolled.png`,
+          path: `${OUT}/${pfx}${state}-${width}-exercise-scrolled.png`,
           fullPage: false,
         })
       }
@@ -333,6 +352,40 @@ async function main() {
         ...(await shoot(browser, server.origin, { width, empty: false, active: true })),
       )
     }
+    // The Arabic pass, one width: the five tabs and the live board. 390 only,
+    // because an RTL defect does not depend on ten more pixels of column.
+    crashes.push(
+      ...(await shoot(browser, server.origin, {
+        width: 390,
+        empty: false,
+        locale: 'ar',
+      })),
+    )
+    crashes.push(
+      ...(await shoot(browser, server.origin, {
+        width: 390,
+        empty: false,
+        active: true,
+        locale: 'ar',
+      })),
+    )
+    // The dark theme, one width: paper is the default now, so dark is the
+    // pass that would otherwise ship unseen.
+    crashes.push(
+      ...(await shoot(browser, server.origin, {
+        width: 390,
+        empty: false,
+        theme: 'dark',
+      })),
+    )
+    crashes.push(
+      ...(await shoot(browser, server.origin, {
+        width: 390,
+        empty: false,
+        active: true,
+        theme: 'dark',
+      })),
+    )
   } finally {
     await browser.close()
     await server.close()

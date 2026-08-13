@@ -36,7 +36,7 @@ export function TabBar({
   return (
     <nav
       className="fixed bottom-0 z-20 w-full bg-ink"
-      style={{ borderTop: '1px solid rgba(236,235,232,0.09)' }}
+      style={{ borderTop: '1px solid var(--divider-solid)' }}
     >
       <div
         className="mx-auto flex w-full max-w-[430px]"

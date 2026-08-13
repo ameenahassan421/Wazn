@@ -212,7 +212,7 @@ function Feed({
   onError: (message: string | null) => void
   onInvite: () => void
 }) {
-  const { t } = useLocale()
+  const { t, locale } = useLocale()
   // Likes are optimistic. The write is small, the failure is recoverable, and
   // a like that waits for a round trip feels broken on gym wifi.
   const [likes, setLikes] = useState<Record<string, { liked: boolean; count: number }>>(
@@ -281,7 +281,7 @@ function Feed({
                   {row.name?.trim() ? ` · ${row.name.trim()}` : ''}
                 </p>
                 <p className="text-[11px] text-muted">
-                  {formatRelativeDay(row.started_at)}
+                  {formatRelativeDay(row.started_at, locale)}
                 </p>
               </div>
               {/* Only when a record actually fell. A badge that is always
@@ -333,7 +333,7 @@ function Feed({
                 like.liked ? t('friends.feed.unlike') : t('friends.feed.like')
               }
               className={`mt-1 flex h-12 items-center gap-2 ${
-                like.liked ? 'text-accent' : 'text-muted'
+                like.liked ? 'text-accent-300' : 'text-muted'
               }`}
             >
               <IconHeart size={20} filled={like.liked} />
@@ -351,7 +351,7 @@ function Feed({
 function FeedStat({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex min-w-0 flex-1 flex-col items-center gap-0.5 px-1">
-      <span className="tnum truncate text-[17px] font-medium leading-none">
+      <span className="tnum font-display truncate text-[17px] font-medium leading-none">
         {value}
       </span>
       <span className="text-[11px] text-muted">{label}</span>
@@ -387,7 +387,7 @@ function Leaderboard({ rows, unit }: { rows: LeaderRow[]; unit: 'lbs' | 'kg' }) 
                 >
                   <span
                     className={`tnum w-4 shrink-0 font-mono text-xs ${
-                      row.is_me ? 'text-accent' : 'text-muted'
+                      row.is_me ? 'text-accent-300' : 'text-muted'
                     }`}
                   >
                     {i + 1}
@@ -395,7 +395,7 @@ function Leaderboard({ rows, unit }: { rows: LeaderRow[]; unit: 'lbs' | 'kg' }) 
                   <span className="min-w-0 flex-1 truncate text-sm font-medium">
                     {row.is_me ? t('friends.leaderboard.you') : nameOf(row)}
                   </span>
-                  <span className="tnum shrink-0 text-[15px] font-medium">
+                  <span className="tnum font-display shrink-0 text-[15px] font-medium">
                     {formatVolume(row.volume_kg, unit)}
                   </span>
                   <span className="tnum w-16 shrink-0 text-end text-[11px] text-muted">

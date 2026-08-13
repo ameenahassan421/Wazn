@@ -3,6 +3,7 @@ import { useUnit } from '../lib/unit-context'
 import { useLocale } from '../lib/locale-context'
 import { supabase } from '../lib/supabase'
 import { useBackLayer } from '../lib/use-back'
+import { useTheme } from '../lib/theme-context'
 import { useActiveWorkout } from '../lib/active-workout'
 import { Wordmark } from './Wordmark'
 import { IconMore } from './icons'
@@ -25,6 +26,7 @@ import { IconMore } from './icons'
 export function Header({ titleKey }: { titleKey?: string | null }) {
   const { unit, toggleUnit } = useUnit()
   const { locale, setLocale, t } = useLocale()
+  const { theme, setTheme } = useTheme()
   const [menuOpen, setMenuOpen] = useState(false)
   const [confirmDiscard, setConfirmDiscard] = useState(false)
   const active = useActiveWorkout()
@@ -120,6 +122,17 @@ export function Header({ titleKey }: { titleKey?: string | null }) {
                         : t('header.menu.discard')}
                     </button>
                   )}
+                  <button
+                    type="button"
+                    role="menuitem"
+                    onClick={() => {
+                      setMenuOpen(false)
+                      setTheme(theme === 'paper' ? 'dark' : 'paper')
+                    }}
+                    className="flex h-12 w-full items-center px-4 text-start text-sm"
+                  >
+                    {theme === 'paper' ? t('theme.to_dark') : t('theme.to_paper')}
+                  </button>
                   <button
                     type="button"
                     role="menuitem"

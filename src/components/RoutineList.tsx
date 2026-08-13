@@ -92,7 +92,7 @@ export function RoutineList({
                     onClick={() => onStart(routine)}
                     disabled={busyId !== null}
                     className={`flex h-14 flex-1 items-center gap-2 overflow-hidden text-start text-[15px] font-medium ${
-                      busy ? 'text-accent' : ''
+                      busy ? 'text-accent-300' : ''
                     }`}
                   >
                     <span className="truncate">

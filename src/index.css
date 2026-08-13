@@ -69,42 +69,42 @@
    everywhere; ember is not, and a 500-on-ink body-copy use is a defect.
    ───────────────────────────────────────────────────────────────────── */
 @theme {
-  --color-ink: #0c0b0a;
-  --color-surface: #161513;
-  --color-raised: #1f1d1a;
-  --color-line: #2a2825;
-  --color-text: #ecebe8;
-  --color-muted: #8d8983;
+  --color-ink: #f7f3ec;
+  --color-surface: #ffffff;
+  --color-raised: #efe9dd;
+  --color-line: #e6e0d4;
+  --color-text: #16130e;
+  --color-muted: #6b6559;
   --color-accent: #e8491d;
   --color-accent-ink: #1c0e08;
 
-  --color-accent-100: #fdece5;
-  --color-accent-200: #f9cfc0;
-  --color-accent-300: #f4a68c;
-  --color-accent-400: #ee7a51;
+  --color-accent-100: #401407;
+  --color-accent-200: #6b210c;
+  --color-accent-300: #9a3012;
+  --color-accent-400: #c33d17;
   --color-accent-500: #e8491d;
-  --color-accent-600: #c33d17;
-  --color-accent-700: #9a3012;
-  --color-accent-800: #6b210c;
-  --color-accent-900: #401407;
+  --color-accent-600: #ee7a51;
+  --color-accent-700: #f4a68c;
+  --color-accent-800: #f9cfc0;
+  --color-accent-900: #fdece5;
 
-  --color-neutral-100: #f4f3f0;
-  --color-neutral-200: #e5e3de;
-  --color-neutral-300: #cfccc5;
-  --color-neutral-400: #b2aea6;
+  --color-neutral-100: #292724;
+  --color-neutral-200: #3f3d38;
+  --color-neutral-300: #595650;
+  --color-neutral-400: #75716a;
   --color-neutral-500: #938f88;
-  --color-neutral-600: #75716a;
-  --color-neutral-700: #595650;
-  --color-neutral-800: #3f3d38;
-  --color-neutral-900: #292724;
+  --color-neutral-600: #b2aea6;
+  --color-neutral-700: #cfccc5;
+  --color-neutral-800: #e5e3de;
+  --color-neutral-900: #f4f3f0;
 
   /* Neutral steps for exercise tiles. No hue, so the single ember accent
      stays the only colour in the app. Four steps are enough to tell
      adjacent rows apart at a glance. */
-  --color-tile-1: #171614;
-  --color-tile-2: #1d1c19;
-  --color-tile-3: #23221e;
-  --color-tile-4: #2a2824;
+  --color-tile-1: #efe9df;
+  --color-tile-2: #eae3d6;
+  --color-tile-3: #e4ddcf;
+  --color-tile-4: #ded6c7;
 
   --font-sans:
     'Hanken Grotesk', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto,
@@ -164,14 +164,15 @@
   --radius-md: 8px;
   --radius-lg: 14px;
 
-  --divider: rgba(236, 235, 232, 0.14);
-  --divider-solid: rgba(236, 235, 232, 0.08);
+  --divider: rgba(22, 19, 14, 0.14);
+  --header-tint: #efe9df;
+  --divider-solid: rgba(22, 19, 14, 0.08);
 
   /* Elevation, v2: the hairline ring plus a 1px inset light along the top
      edge. It reads as a milled surface catching the room light rather than
      as an object floating over the page, which is what a drop shadow says
      and what §2.4 forbids. */
-  --top-light: inset 0 1px 0 rgba(236, 235, 232, 0.045);
+  --top-light: inset 0 1px 0 rgba(255, 255, 255, 0.6);
   --ring-hairline: 0 0 0 1px var(--color-line), var(--top-light);
 
   /* Motion, U7. Four durations and two easings — the whole vocabulary.
@@ -189,8 +190,53 @@
   --motion-linear: linear;
 }
 
-html {
+/* ─── The dark theme ──────────────────────────────────────────────────────
+   Paper is the default (Ameen, 2026-08-12: the prototype IS the design).
+   Dark is the same system with the values the app shipped with: warm
+   near-black ground, and the accent ramp mirrored so each step keeps its
+   ROLE rather than its lightness — 300 is always "small accent text
+   readable on this ground", 800-900 always "tinted fills". */
+html[data-theme='dark'] {
   color-scheme: dark;
+
+  --color-ink: #0c0b0a;
+  --color-surface: #161513;
+  --color-raised: #1f1d1a;
+  --color-line: #2a2825;
+  --color-text: #ecebe8;
+  --color-muted: #8d8983;
+
+  --color-accent-100: #fdece5;
+  --color-accent-200: #f9cfc0;
+  --color-accent-300: #f4a68c;
+  --color-accent-400: #ee7a51;
+  --color-accent-600: #c33d17;
+  --color-accent-700: #9a3012;
+  --color-accent-800: #6b210c;
+  --color-accent-900: #401407;
+
+  --color-neutral-100: #f4f3f0;
+  --color-neutral-200: #e5e3de;
+  --color-neutral-300: #cfccc5;
+  --color-neutral-400: #b2aea6;
+  --color-neutral-600: #75716a;
+  --color-neutral-700: #595650;
+  --color-neutral-800: #3f3d38;
+  --color-neutral-900: #292724;
+
+  --color-tile-1: #171614;
+  --color-tile-2: #1d1c19;
+  --color-tile-3: #23221e;
+  --color-tile-4: #2a2824;
+
+  --divider: rgba(236, 235, 232, 0.14);
+  --divider-solid: rgba(236, 235, 232, 0.08);
+  --top-light: inset 0 1px 0 rgba(236, 235, 232, 0.045);
+  --header-tint: #131210;
+}
+
+html {
+  color-scheme: light;
   background-color: var(--color-ink);
   -webkit-text-size-adjust: 100%;
 }
@@ -510,7 +556,7 @@ button {
    separates chrome from content without a border, which would otherwise cut
    a hard line across the screen directly above the hot path. */
 @utility header-band {
-  background: linear-gradient(180deg, #131210, var(--color-ink));
+  background: linear-gradient(180deg, var(--header-tint), var(--color-ink));
 }
 
 /* ─── Motion ───────────────────────────────────────────────────────────────

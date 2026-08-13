@@ -48,10 +48,27 @@ session delta, ramp suggestion, PR proximity. Strings live in the i18n
 catalogue, EN and AR. No model calls anywhere. Gate: screenshots EN/AR, wall
 green.
 
-**R4: The paper theme.**
-The prototype's light world as a selectable theme (user_preferences already
-stores locale and unit; theme joins them). Dark stays default. Gate:
-both themes pass the same screenshot pass; contrast holds AA in both.
+**R4: The paper theme, as the DEFAULT (Ameen, 2026-08-12).**
+Ameen reversed the dark-first call when he saw it: the app opens in the
+paper world he designed, and dark becomes the toggle (user_preferences
+already stores locale and unit; theme joins them, localStorage-first like
+locale so the migration can land later). Gate: both themes pass the same
+screenshot pass; contrast holds AA in both; the accent-step rule flips with
+the theme (dark ember for small text on paper).
+
+**R5: Workout experience parity with the prototype (Ameen, 2026-08-12).**
+"Not only the colors. The functions, the toggles, functionality." The
+prototype's presentation becomes the spec, with the app's mechanics kept
+underneath: rest presented as the chip above the commit cluster with a
+tap-to-expand full rest view (the deadline engine and canvas rules stay);
+the plate math card and warm-up ramp surfaced the way the prototype does
+it; the coach line in the logging flow; steppers flanking the big figures.
+Gate: side-by-side frames against /prototype read as the same product.
+
+**R6: Home and finish ceremony parity.**
+The greeting header, coach card, Up next plan card and single Start CTA on
+the home surface; the "In the books" finish with stat tiles, per-exercise
+PR cards, debrief and share row. Gate: same side-by-side standard.
 
 ## Not doing in this stage
 
@@ -62,6 +79,6 @@ at /prototype stays as-is as the reference artifact.
 ## Status
 
 - R1: built 2026-08-12, PR open. Ember ramp under the old token names with the small-text rule enforced (accent-300 for anything 14px and under), Sora/Hanken/Plex Mono triad wired through the size tokens with zero component changes, logo iron and share card and SEO pages and privacy page recolored, PRODUCT.md and CLAUDE.md updated. Verified: 38-shot EN gallery both widths, AR pre-auth spot check, wall green except the known lazy-screen Node 26 case.
-- R2: next.
-- R3: not started.
-- R4: not started.
+- R2: built 2026-08-12, PR open. Reduced on evidence: the incumbent rest bar already implements the chip pattern's intent with better mechanics than the prototype (deadline-based, composited drain, never blocks the board), so it was kept, not rebuilt; deviation logged in DECISIONS.md. The phase's real content was the numerals voice: 17 arm's-length figures set in raw pixel sizes (set inputs, ghost rows, rest countdown, edit dialog, records) now carry Sora via font-display. Active-flow gallery verified.
+- R3: built 2026-08-12, PR open. The re-dress was already carried by R1/R2 tokens; the phase became the Arabic pass the wall cannot see. The shot harness grew an AR sweep (five tabs plus the live board, by Arabic accessible names), which caught and fixed: two hardcoded English strings on the workout board (superset round, add set), an untranslated aria-label, a scrambled bidi meta line and set counter, the coach data chip rendering RTL, English "today"-class day words everywhere (formatRelativeDay is now locale-aware with a when.* key family), and untranslated muscle-group names on Progress (muscle.* key family plus muscleLabel helper). Coach statistics already shipped as a template surface and stand.
+- R4: next.

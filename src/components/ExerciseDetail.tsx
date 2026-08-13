@@ -102,7 +102,7 @@ export function ExerciseDetail({
   onChanged?: (exercise: Exercise) => void
   onDeleted?: (exerciseId: string) => void
 }) {
-  const { t } = useLocale()
+  const { t, locale } = useLocale()
   /**
    * `t` changes identity with the locale, and the effects below fetch. Adding
    * it to their deps would re-run a network load every time the language is
@@ -545,12 +545,12 @@ export function ExerciseDetail({
           </p>
           {rec?.value && rec.value.total_sets > 0 ? (
             <>
-              <p className="tnum mt-0.5 text-[15px]">
+              <p className="tnum font-display mt-0.5 text-[15px]">
                 {rec.value.total_sets} sets · {rec.value.total_sessions} sessions
               </p>
               {rec.value.first_logged_at && (
                 <p className="tnum text-xs text-muted">
-                  Since {formatRelativeDay(rec.value.first_logged_at)}
+                  Since {formatRelativeDay(rec.value.first_logged_at, locale)}
                 </p>
               )}
             </>
@@ -568,7 +568,7 @@ export function ExerciseDetail({
               className="ring-edge bg-surface px-2.5 py-2.5"
               style={{ borderRadius: 'var(--radius-md)' }}
             >
-              <p className="tnum text-2xl font-medium">{value}</p>
+              <p className="tnum font-display text-2xl font-medium">{value}</p>
               <p className="mt-0.5 text-[10px] text-muted">{label}</p>
             </li>
           ))}
@@ -587,12 +587,12 @@ export function ExerciseDetail({
       {points && progress && progress.sessions > 1 && (
         <section>
           <h3 className="kicker mb-2">{t('detail.e1rm')}</h3>
-          <p className="tnum text-2xl font-medium">
+          <p className="tnum font-display text-2xl font-medium">
             {progress.delta_kg === 0
               ? 'Level'
               : `${progress.delta_kg > 0 ? '+' : '−'}${formatEstimate(Math.abs(progress.delta_kg), unit)} ${unit}`}
             <span className="ms-2 text-xs font-normal text-muted">
-              since {formatRelativeDay(progress.since_at)}
+              since {formatRelativeDay(progress.since_at, locale)}
             </span>
           </p>
           <SeriesChart
@@ -609,7 +609,7 @@ export function ExerciseDetail({
             {progress.sessions} sessions · now{' '}
             {formatEstimate(progress.latest_kg, unit)} {unit}
             {progress.best_kg > progress.latest_kg &&
-              ` · best ${formatEstimate(progress.best_kg, unit)} ${formatRelativeDay(progress.best_at)}`}
+              ` · best ${formatEstimate(progress.best_kg, unit)} ${formatRelativeDay(progress.best_at, locale)}`}
           </p>
         </section>
       )}
@@ -667,12 +667,12 @@ export function ExerciseDetail({
                 <span className="tnum w-12 shrink-0 text-xs text-muted">
                   {rung.label} rep
                 </span>
-                <span className="tnum flex-1 text-2xl font-medium">
+                <span className="tnum font-display flex-1 text-2xl font-medium">
                   {formatWeight(rung.best_weight_kg, unit)}
                   <span className="ms-1 text-xs font-normal text-muted">{unit}</span>
                 </span>
                 <span className="text-xs text-muted">
-                  {formatRelativeDay(rung.achieved_at)}
+                  {formatRelativeDay(rung.achieved_at, locale)}
                 </span>
               </li>
             ))}
@@ -852,7 +852,7 @@ export function ExerciseDetail({
                   {i > 0 && <div className="rule-fade" />}
                   <div className="flex items-baseline gap-3 py-2.5">
                     <span className="shrink-0 text-xs text-muted">
-                      {formatRelativeDay(session.startedAt)}
+                      {formatRelativeDay(session.startedAt, locale)}
                     </span>
                     <span className="tnum min-w-0 flex-1 text-sm">
                       {shown
