@@ -97,7 +97,7 @@ export function SessionQueue({
                 must NOT be forced left-to-right. */}
             <span
               dir={complete ? undefined : 'ltr'}
-              className="tnum shrink-0 font-mono text-xs text-muted"
+              className="meta-mono tnum shrink-0 text-xs text-muted"
             >
               {detail}
             </span>

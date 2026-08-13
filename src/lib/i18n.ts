@@ -686,8 +686,14 @@ export const messages: Record<Locale, Record<string, string>> = {
     // Picker
     'picker.clear': 'Clear filters',
     // Finish
-    'finish.title': 'Workout complete',
+    'finish.title': 'In the books.',
     'finish.done': 'Done',
+    'finish.ordinal': 'workout {n}',
+    'finish.new_pr': 'New PR',
+    'finish.e1rm': 'est. 1RM {value} {unit}',
+    'finish.warmup': 'Warm-up',
+    'finish.set_n': 'Set {n}',
+    'finish.routine_update': 'Update {name} with today’s changes?',
     // Import
     'import.hero.title': 'Coming from Hevy',
     'import.hero.body': 'Bring your history with you.',
@@ -1377,8 +1383,14 @@ export const messages: Record<Locale, Record<string, string>> = {
     // Picker
     'picker.clear': 'مسح عوامل التصفية',
     // Finish
-    'finish.title': 'اكتمل التمرين',
+    'finish.title': 'في السجل.',
     'finish.done': 'تم',
+    'finish.ordinal': 'التمرين {n}',
+    'finish.new_pr': 'رقم قياسي',
+    'finish.e1rm': 'أقصى تقديري {value} {unit}',
+    'finish.warmup': 'إحماء',
+    'finish.set_n': 'المجموعة {n}',
+    'finish.routine_update': 'أتحدّث {name} بتغييرات اليوم؟',
     // Import
     'import.hero.title': 'قادم من Hevy',
     'import.hero.body': 'أحضِر سجلّك معك.',

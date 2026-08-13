@@ -329,7 +329,7 @@ export function SetEntry({
             <h2 className="font-display truncate text-[17px] font-bold tracking-[-0.02em]">
               {exercise.name}
             </h2>
-            <p className="mt-[3px] truncate font-mono text-xs text-muted">
+            <p className="meta-mono mt-[3px] truncate text-xs text-muted">
               {setLabel}
               {equipment && ` · ${equipment}`}
             </p>
@@ -339,7 +339,7 @@ export function SetEntry({
         {/* The ghost line: when, then what. One mono line, not a card — the
             design demotes it the moment the steppers carry the figure you
             are about to commit. */}
-        <p className="mt-3 truncate font-mono text-xs text-muted">
+        <p className="meta-mono mt-3 truncate text-xs text-muted">
           {previousLoading ? (
             t('entry.previous.loading')
           ) : previousSession.length > 0 ? (
@@ -370,7 +370,7 @@ export function SetEntry({
                     the question louder. Keyed by set.id, so the animation
                     runs when the row mounts and never again on re-render. */}
                 <div
-                  className={`flex min-h-7 items-center gap-2.5 rounded-md font-mono text-sm ${
+                  className={`meta-mono flex min-h-7 items-center gap-2.5 rounded-md text-sm ${
                     i === setsThisWorkout.length - 1
                       ? isRecord(set)
                         ? 'record-flash'

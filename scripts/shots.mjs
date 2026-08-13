@@ -263,6 +263,39 @@ async function shoot(browser, origin, { width, empty, active, locale, theme }) {
       })
       await menu.first().click()
     }
+
+    /**
+     * The finish ceremony, which no run has ever photographed.
+     *
+     * It is the last thing in this pass on purpose: finishing ends the
+     * workout, so every frame above it has to be taken first. Two taps,
+     * because the finish confirms — which is itself the reason the design's
+     * one-tap finish CTA was not ported.
+     */
+    const finish = page.getByRole('button', {
+      name: locale === 'ar' ? /^إنهاء$/ : /^Finish$/,
+    })
+    if (await finish.count()) {
+      await finish.first().click()
+      await page.waitForTimeout(250)
+      // The armed state relaxes on its own, so the second tap is immediate.
+      const confirmFinish = page.getByRole('button', {
+        name: locale === 'ar' ? /أنهِ|إنهاء/ : /Finish/,
+      })
+      await confirmFinish.first().click()
+      await page.waitForTimeout(2500)
+      await page.screenshot({
+        path: `${OUT}/${pfx}finish-${width}.png`,
+        fullPage: false,
+      })
+      await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight))
+      await page.waitForTimeout(400)
+      await page.screenshot({
+        path: `${OUT}/${pfx}finish-${width}-end.png`,
+        fullPage: false,
+      })
+    }
+
     await context.close()
     return crashes
   }

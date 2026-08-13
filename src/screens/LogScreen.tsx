@@ -225,6 +225,16 @@ export function LogScreen({
   const canvasViewed = useRef(false)
   const [summary, setSummary] = useState<WorkoutSummary | null>(null)
   const [summaryDate, setSummaryDate] = useState('')
+  /**
+   * The finished session's sets and their board order, snapshotted.
+   *
+   * The finish handler clears `sets` in the same pass that builds the summary,
+   * so the breakdown card cannot read them off live state — it would render an
+   * empty card, silently, and only a screenshot would say so.
+   */
+  const [summarySets, setSummarySets] = useState<WorkoutSet[]>([])
+  const [summaryOrder, setSummaryOrder] = useState<string[]>([])
+  const [summaryOrdinal, setSummaryOrdinal] = useState<number | null>(null)
   // The finished workout's identity, kept past the point where `workout` is
   // cleared, so the summary can name and annotate the thing just logged.
   const [summaryWorkout, setSummaryWorkout] = useState<Workout | null>(null)
@@ -1737,7 +1747,25 @@ export function LogScreen({
       previousBests,
     )
     setSummary(deferred ? { ...computed, prs: [] } : computed)
+    // Snapshot before the clears below reach `sets` and `displayOrder`.
+    setSummarySets(sets)
+    setSummaryOrder(displayOrder)
     setSummaryDate(formatWorkoutDate(workout.started_at))
+    // Which session this was. Counted rather than stored — no column carries
+    // it — and never awaited: the finish screen's one job is to be instant,
+    // and the ordinal is a kicker. Offline it never arrives, and the kicker
+    // is the date alone, which is what it has always been.
+    setSummaryOrdinal(null)
+    if (!deferred) {
+      void supabase
+        .from('workouts')
+        .select('id', { count: 'exact', head: true })
+        .not('ended_at', 'is', null)
+        .lte('started_at', workout.started_at)
+        .then(({ count }) => {
+          if (typeof count === 'number' && count > 0) setSummaryOrdinal(count)
+        })
+    }
     setSummaryWorkout({ ...workout, ended_at: endedAt })
     // Mid-workout there is no such thing as a skipped exercise — there is only
     // not-yet-done, and saying otherwise is the app scolding somebody who is
@@ -2123,6 +2151,9 @@ export function LogScreen({
           exercisesById={exercisesById}
           workout={summaryWorkout}
           skipped={skipped}
+          sets={summarySets}
+          order={summaryOrder}
+          ordinal={summaryOrdinal}
           routineUpdate={
             routineUpdate
               ? {
@@ -2135,6 +2166,9 @@ export function LogScreen({
           onDone={() => {
             setSummary(null)
             setSummaryWorkout(null)
+            setSummarySets([])
+            setSummaryOrder([])
+            setSummaryOrdinal(null)
             setSkipped([])
             setRoutineUpdate(null)
             setView('overview')

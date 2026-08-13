@@ -452,6 +452,23 @@ button {
   text-transform: none;
 }
 
+/* The meta voice at body scale: mono for a line of figures and stamped
+   labels, and NOT mono the moment the line is in Arabic.
+
+   Same rule `kicker` carries, named separately because it applies to lines
+   that are neither uppercase nor tracked — a set row, a ghost line, an
+   est-1RM line. Plex Mono has no Arabic, so those lines fell through to the
+   platform monospace, which renders Arabic as disconnected letters with
+   gaps between them. R3 fixed this class of defect for kickers; every mono
+   line carrying a translated word had the same hole. */
+@utility meta-mono {
+  font-family: var(--font-mono);
+}
+
+[dir='rtl'] .meta-mono {
+  font-family: var(--font-sans);
+}
+
 /* The knurl. Cross-hatched ember at ±45°, 1px line on a 5px period — the
    grip cut into a bar, the one texture in the system.
 
