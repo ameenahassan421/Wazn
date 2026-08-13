@@ -42,7 +42,10 @@
  */
 export const QUOTAS = {
   coach_notes: { limit: 1, days: 7 },
-  routine: { limit: 3, days: 30 },
+  // Raised from 3 on Ameen's order (2026-08-12): the cap was throttling his
+  // own testing. Cost stays bounded by the free-model-first route and the
+  // OpenRouter monthly ceiling, not by this number.
+  routine: { limit: 30, days: 30 },
   briefing: { limit: 20, days: 7 },
   debrief: { limit: 20, days: 7 },
 } as const

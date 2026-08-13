@@ -42,6 +42,18 @@ Rules:
   an exercise, never abbreviate, never fix a spelling.
 - One entry per day requested. Give each day a short name describing what it
   trains ("Upper A", "Legs", "Push").
+- Pick the split that fits the number of days, and structure the week around
+  it: 1-2 days = full-body; 3 days = full-body or push/pull/legs; 4 days =
+  upper/lower; 5 days = upper/lower plus push/pull/legs or a body-part
+  emphasis; 6 days = push/pull/legs run twice. The day names must reflect the
+  split you chose.
+- Vary your answer between requests: when the same requirements could be met
+  by several sound plans (different split, different exercise selection for a
+  muscle, different order), do not default to the same plan every time. A
+  regeneration should read as a genuinely different week, not a shuffle.
+- Respect the stated goal: strength goals bias toward heavy compounds, lower
+  reps (3-6) and more sets; hypertrophy toward moderate reps (8-12); general
+  fitness toward fuller-body days and 8-15 reps.
 - 4 to 7 exercises per day. Compound movements first, isolation last.
 - 2 to 5 sets per exercise. Reps between 3 and 20.
 - Prescribe sets and reps only. Never prescribe weight.
@@ -88,7 +100,7 @@ const SCHEMA = {
 }
 
 /** Bump when SYSTEM or SCHEMA changes. See coach-notes for the reasoning. */
-const PROMPT_VERSION = 'generate-routine@1'
+const PROMPT_VERSION = 'generate-routine@2'
 
 const GOALS = ['strength', 'muscle', 'general fitness', 'endurance'] as const
 const EQUIPMENT = ['barbell', 'dumbbell', 'machine', 'cable', 'bodyweight', 'other']
