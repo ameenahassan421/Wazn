@@ -5116,9 +5116,9 @@ rings for one timer disagreeing is worse than either convention.
 
 The argument about consistency was right. The conclusion was not. The handoff
 is not ambiguous here — the brand sheet states it as identity, "The rest timer
-*is* the plate — it fills as you recover" — and the behaviour spec gives the
+_is_ the plate — it fills as you recover" — and the behaviour spec gives the
 same expression. That is two independent statements, one of them about what
-the brand *is*. The consistency objection was an argument for moving both
+the brand _is_. The consistency objection was an argument for moving both
 rings, not for moving the design's.
 
 So both fill now. Filling also retired a contradiction the chip was already
