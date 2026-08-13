@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" dir="ltr">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -8,23 +8,56 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700;800&family=Hanken+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700;800&family=Hanken+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
     <style>
       :root {
-        --ink: #16130e;
-        --paper: #f7f3ec;
         --stage: #e9e4d8;
+        --ground: #f7f3ec;
+        --surface: #ffffff;
+        --text: #16130e;
+        --body: #4f4a41;
+        --stone: #6b6559;
+        --stone-soft: #8a8378;
         --ember: #e8491d;
-        --stone: #8a8378;
-        --stone-dark: #9d968a;
-        --stone-dim: #7a7469;
-        --body-dim: #4f4a41;
-        --card-line: rgba(22, 19, 14, 0.06);
+        --ember-tint: rgba(232, 73, 29, 0.09);
+        --flip-bg: #16130e;
+        --flip-text: #f7f3ec;
+        --flip-muted: #9d968a;
+        --line: rgba(22, 19, 14, 0.06);
+        --line-strong: rgba(22, 19, 14, 0.1);
+        --frame-shadow: 0 24px 70px rgba(22, 19, 14, 0.18);
         --sora: 'Sora', ui-sans-serif, system-ui, sans-serif;
         --hanken: 'Hanken Grotesk', ui-sans-serif, system-ui, sans-serif;
         --mono: 'IBM Plex Mono', ui-monospace, monospace;
+      }
+      html[data-theme='dark'] {
+        --stage: #080705;
+        --ground: #16130e;
+        --surface: #221e17;
+        --text: #f7f3ec;
+        --body: #d6d1c6;
+        --stone: #a39c8f;
+        --stone-soft: #8a8378;
+        --ember-tint: rgba(232, 73, 29, 0.16);
+        --flip-bg: #f7f3ec;
+        --flip-text: #16130e;
+        --flip-muted: #6b6559;
+        --line: rgba(247, 243, 236, 0.08);
+        --line-strong: rgba(247, 243, 236, 0.14);
+        --frame-shadow: 0 24px 70px rgba(0, 0, 0, 0.6);
+      }
+      html[lang='ar'] {
+        --sora: 'IBM Plex Sans Arabic', ui-sans-serif, system-ui, sans-serif;
+        --hanken: 'IBM Plex Sans Arabic', ui-sans-serif, system-ui, sans-serif;
+        --mono: 'IBM Plex Mono', 'IBM Plex Sans Arabic', ui-monospace, monospace;
+      }
+      html[lang='ar'] [style*='letter-spacing'] {
+        letter-spacing: 0 !important;
+      }
+      html[dir='rtl'] .dir-flip {
+        transform: scaleX(-1);
       }
       * {
         box-sizing: border-box;
@@ -32,7 +65,7 @@
       body {
         margin: 0;
         background: var(--stage);
-        color: var(--ink);
+        color: var(--text);
         font-family: var(--hanken);
         -webkit-font-smoothing: antialiased;
       }
@@ -54,11 +87,11 @@
       .phone {
         width: 390px;
         height: 844px;
-        background: var(--paper);
+        background: var(--ground);
         border-radius: 44px;
         box-shadow:
-          0 24px 70px rgba(22, 19, 14, 0.18),
-          0 0 0 1px var(--card-line);
+          var(--frame-shadow),
+          0 0 0 1px var(--line);
         overflow: hidden;
         display: flex;
         flex-direction: column;
@@ -76,14 +109,31 @@
           box-shadow: none;
         }
       }
+      .proto-controls {
+        position: fixed;
+        top: 10px;
+        inset-inline-end: 10px;
+        display: flex;
+        gap: 6px;
+        z-index: 10;
+      }
+      .proto-controls button {
+        font: 600 12px var(--hanken);
+        color: #f7f3ec;
+        background: rgba(22, 19, 14, 0.55);
+        border-radius: 99px;
+        padding: 8px 14px;
+        min-height: 34px;
+        backdrop-filter: blur(4px);
+      }
       .screen {
         display: flex;
         flex-direction: column;
         height: 100%;
       }
       .screen.dark {
-        background: var(--ink);
-        color: var(--paper);
+        background: #16130e;
+        color: #f7f3ec;
       }
       .statusbar {
         display: flex;
@@ -91,22 +141,36 @@
         align-items: center;
         padding: 14px 24px 4px;
         font: 500 13px var(--mono);
-        color: var(--stone);
+        color: var(--stone-soft);
+        flex-shrink: 0;
       }
       .dark .statusbar {
-        color: var(--stone-dim);
+        color: #7a7469;
       }
       .card {
-        background: #ffffff;
+        background: var(--surface);
         border-radius: 20px;
         box-shadow:
-          0 1px 2px var(--card-line),
-          0 0 0 1px rgba(22, 19, 14, 0.05);
+          0 1px 2px var(--line),
+          0 0 0 1px var(--line);
       }
       .panel {
-        background: #ffffff;
+        background: var(--surface);
         border-radius: 18px;
-        box-shadow: 0 0 0 1px var(--card-line);
+        box-shadow: 0 0 0 1px var(--line);
+      }
+      .scroll-col {
+        flex: 1;
+        min-height: 0;
+        overflow-y: auto;
+        padding: 0 22px;
+        display: flex;
+        flex-direction: column;
+        gap: 11px;
+        scrollbar-width: none;
+      }
+      .scroll-col::-webkit-scrollbar {
+        display: none;
       }
       .cta {
         width: 100%;
@@ -120,18 +184,19 @@
       }
       .cta span {
         font: 700 16px var(--sora);
-        color: var(--paper);
+        color: #f7f3ec;
       }
       .step {
-        width: 46px;
-        height: 46px;
+        width: 48px;
+        height: 48px;
         border-radius: 12px;
-        background: var(--paper);
+        background: var(--ground);
         display: flex;
         align-items: center;
         justify-content: center;
         font: 600 22px var(--sora);
-        color: var(--ink);
+        color: var(--text);
+        flex-shrink: 0;
       }
       .step-label {
         font: 500 11px var(--mono);
@@ -144,17 +209,89 @@
         font: 700 29px var(--sora);
         letter-spacing: -0.02em;
         font-variant-numeric: tabular-nums;
+        min-height: 48px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex: 1;
+      }
+      .step-input {
+        font: 700 29px var(--sora);
+        letter-spacing: -0.02em;
+        font-variant-numeric: tabular-nums;
+        width: 100%;
+        min-height: 44px;
+        border: none;
+        background: var(--ground);
+        border-radius: 10px;
+        color: var(--text);
+        text-align: center;
+        outline: 2px solid var(--ember);
       }
       .pill-dark {
         font: 600 14px var(--hanken);
-        color: var(--paper);
+        color: #f7f3ec;
         background: rgba(247, 243, 236, 0.1);
         border-radius: 99px;
         padding: 13px 22px;
+        min-height: 48px;
+      }
+      .set-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font: 500 14px var(--mono);
+        color: var(--text);
+        min-height: 28px;
+        width: 100%;
+        text-align: start;
+        border-radius: 8px;
+      }
+      .set-row.editing {
+        box-shadow: 0 0 0 2px var(--ember);
+        background: var(--ember-tint);
+      }
+      .pr-tag {
+        font: 700 10px var(--sora);
+        letter-spacing: 0.08em;
+        color: #f7f3ec;
+        background: var(--ember);
+        border-radius: 99px;
+        padding: 2px 7px;
+        margin-inline-start: 6px;
+      }
+      .queue-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        min-height: 32px;
+        width: 100%;
+        text-align: start;
+      }
+      .link-btn {
+        font: 600 13px var(--hanken);
+        color: var(--stone);
+        min-height: 48px;
+        padding: 0 14px;
+      }
+      .rest-chip {
+        background: var(--flip-bg);
+        color: var(--flip-text);
+        border-radius: 16px;
+        padding: 8px 8px 8px 14px;
+        padding-inline-start: 14px;
+        padding-inline-end: 8px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
       }
     </style>
   </head>
   <body>
+    <div class="proto-controls">
+      <button type="button" data-ctl="locale" id="ctl-locale">عربي</button>
+      <button type="button" data-ctl="theme" id="ctl-theme">Dark</button>
+    </div>
     <div class="stage">
       <div class="phone">
         <main id="screen" style="display: contents"></main>
@@ -164,27 +301,278 @@
       ;(function () {
         'use strict'
 
-        var REST_DEFAULT = 120
+        var WORK_REST = 120
+        var WARM_REST = 60
         var RING = 257.6
+        var CHIP_RING = 62.8
 
-        function initialState() {
-          return {
-            screen: 'home',
-            weight: 62.5,
+        /* ---------- session plan ---------- */
+        var SESSION = [
+          {
+            key: 'bench',
+            name: { en: 'Bench Press', ar: 'ضغط البنش' },
+            equip: { en: 'barbell', ar: 'بار' },
+            img: '/exercises/bench-press-barbell.jpg',
+            bar: 20,
+            inc: 2.5,
+            work: 4,
             reps: 5,
-            sets: [
-              { n: 1, w: '62.5', r: 5 },
-              { n: 2, w: '62.5', r: 5 },
+            start: 62.5,
+            warm: [
+              { w: 40, r: 8 },
+              { w: 50, r: 5 },
+              { w: 57.5, r: 3 },
             ],
-            restTotal: REST_DEFAULT,
-            restLeft: REST_DEFAULT,
-            elapsed: 1394,
-          }
+            ghost: '60×5 · 60×5 · 60×4',
+            best: 73.5,
+          },
+          {
+            key: 'ohp',
+            name: { en: 'Overhead Press', ar: 'الضغط العسكري' },
+            equip: { en: 'barbell', ar: 'بار' },
+            img: '/exercises/overhead-press-barbell.jpg',
+            bar: 20,
+            inc: 2.5,
+            work: 3,
+            reps: 8,
+            start: 40,
+            warm: [
+              { w: 20, r: 10 },
+              { w: 30, r: 6 },
+            ],
+            ghost: '37.5×8 · 37.5×8 · 37.5×7',
+            best: 52,
+          },
+          {
+            key: 'incline',
+            name: { en: 'Incline DB Press', ar: 'ضغط مائل بالدمبل' },
+            equip: { en: 'dumbbell', ar: 'دمبل' },
+            img: '/exercises/incline-bench-press-dumbbell.jpg',
+            bar: null,
+            inc: 2,
+            work: 3,
+            reps: 10,
+            start: 22,
+            warm: [{ w: 14, r: 12 }],
+            ghost: '20×10 · 20×10 · 20×9',
+            best: 30.5,
+          },
+          {
+            key: 'fly',
+            name: { en: 'Cable Fly', ar: 'تفتيح بالكيبل' },
+            equip: { en: 'cable', ar: 'كيبل' },
+            img: null,
+            bar: null,
+            inc: 2.5,
+            work: 3,
+            reps: 12,
+            start: 15,
+            warm: [],
+            ghost: '15×12 · 15×12 · 15×11',
+            best: 21.5,
+          },
+          {
+            key: 'lateral',
+            name: { en: 'Lateral Raise', ar: 'رفرفة جانبية' },
+            equip: { en: 'dumbbell', ar: 'دمبل' },
+            img: null,
+            bar: null,
+            inc: 1,
+            work: 3,
+            reps: 15,
+            start: 8,
+            warm: [],
+            ghost: '8×15 · 8×14 · 8×12',
+            best: 12.6,
+          },
+          {
+            key: 'pushdown',
+            name: { en: 'Triceps Pushdown', ar: 'دفع الترايسبس' },
+            equip: { en: 'cable', ar: 'كيبل' },
+            img: null,
+            bar: null,
+            inc: 2.5,
+            work: 3,
+            reps: 12,
+            start: 25,
+            warm: [],
+            ghost: '25×12 · 25×12 · 25×10',
+            best: 35.5,
+          },
+        ]
+
+        /* ---------- strings ---------- */
+        var T = {
+          en: {
+            planName: 'Push Day A',
+            greetSub: 'Tuesday · week 12 · 3 of 4 done',
+            greet: 'Push day,<br />Ameen.',
+            coach: 'Coach',
+            coachHome:
+              'Bench moved well last week — <strong>62.5 kg</strong> is there today. We’ll warm up longer; your shoulder felt tight Friday.',
+            upNext: 'Up next',
+            planMeta: '6 exercises · ~55 min · last done Friday',
+            startWorkout: 'Start workout',
+            weeks: '12 wk',
+            exerciseOf: 'exercise {i} of {n}',
+            finish: 'Finish',
+            setOf: 'set {i} of {n}',
+            warmOf: 'warm-up {i} of {n}',
+            lastTime: 'last Fri',
+            warmupsDone: 'warm-ups',
+            weightKg: 'Weight · kg',
+            reps: 'Reps',
+            onBar: 'On the bar · per side',
+            emptyBar: 'empty bar',
+            total: 'total',
+            session: 'Session',
+            toGo: '{n} to go',
+            setsShort: '{a}/{b} sets',
+            logWarm: 'Log warm-up',
+            logSet: 'Log set {n}',
+            updateSet: 'Update set',
+            removeSet: 'Remove set',
+            cancel: 'Cancel',
+            addSet: '+ Add set',
+            nextEx: 'Next: {name}',
+            finishWorkout: 'Finish workout',
+            doneLine: '{name} is in the books. Shake out, sip water, move on.',
+            warmLine: 'Light and fast. Groove the path, save the effort.',
+            workLine: 'Warm-up done. Work sets start now — steady pace.',
+            bench3: 'Two clean fives. Same again — brace hard, this is the money set.',
+            bench4: 'Last one. Everything you have, then we press overhead.',
+            restCoach: 'Shake the arms out. Breathe. The next one is the money set.',
+            setLogged: 'set {n} logged ✓',
+            skipRest: 'skip rest',
+            restOf: 'REST · OF {t}',
+            rest: 'rest',
+            next: 'next',
+            finTitle: 'In the books.',
+            finSub: 'Tuesday · workout 47',
+            duration: 'duration',
+            kgLifted: 'kg lifted',
+            setsTile: 'sets',
+            newPR: 'New PR',
+            e1rm: 'est. 1RM {x} kg',
+            debrief:
+              'All pressing at speed — the 2.5 jump held. Eat, sleep. Pull day Thursday.',
+            share: 'Share card',
+            done: 'Done',
+            warmTag: 'W',
+            setWord: 'set {n}',
+          },
+          ar: {
+            planName: 'يوم الدفع أ',
+            greetSub: 'الثلاثاء · الأسبوع 12 · 3 من 4',
+            greet: 'يوم الدفع،<br />يا أمين.',
+            coach: 'المدرب',
+            coachHome:
+              'أداء البنش كان جيداً الأسبوع الماضي — <strong>62.5 كجم</strong> في المتناول اليوم. سنطيل الإحماء قليلاً؛ كتفك كان مشدوداً يوم الجمعة.',
+            upNext: 'التالي',
+            planMeta: '6 تمارين · ~55 دقيقة · آخر مرة الجمعة',
+            startWorkout: 'ابدأ التمرين',
+            weeks: '12 أسبوع',
+            exerciseOf: 'التمرين {i} من {n}',
+            finish: 'إنهاء',
+            setOf: 'المجموعة {i} من {n}',
+            warmOf: 'إحماء {i} من {n}',
+            lastTime: 'الجمعة الماضية',
+            warmupsDone: 'الإحماء',
+            weightKg: 'الوزن · كجم',
+            reps: 'التكرارات',
+            onBar: 'على البار · لكل جانب',
+            emptyBar: 'بار فارغ',
+            total: 'إجمالي',
+            session: 'الجلسة',
+            toGo: 'باقي {n}',
+            setsShort: '{a}/{b} مجموعات',
+            logWarm: 'سجل الإحماء',
+            logSet: 'سجل المجموعة {n}',
+            updateSet: 'عدل المجموعة',
+            removeSet: 'احذف المجموعة',
+            cancel: 'إلغاء',
+            addSet: '+ أضف مجموعة',
+            nextEx: 'التالي: {name}',
+            finishWorkout: 'أنهِ التمرين',
+            doneLine: 'انتهى {name}. أرخِ ذراعيك، اشرب ماءً، وانتقل.',
+            warmLine: 'خفيف وسريع. ثبّت المسار ووفّر الجهد.',
+            workLine: 'انتهى الإحماء. مجموعات العمل تبدأ الآن — إيقاع ثابت.',
+            bench3:
+              'خمستان نظيفتان. كرر نفس الأداء — شد جذعك، هذه هي المجموعة الحاسمة.',
+            bench4: 'الأخيرة. أعطها كل ما عندك، وبعدها ننتقل إلى الضغط العسكري.',
+            restCoach: 'أرخِ ذراعيك وتنفس. القادمة هي المجموعة الحاسمة.',
+            setLogged: 'سُجلت المجموعة {n} ✓',
+            skipRest: 'تخطَّ الراحة',
+            restOf: 'راحة · من {t}',
+            rest: 'راحة',
+            next: 'التالي',
+            finTitle: 'في السجل.',
+            finSub: 'الثلاثاء · التمرين 47',
+            duration: 'المدة',
+            kgLifted: 'كجم مرفوعة',
+            setsTile: 'مجموعات',
+            newPR: 'رقم قياسي جديد',
+            e1rm: 'تقدير <span dir="ltr">1RM</span> {x} كجم',
+            debrief:
+              'كل مجموعات الضغط بسرعة جيدة — قفزة الـ 2.5 نجحت. كُل ونَم. يوم السحب الخميس.',
+            share: 'شارك البطاقة',
+            done: 'تم',
+            warmTag: 'إحماء',
+            setWord: 'المجموعة {n}',
+          },
         }
 
-        var state = initialState()
+        /* ---------- state ---------- */
+        function initialExState() {
+          return SESSION.map(function (ex, i) {
+            var logged = []
+            if (i === 0) {
+              ex.warm.forEach(function (s) {
+                logged.push({ w: s.w, r: s.r, warm: true, pr: false })
+              })
+              logged.push({ w: 62.5, r: 5, warm: false, pr: false })
+              logged.push({ w: 62.5, r: 5, warm: false, pr: false })
+            }
+            return { logged: logged, extra: 0 }
+          })
+        }
+
+        function initialState() {
+          var st = {
+            screen: 'home',
+            exIndex: 0,
+            ex: initialExState(),
+            weight: 62.5,
+            reps: 5,
+            editing: null,
+            resting: false,
+            restTotal: WORK_REST,
+            restLeft: WORK_REST,
+            elapsed: 1394,
+          }
+          st.ex.forEach(function (_, i) {
+            recomputePRs(st, i)
+          })
+          return st
+        }
+
+        var locale = 'en'
+        var theme = 'light'
+        var state
         var root = document.getElementById('screen')
 
+        /* ---------- helpers ---------- */
+        function t(key, params) {
+          var s = T[locale][key] || T.en[key] || key
+          if (params)
+            Object.keys(params).forEach(function (k) {
+              s = s.replace('{' + k + '}', params[k])
+            })
+          return s
+        }
+        function exName(ex) {
+          return ex.name[locale] || ex.name.en
+        }
         function fmt(sec) {
           var m = Math.floor(sec / 60)
           var s = sec % 60
@@ -193,9 +581,76 @@
         function fmtW(w) {
           return w % 1 === 0 ? String(w) : w.toFixed((w * 10) % 5 === 0 ? 1 : 2)
         }
-        function plates(total) {
-          var per = (total - 20) / 2
-          if (per <= 0) return 'empty bar = 20 total'
+        function ltr(s) {
+          return '<span dir="ltr" style="unicode-bidi:isolate">' + s + '</span>'
+        }
+        function e1rm(w, r) {
+          return w * (1 + r / 30)
+        }
+        function cur() {
+          return SESSION[state.exIndex]
+        }
+        function curEx() {
+          return state.ex[state.exIndex]
+        }
+        function workLogged(exSt) {
+          return exSt.logged.filter(function (s) {
+            return !s.warm
+          }).length
+        }
+        function warmLogged(exSt) {
+          return exSt.logged.filter(function (s) {
+            return s.warm
+          }).length
+        }
+        function plannedWork(i) {
+          return SESSION[i].work + state.ex[i].extra
+        }
+        function exDone(i) {
+          return workLogged(state.ex[i]) >= SESSION[i].work
+        }
+        function exComplete(i) {
+          return workLogged(state.ex[i]) >= plannedWork(i)
+        }
+        function recomputePRs(st, i) {
+          var best = SESSION[i].best
+          st.ex[i].logged.forEach(function (s) {
+            if (s.warm) {
+              s.pr = false
+              return
+            }
+            var v = e1rm(s.w, s.r)
+            s.pr = v > best
+            if (v > best) best = v
+          })
+        }
+        function nextPlanned(i) {
+          var ex = SESSION[i]
+          var exSt = state.ex[i]
+          var wl = warmLogged(exSt)
+          if (wl < ex.warm.length && workLogged(exSt) === 0) {
+            return { warm: true, idx: wl, w: ex.warm[wl].w, r: ex.warm[wl].r }
+          }
+          var lastWork = null
+          exSt.logged.forEach(function (s) {
+            if (!s.warm) lastWork = s
+          })
+          return {
+            warm: false,
+            idx: workLogged(exSt),
+            w: lastWork ? lastWork.w : ex.start,
+            r: lastWork ? lastWork.r : ex.reps,
+          }
+        }
+        function prepInputs() {
+          var p = nextPlanned(state.exIndex)
+          state.weight = p.w
+          state.reps = p.r
+          state.editing = null
+        }
+        function plates(total, bar) {
+          var per = (total - bar) / 2
+          if (per <= 0) return t('emptyBar') + ' ' + ltr('= ' + bar) + ' ' + t('total')
           var parts = []
           ;[25, 20, 15, 10, 5, 2.5, 1.25].forEach(function (p) {
             while (per >= p - 1e-9) {
@@ -203,17 +658,29 @@
               per -= p
             }
           })
-          return parts.join(' + ') + '  = ' + fmtW(total) + ' total'
+          return ltr(parts.join(' + ') + ' = ' + fmtW(total)) + ' ' + t('total')
+        }
+        function coachLineFor() {
+          var ex = cur()
+          var exSt = curEx()
+          if (exComplete(state.exIndex)) return t('doneLine', { name: exName(ex) })
+          var p = nextPlanned(state.exIndex)
+          if (p.warm) return t('warmLine')
+          if (ex.key === 'bench') {
+            if (p.idx + 1 === 3) return t('bench3')
+            if (p.idx + 1 === 4) return t('bench4')
+          }
+          return t('workLine')
         }
 
-        /* Brand marks */
+        /* ---------- svg bits ---------- */
         function glyph(size, fill, dot) {
           return (
             '<svg width="' +
             size +
             '" height="' +
             size +
-            '" viewBox="0 0 96 96" style="flex-shrink:0">' +
+            '" viewBox="0 0 96 96" style="flex-shrink:0" aria-hidden="true">' +
             '<path fill="' +
             fill +
             '" fill-rule="evenodd" d="M48 4 a44 44 0 1 0 0 88 a44 44 0 1 0 0 -88 Z M48 33 a15 15 0 1 1 0 30 a15 15 0 1 1 0 -30 Z"></path>' +
@@ -221,201 +688,394 @@
             '</svg>'
           )
         }
-
+        function donut(size) {
+          return glyph(size, '#e8491d', false)
+        }
+        function hollow(size) {
+          return (
+            '<svg width="' +
+            size +
+            '" height="' +
+            size +
+            '" viewBox="0 0 96 96" style="flex-shrink:0" aria-hidden="true"><circle cx="48" cy="48" r="34" fill="none" stroke="var(--stone-soft)" stroke-width="9" opacity=".55"></circle></svg>'
+          )
+        }
+        function checkDot(size) {
+          return (
+            '<svg width="' +
+            size +
+            '" height="' +
+            size +
+            '" viewBox="0 0 96 96" style="flex-shrink:0" aria-hidden="true"><circle cx="48" cy="48" r="40" fill="#e8491d"></circle><path d="M30 50 l12 12 24 -26" fill="none" stroke="#f7f3ec" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"></path></svg>'
+          )
+        }
+        function thumb(ex) {
+          if (ex.img)
+            return (
+              '<img src="' +
+              ex.img +
+              '" alt="" style="width:44px;height:44px;border-radius:12px;object-fit:cover;filter:grayscale(1) contrast(1.05)" />'
+            )
+          return (
+            '<span style="width:44px;height:44px;border-radius:12px;background:var(--ember-tint);display:flex;align-items:center;justify-content:center;font:700 17px var(--sora);color:var(--ember)">' +
+            exName(ex).charAt(0) +
+            '</span>'
+          )
+        }
         var STATUSBAR = '<div class="statusbar"><span>9:41</span><span>●●●</span></div>'
 
-        function coachLine(setNum) {
-          var lines = {
-            3: 'Two clean fives. Same again — brace hard, this is the money set.',
-            4: 'Last one. Everything you have, then we press overhead.',
-          }
-          return lines[setNum] || 'Warm-up done. Work sets start now — steady pace.'
-        }
-
-        function setsRowsWorkout() {
-          return state.sets
-            .map(function (s) {
-              return (
-                '<div style="display:flex;align-items:center;gap:10px;font:500 14px var(--mono);color:var(--ink)">' +
-                '<svg width="16" height="16" viewBox="0 0 96 96"><path fill="#e8491d" fill-rule="evenodd" d="M48 4 a44 44 0 1 0 0 88 a44 44 0 1 0 0 -88 Z M48 33 a15 15 0 1 1 0 30 a15 15 0 1 1 0 -30 Z"></path></svg>' +
-                '<span style="width:36px;color:var(--stone)">' +
-                s.n +
-                '</span><span>' +
-                s.w +
-                ' kg × ' +
-                s.r +
-                '</span></div>'
-              )
-            })
-            .join('')
-        }
-
+        /* ---------- screens ---------- */
         function renderHome() {
           return (
             '<div class="screen" data-screen="home">' +
             STATUSBAR +
             '<div style="display:flex;align-items:center;padding:10px 22px 0">' +
             '<div style="display:flex;align-items:center;gap:1px" role="img" aria-label="Wazn">' +
+            '<span dir="ltr" style="display:inline-flex;align-items:center;gap:1px">' +
             '<span style="font:800 26px/1 var(--sora);letter-spacing:-.05em">w</span>' +
             '<svg width="14" height="14" viewBox="0 0 100 100" style="position:relative;top:3px;margin:0 1px"><path fill="#e8491d" fill-rule="evenodd" d="M46 4 a46 46 0 1 0 0 92 a46 46 0 1 0 0 -92 Z M46 30 a16 16 0 1 1 0 32 a16 16 0 1 1 0 -32 Z"></path><path fill="#e8491d" d="M93 4 a7 7 0 0 1 7 7 v78 a7 7 0 0 1 -14 0 v-78 a7 7 0 0 1 7 -7 Z"></path></svg>' +
             '<span style="font:800 26px/1 var(--sora);letter-spacing:-.05em">zn</span>' +
-            '</div>' +
+            '</span></div>' +
             '<div style="margin-inline-start:auto;display:flex;gap:8px;align-items:center">' +
-            '<span style="font:700 12px var(--sora);color:var(--ember);background:rgba(232,73,29,.09);border-radius:99px;padding:8px 13px">12 wk</span>' +
-            '<span style="width:38px;height:38px;border-radius:50%;background:var(--ink);display:flex;align-items:center;justify-content:center;font:700 14px var(--sora);color:var(--paper)">A</span>' +
+            '<span style="font:700 12px var(--sora);color:var(--ember);background:var(--ember-tint);border-radius:99px;padding:8px 13px">' +
+            t('weeks') +
+            '</span>' +
+            '<span style="width:38px;height:38px;border-radius:50%;background:var(--flip-bg);display:flex;align-items:center;justify-content:center;font:700 14px var(--sora);color:var(--flip-text)">A</span>' +
             '</div></div>' +
             '<div style="padding:26px 22px 18px">' +
-            '<p style="font:500 13px var(--hanken);color:var(--stone);margin:0 0 8px">Tuesday · week 12 · 3 of 4 done</p>' +
-            '<p style="font:800 34px/1.12 var(--sora);letter-spacing:-.03em;margin:0">Push day,<br>Ameen.</p>' +
-            '</div>' +
-            '<div style="flex:1;overflow:hidden;padding:0 22px;display:flex;flex-direction:column;gap:12px">' +
+            '<p style="font:500 13px var(--hanken);color:var(--stone);margin:0 0 8px">' +
+            t('greetSub') +
+            '</p>' +
+            '<p style="font:800 34px/1.12 var(--sora);letter-spacing:-.03em;margin:0">' +
+            t('greet') +
+            '</p></div>' +
+            '<div class="scroll-col" style="overflow:hidden;gap:12px">' +
             '<div class="card" style="padding:16px 18px">' +
             '<div style="display:flex;gap:12px;align-items:flex-start">' +
-            glyph(30, '#16130e', true) +
+            glyph(30, 'var(--text)', true) +
             '<div style="flex:1">' +
-            '<p style="font:700 12px var(--sora);letter-spacing:.08em;text-transform:uppercase;color:var(--stone);margin:0 0 5px">Coach</p>' +
-            '<p style="font:500 14.5px/1.55 var(--hanken);margin:0;color:var(--ink)">Bench moved well last week — <strong>62.5 kg</strong> is there today. We’ll warm up longer; your shoulder felt tight Friday.</p>' +
-            '</div></div></div>' +
-            '<div style="background:var(--ink);border-radius:20px;padding:18px;color:var(--paper)">' +
-            '<p style="font:700 12px var(--sora);letter-spacing:.08em;text-transform:uppercase;color:var(--stone-dark);margin:0">Up next</p>' +
-            '<p style="font:700 22px var(--sora);letter-spacing:-.02em;margin:8px 0 4px">Push Day A</p>' +
-            '<p style="font:400 13px var(--hanken);color:var(--stone-dark);margin:0">6 exercises · ~55 min · last done Friday</p>' +
-            '</div></div>' +
+            '<p style="font:700 12px var(--sora);letter-spacing:.08em;text-transform:uppercase;color:var(--stone);margin:0 0 5px">' +
+            t('coach') +
+            '</p>' +
+            '<p style="font:500 14.5px/1.55 var(--hanken);margin:0;color:var(--text)">' +
+            t('coachHome') +
+            '</p></div></div></div>' +
+            '<div style="background:var(--flip-bg);border-radius:20px;padding:18px;color:var(--flip-text)">' +
+            '<p style="font:700 12px var(--sora);letter-spacing:.08em;text-transform:uppercase;color:var(--flip-muted);margin:0">' +
+            t('upNext') +
+            '</p>' +
+            '<p style="font:700 22px var(--sora);letter-spacing:-.02em;margin:8px 0 4px">' +
+            t('planName') +
+            '</p>' +
+            '<p style="font:400 13px var(--hanken);color:var(--flip-muted);margin:0">' +
+            t('planMeta') +
+            '</p></div></div>' +
             '<div style="padding:14px 22px 26px">' +
             '<button type="button" data-act="start" class="cta" style="height:58px">' +
             glyph(20, '#f7f3ec', false) +
-            '<span>Start workout</span></button>' +
-            '</div></div>'
+            '<span>' +
+            t('startWorkout') +
+            '</span></button></div></div>'
           )
         }
 
-        var SESSION_PLAN = [
-          { name: 'Bench Press', scheme: '4 × 5' },
-          { name: 'Overhead Press', scheme: '3 × 8' },
-          { name: 'Incline DB Press', scheme: '3 × 10' },
-          { name: 'Cable Fly', scheme: '3 × 12' },
-          { name: 'Lateral Raise', scheme: '3 × 15' },
-          { name: 'Triceps Pushdown', scheme: '3 × 12' },
-        ]
+        function setRows() {
+          var exSt = curEx()
+          var html = ''
+          var warmRows = exSt.logged.filter(function (s) {
+            return s.warm
+          })
+          var allWarmDone = warmRows.length >= cur().warm.length && warmRows.length > 0
+          if (allWarmDone && workLogged(exSt) > 0) {
+            html +=
+              '<div class="set-row" style="color:var(--stone);font-size:12px">' +
+              donut(16) +
+              '<span style="min-width:36px">' +
+              t('warmupsDone') +
+              '</span><span>' +
+              ltr(
+                warmRows
+                  .map(function (s) {
+                    return fmtW(s.w) + '×' + s.r
+                  })
+                  .join(' · '),
+              ) +
+              '</span></div>'
+          } else {
+            warmRows.forEach(function (s) {
+              var gi = exSt.logged.indexOf(s)
+              html +=
+                '<button type="button" class="set-row' +
+                (state.editing === gi ? ' editing' : '') +
+                '" data-edit-set="' +
+                gi +
+                '" style="color:var(--stone);font-size:13px">' +
+                donut(16) +
+                '<span style="min-width:36px">' +
+                t('warmTag') +
+                '</span><span>' +
+                ltr(fmtW(s.w) + ' kg × ' + s.r) +
+                '</span></button>'
+            })
+          }
+          var wn = 0
+          exSt.logged.forEach(function (s, gi) {
+            if (s.warm) return
+            wn += 1
+            html +=
+              '<button type="button" class="set-row' +
+              (state.editing === gi ? ' editing' : '') +
+              '" data-edit-set="' +
+              gi +
+              '">' +
+              donut(16) +
+              '<span style="min-width:36px;color:var(--stone)">' +
+              wn +
+              '</span><span>' +
+              ltr(fmtW(s.w) + ' kg × ' + s.r) +
+              '</span>' +
+              (s.pr ? '<span class="pr-tag">PR</span>' : '') +
+              '</button>'
+          })
+          return html
+        }
 
         function sessionQueue() {
-          var rows = SESSION_PLAN.map(function (ex, i) {
-            var current = i === 0
-            var marker = current
-              ? '<svg width="16" height="16" viewBox="0 0 96 96" style="flex-shrink:0"><path fill="#e8491d" fill-rule="evenodd" d="M48 4 a44 44 0 1 0 0 88 a44 44 0 1 0 0 -88 Z M48 33 a15 15 0 1 1 0 30 a15 15 0 1 1 0 -30 Z"></path></svg>'
-              : '<svg width="16" height="16" viewBox="0 0 96 96" style="flex-shrink:0"><circle cx="48" cy="48" r="34" fill="none" stroke="#8a8378" stroke-width="9" opacity=".5"></circle></svg>'
-            var detail = current ? state.sets.length + '/4 sets' : ex.scheme
+          var remaining = SESSION.filter(function (_, i) {
+            return !exDone(i) && i !== state.exIndex
+          }).length
+          var rows = SESSION.map(function (ex, i) {
+            var current = i === state.exIndex
+            var done = exDone(i)
+            var marker = current ? donut(16) : done ? checkDot(16) : hollow(16)
+            var detail = current
+              ? t('setsShort', { a: workLogged(state.ex[i]), b: plannedWork(i) })
+              : done
+                ? '✓'
+                : ltr(ex.work + ' × ' + ex.reps)
             return (
-              '<div style="display:flex;align-items:center;gap:10px;min-height:24px">' +
+              '<button type="button" class="queue-row" data-jump="' +
+              i +
+              '">' +
               marker +
               '<span style="flex:1;font:' +
               (current ? '600' : '500') +
               ' 13px var(--hanken);color:' +
-              (current ? 'var(--ink)' : 'var(--stone)') +
+              (current ? 'var(--text)' : 'var(--stone)') +
               '">' +
-              ex.name +
+              exName(ex) +
               '</span><span style="font:500 12px var(--mono);color:var(--stone);font-variant-numeric:tabular-nums">' +
               detail +
-              '</span></div>'
+              '</span></button>'
             )
           })
           return (
-            '<div class="panel" style="padding:12px 16px;display:flex;flex-direction:column;gap:6px;overflow:hidden">' +
-            '<p style="font:500 11px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--stone);margin:0 0 2px">Session · 5 to go</p>' +
+            '<div class="panel" style="padding:12px 16px;display:flex;flex-direction:column;gap:2px;flex-shrink:0">' +
+            '<p style="font:500 11px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--stone);margin:0 0 4px">' +
+            t('session') +
+            ' · ' +
+            t('toGo', { n: remaining }) +
+            '</p>' +
             rows.join('') +
             '</div>'
           )
         }
 
+        function restChip() {
+          if (!state.resting) return ''
+          return (
+            '<button type="button" data-act="expandRest" class="rest-chip" aria-label="' +
+            t('rest') +
+            '">' +
+            '<svg width="28" height="28" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="none" stroke="rgba(128,128,128,.35)" stroke-width="3"></circle><circle id="chip-ring" cx="12" cy="12" r="10" fill="none" stroke="#e8491d" stroke-width="3" stroke-linecap="round" stroke-dasharray="62.8" stroke-dashoffset="' +
+            CHIP_RING * (state.restLeft / state.restTotal) +
+            '" transform="rotate(-90 12 12)" style="transition:stroke-dashoffset 1s linear"></circle></svg>' +
+            '<span id="chip-time" style="font:700 17px var(--sora);font-variant-numeric:tabular-nums;min-width:52px;text-align:start" dir="ltr">' +
+            fmt(state.restLeft) +
+            '</span>' +
+            '<span style="font:500 12px var(--hanken);opacity:.7;flex:1;text-align:start">' +
+            t('rest') +
+            '</span>' +
+            '<span data-sub="add30" style="font:600 13px var(--hanken);padding:10px 12px;border-radius:99px;background:rgba(128,128,128,.18)"><span dir="ltr">+30s</span></span>' +
+            '<span data-sub="skipRest" style="font:600 13px var(--hanken);padding:10px 12px;border-radius:99px;background:rgba(128,128,128,.18)">' +
+            t('skipRest') +
+            '</span>' +
+            '</button>'
+          )
+        }
+
         function renderWorkout() {
-          var setNum = state.sets.length + 1
+          var ex = cur()
+          var exSt = curEx()
+          var complete = exComplete(state.exIndex)
+          var p = nextPlanned(state.exIndex)
+          var subLabel = p.warm
+            ? t('warmOf', { i: p.idx + 1, n: ex.warm.length })
+            : t('setOf', {
+                i: Math.min(p.idx + 1, plannedWork(state.exIndex)),
+                n: plannedWork(state.exIndex),
+              })
+          var doneCount = SESSION.filter(function (_, i) {
+            return exDone(i)
+          }).length
+          var isLast = state.exIndex >= SESSION.length - 1
+          var editing = state.editing !== null
+
+          var ctaLabel
+          if (editing) {
+            var en = 0
+            for (var i2 = 0; i2 <= state.editing; i2++) if (!exSt.logged[i2].warm) en++
+            ctaLabel =
+              t('updateSet') + ' — ' + ltr(fmtW(state.weight) + ' × ' + state.reps)
+          } else if (complete) {
+            ctaLabel = isLast
+              ? t('finishWorkout')
+              : t('nextEx', { name: exName(SESSION[state.exIndex + 1]) })
+          } else if (p.warm) {
+            ctaLabel =
+              t('logWarm') + ' — ' + ltr(fmtW(state.weight) + ' × ' + state.reps)
+          } else {
+            ctaLabel =
+              t('logSet', { n: p.idx + 1 }) +
+              ' — ' +
+              ltr(fmtW(state.weight) + ' × ' + state.reps)
+          }
+          var ctaAct = editing ? 'updateSet' : complete ? 'nextExercise' : 'logSet'
+
           return (
             '<div class="screen" data-screen="workout">' +
             STATUSBAR +
-            '<div style="display:flex;align-items:center;gap:12px;padding:10px 22px 12px">' +
-            '<button type="button" data-act="goHome" aria-label="Back to home" style="width:40px;height:40px;border-radius:50%;background:#ffffff;box-shadow:0 0 0 1px rgba(22,19,14,.08);display:flex;align-items:center;justify-content:center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#16130e" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M14 5l-7 7 7 7"></path></svg></button>' +
-            '<div style="flex:1"><p style="font:700 16px var(--sora);letter-spacing:-.02em;margin:0">Push Day A</p>' +
-            '<p style="font:500 12px var(--mono);color:var(--stone);margin:2px 0 0"><span id="elapsed">' +
+            '<div style="display:flex;align-items:center;gap:12px;padding:10px 22px 12px;flex-shrink:0">' +
+            '<button type="button" data-act="goHome" aria-label="Home" style="width:44px;height:44px;border-radius:50%;background:var(--surface);box-shadow:0 0 0 1px var(--line-strong);display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg class="dir-flip" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M14 5l-7 7 7 7"></path></svg></button>' +
+            '<div style="flex:1;min-width:0"><p style="font:700 16px var(--sora);letter-spacing:-.02em;margin:0">' +
+            t('planName') +
+            '</p><p style="font:500 12px var(--mono);color:var(--stone);margin:2px 0 0"><span id="elapsed" dir="ltr">' +
             fmt(state.elapsed) +
-            '</span> · exercise 1 of 6</p></div>' +
-            '<button type="button" data-act="finish" style="font:700 13px var(--sora);color:var(--ink);background:#ffffff;box-shadow:0 0 0 1px rgba(22,19,14,.1);border-radius:99px;padding:11px 16px">Finish</button>' +
-            '</div>' +
-            '<div style="flex:1;overflow:hidden;padding:0 22px;display:flex;flex-direction:column;gap:11px">' +
-            '<div class="card" style="padding:14px 18px">' +
+            '</span> · ' +
+            t('exerciseOf', { i: state.exIndex + 1, n: SESSION.length }) +
+            '</p></div>' +
+            '<button type="button" data-act="finish" style="font:700 13px var(--sora);color:var(--text);background:var(--surface);box-shadow:0 0 0 1px var(--line-strong);border-radius:99px;padding:0 16px;min-height:48px">' +
+            t('finish') +
+            '</button></div>' +
+            '<div class="scroll-col">' +
+            '<div class="card" style="padding:14px 18px;flex-shrink:0">' +
             '<div style="display:flex;align-items:center;gap:12px">' +
-            '<img src="/exercises/bench-press-barbell.jpg" alt="Bench press" style="width:44px;height:44px;border-radius:12px;object-fit:cover;filter:grayscale(1) contrast(1.05)">' +
-            '<div style="flex:1"><p style="font:700 17px var(--sora);letter-spacing:-.02em;margin:0">Bench Press</p>' +
-            '<p style="font:500 12px var(--mono);color:var(--stone);margin:3px 0 0">set ' +
-            setNum +
-            ' of 4 · barbell</p></div></div>' +
-            '<p style="font:500 12px var(--mono);color:var(--stone);margin:12px 0 0">last Fri&nbsp;&nbsp;60×5 · 60×5 · 60×4</p>' +
-            '<div style="display:flex;flex-direction:column;gap:6px;margin-top:8px">' +
-            setsRowsWorkout() +
-            '</div></div>' +
-            '<div style="display:flex;gap:10px">' +
+            thumb(ex) +
+            '<div style="flex:1"><p style="font:700 17px var(--sora);letter-spacing:-.02em;margin:0">' +
+            exName(ex) +
+            '</p><p style="font:500 12px var(--mono);color:var(--stone);margin:3px 0 0">' +
+            subLabel +
+            ' · ' +
+            ex.equip[locale] +
+            '</p></div></div>' +
+            '<p style="font:500 12px var(--mono);color:var(--stone);margin:12px 0 0">' +
+            t('lastTime') +
+            '&nbsp;&nbsp;' +
+            ltr(ex.ghost) +
+            '</p>' +
+            '<div style="display:flex;flex-direction:column;gap:4px;margin-top:8px">' +
+            setRows() +
+            '</div>' +
+            (editing
+              ? '<div style="display:flex;gap:8px;margin-top:10px">' +
+                '<button type="button" data-act="removeSet" class="link-btn" style="color:var(--ember)">' +
+                t('removeSet') +
+                '</button><button type="button" data-act="cancelEdit" class="link-btn">' +
+                t('cancel') +
+                '</button></div>'
+              : complete && !editing
+                ? '<div style="display:flex;margin-top:6px"><button type="button" data-act="addSet" class="link-btn" style="color:var(--ember);padding-inline-start:0">' +
+                  t('addSet') +
+                  '</button></div>'
+                : '') +
+            '</div>' +
+            '<div style="display:flex;gap:10px;flex-shrink:0">' +
             '<div class="panel" style="flex:1.3;padding:11px 14px">' +
-            '<p class="step-label">Weight · kg</p>' +
-            '<div style="display:flex;align-items:center;justify-content:space-between">' +
-            '<button type="button" data-act="decW" aria-label="Decrease weight" class="step">−</button>' +
-            '<span class="step-value">' +
+            '<p class="step-label">' +
+            t('weightKg') +
+            '</p>' +
+            '<div style="display:flex;align-items:center;justify-content:space-between;gap:4px">' +
+            '<button type="button" data-act="decW" aria-label="−" class="step">−</button>' +
+            '<span class="step-value" data-num="weight" dir="ltr">' +
             fmtW(state.weight) +
             '</span>' +
-            '<button type="button" data-act="incW" aria-label="Increase weight" class="step">+</button>' +
+            '<button type="button" data-act="incW" aria-label="+" class="step">+</button>' +
             '</div></div>' +
             '<div class="panel" style="flex:1;padding:11px 14px">' +
-            '<p class="step-label">Reps</p>' +
-            '<div style="display:flex;align-items:center;justify-content:space-between">' +
-            '<button type="button" data-act="decR" aria-label="Decrease reps" class="step">−</button>' +
-            '<span class="step-value">' +
+            '<p class="step-label">' +
+            t('reps') +
+            '</p>' +
+            '<div style="display:flex;align-items:center;justify-content:space-between;gap:4px">' +
+            '<button type="button" data-act="decR" aria-label="−" class="step">−</button>' +
+            '<span class="step-value" data-num="reps" dir="ltr">' +
             state.reps +
             '</span>' +
-            '<button type="button" data-act="incR" aria-label="Increase reps" class="step">+</button>' +
+            '<button type="button" data-act="incR" aria-label="+" class="step">+</button>' +
             '</div></div></div>' +
-            '<div style="display:flex;gap:10px;align-items:flex-start;padding:0 4px">' +
+            '<div style="display:flex;gap:10px;align-items:flex-start;padding:0 4px;flex-shrink:0">' +
             '<span style="margin-top:1px;display:flex">' +
-            glyph(22, '#16130e', true) +
+            glyph(22, 'var(--text)', true) +
             '</span>' +
-            '<p style="font:500 13px/1.5 var(--hanken);color:var(--body-dim);margin:0">' +
-            coachLine(setNum) +
+            '<p style="font:500 13px/1.5 var(--hanken);color:var(--body);margin:0">' +
+            coachLineFor() +
             '</p></div>' +
-            '<div class="panel" style="padding:12px 16px;display:flex;align-items:center;gap:16px">' +
-            '<div style="flex:1">' +
-            '<p style="font:500 11px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--stone);margin:0 0 3px">On the bar · per side</p>' +
-            '<p style="font:700 15px var(--sora);letter-spacing:-.01em;margin:0;font-variant-numeric:tabular-nums">' +
-            plates(state.weight) +
-            '</p></div>' +
-            '<svg width="110" height="44" viewBox="0 0 120 52"><line x1="4" y1="26" x2="116" y2="26" stroke="#16130e" stroke-width="5" stroke-linecap="round"></line><rect x="30" y="3" width="11" height="46" rx="3" fill="#e8491d"></rect><rect x="45" y="16" width="7" height="20" rx="2.5" fill="#16130e"></rect><rect x="14" y="19" width="9" height="14" rx="2" fill="#16130e" opacity=".25"></rect></svg>' +
-            '</div>' +
+            (ex.bar
+              ? '<div class="panel" style="padding:12px 16px;display:flex;align-items:center;gap:16px;flex-shrink:0">' +
+                '<div style="flex:1">' +
+                '<p style="font:500 11px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--stone);margin:0 0 3px">' +
+                t('onBar') +
+                '</p>' +
+                '<p style="font:700 15px var(--sora);letter-spacing:-.01em;margin:0;font-variant-numeric:tabular-nums">' +
+                plates(state.weight, ex.bar) +
+                '</p></div>' +
+                '<svg width="110" height="44" viewBox="0 0 120 52" aria-hidden="true"><line x1="4" y1="26" x2="116" y2="26" stroke="var(--text)" stroke-width="5" stroke-linecap="round"></line><rect x="30" y="3" width="11" height="46" rx="3" fill="#e8491d"></rect><rect x="45" y="16" width="7" height="20" rx="2.5" fill="var(--text)"></rect><rect x="14" y="19" width="9" height="14" rx="2" fill="var(--text)" opacity=".25"></rect></svg>' +
+                '</div>'
+              : '') +
             sessionQueue() +
             '</div>' +
-            '<div style="padding:10px 22px 26px;display:flex;flex-direction:column;gap:10px">' +
-            '<button type="button" data-act="logSet" class="cta" style="height:60px">' +
+            '<div style="padding:10px 22px 26px;display:flex;flex-direction:column;gap:10px;flex-shrink:0">' +
+            restChip() +
+            '<button type="button" data-act="' +
+            ctaAct +
+            '" class="cta" style="height:60px">' +
             glyph(20, '#f7f3ec', false) +
-            '<span>Log set ' +
-            setNum +
-            ' — ' +
-            fmtW(state.weight) +
-            ' × ' +
-            state.reps +
+            '<span>' +
+            ctaLabel +
             '</span></button>' +
             '</div></div>'
           )
         }
 
         function renderRest() {
-          var setNum = state.sets.length + 1
+          var lastLogged = curEx().logged.length
+          var p = nextPlanned(state.exIndex)
+          var nextLabel = exComplete(state.exIndex)
+            ? t('nextEx', {
+                name:
+                  state.exIndex < SESSION.length - 1
+                    ? exName(SESSION[state.exIndex + 1])
+                    : t('finishWorkout'),
+              })
+            : exName(cur()) +
+              ' — ' +
+              t('setWord', { n: p.idx + 1 }) +
+              ' · ' +
+              ltr(fmtW(state.weight) + ' × ' + state.reps)
           return (
             '<div class="screen dark" data-screen="rest">' +
             STATUSBAR +
-            '<div style="display:flex;align-items:center;gap:12px;padding:10px 22px 0">' +
-            '<div style="flex:1"><p style="font:700 16px var(--sora);letter-spacing:-.02em;margin:0">Push Day A</p>' +
-            '<p style="font:500 12px var(--mono);color:var(--stone-dim);margin:2px 0 0"><span id="elapsed">' +
+            '<div style="display:flex;align-items:center;gap:12px;padding:10px 22px 0;flex-shrink:0">' +
+            '<button type="button" data-act="collapseRest" aria-label="Back" style="width:44px;height:44px;border-radius:50%;background:rgba(247,243,236,.08);display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f7f3ec" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"></path></svg></button>' +
+            '<div style="flex:1"><p style="font:700 16px var(--sora);letter-spacing:-.02em;margin:0">' +
+            t('planName') +
+            '</p><p style="font:500 12px var(--mono);color:#7a7469;margin:2px 0 0"><span id="elapsed" dir="ltr">' +
             fmt(state.elapsed) +
-            '</span> · set ' +
-            state.sets.length +
-            ' logged ✓</p></div>' +
-            '<button type="button" data-act="skipRest" style="font:600 13px var(--hanken);color:var(--stone-dark);height:44px;padding:0 8px">skip rest</button>' +
-            '</div>' +
+            '</span> · ' +
+            t('setLogged', { n: lastLogged }) +
+            '</p></div>' +
+            '<button type="button" data-act="skipRest" style="font:600 13px var(--hanken);color:#9d968a;min-height:48px;padding:0 8px">' +
+            t('skipRest') +
+            '</button></div>' +
             '<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:30px;padding:0 22px">' +
             '<div style="position:relative;width:240px;height:240px;display:flex;align-items:center;justify-content:center">' +
             '<svg width="240" height="240" viewBox="0 0 96 96" style="position:absolute;inset:0">' +
@@ -423,104 +1083,131 @@
             '<circle id="ring" cx="48" cy="48" r="41" fill="none" stroke="#e8491d" stroke-width="9" stroke-linecap="round" stroke-dasharray="257.6" stroke-dashoffset="' +
             RING * (state.restLeft / state.restTotal) +
             '" transform="rotate(-90 48 48)" style="transition:stroke-dashoffset 1s linear"></circle></svg>' +
-            '<div style="text-align:center"><p id="rest-label" style="font:800 54px var(--sora);letter-spacing:-.03em;margin:0;font-variant-numeric:tabular-nums">' +
+            '<div style="text-align:center"><p id="rest-label" dir="ltr" style="font:800 54px var(--sora);letter-spacing:-.03em;margin:0;font-variant-numeric:tabular-nums">' +
             fmt(state.restLeft) +
-            '</p><p style="font:500 12px var(--mono);letter-spacing:.16em;color:var(--stone-dark);margin:4px 0 0">REST · OF <span id="rest-total">' +
-            fmt(state.restTotal) +
-            '</span></p></div></div>' +
+            '</p><p style="font:500 12px var(--mono);letter-spacing:.16em;color:#9d968a;margin:4px 0 0">' +
+            t('restOf', {
+              t: '<span id="rest-total" dir="ltr">' + fmt(state.restTotal) + '</span>',
+            }) +
+            '</p></div></div>' +
             '<div style="display:flex;gap:10px">' +
-            '<button type="button" data-act="sub30" class="pill-dark">− 30s</button>' +
-            '<button type="button" data-act="add30" class="pill-dark">+ 30s</button>' +
+            '<button type="button" data-act="sub30" class="pill-dark"><span dir="ltr">− 30s</span></button>' +
+            '<button type="button" data-act="add30" class="pill-dark"><span dir="ltr">+ 30s</span></button>' +
             '</div>' +
             '<div style="display:flex;gap:12px;align-items:flex-start;background:rgba(247,243,236,.06);border-radius:18px;padding:16px 18px;max-width:320px">' +
             glyph(24, '#f7f3ec', true) +
-            '<p style="font:500 14px/1.55 var(--hanken);color:#d6d1c6;margin:0">Shake the arms out. Breathe. The next one is the money set.</p>' +
-            '</div></div>' +
-            '<div style="padding:0 22px 30px">' +
-            '<button type="button" data-act="skipRest" style="width:100%;background:rgba(247,243,236,.06);border-radius:16px;padding:14px 18px;display:flex;justify-content:space-between;align-items:center">' +
-            '<span style="font:500 13px var(--mono);color:var(--stone-dark)">next&nbsp;&nbsp;<span style="color:var(--paper)">Bench — set ' +
-            setNum +
-            ' · ' +
-            fmtW(state.weight) +
-            ' × ' +
-            state.reps +
+            '<p style="font:500 14px/1.55 var(--hanken);color:#d6d1c6;margin:0">' +
+            t('restCoach') +
+            '</p></div></div>' +
+            '<div style="padding:0 22px 30px;flex-shrink:0">' +
+            '<button type="button" data-act="collapseRest" style="width:100%;background:rgba(247,243,236,.06);border-radius:16px;padding:14px 18px;display:flex;justify-content:space-between;align-items:center;min-height:48px">' +
+            '<span style="font:500 13px var(--mono);color:#9d968a">' +
+            t('next') +
+            '&nbsp;&nbsp;<span style="color:#f7f3ec">' +
+            nextLabel +
             '</span></span>' +
-            '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9d968a" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M10 5l7 7-7 7"></path></svg>' +
+            '<svg class="dir-flip" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9d968a" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M10 5l7 7-7 7"></path></svg>' +
             '</button></div></div>'
           )
         }
 
         function renderFinish() {
-          var volume = state.sets.reduce(function (a, x) {
-            return a + parseFloat(x.w) * x.r
-          }, 0)
-          var best = state.sets.reduce(function (a, x) {
-            return Math.max(a, parseFloat(x.w) * (1 + x.r / 30))
-          }, 0)
-          var bestSet = state.sets.reduce(
-            function (a, x) {
-              return parseFloat(x.w) >= parseFloat(a.w) ? x : a
-            },
-            state.sets[0] || { w: '0', r: 0 },
-          )
-          var gotPR = state.sets.some(function (x) {
-            return parseFloat(x.w) >= 62.5
-          })
-          var rows = state.sets
-            .map(function (s) {
-              return (
-                '<div style="display:flex;justify-content:space-between;font:500 13px var(--mono)"><span style="color:var(--ink)">Bench Press · set ' +
-                s.n +
-                '</span><span style="color:var(--stone);white-space:nowrap">' +
-                s.w +
-                ' × ' +
-                s.r +
-                '</span></div>'
-              )
+          var allSets = []
+          state.ex.forEach(function (exSt, i) {
+            exSt.logged.forEach(function (s) {
+              allSets.push({ ex: SESSION[i], s: s })
             })
-            .join('')
+          })
+          var volume = allSets.reduce(function (a, x) {
+            return a + x.s.w * x.s.r
+          }, 0)
+          var prCards = ''
+          SESSION.forEach(function (ex, i) {
+            var prSets = state.ex[i].logged.filter(function (s) {
+              return s.pr
+            })
+            if (!prSets.length) return
+            var best = prSets.reduce(function (a, s) {
+              return e1rm(s.w, s.r) > e1rm(a.w, a.r) ? s : a
+            }, prSets[0])
+            prCards +=
+              '<div style="background:var(--ember-tint);border-radius:20px;padding:18px;display:flex;gap:14px;align-items:center;flex-shrink:0">' +
+              '<svg width="44" height="44" viewBox="0 0 96 96" style="flex-shrink:0" aria-hidden="true"><path fill="#e8491d" fill-rule="evenodd" d="M48 4 a44 44 0 1 0 0 88 a44 44 0 1 0 0 -88 Z M48 33 a15 15 0 1 1 0 30 a15 15 0 1 1 0 -30 Z M17 43 h6 a5 5 0 0 1 5 5 a5 5 0 0 1 -5 5 h-6 a5 5 0 0 1 -5 -5 a5 5 0 0 1 5 -5 Z M73 43 h6 a5 5 0 0 1 5 5 a5 5 0 0 1 -5 5 h-6 a5 5 0 0 1 -5 -5 a5 5 0 0 1 5 -5 Z"></path></svg>' +
+              '<div><p style="font:700 12px var(--sora);letter-spacing:.08em;text-transform:uppercase;color:var(--ember);margin:0 0 4px">' +
+              t('newPR') +
+              '</p><p style="font:700 17px var(--sora);letter-spacing:-.02em;margin:0">' +
+              exName(ex) +
+              ' — ' +
+              ltr(fmtW(best.w) + ' kg × ' + best.r) +
+              '</p><p style="font:500 12px var(--mono);color:var(--stone);margin:4px 0 0">' +
+              t('e1rm', { x: ltr(e1rm(best.w, best.r).toFixed(1)) }) +
+              '</p></div></div>'
+          })
+          var breakdown = ''
+          SESSION.forEach(function (ex, i) {
+            var logged = state.ex[i].logged
+            if (!logged.length) return
+            breakdown +=
+              '<p style="font:700 12px var(--sora);letter-spacing:.06em;text-transform:uppercase;color:var(--stone);margin:6px 0 2px">' +
+              exName(ex) +
+              '</p>'
+            var wn = 0
+            logged.forEach(function (s) {
+              if (!s.warm) wn++
+              breakdown +=
+                '<div style="display:flex;justify-content:space-between;align-items:center;font:500 13px var(--mono);min-height:22px"><span style="color:' +
+                (s.warm ? 'var(--stone)' : 'var(--text)') +
+                '">' +
+                (s.warm ? t('warmTag') : t('setWord', { n: wn })) +
+                (s.pr ? '<span class="pr-tag">PR</span>' : '') +
+                '</span><span style="color:var(--stone);white-space:nowrap">' +
+                ltr(fmtW(s.w) + ' × ' + s.r) +
+                '</span></div>'
+            })
+          })
           return (
             '<div class="screen" data-screen="finish">' +
             STATUSBAR +
-            '<div style="padding:26px 22px 18px">' +
-            '<p style="font:500 13px var(--hanken);color:var(--stone);margin:0 0 8px">Tuesday · workout 47</p>' +
-            '<p style="font:800 34px/1.12 var(--sora);letter-spacing:-.03em;margin:0">In the books.</p>' +
-            '</div>' +
-            '<div style="flex:1;overflow:hidden;padding:0 22px;display:flex;flex-direction:column;gap:12px">' +
-            '<div style="display:flex;gap:10px">' +
-            '<div class="panel" style="flex:1;padding:14px 16px"><p style="font:700 22px var(--sora);letter-spacing:-.02em;margin:0;font-variant-numeric:tabular-nums">' +
+            '<div style="padding:26px 22px 18px;flex-shrink:0">' +
+            '<p style="font:500 13px var(--hanken);color:var(--stone);margin:0 0 8px">' +
+            t('finSub') +
+            '</p>' +
+            '<p style="font:800 34px/1.12 var(--sora);letter-spacing:-.03em;margin:0">' +
+            t('finTitle') +
+            '</p></div>' +
+            '<div class="scroll-col" style="gap:12px">' +
+            '<div style="display:flex;gap:10px;flex-shrink:0">' +
+            '<div class="panel" style="flex:1;padding:14px 16px"><p dir="ltr" style="font:700 22px var(--sora);letter-spacing:-.02em;margin:0;font-variant-numeric:tabular-nums;text-align:start">' +
             fmt(state.elapsed) +
-            '</p><p style="font:500 11.5px var(--hanken);color:var(--stone);margin:3px 0 0">duration</p></div>' +
-            '<div class="panel" style="flex:1;padding:14px 16px"><p style="font:700 22px var(--sora);letter-spacing:-.02em;margin:0;font-variant-numeric:tabular-nums">' +
+            '</p><p style="font:500 11.5px var(--hanken);color:var(--stone);margin:3px 0 0">' +
+            t('duration') +
+            '</p></div>' +
+            '<div class="panel" style="flex:1;padding:14px 16px"><p dir="ltr" style="font:700 22px var(--sora);letter-spacing:-.02em;margin:0;font-variant-numeric:tabular-nums;text-align:start">' +
             volume.toLocaleString('en-US') +
-            '</p><p style="font:500 11.5px var(--hanken);color:var(--stone);margin:3px 0 0">kg lifted</p></div>' +
-            '<div class="panel" style="flex:1;padding:14px 16px"><p style="font:700 22px var(--sora);letter-spacing:-.02em;margin:0;font-variant-numeric:tabular-nums">' +
-            state.sets.length +
-            '</p><p style="font:500 11.5px var(--hanken);color:var(--stone);margin:3px 0 0">bench sets</p></div>' +
-            '</div>' +
-            (gotPR
-              ? '<div style="background:rgba(232,73,29,.09);border-radius:20px;padding:18px;display:flex;gap:14px;align-items:center">' +
-                '<svg width="44" height="44" viewBox="0 0 96 96" style="flex-shrink:0"><path fill="#e8491d" fill-rule="evenodd" d="M48 4 a44 44 0 1 0 0 88 a44 44 0 1 0 0 -88 Z M48 33 a15 15 0 1 1 0 30 a15 15 0 1 1 0 -30 Z M17 43 h6 a5 5 0 0 1 5 5 a5 5 0 0 1 -5 5 h-6 a5 5 0 0 1 -5 -5 a5 5 0 0 1 5 -5 Z M73 43 h6 a5 5 0 0 1 5 5 a5 5 0 0 1 -5 5 h-6 a5 5 0 0 1 -5 -5 a5 5 0 0 1 5 -5 Z"></path></svg>' +
-                '<div><p style="font:700 12px var(--sora);letter-spacing:.08em;text-transform:uppercase;color:var(--ember);margin:0 0 4px">New PR</p>' +
-                '<p style="font:700 17px var(--sora);letter-spacing:-.02em;margin:0">Bench Press — ' +
-                bestSet.w +
-                ' kg × ' +
-                bestSet.r +
-                '</p><p style="font:500 12px var(--mono);color:var(--stone);margin:4px 0 0">est. 1RM ' +
-                best.toFixed(1) +
-                ' kg</p></div></div>'
-              : '') +
-            '<div class="card" style="padding:16px 18px;display:flex;gap:12px;align-items:flex-start">' +
-            glyph(26, '#16130e', true) +
-            '<p style="font:500 14px/1.6 var(--hanken);color:var(--body-dim);margin:0">All bench sets at speed — the 2.5 jump held. Eat, sleep. Pull day Thursday.</p>' +
-            '</div>' +
-            '<div class="card" style="padding:14px 18px;display:flex;flex-direction:column;gap:8px">' +
-            rows +
+            '</p><p style="font:500 11.5px var(--hanken);color:var(--stone);margin:3px 0 0">' +
+            t('kgLifted') +
+            '</p></div>' +
+            '<div class="panel" style="flex:1;padding:14px 16px"><p dir="ltr" style="font:700 22px var(--sora);letter-spacing:-.02em;margin:0;font-variant-numeric:tabular-nums;text-align:start">' +
+            allSets.length +
+            '</p><p style="font:500 11.5px var(--hanken);color:var(--stone);margin:3px 0 0">' +
+            t('setsTile') +
+            '</p></div></div>' +
+            prCards +
+            '<div class="card" style="padding:16px 18px;display:flex;gap:12px;align-items:flex-start;flex-shrink:0">' +
+            glyph(26, 'var(--text)', true) +
+            '<p style="font:500 14px/1.6 var(--hanken);color:var(--body);margin:0">' +
+            t('debrief') +
+            '</p></div>' +
+            '<div class="card" style="padding:14px 18px;display:flex;flex-direction:column;gap:4px;flex-shrink:0">' +
+            breakdown +
             '</div></div>' +
-            '<div style="padding:14px 22px 30px;display:flex;gap:10px">' +
-            '<button type="button" data-act="done" style="flex:1;display:flex;align-items:center;justify-content:center;font:700 15px var(--sora);color:var(--ink);background:#ffffff;box-shadow:0 0 0 1px rgba(22,19,14,.1);border-radius:99px;height:56px">Share card</button>' +
-            '<button type="button" data-act="done" style="flex:1;display:flex;align-items:center;justify-content:center;font:700 15px var(--sora);color:var(--paper);background:var(--ink);border-radius:99px;height:56px">Done</button>' +
-            '</div></div>'
+            '<div style="padding:14px 22px 30px;display:flex;gap:10px;flex-shrink:0">' +
+            '<button type="button" data-act="done" style="flex:1;display:flex;align-items:center;justify-content:center;font:700 15px var(--sora);color:var(--text);background:var(--surface);box-shadow:0 0 0 1px var(--line-strong);border-radius:99px;height:56px">' +
+            t('share') +
+            '</button>' +
+            '<button type="button" data-act="done" style="flex:1;display:flex;align-items:center;justify-content:center;font:700 15px var(--sora);color:var(--flip-text);background:var(--flip-bg);border-radius:99px;height:56px">' +
+            t('done') +
+            '</button></div></div>'
           )
         }
 
@@ -533,26 +1220,33 @@
           root.innerHTML = html
         }
 
+        /* ---------- actions ---------- */
+        function startRest(afterWarm) {
+          state.restTotal = afterWarm ? WARM_REST : WORK_REST
+          state.restLeft = state.restTotal
+          state.resting = true
+        }
+
         var actions = {
           start: function () {
             state.screen = 'workout'
-            state.restTotal = REST_DEFAULT
-            state.restLeft = REST_DEFAULT
+            prepInputs()
           },
           goHome: function () {
             state.screen = 'home'
           },
           finish: function () {
             state.screen = 'finish'
+            state.resting = false
           },
           done: function () {
             state = initialState()
           },
           incW: function () {
-            state.weight += 2.5
+            state.weight += cur().inc
           },
           decW: function () {
-            state.weight = Math.max(20, state.weight - 2.5)
+            state.weight = Math.max(0, state.weight - cur().inc)
           },
           incR: function () {
             state.reps += 1
@@ -561,26 +1255,63 @@
             state.reps = Math.max(1, state.reps - 1)
           },
           logSet: function () {
-            state.sets = state.sets.concat({
-              n: state.sets.length + 1,
-              w: fmtW(state.weight),
+            var p = nextPlanned(state.exIndex)
+            curEx().logged.push({
+              w: state.weight,
               r: state.reps,
+              warm: p.warm,
+              pr: false,
             })
-            if (state.sets.length >= 4) {
+            recomputePRs(state, state.exIndex)
+            startRest(p.warm)
+            prepInputs()
+          },
+          nextExercise: function () {
+            if (state.exIndex >= SESSION.length - 1) {
               state.screen = 'finish'
-            } else {
-              state.screen = 'rest'
-              state.restLeft = state.restTotal
+              state.resting = false
+              return
             }
+            state.exIndex += 1
+            prepInputs()
+          },
+          addSet: function () {
+            curEx().extra += 1
+            prepInputs()
+          },
+          updateSet: function () {
+            var s = curEx().logged[state.editing]
+            if (s) {
+              s.w = state.weight
+              s.r = state.reps
+              recomputePRs(state, state.exIndex)
+            }
+            prepInputs()
+          },
+          removeSet: function () {
+            if (state.editing !== null) {
+              curEx().logged.splice(state.editing, 1)
+              recomputePRs(state, state.exIndex)
+            }
+            prepInputs()
+          },
+          cancelEdit: function () {
+            prepInputs()
+          },
+          expandRest: function () {
+            state.screen = 'rest'
+          },
+          collapseRest: function () {
+            state.screen = 'workout'
           },
           skipRest: function () {
-            state.screen = 'workout'
+            state.resting = false
             state.restLeft = state.restTotal
+            state.screen = 'workout'
           },
           add30: function () {
-            var next = state.restLeft + 30
-            state.restLeft = next
-            state.restTotal = Math.max(state.restTotal, next)
+            state.restLeft = state.restLeft + 30
+            state.restTotal = Math.max(state.restTotal, state.restLeft)
           },
           sub30: function () {
             state.restLeft = Math.max(1, state.restLeft - 30)
@@ -588,6 +1319,64 @@
         }
 
         root.addEventListener('click', function (e) {
+          var sub = e.target.closest('[data-sub]')
+          if (sub) {
+            e.stopPropagation()
+            actions[sub.getAttribute('data-sub')]()
+            render()
+            return
+          }
+          var jump = e.target.closest('[data-jump]')
+          if (jump) {
+            state.exIndex = parseInt(jump.getAttribute('data-jump'), 10)
+            prepInputs()
+            render()
+            return
+          }
+          var editBtn = e.target.closest('[data-edit-set]')
+          if (editBtn) {
+            var gi = parseInt(editBtn.getAttribute('data-edit-set'), 10)
+            var s = curEx().logged[gi]
+            if (s) {
+              state.editing = gi
+              state.weight = s.w
+              state.reps = s.r
+            }
+            render()
+            return
+          }
+          var num = e.target.closest('[data-num]')
+          if (num && !num.querySelector('input')) {
+            var field = num.getAttribute('data-num')
+            var input = document.createElement('input')
+            input.className = 'step-input'
+            input.type = 'text'
+            input.inputMode = field === 'weight' ? 'decimal' : 'numeric'
+            input.value = field === 'weight' ? fmtW(state.weight) : String(state.reps)
+            input.setAttribute('dir', 'ltr')
+            num.textContent = ''
+            num.appendChild(input)
+            input.focus()
+            input.select()
+            var commit = function () {
+              var raw = input.value.replace(',', '.').replace(/[^0-9.]/g, '')
+              var v = parseFloat(raw)
+              if (!isNaN(v)) {
+                if (field === 'weight') state.weight = Math.min(500, Math.max(0, v))
+                else state.reps = Math.min(100, Math.max(1, Math.round(v)))
+              }
+              render()
+            }
+            input.addEventListener('blur', commit)
+            input.addEventListener('keydown', function (ev) {
+              if (ev.key === 'Enter') input.blur()
+              if (ev.key === 'Escape') {
+                input.removeEventListener('blur', commit)
+                render()
+              }
+            })
+            return
+          }
           var btn = e.target.closest('[data-act]')
           if (!btn) return
           var act = actions[btn.getAttribute('data-act')]
@@ -596,22 +1385,39 @@
           render()
         })
 
+        /* ---------- prototype controls ---------- */
+        document.getElementById('ctl-locale').addEventListener('click', function () {
+          locale = locale === 'en' ? 'ar' : 'en'
+          document.documentElement.lang = locale
+          document.documentElement.dir = locale === 'ar' ? 'rtl' : 'ltr'
+          this.textContent = locale === 'en' ? 'عربي' : 'EN'
+          render()
+        })
+        document.getElementById('ctl-theme').addEventListener('click', function () {
+          theme = theme === 'light' ? 'dark' : 'light'
+          if (theme === 'dark')
+            document.documentElement.setAttribute('data-theme', 'dark')
+          else document.documentElement.removeAttribute('data-theme')
+          this.textContent = theme === 'light' ? 'Dark' : 'Light'
+        })
+
+        /* ---------- clock ---------- */
         setInterval(function () {
-          if (state.screen === 'workout') {
-            state.elapsed += 1
-            var el = document.getElementById('elapsed')
-            if (el) el.textContent = fmt(state.elapsed)
-          } else if (state.screen === 'rest') {
-            state.elapsed += 1
+          var onWorkout = state.screen === 'workout'
+          var onRest = state.screen === 'rest'
+          if (!onWorkout && !onRest) return
+          state.elapsed += 1
+          var el = document.getElementById('elapsed')
+          if (el) el.textContent = fmt(state.elapsed)
+          if (state.resting) {
             if (state.restLeft <= 1) {
+              state.resting = false
               state.restLeft = state.restTotal
-              state.screen = 'workout'
+              if (onRest) state.screen = 'workout'
               render()
               return
             }
             state.restLeft -= 1
-            var el2 = document.getElementById('elapsed')
-            if (el2) el2.textContent = fmt(state.elapsed)
             var lbl = document.getElementById('rest-label')
             if (lbl) lbl.textContent = fmt(state.restLeft)
             var tot = document.getElementById('rest-total')
@@ -622,9 +1428,18 @@
                 'stroke-dashoffset',
                 String(RING * (state.restLeft / state.restTotal)),
               )
+            var chipT = document.getElementById('chip-time')
+            if (chipT) chipT.textContent = fmt(state.restLeft)
+            var chipR = document.getElementById('chip-ring')
+            if (chipR)
+              chipR.setAttribute(
+                'stroke-dashoffset',
+                String(CHIP_RING * (state.restLeft / state.restTotal)),
+              )
           }
         }, 1000)
 
+        state = initialState()
         render()
       })()
     </script>
