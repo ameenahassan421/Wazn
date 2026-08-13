@@ -88,7 +88,7 @@ export function LoadHelper({
 
           <div>
             <p className="text-xs text-muted">{t('load.per_side')}</p>
-            <p className="tnum text-2xl font-semibold">
+            <p className="tnum font-display text-2xl font-semibold">
               {plates ? describePlates(plates) : '—'}
             </p>
             {plates && plates.remainder !== 0 && (

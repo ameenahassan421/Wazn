@@ -134,7 +134,7 @@ export function FinishSummary({
                 />
               )}
               <div className="flex min-w-0 flex-1 flex-col items-center gap-1 px-1">
-                <span className="tnum truncate text-[27px] font-semibold leading-none">
+                <span className="tnum font-display truncate text-[27px] font-semibold leading-none">
                   {value}
                 </span>
                 <span className="text-[11px] text-muted">{label}</span>

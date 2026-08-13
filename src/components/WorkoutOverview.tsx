@@ -517,7 +517,7 @@ function BlockMenu({
         >
           −
         </button>
-        <span className="tnum w-12 text-center text-[15px] font-medium">
+        <span className="tnum font-display w-12 text-center text-[15px] font-medium">
           {describeRest(block.restSeconds)}
         </span>
         <button

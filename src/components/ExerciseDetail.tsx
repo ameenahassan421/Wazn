@@ -545,7 +545,7 @@ export function ExerciseDetail({
           </p>
           {rec?.value && rec.value.total_sets > 0 ? (
             <>
-              <p className="tnum mt-0.5 text-[15px]">
+              <p className="tnum font-display mt-0.5 text-[15px]">
                 {rec.value.total_sets} sets · {rec.value.total_sessions} sessions
               </p>
               {rec.value.first_logged_at && (
@@ -568,7 +568,7 @@ export function ExerciseDetail({
               className="ring-edge bg-surface px-2.5 py-2.5"
               style={{ borderRadius: 'var(--radius-md)' }}
             >
-              <p className="tnum text-2xl font-medium">{value}</p>
+              <p className="tnum font-display text-2xl font-medium">{value}</p>
               <p className="mt-0.5 text-[10px] text-muted">{label}</p>
             </li>
           ))}
@@ -587,7 +587,7 @@ export function ExerciseDetail({
       {points && progress && progress.sessions > 1 && (
         <section>
           <h3 className="kicker mb-2">{t('detail.e1rm')}</h3>
-          <p className="tnum text-2xl font-medium">
+          <p className="tnum font-display text-2xl font-medium">
             {progress.delta_kg === 0
               ? 'Level'
               : `${progress.delta_kg > 0 ? '+' : '−'}${formatEstimate(Math.abs(progress.delta_kg), unit)} ${unit}`}
@@ -667,7 +667,7 @@ export function ExerciseDetail({
                 <span className="tnum w-12 shrink-0 text-xs text-muted">
                   {rung.label} rep
                 </span>
-                <span className="tnum flex-1 text-2xl font-medium">
+                <span className="tnum font-display flex-1 text-2xl font-medium">
                   {formatWeight(rung.best_weight_kg, unit)}
                   <span className="ms-1 text-xs font-normal text-muted">{unit}</span>
                 </span>
