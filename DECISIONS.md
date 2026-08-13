@@ -4821,3 +4821,41 @@ muscleLabel helper that falls back to the raw value for anything custom.
 Known and deliberate: AI-generated coach content (brief, notes) is model
 output, not catalogue strings; its language is a prompt question for the
 coach functions, not an i18n question, and is out of this stage's scope.
+
+## 2026-08-12: Ameen reversed two of my calls, and the record should say so plainly
+
+1. **Dark-first is dead. Paper is the default.** My delegated decision kept
+   the app dark with the prototype's accent and type; Ameen looked at it and
+   said it is not what we agreed on. He is right about what the agreement
+   was FOR: the prototype IS the design, and the prototype is paper. Dark
+   becomes the toggle, still fully built, still recommended in dim gyms.
+2. **Experience parity, not token parity.** My R2 entry kept the incumbent
+   rest bar and called the prototype's chip a cosmetic trade-down. Ameen's
+   correction: the functions, toggles and flow of the prototype are the
+   spec, not just its palette. The resolution keeps what rule 6 protected
+   (deadline-based timing, composited drain, the write path, the canvas
+   rules) UNDER the prototype's presentation (chip above the commit
+   cluster, tap-to-expand rest view, plate card, warm-up surfacing, coach
+   line in flow). R5 and R6 in docs/REBUILD_PLAN.md carry the itemized
+   scope.
+
+The lesson for the log: a delegated decision is still the owner's decision.
+When the owner sees it and disagrees, the artifact was doing its job.
+
+## 2026-08-12: R4 shipped paper-first. Choices inside the phase.
+
+1. **The ramps are role-mirrored, not value-copied.** In both themes,
+   accent-300 means "small accent text readable on this ground" and 800-900
+   mean "tinted fills". Paper gets the dark embers where dark got the pale
+   ones. Every component keeps its class; the meaning travels with the
+   theme. Same for the neutral ramp and the exercise tiles.
+2. **The share card stays dark.** A canvas cannot read CSS custom
+   properties, and a shared card is a brand artifact, not a screen. It
+   renders ink-and-ember in both themes on purpose.
+3. **Migration 0025 (theme column plus upsert allowlist) is written and
+   executes from empty, but is NOT applied to production.** The client is
+   localStorage-first like locale, so nothing depends on the column
+   existing. Applying it is a production DDL action and waits for Ameen or
+   an explicit go, per the standing rule.
+4. Two hardcoded dark hairlines (TabBar, the overview footer) moved to the
+   divider token; the header band's gradient got a per-theme tint token.

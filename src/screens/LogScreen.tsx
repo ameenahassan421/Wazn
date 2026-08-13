@@ -2434,7 +2434,7 @@ export function LogScreen({
                 // it marks the edge where content stops and chrome starts, so
                 // a control passing behind reads as scrolling under a bar
                 // rather than as being cut in half.
-                borderTop: '1px solid rgba(236,235,232,0.09)',
+                borderTop: '1px solid var(--divider-solid)',
               }}
             >
               {/* E1's rest canvas, ABOVE the bar and inside the same wrapper.

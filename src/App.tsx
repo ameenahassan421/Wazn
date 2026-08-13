@@ -7,6 +7,7 @@ import { supabaseConfigError } from './lib/supabase'
 import { useAuth } from './lib/use-auth'
 import { useBackLayer } from './lib/use-back'
 import { LocaleProvider, useLocale } from './lib/locale-context'
+import { ThemeProvider } from './lib/theme-context'
 import { UnitProvider } from './lib/unit-context'
 import { AuthScreen } from './components/AuthScreen'
 import { ErrorBoundary } from './components/ErrorBoundary'
@@ -88,9 +89,11 @@ export default function App() {
     // LocaleProvider wraps AuthScreen so the pre-auth surface can offer the
     // language toggle — a signed-out user has no Header to put it in.
     return (
-      <LocaleProvider>
-        <AuthScreen />
-      </LocaleProvider>
+      <ThemeProvider>
+        <LocaleProvider>
+          <AuthScreen />
+        </LocaleProvider>
+      </ThemeProvider>
     )
   }
 
@@ -113,39 +116,41 @@ export default function App() {
     // header and tab bar can throw too, and a boundary inside `main` cannot
     // catch its own chrome. See components/ErrorBoundary.tsx.
     <ErrorBoundary boundary="root">
-      <LocaleProvider userId={userId}>
-        <UnitProvider userId={userId}>
-          <Header titleKey={titleKey} />
-          <main className="mx-auto w-full max-w-[430px] px-[18px] pb-28">
-            <ErrorBoundary boundary={tab} resetKey={tab}>
-              {tab === 'log' && (
-                <LogScreen userId={userId} onOpenCoach={() => setTab('coach')} />
-              )}
-              {tab === 'history' && <HistoryScreen />}
-              {tab === 'progress' && (
-                <Suspense fallback={<ScreenFallback />}>
-                  <ProgressScreen onOpenCoach={() => setTab('coach')} />
-                </Suspense>
-              )}
-              {tab === 'coach' && (
-                <Suspense fallback={<ScreenFallback />}>
-                  {/* Saving generated routines sends you to Log, where routines
+      <ThemeProvider userId={userId}>
+        <LocaleProvider userId={userId}>
+          <UnitProvider userId={userId}>
+            <Header titleKey={titleKey} />
+            <main className="mx-auto w-full max-w-[430px] px-[18px] pb-28">
+              <ErrorBoundary boundary={tab} resetKey={tab}>
+                {tab === 'log' && (
+                  <LogScreen userId={userId} onOpenCoach={() => setTab('coach')} />
+                )}
+                {tab === 'history' && <HistoryScreen />}
+                {tab === 'progress' && (
+                  <Suspense fallback={<ScreenFallback />}>
+                    <ProgressScreen onOpenCoach={() => setTab('coach')} />
+                  </Suspense>
+                )}
+                {tab === 'coach' && (
+                  <Suspense fallback={<ScreenFallback />}>
+                    {/* Saving generated routines sends you to Log, where routines
                     live — the thing you just made is one tap from being
                     started. */}
-                  <CoachScreen onRoutinesSaved={() => setTab('log')} />
-                </Suspense>
-              )}
-              {tab === 'friends' && (
-                <Suspense fallback={<ScreenFallback />}>
-                  <FriendsScreen userId={userId} />
-                </Suspense>
-              )}
-            </ErrorBoundary>
-          </main>
-          <TabBar active={tab} onChange={setTab} />
-          <Analytics />
-        </UnitProvider>
-      </LocaleProvider>
+                    <CoachScreen onRoutinesSaved={() => setTab('log')} />
+                  </Suspense>
+                )}
+                {tab === 'friends' && (
+                  <Suspense fallback={<ScreenFallback />}>
+                    <FriendsScreen userId={userId} />
+                  </Suspense>
+                )}
+              </ErrorBoundary>
+            </main>
+            <TabBar active={tab} onChange={setTab} />
+            <Analytics />
+          </UnitProvider>
+        </LocaleProvider>
+      </ThemeProvider>
     </ErrorBoundary>
   )
 }

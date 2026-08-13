@@ -48,10 +48,27 @@ session delta, ramp suggestion, PR proximity. Strings live in the i18n
 catalogue, EN and AR. No model calls anywhere. Gate: screenshots EN/AR, wall
 green.
 
-**R4: The paper theme.**
-The prototype's light world as a selectable theme (user_preferences already
-stores locale and unit; theme joins them). Dark stays default. Gate:
-both themes pass the same screenshot pass; contrast holds AA in both.
+**R4: The paper theme, as the DEFAULT (Ameen, 2026-08-12).**
+Ameen reversed the dark-first call when he saw it: the app opens in the
+paper world he designed, and dark becomes the toggle (user_preferences
+already stores locale and unit; theme joins them, localStorage-first like
+locale so the migration can land later). Gate: both themes pass the same
+screenshot pass; contrast holds AA in both; the accent-step rule flips with
+the theme (dark ember for small text on paper).
+
+**R5: Workout experience parity with the prototype (Ameen, 2026-08-12).**
+"Not only the colors. The functions, the toggles, functionality." The
+prototype's presentation becomes the spec, with the app's mechanics kept
+underneath: rest presented as the chip above the commit cluster with a
+tap-to-expand full rest view (the deadline engine and canvas rules stay);
+the plate math card and warm-up ramp surfaced the way the prototype does
+it; the coach line in the logging flow; steppers flanking the big figures.
+Gate: side-by-side frames against /prototype read as the same product.
+
+**R6: Home and finish ceremony parity.**
+The greeting header, coach card, Up next plan card and single Start CTA on
+the home surface; the "In the books" finish with stat tiles, per-exercise
+PR cards, debrief and share row. Gate: same side-by-side standard.
 
 ## Not doing in this stage
 

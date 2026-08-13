@@ -52,6 +52,8 @@ export const messages: Record<Locale, Record<string, string>> = {
     'when.last_week': 'last week',
     'when.weeks_ago': '{n} weeks ago',
     'when.months_ago': '{n} months ago',
+    'theme.to_dark': 'Dark theme',
+    'theme.to_paper': 'Paper theme',
     // Suspense loading fallback
     'chrome.loading': 'Loading…',
 
@@ -721,6 +723,8 @@ export const messages: Record<Locale, Record<string, string>> = {
     'when.last_week': 'الأسبوع الماضي',
     'when.weeks_ago': 'منذ {n} أسابيع',
     'when.months_ago': 'منذ {n} أشهر',
+    'theme.to_dark': 'المظهر الداكن',
+    'theme.to_paper': 'المظهر الفاتح',
     // Suspense loading fallback
     'chrome.loading': 'جارٍ التحميل…',
 
