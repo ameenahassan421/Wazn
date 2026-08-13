@@ -36,20 +36,23 @@ not the edge case. **[plan]**
 ## Voice
 
 **Terse gym partner.** Short, direct, zero fluff — respects the mid-workout
-context. PRs get an amber flash, not confetti. Errors say what failed and
+context. PRs get an ember flash, not confetti. Errors say what failed and
 what to do next. **[Ameen]**
 
 ## Durable constraints future work must preserve
 
 - The logging flow is sacred: no ads, modals, spinners, or celebration
   screens mid-set. Logging is never paywalled. **[plan]**
-- Design system: dark only, near-black warm ground, off-white text, single
-  amber accent (#f0b429), numbers ≥24px tabular, touch targets ≥48px, one
-  typeface, no gradients/shadows/emoji in UI. CSS logical properties only.
+- Design system: dark-first, near-black warm ground, off-white text, single
+  ember accent (#e8491d; adopted 2026-08-12, DECISIONS.md), numbers ≥24px
+  tabular, touch targets ≥48px, three faces with fixed roles (Sora for
+  figures and display, Hanken Grotesk for prose, IBM Plex Mono for meta),
+  no gradients/shadows/emoji in UI. CSS logical properties only. A paper
+  light theme arrives at stage R4 as the secondary option.
   **[plan]**
 - Weight is stored in kg, always; lbs is display-only. **[plan]**
 - The brand mark is the word وزن composed as a barbell ("Loaded Ink" —
-  `docs/design-philosophy.md`); chalk letters, amber iron. Regenerate via
+  `docs/design-philosophy.md`); chalk letters, ember iron. Regenerate via
   `scripts/build_logo.py`, never redraw by hand. **[plan]**
 - Auth is a 6-digit email code, never a magic link. **[plan]**
 

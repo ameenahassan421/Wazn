@@ -138,7 +138,7 @@ export function LoadHelper({
                           className="flex h-12 w-full items-center gap-3 disabled:opacity-45"
                         >
                           {figures}
-                          <span className="w-12 shrink-0 text-end text-[11px] font-medium text-accent">
+                          <span className="w-12 shrink-0 text-end text-[11px] font-medium text-accent-300">
                             {logged ? 'logged' : 'Log'}
                           </span>
                         </button>

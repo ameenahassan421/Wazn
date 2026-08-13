@@ -17,7 +17,7 @@
  *
  * Every exercise page is self-contained: inline CSS, no JS bundle, no
  * framework. Logical CSS properties only; dark theme with one amber accent
- * (#f0b429); no gradients, no emoji, no em-dashes.
+ * (#e8491d); no gradients, no emoji, no em-dashes.
  */
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { dirname, join, resolve } from 'node:path'
@@ -108,13 +108,13 @@ body {
   font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   line-height: 1.6;
 }
-a { color: #f0b429; text-decoration: none; }
+a { color: #e8491d; text-decoration: none; }
 a:hover { text-decoration: underline; }
 .container { max-width: 640px; margin-inline: auto; padding: 2rem 1.25rem 3rem; }
 header { border-block-end: 1px solid #1f242c; }
 .site-title { font-size: 1rem; letter-spacing: 0.08em; text-transform: uppercase; color: #9ca3af; }
 h1 { font-size: 1.75rem; line-height: 1.25; margin-block: 0.75rem 0.25rem; }
-h2 { font-size: 1.2rem; margin-block: 2rem 0.5rem; color: #f0b429; }
+h2 { font-size: 1.2rem; margin-block: 2rem 0.5rem; color: #e8491d; }
 .meta { color: #9ca3af; margin-block: 0 1.5rem; font-size: 0.95rem; }
 ol.instructions { padding-inline-start: 1.25rem; }
 ol.instructions li { margin-block-end: 0.6rem; }

@@ -153,7 +153,7 @@ export function FinishSummary({
         >
           <div className="flex items-center gap-2">
             <span className="tag-pr h-[22px]">PR</span>
-            <p className="text-sm font-medium text-accent">
+            <p className="text-sm font-medium text-accent-300">
               {summary.prs.length === 1
                 ? '1 personal record'
                 : `${summary.prs.length} personal records`}

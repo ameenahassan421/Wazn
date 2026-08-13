@@ -279,7 +279,7 @@ export function ExercisePicker({
               <button
                 type="button"
                 onClick={() => setCreating(true)}
-                className="flex min-h-14 w-full items-center py-3 text-start text-sm text-accent"
+                className="flex min-h-14 w-full items-center py-3 text-start text-sm text-accent-300"
               >
                 + New exercise
               </button>

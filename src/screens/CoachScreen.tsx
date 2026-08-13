@@ -173,7 +173,7 @@ function NotesCard() {
                   />
                 )}
                 <div className="flex gap-2.5">
-                  <span className="tnum shrink-0 font-mono text-xs text-accent">
+                  <span className="tnum shrink-0 font-mono text-xs text-accent-300">
                     {i + 1}
                   </span>
                   <div className="min-w-0 flex-1">
@@ -355,7 +355,7 @@ function RoutineBuilder({ onSaved }: { onSaved: () => void }) {
       {error && (
         <p
           role="alert"
-          className="mb-2.5 border border-accent px-3 py-2 text-sm text-accent"
+          className="mb-2.5 border border-accent px-3 py-2 text-sm text-accent-300"
           style={{ borderRadius: 'var(--radius-md)' }}
         >
           {error}
@@ -458,7 +458,7 @@ function RoutinePreviewScreen({
       {error && (
         <p
           role="alert"
-          className="border border-accent px-3 py-2 text-sm text-accent"
+          className="border border-accent px-3 py-2 text-sm text-accent-300"
           style={{ borderRadius: 'var(--radius-md)' }}
         >
           {error}

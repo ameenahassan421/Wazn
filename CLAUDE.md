@@ -98,7 +98,7 @@ which one it has.
   grow an Arabic RTL locale.
 - **Weight is stored in kg, always.** The header lbs/kg toggle is display only,
   rounded to 0.5 lb / 0.25 kg. Never round the stored value.
-- **Dark theme, one accent (amber `#f0b429`).** Nothing else is coloured. No
+- **Dark-first, one accent (ember `#e8491d`, adopted 2026-08-12).** Nothing else is coloured. No
   gradients, shadows, emoji, or decorative illustration. Numbers render large
   and tabular (`.tnum`). Touch targets ≥ 48px.
 - **Auth offers four ways in — never a magic link.** Ameen's decisions
