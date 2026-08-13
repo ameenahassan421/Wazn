@@ -2,6 +2,7 @@ import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'rea
 import { describeError, supabase } from '../lib/supabase'
 import { useBackLayer } from '../lib/use-back'
 import { publishActiveWorkout } from '../lib/active-workout'
+import { dueRoutine } from '../lib/rotation'
 import type { RoutineWithRun } from '../lib/rotation'
 import { lazyScreen } from '../lib/lazy-screen'
 import { useUnit } from '../lib/unit-context'
@@ -10,7 +11,9 @@ import { formatWeight } from '../lib/units'
 import {
   formatDuration,
   formatRelativeDay,
+  formatShortDate,
   formatSyncedAt,
+  formatWeekday,
   formatWorkoutDate,
 } from '../lib/format'
 import type {
@@ -25,9 +28,10 @@ import type {
 } from '../lib/types'
 import { ExercisePicker } from '../components/ExercisePicker'
 import { ExerciseThumb } from '../components/ExerciseThumb'
-import { IconBack } from '../components/icons'
+import { IconBack, PlateRing } from '../components/icons'
 import { SetEntry } from '../components/SetEntry'
 import { SessionQueue } from '../components/SessionQueue'
+import { UpNextCard } from '../components/UpNextCard'
 import { DEFAULT_REST_SECONDS, useRestTimer } from '../lib/use-rest-timer'
 import { FinishSummary } from '../components/FinishSummary'
 import { RoutineList } from '../components/RoutineList'
@@ -2161,6 +2165,12 @@ export function LogScreen({
   // Empty state: one button, then context. Nothing here is a control you have
   // to read before you can start lifting.
   if (!workout) {
+    // The lift the rotation is pointing at. `dueRoutine` returns null for a
+    // single routine — calling the only door "due" is telling somebody the
+    // only door is the door — but a single routine IS what is up next, so the
+    // card takes it while the "due" label does not.
+    const upNext = dueRoutine(routines) ?? (routines.length === 1 ? routines[0] : null)
+
     return (
       <div className="flex flex-col gap-[18px] pt-4">
         {error && <ErrorNote message={error} />}
@@ -2170,6 +2180,62 @@ export function LogScreen({
         {cachedAt !== null && <CachedNote savedAt={cachedAt} />}
         <SyncNote online={online} pending={pendingSetCount(queue)} />
 
+        {/* The greeting. Two lines, as the design has it: what today is by
+            the calendar, then what today is by the plan.
+
+            The design's hero is "{Plan} day, {Name}." — this app has no name
+            to put there. `profiles.display_name` has existed since migration
+            0001 and nothing has ever written it; the only name the app
+            collects is a username, and "Upper A, @ameen." is worse than no
+            greeting at all. So the hero names the session and stops, which is
+            the half of the sentence the app can actually stand behind. And it
+            is the routine name alone rather than "{Plan} day" — routine names
+            here are free text and most of them already end in "Day". */}
+        <div>
+          <p className="flex items-center gap-2 text-[13px] text-muted">
+            {/* The streak plates stay: they are this app's own mark for the
+                fact the design writes as "week 12", and they were already
+                built. What goes is the separate streak paragraph under the
+                Start button — it said the same thing twice.
+
+                Every figure is isolated. Unisolated, the two counts ended up
+                adjacent under Arabic — "6" and "0" printed side by side in a
+                sentence that never put them together. */}
+            {streak && streak.weeks > 0 && <StreakPlates weeks={streak.weeks} />}
+            <span className="min-w-0 truncate">
+              {streak && streak.weeks > 0 ? (
+                <>
+                  <span dir="ltr" className="tnum">
+                    {streak.weeks}
+                  </span>{' '}
+                  {t('log.streak.week_streak')}
+                  {streak.current_week_sessions > 0 && (
+                    <>
+                      {' · '}
+                      <span dir="ltr" className="tnum">
+                        {streak.current_week_sessions}
+                      </span>{' '}
+                      {t('log.streak.this_week')}
+                    </>
+                  )}
+                </>
+              ) : (
+                formatShortDate(new Date().toISOString())
+              )}
+            </span>
+          </p>
+          {/* The hero names today. The design's is "{Plan} day, {Name}." and
+              this app has neither half to put there: nothing has ever written
+              `profiles.display_name`, and the plan's name is already the
+              subject of the Up next card two rows down — using it here made
+              the screen say "Core & Conditioning" twice in one glance. The
+              weekday is what is left, and it is the honest half: it is the
+              question the design's hero actually answers. */}
+          <h1 className="font-display mt-2 text-[34px] leading-[1.12] font-extrabold tracking-[-0.03em]">
+            {formatWeekday(new Date(), locale)}.
+          </h1>
+        </div>
+
         {/* B1's pre-workout briefing. Mounted HERE and nowhere else, which is
             what enforces §4-A1's core-loop rule: this branch renders only
             when no workout is open, so the coach cannot appear mid-session
@@ -2177,30 +2243,14 @@ export function LogScreen({
             returns null when it has nothing to say, so it costs no layout on
             a new account and never delays Start. */}
         <CoachBrief />
-        <div>
-          <button
-            type="button"
-            onClick={() => void startWorkout()}
-            disabled={saving}
-            className="btn-base btn-hero press h-[62px] w-full text-[18px] disabled:opacity-45"
-          >
-            {hasHistory ? t('log.start') : t('log.start_first')}
-          </button>
 
-          {streak && streak.weeks > 0 && (
-            <p className="mt-2.5 flex items-center gap-2 whitespace-nowrap text-[13px] text-muted">
-              <StreakPlates weeks={streak.weeks} />
-              <span>
-                <span className="tnum font-medium text-text">{streak.weeks}</span>{' '}
-                {t('log.streak.week_streak')} ·{' '}
-                <span className="tnum font-medium text-text">
-                  {streak.current_week_sessions}
-                </span>{' '}
-                {t('log.streak.this_week')}
-              </span>
-            </p>
-          )}
-        </div>
+        {upNext && (
+          <UpNextCard
+            routine={upNext}
+            busy={routineBusy === upNext.id}
+            onStart={() => void startFromRoutine(upNext)}
+          />
+        )}
 
         <RoutineList
           routines={routines}
@@ -2261,6 +2311,33 @@ export function LogScreen({
             </ul>
           </section>
         )}
+
+        {/* Start, fixed at the thumb — the design's own placement, and the
+            reason the routines and the recap can sit below it without pushing
+            the one button this screen exists for off the bottom of a scroll.
+            Same sticky recipe and tab-bar clearance as the workout's commit
+            cluster, so the two screens' hot controls live in one place. */}
+        <div
+          className="sticky z-10 -mx-[18px] mt-auto bg-ink px-[18px] pt-3 pb-1"
+          style={{
+            bottom: 'calc(max(env(safe-area-inset-bottom, 0px), 10px) + 64px)',
+            borderTop: '1px solid var(--divider-solid)',
+          }}
+        >
+          <button
+            type="button"
+            onClick={() => void startWorkout()}
+            disabled={saving}
+            className="btn-base btn-hero press flex h-[58px] w-full items-center justify-center gap-2.5 text-[16px] font-bold disabled:opacity-45"
+            style={{
+              borderRadius: 'var(--radius-pill)',
+              boxShadow: 'var(--shadow-cta)',
+            }}
+          >
+            <PlateRing size={20} className="shrink-0" />
+            <span>{hasHistory ? t('log.start') : t('log.start_first')}</span>
+          </button>
+        </div>
       </div>
     )
   }

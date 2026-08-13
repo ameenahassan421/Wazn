@@ -279,6 +279,11 @@ export const messages: Record<Locale, Record<string, string>> = {
     'log.start_first': 'Start your first workout',
     'log.streak.week_streak': 'week streak',
     'log.streak.this_week': 'this week',
+    // Up next
+    'upnext.kicker': 'Up next',
+    'upnext.exercises': '{n} exercises',
+    'upnext.last_done': 'last done {day}',
+    'upnext.never': 'never run',
     'log.last_session': 'Last session · {day}',
     'log.in_progress': '{name} · in progress',
     'log.workout_fallback': 'Workout',
@@ -978,6 +983,11 @@ export const messages: Record<Locale, Record<string, string>> = {
     'log.start_first': 'ابدأ أول تمرين لك',
     'log.streak.week_streak': 'أسبوع متتالٍ',
     'log.streak.this_week': 'هذا الأسبوع',
+    // Up next
+    'upnext.kicker': 'التالي',
+    'upnext.exercises': '{n} تمارين',
+    'upnext.last_done': 'آخر مرة {day}',
+    'upnext.never': 'لم يُنفَّذ بعد',
     'log.last_session': 'آخر جلسة · {day}',
     'log.in_progress': '{name} · في التقدّم',
     'log.workout_fallback': 'تمرين',

@@ -178,6 +178,19 @@
   --radius-thumb: 12px;
   --radius-pill: 999px;
   --surface-line: rgba(22, 19, 14, 0.06);
+
+  /* The flip ground: the theme's opposite, for the surfaces that want to be
+     the darkest thing on a paper screen and the lightest on an ink one —
+     the rest chip, the Up next card.
+
+     Defined FROM the ramp rather than as its own pair of hex values, so
+     there is one truth about what ink and paper are. `--color-text` and
+     `--color-ink` already swap with the theme, so this needs no dark
+     override; the rest chip has been painting itself this way since R5a,
+     and now it has a name. */
+  --flip-bg: var(--color-text);
+  --flip-text: var(--color-ink);
+  --flip-muted: color-mix(in srgb, var(--color-ink) 58%, var(--color-text));
   --shadow-panel: 0 0 0 1px var(--surface-line);
   --shadow-card: 0 1px 2px var(--surface-line), 0 0 0 1px var(--surface-line);
   --shadow-cta: 0 10px 26px rgba(232, 73, 29, 0.35);

@@ -30,17 +30,18 @@ export interface RoutineDetail extends Routine {
 export async function listRoutines(): Promise<RoutineWithRun[]> {
   const { data, error } = await supabase
     .from('routines')
-    .select('*, workouts(started_at, ended_at)')
+    .select('*, workouts(started_at, ended_at), routine_exercises(count)')
     .order('position')
     .order('created_at')
   if (error) throw error
 
   const rows = (data ?? []) as (Routine & {
     workouts?: { started_at: string; ended_at: string | null }[] | null
+    routine_exercises?: { count: number }[] | null
   })[]
 
   return rotationOrder(
-    rows.map(({ workouts, ...routine }) => {
+    rows.map(({ workouts, routine_exercises, ...routine }) => {
       let last: string | null = null
       for (const w of workouts ?? []) {
         // Finished only, matching `session_brief()`'s `ended_at is not null`.
@@ -49,7 +50,14 @@ export async function listRoutines(): Promise<RoutineWithRun[]> {
         if (w.ended_at === null) continue
         if (last === null || w.started_at > last) last = w.started_at
       }
-      return { ...routine, last_run_at: last }
+      return {
+        ...routine,
+        last_run_at: last,
+        // PostgREST returns an aggregate embed as a one-row array. Absent
+        // rather than zero when the shape surprises us: "0 exercises" is a
+        // claim, and a missing count should say nothing instead.
+        exercise_count: routine_exercises?.[0]?.count ?? null,
+      }
     }),
   )
 }

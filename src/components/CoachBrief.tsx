@@ -9,7 +9,7 @@ import {
   recordCoachView,
 } from '../lib/coach'
 import type { BriefBlock } from '../lib/coach'
-import { IconClose } from './icons'
+import { IconClose, PlateDot } from './icons'
 import { useLocale } from '../lib/locale-context'
 
 /**
@@ -96,18 +96,18 @@ export function CoachBrief() {
   if (!line || dismissed) return null
 
   return (
-    <section
-      className="ring-edge bg-surface ps-3 pe-1 py-2.5"
-      style={{ borderRadius: 'var(--radius-md)' }}
-      aria-label={t('brief.label')}
-    >
-      <div className="flex items-start gap-1">
+    <section className="surface-card ps-[18px] pe-1 py-4" aria-label={t('brief.label')}>
+      {/* The design's coach card: the plate mark, the kicker, the sentence.
+          The mark is what makes this read as the coach speaking rather than
+          as one more panel — it is the only glyph on the home surface. */}
+      <div className="flex items-start gap-3">
+        <PlateDot size={30} className="mt-0.5 shrink-0" />
         <div className="min-w-0 flex-1 pe-1">
           <h2 className="kicker">{t('brief.title')}</h2>
           {/* Keyed on the text so the sentence arriving is an authored moment
               — it settles in rather than swapping under the eye. The skeleton
               is already correct, so this is the only motion the card has. */}
-          <p key={line} className="coach-in mt-1.5 text-[15px] leading-snug">
+          <p key={line} className="coach-in mt-1.5 text-[14.5px] leading-[1.55]">
             {line}
           </p>
           {chip && (

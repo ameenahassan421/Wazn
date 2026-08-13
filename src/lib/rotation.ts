@@ -37,6 +37,12 @@ import type { Routine } from './types'
 export interface RoutineWithRun extends Routine {
   /** `started_at` of the most recent FINISHED workout from it, or null. */
   last_run_at: string | null
+  /**
+   * How many exercises the routine plans, for the Up next card's meta line.
+   * Null when the count did not come back — the card then says less rather
+   * than claiming a routine has no exercises in it.
+   */
+  exercise_count?: number | null
 }
 
 export function rotationOrder<T extends RoutineWithRun>(routines: T[]): T[] {
