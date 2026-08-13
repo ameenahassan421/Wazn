@@ -52,14 +52,14 @@ describe('remaining', () => {
   })
 
   it('counts down', () => {
-    expect(remaining('routine', 1)).toBe(2)
-    expect(remaining('routine', 2)).toBe(1)
+    expect(remaining('routine', 1)).toBe(29)
+    expect(remaining('routine', 29)).toBe(1)
   })
 
   it('is zero, never negative, past the limit', () => {
     // A limit lowered after the fact leaves users over it. "-2 left this
     // month" in the Coach footer is worse than the refusal it describes.
-    expect(remaining('routine', 3)).toBe(0)
+    expect(remaining('routine', 30)).toBe(0)
     expect(remaining('routine', 99)).toBe(0)
   })
 
