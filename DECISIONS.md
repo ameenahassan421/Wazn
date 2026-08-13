@@ -4778,3 +4778,25 @@ statistics) is its own planning task and begins on Ameen's word.
 
 Ground ramp, radii, motion, elevation: untouched. The identity change is
 the hue, the type triad, and nothing else; R2 begins the interaction work.
+
+## 2026-08-12: Routine generation opened up, on Ameen's order
+
+Two changes, both server-side, deployed by merge (deploy-functions.yml):
+
+1. **The routine quota rises from 3 to 30 per rolling 30 days.** The cap was
+   throttling Ameen's own testing. Cost stays bounded where it always was:
+   the free-model-first route in openrouter.ts and the monthly OpenRouter
+   spend ceiling, not this number. coach_notes stays at 1 per week; that one
+   is a product rule, not a cost rule. The quota test's pinned numbers moved
+   with it.
+2. **The generator now plans splits and varies its answers.** The system
+   prompt (generate-routine@2) chooses a split from the day count (1-2
+   full-body, 3 FB or PPL, 4 upper/lower, 5 hybrid, 6 PPL twice), biases
+   set and rep schemes by the stated goal, and is told a regeneration must
+   read as a genuinely different sound week rather than the same plan
+   reshuffled. Validation is unchanged: names still re-match the real
+   exercise table, sets and reps still clamp.
+
+Not done, deliberately: a split-picker in the Routine Builder UI. The prompt
+now infers a sensible split from days and goal; a picker is a fast follow if
+Ameen wants explicit control after trying this.
