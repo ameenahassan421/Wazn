@@ -109,7 +109,13 @@ describe('lazyScreen', () => {
   })
 
   it('does not reload at all when sessionStorage is unavailable', async () => {
-    const getItem = vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
+    // Not `Storage.prototype`: newer Node ships its own `Storage` and
+    // `sessionStorage` globals, and vitest's jsdom environment replaces
+    // `Storage` with jsdom's while leaving Node's `sessionStorage` in place.
+    // The two can belong to different classes, so a spy on the bare class
+    // misses the object the code actually reads.
+    const storageProto = Object.getPrototypeOf(window.sessionStorage) as Storage
+    const getItem = vi.spyOn(storageProto, 'getItem').mockImplementation(() => {
       throw new Error('storage disabled')
     })
     mount(() =>
