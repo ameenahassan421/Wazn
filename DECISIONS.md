@@ -5366,3 +5366,17 @@ only `request.jwt.claims` — which the local shim does not read, making
 **Not applied to production.** Plan §2.6 makes a change to auth an ask. It
 executes cleanly from empty and the suites pass; production is a separate
 decision and needs Ameen's go-ahead.
+
+## 2026-08-13: a failed load was disabling durability for the session
+
+`restoredRef` means "the load path has finished reading the device". Two
+effects gate on it: the one that persists the write queue, and the one that
+writes the workout checkpoint. Both error exits in `load()` returned without
+setting it, so after a failed read neither ran again for the life of the
+screen — a set logged afterwards would not have survived the tab dying, which
+is the single thing the queue and the checkpoint exist to guarantee.
+
+A failed read is exactly when durability matters most: it usually means the
+network is bad, which is when the queue is doing the most work. Both exits
+now set the ref, because the read IS over — the ref never meant "the read
+succeeded".

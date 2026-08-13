@@ -1021,6 +1021,13 @@ export function LogScreen({
           new Error('the server did not answer'),
         ),
       )
+      // The load path has finished reading the device, which is what this ref
+      // means — not that it succeeded. Left false, the two effects it gates
+      // never run again for the life of the screen, so the write queue and
+      // the checkpoint stop being persisted: a set logged after a failed load
+      // would not survive the tab dying, which is the one thing they exist to
+      // guarantee. A failed read is exactly when durability matters most.
+      restoredRef.current = true
       setLoading(false)
       return
     }
@@ -1034,6 +1041,9 @@ export function LogScreen({
       // something went wrong if there is genuinely nothing to fall back to.
       if (classifyFailure(failure) === 'offline' && (await restoreFromCache())) return
       setError(describeError(tRef.current('log.error.load_workout'), failure))
+      // Same reason as the deadline path above: the read is over either way,
+      // and the queue and checkpoint must resume being written.
+      restoredRef.current = true
       setLoading(false)
       return
     }
