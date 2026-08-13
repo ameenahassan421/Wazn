@@ -12,6 +12,7 @@ export default tseslint.config(
       'dev-dist',
       'node_modules',
       '.agents',
+      '.claude/worktrees',
       'coverage',
       'test-results',
       'playwright-report',

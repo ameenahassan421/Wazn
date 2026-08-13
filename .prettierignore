@@ -3,6 +3,7 @@ dev-dist
 coverage
 node_modules
 .agents
+.claude/worktrees
 package-lock.json
 workouts_corrected.csv
 # Vendored impeccable design skills — third-party, not our style domain.

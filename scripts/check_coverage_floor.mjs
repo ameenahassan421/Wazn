@@ -48,8 +48,6 @@ const EXEMPT = {
     'Thin functions.invoke wrappers with no branching beyond error passthrough. The contract they wrap is asserted in the Edge Function tests and the eval harness.',
   'auth-alias.ts':
     'Thin functions.invoke wrapper. The logic it fronts is server-side in supabase/functions/auth-alias, where identical-response behaviour is the thing worth testing.',
-  'unit-context.tsx':
-    'A React context provider over units.ts, which is tested. The provider adds storage read/write and nothing else.',
   'use-auth.ts':
     'A subscription to supabase.auth.onAuthStateChange. Faking the whole auth client to assert a passthrough would test the fake.',
   'use-rest-timer.ts':

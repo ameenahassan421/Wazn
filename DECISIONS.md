@@ -4712,3 +4712,53 @@ quarantined from the app:
 The design hook flags the CTA's ember shadow (`0 10px 26px` at 35%). That
 shadow is verbatim from Ameen's design file and is offset elevation, not a
 halo; left intentionally.
+
+## 2026-08-12: Direction decided. The prototype's world is adopted, dark-first. Ameen delegated the call.
+
+Ameen deferred three decisions with "make your best judgement i defer to you".
+Recorded here as decisions, not proposals. Per §2.7 the rebuild itself is a
+new stage and does not start until Ameen says go; nothing in `src/` changes
+under this entry.
+
+**1. The world is adopted, with the dark variant as the product default.**
+The prototype's interaction layer (warm-up ramps, rest as an inline chip,
+session queue, inline PRs, tap-to-type inputs, edit paths) is adopted
+outright; it is where the design earns its keep under load and none of it
+conflicts with the core-loop law. The visual world is adopted with one
+inversion: the product ships dark-first (ink ground, ember accent, paper
+text), with the paper "daylight" theme as the secondary option. Reasoning:
+gyms are dim, budget Android screens wash out in glare, OLED battery life
+matters in the target market, and the v2 dark variant proved the world
+inverts without losing its character. The paper look remains the marketing
+and daylight face. Ember (#e8491d) replaces amber (#f0b429) as the single
+accent everywhere; two accents is not a brand. The coach voice is adopted
+as template-driven statistics only (previous-session deltas, ramp math,
+PR proximity), never an LLM on the logging path, per the standing scope
+rule; Stage 8 remains conditional and untouched by this decision.
+
+**2. The وزن mark survives as the canonical mark; the Latin lockup becomes
+the interface face.** PRODUCT.md's positioning is "a global app with an
+Egyptian soul", reading first as a polished global app with the Arabic
+identity as the distinctive accent. That maps to a two-lockup system: the
+Latin "w-plate-zn" wordmark carries the interface header and other
+Latin-context surfaces; the وزن Loaded Ink barbell mark stays canonical for
+the app icon, splash, and share cards, with its iron recolored from amber
+to ember to join the world. The prototype's plate glyph and the Loaded Ink
+plates are the same object at different scales, so the system is coherent
+rather than two brands. The mark is the one asset no competitor can copy;
+dropping it for a generic Latin roundel would have traded the moat for
+polish. Recolor happens via `scripts/build_logo.py` per the brand doc,
+never by hand, when the rebuild stage starts.
+
+**3. Arabic strings: reviewed and standing.** The prototype's Arabic was
+reviewed line by line this session. Register is MSA with established gym
+vernacular kept as loanwords (بنش، دمبل، كيبل), matching the F2 SEO
+catalogue's approach. Grammar checked (imperatives سجِّل / تخطَّ / أنهِ,
+the dual in خمستان نظيفتان, feminine agreement in كجم مرفوعة). No changes
+required. This clears the review the same way GATE 5 was cleared: Ameen
+can still skim the AR toggle in five minutes whenever he wants, and any
+line he dislikes is a one-string edit, but it is not a blocker.
+
+What this entry does NOT do: start the rebuild. Sequencing the adoption
+into stages (tokens and type first, then the logging screen, then coach
+statistics) is its own planning task and begins on Ameen's word.
