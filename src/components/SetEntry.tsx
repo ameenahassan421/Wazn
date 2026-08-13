@@ -92,7 +92,7 @@ export function SetEntry({
   /** Clears this exercise's group for the whole workout. Omit to hide. */
   onUngroup?: () => void
 }) {
-  const { t } = useLocale()
+  const { t, locale } = useLocale()
   const [draft, setDraft] = useState<Draft>({ weight: '', reps: '' })
   const [error, setError] = useState<string | null>(null)
   const [setType, setSetType] = useState<SetType>('normal')
@@ -281,7 +281,9 @@ export function SetEntry({
         ) : previousSession.length > 0 ? (
           <>
             <p className="kicker">
-              Previous · {formatRelativeDay(previousSession[0].started_at)}
+              {t('entry.previous.kicker', {
+                day: formatRelativeDay(previousSession[0].started_at, locale),
+              })}
             </p>
             {/* 20px, not the 24px minimum in the plan's §2.4. This is a
                 multi-set string ("60 kg × 8 · 60 kg × 6 · 55 kg × 6"), not a

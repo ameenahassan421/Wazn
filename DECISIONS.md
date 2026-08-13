@@ -4798,3 +4798,26 @@ the board (15px), the rest countdown (23px), the edit dialog, the finish
 and progress records, the load helper. All now carry font-display. Mono
 figures were left alone on purpose; Plex Mono is the meta voice, and a
 timestamp is not a lift.
+
+## 2026-08-12: R3 became the Arabic pass, and the harness learned to see it
+
+R3's planned re-dress of Home, History and Progress was already done by
+R1's tokens. What the phase actually produced is the thing §7.0 demanded
+after the mirrored-ghost defect: the screenshot harness now runs an Arabic
+sweep (five tabs plus the live board, located by their Arabic accessible
+names), so this class of defect is photographed on every future phase, not
+only when someone remembers.
+
+The sweep caught, and this phase fixed: "Superset · round N of M" and
+"+ Add set" hardcoded in English on the Arabic board; an untranslated
+row aria-label; the workout meta line and the N / M set counter scrambling
+under bidi (isolated now); the coach data chip rendering RTL; the English
+day words ("today", "3 days ago") in every corner of the app, fixed at the
+source by making formatRelativeDay locale-aware over a new when.* key
+family; and the eleven muscle-group names rendering in English on the
+Progress bands and focus line, fixed with a muscle.* key family and a
+muscleLabel helper that falls back to the raw value for anything custom.
+
+Known and deliberate: AI-generated coach content (brief, notes) is model
+output, not catalogue strings; its language is a prompt question for the
+coach functions, not an i18n question, and is out of this stage's scope.

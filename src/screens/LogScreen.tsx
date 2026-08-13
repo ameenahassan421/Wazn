@@ -180,7 +180,7 @@ export function LogScreen({
   onOpenCoach: () => void
 }) {
   const { unit } = useUnit()
-  const { t } = useLocale()
+  const { t, locale } = useLocale()
   /**
    * `t` changes identity when the locale does. `load` and `drain` must NOT:
    * an effect calls `load()` whenever its identity changes, so putting `t` in
@@ -2202,7 +2202,9 @@ export function LogScreen({
         {lastSummary.length > 0 && lastSession && (
           <section>
             <h2 className="kicker mb-2">
-              {t('log.last_session', { day: formatRelativeDay(lastSession.startedAt) })}
+              {t('log.last_session', {
+                day: formatRelativeDay(lastSession.startedAt, locale),
+              })}
             </h2>
             <ul>
               {lastSummary.map(({ exercise, summary: text }, i) => (
@@ -2241,7 +2243,7 @@ export function LogScreen({
               })}
             </span>
           </p>
-          <p className="tnum text-xs text-muted">
+          <p className="tnum text-xs text-muted" dir="auto">
             {formatDuration(workout.started_at, new Date().toISOString())} ·{' '}
             {sets.length} {sets.length === 1 ? t('log.set') : t('log.sets')}
           </p>

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
 import { describeError, supabase } from '../lib/supabase'
 import { useLocale } from '../lib/locale-context'
+import { muscleLabel } from '../lib/i18n'
 import { useBackLayer } from '../lib/use-back'
 import { useUnit } from '../lib/unit-context'
 import { formatWeight, toDisplayWeight } from '../lib/units'
@@ -422,7 +423,7 @@ function MuscleBalance({
   onOpenCoach: () => void
   empty: boolean
 }) {
-  const { t } = useLocale()
+  const { t, locale } = useLocale()
   const lagging = underBand(groups)
   const rows = [...groups].sort((a, b) => num(b.set_count) - num(a.set_count))
 
@@ -448,7 +449,7 @@ function MuscleBalance({
           {rows.map((row) => (
             <BalanceRow
               key={row.muscle_group}
-              label={row.muscle_group}
+              label={muscleLabel(locale, row.muscle_group)}
               sets={num(row.set_count)}
             />
           ))}
@@ -459,7 +460,10 @@ function MuscleBalance({
         lagging.length > 0 &&
         (() => {
           const laggingTwo = lagging.slice(0, 2)
-          const joined = joinList(laggingTwo, t('progress.and'))
+          const joined = joinList(
+            laggingTwo.map((g) => muscleLabel(locale, g)),
+            t('progress.and'),
+          )
           const verb =
             laggingTwo.length === 1
               ? t('progress.balance.verb.sits')
@@ -725,7 +729,7 @@ function Records({
   unit: Unit
   onOpen: (exerciseId: string) => void
 }) {
-  const { t } = useLocale()
+  const { t, locale } = useLocale()
   return (
     <section>
       <h2 className="kicker mb-2.5">{t('progress.records.title')}</h2>
@@ -742,7 +746,8 @@ function Records({
                   {entry.name}
                 </span>
                 <span className="block truncate text-[11px] text-muted">
-                  {t(RECORD_LABEL_KEY[entry.kind])} · {formatRelativeDay(entry.at)}
+                  {t(RECORD_LABEL_KEY[entry.kind])} ·{' '}
+                  {formatRelativeDay(entry.at, locale)}
                 </span>
               </span>
               <span className="tnum shrink-0 text-2xl font-medium">
@@ -924,7 +929,7 @@ function StrengthList({
   onRange: (key: RangeKey) => void
   onOpen: (exerciseId: string) => void
 }) {
-  const { t } = useLocale()
+  const { t, locale } = useLocale()
   const shown = rows.slice(0, STRENGTH_SHOWN)
   const scope =
     range === 'ALL' ? '' : t('progress.strength.scope', { range: describeRange(range) })
@@ -998,7 +1003,9 @@ function StrengthList({
                   <span className="block truncate text-sm font-medium">{row.name}</span>
                   <span className="block text-[11px] text-muted">
                     {t('progress.strength.last')}{' '}
-                    {row.last_trained_at ? formatRelativeDay(row.last_trained_at) : '—'}
+                    {row.last_trained_at
+                      ? formatRelativeDay(row.last_trained_at, locale)
+                      : '—'}
                   </span>
                 </span>
                 <span className="tnum shrink-0 text-[20px] font-medium">
