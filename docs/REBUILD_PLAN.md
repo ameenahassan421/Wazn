@@ -56,19 +56,57 @@ locale so the migration can land later). Gate: both themes pass the same
 screenshot pass; contrast holds AA in both; the accent-step rule flips with
 the theme (dark ember for small text on paper).
 
+**THE EXACT-MATCH MANDATE (Ameen, 2026-08-12, supersedes R5/R6 as written):**
+"I need a full implementation of that design. Meaning that you refactor
+everything and make it look exactly like the design." The prototype at
+/prototype (public/prototype.html) is the pixel spec. The app's engines
+(deadline rest timer, write queue, offline ladder, RPCs) stay; every
+visible surface rebuilds to the design. Consequence, logged in
+DECISIONS.md: the old no-shadow/no-pill rules are superseded by the
+design's own language: pill buttons (radius 99), cards at 18-20px radius,
+the design's card shadow and the ember CTA shadow, the plate-glyph
+iconography.
+
+Shared token additions for both phases: --radius-xl: 20px, --radius-pill:
+99px, --shadow-card (0 1px 2px + hairline), --shadow-cta (0 10px 26px
+ember at 35%), the glyph component (ring/dot/plate marker set drawn once).
+
 **R5: Workout experience parity with the prototype (Ameen, 2026-08-12).**
-"Not only the colors. The functions, the toggles, functionality." The
-prototype's presentation becomes the spec, with the app's mechanics kept
-underneath: rest presented as the chip above the commit cluster with a
-tap-to-expand full rest view (the deadline engine and canvas rules stay);
-the plate math card and warm-up ramp surfaced the way the prototype does
-it; the coach line in the logging flow; steppers flanking the big figures.
-Gate: side-by-side frames against /prototype read as the same product.
+Exact spec per surface, referenced against /prototype:
+- Exercise card: 44px thumb radius 12, name Sora 17/-.02em, "set N of M ·
+  equipment" mono 12 muted, ghost line "last {day}  60×5 · 60×5 · 60×4"
+  mono 12, logged rows as donut + set number + "62.5 kg × 5" mono 14 with
+  the inline PR tag kept.
+- Stepper panels: two white/surface cards, mono 11 uppercase labels
+  (WEIGHT · KG / REPS), 48px step buttons flanking the Sora 29 value,
+  direct typing preserved.
+- Coach line: plate glyph + Hanken 13/1.5 body-dim, between steppers and
+  plate card; template statistics only.
+- Plate card: "ON THE BAR · PER SIDE" mono 11 uppercase + Sora 15 math +
+  the barbell SVG end-on; this is LoadHelper's data surfaced as the
+  prototype's card (bar picker and ramp stay one tap deeper).
+- Session queue card: SESSION · N TO GO, current row donut + live a/b
+  sets, done rows check dot, upcoming hollow rings + scheme, rows jump.
+- CTA: ember pill h-60 with glyph + "Log set N — W × R" composed label.
+- Rest: chip above the CTA (flip ground, 28px ring, mm:ss Sora 17, +30s,
+  skip), tap expands to the full dark rest screen (240px ring drawing
+  down, Sora 54 countdown, REST · OF total, ±30s pills, coach card, next
+  row) as a layer over the workout screen; engine untouched.
+Gate: side-by-side frames against /prototype read as the same product, in
+paper, dark, EN, AR.
 
 **R6: Home and finish ceremony parity.**
-The greeting header, coach card, Up next plan card and single Start CTA on
-the home surface; the "In the books" finish with stat tiles, per-exercise
-PR cards, debrief and share row. Gate: same side-by-side standard.
+- Home: date/week/progress line Hanken 13 muted, "{Plan} day," + name
+  Sora 34/1.12, coach card (glyph + COACH kicker + body), the flip-ground
+  "Up next" card (kicker, plan name Sora 22, meta line), routines and
+  recap kept below, Start pill h-58 with glyph fixed at the thumb.
+- Finish: kicker date · workout N, "In the books." Sora 34, three stat
+  panels (duration/volume/sets, Sora 22 values), one PR card per exercise
+  (barbell-plate glyph, NEW PR kicker, name — best set, est 1RM line),
+  debrief card (glyph + Hanken 14/1.6), per-exercise breakdown card with
+  warm-up rows muted and PR tags, Share card + Done as paired pills.
+Gate: same side-by-side standard.
+
 
 ## Not doing in this stage
 
@@ -82,3 +120,44 @@ at /prototype stays as-is as the reference artifact.
 - R2: built 2026-08-12, PR open. Reduced on evidence: the incumbent rest bar already implements the chip pattern's intent with better mechanics than the prototype (deadline-based, composited drain, never blocks the board), so it was kept, not rebuilt; deviation logged in DECISIONS.md. The phase's real content was the numerals voice: 17 arm's-length figures set in raw pixel sizes (set inputs, ghost rows, rest countdown, edit dialog, records) now carry Sora via font-display. Active-flow gallery verified.
 - R3: built 2026-08-12, PR open. The re-dress was already carried by R1/R2 tokens; the phase became the Arabic pass the wall cannot see. The shot harness grew an AR sweep (five tabs plus the live board, by Arabic accessible names), which caught and fixed: two hardcoded English strings on the workout board (superset round, add set), an untranslated aria-label, a scrambled bidi meta line and set counter, the coach data chip rendering RTL, English "today"-class day words everywhere (formatRelativeDay is now locale-aware with a when.* key family), and untranslated muscle-group names on Progress (muscle.* key family plus muscleLabel helper). Coach statistics already shipped as a template surface and stand.
 - R4: next.
+
+## Consequences ledger (Ameen, 2026-08-12: "make best of two worlds,
+## plan the consequences, account for them, solve them")
+
+Each row: what the exact-match refactor would break or risk, and the
+resolution that keeps both worlds.
+
+1. Shadows and pills vs the old §2.4. Superseded deliberately, as tokens
+   (--shadow-card, --shadow-cta, --radius-pill), not ad hoc. The hairline
+   ring stays for every surface the design does not draw with a shadow.
+2. Ember text on solid ember controls. The design's white-on-ember is
+   3.7:1, under AA. The app keeps ink-on-ember (~4.9:1) in both themes.
+   This is the one place "exact" yields, and it yields to legibility law.
+3. The prototype's sub-48px chip controls. Raised to 48px minimum; the
+   chip runs a few pixels taller than the design. Thumb law wins.
+4. Full-screen rest as an interruption risk. It is entry-by-tap only,
+   never automatic; the chip is the default; back gesture, chevron, next
+   row, and rest-end all collapse it; the board never unmounts under it.
+   The deadline engine and the canvas rules are untouched.
+5. Space cost of the plate card and queue on 390px. The logging column
+   scrolls (R3 made it scrollable); the commit cluster is pinned; nothing
+   reachable only by luck.
+6. Budget-Android performance. Ring updates are composited transforms on
+   1s ticks that already existed; shadows are static; no new render loops;
+   the font bill was paid in R1 (+23KB).
+7. Tests pinned to the old DOM. Component tests are updated with the
+   surfaces, keeping behavioral assertions (what commits, what starts
+   rest) over structural ones.
+8. RTL and Arabic. Every new surface uses logical properties, dir
+   isolates on numerals, and gates on the AR gallery sweep.
+9. The prototype's phone frame and fake 9:41 status bar are prototype
+   affordances, not product UI. Not ported. Documented exception to
+   "exactly".
+10. Coach lines in the logging flow. Template statistics from data the
+    app already has; never a model call on the logging path (standing
+    scope rule). The AI coach surfaces stay where they are.
+11. Cross-device theme memory waits on migration 0025 being applied to
+    production, which is Ameen's explicit go; localStorage carries it
+    until then.
+12. The knurl stays the system's only texture; card shadows do not stack
+    with it on the same surface.

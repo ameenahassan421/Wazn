@@ -141,6 +141,25 @@ async function shoot(browser, origin, { width, empty, active, locale, theme }) {
         path: `${OUT}/${pfx}active-${width}-restcanvas-gone.png`,
         fullPage: false,
       })
+
+      // The expanded rest view, reached the only way a user can: tapping the
+      // chip. New in R5; without this frame the whole surface ships unseen.
+      const expand = page.getByRole('button', {
+        name: locale === 'ar' ? 'افتح مؤقت الراحة' : 'Open the rest timer',
+      })
+      if (await expand.count()) {
+        await expand.first().click()
+        await page.waitForTimeout(500)
+        await page.screenshot({
+          path: `${OUT}/${pfx}active-${width}-restexpanded.png`,
+          fullPage: false,
+        })
+        const collapse = page.getByRole('button', {
+          name: locale === 'ar' ? 'عودة إلى اللوحة' : 'Back to the board',
+        })
+        if (await collapse.count()) await collapse.first().click()
+        await page.waitForTimeout(300)
+      }
     }
 
     await page.evaluate(() => window.scrollTo(0, 0))

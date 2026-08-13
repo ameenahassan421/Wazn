@@ -52,7 +52,8 @@ import { buildBlock, groupAdjacent, mergeOrder } from '../lib/plan'
 import type { OverviewRow, PlannedSet, WorkoutPlan } from '../lib/plan'
 import { WorkoutOverview } from '../components/WorkoutOverview'
 import type { OverviewBlock } from '../components/WorkoutOverview'
-import { RestTimerBar } from '../components/RestTimer'
+import { RestChip } from '../components/RestTimer'
+import { RestExpanded } from '../components/RestExpanded'
 import { RestCanvas } from '../components/RestCanvas'
 import { pickRestCard } from '../lib/rest-canvas'
 import type { CrewToday } from '../lib/rest-canvas'
@@ -205,6 +206,9 @@ export function LogScreen({
    * that (`advanceTo`), and this is the same answer kept for the canvas.
    */
   const [restingExerciseId, setRestingExerciseId] = useState<string | null>(null)
+  const [restExpanded, setRestExpanded] = useState(false)
+  // The layer never outlives the rest itself.
+  if (restExpanded && timer.remaining === null) setRestExpanded(false)
   /**
    * What the crew did today, fetched at most once per open workout and never on
    * the load path — see the effect below.
@@ -2331,6 +2335,20 @@ export function LogScreen({
         />
       )}
 
+      {restExpanded && timer.remaining !== null && (
+        <RestExpanded
+          timer={timer}
+          onCollapse={() => setRestExpanded(false)}
+          card={restCard}
+          nextLabel={(() => {
+            const ex = exercises.find((e) => e.id === restingExerciseId)
+            if (!ex) return null
+            const n = sets.filter((x) => x.exercise_id === ex.id).length + 1
+            return t('rest.next_set', { name: ex.name, n: String(n) })
+          })()}
+        />
+      )}
+
       {view === 'entry' && current && (
         <SetEntry
           exercise={current}
@@ -2343,6 +2361,7 @@ export function LogScreen({
           saving={saving}
           onAddSet={async (values) => (await addSet(values)) !== null}
           timer={timer}
+          onExpandRest={() => setRestExpanded(true)}
           restSeconds={restFor(current)}
           onSaveRest={(seconds) => void saveRestDefault(current.id, seconds)}
           supersetGroup={groupOf(sets, current.id) ?? pendingGroup}
@@ -2454,7 +2473,7 @@ export function LogScreen({
                 }}
                 onDismiss={() => void recordCoachView('rest_canvas', 'dismiss')}
               />
-              <RestTimerBar timer={timer} />
+              <RestChip timer={timer} onExpand={() => setRestExpanded(true)} />
             </div>
           )}
         </>

@@ -4859,3 +4859,18 @@ When the owner sees it and disagrees, the artifact was doing its job.
    an explicit go, per the standing rule.
 4. Two hardcoded dark hairlines (TabBar, the overview footer) moved to the
    divider token; the header band's gradient got a per-theme tint token.
+
+## 2026-08-12: Exact match ordered. The old surface rules are superseded.
+
+Ameen: "I need a full implementation of that design. Meaning that you
+refactor everything and make it look exactly like the design." Recorded
+consequences:
+
+1. WAZN_PLAN §2.4's no-shadow and no-pill constraints are superseded by
+   the adopted design's own language: pill controls, 18-20px cards, the
+   design's two shadows (card, CTA). They enter the token system rather
+   than being sprinkled ad hoc.
+2. The engines do not move: the deadline rest timer, the write queue and
+   offline ladder, commitOutcome, the RPCs. The refactor is presentation.
+3. The itemized pixel spec lives in docs/REBUILD_PLAN.md under the
+   exact-match mandate, so it survives session boundaries.

@@ -180,3 +180,164 @@ export function IconHeart({ filled, ...props }: IconProps & { filled?: boolean }
     </Svg>
   )
 }
+
+/* ─── The plate glyphs — the design's marker set ──────────────────────────
+   The prototype's iconography is one object at different states: a weight
+   plate seen end-on. Drawn on the prototype's own 96 grid, fill rather
+   than stroke, because a plate is a solid. `currentColor` carries the ring
+   so the same glyph reads on any ground; the dot and check are always
+   ember or paper by design. */
+
+interface PlateProps {
+  size?: number
+  className?: string
+}
+
+/** Solid ring with the hole showing the ground through it. */
+export function PlateRing({ size = 16, className }: PlateProps) {
+  return (
+    <svg
+      viewBox="0 0 96 96"
+      width={size}
+      height={size}
+      aria-hidden="true"
+      className={className}
+      style={{ flexShrink: 0 }}
+    >
+      <path
+        fill="currentColor"
+        fillRule="evenodd"
+        d="M48 4 a44 44 0 1 0 0 88 a44 44 0 1 0 0 -88 Z M48 33 a15 15 0 1 1 0 30 a15 15 0 1 1 0 -30 Z"
+      />
+    </svg>
+  )
+}
+
+/** The coach mark: ring in the text colour, ember core. */
+export function PlateDot({ size = 22, className }: PlateProps) {
+  return (
+    <svg
+      viewBox="0 0 96 96"
+      width={size}
+      height={size}
+      aria-hidden="true"
+      className={className}
+      style={{ flexShrink: 0 }}
+    >
+      <path
+        fill="currentColor"
+        fillRule="evenodd"
+        d="M48 4 a44 44 0 1 0 0 88 a44 44 0 1 0 0 -88 Z M48 33 a15 15 0 1 1 0 30 a15 15 0 1 1 0 -30 Z"
+      />
+      <circle cx="48" cy="48" r="9" fill="var(--color-accent)" />
+    </svg>
+  )
+}
+
+/** Upcoming: the hollow outline. */
+export function PlateHollow({ size = 16, className }: PlateProps) {
+  return (
+    <svg
+      viewBox="0 0 96 96"
+      width={size}
+      height={size}
+      aria-hidden="true"
+      className={className}
+      style={{ flexShrink: 0 }}
+    >
+      <circle
+        cx="48"
+        cy="48"
+        r="34"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="9"
+        opacity="0.55"
+      />
+    </svg>
+  )
+}
+
+/** Done: filled ember plate with a paper check. */
+export function PlateCheck({ size = 16, className }: PlateProps) {
+  return (
+    <svg
+      viewBox="0 0 96 96"
+      width={size}
+      height={size}
+      aria-hidden="true"
+      className={className}
+      style={{ flexShrink: 0 }}
+    >
+      <circle cx="48" cy="48" r="40" fill="var(--color-accent)" />
+      <path
+        d="M30 50 l12 12 24 -26"
+        fill="none"
+        stroke="#f7f3ec"
+        strokeWidth="10"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  )
+}
+
+/** The PR mark: the plate with side plates loaded, ember. */
+export function PlateLoaded({ size = 44, className }: PlateProps) {
+  return (
+    <svg
+      viewBox="0 0 96 96"
+      width={size}
+      height={size}
+      aria-hidden="true"
+      className={className}
+      style={{ flexShrink: 0 }}
+    >
+      <path
+        fill="var(--color-accent)"
+        fillRule="evenodd"
+        d="M48 4 a44 44 0 1 0 0 88 a44 44 0 1 0 0 -88 Z M48 33 a15 15 0 1 1 0 30 a15 15 0 1 1 0 -30 Z M17 43 h6 a5 5 0 0 1 5 5 a5 5 0 0 1 -5 5 h-6 a5 5 0 0 1 -5 -5 a5 5 0 0 1 5 -5 Z M73 43 h6 a5 5 0 0 1 5 5 a5 5 0 0 1 -5 5 h-6 a5 5 0 0 1 -5 -5 a5 5 0 0 1 5 -5 Z"
+      />
+    </svg>
+  )
+}
+
+/** The bar seen from the end: shaft, ember plate, collar, ghost plate. */
+export function BarEndOn({
+  width = 110,
+  className,
+}: {
+  width?: number
+  className?: string
+}) {
+  return (
+    <svg
+      viewBox="0 0 120 52"
+      width={width}
+      height={Math.round((width * 44) / 110)}
+      aria-hidden="true"
+      className={className}
+    >
+      <line
+        x1="4"
+        y1="26"
+        x2="116"
+        y2="26"
+        stroke="currentColor"
+        strokeWidth="5"
+        strokeLinecap="round"
+      />
+      <rect x="30" y="3" width="11" height="46" rx="3" fill="var(--color-accent)" />
+      <rect x="45" y="16" width="7" height="20" rx="2.5" fill="currentColor" />
+      <rect
+        x="14"
+        y="19"
+        width="9"
+        height="14"
+        rx="2"
+        fill="currentColor"
+        opacity="0.25"
+      />
+    </svg>
+  )
+}

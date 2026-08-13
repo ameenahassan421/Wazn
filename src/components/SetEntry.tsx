@@ -5,7 +5,7 @@ import { formatRelativeDay } from '../lib/format'
 import { formatWeight, fromDisplayWeight, toDisplayWeight } from '../lib/units'
 import type { Unit } from '../lib/units'
 import type { RestTimer } from '../lib/use-rest-timer'
-import { RestTimerBar } from './RestTimer'
+import { RestChip } from './RestTimer'
 import { LoadHelper } from './LoadHelper'
 import { ExerciseThumb } from './ExerciseThumb'
 import { IconBack } from './icons'
@@ -65,6 +65,7 @@ export function SetEntry({
   timer,
   restSeconds,
   onSaveRest,
+  onExpandRest,
   supersetGroup,
   onSuperset,
   onUngroup,
@@ -87,6 +88,7 @@ export function SetEntry({
   /** This lift's resolved rest length, for the timer's keep-it affordance. */
   restSeconds?: number
   onSaveRest?: (seconds: number) => void
+  onExpandRest?: () => void
   supersetGroup?: number | null
   onSuperset?: () => void
   /** Clears this exercise's group for the whole workout. Omit to hide. */
@@ -298,14 +300,6 @@ export function SetEntry({
           <p className="text-[11px] text-muted">{t('entry.previous.none')}</p>
         )}
       </div>
-
-      {timer && (
-        <RestTimerBar
-          timer={timer}
-          defaultSeconds={restSeconds}
-          onSaveDefault={onSaveRest}
-        />
-      )}
 
       {setsThisWorkout.length > 0 && (
         <ul
@@ -532,6 +526,15 @@ export function SetEntry({
           made unmissable instead of removed: the label names it, and the
           button drops out of the solid hero tier, because logging a warm-up
           is not the thing this screen exists for. */}
+      {timer && (
+        <RestChip
+          timer={timer}
+          onExpand={onExpandRest}
+          defaultSeconds={restSeconds}
+          onSaveDefault={onSaveRest}
+        />
+      )}
+
       <button
         type="button"
         onClick={() => void submit()}

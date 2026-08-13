@@ -163,6 +163,14 @@
   --radius-sm: 4px;
   --radius-md: 8px;
   --radius-lg: 14px;
+  /* The exact-match mandate (DECISIONS.md 2026-08-12): the design's own
+     surface language. Cards at 18-20, controls as pills, and the design's
+     two shadows. These supersede the no-shadow rule for surfaces the
+     design draws with them; the hairline ring remains for everything else. */
+  --radius-xl: 20px;
+  --radius-pill: 999px;
+  --shadow-card: 0 1px 2px var(--line), 0 0 0 1px var(--line);
+  --shadow-cta: 0 10px 26px rgba(232, 73, 29, 0.35);
 
   --divider: rgba(22, 19, 14, 0.14);
   --header-tint: #efe9df;
