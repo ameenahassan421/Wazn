@@ -87,6 +87,21 @@ async function shoot(browser, origin, { width, empty, active, locale, theme }) {
   await page.goto(origin, { waitUntil: 'networkidle' })
   await page.waitForTimeout(900)
 
+  // The home feed's cards sit below the fold on a 390px phone, so the default
+  // home shot cannot see them. This is the frame that proves the week row,
+  // the record card and the recent-session line render against real data —
+  // and that the sticky Start still clears them at the end of the scroll.
+  if (!active) {
+    await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight))
+    await page.waitForTimeout(400)
+    await page.screenshot({
+      path: `${OUT}/${pfx}${empty ? 'empty' : 'full'}-${width}-log-feed.png`,
+      fullPage: false,
+    })
+    await page.evaluate(() => window.scrollTo(0, 0))
+    await page.waitForTimeout(300)
+  }
+
   // Settings, reached the way a user reaches it: the avatar at the end of the
   // header row. Shot on the empty pass only — the screen shows preferences,
   // not data, so a populated account photographs identically, and the two

@@ -76,9 +76,17 @@ beforeEach(() => {
 
 describe('LogScreen locale strings', () => {
   it('renders the English loading string', async () => {
-    render(<LogScreen userId="test-user" onOpenCoach={() => {}} />, {
-      wrapper: Wrapper,
-    })
+    render(
+      <LogScreen
+        userId="test-user"
+        onOpenCoach={() => {}}
+        onOpenHistory={() => {}}
+        onOpenProgress={() => {}}
+      />,
+      {
+        wrapper: Wrapper,
+      },
+    )
     await waitFor(() => {
       expect(screen.getByText('Loading…')).toBeInTheDocument()
     })
@@ -86,9 +94,17 @@ describe('LogScreen locale strings', () => {
 
   it('renders the Arabic loading string when locale is ar', async () => {
     localStorage.setItem('workout.locale', 'ar')
-    render(<LogScreen userId="test-user" onOpenCoach={() => {}} />, {
-      wrapper: Wrapper,
-    })
+    render(
+      <LogScreen
+        userId="test-user"
+        onOpenCoach={() => {}}
+        onOpenHistory={() => {}}
+        onOpenProgress={() => {}}
+      />,
+      {
+        wrapper: Wrapper,
+      },
+    )
     await waitFor(() => {
       expect(screen.getByText('جارٍ التحميل…')).toBeInTheDocument()
     })

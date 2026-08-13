@@ -12,6 +12,7 @@ import {
   trainingCalendar,
   underBand,
   weekStart,
+  thisWeek,
   weeklyVolume,
 } from './progress'
 import type { LadderSet } from './progress'
@@ -524,5 +525,62 @@ describe('repMaxLadder', () => {
     const before = JSON.stringify(sets)
     repMaxLadder(sets)
     expect(JSON.stringify(sets)).toBe(before)
+  })
+})
+
+describe('thisWeek', () => {
+  // Wednesday 2026-08-12, local midnight-ish.
+  const wed = new Date(2026, 7, 12, 9, 0, 0)
+  const row = (d: Date, volume: number): SessionVolumeRow => ({
+    workout_id: d.toISOString(),
+    started_at: d.toISOString(),
+    volume_kg: volume,
+    set_count: 1,
+  })
+
+  it('always returns seven days, Monday first', () => {
+    const week = thisWeek([], wed)
+    expect(week).toHaveLength(7)
+    expect(week[0].date.getDay()).toBe(1)
+    expect(week[6].date.getDay()).toBe(0)
+  })
+
+  it('marks today, and only today', () => {
+    const week = thisWeek([], wed)
+    expect(week.filter((d) => d.today)).toHaveLength(1)
+    expect(week.find((d) => d.today)?.date.getDate()).toBe(12)
+  })
+
+  it('separates days still to come from days that were skipped', () => {
+    const week = thisWeek([], wed)
+    // Monday and Tuesday happened and were empty; Thursday on has not.
+    expect(week.slice(0, 2).every((d) => !d.ahead)).toBe(true)
+    expect(week.slice(3).every((d) => d.ahead)).toBe(true)
+    // Today is never "ahead", whatever the clock says.
+    expect(week[2].ahead).toBe(false)
+  })
+
+  it('sums several sessions on one day into that day', () => {
+    const mon = new Date(2026, 7, 10, 8, 0, 0)
+    const week = thisWeek([row(mon, 1000), row(mon, 500)], wed)
+    expect(week[0].volumeKg).toBe(1500)
+  })
+
+  it('scales the heat to this week alone', () => {
+    const mon = new Date(2026, 7, 10, 8, 0, 0)
+    const tue = new Date(2026, 7, 11, 8, 0, 0)
+    // A week whose biggest day is 1000 must still reach the top step, or a
+    // light week renders as seven identical stubs.
+    const week = thisWeek([row(mon, 1000), row(tue, 100)], wed)
+    expect(week[0].level).toBe(4)
+    expect(week[1].level).toBeGreaterThan(0)
+    expect(week[1].level).toBeLessThan(4)
+  })
+
+  it('ignores sessions outside the current week', () => {
+    const lastWeek = new Date(2026, 7, 5, 8, 0, 0)
+    const week = thisWeek([row(lastWeek, 9999)], wed)
+    expect(week.every((d) => d.volumeKg === 0)).toBe(true)
+    expect(week.every((d) => d.level === 0)).toBe(true)
   })
 })

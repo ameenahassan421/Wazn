@@ -124,6 +124,23 @@ export function formatWeekday(date: Date, locale: Locale = 'en'): string {
   }
 }
 
+/**
+ * "M" / "ن" — one letter per column in the home's week row.
+ *
+ * Seven more catalogue keys in two locales would say the same thing worse:
+ * Intl already knows the narrow form for every locale, and the Arabic narrow
+ * weekday is not derivable from the English one. Same no-digit reasoning as
+ * `formatWeekday`, and the same fallback.
+ */
+export function formatWeekdayNarrow(date: Date, locale: Locale = 'en'): string {
+  if (Number.isNaN(date.getTime())) return NO_VALUE
+  try {
+    return new Intl.DateTimeFormat(locale, { weekday: 'narrow' }).format(date)
+  } catch {
+    return new Intl.DateTimeFormat('en', { weekday: 'narrow' }).format(date)
+  }
+}
+
 export function formatDuration(startIso: string, endIso: string | null): string {
   if (!endIso) return 'in progress'
   const start = parse(startIso)

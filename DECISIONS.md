@@ -5176,3 +5176,55 @@ And `__APP_VERSION__` had to be declared in `vitest.config.ts` as well as
 `vite.config.ts`. Vitest does not read the Vite config, so without it every
 test rendering Settings dies on an undefined global rather than on anything
 real.
+
+## 2026-08-13: the home feed's three cards, and the week that starts on Monday
+
+The design's home carries a "This week" bar row, a "Last PR" tile and a
+one-line recent-session card. All three are built. Four calls inside them.
+
+**Monday, not Sunday.** The design draws the week `S M T W T F S`. Every week
+boundary in this app is Monday-based — `weekStart` shifts so Monday is index
+0, `trainingCalendar` lays out Monday-started weeks, ProgressScreen's own tile
+does, and `weekly_streak` uses `date_trunc('week')`, which is ISO Monday in
+Postgres. Following the design here would put the new card and the streak pill
+six inches apart on one screen disagreeing about how many sessions the week
+has had. This is the second place "exact" deliberately yields, after ink-on-
+ember text and the 48px touch floors.
+
+Seven days always, unlike `trainingCalendar`, which stops at today: the design
+shows the rest of the week as empty cells, and a row that grew a column a day
+would be a strange thing to look at on a Tuesday. Days still to come carry an
+`ahead` flag but are drawn like rest days — nothing on the card distinguishes
+"did not train" from "has not happened", and a third tint would claim more
+than the app knows.
+
+**One heat ramp, not two.** `HEAT_RAMP` moved out of `TrainingCalendar.tsx`
+into `progress.ts`, and both surfaces read it. The design writes its busy
+steps as one vermilion at .45/.7/1 opacity; this app already had a five-step
+scale of theme-aware tokens for exactly that job. Two scales for one idea
+would drift the first time either was touched.
+
+**The recent-session card costs no query.** The idle branch already fetched
+the last finished workout's sets, and those rows carry weight, reps and the
+PR flags — so the volume and the PR pill are arithmetic. The query gained
+`name` and `ended_at` and nothing else. Volume goes through
+`countsForRecords`, so it agrees with the finish screen and with
+`session_debrief` rather than inventing a third definition of volume.
+
+Two facts DID need the server: the week row (`session_volume_history`) and the
+last PR — a record set three sessions ago is not in the last session's sets.
+Both are inside the `else` branch that only runs when no workout is open, and
+both go in the same `Promise.all` as the query that was already there, so the
+idle screen costs one round trip rather than three. Mid-workout none of these
+cards is on screen and none of these queries runs. The Log screen is the
+30-seconds-to-log path and it stays that way.
+
+**The old recap list is gone.** Three exercise rows with thumbnails, stating
+the same session these cards now state in one line. The design asks the home
+for a glance; the depth is one tap into History.
+
+**Known gap, not introduced here:** `formatDuration` returns `min`, `h` and
+`in progress` as hardcoded English, so the Arabic home now shows "52 min".
+History has shown the same string since it was written; localising it means
+threading a locale through every caller, and it is a separate piece of work
+rather than something to bolt onto this one.

@@ -7,10 +7,8 @@ import type { RoutineWithRun } from '../lib/rotation'
 import { lazyScreen } from '../lib/lazy-screen'
 import { useUnit } from '../lib/unit-context'
 import { useLocale } from '../lib/locale-context'
-import { formatWeight } from '../lib/units'
 import {
   formatDuration,
-  formatRelativeDay,
   formatShortDate,
   formatSyncedAt,
   formatWeekday,
@@ -27,11 +25,14 @@ import type {
   WorkoutSet,
 } from '../lib/types'
 import { ExercisePicker } from '../components/ExercisePicker'
-import { ExerciseThumb } from '../components/ExerciseThumb'
 import { IconBack, PlateRing } from '../components/icons'
 import { SetEntry } from '../components/SetEntry'
 import { SessionQueue } from '../components/SessionQueue'
 import { UpNextCard } from '../components/UpNextCard'
+import { recentRecords, thisWeek } from '../lib/progress'
+import type { RecordSetRow, SessionVolumeRow } from '../lib/progress'
+import { LastPrCard, RecentSessionCard, WeekCard } from '../components/HomeFeed'
+import { countsForRecords, totalVolumeKg } from '../lib/summary'
 import { DEFAULT_REST_SECONDS, useRestTimer } from '../lib/use-rest-timer'
 import { FinishSummary } from '../components/FinishSummary'
 import { RoutineList } from '../components/RoutineList'
@@ -132,7 +133,24 @@ interface CatalogueSnapshot {
   exerciseNotes: [string, string][]
   routines: RoutineWithRun[]
   hasHistory: boolean
-  lastSession: { startedAt: string; sets: WorkoutSet[] } | null
+  lastSession: LastSession | null
+  /** Finished-workout volume per day, for the home's week row. */
+  weekRows?: SessionVolumeRow[]
+}
+
+/**
+ * The last finished workout, as the home feed needs it.
+ *
+ * `name` and `endedAt` were added for the recent-session card and are optional
+ * on the type for one reason: a snapshot cached by an earlier build has
+ * neither, and a device coming back online after an update must not render
+ * `undefined min`. Everything reading them treats missing as unknown.
+ */
+interface LastSession {
+  startedAt: string
+  sets: WorkoutSet[]
+  name?: string | null
+  endedAt?: string | null
 }
 
 interface BoardSnapshot {
@@ -180,11 +198,18 @@ interface ExerciseBestRow {
 export function LogScreen({
   userId,
   onOpenCoach,
+  onOpenHistory,
+  onOpenProgress,
 }: {
   userId: string
   /** The routine builder lives on the Coach tab (design v2.1), so Log's
    *  "Generate" is navigation rather than a view of its own. */
   onOpenCoach: () => void
+  /** The home feed's cards are the doors to the other screens now that the
+   *  five-tab bar is going: the week and the last session open History, the
+   *  record opens Progress. */
+  onOpenHistory: () => void
+  onOpenProgress: () => void
 }) {
   const { unit } = useUnit()
   const { t, locale } = useLocale()
@@ -349,10 +374,11 @@ export function LogScreen({
   const [hasHistory, setHasHistory] = useState(false)
   // The idle screen answers "what did I do last time" without a tab change.
   // Only fetched when there is no workout open — mid-session it is noise.
-  const [lastSession, setLastSession] = useState<{
-    startedAt: string
-    sets: WorkoutSet[]
-  } | null>(null)
+  const [lastSession, setLastSession] = useState<LastSession | null>(null)
+  // The home feed's two extra facts. Idle screen only — mid-workout neither
+  // card is on screen, so neither query runs.
+  const [weekRows, setWeekRows] = useState<SessionVolumeRow[]>([])
+  const [recordRows, setRecordRows] = useState<RecordSetRow[]>([])
 
   const [view, setView] = useState<View>('overview')
   // Onboarding is shown once, to an account with nothing in it, and can be
@@ -873,6 +899,8 @@ export function LogScreen({
     setRoutines(catalogue.value.routines)
     setHasHistory(catalogue.value.hasHistory)
     setLastSession(catalogue.value.lastSession)
+    // Absent from snapshots written before the home feed existed.
+    setWeekRows(catalogue.value.weekRows ?? [])
 
     const active = board?.value.workout ?? null
     setWorkout(active)
@@ -1021,7 +1049,9 @@ export function LogScreen({
     setWorkout(active ?? null)
 
     let restoredSets: WorkoutSet[] = []
-    let lastFinished: { startedAt: string; sets: WorkoutSet[] } | null = null
+    let lastFinished: LastSession | null = null
+    let weekHistory: SessionVolumeRow[] = []
+    let prHistory: RecordSetRow[] = []
 
     if (active) {
       const { data, error: setsError } = await supabase
@@ -1105,13 +1135,51 @@ export function LogScreen({
       // Idle screen only. A failure here must not block the screen — like the
       // streak, it is context, not data you cannot log without.
       try {
-        const { data: recent } = await supabase
-          .from('workouts')
-          .select('id, started_at')
-          .not('ended_at', 'is', null)
-          .order('started_at', { ascending: false })
-          .limit(1)
-        const last = (recent ?? [])[0] as { id: string; started_at: string } | undefined
+        /**
+         * The home feed, in one round trip rather than three.
+         *
+         * The recent-session card costs nothing extra: the sets fetched below
+         * already carry weight, reps and the PR flags, so its volume and its
+         * PR pill are arithmetic rather than another query. Only the week row
+         * and the last PR need the server, and the last PR needs it because a
+         * record set three sessions ago is not in the last session's sets.
+         *
+         * All of it is behind the `else` — no workout open. Mid-session none
+         * of these cards is on screen and none of these queries runs.
+         */
+        const [recent, volume, records] = await Promise.all([
+          supabase
+            .from('workouts')
+            .select('id, name, started_at, ended_at')
+            .not('ended_at', 'is', null)
+            .order('started_at', { ascending: false })
+            .limit(1),
+          supabase.rpc('session_volume_history'),
+          // The referenced-table order genuinely orders the parent rows here
+          // because the select uses `!inner`. The limit is a ceiling, not the
+          // list length: `recentRecords` sorts and slices after this.
+          supabase
+            .from('workout_sets')
+            .select(
+              'exercise_id, weight_kg, reps, pr_weight, pr_e1rm, workouts!inner(started_at)',
+            )
+            .or('pr_weight.eq.true,pr_e1rm.eq.true')
+            .order('started_at', { referencedTable: 'workouts', ascending: false })
+            .limit(20),
+        ])
+        weekHistory = (volume.data ?? []) as SessionVolumeRow[]
+        prHistory = ((records.data ?? []) as unknown[]).map((raw) => {
+          const row = raw as RecordSetRow & { workouts?: { started_at: string } | null }
+          return { ...row, started_at: row.workouts?.started_at ?? '' }
+        })
+        const last = (recent.data ?? [])[0] as
+          | {
+              id: string
+              name: string | null
+              started_at: string
+              ended_at: string | null
+            }
+          | undefined
         if (last) {
           const { data: lastSets } = await supabase
             .from('workout_sets')
@@ -1120,6 +1188,8 @@ export function LogScreen({
             .order('set_number')
           lastFinished = {
             startedAt: last.started_at,
+            name: last.name,
+            endedAt: last.ended_at,
             sets: (lastSets ?? []) as WorkoutSet[],
           }
         }
@@ -1127,6 +1197,8 @@ export function LogScreen({
         lastFinished = null
       }
       setLastSession(lastFinished)
+      setWeekRows(weekHistory)
+      setRecordRows(prHistory)
     }
 
     /**
@@ -1145,6 +1217,7 @@ export function LogScreen({
       routines: routineList,
       hasHistory: anyHistory,
       lastSession: lastFinished,
+      weekRows: weekHistory,
     } satisfies CatalogueSnapshot)
 
     restoredRef.current = true
@@ -2073,39 +2146,30 @@ export function LogScreen({
     [resting, unit, locale, restingExerciseId, blocks, sets, crew],
   )
 
-  // Up to three exercises from the last finished session, in the order they
-  // were performed, each collapsed to its working sets.
-  const lastSummary = useMemo(() => {
-    if (!lastSession) return []
-    const order: string[] = []
-    const byExercise = new Map<string, WorkoutSet[]>()
-    for (const set of lastSession.sets) {
-      if (!byExercise.has(set.exercise_id)) {
-        byExercise.set(set.exercise_id, [])
-        order.push(set.exercise_id)
-      }
-      byExercise.get(set.exercise_id)!.push(set)
-    }
-    return order.slice(0, 3).flatMap((id) => {
-      const exercise = exercisesById.get(id)
-      if (!exercise) return []
-      const rows = byExercise.get(id)!
-      const working = rows.filter((s) => s.set_type !== 'warmup')
-      return [
-        {
-          exercise,
-          summary: (working.length > 0 ? working : rows)
-            .slice(0, 2)
-            .map((s) =>
-              s.weight_kg === null
-                ? `BW × ${s.reps ?? '—'}`
-                : `${formatWeight(s.weight_kg, unit)} × ${s.reps ?? '—'}`,
-            )
-            .join(' · '),
-        },
-      ]
-    })
-  }, [lastSession, exercisesById, unit])
+  /**
+   * The three facts the recent-session card states, from sets already on the
+   * device. No query: the last session's rows were fetched for this screen
+   * anyway, and they carry weight, reps and the PR flags.
+   *
+   * `countsForRecords` is what makes the volume agree with the finish screen
+   * and with `session_debrief` — warm-ups and sets missing weight or reps are
+   * out, in all three.
+   */
+  const lastCounted = useMemo(
+    () => (lastSession?.sets ?? []).filter(countsForRecords),
+    [lastSession],
+  )
+  const lastVolumeKg = useMemo(() => totalVolumeKg(lastCounted), [lastCounted])
+  const lastHadPr = useMemo(
+    () => lastCounted.some((s) => s.pr_weight || s.pr_e1rm),
+    [lastCounted],
+  )
+
+  const week = useMemo(() => thisWeek(weekRows), [weekRows])
+  const lastRecord = useMemo(
+    () => recentRecords(recordRows, (id) => exercisesById.get(id)?.name, 1)[0] ?? null,
+    [recordRows, exercisesById],
+  )
 
   if (loading) {
     return <p className="py-10 text-sm text-muted">{t('log.loading')}</p>
@@ -2293,6 +2357,31 @@ export function LogScreen({
           />
         )}
 
+        {/* The design's two-up row. Both halves are doors: the week goes to
+            History, the record to Progress. With the tab bar gone that is how
+            those screens are reached — content that is also navigation. */}
+        {hasHistory && (
+          <div className="flex gap-3">
+            <WeekCard days={week} onOpen={onOpenHistory} />
+            <LastPrCard record={lastRecord} onOpen={onOpenProgress} />
+          </div>
+        )}
+
+        {/* One line where a list of exercise rows used to be. The old recap
+            was the same facts spread over four rows of thumbnails; the design
+            asks the home for a glance, and the depth is one tap away in
+            History rather than printed here. */}
+        {lastSession && (
+          <RecentSessionCard
+            name={lastSession.name ?? null}
+            startedAt={lastSession.startedAt}
+            endedAt={lastSession.endedAt ?? null}
+            volumeKg={lastVolumeKg}
+            hasPr={lastHadPr}
+            onOpen={onOpenHistory}
+          />
+        )}
+
         <RoutineList
           routines={routines}
           busyId={routineBusy}
@@ -2328,30 +2417,6 @@ export function LogScreen({
         {/* Offered only once the app has proved useful — `hasHistory` means
             at least one workout exists — and never while one is open. */}
         <InstallPrompt earned={hasHistory} />
-
-        {lastSummary.length > 0 && lastSession && (
-          <section>
-            <h2 className="kicker mb-2">
-              {t('log.last_session', {
-                day: formatRelativeDay(lastSession.startedAt, locale),
-              })}
-            </h2>
-            <ul>
-              {lastSummary.map(({ exercise, summary: text }, i) => (
-                <li key={exercise.id}>
-                  {i > 0 && <div className="rule-fade" />}
-                  <div className="flex items-center gap-3 py-2">
-                    <ExerciseThumb exercise={exercise} size={48} />
-                    <span className="min-w-0 flex-1 truncate text-sm">
-                      {exercise.name}
-                    </span>
-                    <span className="tnum shrink-0 text-[13px] text-muted">{text}</span>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          </section>
-        )}
 
         {/* Start, fixed at the thumb — the design's own placement, and the
             reason the routines and the recap can sit below it without pushing

@@ -64,6 +64,13 @@ export const messages: Record<Locale, Record<string, string>> = {
     // Settings ("You"), design screen 14. The kg/lb and language controls
     // moved here out of the header, which was renting prime space on every
     // screen to two preferences that are set once.
+    // The home feed's three cards (design screen 01).
+    'home.week': 'This week',
+    'home.last_pr': 'Last PR',
+    'home.pr': 'PR',
+    'home.lifted': '{v} lifted',
+    'home.no_pr': 'None yet',
+    'home.week.aria': 'Training this week',
     'settings.open': 'You — settings',
     'settings.back': 'Back',
     'settings.title': 'You',
@@ -829,6 +836,13 @@ export const messages: Record<Locale, Record<string, string>> = {
     'when.weeks_ago': 'منذ {n} أسابيع',
     'when.months_ago': 'منذ {n} أشهر',
     // Settings ("You"), design screen 14.
+    // The home feed's three cards (design screen 01).
+    'home.week': 'هذا الأسبوع',
+    'home.last_pr': 'آخر رقم قياسي',
+    'home.pr': 'رقم قياسي',
+    'home.lifted': 'رُفع {v}',
+    'home.no_pr': 'لا شيء بعد',
+    'home.week.aria': 'تدريب هذا الأسبوع',
     'settings.open': 'أنت — الإعدادات',
     'settings.back': 'رجوع',
     'settings.title': 'أنت',

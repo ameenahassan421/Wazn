@@ -166,7 +166,12 @@ export default function App() {
             <main className="mx-auto w-full max-w-[430px] px-[18px] pb-28">
               <ErrorBoundary boundary={tab} resetKey={tab}>
                 {tab === 'log' && (
-                  <LogScreen userId={userId} onOpenCoach={() => setTab('coach')} />
+                  <LogScreen
+                    userId={userId}
+                    onOpenCoach={() => setTab('coach')}
+                    onOpenHistory={() => setTab('history')}
+                    onOpenProgress={() => setTab('progress')}
+                  />
                 )}
                 {tab === 'history' && <HistoryScreen />}
                 {tab === 'progress' && (
