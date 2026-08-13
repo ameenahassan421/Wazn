@@ -2362,6 +2362,10 @@ export function LogScreen({
           className="sticky z-10 -mx-[18px] mt-auto bg-ink px-[18px] pt-3 pb-1"
           style={{
             bottom: 'calc(max(env(safe-area-inset-bottom, 0px), 10px) + 64px)',
+            // Same correction as the commit cluster, over less trailing
+            // space: this branch adds no bottom padding of its own, so only
+            // main's pb-28 is in the way.
+            marginBottom: 'calc(max(env(safe-area-inset-bottom, 0px), 10px) - 48px)',
             borderTop: '1px solid var(--divider-solid)',
           }}
         >

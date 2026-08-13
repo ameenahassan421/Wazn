@@ -581,6 +581,15 @@ export function SetEntry({
         className="sticky z-10 -mx-[18px] flex flex-col gap-2 bg-ink px-[18px] pt-2"
         style={{
           bottom: 'calc(max(env(safe-area-inset-bottom, 0px), 10px) + 64px)',
+          // A pinned element stops being pinned when the space beneath it
+          // runs out, and there is 140px of it here: this section's pb-4,
+          // the workout wrapper's py-3, and main's pb-28 — clearance written
+          // for a page whose last control was in flow. Left alone, the
+          // cluster rode 66px up its own pinned line over the last stretch
+          // of the scroll. This pulls the trailing space back to exactly the
+          // offset above, and tracks the safe-area inset with it. main's
+          // padding stays: the other four tabs still need it.
+          marginBottom: 'calc(max(env(safe-area-inset-bottom, 0px), 10px) - 76px)',
           // The same hairline the tab bar and the overview's rest bar carry,
           // for the same reason: it marks where content stops and chrome
           // starts, so a chip passing behind reads as scrolling under a bar
