@@ -489,6 +489,16 @@ connection close on a pinned, known-good model. Two runs did complete useful
 work. Pin a concrete model rather than an `auto/` route, batch long jobs so a
 drop costs one batch, and expect to finish the tail by hand.
 
+**Design prototype live at `/prototype` (2026-08-12).** The Claude Design
+handoff (`Wazn Prototype.dc.html`: light paper world, ember accent, coach
+voice, rest timer) is implemented as a quarantined static page,
+`public/prototype.html`, with one `vercel.json` rewrite. No `src/` changes and
+nothing in the app bundle. It is a design artifact for evaluation, not a
+product decision; adopting its direction is Ameen's call. See DECISIONS.md
+2026-08-12. While verifying it, one pre-existing test failure surfaced on
+clean `main` (`lazy-screen.test.tsx`, sessionStorage case); tracked as its own
+task.
+
 **Blocked on Ameen:** run `LAUNCH.md` on a real phone with a second account
 (also GATE U7's last item, not reachable from a sandboxed session); rotate the
 OpenRouter key, which was shared in a chat session and is compromised by

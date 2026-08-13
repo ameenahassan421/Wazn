@@ -6,6 +6,10 @@
       "destination": "/privacy.html"
     },
     {
+      "source": "/prototype",
+      "destination": "/prototype.html"
+    },
+    {
       "source": "/exercises",
       "destination": "/exercises.html"
     },

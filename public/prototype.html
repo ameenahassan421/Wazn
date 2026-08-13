@@ -1,0 +1,592 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex" />
+    <title>Wazn Prototype</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700;800&family=Hanken+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --ink: #16130e;
+        --paper: #f7f3ec;
+        --stage: #e9e4d8;
+        --ember: #e8491d;
+        --stone: #8a8378;
+        --stone-dark: #9d968a;
+        --stone-dim: #7a7469;
+        --body-dim: #4f4a41;
+        --card-line: rgba(22, 19, 14, 0.06);
+        --sora: 'Sora', ui-sans-serif, system-ui, sans-serif;
+        --hanken: 'Hanken Grotesk', ui-sans-serif, system-ui, sans-serif;
+        --mono: 'IBM Plex Mono', ui-monospace, monospace;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--stage);
+        color: var(--ink);
+        font-family: var(--hanken);
+        -webkit-font-smoothing: antialiased;
+      }
+      button {
+        font-family: inherit;
+        border: none;
+        cursor: pointer;
+        padding: 0;
+        background: none;
+        color: inherit;
+      }
+      .stage {
+        min-height: 100dvh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 28px 0;
+      }
+      .phone {
+        width: 390px;
+        height: 844px;
+        background: var(--paper);
+        border-radius: 44px;
+        box-shadow:
+          0 24px 70px rgba(22, 19, 14, 0.18),
+          0 0 0 1px var(--card-line);
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        position: relative;
+      }
+      @media (max-width: 430px), (max-height: 900px) and (max-width: 500px) {
+        .stage {
+          padding: 0;
+          align-items: stretch;
+        }
+        .phone {
+          width: 100%;
+          height: 100dvh;
+          border-radius: 0;
+          box-shadow: none;
+        }
+      }
+      .screen {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+      }
+      .screen.dark {
+        background: var(--ink);
+        color: var(--paper);
+      }
+      .statusbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 14px 24px 4px;
+        font: 500 13px var(--mono);
+        color: var(--stone);
+      }
+      .dark .statusbar {
+        color: var(--stone-dim);
+      }
+      .card {
+        background: #ffffff;
+        border-radius: 20px;
+        box-shadow:
+          0 1px 2px var(--card-line),
+          0 0 0 1px rgba(22, 19, 14, 0.05);
+      }
+      .panel {
+        background: #ffffff;
+        border-radius: 18px;
+        box-shadow: 0 0 0 1px var(--card-line);
+      }
+      .cta {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 11px;
+        background: var(--ember);
+        border-radius: 99px;
+        box-shadow: 0 10px 26px rgba(232, 73, 29, 0.35);
+      }
+      .cta span {
+        font: 700 16px var(--sora);
+        color: var(--paper);
+      }
+      .step {
+        width: 46px;
+        height: 46px;
+        border-radius: 12px;
+        background: var(--paper);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font: 600 22px var(--sora);
+        color: var(--ink);
+      }
+      .step-label {
+        font: 500 11px var(--mono);
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--stone);
+        margin: 0 0 5px;
+      }
+      .step-value {
+        font: 700 29px var(--sora);
+        letter-spacing: -0.02em;
+        font-variant-numeric: tabular-nums;
+      }
+      .pill-dark {
+        font: 600 14px var(--hanken);
+        color: var(--paper);
+        background: rgba(247, 243, 236, 0.1);
+        border-radius: 99px;
+        padding: 13px 22px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="stage">
+      <div class="phone">
+        <main id="screen" style="display: contents"></main>
+      </div>
+    </div>
+    <script>
+      ;(function () {
+        'use strict'
+
+        var REST_DEFAULT = 120
+        var RING = 257.6
+
+        function initialState() {
+          return {
+            screen: 'home',
+            weight: 62.5,
+            reps: 5,
+            sets: [
+              { n: 1, w: '62.5', r: 5 },
+              { n: 2, w: '62.5', r: 5 },
+            ],
+            restTotal: REST_DEFAULT,
+            restLeft: REST_DEFAULT,
+            elapsed: 1394,
+          }
+        }
+
+        var state = initialState()
+        var root = document.getElementById('screen')
+
+        function fmt(sec) {
+          var m = Math.floor(sec / 60)
+          var s = sec % 60
+          return m + ':' + String(s).padStart(2, '0')
+        }
+        function fmtW(w) {
+          return w % 1 === 0 ? String(w) : w.toFixed((w * 10) % 5 === 0 ? 1 : 2)
+        }
+        function plates(total) {
+          var per = (total - 20) / 2
+          if (per <= 0) return 'empty bar = 20 total'
+          var parts = []
+          ;[25, 20, 15, 10, 5, 2.5, 1.25].forEach(function (p) {
+            while (per >= p - 1e-9) {
+              parts.push(fmtW(p))
+              per -= p
+            }
+          })
+          return parts.join(' + ') + '  = ' + fmtW(total) + ' total'
+        }
+
+        /* Brand marks */
+        function glyph(size, fill, dot) {
+          return (
+            '<svg width="' +
+            size +
+            '" height="' +
+            size +
+            '" viewBox="0 0 96 96" style="flex-shrink:0">' +
+            '<path fill="' +
+            fill +
+            '" fill-rule="evenodd" d="M48 4 a44 44 0 1 0 0 88 a44 44 0 1 0 0 -88 Z M48 33 a15 15 0 1 1 0 30 a15 15 0 1 1 0 -30 Z"></path>' +
+            (dot ? '<circle cx="48" cy="48" r="9" fill="#e8491d"></circle>' : '') +
+            '</svg>'
+          )
+        }
+
+        var STATUSBAR = '<div class="statusbar"><span>9:41</span><span>●●●</span></div>'
+
+        function coachLine(setNum) {
+          var lines = {
+            3: 'Two clean fives. Same again — brace hard, this is the money set.',
+            4: 'Last one. Everything you have, then we press overhead.',
+          }
+          return lines[setNum] || 'Warm-up done. Work sets start now — steady pace.'
+        }
+
+        function setsRowsWorkout() {
+          return state.sets
+            .map(function (s) {
+              return (
+                '<div style="display:flex;align-items:center;gap:10px;font:500 14px var(--mono);color:var(--ink)">' +
+                '<svg width="16" height="16" viewBox="0 0 96 96"><path fill="#e8491d" fill-rule="evenodd" d="M48 4 a44 44 0 1 0 0 88 a44 44 0 1 0 0 -88 Z M48 33 a15 15 0 1 1 0 30 a15 15 0 1 1 0 -30 Z"></path></svg>' +
+                '<span style="width:36px;color:var(--stone)">' +
+                s.n +
+                '</span><span>' +
+                s.w +
+                ' kg × ' +
+                s.r +
+                '</span></div>'
+              )
+            })
+            .join('')
+        }
+
+        function renderHome() {
+          return (
+            '<div class="screen" data-screen="home">' +
+            STATUSBAR +
+            '<div style="display:flex;align-items:center;padding:10px 22px 0">' +
+            '<div style="display:flex;align-items:center;gap:1px" role="img" aria-label="Wazn">' +
+            '<span style="font:800 26px/1 var(--sora);letter-spacing:-.05em">w</span>' +
+            '<svg width="14" height="14" viewBox="0 0 100 100" style="position:relative;top:3px;margin:0 1px"><path fill="#e8491d" fill-rule="evenodd" d="M46 4 a46 46 0 1 0 0 92 a46 46 0 1 0 0 -92 Z M46 30 a16 16 0 1 1 0 32 a16 16 0 1 1 0 -32 Z"></path><path fill="#e8491d" d="M93 4 a7 7 0 0 1 7 7 v78 a7 7 0 0 1 -14 0 v-78 a7 7 0 0 1 7 -7 Z"></path></svg>' +
+            '<span style="font:800 26px/1 var(--sora);letter-spacing:-.05em">zn</span>' +
+            '</div>' +
+            '<div style="margin-inline-start:auto;display:flex;gap:8px;align-items:center">' +
+            '<span style="font:700 12px var(--sora);color:var(--ember);background:rgba(232,73,29,.09);border-radius:99px;padding:8px 13px">12 wk</span>' +
+            '<span style="width:38px;height:38px;border-radius:50%;background:var(--ink);display:flex;align-items:center;justify-content:center;font:700 14px var(--sora);color:var(--paper)">A</span>' +
+            '</div></div>' +
+            '<div style="padding:26px 22px 18px">' +
+            '<p style="font:500 13px var(--hanken);color:var(--stone);margin:0 0 8px">Tuesday · week 12 · 3 of 4 done</p>' +
+            '<p style="font:800 34px/1.12 var(--sora);letter-spacing:-.03em;margin:0">Push day,<br>Ameen.</p>' +
+            '</div>' +
+            '<div style="flex:1;overflow:hidden;padding:0 22px;display:flex;flex-direction:column;gap:12px">' +
+            '<div class="card" style="padding:16px 18px">' +
+            '<div style="display:flex;gap:12px;align-items:flex-start">' +
+            glyph(30, '#16130e', true) +
+            '<div style="flex:1">' +
+            '<p style="font:700 12px var(--sora);letter-spacing:.08em;text-transform:uppercase;color:var(--stone);margin:0 0 5px">Coach</p>' +
+            '<p style="font:500 14.5px/1.55 var(--hanken);margin:0;color:var(--ink)">Bench moved well last week — <strong>62.5 kg</strong> is there today. We’ll warm up longer; your shoulder felt tight Friday.</p>' +
+            '</div></div></div>' +
+            '<div style="background:var(--ink);border-radius:20px;padding:18px;color:var(--paper)">' +
+            '<p style="font:700 12px var(--sora);letter-spacing:.08em;text-transform:uppercase;color:var(--stone-dark);margin:0">Up next</p>' +
+            '<p style="font:700 22px var(--sora);letter-spacing:-.02em;margin:8px 0 4px">Push Day A</p>' +
+            '<p style="font:400 13px var(--hanken);color:var(--stone-dark);margin:0">6 exercises · ~55 min · last done Friday</p>' +
+            '</div></div>' +
+            '<div style="padding:14px 22px 26px">' +
+            '<button type="button" data-act="start" class="cta" style="height:58px">' +
+            glyph(20, '#f7f3ec', false) +
+            '<span>Start workout</span></button>' +
+            '</div></div>'
+          )
+        }
+
+        function renderWorkout() {
+          var setNum = state.sets.length + 1
+          return (
+            '<div class="screen" data-screen="workout">' +
+            STATUSBAR +
+            '<div style="display:flex;align-items:center;gap:12px;padding:10px 22px 12px">' +
+            '<button type="button" data-act="goHome" aria-label="Back to home" style="width:40px;height:40px;border-radius:50%;background:#ffffff;box-shadow:0 0 0 1px rgba(22,19,14,.08);display:flex;align-items:center;justify-content:center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#16130e" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M14 5l-7 7 7 7"></path></svg></button>' +
+            '<div style="flex:1"><p style="font:700 16px var(--sora);letter-spacing:-.02em;margin:0">Push Day A</p>' +
+            '<p style="font:500 12px var(--mono);color:var(--stone);margin:2px 0 0"><span id="elapsed">' +
+            fmt(state.elapsed) +
+            '</span> · exercise 1 of 6</p></div>' +
+            '<button type="button" data-act="finish" style="font:700 13px var(--sora);color:var(--ink);background:#ffffff;box-shadow:0 0 0 1px rgba(22,19,14,.1);border-radius:99px;padding:11px 16px">Finish</button>' +
+            '</div>' +
+            '<div style="flex:1;overflow:hidden;padding:0 22px;display:flex;flex-direction:column;gap:11px">' +
+            '<div class="card" style="padding:14px 18px">' +
+            '<div style="display:flex;align-items:center;gap:12px">' +
+            '<img src="/exercises/bench-press-barbell.jpg" alt="Bench press" style="width:44px;height:44px;border-radius:12px;object-fit:cover;filter:grayscale(1) contrast(1.05)">' +
+            '<div style="flex:1"><p style="font:700 17px var(--sora);letter-spacing:-.02em;margin:0">Bench Press</p>' +
+            '<p style="font:500 12px var(--mono);color:var(--stone);margin:3px 0 0">set ' +
+            setNum +
+            ' of 4 · barbell</p></div></div>' +
+            '<p style="font:500 12px var(--mono);color:var(--stone);margin:12px 0 0">last Fri&nbsp;&nbsp;60×5 · 60×5 · 60×4</p>' +
+            '<div style="display:flex;flex-direction:column;gap:6px;margin-top:8px">' +
+            setsRowsWorkout() +
+            '</div></div>' +
+            '<div style="display:flex;gap:10px">' +
+            '<div class="panel" style="flex:1.3;padding:11px 14px">' +
+            '<p class="step-label">Weight · kg</p>' +
+            '<div style="display:flex;align-items:center;justify-content:space-between">' +
+            '<button type="button" data-act="decW" aria-label="Decrease weight" class="step">−</button>' +
+            '<span class="step-value">' +
+            fmtW(state.weight) +
+            '</span>' +
+            '<button type="button" data-act="incW" aria-label="Increase weight" class="step">+</button>' +
+            '</div></div>' +
+            '<div class="panel" style="flex:1;padding:11px 14px">' +
+            '<p class="step-label">Reps</p>' +
+            '<div style="display:flex;align-items:center;justify-content:space-between">' +
+            '<button type="button" data-act="decR" aria-label="Decrease reps" class="step">−</button>' +
+            '<span class="step-value">' +
+            state.reps +
+            '</span>' +
+            '<button type="button" data-act="incR" aria-label="Increase reps" class="step">+</button>' +
+            '</div></div></div>' +
+            '<div style="display:flex;gap:10px;align-items:flex-start;padding:0 4px">' +
+            '<span style="margin-top:1px;display:flex">' +
+            glyph(22, '#16130e', true) +
+            '</span>' +
+            '<p style="font:500 13px/1.5 var(--hanken);color:var(--body-dim);margin:0">' +
+            coachLine(setNum) +
+            '</p></div>' +
+            '<div class="panel" style="padding:12px 16px;display:flex;align-items:center;gap:16px">' +
+            '<div style="flex:1">' +
+            '<p style="font:500 11px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--stone);margin:0 0 3px">On the bar · per side</p>' +
+            '<p style="font:700 15px var(--sora);letter-spacing:-.01em;margin:0;font-variant-numeric:tabular-nums">' +
+            plates(state.weight) +
+            '</p></div>' +
+            '<svg width="110" height="44" viewBox="0 0 120 52"><line x1="4" y1="26" x2="116" y2="26" stroke="#16130e" stroke-width="5" stroke-linecap="round"></line><rect x="30" y="3" width="11" height="46" rx="3" fill="#e8491d"></rect><rect x="45" y="16" width="7" height="20" rx="2.5" fill="#16130e"></rect><rect x="14" y="19" width="9" height="14" rx="2" fill="#16130e" opacity=".25"></rect></svg>' +
+            '</div></div>' +
+            '<div style="padding:10px 22px 26px;display:flex;flex-direction:column;gap:10px">' +
+            '<button type="button" data-act="logSet" class="cta" style="height:60px">' +
+            glyph(20, '#f7f3ec', false) +
+            '<span>Log set ' +
+            setNum +
+            ' — ' +
+            fmtW(state.weight) +
+            ' × ' +
+            state.reps +
+            '</span></button>' +
+            '</div></div>'
+          )
+        }
+
+        function renderRest() {
+          var setNum = state.sets.length + 1
+          return (
+            '<div class="screen dark" data-screen="rest">' +
+            STATUSBAR +
+            '<div style="display:flex;align-items:center;gap:12px;padding:10px 22px 0">' +
+            '<div style="flex:1"><p style="font:700 16px var(--sora);letter-spacing:-.02em;margin:0">Push Day A</p>' +
+            '<p style="font:500 12px var(--mono);color:var(--stone-dim);margin:2px 0 0"><span id="elapsed">' +
+            fmt(state.elapsed) +
+            '</span> · set ' +
+            state.sets.length +
+            ' logged ✓</p></div>' +
+            '<button type="button" data-act="skipRest" style="font:600 13px var(--hanken);color:var(--stone-dark);height:44px;padding:0 8px">skip rest</button>' +
+            '</div>' +
+            '<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:30px;padding:0 22px">' +
+            '<div style="position:relative;width:240px;height:240px;display:flex;align-items:center;justify-content:center">' +
+            '<svg width="240" height="240" viewBox="0 0 96 96" style="position:absolute;inset:0">' +
+            '<circle cx="48" cy="48" r="41" fill="none" stroke="rgba(247,243,236,.12)" stroke-width="9"></circle>' +
+            '<circle id="ring" cx="48" cy="48" r="41" fill="none" stroke="#e8491d" stroke-width="9" stroke-linecap="round" stroke-dasharray="257.6" stroke-dashoffset="' +
+            RING * (state.restLeft / state.restTotal) +
+            '" transform="rotate(-90 48 48)" style="transition:stroke-dashoffset 1s linear"></circle></svg>' +
+            '<div style="text-align:center"><p id="rest-label" style="font:800 54px var(--sora);letter-spacing:-.03em;margin:0;font-variant-numeric:tabular-nums">' +
+            fmt(state.restLeft) +
+            '</p><p style="font:500 12px var(--mono);letter-spacing:.16em;color:var(--stone-dark);margin:4px 0 0">REST · OF <span id="rest-total">' +
+            fmt(state.restTotal) +
+            '</span></p></div></div>' +
+            '<div style="display:flex;gap:10px">' +
+            '<button type="button" data-act="sub30" class="pill-dark">− 30s</button>' +
+            '<button type="button" data-act="add30" class="pill-dark">+ 30s</button>' +
+            '</div>' +
+            '<div style="display:flex;gap:12px;align-items:flex-start;background:rgba(247,243,236,.06);border-radius:18px;padding:16px 18px;max-width:320px">' +
+            glyph(24, '#f7f3ec', true) +
+            '<p style="font:500 14px/1.55 var(--hanken);color:#d6d1c6;margin:0">Shake the arms out. Breathe. The next one is the money set.</p>' +
+            '</div></div>' +
+            '<div style="padding:0 22px 30px">' +
+            '<button type="button" data-act="skipRest" style="width:100%;background:rgba(247,243,236,.06);border-radius:16px;padding:14px 18px;display:flex;justify-content:space-between;align-items:center">' +
+            '<span style="font:500 13px var(--mono);color:var(--stone-dark)">next&nbsp;&nbsp;<span style="color:var(--paper)">Bench — set ' +
+            setNum +
+            ' · ' +
+            fmtW(state.weight) +
+            ' × ' +
+            state.reps +
+            '</span></span>' +
+            '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9d968a" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M10 5l7 7-7 7"></path></svg>' +
+            '</button></div></div>'
+          )
+        }
+
+        function renderFinish() {
+          var volume = state.sets.reduce(function (a, x) {
+            return a + parseFloat(x.w) * x.r
+          }, 0)
+          var best = state.sets.reduce(function (a, x) {
+            return Math.max(a, parseFloat(x.w) * (1 + x.r / 30))
+          }, 0)
+          var bestSet = state.sets.reduce(
+            function (a, x) {
+              return parseFloat(x.w) >= parseFloat(a.w) ? x : a
+            },
+            state.sets[0] || { w: '0', r: 0 },
+          )
+          var gotPR = state.sets.some(function (x) {
+            return parseFloat(x.w) >= 62.5
+          })
+          var rows = state.sets
+            .map(function (s) {
+              return (
+                '<div style="display:flex;justify-content:space-between;font:500 13px var(--mono)"><span style="color:var(--ink)">Bench Press · set ' +
+                s.n +
+                '</span><span style="color:var(--stone);white-space:nowrap">' +
+                s.w +
+                ' × ' +
+                s.r +
+                '</span></div>'
+              )
+            })
+            .join('')
+          return (
+            '<div class="screen" data-screen="finish">' +
+            STATUSBAR +
+            '<div style="padding:26px 22px 18px">' +
+            '<p style="font:500 13px var(--hanken);color:var(--stone);margin:0 0 8px">Tuesday · workout 47</p>' +
+            '<p style="font:800 34px/1.12 var(--sora);letter-spacing:-.03em;margin:0">In the books.</p>' +
+            '</div>' +
+            '<div style="flex:1;overflow:hidden;padding:0 22px;display:flex;flex-direction:column;gap:12px">' +
+            '<div style="display:flex;gap:10px">' +
+            '<div class="panel" style="flex:1;padding:14px 16px"><p style="font:700 22px var(--sora);letter-spacing:-.02em;margin:0;font-variant-numeric:tabular-nums">' +
+            fmt(state.elapsed) +
+            '</p><p style="font:500 11.5px var(--hanken);color:var(--stone);margin:3px 0 0">duration</p></div>' +
+            '<div class="panel" style="flex:1;padding:14px 16px"><p style="font:700 22px var(--sora);letter-spacing:-.02em;margin:0;font-variant-numeric:tabular-nums">' +
+            volume.toLocaleString('en-US') +
+            '</p><p style="font:500 11.5px var(--hanken);color:var(--stone);margin:3px 0 0">kg lifted</p></div>' +
+            '<div class="panel" style="flex:1;padding:14px 16px"><p style="font:700 22px var(--sora);letter-spacing:-.02em;margin:0;font-variant-numeric:tabular-nums">' +
+            state.sets.length +
+            '</p><p style="font:500 11.5px var(--hanken);color:var(--stone);margin:3px 0 0">bench sets</p></div>' +
+            '</div>' +
+            (gotPR
+              ? '<div style="background:rgba(232,73,29,.09);border-radius:20px;padding:18px;display:flex;gap:14px;align-items:center">' +
+                '<svg width="44" height="44" viewBox="0 0 96 96" style="flex-shrink:0"><path fill="#e8491d" fill-rule="evenodd" d="M48 4 a44 44 0 1 0 0 88 a44 44 0 1 0 0 -88 Z M48 33 a15 15 0 1 1 0 30 a15 15 0 1 1 0 -30 Z M17 43 h6 a5 5 0 0 1 5 5 a5 5 0 0 1 -5 5 h-6 a5 5 0 0 1 -5 -5 a5 5 0 0 1 5 -5 Z M73 43 h6 a5 5 0 0 1 5 5 a5 5 0 0 1 -5 5 h-6 a5 5 0 0 1 -5 -5 a5 5 0 0 1 5 -5 Z"></path></svg>' +
+                '<div><p style="font:700 12px var(--sora);letter-spacing:.08em;text-transform:uppercase;color:var(--ember);margin:0 0 4px">New PR</p>' +
+                '<p style="font:700 17px var(--sora);letter-spacing:-.02em;margin:0">Bench Press — ' +
+                bestSet.w +
+                ' kg × ' +
+                bestSet.r +
+                '</p><p style="font:500 12px var(--mono);color:var(--stone);margin:4px 0 0">est. 1RM ' +
+                best.toFixed(1) +
+                ' kg</p></div></div>'
+              : '') +
+            '<div class="card" style="padding:16px 18px;display:flex;gap:12px;align-items:flex-start">' +
+            glyph(26, '#16130e', true) +
+            '<p style="font:500 14px/1.6 var(--hanken);color:var(--body-dim);margin:0">All bench sets at speed — the 2.5 jump held. Eat, sleep. Pull day Thursday.</p>' +
+            '</div>' +
+            '<div class="card" style="padding:14px 18px;display:flex;flex-direction:column;gap:8px">' +
+            rows +
+            '</div></div>' +
+            '<div style="padding:14px 22px 30px;display:flex;gap:10px">' +
+            '<button type="button" data-act="done" style="flex:1;display:flex;align-items:center;justify-content:center;font:700 15px var(--sora);color:var(--ink);background:#ffffff;box-shadow:0 0 0 1px rgba(22,19,14,.1);border-radius:99px;height:56px">Share card</button>' +
+            '<button type="button" data-act="done" style="flex:1;display:flex;align-items:center;justify-content:center;font:700 15px var(--sora);color:var(--paper);background:var(--ink);border-radius:99px;height:56px">Done</button>' +
+            '</div></div>'
+          )
+        }
+
+        function render() {
+          var html
+          if (state.screen === 'home') html = renderHome()
+          else if (state.screen === 'workout') html = renderWorkout()
+          else if (state.screen === 'rest') html = renderRest()
+          else html = renderFinish()
+          root.innerHTML = html
+        }
+
+        var actions = {
+          start: function () {
+            state.screen = 'workout'
+            state.restTotal = REST_DEFAULT
+            state.restLeft = REST_DEFAULT
+          },
+          goHome: function () {
+            state.screen = 'home'
+          },
+          finish: function () {
+            state.screen = 'finish'
+          },
+          done: function () {
+            state = initialState()
+          },
+          incW: function () {
+            state.weight += 2.5
+          },
+          decW: function () {
+            state.weight = Math.max(20, state.weight - 2.5)
+          },
+          incR: function () {
+            state.reps += 1
+          },
+          decR: function () {
+            state.reps = Math.max(1, state.reps - 1)
+          },
+          logSet: function () {
+            state.sets = state.sets.concat({
+              n: state.sets.length + 1,
+              w: fmtW(state.weight),
+              r: state.reps,
+            })
+            if (state.sets.length >= 4) {
+              state.screen = 'finish'
+            } else {
+              state.screen = 'rest'
+              state.restLeft = state.restTotal
+            }
+          },
+          skipRest: function () {
+            state.screen = 'workout'
+            state.restLeft = state.restTotal
+          },
+          add30: function () {
+            var next = state.restLeft + 30
+            state.restLeft = next
+            state.restTotal = Math.max(state.restTotal, next)
+          },
+          sub30: function () {
+            state.restLeft = Math.max(1, state.restLeft - 30)
+          },
+        }
+
+        root.addEventListener('click', function (e) {
+          var btn = e.target.closest('[data-act]')
+          if (!btn) return
+          var act = actions[btn.getAttribute('data-act')]
+          if (!act) return
+          act()
+          render()
+        })
+
+        setInterval(function () {
+          if (state.screen === 'workout') {
+            state.elapsed += 1
+            var el = document.getElementById('elapsed')
+            if (el) el.textContent = fmt(state.elapsed)
+          } else if (state.screen === 'rest') {
+            state.elapsed += 1
+            if (state.restLeft <= 1) {
+              state.restLeft = state.restTotal
+              state.screen = 'workout'
+              render()
+              return
+            }
+            state.restLeft -= 1
+            var el2 = document.getElementById('elapsed')
+            if (el2) el2.textContent = fmt(state.elapsed)
+            var lbl = document.getElementById('rest-label')
+            if (lbl) lbl.textContent = fmt(state.restLeft)
+            var tot = document.getElementById('rest-total')
+            if (tot) tot.textContent = fmt(state.restTotal)
+            var ring = document.getElementById('ring')
+            if (ring)
+              ring.setAttribute(
+                'stroke-dashoffset',
+                String(RING * (state.restLeft / state.restTotal)),
+              )
+          }
+        }, 1000)
+
+        render()
+      })()
+    </script>
+  </body>
+</html>

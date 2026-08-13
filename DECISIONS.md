@@ -4629,3 +4629,42 @@ through and corrected in place, keeping the record that they were believed:
    cohort and say nothing about retention. I repeated this inference myself in
    a status report before he corrected it, which is exactly why the wrong
    premise is preserved rather than quietly removed.
+
+## 2026-08-12: The Claude Design prototype ships as a quarantined page, not a redesign
+
+Ameen handed off `Wazn Prototype.dc.html` from the Claude Design project for
+implementation. The design is a different visual world from the shipped app:
+light paper ground, ember accent (#e8491d), three new typefaces (Sora, Hanken
+Grotesk, IBM Plex Mono), a coach voice, and a rest timer. Two of those
+(rest timers, anything resembling a coach) sit on the do-not-build list, and
+the standing design constraints say dark only, single amber accent.
+
+The handoff is the ask for the page. It is not read as the ask to rebrand the
+product: replacing the live screens' visual system is a phase-gate decision
+that belongs to Ameen explicitly. So the implementation is a standalone,
+self-contained page at `/prototype` (`public/prototype.html`, vanilla JS, no
+build step) plus one rewrite in `vercel.json` placed before the SPA catch-all,
+the same pattern `/exercises` already uses. Zero changes under `src/`, nothing
+added to the app bundle, `noindex` on the page.
+
+Choices inside the page:
+
+1. The four screens (Home, Workout, Rest, Finish), all interactions, and all
+   arithmetic (Epley e1RM, per-side plate math, volume) are ported 1:1 from
+   the design component's logic.
+2. Copy is verbatim from the design file, including its punctuation. The
+   em-dashes are in the design's own copy; whether they stay is a copy
+   decision on the design, not something to silently edit during a port.
+3. The page loads its three typefaces from Google Fonts. That is fine for a
+   prototype; it would need self-hosting before any of this moved into the
+   real app.
+4. On viewports wider than 430px the page renders the design's 390x844 phone
+   frame; at phone width it fills the viewport, since the point is to hold it
+   in one hand.
+
+Found while verifying, not caused by this change: the test "does not reload
+at all when sessionStorage is unavailable" in `src/lib/lazy-screen.test.tsx`
+fails deterministically on a clean `origin/main` tree (3 of 3 runs, and again
+after stashing this branch's files). PR #67 merged green, so an environment
+or dependency shift since then is the suspect. Logged as its own task rather
+than fixed here.
