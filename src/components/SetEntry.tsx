@@ -46,7 +46,8 @@ function StepperButton({
       onClick={onPress}
       disabled={disabled}
       aria-label={label}
-      className="btn-base btn-secondary h-[62px] w-[58px] shrink-0 bg-surface text-2xl disabled:opacity-45"
+      className="btn-base press bg-ink h-12 w-12 shrink-0 text-[22px] font-semibold disabled:opacity-45"
+      style={{ borderRadius: '12px' }}
     >
       {sign === 'down' ? '−' : '+'}
     </button>
@@ -367,12 +368,18 @@ export function SetEntry({
         </ul>
       )}
 
-      <div className="flex flex-col gap-2">
-        <div>
-          <label htmlFor="weight" className="mb-1 block text-[11px] text-muted">
-            Weight ({unit}) · optional
+      <div className="flex gap-2.5">
+        <div
+          className="min-w-0 flex-[1.3] bg-surface px-3.5 py-3"
+          style={{ borderRadius: '18px', boxShadow: 'var(--shadow-card)' }}
+        >
+          <label
+            htmlFor="weight"
+            className="mb-1.5 block font-mono text-[11px] tracking-[0.1em] uppercase text-muted"
+          >
+            {t('entry.weight.panel', { unit })} · {t('entry.weight.optional')}
           </label>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center justify-between gap-1">
             <StepperButton
               label={t('entry.weight.decrease')}
               sign="down"
@@ -387,8 +394,7 @@ export function SetEntry({
               value={draft.weight}
               onChange={(e) => setDraft((d) => ({ ...d, weight: e.target.value }))}
               placeholder="BW"
-              className="tnum font-display h-[62px] w-full flex-1 border border-line bg-surface px-3 text-start text-[30px] font-medium outline-none placeholder:text-muted focus:border-accent"
-              style={{ borderRadius: 'var(--radius-md)' }}
+              className="tnum font-display h-12 w-full min-w-0 flex-1 bg-transparent text-center text-[29px] font-bold tracking-[-0.02em] outline-none placeholder:text-muted"
             />
             <StepperButton
               label={t('entry.weight.increase')}
@@ -398,11 +404,17 @@ export function SetEntry({
           </div>
         </div>
 
-        <div>
-          <label htmlFor="reps" className="mb-1 block text-[11px] text-muted">
-            Reps
+        <div
+          className="min-w-0 flex-1 bg-surface px-3.5 py-3"
+          style={{ borderRadius: '18px', boxShadow: 'var(--shadow-card)' }}
+        >
+          <label
+            htmlFor="reps"
+            className="mb-1.5 block font-mono text-[11px] tracking-[0.1em] uppercase text-muted"
+          >
+            {t('entry.reps.panel')}
           </label>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center justify-between gap-1">
             <StepperButton
               label={t('entry.reps.decrease')}
               sign="down"
@@ -417,8 +429,7 @@ export function SetEntry({
               value={draft.reps}
               onChange={(e) => setDraft((d) => ({ ...d, reps: e.target.value }))}
               placeholder="0"
-              className="tnum font-display h-[62px] w-full flex-1 border border-line bg-surface px-3 text-start text-[30px] font-medium outline-none placeholder:text-muted focus:border-accent"
-              style={{ borderRadius: 'var(--radius-md)' }}
+              className="tnum font-display h-12 w-full min-w-0 flex-1 bg-transparent text-center text-[29px] font-bold tracking-[-0.02em] outline-none placeholder:text-muted"
             />
             <StepperButton
               label={t('entry.reps.increase')}
