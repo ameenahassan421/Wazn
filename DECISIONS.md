@@ -4629,3 +4629,86 @@ through and corrected in place, keeping the record that they were believed:
    cohort and say nothing about retention. I repeated this inference myself in
    a status report before he corrected it, which is exactly why the wrong
    premise is preserved rather than quietly removed.
+
+## 2026-08-12: The Claude Design prototype ships as a quarantined page, not a redesign
+
+Ameen handed off `Wazn Prototype.dc.html` from the Claude Design project for
+implementation. The design is a different visual world from the shipped app:
+light paper ground, ember accent (#e8491d), three new typefaces (Sora, Hanken
+Grotesk, IBM Plex Mono), a coach voice, and a rest timer. Two of those
+(rest timers, anything resembling a coach) sit on the do-not-build list, and
+the standing design constraints say dark only, single amber accent.
+
+The handoff is the ask for the page. It is not read as the ask to rebrand the
+product: replacing the live screens' visual system is a phase-gate decision
+that belongs to Ameen explicitly. So the implementation is a standalone,
+self-contained page at `/prototype` (`public/prototype.html`, vanilla JS, no
+build step) plus one rewrite in `vercel.json` placed before the SPA catch-all,
+the same pattern `/exercises` already uses. Zero changes under `src/`, nothing
+added to the app bundle, `noindex` on the page.
+
+Choices inside the page:
+
+1. The four screens (Home, Workout, Rest, Finish), all interactions, and all
+   arithmetic (Epley e1RM, per-side plate math, volume) are ported 1:1 from
+   the design component's logic.
+2. Copy is verbatim from the design file, including its punctuation. The
+   em-dashes are in the design's own copy; whether they stay is a copy
+   decision on the design, not something to silently edit during a port.
+3. The page loads its three typefaces from Google Fonts. That is fine for a
+   prototype; it would need self-hosting before any of this moved into the
+   real app.
+4. On viewports wider than 430px the page renders the design's 390x844 phone
+   frame; at phone width it fills the viewport, since the point is to hold it
+   in one hand.
+
+Found while verifying, not caused by this change: the test "does not reload
+at all when sessionStorage is unavailable" in `src/lib/lazy-screen.test.tsx`
+fails deterministically on a clean `origin/main` tree (3 of 3 runs, and again
+after stashing this branch's files). PR #67 merged green, so an environment
+or dependency shift since then is the suspect. Logged as its own task rather
+than fixed here.
+
+## 2026-08-12: Prototype v2, the elevation pass Ameen ordered
+
+After reviewing the first port, Ameen asked for every improvement from the
+critique to be built. The prototype now deviates from the design file
+deliberately, in these ways, all inside `public/prototype.html` and still
+quarantined from the app:
+
+1. **Rest inverted to a chip.** The full-screen rest was an interruption
+   pattern; the default is now a compact dark chip above the CTA (ring,
+   countdown, +30s, skip) and the full-screen view is a tap-to-expand.
+   Logging never leaves the workout screen.
+2. **Warm-up ramps.** Each lift carries computed warm-up sets that pre-fill
+   before work sets, at a shorter rest (60s vs 120s). Once complete they
+   collapse to a single muted line. The coach's "we'll warm up longer" line
+   is now backed by the UI.
+3. **Direct numeric entry.** Tapping the weight or reps value swaps in a
+   numeric input, select-all on focus, Enter/blur commits, Escape cancels.
+   Steppers stay for the plate-increment case.
+4. **Correction paths.** Tap a logged row to edit it (update or remove),
+   cancel restores; a set can be added beyond the plan after the last
+   planned set.
+5. **Real multi-exercise flow.** All six Push Day A exercises are live with
+   their own plans, ghosts, increments, and thumbnails (letter tiles where
+   no image exists). The queue rows jump between exercises; finishing one
+   offers "Next: X"; the finish screen aggregates every exercise.
+6. **Inline PRs.** A set that beats the exercise's stored best e1RM gets an
+   ember PR tag on its row the moment it is logged; the finish screen shows
+   one PR card per exercise that earned one.
+7. **Arabic.** A toggle flips the page to `ar`/RTL with IBM Plex Sans
+   Arabic substituting for Sora and Hanken Grotesk, machine-drafted copy
+   for every string (Ameen reviews, per the GATE 5 precedent), directional
+   glyphs mirrored via a scoped `.dir-flip` class, and all numerals held
+   LTR with bidi isolates. The Latin logo stays; whether the وزن mark
+   survives this world is still Ameen's open brand decision.
+8. **Dark variant.** The palette is tokenized; a toggle flips to a dark
+   theme (ink ground, elevated surfaces, paper flip-pills). The rest
+   surface was already dark and is unchanged.
+9. **Contrast and targets.** Secondary text darkened to #6b6559 on paper
+   (AA at small sizes), steppers and small controls raised to 48px.
+
+The design hook flags the CTA's ember shadow (`0 10px 26px` at 35%). That
+shadow is verbatim from Ameen's design file and is offset elevation, not a
+halo; left intentionally.
