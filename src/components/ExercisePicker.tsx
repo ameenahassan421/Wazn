@@ -179,6 +179,10 @@ export function ExercisePicker({
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder={t('picker.search')}
+          // A placeholder is a hint, not a name: it is not exposed as one,
+          // and it disappears the moment there is a value. This is the
+          // primary control of the screen every workout passes through.
+          aria-label={t('picker.search')}
           autoComplete="off"
           autoCapitalize="none"
           spellCheck={false}

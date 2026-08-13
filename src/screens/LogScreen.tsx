@@ -2245,6 +2245,12 @@ export function LogScreen({
   if (view === 'summary' && summary) {
     return (
       <div className="py-3">
+        {/* The summary's own failures were invisible. `applyRoutineUpdate`
+            sets an error like every other mutation here, but this branch
+            rendered FinishSummary alone — so pressing "Update <routine>" and
+            having it fail looked identical to it succeeding. The routine
+            branch above has carried an ErrorNote all along. */}
+        {error && <ErrorNote message={error} />}
         <FinishSummary
           summary={summary}
           unit={unit}

@@ -558,7 +558,11 @@ function You({
       </section>
 
       <section>
-        <h2 className="kicker mb-2">{t('friends.username.title')}</h2>
+        {/* A real label, wired to the input below it: both fields had an id
+            and no `for`, so neither had an accessible name at all. */}
+        <h2 className="kicker mb-2">
+          <label htmlFor="username">{t('friends.username.title')}</label>
+        </h2>
         <div className="flex items-center gap-2">
           <input
             id="username"
@@ -587,7 +591,9 @@ function You({
       </section>
 
       <section>
-        <h2 className="kicker mb-2">{t('friends.follow.title')}</h2>
+        <h2 className="kicker mb-2">
+          <label htmlFor="follow">{t('friends.follow.title')}</label>
+        </h2>
         <div className="flex items-center gap-2">
           <input
             id="follow"

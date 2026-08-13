@@ -148,6 +148,12 @@ export function RecentSessionCard({
     <button
       type="button"
       onClick={onOpen}
+      // Named for where it goes, like the two cards above it. Composing its
+      // name from its contents made it announce "Upper A Today · 48 min ·
+      // lifted 12,500 kg PR" — a sentence that changes every session and
+      // never says it opens History. The visible text stays as it is; a
+      // screen reader still reaches it by walking into the button.
+      aria-label={t('home.last_session.aria')}
       className="surface-card flex w-full items-center justify-between gap-3 px-[18px] py-3.5 text-start"
     >
       <span className="min-w-0">

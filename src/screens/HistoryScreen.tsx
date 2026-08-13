@@ -65,6 +65,8 @@ export function HistoryScreen({ onStart }: { onStart: () => void }) {
   const [workouts, setWorkouts] = useState<Workout[]>([])
   const [loading, setLoading] = useState(true)
   const [loadingMore, setLoadingMore] = useState(false)
+  /** Workouts whose sets fetch failed, so the row can offer a retry. */
+  const [setsFailed, setSetsFailed] = useState<Set<string>>(new Set())
   const [done, setDone] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -276,11 +278,29 @@ export function HistoryScreen({ onStart }: { onStart: () => void }) {
     setBusy(false)
   }
 
-  /** Loads the exercise list once, the first time the picker is opened. */
-  async function openCatalogue() {
-    if (catalogue.length > 0) return
-    const { data } = await supabase.from('exercises').select('*').order('name')
-    setCatalogue((data ?? []) as Exercise[])
+  /**
+   * Loads the exercise list once, the first time the picker is opened.
+   *
+   * Returns whether there is a catalogue to show, and surfaces its own error.
+   * It used to discard the error entirely (`const { data } = ...`) while the
+   * caller opened the full-screen picker without awaiting it — so a failed or
+   * slow fetch put up an empty overlay whose own empty state reads
+   * `No exercise matches ""`, with nothing said about what went wrong and no
+   * way to retry.
+   */
+  async function openCatalogue(): Promise<boolean> {
+    if (catalogue.length > 0) return true
+    const { data, error: failure } = await supabase
+      .from('exercises')
+      .select('*')
+      .order('name')
+    if (failure) {
+      setError(describeError(t('history.error.catalogue'), failure))
+      return false
+    }
+    const rows = (data ?? []) as Exercise[]
+    setCatalogue(rows)
+    return rows.length > 0
   }
 
   async function removeSet(set: SetWithExercise) {
@@ -357,6 +377,25 @@ export function HistoryScreen({ onStart }: { onStart: () => void }) {
     }
     setExpanded(workoutId)
     if (setsByWorkout[workoutId]) return
+    await loadSets(workoutId)
+  }
+
+  /**
+   * Fetch one workout's sets, and remember if it fails.
+   *
+   * The failure has to be recorded per workout, not just announced. Absence
+   * from `setsByWorkout` is what the expansion reads as "still loading", so a
+   * fetch that errored and returned left the row saying "Loading sets…"
+   * forever — with a banner at the top of a screen the reader may have
+   * scrolled well past, and nothing to press.
+   */
+  async function loadSets(workoutId: string) {
+    setSetsFailed((prev) => {
+      if (!prev.has(workoutId)) return prev
+      const next = new Set(prev)
+      next.delete(workoutId)
+      return next
+    })
 
     const { data, error: setsError } = await supabase
       .from('workout_sets')
@@ -366,6 +405,7 @@ export function HistoryScreen({ onStart }: { onStart: () => void }) {
 
     if (setsError) {
       setError(describeError(t('history.error.load_sets'), setsError))
+      setSetsFailed((prev) => new Set(prev).add(workoutId))
       return
     }
     setSetsByWorkout((prev) => ({
@@ -500,7 +540,15 @@ export function HistoryScreen({ onStart }: { onStart: () => void }) {
                       </p>
                     )}
 
-                    {!sets ? (
+                    {!sets && setsFailed.has(workout.id) ? (
+                      <button
+                        type="button"
+                        onClick={() => void loadSets(workout.id)}
+                        className="btn-base btn-secondary h-12 px-4 text-sm"
+                      >
+                        {t('history.sets_retry')}
+                      </button>
+                    ) : !sets ? (
                       <p className="text-sm text-muted">{t('history.loading_sets')}</p>
                     ) : sets.length === 0 ? (
                       <p className="text-sm text-muted">{t('history.no_sets')}</p>
@@ -548,8 +596,15 @@ export function HistoryScreen({ onStart }: { onStart: () => void }) {
                         <button
                           type="button"
                           onClick={() => {
-                            setAddingTo(workout.id)
+                            // Awaited, so the overlay never opens onto an
+                            // empty list. `busy` carries the wait, which is
+                            // what the button already uses to say so.
+                            setBusy(true)
                             void openCatalogue()
+                              .then((ready) => {
+                                if (ready) setAddingTo(workout.id)
+                              })
+                              .finally(() => setBusy(false))
                           }}
                           disabled={busy}
                           className="btn-base btn-secondary h-11 px-4 text-sm"

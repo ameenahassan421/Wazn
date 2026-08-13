@@ -5380,3 +5380,54 @@ A failed read is exactly when durability matters most: it usually means the
 network is bad, which is when the queue is doing the most work. Both exits
 now set the ref, because the read IS over — the ref never meant "the read
 succeeded".
+
+## 2026-08-13: the second pass through the audit list
+
+Nine more of the confirmed findings, fixed.
+
+**"Open to edit" was a lie.** Tapping a committed row on the workout board
+opened the entry view, which appends. `setEditingKey(row.key)` runs first and
+looks like an edit path, but `editingKey` is read only by `WorkoutOverview`
+for a highlight — `SetEntry` never receives a target row. Correcting a logged
+set lives in History, behind `EditSetDialog`, the only place that component is
+used. The tap is still useful, so the action stays and the name tells the
+truth: `overview.open_logged`.
+
+**Two History failures that ended in nothing.** `openCatalogue` discarded its
+error (`const { data } = ...`) while the caller opened the full-screen picker
+without awaiting it, so a slow or failed fetch put up an empty overlay reading
+`No exercise matches ""`. It now returns whether there is anything to show and
+surfaces its own error, and the button waits. Separately, an expanded row
+whose sets failed to load sat on "Loading sets…" forever: absence from
+`setsByWorkout` is what the render reads as "still loading", so a fetch that
+errored and returned left the row that way with a banner at the top of a
+screen the reader had scrolled past. Failure is now recorded per workout and
+the row offers a retry.
+
+**Two silent failures.** A failed weekly review rendered muted text identical
+to the "no news this week" state, with Regenerate gated on `state === 'ready'`
+— so the one control was absent exactly when it was needed. The retry does not
+set `force`: a failed call produced nothing, so re-asking must not spend a
+regeneration. And the finish screen rendered `FinishSummary` alone, so a failed
+"Update <routine>" looked identical to a successful one.
+
+**Progress named a truncation it would not lift.** The strength list caps at
+twelve and the caption says "top 12 of 40 lifts trained in 6M". Telling the
+reader the rest exists and giving them nothing to press is worse than either
+showing everything or saying nothing. The rows are already in hand, so the
+toggle costs no query.
+
+**Two overlays that could be opened and not closed.** `useBackLayer` gave both
+the Android back gesture, and that was the entire escape route: iOS has no
+system back, the rest layer's only visible exit is a chevron a screen reader
+never reached, and the correction dialog's scrim was an inert div. The new
+`useModalLayer` moves focus in on mount, closes on Escape, and returns focus to
+whatever opened it; both get `aria-modal`, and the scrim now dismisses. The
+dialog's `aria-label` was also hardcoded English.
+
+**Three controls with no accessible name** — the picker's search field, which
+is the primary control of the screen every workout passes through, and both
+Friends inputs, which had ids and no `for`. A placeholder is a hint, not a
+name. The recent-session card was naming itself by concatenating its contents
+("Upper A Today · 48 min · lifted 12,500 kg PR") and never saying where it
+went.

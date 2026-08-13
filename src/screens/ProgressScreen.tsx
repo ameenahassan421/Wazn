@@ -955,7 +955,16 @@ function StrengthList({
   onOpen: (exerciseId: string) => void
 }) {
   const { t, locale } = useLocale()
-  const shown = rows.slice(0, STRENGTH_SHOWN)
+  /*
+   * The list is capped at twelve, and the caption says so out loud — "top 12
+   * of 40 lifts trained in 6M". Naming a truncation without offering a way
+   * past it is worse than either showing everything or saying nothing: the
+   * reader is told the rest exists and given nothing to press. The rows are
+   * already in hand (strength_summary returns them all and the range filter
+   * is client-side), so this costs no query.
+   */
+  const [showAll, setShowAll] = useState(false)
+  const shown = showAll ? rows : rows.slice(0, STRENGTH_SHOWN)
   const scope =
     range === 'ALL' ? '' : t('progress.strength.scope', { range: describeRange(range) })
   const caption =
@@ -1046,6 +1055,18 @@ function StrengthList({
       </ul>
 
       {rows.length > 0 && <p className="mt-1.5 text-[11px] text-muted">{caption}</p>}
+
+      {rows.length > STRENGTH_SHOWN && (
+        <button
+          type="button"
+          onClick={() => setShowAll((v) => !v)}
+          className="btn-base btn-secondary mt-2.5 h-12 w-full text-sm"
+        >
+          {showAll
+            ? t('progress.strength.show_fewer')
+            : t('progress.strength.show_all', { n: String(rows.length) })}
+        </button>
+      )}
 
       <div className="mt-2.5">
         <RangeChips

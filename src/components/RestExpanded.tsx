@@ -1,5 +1,7 @@
+import { useRef } from 'react'
 import { useLocale } from '../lib/locale-context'
 import { useBackLayer } from '../lib/use-back'
+import { useModalLayer } from '../lib/use-modal'
 import { formatRest, REST_STEP_SECONDS } from '../lib/use-rest-timer'
 import type { RestTimer } from '../lib/use-rest-timer'
 import type { RestCard } from '../lib/rest-canvas'
@@ -34,6 +36,8 @@ export function RestExpanded({
 }) {
   const { t } = useLocale()
   useBackLayer(true, onCollapse)
+  const layerRef = useRef<HTMLDivElement>(null)
+  useModalLayer(layerRef, onCollapse)
 
   if (timer.remaining === null || timer.total === null) return null
   /**
@@ -51,7 +55,10 @@ export function RestExpanded({
 
   return (
     <div
+      ref={layerRef}
       role="dialog"
+      aria-modal="true"
+      tabIndex={-1}
       aria-label={t('rest.title')}
       className="fixed inset-0 z-40 flex flex-col"
       style={{ background: '#16130e', color: '#f7f3ec' }}

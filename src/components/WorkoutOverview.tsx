@@ -653,7 +653,12 @@ function SetRow({
       <button
         type="button"
         onClick={onOpen}
-        aria-label={t('overview.open_row', {
+        // A committed row is not editable from here and must not say it is.
+        // Correcting a logged set lives in History, behind EditSetDialog —
+        // the only place that component is used. What a tap does on the board
+        // is open this exercise, which appends the next set, so that is what
+        // the name says now.
+        aria-label={t(committed ? 'overview.open_logged' : 'overview.open_row', {
           name: exerciseName,
           label: row.label,
           values: values(row.weightKg, row.reps, unit),
