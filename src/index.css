@@ -584,6 +584,13 @@ button {
   font-variant-numeric: tabular-nums;
 }
 
+/* The chip carries translated words beside its figures, so it takes the
+   same rule `meta-mono` names: Plex Mono has no Arabic, and the platform
+   monospace draws it as disconnected letters. */
+[dir='rtl'] .chip-data {
+  font-family: var(--font-sans);
+}
+
 /* The PR badge. Ember-800 fill with the knurl laid over it at low opacity —
    the only place the texture appears outside a rule, because a record is the
    one thing in the app worth marking as machined. Mono, because it is a

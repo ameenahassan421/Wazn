@@ -392,6 +392,7 @@ export function FinishSummary({
  * voice, exactly as it does on the home surface.
  */
 function CoachDebrief({ workoutId, unit }: { workoutId: string | null; unit: Unit }) {
+  const { locale } = useLocale()
   const [line, setLine] = useState<string | null>(null)
   const [chip, setChip] = useState<string | undefined>(undefined)
 
@@ -402,10 +403,10 @@ function CoachDebrief({ workoutId, unit }: { workoutId: string | null; unit: Uni
       const block = await fetchDebriefBlock(workoutId)
       if (!active) return
 
-      const skeleton = debriefSkeleton(block, unit)
+      const skeleton = debriefSkeleton(block, unit, locale)
       if (!skeleton) return
       setLine(skeleton)
-      setChip(debriefChip(block, unit))
+      setChip(debriefChip(block, unit, locale))
       void recordCoachView('debrief', 'view')
 
       const phrased = await fetchCoachLine('debrief', unit, workoutId)
@@ -418,7 +419,7 @@ function CoachDebrief({ workoutId, unit }: { workoutId: string | null; unit: Uni
     }
     // Same as the briefing: a unit change re-renders, it does not re-ask.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [workoutId])
+  }, [workoutId, locale])
 
   if (!line) return null
 

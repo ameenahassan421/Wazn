@@ -34,7 +34,7 @@ import { useLocale } from '../lib/locale-context'
  * not render at all while a workout is open. Nothing here needs to check.
  */
 export function CoachBrief() {
-  const { t } = useLocale()
+  const { t, locale } = useLocale()
   const { unit } = useUnit()
   const [block, setBlock] = useState<BriefBlock | null>(null)
   /**
@@ -66,7 +66,7 @@ export function CoachBrief() {
       // The sentence is asked for only when there is a card to improve. A
       // model call whose output has nowhere to go is a model call not worth
       // making — and on a brand-new account, that is every call.
-      if (!facts || !briefSkeleton(facts, unit)) return
+      if (!facts || !briefSkeleton(facts, unit, locale)) return
 
       const result = await fetchCoachLine('briefing', unit)
       if (!active || !result.line) return
@@ -78,12 +78,12 @@ export function CoachBrief() {
     // `unit` IS a dependency: the sentence is written by a model that was
     // handed one unit, so a toggle needs a different sentence. The function
     // caches per unit, so coming back to a unit already seen costs nothing.
-  }, [unit])
+  }, [unit, locale])
 
   const current = phrased?.unit === unit ? phrased : null
-  const skeleton = briefSkeleton(block, unit)
+  const skeleton = briefSkeleton(block, unit, locale)
   const line = current?.line ?? skeleton
-  const chip = current?.chip ?? briefChip(block, unit)
+  const chip = current?.chip ?? briefChip(block, unit, locale)
 
   // The card only exists when it has something to say. An empty briefing is
   // not an empty state — it is one fewer thing between a lifter and Start.

@@ -154,8 +154,16 @@ export function RestCanvas({
           )}
           {/* Baseline-aligned so the chip sits on the number's line, wrapping
               under it only when the two genuinely do not fit. */}
+          {/* The payload is a pure figure and is isolated; the note is a
+              translated sentence with a figure inside it and is NOT, so it
+              flows with the page direction. Under Arabic, the unisolated
+              payload printed "lbs × 6 127" — the reason every figure in this
+              app carries its own dir. */}
           <div className="mt-2 flex flex-wrap items-baseline gap-x-2.5 gap-y-1.5">
-            <span className="tnum font-display text-[26px] font-medium leading-none">
+            <span
+              dir="ltr"
+              className="tnum font-display text-[26px] font-medium leading-none"
+            >
               {card.value}
             </span>
             {card.note && <span className="chip-data">{card.note}</span>}

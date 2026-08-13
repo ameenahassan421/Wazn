@@ -139,7 +139,24 @@ at /prototype stays as-is as the reference artifact.
   all — it photographed the overview and called the gate met — so it grew
   an entry sweep (card, commit cluster, plate card open) in EN, AR and
   dark. Verified: 38 shots, full wall green.
-- R6: next.
+- R6a: built 2026-08-13. The home surface — streak meta line, Sora 34 hero,
+  the coach card re-dressed with its plate mark, the flip-ground Up next card,
+  and Start as a pill fixed at the thumb. The design's greeting needed a name
+  the app has never collected and a duration estimate nothing computes; both
+  adapted rather than faked, logged in DECISIONS.md. The flip ground becomes
+  tokens derived from the ramp, so it needs no dark override.
+- R6b: built 2026-08-13. The finish ceremony — kicker with the counted
+  ordinal, "In the books.", three stat panels, an ember-tint card per record
+  with the set behind it, the debrief as a card, the full breakdown with
+  warm-ups muted, and Share/Done as paired pills. The finish screen had never
+  been photographed by any run; it is now, in EN, AR and dark.
+- R6c: built 2026-08-13. The coach's own voice in Arabic. `briefSkeleton`,
+  `briefChip`, `debriefSkeleton`, `debriefChip` and all four rest-canvas cards
+  composed English template literals; they take a locale now. Plus the two
+  systemic Arabic rules the shot pass surfaced — `meta-mono` for mono lines
+  carrying translated words, and "a figure never leads a translated sentence".
+  The model-generated line stays English: that is a prompt question for the
+  Edge Function, not an i18n one.
 
 ## Consequences ledger (Ameen, 2026-08-12: "make best of two worlds,
 
@@ -209,3 +226,14 @@ resolution that keeps both worlds.
     tracking and uppercase reset under `[dir='rtl']`, because tracking out
     a connected script breaks its joins. R5a/R5b hand-rolled the recipe in
     Tailwind classes and lost that reset; the AR gallery caught it.
+17. The design's home greeting names the lifter. This app has never
+    collected a name — `profiles.display_name` is unwritten since 0001 —
+    and a username greeting is worse than none, so the hero names the day.
+    Its "~55 min" is dropped for the same class of reason: no source.
+18. The finish duration reads in minutes, not the design's M:SS, and the
+    coach's brief and debrief stay dismissible surfaces rather than fixed
+    ones. Both are the app's existing decisions, kept.
+19. The model-written coach sentence is still English under Arabic. Its
+    language is a prompt question for the `coach-brief` Edge Function, not
+    a catalogue question; the deterministic skeleton beneath it, which is
+    what shows offline and before the model answers, is now translated.

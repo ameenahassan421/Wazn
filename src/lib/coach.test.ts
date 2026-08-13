@@ -83,7 +83,7 @@ describe('the briefing skeleton', () => {
   it('falls back to a band gap when there is no target', () => {
     const noTarget = { ...fullBrief, target: null }
     expect(briefSkeleton(noTarget, 'kg')).toBe(
-      'Push A is up · calves is at 0 sets this week.',
+      'Push A is up · Calves is at 0 sets this week.',
     )
   })
 
@@ -165,7 +165,7 @@ describe('the debrief skeleton', () => {
     expect(debriefSkeleton(flatMonth, 'kg')).toBe('1 personal record logged.')
 
     const nothingBeaten = { ...flatMonth, records: 0 }
-    expect(debriefSkeleton(nothingBeaten, 'kg')).toBe('calves is at 0 sets this week.')
+    expect(debriefSkeleton(nothingBeaten, 'kg')).toBe('Calves is at 0 sets this week.')
   })
 
   it('says nothing rather than manufacturing significance', () => {

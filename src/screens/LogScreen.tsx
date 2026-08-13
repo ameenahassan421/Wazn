@@ -2059,11 +2059,13 @@ export function LogScreen({
   const resting = timer.remaining !== null
   const restCard = useMemo(
     () =>
-      resting ? pickRestCard({ unit, restingExerciseId, blocks, sets, crew }) : null,
+      resting
+        ? pickRestCard({ unit, restingExerciseId, blocks, sets, crew }, locale)
+        : null,
     // `resting`, not `timer.remaining`: the countdown changes every second and
     // the card does not. Recomputing it 120 times a rest would hand the canvas
     // a new object each tick for no change in what it says.
-    [resting, unit, restingExerciseId, blocks, sets, crew],
+    [resting, unit, locale, restingExerciseId, blocks, sets, crew],
   )
 
   // Up to three exercises from the last finished session, in the order they

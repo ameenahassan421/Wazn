@@ -1,6 +1,8 @@
 import { supabase } from './supabase'
 import { formatEstimate, formatWeight } from './units'
 import type { Unit } from './units'
+import { muscleLabel, t } from './i18n'
+import type { Locale } from './i18n'
 
 /**
  * The proactive coach's client half — B1's two surfaces and B2's review.
@@ -264,25 +266,39 @@ export async function recordCoachView(
  * been. Returns null when there is genuinely nothing to say, which renders as
  * no card at all rather than as a card apologising for itself.
  */
-export function briefSkeleton(block: BriefBlock | null, unit: Unit): string | null {
+export function briefSkeleton(
+  block: BriefBlock | null,
+  unit: Unit,
+  locale: Locale = 'en',
+): string | null {
   if (!block) return null
 
   const parts: string[] = []
 
-  if (block.due_routine?.name) parts.push(`${block.due_routine.name} is up`)
+  if (block.due_routine?.name) {
+    parts.push(t(locale, 'coach.line.up', { name: block.due_routine.name }))
+  }
 
   // Every field is read as optional even though the SQL always sends it. This
   // function renders on the screen the app opens on, so it has to be TOTAL:
   // there is no input for which throwing is better than saying less.
   const gap = block.low_bands?.[0]
   if (block.target) {
-    const t = block.target
+    const target = block.target
     parts.push(
-      `${t.exercise} — ${formatWeight(t.last_weight_kg, unit)} ${unit} × ${t.last_reps} last time`,
+      t(locale, 'coach.line.target', {
+        exercise: target.exercise,
+        weight: formatWeight(target.last_weight_kg, unit),
+        unit,
+        reps: String(target.last_reps),
+      }),
     )
   } else if (gap) {
     parts.push(
-      `${gap.muscle} is at ${gap.sets} ${gap.sets === 1 ? 'set' : 'sets'} this week`,
+      t(locale, gap.sets === 1 ? 'coach.line.low_band_one' : 'coach.line.low_band', {
+        muscle: muscleLabel(locale, gap.muscle),
+        n: String(gap.sets),
+      }),
     )
   }
 
@@ -290,7 +306,7 @@ export function briefSkeleton(block: BriefBlock | null, unit: Unit): string | nu
   // days, and below it a "days since" line is the app nagging someone who is
   // on schedule.
   if (typeof block.days_since_last === 'number' && block.days_since_last > 5) {
-    parts.push(`${block.days_since_last} days since your last session`)
+    parts.push(t(locale, 'coach.line.days_since', { n: String(block.days_since_last) }))
   }
 
   if (parts.length === 0) return null
@@ -298,13 +314,22 @@ export function briefSkeleton(block: BriefBlock | null, unit: Unit): string | nu
 }
 
 /** The target chip: what to hit, and what it would be worth. */
-export function briefChip(block: BriefBlock | null, unit: Unit): string | undefined {
+export function briefChip(
+  block: BriefBlock | null,
+  unit: Unit,
+  locale: Locale = 'en',
+): string | undefined {
   if (!block?.target) return undefined
-  const t = block.target
+  const target = block.target
   // The target is a load and rounds like one; the e1RM it beats is an
   // estimate and must match the figure the block (and the Progress screen)
   // carries, to the decimal.
-  return `${formatWeight(t.next_weight_kg, unit)} ${unit} × ${t.last_reps} beats ${formatEstimate(t.best_e1rm, unit)} e1RM`
+  return t(locale, 'coach.line.chip', {
+    weight: formatWeight(target.next_weight_kg, unit),
+    unit,
+    reps: String(target.last_reps),
+    e1rm: formatEstimate(target.best_e1rm, unit),
+  })
 }
 
 /**
@@ -314,15 +339,30 @@ export function briefChip(block: BriefBlock | null, unit: Unit): string | undefi
  * screen, in larger type, three centimetres above this line. Repeating them is
  * the coach proving it can read rather than saying anything.
  */
-export function debriefSkeleton(block: DebriefBlock | null, unit: Unit): string | null {
+export function debriefSkeleton(
+  block: DebriefBlock | null,
+  unit: Unit,
+  locale: Locale = 'en',
+): string | null {
   if (!block?.found || !block.anchor) return null
   const a = block.anchor
 
   if (a.progression_streak >= 2) {
-    return `${ordinal(a.progression_streak)} straight ${a.exercise} progression.`
+    // Both an ordinal and a count go in: English wants "3rd straight", and
+    // Arabic ordinals are words with their own agreement, so the AR string
+    // counts the sessions instead. Each locale spends the parameter it needs.
+    return t(locale, 'coach.line.streak', {
+      ordinal: ordinal(a.progression_streak),
+      n: String(a.progression_streak),
+      exercise: a.exercise,
+    })
   }
   if (a.gain_since_last_e1rm !== null && a.gain_since_last_e1rm > 0) {
-    return `${a.exercise} estimate up ${formatEstimate(a.gain_since_last_e1rm, unit)} ${unit} on last session.`
+    return t(locale, 'coach.line.gain_last', {
+      exercise: a.exercise,
+      gain: formatEstimate(a.gain_since_last_e1rm, unit),
+      unit,
+    })
   }
   if (
     a.e1rm_28d !== null &&
@@ -330,13 +370,26 @@ export function debriefSkeleton(block: DebriefBlock | null, unit: Unit): string 
     a.e1rm_28d > a.e1rm_before_28d
   ) {
     const gain = a.e1rm_28d - a.e1rm_before_28d
-    return `${a.exercise} estimate up ${formatEstimate(gain, unit)} ${unit} this month.`
+    return t(locale, 'coach.line.gain_month', {
+      exercise: a.exercise,
+      gain: formatEstimate(gain, unit),
+      unit,
+    })
   }
   if (block.records > 0) {
-    return `${block.records} personal ${block.records === 1 ? 'record' : 'records'} logged.`
+    return t(
+      locale,
+      block.records === 1 ? 'coach.line.records_one' : 'coach.line.records',
+      { n: String(block.records) },
+    )
   }
   if (block.low_band) {
-    return `${block.low_band.muscle} is at ${block.low_band.sets} ${block.low_band.sets === 1 ? 'set' : 'sets'} this week.`
+    const band = block.low_band
+    return `${t(
+      locale,
+      band.sets === 1 ? 'coach.line.low_band_one' : 'coach.line.low_band',
+      { muscle: muscleLabel(locale, band.muscle), n: String(band.sets) },
+    )}.`
   }
   return null
 }
@@ -344,10 +397,16 @@ export function debriefSkeleton(block: DebriefBlock | null, unit: Unit): string 
 export function debriefChip(
   block: DebriefBlock | null,
   unit: Unit,
+  locale: Locale = 'en',
 ): string | undefined {
   if (!block?.anchor) return undefined
   const a = block.anchor
-  return `${a.exercise} ${formatWeight(a.top_weight_kg, unit)} ${unit} × ${a.top_reps}`
+  return t(locale, 'coach.line.debrief_chip', {
+    exercise: a.exercise,
+    weight: formatWeight(a.top_weight_kg, unit),
+    unit,
+    reps: String(a.top_reps),
+  })
 }
 
 /** 1st, 2nd, 3rd, 4th — English, and only ever used on small counts. */

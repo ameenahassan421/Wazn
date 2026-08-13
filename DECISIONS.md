@@ -4939,3 +4939,66 @@ the phase had not touched. It now opens a row, shoots the card, the commit
 cluster and the plate card expanded, in EN, AR and dark. That sweep is what
 caught the lost RTL kicker resets, the wrapping weight label, and the English
 equipment names — none of which any other check in the wall can see.
+
+## 2026-08-13: R6, and what the home screen cannot honestly say
+
+**The home surface.** The design's hero is "{Plan} day, {Name}." — and the app
+has neither half. `profiles.display_name` has existed since migration 0001 and
+nothing in the app has ever written it; the only name collected is a username,
+so the realistic outputs were "Core & Conditioning, @ameen." and
+"Core & Conditioning, Someone." Both are worse than no greeting. Using the plan
+name alone read fine until the Up next card landed two rows below it and the
+screen said "Core & Conditioning" twice in one glance. So the hero is the
+weekday. It is the half of the design's sentence the app can stand behind, and
+it is the question the hero actually answers.
+
+The Up next meta drops the design's "~55 min". Nothing in the schema estimates a
+routine's duration — `duration_min` exists only per finished workout — and a
+guessed number on the opening screen is the kind of claim a lifter checks once
+and never trusts again. It carries the exercise count instead, which is real and
+now comes back with `listRoutines` on the existing embed.
+
+Start becomes a pill fixed at the thumb, which is what lets the routines and the
+recap sit below it. Same sticky recipe as the workout's commit cluster: the two
+screens' hot controls now live in the same place on the glass.
+
+**The finish ceremony.** The breakdown needed the session's sets, and the finish
+handler clears them in the same pass that builds the summary — so they are
+snapshotted alongside it. The ordinal ("workout 47") is counted rather than
+stored and never awaited; this screen's one job is to be instant.
+
+Two things the design does that this does not. Its duration tile reads M:SS;
+minutes are what a session is remembered in, and "1h 12m" survives a long
+session that "72:14" does not. And its debrief is a card, which reverses the
+comment that used to argue against exactly that — the old reasoning was that a
+box would make four boxes down the screen, and the design's finish IS a column
+of cards, so a bare sentence in the middle read as an orphan.
+
+**The Arabic pass found more than the layout.** Three things, all systemic:
+
+1. **Plex Mono has no Arabic.** Every mono line carrying a translated word fell
+   through to the platform monospace, which draws Arabic as disconnected letters
+   with gaps. R3 fixed this for kickers; `meta-mono` (and the same reset on
+   `chip-data`) names the rule for the lines that are neither uppercase nor
+   tracked — set rows, ghost lines, queue details, est-1RM lines, coach chips.
+2. **A figure must never lead a translated sentence.** "+5.5 lbs on last
+   session" translated with the figure still in front, and the bidi algorithm
+   put the Latin run on the wrong side of the Arabic. The Arabic strings are
+   rewritten so a word leads ("نقصان 5.5 lbs عن الجلسة السابقة"), which is
+   better Arabic anyway — the sign becomes a word. Pure figures get `dir="ltr"`;
+   mixed sentences inherit the page direction; a line whose direction depends on
+   its content (a PR title with an exercise name) gets `dir="auto"`.
+3. **The coach composed English.** `briefSkeleton`, `briefChip`,
+   `debriefSkeleton`, `debriefChip` and all four rest-canvas cards built their
+   sentences as template literals. R3's sweep caught the board and Progress and
+   never reached them, and R6 was about to make that card the hero of the
+   opening screen. They take a locale now, defaulting to `en` so nothing that
+   calls them without one changes. Muscle names go through `muscleLabel` on the
+   way, which is why two test expectations moved from "calves" to "Calves".
+
+**Still English under Arabic, deliberately:** the coach's MODEL-generated line,
+which overrides the skeleton when it arrives. Its language is a prompt question
+for the `coach-brief` Edge Function, not an i18n question, and it is out of this
+stage's scope — the same call recorded on 2026-08-12. Also `formatWorkoutDate`,
+which the finish kicker shares with History and the share-card canvas; changing
+it is a three-surface decision, not a finish-screen one.
