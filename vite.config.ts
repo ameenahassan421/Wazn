@@ -50,17 +50,24 @@ export default defineConfig({
         orientation: 'portrait',
         background_color: '#f7f3ec',
         theme_color: '#f7f3ec',
+        // One tile, both purposes. Through v2 the mark was the وزن barbell
+        // running the full width of the icon, so a maskable crop — up to 20%
+        // off every edge — cut the sleeves off and needed a separate inset
+        // file. v3's mark is a centred plate at 52.6% of the tile: it sits
+        // well inside the safe circle, and a second rendering of the same
+        // artwork would only be another thing to forget to regenerate.
         icons: [
-          { src: '/icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
-          { src: '/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
-          // A separate, inset mark. Reusing the "any" icon here let a
-          // circular mask cut the sleeves off the bar — maskable crops up
-          // to 20% from every edge, and the wordmark runs full width.
           {
-            src: '/icon-maskable-512.png',
+            src: '/icon-192.png',
+            sizes: '192x192',
+            type: 'image/png',
+            purpose: 'any maskable',
+          },
+          {
+            src: '/icon-512.png',
             sizes: '512x512',
             type: 'image/png',
-            purpose: 'maskable',
+            purpose: 'any maskable',
           },
         ],
       },

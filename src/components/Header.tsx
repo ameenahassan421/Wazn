@@ -47,7 +47,7 @@ export function Header({ titleKey }: { titleKey?: string | null }) {
         style={{ paddingTop: 'max(env(safe-area-inset-top), 10px)' }}
       >
         <h1 className="flex items-center text-[17px] font-medium tracking-tight">
-          {titleKey ? t(titleKey) : <Wordmark height={34} className="text-text" />}
+          {titleKey ? t(titleKey) : <Wordmark height={15.5} className="text-text" />}
         </h1>
 
         <div className="ms-auto flex items-center">

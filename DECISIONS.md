@@ -5060,3 +5060,67 @@ green throughout.
 The lesson worth keeping: three of the six were introduced by this branch and
 three predate it, and no test could have caught any of them. The two that were
 caught by looking at pixels earlier in the session were caught the same way.
+
+## 2026-08-13: V3 "The Plate" — the brand rollout, and a reversed ring
+
+The redesign handoff (`docs/design/v3-plate/`) gives Wazn a second wordmark:
+lowercase `wazn` with the **a** drawn as a vermilion plate. Four calls inside
+building it.
+
+**1. The Latin lockup is outlines, not live text.** The brand sheet builds it
+from a Sora 800 `<span>`, an SVG plate and another `<span>` in a flex row. The
+app cannot: every font here ships `font-display: swap`, so a wordmark set in
+real type renders in a fallback on first paint and then reflows — the one
+element on screen that must never do that. `scripts/build_logo.py` now
+instantiates the app's **own** `public/fonts/sora-latin.woff2` at wght 800,
+replicates the brand sheet's flex math exactly (advances, the −.05em track's
+trailing space, the 6px gap, the 2px margins, the 16px drop, and where a
+`line-height: 1` box puts the baseline given Sora's typo metrics), and emits
+one composed viewBox as `wordmark-latin-paths.ts`.
+
+Measured against the sheet's own lockup rendered live at 128px type: right
+edges identical, width within 0.25px, height within 1.25px — the residue is
+antialiasing on the `n` shoulder, which overshoots the x-height by 18 units.
+At the in-app 26px that is a quarter of a pixel.
+
+Using the app's own font subset rather than a fresh Google Fonts download is
+deliberate twice over: the letters in the mark are then provably the letters
+in the UI, and this step needs no network.
+
+**2. Both marks, one `height`.** `<Wordmark>` returns the Latin lockup in
+English and the وزن barbell in Arabic — the handoff keeps the barbell as "the
+soul" for the Arabic locale, the splash and About, which `soul` forces in any
+locale. They are different objects (a band of lowercase letters vs. three
+letters with a bar running past both ends and air in its viewBox), so sizing
+both to one number makes the barbell read as a caption. `SOUL_SCALE = 2.2`
+normalises them, and `height` means the Latin mark's ink height everywhere.
+
+**3. One app icon, both manifest purposes.** v2 needed a separate inset
+maskable file because a circular crop cut the sleeves off a full-width
+barbell. v3's mark is a centred gripped plate at 52.6% of the tile — the brand
+sheet's own figure — which sits well inside the 80% safe circle. `icon-192`
+and `icon-512` now declare `any maskable` and `icon-maskable-512.png` is gone.
+The tile is vermilion with a bone plate, the sheet's primary of three.
+
+The share card follows: v3 ink/bone/muted instead of v2's cool greys, and the
+Latin lockup in every locale — a share card is read by people who are not the
+lifter and may not read Arabic, and it is the one place the mark has to
+survive being seen once, small, by a stranger.
+
+**4. The rest ring FILLS. R5b was wrong, and this reverses it.**
+
+R5b read the prototype's `dashoffset = 257.6 × remaining/total` as a
+transcription slip and inverted it, on the grounds that the chip had drained
+since before R5, that the motion utility is named `timer-drain`, and that two
+rings for one timer disagreeing is worse than either convention.
+
+The argument about consistency was right. The conclusion was not. The handoff
+is not ambiguous here — the brand sheet states it as identity, "The rest timer
+*is* the plate — it fills as you recover" — and the behaviour spec gives the
+same expression. That is two independent statements, one of them about what
+the brand *is*. The consistency objection was an argument for moving both
+rings, not for moving the design's.
+
+So both fill now. Filling also retired a contradiction the chip was already
+carrying: it drained to nothing and then special-cased `done` back to a full
+ring. Under fill, `done` is just `offset = 0` and the special case disappears.

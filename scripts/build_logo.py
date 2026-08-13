@@ -14,7 +14,11 @@ Run it only when the mark itself changes — the outputs are committed, and
 nothing at runtime depends on the font.
 
 Requires `fontTools` and the repo's `sharp` for rasterising:
-    pip install fonttools && npm install
+    pip install fonttools brotli && npm install
+
+Run `npm run format` afterwards: the generated modules are committed, and
+Prettier owns their line breaks, so an unformatted generation shows up as a
+CI failure rather than as a diff in the mark.
 """
 
 import re
@@ -26,6 +30,7 @@ from pathlib import Path
 from fontTools.ttLib import TTFont
 from fontTools.pens.svgPathPen import SVGPathPen
 from fontTools.pens.transformPen import TransformPen
+from fontTools.pens.boundsPen import BoundsPen
 from fontTools.pens.recordingPen import DecomposingRecordingPen
 from fontTools.misc.transform import Transform
 
@@ -53,9 +58,14 @@ upem = font["head"].unitsPerEm
 cmap = font.getBestCmap()
 gs = font.getGlyphSet()
 
-INK = "#0c0b0a"
-TEXT = "#ecebe8"
+# v3 "The Plate" palette, from docs/design/v3-plate/Wazn Brand - Logo.dc.html.
+# These were the v2 dark values (#0c0b0a / #ecebe8) until the redesign landed;
+# they must track src/index.css, or a rasterised icon and the live app disagree
+# about what colour the brand is.
+INK = "#16130e"
+BONE = "#f7f3ec"
 ACCENT = "#e8491d"
+TEXT = BONE  # letters on an ink ground, the Arabic mark's original role
 
 
 def glyph_contours(ch):
@@ -222,21 +232,103 @@ def mark_svg(g, letters_color, width=None):
     )
 
 
-def app_icon(size=512, pad_ratio=0.86):
-    """Home screen, favicon, PWA manifest: the mark on an ink tile.
+# ── The Plate ────────────────────────────────────────────────────────────────
+#
+# The v3 identity. Geometry is transcribed from the brand sheet
+# (docs/design/v3-plate/Wazn Brand - Logo.dc.html) and re-emitted parametrically
+# here rather than string-copied, so it can be scaled and composed.
 
-    A tighter set than the wordmark — smaller gaps, short overhang — so the
-    wide mark fills the square instead of shrinking to a strip. pad_ratio
-    0.62 for the maskable variant: the crop can take 20% off each edge."""
-    g = geometry(gap=60, overhang=50, stroke=46, zay_scale=0.9)
+# The mark: a gripped plate on a 96 grid. Ring, hole, two grip slots.
+MARK_RING = (48.0, 48.0, 44.0)  # cx, cy, r
+MARK_HOLE = (48.0, 48.0, 15.0)
+MARK_GRIPS = ((12.0, 43.0, 16.0, 10.0, 5.0), (68.0, 43.0, 16.0, 10.0, 5.0))
+# Ink bounds of that mark, used to size it inside a tile.
+MARK_INK = (12.0, 4.0, 84.0, 92.0)  # x0, y0, x1, y1
+
+# The wordmark's plate — the "a" — on a 100 grid: a bigger hole than the mark's
+# and a bar stub instead of grips, because in the word it is being held up.
+WM_RING = (46.0, 50.0, 46.0)
+WM_HOLE = (46.0, 46.0, 16.0)
+WM_BAR = (86.0, 4.0, 14.0, 92.0, 7.0)  # x, y, w, h, r
+
+
+def circle_d(cx, cy, r):
+    """A circle as two arcs — the form the brand sheet writes them in."""
+    return (
+        f"M{cx - r:.2f} {cy:.2f} "
+        f"a{r:.2f} {r:.2f} 0 1 0 {2 * r:.2f} 0 "
+        f"a{r:.2f} {r:.2f} 0 1 0 {-2 * r:.2f} 0 Z"
+    )
+
+
+def rrect_d(x, y, w, h, r):
+    """A rounded rectangle: the bar stub and the grip slots.
+
+    Both of those are stadiums — h == 2r for the grips, w == 2r for the bar —
+    so the straight run on one axis is zero-length. Emitting `h0` anyway is
+    valid SVG but reads as a mistake in a committed artifact, so the flat
+    sides are dropped when they have no length."""
+    fx, fy = w - 2 * r, h - 2 * r
+    arc = f"a{r:.2f} {r:.2f} 0 0 1"
+    seg = [f"M{x + r:.2f} {y:.2f}"]
+    if fx:
+        seg.append(f"h{fx:.2f}")
+    seg.append(f"{arc} {r:.2f} {r:.2f}")
+    if fy:
+        seg.append(f"v{fy:.2f}")
+    seg.append(f"{arc} {-r:.2f} {r:.2f}")
+    if fx:
+        seg.append(f"h{-fx:.2f}")
+    seg.append(f"{arc} {-r:.2f} {-r:.2f}")
+    if fy:
+        seg.append(f"v{-fy:.2f}")
+    seg.append(f"{arc} {r:.2f} {-r:.2f} Z")
+    return " ".join(seg)
+
+
+def plate_mark_d(s=1.0, ox=0.0, oy=0.0):
+    """The gripped plate, even-odd, optionally scaled and moved."""
+
+    def p(v):
+        return v * s
+
+    cx, cy, r = MARK_RING
+    hx, hy, hr = MARK_HOLE
+    parts = [
+        circle_d(ox + p(cx), oy + p(cy), p(r)),
+        circle_d(ox + p(hx), oy + p(hy), p(hr)),
+    ]
+    parts += [
+        rrect_d(ox + p(gx), oy + p(gy), p(gw), p(gh), p(gr))
+        for gx, gy, gw, gh, gr in MARK_GRIPS
+    ]
+    return " ".join(parts)
+
+
+def app_icon(size=512, ink_ratio=0.526, ground=ACCENT, glyph=BONE):
+    """Home screen, favicon, PWA manifest: the Plate on a vermilion tile.
+
+    Through v2 this was the وزن barbell on ink. The redesign makes the plate
+    the mark — it survives being 48px on a home screen in a way a three-letter
+    barbell never did, and it needs no reading.
+
+    `ink_ratio` is the fraction of the tile height the drawn plate spans.
+    0.526 is the brand sheet's own figure — its icon tiles are 150px with an
+    86px svg whose plate fills 91.7% of that.
+
+    One tile now serves both manifest purposes. v2 needed a separate, inset
+    maskable icon because a circular crop cut the sleeves off a full-width
+    barbell; a centred plate at 52.6% sits well inside the 80% safe circle,
+    so "any maskable" on a single file is the honest declaration."""
     vb = 120.0
-    scale = (vb * pad_ratio) / g["viewW"]
-    ox = (vb - g["viewW"] * scale) / 2
-    oy = (vb - g["viewH"] * scale) / 2
+    x0, y0, x1, y1 = MARK_INK
+    scale = (vb * ink_ratio) / (y1 - y0)
+    ox = (vb - (x1 + x0) * scale) / 2
+    oy = (vb - (y1 + y0) * scale) / 2
     return f"""<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {vb:.0f} {vb:.0f}" width="{size}" height="{size}" role="img" aria-label="Wazn">
   <title>Wazn</title>
-  <rect width="{vb:.0f}" height="{vb:.0f}" fill="{INK}"/>
-  <g transform="translate({ox:.2f} {oy:.2f}) scale({scale:.4f})">{mark_svg(g, TEXT)}</g>
+  <rect width="{vb:.0f}" height="{vb:.0f}" fill="{ground}"/>
+  <path fill="{glyph}" fill-rule="evenodd" d="{plate_mark_d(scale, ox, oy)}"/>
 </svg>
 """
 
@@ -276,6 +368,160 @@ export const DOT_D =
 OUT = Path(__file__).parent.parent / "public"
 SRC = Path(__file__).parent.parent / "src" / "components"
 
+# ── The Latin wordmark: w · plate · zn ───────────────────────────────────────
+#
+# Set in Sora 800 with the plate standing in for the "a". The brand sheet's
+# hero builds it out of live text in a flex row; this reproduces that layout
+# exactly and then freezes the letters as outlines, for the same reason the
+# Arabic mark is outlined: `font-display: swap` means live text renders in a
+# fallback on first paint, and a wordmark that changes shape while you look at
+# it is not a wordmark.
+#
+# The source is the app's OWN subset (public/fonts/sora-latin.woff2), not a
+# fresh download — the letters in the mark are then provably the letters in
+# the UI, and this step needs no network.
+
+SORA = Path(__file__).parent.parent / "public" / "fonts" / "sora-latin.woff2"
+
+# Every number below is read off the brand sheet's hero rule:
+#   font: 800 128px/1 Sora; letter-spacing: -.05em
+#   display:flex; align-items:center; gap:6px
+#   svg: width/height 67; margin:0 2px; position:relative; top:16px
+WM_SIZE = 128.0
+WM_TRACK = -0.05 * WM_SIZE
+WM_PLATE_BOX = 67.0
+WM_GAP = 6.0
+WM_MARGIN = 2.0
+WM_DROP = 16.0
+
+
+def _sora_800():
+    from fontTools.varLib.instancer import instantiateVariableFont
+
+    f = TTFont(SORA)
+    if "fvar" in f:
+        f = instantiateVariableFont(f, {"wght": 800}, inplace=True)
+    return f
+
+
+def latin_lockup():
+    """Compose the wordmark into one coordinate space and return its parts."""
+    f = _sora_800()
+    upem = f["head"].unitsPerEm
+    os2, hmtx, gset, cm = f["OS/2"], f["hmtx"], f.getGlyphSet(), f.getBestCmap()
+    k = WM_SIZE / upem
+
+    # Where the baseline falls inside a `line-height: 1` box. Half-leading is
+    # negative here — Sora's ascent+descent (1.26em) overflows a 1em line box —
+    # which is exactly why the plate needs its 16px nudge to look centred.
+    asc, desc = os2.sTypoAscender * k, -os2.sTypoDescender * k
+    baseline = (WM_SIZE - (asc + desc)) / 2 + asc
+
+    def adv(ch):
+        return hmtx[cm[ord(ch)]][0] * k
+
+    # Horizontal cursor. CSS letter-spacing adds its (negative) space AFTER
+    # every character, including the last of a span — so the trailing track
+    # pulls the plate back toward the "w".
+    x_w = 0.0
+    x_plate = x_w + adv("w") + WM_TRACK + WM_GAP + WM_MARGIN
+    x_zn = x_plate + WM_PLATE_BOX + WM_MARGIN + WM_GAP
+    x_n = x_zn + adv("z") + WM_TRACK
+    plate_top = (WM_SIZE - WM_PLATE_BOX) / 2 + WM_DROP
+    ps = WM_PLATE_BOX / 100.0  # the plate is drawn on a 100 grid
+
+    letters, boxes = [], []
+    for ch, x in (("w", x_w), ("z", x_zn), ("n", x_n)):
+        # y flips: font units are y-up, SVG is y-down off the baseline.
+        place = Transform(k, 0, 0, -k, x, baseline)
+        pen = SVGPathPen(gset, ntos=lambda v: f"{v:.2f}".rstrip("0").rstrip("."))
+        gset[cm[ord(ch)]].draw(TransformPen(pen, place))
+        letters.append(pen.getCommands())
+        # BoundsPen, not the recording pen's control points: quadratic
+        # off-curve points sit outside the ink, and trimming to them would
+        # leave the mark floating inside its own viewBox.
+        bounds = BoundsPen(gset)
+        gset[cm[ord(ch)]].draw(TransformPen(bounds, place))
+        boxes.append(bounds.bounds)
+
+    cx, cy, r = WM_RING
+    hx, hy, hr = WM_HOLE
+    bx, by, bw, bh, br = WM_BAR
+    plate = " ".join(
+        (
+            circle_d(x_plate + cx * ps, plate_top + cy * ps, r * ps),
+            circle_d(x_plate + hx * ps, plate_top + hy * ps, hr * ps),
+        )
+    )
+    bar = rrect_d(
+        x_plate + bx * ps, plate_top + by * ps, bw * ps, bh * ps, br * ps
+    )
+    boxes.append(
+        (
+            x_plate + (cx - r) * ps,
+            plate_top + (cy - r) * ps,
+            x_plate + (bx + bw) * ps,
+            plate_top + (cy + r) * ps,
+        )
+    )
+
+    # Trim to the drawn ink, so `height` on the component means the height of
+    # the mark you can see rather than of a box with slack in it. The paths
+    # keep their composed coordinates and the viewBox moves to meet them —
+    # viewBox takes a min-x and min-y, so no transform is needed anywhere.
+    return {
+        "x": min(b[0] for b in boxes),
+        "y": min(b[1] for b in boxes),
+        "w": max(b[2] for b in boxes) - min(b[0] for b in boxes),
+        "h": max(b[3] for b in boxes) - min(b[1] for b in boxes),
+        "letters": " ".join(letters),
+        "plate": plate,
+        "bar": bar,
+        "baseline": baseline,
+    }
+
+
+def latin_module():
+    """src/components/wordmark-latin-paths.ts — the EN lockup, one viewBox."""
+    g = latin_lockup()
+    return f"""// GENERATED by scripts/build_logo.py — do not edit by hand.
+//
+// The Latin wordmark: `w`, a vermilion plate standing in for the `a`, `zn`.
+// Sora 800 outlines, composed to the brand sheet's own metrics and trimmed to
+// the ink, so `height` on <Wordmark> is the height of what you see.
+//
+// The letters take the caller's colour; the plate and its bar are always
+// accent. Both plate parts are one visual object — the ring needs `evenodd`
+// so the ground shows through the hole, the bar must NOT be in that path or
+// the even-odd rule would punch it back out again.
+
+/**
+ * The composed lockup's ink bounds. The paths keep the coordinates they were
+ * composed in and the viewBox moves to meet them, so nothing needs a
+ * transform — but the share card draws these on a canvas, which has no
+ * viewBox, so it needs the origin as numbers.
+ */
+export const LATIN_X = {g["x"]:.2f}
+export const LATIN_Y = {g["y"]:.2f}
+export const LATIN_W = {g["w"]:.2f}
+export const LATIN_H = {g["h"]:.2f}
+
+/** The same four numbers as an SVG `viewBox`. */
+export const LATIN_VIEWBOX = `${{LATIN_X}} ${{LATIN_Y}} ${{LATIN_W}} ${{LATIN_H}}`
+
+/** `w` and `zn`, already kerned and tracked. Fill with the letter colour. */
+export const LATIN_LETTERS_D =
+  '{g["letters"]}'
+
+/** The plate that replaces the `a`: ring and hole, needs `fill-rule=evenodd`. */
+export const LATIN_PLATE_D =
+  '{g["plate"]}'
+
+/** The bar stub the plate is loaded onto. Solid — no even-odd. */
+export const LATIN_BAR_D =
+  '{g["bar"]}'
+"""
+
 
 def _render():
     """Rasterise the PNG icons through the repo's sharp."""
@@ -283,7 +529,6 @@ def _render():
     jobs = [
         ("icon-any.svg", "icon-192.png", 192),
         ("icon-any.svg", "icon-512.png", 512),
-        ("icon-maskable.svg", "icon-maskable-512.png", 512),
     ]
     script = ";".join(
         f"sharp(fs.readFileSync('{OUT / a}')).resize({s},{s}).png()"
@@ -299,9 +544,9 @@ def _render():
 
 
 if __name__ == "__main__":
-    (OUT / "icon.svg").write_text(app_icon(pad_ratio=0.86))
-    (OUT / "icon-any.svg").write_text(app_icon(pad_ratio=0.86))
-    (OUT / "icon-maskable.svg").write_text(app_icon(pad_ratio=0.62))
+    (OUT / "icon.svg").write_text(app_icon())
+    (OUT / "icon-any.svg").write_text(app_icon())
     _render()
     (SRC / "wordmark-paths.ts").write_text(paths_module())
-    print("wrote public icons and src/components/wordmark-paths.ts")
+    (SRC / "wordmark-latin-paths.ts").write_text(latin_module())
+    print("wrote public icons, wordmark-paths.ts and wordmark-latin-paths.ts")

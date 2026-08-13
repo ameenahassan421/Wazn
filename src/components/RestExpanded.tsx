@@ -37,16 +37,17 @@ export function RestExpanded({
 
   if (timer.remaining === null || timer.total === null) return null
   /**
-   * The ring DRAINS: full at the start of the rest, empty at the end.
+   * The ring FILLS: empty at the start of the rest, whole at the end.
    *
-   * R5a took the prototype's expression literally — `RING * (remaining/total)`
-   * — which fills as the rest elapses. The prototype does the same on both of
-   * its rings, so it is self-consistent; this app is not. Its chip has drained
-   * since before R5, the motion system names the utility `timer-drain`, and
-   * the R5 spec itself asks for a ring "drawing down". Two rings for one timer
-   * disagreeing about which way time runs is worse than either convention.
+   * R5b argued the opposite and was wrong. The handoff is not ambiguous about
+   * this — the brand sheet states it as identity, "the rest timer *is* the
+   * plate — it fills as you recover", and the behaviour spec gives the same
+   * expression this line now uses. The objection R5b raised was real, but it
+   * was an argument for moving BOTH rings, not for moving the design's: the
+   * chip fills too now, and the plate you are loading while you recover is a
+   * better idea than a bar draining away.
    */
-  const offset = RING * (1 - timer.remaining / timer.total)
+  const offset = RING * (timer.remaining / timer.total)
 
   return (
     <div

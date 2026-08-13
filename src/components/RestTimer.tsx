@@ -86,6 +86,10 @@ export function RestChip({
               strokeOpacity="0.25"
               strokeWidth="3"
             />
+            {/* The ring FILLS as the rest elapses — see RestExpanded for the
+                argument. Filling also retires a contradiction this chip
+                carried: it drained to nothing and then special-cased `done`
+                back to a full ring. */}
             <circle
               cx="12"
               cy="12"
@@ -95,7 +99,7 @@ export function RestChip({
               strokeWidth="3"
               strokeLinecap="round"
               strokeDasharray={CHIP_RING}
-              strokeDashoffset={done ? 0 : CHIP_RING * (1 - fraction)}
+              strokeDashoffset={CHIP_RING * fraction}
               transform="rotate(-90 12 12)"
               style={{
                 transition: 'stroke-dashoffset 1000ms var(--motion-linear)',
