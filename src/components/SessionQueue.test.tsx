@@ -180,11 +180,14 @@ describe('SessionQueue', () => {
     )
     // The bug this pins shipped once: "2 × 12" rendered backwards beside an
     // Arabic name, and only a screenshot caught it.
-    for (const el of container.querySelectorAll('[dir="ltr"]')) {
-      expect(el.textContent).toMatch(/[0-9—]/)
-    }
-    // Two figure rows (current and upcoming); the done row's "Logged" is a
-    // translated word and is deliberately left to the paragraph direction.
-    expect(container.querySelectorAll('[dir="ltr"]').length).toBe(2)
+    //
+    // `auto` rather than `ltr`, and the difference matters: this column is a
+    // figure on some rows ("2 × 12", "—") and a translated phrase on others
+    // ("2/3 sets", "Logged"). Forcing ltr printed the Arabic backwards;
+    // forcing nothing printed the figures backwards. Every row carries one.
+    const cells = container.querySelectorAll('[dir="auto"]')
+    expect(cells.length).toBe(3)
+    for (const el of cells) expect(el.textContent).not.toBe('')
+    expect(container.querySelectorAll('[dir="ltr"]').length).toBe(0)
   })
 })

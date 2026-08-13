@@ -237,3 +237,9 @@ resolution that keeps both worlds.
     language is a prompt question for the `coach-brief` Edge Function, not
     a catalogue question; the deterministic skeleton beneath it, which is
     what shows offline and before the model answers, is now translated.
+20. The expanded rest ring DRAINS; the design's fills. The design is
+    self-consistent — both its rings fill — and this app is not: its chip
+    has drained since before R5, the motion system names the utility
+    `timer-drain`, and R5's own spec asks for a ring "drawing down". Two
+    rings for one timer disagreeing about which way time runs is worse
+    than either convention, so both drain.

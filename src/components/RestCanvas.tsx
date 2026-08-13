@@ -154,14 +154,15 @@ export function RestCanvas({
           )}
           {/* Baseline-aligned so the chip sits on the number's line, wrapping
               under it only when the two genuinely do not fit. */}
-          {/* The payload is a pure figure and is isolated; the note is a
-              translated sentence with a figure inside it and is NOT, so it
-              flows with the page direction. Under Arabic, the unisolated
-              payload printed "lbs × 6 127" — the reason every figure in this
-              app carries its own dir. */}
+          {/* `auto` on the payload, because it is not always a figure: the
+              target card says "127 lbs × 6" and the crew card says "3 trained
+              today", which is a translated sentence. Unisolated, the figure
+              printed "lbs × 6 127"; forced to ltr, the sentence printed
+              backwards. The note flows with the page either way — it is
+              always prose. */}
           <div className="mt-2 flex flex-wrap items-baseline gap-x-2.5 gap-y-1.5">
             <span
-              dir="ltr"
+              dir="auto"
               className="tnum font-display text-[26px] font-medium leading-none"
             >
               {card.value}

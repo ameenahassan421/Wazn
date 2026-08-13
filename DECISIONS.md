@@ -5002,3 +5002,39 @@ for the `coach-brief` Edge Function, not an i18n question, and it is out of this
 stage's scope — the same call recorded on 2026-08-12. Also `formatWorkoutDate`,
 which the finish kicker shares with History and the share-card canvas; changing
 it is a three-surface decision, not a finish-screen one.
+
+## 2026-08-13: what the adversarial review of R5/R6 actually found
+
+Four review passes over the branch diff, each finding independently refuted by
+a separate agent told to default to "refuted". Six survived, and every one of
+them was invisible to the wall — lint, typecheck, 851 tests and a build were
+green throughout.
+
+1. **`dir-flip` is not a class.** `RestExpanded` used it on the next-set
+   chevron. It exists only in the prototype's own inline stylesheet, which
+   never reaches the app; the real hook is `icon-start`. The chevron had never
+   mirrored in Arabic. Same shape as the `inset-block-0` defect the shots
+   script's header is written about: a class that does not exist generates no
+   CSS and raises no error.
+2. **The rest view's "next set" counted warm-ups.** `sets.filter(by exercise)
+.length + 1` is a row ordinal, not a working-set number — so the overlay
+   said "set 5" in its next row while the canvas card directly above it, which
+   goes through `buildBlock` and does filter, said set 3. About the same lift,
+   on the same screen.
+3. **The workout ordinal was not scoped to the user.** The new count relied on
+   RLS, and `workouts_select_visible` (0011_social.sql) also admits other
+   lifters' finished workouts when their profile is public or followed. "In the
+   books · workout 4,271" was one public profile away. Now `.eq('user_id')`.
+4. **The expanded rest ring filled while the chip drained.** R5a copied the
+   prototype's expression literally; the prototype fills on both of its rings
+   and is self-consistent, this app was not. Both drain now — ledger row 20.
+5. **Two more mono lines and one more isolate.** `rest.of` hand-rolled the
+   kicker and lost the RTL reset; the next row was `font-mono` with two Arabic
+   strings in it; and the queue's detail column and the canvas payload were
+   forced to `ltr` when they are figures on some rows and translated phrases on
+   others. Both take `dir="auto"` now, which is the honest answer: "3 × 12" has
+   no strong character and falls to ltr, "2/3 مجموعات" takes the Arabic.
+
+The lesson worth keeping: three of the six were introduced by this branch and
+three predate it, and no test could have caught any of them. The two that were
+caught by looking at pixels earlier in the session were caught the same way.

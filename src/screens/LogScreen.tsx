@@ -1760,6 +1760,11 @@ export function LogScreen({
       void supabase
         .from('workouts')
         .select('id', { count: 'exact', head: true })
+        // Scoped explicitly, NOT left to RLS. `workouts_select_visible`
+        // (0011_social.sql) also admits other lifters' finished workouts when
+        // their profile is public or followed, so an unscoped count would
+        // number this session against the whole visible feed.
+        .eq('user_id', userId)
         .not('ended_at', 'is', null)
         .lte('started_at', workout.started_at)
         .then(({ count }) => {
@@ -2507,7 +2512,13 @@ export function LogScreen({
           nextLabel={(() => {
             const ex = exercises.find((e) => e.id === restingExerciseId)
             if (!ex) return null
-            const n = sets.filter((x) => x.exercise_id === ex.id).length + 1
+            // Working sets only. Counting every row made this say "set 5"
+            // while the canvas card directly above it — which goes through
+            // `buildBlock`, and does filter — said set 3, on the same
+            // overlay, about the same lift.
+            const n =
+              sets.filter((x) => x.exercise_id === ex.id && x.set_type !== 'warmup')
+                .length + 1
             return t('rest.next_set', { name: ex.name, n: String(n) })
           })()}
         />

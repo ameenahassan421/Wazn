@@ -36,7 +36,17 @@ export function RestExpanded({
   useBackLayer(true, onCollapse)
 
   if (timer.remaining === null || timer.total === null) return null
-  const offset = RING * (timer.remaining / timer.total)
+  /**
+   * The ring DRAINS: full at the start of the rest, empty at the end.
+   *
+   * R5a took the prototype's expression literally — `RING * (remaining/total)`
+   * — which fills as the rest elapses. The prototype does the same on both of
+   * its rings, so it is self-consistent; this app is not. Its chip has drained
+   * since before R5, the motion system names the utility `timer-drain`, and
+   * the R5 spec itself asks for a ring "drawing down". Two rings for one timer
+   * disagreeing about which way time runs is worse than either convention.
+   */
+  const offset = RING * (1 - timer.remaining / timer.total)
 
   return (
     <div
@@ -123,10 +133,10 @@ export function RestExpanded({
             >
               {formatRest(timer.remaining)}
             </p>
-            <p
-              className="mt-1 font-mono text-[12px] tracking-[0.16em] uppercase"
-              style={{ color: '#9d968a' }}
-            >
+            {/* The `kicker` utility, not the recipe by hand: it carries the
+                RTL reset that keeps Arabic letters joined. The colour is
+                overridden because this layer is ink-grounded in both themes. */}
+            <p className="kicker mt-1" style={{ color: '#9d968a' }}>
               {t('rest.of', { t: formatRest(timer.total) })}
             </p>
           </div>
@@ -188,7 +198,7 @@ export function RestExpanded({
               borderRadius: '16px',
             }}
           >
-            <span className="font-mono text-[13px]" style={{ color: '#9d968a' }}>
+            <span className="meta-mono text-[13px]" style={{ color: '#9d968a' }}>
               {t('rest.next')}&nbsp;&nbsp;
               <span style={{ color: '#f7f3ec' }}>{nextLabel}</span>
             </span>
@@ -202,7 +212,7 @@ export function RestExpanded({
               strokeLinecap="round"
               strokeLinejoin="round"
               aria-hidden="true"
-              className="dir-flip"
+              className="icon-start"
             >
               <path d="M10 5l7 7-7 7" />
             </svg>

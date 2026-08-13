@@ -91,14 +91,13 @@ export function SessionQueue({
             >
               {name}
             </span>
-            {/* Latin figures beside an Arabic name: isolated, or the bidi
-                algorithm reorders "3 × 5" against the words next to it. The
-                done row's detail is a translated word, not a figure, and
-                must NOT be forced left-to-right. */}
-            <span
-              dir={complete ? undefined : 'ltr'}
-              className="meta-mono tnum shrink-0 text-xs text-muted"
-            >
+            {/* `auto`, because this column is a figure on some rows and a
+                translated phrase on others: "3 × 12" has no strong character
+                and falls to ltr, while "2/3 مجموعات" and "مسجَّل" take their
+                direction from the Arabic in them. Forcing ltr printed the
+                Arabic backwards; forcing nothing printed the figures
+                backwards. */}
+            <span dir="auto" className="meta-mono tnum shrink-0 text-xs text-muted">
               {detail}
             </span>
           </button>
