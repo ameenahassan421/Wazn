@@ -5,6 +5,7 @@ import { useLocale } from '../lib/locale-context'
 import { muscleLabel } from '../lib/i18n'
 import { useBackLayer } from '../lib/use-back'
 import { useUnit } from '../lib/unit-context'
+import { PlateRing } from '../components/icons'
 import { formatWeight, toDisplayWeight } from '../lib/units'
 import type { Unit } from '../lib/units'
 import {
@@ -86,7 +87,14 @@ const SCALE_MAX = 30
  *  quarter. */
 const FREQUENCY_WEEKS = 13
 
-export function ProgressScreen({ onOpenCoach }: { onOpenCoach: () => void }) {
+export function ProgressScreen({
+  onOpenCoach,
+  onStart,
+}: {
+  onOpenCoach: () => void
+  /** The way out of the empty state: straight into the exercise picker. */
+  onStart: () => void
+}) {
   const { unit } = useUnit()
   const { t } = useLocale()
 
@@ -331,8 +339,25 @@ export function ProgressScreen({ onOpenCoach }: { onOpenCoach: () => void }) {
       {empty && (
         /* "Log a workout to load the bar" already sits under the balance
            chart; with four blocks between them, saying it twice reads as a
-           stutter. What is left is the part only this line says. */
-        <p className="text-sm text-muted">{t('progress.empty_notice')}</p>
+           stutter. What is left is the part only this line says — and then
+           the thing that fills every chart above it. An empty screen that
+           explains itself and then offers no way forward is still a dead
+           end, however well it explains itself. */
+        <div className="flex flex-col items-start gap-5">
+          <p className="text-sm text-muted">{t('progress.empty_notice')}</p>
+          <button
+            type="button"
+            onClick={onStart}
+            className="btn-base btn-hero press flex h-[52px] items-center justify-center gap-2.5 px-7 text-[15px] font-bold"
+            style={{
+              borderRadius: 'var(--radius-pill)',
+              boxShadow: 'var(--shadow-cta)',
+            }}
+          >
+            <PlateRing size={18} className="shrink-0" />
+            <span>{t('history.empty.cta')}</span>
+          </button>
+        </div>
       )}
     </div>
   )

@@ -37,7 +37,6 @@ function open(props: Partial<Parameters<typeof SettingsScreen>[0]> = {}) {
       email="ameen@example.com"
       joinedAt="2025-10-04T10:00:00.000Z"
       onFriends={vi.fn()}
-      onClose={vi.fn()}
       {...props}
     />,
     { wrapper: Wrapper },

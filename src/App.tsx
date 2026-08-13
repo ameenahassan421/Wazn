@@ -75,6 +75,20 @@ export default function App() {
   const { loading, session, userId } = useAuth()
   const [tab, setTab] = useState<View>('log')
   /**
+   * Which view the Log screen opens on when we go there.
+   *
+   * Set explicitly at every navigation site rather than cleared afterwards,
+   * so there is no stale intent to leak: going home from anywhere means the
+   * board, and the empty-history screen's "Start a workout" means the picker.
+   * That button used to be the only place in the app whose label promised
+   * something its press did not do.
+   */
+  const [logView, setLogView] = useState<'overview' | 'picker'>('overview')
+  const openLog = (view: 'overview' | 'picker' = 'overview') => {
+    setLogView(view)
+    setTab('log')
+  }
+  /**
    * The header's monogram. Fetched here rather than inside the header so the
    * one request serves both the chip and the Settings screen behind it.
    *
@@ -121,7 +135,7 @@ export default function App() {
   // Android back from any secondary screen returns home instead of closing
   // the app. It backs up the header's chevron rather than replacing it: iOS
   // has no system back gesture to fall back on.
-  useBackLayer(tab !== 'log', () => setTab('log'))
+  useBackLayer(tab !== 'log', () => openLog())
 
   if (supabaseConfigError) {
     return (
@@ -176,7 +190,7 @@ export default function App() {
             <Header
               titleKey={titleKey}
               name={name}
-              onBack={tab === 'log' ? undefined : () => setTab('log')}
+              onBack={tab === 'log' ? undefined : () => openLog()}
               onOpenSettings={() => setTab('settings')}
             />
             {/* The bottom padding matches the sticky clusters' `bottom` value
@@ -192,16 +206,22 @@ export default function App() {
               <ErrorBoundary boundary={tab} resetKey={tab}>
                 {tab === 'log' && (
                   <LogScreen
+                    initialView={logView}
                     userId={userId}
                     onOpenCoach={() => setTab('coach')}
                     onOpenHistory={() => setTab('history')}
                     onOpenProgress={() => setTab('progress')}
                   />
                 )}
-                {tab === 'history' && <HistoryScreen />}
+                {tab === 'history' && (
+                  <HistoryScreen onStart={() => openLog('picker')} />
+                )}
                 {tab === 'progress' && (
                   <Suspense fallback={<ScreenFallback />}>
-                    <ProgressScreen onOpenCoach={() => setTab('coach')} />
+                    <ProgressScreen
+                      onOpenCoach={() => setTab('coach')}
+                      onStart={() => openLog('picker')}
+                    />
                   </Suspense>
                 )}
                 {tab === 'coach' && (
@@ -224,7 +244,6 @@ export default function App() {
                       email={session?.user.email ?? null}
                       joinedAt={session?.user.created_at ?? null}
                       onFriends={() => setTab('friends')}
-                      onClose={() => setTab('log')}
                     />
                   </Suspense>
                 )}

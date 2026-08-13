@@ -6,8 +6,8 @@ import { useTheme } from '../lib/theme-context'
 import { useUnit } from '../lib/unit-context'
 import { fetchMyProfile } from '../lib/social'
 import type { Profile } from '../lib/social'
-import { Avatar } from '../components/Avatar'
 import { IconBack } from '../components/icons'
+import { Avatar } from '../components/Avatar'
 
 /**
  * "You" — the design's screen 14, and the fix for the audit's S3: the header
@@ -132,13 +132,11 @@ export function SettingsScreen({
   joinedAt,
   userId,
   onFriends,
-  onClose,
 }: {
   email: string | null
   joinedAt: string | null
   userId: string
   onFriends: () => void
-  onClose: () => void
 }) {
   const { t, locale, setLocale } = useLocale()
   const { unit, setUnit } = useUnit()
@@ -167,15 +165,13 @@ export function SettingsScreen({
 
   return (
     <div className="flex flex-col gap-3 pt-3 pb-6">
+      {/* No back chevron here. The Header draws one for every screen that
+          is not home, with the same label and the same icon, at the same
+          inline-start edge — so this one stacked directly underneath it and
+          the screen offered two identical "Back" buttons. App already
+          suppresses the header TITLE on Settings so the word is not said
+          twice; the chevron half of that was missed. */}
       <div className="flex items-center gap-1">
-        <button
-          type="button"
-          onClick={onClose}
-          aria-label={t('settings.back')}
-          className="btn-base btn-quiet -ms-3 h-12 w-12"
-        >
-          <IconBack size={20} />
-        </button>
         <h1 className="font-display text-[19px] font-extrabold tracking-[-0.02em]">
           {t('settings.title')}
         </h1>

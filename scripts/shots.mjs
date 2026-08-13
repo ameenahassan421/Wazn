@@ -420,10 +420,18 @@ async function shoot(browser, origin, { width, empty, active, locale, theme }) {
       await page.waitForTimeout(1400)
     }
     if (!reached) {
-      // Loudly, not silently: a door that has stopped existing is the exact
-      // defect retiring the tab bar could introduce, and a run that quietly
-      // skipped the screen would report success.
+      // Loudly, and with what WAS on screen. A door that has stopped existing
+      // is the exact defect retiring the tab bar could introduce, and "no
+      // door to coach" on its own sends you looking in the wrong place when
+      // the real fault is that the run never got back to the home screen.
+      const present = await page.getByRole('button').evaluateAll((els) =>
+        els
+          .map((e) => e.getAttribute('aria-label') || e.textContent?.trim())
+          .filter(Boolean)
+          .slice(0, 12),
+      )
       console.log(`  ! ${pfx}${state}-${width}: no door to ${screen.key}`)
+      console.log(`      on screen: ${present.join(' · ')}`)
       continue
     }
     await page.screenshot({

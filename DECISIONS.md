@@ -5278,3 +5278,91 @@ workouts has no door to a screen with nothing on it. One workout in, the Last
 PR card renders "None yet" and Progress is reachable. History stays reachable
 throughout — its empty state is screen 18, and it is the one somebody with no
 data might still want to open.
+
+## 2026-08-13: dead ends are defects, not design
+
+A dead end I had described as deliberate — "a brand-new account can't reach
+Progress, and that is intentional" — was not defensible. Ameen's instruction:
+_"things like this, I expect you to solve."_ A six-lens audit over the whole
+app raised 49 findings; these are the ones that survived independent
+refutation and are fixed here.
+
+**Every screen has a door in every state.** The two-up week/PR row and the
+coach card were gated on having history, which meant the doors to History,
+Progress and Coach appeared only once you had already been there. They render
+in all states now. An empty week row still shows today, which is the whole
+invitation.
+
+**Onboarding did not stick.** `welcomed` was `useState(false)` inside
+LogScreen, and every screen here unmounts when you leave it — so a new user
+who skipped the welcome, opened History and came back was shown the welcome
+again, and again, until their first workout landed. The comment above it said
+"shown once"; nothing made that true. It is now `src/lib/welcomed.ts`, keyed
+by user id in localStorage.
+
+**A failed load was rendering onboarding.** When `load()` gives up it sets an
+error and returns without touching `hasHistory` or `routines`, which are
+indistinguishable from an empty account. A lifter with years of history, on a
+cold device with a bad connection, was told to build their first routine — and
+offered the Hevy import, which is gated on an empty account precisely because
+running an export twice duplicates every workout in it. Both are now gated on
+`!error`.
+
+**Empty states that named a tab bar that no longer exists.** Four strings sent
+people to the "Log tab" and the "Friends tab". History's empty state is now the
+design's screen 18 — the plate at 14%, "Your log starts today.", and a Start
+button that opens the exercise picker rather than merely going home. Progress's
+empty state gets the same button. The intent rides in as `initialView` rather
+than an effect, because a `setView` inside one would be the
+synchronous-setState-in-effect the lint rule forbids.
+
+**Two identical "Back" buttons on Settings.** App gives the Header a chevron on
+every non-home screen; Settings drew its own with the same label, same icon and
+same inline-start edge, directly underneath. App already suppressed the header
+title on Settings so the word was not said twice — the chevron half was missed.
+
+**A third sticky bar still cleared the retired tab bar.** The rest chip on the
+workout board kept its `+ 64px` when the other two were rebased, so it floated a
+tab-bar's height above the screen with the board showing through underneath.
+
+## 2026-08-13: migration 0026 — the tables mean "mine"
+
+The most serious thing the audit found, and it is not a dead end.
+
+`workouts_select_visible` (0011) admits `ended_at is not null and
+private.can_view(user_id)` so the friends feed can read the people you follow.
+That arm applies to **every** select on the table — and fifteen reporting
+functions read `workouts` with no user predicate of their own, trusting RLS to
+scope them: `session_volume_history`, `workout_totals`, `exercise_bests`,
+`muscle_group_weekly_sets`, `weekly_streak`, `adherence`, `exercise_records`,
+`exercise_rep_distribution`, `records_ladder`, `rep_distribution`,
+`weekly_band`, `session_brief`, `session_debrief`, `exercise_usage` and
+`previous_session`. All are SECURITY INVOKER, so all of them saw through it.
+
+Nothing leaks today only because `profiles.visibility` defaults to `'private'`
+and `can_view` answers false. One person setting themselves public or followers
+would have put their finished workouts inside other people's History pages,
+volume charts, streaks and PR comparisons — and `previous_session` feeds the
+mid-workout auto-fill, so a lifter could have been handed a stranger's working
+weight.
+
+**The fix is not fifteen predicates** that must each be remembered again by the
+sixteenth function. The two surfaces that legitimately read other people —
+`social_feed` and `weekly_leaderboard` — become SECURITY DEFINER and state the
+visibility check themselves as `private.can_view(w.user_id)`; both already
+filtered to the caller's follow graph, so that check was the only thing they
+took from RLS. The select policies then tighten to `user_id = (select
+auth.uid())`. A query that forgets to scope itself now returns the caller's own
+rows, which is the safe direction to be wrong in.
+
+`supabase/tests/rls_own_rows.sql` seeds the exact state that used to leak — A
+public and followed by B — and asserts both halves: B's reads and B's stats
+contain nothing of A's, AND B's feed and leaderboard still contain A. Half is
+not enough: tightening the policy while breaking the feed would pass a
+leak-only test. It also asserts B still sees B, because the first draft set
+only `request.jwt.claims` — which the local shim does not read, making
+`auth.uid()` NULL and every isolation assertion a tautology.
+
+**Not applied to production.** Plan §2.6 makes a change to auth an ask. It
+executes cleanly from empty and the suites pass; production is a separate
+decision and needs Ameen's go-ahead.

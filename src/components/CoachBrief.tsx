@@ -85,15 +85,49 @@ export function CoachBrief({ onOpen }: { onOpen?: () => void }) {
   const line = current?.line ?? skeleton
   const chip = current?.chip ?? briefChip(block, unit, locale)
 
-  // The card only exists when it has something to say. An empty briefing is
-  // not an empty state — it is one fewer thing between a lifter and Start.
   useEffect(() => {
     if (!line || dismissed || logged.current) return
     logged.current = true
     void recordCoachView('briefing', 'view')
   }, [line, dismissed])
 
-  if (!line || dismissed) return null
+  if (dismissed) return null
+
+  /*
+   * With nothing to brief on, the card still stands — as the coach's door.
+   *
+   * It used to render nothing here, on the reasoning that an empty briefing
+   * is one fewer thing between a lifter and Start. That was right while a tab
+   * bar carried the coach; with the bar retired this card is how the coach is
+   * reached, and a door that only appears once you have training history is
+   * not a door. It is also the design's own first-run screen, where the coach
+   * is the one thing on an empty home with something to offer: it can draft
+   * the week that fills everything else in.
+   */
+  if (!line) {
+    if (!onOpen) return null
+    return (
+      <section className="surface-card px-[18px] py-4" aria-label={t('brief.label')}>
+        <div className="flex items-start gap-3">
+          <PlateDot size={30} className="mt-0.5 shrink-0" />
+          <div className="min-w-0 flex-1">
+            <h2 className="kicker">{t('brief.title')}</h2>
+            <p className="mt-1.5 text-[14.5px] leading-[1.55]">{t('brief.first')}</p>
+            <div className="mt-3">
+              <button
+                type="button"
+                onClick={onOpen}
+                className="btn-base btn-secondary press h-9 px-3.5 text-[12.5px] font-semibold"
+                style={{ borderRadius: 'var(--radius-pill)' }}
+              >
+                {t('brief.ask')}
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+    )
+  }
 
   return (
     <section className="surface-card ps-[18px] pe-1 py-4" aria-label={t('brief.label')}>

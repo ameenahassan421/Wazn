@@ -86,7 +86,7 @@ export class ErrorBoundary extends Component<Props, State> {
           else did.
         </p>
         <p className="mt-2 text-[13px] text-muted">
-          Try it again, or use another tab and come back.
+          Try it again, or use the arrow at the top of the screen to go back.
         </p>
         <button
           type="button"

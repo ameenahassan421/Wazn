@@ -97,7 +97,7 @@ for file in supabase/migrations/*.sql; do
 done
 
 echo
-for file in supabase/tests/coach_surfaces.sql; do
+for file in supabase/tests/coach_surfaces.sql supabase/tests/rls_own_rows.sql; do
   echo "running $file"
   # Run ONCE, and read the exit code rather than the output. Every assertion in
   # the suite is a `raise exception`, and ON_ERROR_STOP is the entire

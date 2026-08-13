@@ -39,6 +39,7 @@ import { RoutineList } from '../components/RoutineList'
 import { InstallPrompt } from '../components/InstallPrompt'
 import { CoachBrief } from '../components/CoachBrief'
 import { Welcome } from '../components/Welcome'
+import { hasBeenWelcomed, markWelcomed } from '../lib/welcomed'
 import { useWakeLock } from '../lib/use-wake-lock'
 import { RoutineEditor } from '../components/RoutineEditor'
 import {
@@ -200,6 +201,7 @@ export function LogScreen({
   onOpenCoach,
   onOpenHistory,
   onOpenProgress,
+  initialView = 'overview',
 }: {
   userId: string
   /** The routine builder lives on the Coach tab (design v2.1), so Log's
@@ -210,6 +212,15 @@ export function LogScreen({
    *  record opens Progress. */
   onOpenHistory: () => void
   onOpenProgress: () => void
+  /**
+   * Which view to open on. `'picker'` is how the empty-history screen's
+   * "Start a workout" actually starts one: this screen unmounts when you
+   * leave it, so the intent rides in as a prop and is read once by the
+   * `view` initialiser. A prop rather than an effect — an effect that called
+   * `setView` would be the synchronous-setState-in-effect the lint rule
+   * forbids, and a ref would be re-read by StrictMode's double invoke.
+   */
+  initialView?: 'overview' | 'picker'
 }) {
   const { unit } = useUnit()
   const { t, locale } = useLocale()
@@ -380,11 +391,20 @@ export function LogScreen({
   const [weekRows, setWeekRows] = useState<SessionVolumeRow[]>([])
   const [recordRows, setRecordRows] = useState<RecordSetRow[]>([])
 
-  const [view, setView] = useState<View>('overview')
+  const [view, setView] = useState<View>(initialView)
   // Onboarding is shown once, to an account with nothing in it, and can be
   // dismissed forward into either path. It is state rather than a route
   // because it is a moment, not a place.
-  const [welcomed, setWelcomed] = useState(false)
+  /**
+   * Read from storage on first render, not defaulted to false. Every screen
+   * here unmounts when you leave it, so a `useState(false)` meant the
+   * first-run screen came back every time a new user returned to home.
+   */
+  const [welcomed, setWelcomed] = useState(() => hasBeenWelcomed(userId))
+  const dismissWelcome = () => {
+    markWelcomed(userId)
+    setWelcomed(true)
+  }
   const [current, setCurrent] = useState<Exercise | null>(null)
 
   // The screen stays on while a workout is open. Racking the bar and finding
@@ -2251,16 +2271,26 @@ export function LogScreen({
 
   // A brand-new account: no workouts, no routines, nothing to look at. Shown
   // once and only here, because this is the screen the app opens on.
-  if (!workout && !welcomed && !hasHistory && routines.length === 0) {
+  //
+  // `!error` is load-bearing. When `load()` gives up it sets an error and
+  // returns without touching `hasHistory` or `routines`, so they hold their
+  // initial `false` and `[]` — indistinguishable from an empty account. A
+  // lifter with years of history, on a cold device with a bad connection,
+  // was told "let's build your first routine" and never shown what went
+  // wrong. Worse, this screen offers the Hevy import, which is gated on an
+  // empty account precisely because running an export twice duplicates every
+  // workout in it — a failed read must not be what opens that door. Falling
+  // through renders the empty branch below, which already draws ErrorNote.
+  if (!error && !workout && !welcomed && !hasHistory && routines.length === 0) {
     return (
       <Welcome
         onGenerate={() => {
-          setWelcomed(true)
+          dismissWelcome()
           onOpenCoach()
         }}
-        onSkip={() => setWelcomed(true)}
+        onSkip={dismissWelcome}
         onImport={() => {
-          setWelcomed(true)
+          dismissWelcome()
           setView('import')
         }}
       />
@@ -2359,13 +2389,18 @@ export function LogScreen({
 
         {/* The design's two-up row. Both halves are doors: the week goes to
             History, the record to Progress. With the tab bar gone that is how
-            those screens are reached — content that is also navigation. */}
-        {hasHistory && (
-          <div className="flex gap-3">
-            <WeekCard days={week} onOpen={onOpenHistory} />
-            <LastPrCard record={lastRecord} onOpen={onOpenProgress} />
-          </div>
-        )}
+            those screens are reached — content that is also navigation.
+
+            Rendered in every state, including the account that has never
+            trained. It was gated on `hasHistory` for one release, on the
+            reasoning that a card with nothing in it is clutter — but a door
+            that appears only once you have walked through it is not a door,
+            and Progress had no other way in. An empty week row is not empty
+            anyway: it shows today, which is the whole invitation. */}
+        <div className="flex gap-3">
+          <WeekCard days={week} onOpen={onOpenHistory} />
+          <LastPrCard record={lastRecord} onOpen={onOpenProgress} />
+        </div>
 
         {/* One line where a list of exercise rows used to be. The old recap
             was the same facts spread over four rows of thumbnails; the design
@@ -2404,7 +2439,7 @@ export function LogScreen({
             duplicate every workout in it, and nothing here de-duplicates.
             Gating on an empty account makes that impossible instead of
             merely unlikely. */}
-        {!hasHistory && (
+        {!hasHistory && !error && (
           <button
             type="button"
             onClick={() => setView('import')}
@@ -2721,13 +2756,20 @@ export function LogScreen({
               // makes the gap a no-op and the bar is exactly what it was.
               className="sticky z-10 -mx-[18px] flex flex-col gap-1.5 bg-ink px-[18px] pt-2 pb-1"
               style={{
-                // The tab bar is 60px plus its own safe-area padding; 4px of
-                // air keeps the bar off it without a gap you could read as a
-                // seam.
-                bottom: 'calc(max(env(safe-area-inset-bottom, 0px), 10px) + 64px)',
-                // The same hairline the tab bar carries, for the same reason:
-                // it marks the edge where content stops and chrome starts, so
-                // a control passing behind reads as scrolling under a bar
+                // At the safe-area inset, like the other pinned clusters.
+                // This one kept its `+ 64px` when the tab bar was retired and
+                // the other two were rebased — so the rest bar floated a
+                // tab-bar's height above the bottom of the screen with the
+                // board showing through underneath it.
+                bottom: 'max(env(safe-area-inset-bottom, 0px), 10px)',
+                // Trailing space below this bar is the overview wrapper's
+                // py-3 plus main's padding; main's padding is now exactly
+                // `bottom` and cancels, leaving a constant 12px. Without it
+                // the bar rides up its own pinned line over the last stretch
+                // of the scroll.
+                marginBottom: '-12px',
+                // A hairline where content stops and chrome starts, so a
+                // control passing behind reads as scrolling under a bar
                 // rather than as being cut in half.
                 borderTop: '1px solid var(--divider-solid)',
               }}

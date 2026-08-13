@@ -11,6 +11,7 @@ import {
   formatVolumeWithUnit,
   formatWorkoutDate,
 } from '../lib/format'
+import { PlateRing, PlateSilhouette } from '../components/icons'
 import type { Exercise, Workout, WorkoutSet } from '../lib/types'
 import { isRecord } from '../lib/types'
 import type { SessionVolumeRow } from '../lib/progress'
@@ -57,7 +58,7 @@ function thumbExercise(e: EmbeddedExercise): Exercise {
   return { ...e, is_custom: false, owner_id: null, default_rest_seconds: null }
 }
 
-export function HistoryScreen() {
+export function HistoryScreen({ onStart }: { onStart: () => void }) {
   const { unit } = useUnit()
   const { t } = useLocale()
 
@@ -390,7 +391,32 @@ export function HistoryScreen() {
       <TrainingCalendar sessions={sessions} unit={unit} />
 
       {workouts.length === 0 ? (
-        <p className="py-6 text-sm text-muted">{t('history.empty')}</p>
+        /* The design's screen 18. It replaces a line of muted text that told
+           the reader to "log one on the Log tab" — a tab that no longer
+           exists, and an instruction with nothing to press either way. An
+           empty screen that names the thing you came for and then offers no
+           way to get it is the emptiest kind. */
+        <div className="flex flex-col items-center px-4 py-14 text-center">
+          <PlateSilhouette size={120} className="text-text opacity-[0.14]" />
+          <h2 className="font-display mt-7 text-[26px] font-extrabold tracking-[-0.03em]">
+            {t('history.empty')}
+          </h2>
+          <p className="mt-2.5 max-w-[280px] text-sm leading-relaxed text-muted">
+            {t('history.empty.body')}
+          </p>
+          <button
+            type="button"
+            onClick={onStart}
+            className="btn-base btn-hero press mt-7 flex h-[52px] items-center justify-center gap-2.5 px-7 text-[15px] font-bold"
+            style={{
+              borderRadius: 'var(--radius-pill)',
+              boxShadow: 'var(--shadow-cta)',
+            }}
+          >
+            <PlateRing size={18} className="shrink-0" />
+            <span>{t('history.empty.cta')}</span>
+          </button>
+        </div>
       ) : (
         <ul>
           {workouts.map((workout, i) => {

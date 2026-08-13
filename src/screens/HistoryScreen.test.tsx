@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, expect, it, vi, beforeEach } from 'vitest'
-import { render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import type { ReactNode } from 'react'
 import { LocaleProvider } from '../lib/locale-context'
 import { UnitProvider } from '../lib/unit-context'
@@ -56,17 +56,30 @@ beforeEach(() => {
 
 describe('HistoryScreen locale strings', () => {
   it('renders the English empty-state message', async () => {
-    render(<HistoryScreen />, { wrapper: Wrapper })
+    render(<HistoryScreen onStart={() => {}} />, { wrapper: Wrapper })
     await waitFor(() => {
-      expect(screen.getByText(/No workouts yet/)).toBeInTheDocument()
+      expect(screen.getByText(/starts today/)).toBeInTheDocument()
     })
   })
 
   it('renders the Arabic empty-state message when locale is ar', async () => {
     localStorage.setItem('workout.locale', 'ar')
-    render(<HistoryScreen />, { wrapper: Wrapper })
+    render(<HistoryScreen onStart={() => {}} />, { wrapper: Wrapper })
     await waitFor(() => {
-      expect(screen.getByText(/لا توجد تمارين/)).toBeInTheDocument()
+      expect(screen.getByText(/يبدأ اليوم/)).toBeInTheDocument()
     })
+  })
+
+  /*
+   * The empty state's whole job. It used to be a sentence telling the reader
+   * to use a tab that no longer exists — no control, nothing to press. If
+   * this button ever goes back to being decoration, this fails.
+   */
+  it('offers a way out of the empty state, and it fires', async () => {
+    const onStart = vi.fn()
+    render(<HistoryScreen onStart={onStart} />, { wrapper: Wrapper })
+    const cta = await screen.findByRole('button', { name: 'Start a workout' })
+    fireEvent.click(cta)
+    expect(onStart).toHaveBeenCalledTimes(1)
   })
 })

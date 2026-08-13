@@ -37,8 +37,11 @@ describe('Slice 4 history/progress keys', () => {
   // key-set parity check above is the safety net; these pin the actual values
   // the screens render, so a bad edit to a message is caught here.
   it('history.empty resolves in both locales', () => {
-    expect(t('en', 'history.empty')).toContain('No workouts yet')
-    expect(t('ar', 'history.empty')).toContain('لا توجد تمارين')
+    // The heading of the design's empty-history screen. It used to read "Log
+    // one on the Log tab", which outlived the tab it named by one release.
+    expect(t('en', 'history.empty')).toContain('starts today')
+    expect(t('ar', 'history.empty')).toContain('يبدأ اليوم')
+    expect(t('en', 'history.empty.cta')).toBe('Start a workout')
   })
 
   it('interpolates the history personal-record title', () => {

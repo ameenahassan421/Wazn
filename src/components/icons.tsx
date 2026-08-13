@@ -50,49 +50,12 @@ export function IconBack(props: IconProps) {
   )
 }
 
-/** A loaded bar: the Log tab. */
-export function IconBarbell(props: IconProps) {
-  return (
-    <Svg {...props}>
-      <line x1="2.5" y1="12" x2="21.5" y2="12" />
-      <rect
-        x="4.5"
-        y="7"
-        width="3"
-        height="10"
-        rx="1.2"
-        fill="currentColor"
-        stroke="none"
-      />
-      <rect
-        x="16.5"
-        y="7"
-        width="3"
-        height="10"
-        rx="1.2"
-        fill="currentColor"
-        stroke="none"
-      />
-    </Svg>
-  )
-}
-
 /** A clock wound backwards: the History tab. */
 export function IconHistory(props: IconProps) {
   return (
     <Svg {...props}>
       <circle cx="12" cy="12" r="8.5" />
       <polyline points="12 7.5 12 12 15.2 13.8" />
-    </Svg>
-  )
-}
-
-/** A rising line: the Progress tab. */
-export function IconTrend(props: IconProps) {
-  return (
-    <Svg {...props}>
-      <polyline points="3.5 16.5 9.5 10.5 13.5 14 20.5 7" />
-      <polyline points="15.5 7 20.5 7 20.5 12" />
     </Svg>
   )
 }
@@ -129,33 +92,6 @@ export function IconChevronDown(props: IconProps) {
   return (
     <Svg {...props}>
       <polyline points="6 9.5 12 15.5 18 9.5" />
-    </Svg>
-  )
-}
-
-/** Two figures: the Friends tab. */
-export function IconPeople(props: IconProps) {
-  return (
-    <Svg {...props}>
-      <circle cx="9" cy="8" r="3.2" />
-      <path d="M3.5 19.5c0-3 2.5-5 5.5-5s5.5 2 5.5 5" />
-      <path d="M16 5.6a3.2 3.2 0 0 1 0 6.3" />
-      <path d="M17.5 14.8c1.9.6 3.2 2.3 3.2 4.7" />
-    </Svg>
-  )
-}
-
-/**
- * A star, for the Coach tab. Drawn on the same 24 grid at stroke 2 as the
- * rest of the set — not a filled glyph, so it sits at the same visual weight
- * as the barbell and the clock beside it.
- *
- * Not directional: it does not flip under RTL.
- */
-export function IconStar(props: IconProps) {
-  return (
-    <Svg {...props}>
-      <path d="M12 3.6l2.5 5.3 5.6.8-4.1 4 1 5.7-5-2.7-5 2.7 1-5.7-4.1-4 5.6-.8z" />
     </Svg>
   )
 }
@@ -295,6 +231,32 @@ export function PlateLoaded({ size = 44, className }: PlateProps) {
     >
       <path
         fill="var(--color-accent)"
+        fillRule="evenodd"
+        d="M48 4 a44 44 0 1 0 0 88 a44 44 0 1 0 0 -88 Z M48 33 a15 15 0 1 1 0 30 a15 15 0 1 1 0 -30 Z M17 43 h6 a5 5 0 0 1 5 5 a5 5 0 0 1 -5 5 h-6 a5 5 0 0 1 -5 -5 a5 5 0 0 1 5 -5 Z M73 43 h6 a5 5 0 0 1 5 5 a5 5 0 0 1 -5 5 h-6 a5 5 0 0 1 -5 -5 a5 5 0 0 1 5 -5 Z"
+      />
+    </svg>
+  )
+}
+
+/**
+ * The mark itself, at size, in the caller's colour.
+ *
+ * `PlateLoaded` is the same geometry welded to the accent, which is right for
+ * a PR badge and wrong for an empty state — the design's empty screens draw
+ * this plate in ink at 14% and it has to take the text colour to do that.
+ */
+export function PlateSilhouette({ size = 120, className }: PlateProps) {
+  return (
+    <svg
+      viewBox="0 0 96 96"
+      width={size}
+      height={size}
+      aria-hidden="true"
+      className={className}
+      style={{ flexShrink: 0 }}
+    >
+      <path
+        fill="currentColor"
         fillRule="evenodd"
         d="M48 4 a44 44 0 1 0 0 88 a44 44 0 1 0 0 -88 Z M48 33 a15 15 0 1 1 0 30 a15 15 0 1 1 0 -30 Z M17 43 h6 a5 5 0 0 1 5 5 a5 5 0 0 1 -5 5 h-6 a5 5 0 0 1 -5 -5 a5 5 0 0 1 5 -5 Z M73 43 h6 a5 5 0 0 1 5 5 a5 5 0 0 1 -5 5 h-6 a5 5 0 0 1 -5 -5 a5 5 0 0 1 5 -5 Z"
       />

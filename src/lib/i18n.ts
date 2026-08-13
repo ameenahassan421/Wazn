@@ -66,6 +66,8 @@ export const messages: Record<Locale, Record<string, string>> = {
     // screen to two preferences that are set once.
     // The home feed's three cards (design screen 01).
     'brief.ask': 'Ask the coach',
+    'brief.first':
+      'Nothing logged yet. Ask me anything — or I can draft your first week.',
     'home.week': 'This week',
     'home.last_pr': 'Last PR',
     'home.pr': 'PR',
@@ -101,12 +103,12 @@ export const messages: Record<Locale, Record<string, string>> = {
       'That is the whole idea. Everything else in here exists to stay out of the way while you do it.',
     'welcome.invited.heading': 'You were invited',
     'welcome.invited.body':
-      'Follow them to see their finished workouts and share a weekly leaderboard. Your own training stays private until you change that on the Friends tab.',
+      'Follow them to see their finished workouts and share a weekly leaderboard. Your own training stays private until you change that in Settings.',
     'welcome.follow': 'Follow {name}',
     'welcome.following': 'Following {name}',
     'welcome.follow.busy': 'Following…',
     'welcome.follow.error':
-      'That did not go through. You can follow them from the Friends tab.',
+      'That did not go through. You can follow them from Settings.',
     'welcome.username.label': 'Pick a username — optional',
     'welcome.username.body':
       'Sign in with it instead of your email, and let friends find you.',
@@ -201,8 +203,10 @@ export const messages: Record<Locale, Record<string, string>> = {
 
     // ── History screen (Slice 4) ─────────────────────────────────
     'history.loading_sets': 'Loading sets…',
-    'history.empty':
-      'No workouts yet. Log one on the Log tab and it will show up here.',
+    'history.empty.body':
+      'Every set you log lands here — the calendar above fills in as you go.',
+    'history.empty.cta': 'Start a workout',
+    'history.empty': 'Your log starts today.',
     'history.no_sets': 'This workout has no sets recorded.',
     'history.set': 'set',
     'history.sets': 'sets',
@@ -694,7 +698,7 @@ export const messages: Record<Locale, Record<string, string>> = {
     'wordmark.label': 'Wazn',
     // Error boundary
     'error.title': 'Something broke',
-    'error.body': 'Try it again, or use another tab and come back.',
+    'error.body': 'Try it again, or go back and come in again.',
     'error.retry': 'Try again',
     // Exercise detail sections
     'detail.not_logged': 'Not logged yet',
@@ -839,6 +843,7 @@ export const messages: Record<Locale, Record<string, string>> = {
     // Settings ("You"), design screen 14.
     // The home feed's three cards (design screen 01).
     'brief.ask': 'اسأل المدرب',
+    'brief.first': 'لا يوجد سجل بعد. اسألني ما شئت — أو أستطيع صياغة أسبوعك الأول.',
     'home.week': 'هذا الأسبوع',
     'home.last_pr': 'آخر رقم قياسي',
     'home.pr': 'رقم قياسي',
@@ -871,11 +876,11 @@ export const messages: Record<Locale, Record<string, string>> = {
       'هذا هو الفكرة بالكامل. كل شيء آخر هنا موجود ليكون خارج طريقي وأنت تفعل ذلك.',
     'welcome.invited.heading': 'لقد تمت دعوتك',
     'welcome.invited.body':
-      'تابعهم لرؤية تمارينهم المنتهية ومشاركة لوحة صدارة أسبوعية. تدريبك الخاص يبقى خاصاً حتى تغير ذلك من تبويب الأصدقاء.',
+      'تابعهم لرؤية تمارينهم المنتهية ومشاركة لوحة صدارة أسبوعية. تدريبك الخاص يبقى خاصاً حتى تغير ذلك من الإعدادات.',
     'welcome.follow': 'تابع {name}',
     'welcome.following': 'متابَع {name}',
     'welcome.follow.busy': 'جارٍ المتابعة…',
-    'welcome.follow.error': 'لم يتم الإرسال. يمكنك متابعتهم من تبويب الأصدقاء.',
+    'welcome.follow.error': 'لم يتم الإرسال. يمكنك متابعتهم من الإعدادات.',
     'welcome.username.label': 'اختر اسماً مستعاراً — اختياري',
     'welcome.username.body':
       'سجّل الدخول به بدلاً من بريدك الإلكتروني، ودع الأصدقاء يجدونك.',
@@ -968,7 +973,10 @@ export const messages: Record<Locale, Record<string, string>> = {
 
     // ── History screen (Slice 4) ─────────────────────────────────
     'history.loading_sets': 'جارٍ تحميل المجموعات…',
-    'history.empty': 'لا توجد تمارين بعد. سجّل تمرينًا من شاشة التسجيل وظهر هنا.',
+    'history.empty.body':
+      'كل مجموعة تسجّلها تصل إلى هنا — والتقويم أعلاه يمتلئ مع تقدمك.',
+    'history.empty.cta': 'ابدأ تمريناً',
+    'history.empty': 'سجلك يبدأ اليوم.',
     'history.no_sets': 'هذا التمرين ليس له مجموعات مسجلة.',
     'history.set': 'مجموعة',
     'history.sets': 'مجموعات',
@@ -1445,7 +1453,7 @@ export const messages: Record<Locale, Record<string, string>> = {
     'wordmark.label': 'وزن',
     // Error boundary
     'error.title': 'حدث خطأ',
-    'error.body': 'أعِد المحاولة، أو انتقل إلى تبويب آخر ثم عُد.',
+    'error.body': 'أعِد المحاولة، أو ارجع ثم ادخل من جديد.',
     'error.retry': 'حاول مرة أخرى',
     // Exercise detail sections
     'detail.not_logged': 'لم يُسجَّل بعد',
