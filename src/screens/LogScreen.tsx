@@ -25,7 +25,7 @@ import type {
   WorkoutSet,
 } from '../lib/types'
 import { ExercisePicker } from '../components/ExercisePicker'
-import { IconBack, PlateRing } from '../components/icons'
+import { IconBack, IconHistory, PlateRing } from '../components/icons'
 import { SetEntry } from '../components/SetEntry'
 import { SessionQueue } from '../components/SessionQueue'
 import { UpNextCard } from '../components/UpNextCard'
@@ -2347,7 +2347,7 @@ export function LogScreen({
             without someone moving this line. It draws itself from SQL and
             returns null when it has nothing to say, so it costs no layout on
             a new account and never delays Start. */}
-        <CoachBrief />
+        <CoachBrief onOpen={onOpenCoach} />
 
         {upNext && (
           <UpNextCard
@@ -2424,21 +2424,31 @@ export function LogScreen({
             Same sticky recipe and tab-bar clearance as the workout's commit
             cluster, so the two screens' hot controls live in one place. */}
         <div
-          className="sticky z-10 -mx-[18px] mt-auto bg-ink px-[18px] pt-3 pb-1"
+          className="sticky z-10 -mx-[18px] mt-auto flex items-center gap-2.5 px-[18px] pt-4"
           style={{
-            bottom: 'calc(max(env(safe-area-inset-bottom, 0px), 10px) + 64px)',
-            // Same correction as the commit cluster, over less trailing
-            // space: this branch adds no bottom padding of its own, so only
-            // main's pb-28 is in the way.
-            marginBottom: 'calc(max(env(safe-area-inset-bottom, 0px), 10px) - 48px)',
-            borderTop: '1px solid var(--divider-solid)',
+            // Flush to the bottom edge, like the design's bar, so the fade
+            // reaches the edge of the screen. Anchored anywhere above it, a
+            // strip of the routines list shows underneath and reads as the
+            // bar having come loose.
+            bottom: 0,
+            // The row owns the safe-area inset now that it sits at 0.
+            paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 22px)',
+            // No drift at the end of the scroll: the correction is `bottom`
+            // minus the trailing space, and the only trailing space is main's
+            // padding. The old value added 64px for a tab bar that is no
+            // longer there.
+            marginBottom: 'calc(-1 * max(env(safe-area-inset-bottom, 0px), 10px))',
+            // The design's fade rather than a rule: the row floats over the
+            // feed instead of cutting it off, and the last card stays half
+            // visible under it as a hint that the list continues.
+            background: 'linear-gradient(180deg, transparent, var(--color-ink) 45%)',
           }}
         >
           <button
             type="button"
             onClick={() => void startWorkout()}
             disabled={saving}
-            className="btn-base btn-hero press flex h-[58px] w-full items-center justify-center gap-2.5 text-[16px] font-bold disabled:opacity-45"
+            className="btn-base btn-hero press flex h-[58px] flex-1 items-center justify-center gap-2.5 text-[16px] font-bold disabled:opacity-45"
             style={{
               borderRadius: 'var(--radius-pill)',
               boxShadow: 'var(--shadow-cta)',
@@ -2446,6 +2456,20 @@ export function LogScreen({
           >
             <PlateRing size={20} className="shrink-0" />
             <span>{hasHistory ? t('log.start') : t('log.start_first')}</span>
+          </button>
+          {/* The one piece of navigation the design keeps as furniture. Every
+              other screen is reached through something that says what it
+              holds — a record, a week, a coach line — but "what did I do
+              before" has no card of its own, and it is the question asked
+              most often after "what am I doing now". */}
+          <button
+            type="button"
+            onClick={onOpenHistory}
+            aria-label={t('nav.history')}
+            className="press flex h-[58px] w-[58px] shrink-0 items-center justify-center rounded-full"
+            style={{ background: 'var(--flip-bg)', color: 'var(--flip-text)' }}
+          >
+            <IconHistory size={22} />
           </button>
         </div>
       </div>

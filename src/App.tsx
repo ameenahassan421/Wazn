@@ -13,8 +13,6 @@ import { fetchMyProfile } from './lib/social'
 import { AuthScreen } from './components/AuthScreen'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import { Header } from './components/Header'
-import { TabBar } from './components/TabBar'
-import type { Tab } from './components/TabBar'
 import { LogScreen } from './screens/LogScreen'
 import { HistoryScreen } from './screens/HistoryScreen'
 
@@ -48,6 +46,22 @@ const SettingsScreen = lazyScreen(() =>
 )
 
 /**
+ * Where you are. Not a tab any more.
+ *
+ * The five-tab bar is gone — the audit's S2 finding, "five equal tabs for
+ * five unequal jobs": Log is daily and the other four are occasional, and
+ * equal tabs made the app feel bigger and harder than it is. What replaces it
+ * is the design's home: one Start action, a History circle beside it, and
+ * cards that are themselves the doors to Progress and History.
+ *
+ * Friends keeps its screen and loses its place in the furniture. The audit
+ * calls it "a tab it hasn't earned"; it is now a row in Settings, which is
+ * where somebody who wants it will look, and nowhere in the way of somebody
+ * who does not.
+ */
+export type View = 'log' | 'history' | 'progress' | 'coach' | 'friends' | 'settings'
+
+/**
  * The lazy-screen fallback, as its own component so `t()` runs INSIDE
  * LocaleProvider. Calling it from App would resolve against the default
  * context and print the raw key.
@@ -59,7 +73,7 @@ function ScreenFallback() {
 
 export default function App() {
   const { loading, session, userId } = useAuth()
-  const [tab, setTab] = useState<Tab>('log')
+  const [tab, setTab] = useState<View>('log')
   /**
    * The header's monogram. Fetched here rather than inside the header so the
    * one request serves both the chip and the Settings screen behind it.
@@ -104,8 +118,9 @@ export default function App() {
     void reconcileDeviceUser(userId, browserStorage())
   }, [userId])
 
-  // Android back from History or Progress returns to Log — the home tab —
-  // instead of closing the app, matching what a bottom tab bar promises.
+  // Android back from any secondary screen returns home instead of closing
+  // the app. It backs up the header's chevron rather than replacing it: iOS
+  // has no system back gesture to fall back on.
   useBackLayer(tab !== 'log', () => setTab('log'))
 
   if (supabaseConfigError) {
@@ -161,9 +176,19 @@ export default function App() {
             <Header
               titleKey={titleKey}
               name={name}
+              onBack={tab === 'log' ? undefined : () => setTab('log')}
               onOpenSettings={() => setTab('settings')}
             />
-            <main className="mx-auto w-full max-w-[430px] px-[18px] pb-28">
+            {/* The bottom padding matches the sticky clusters' `bottom` value
+                exactly. That is not a coincidence to preserve by accident: a
+                sticky element stops drifting at the end of a scroll precisely
+                when its natural resting place equals the offset it sticks at,
+                and the two hand-tuned negative margins this replaces existed
+                because the old `pb-28` was clearing a tab bar instead. */}
+            <main
+              className="mx-auto w-full max-w-[430px] px-[18px]"
+              style={{ paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 10px)' }}
+            >
               <ErrorBoundary boundary={tab} resetKey={tab}>
                 {tab === 'log' && (
                   <LogScreen
@@ -205,7 +230,6 @@ export default function App() {
                 )}
               </ErrorBoundary>
             </main>
-            <TabBar active={tab} onChange={setTab} />
             <Analytics />
           </UnitProvider>
         </LocaleProvider>

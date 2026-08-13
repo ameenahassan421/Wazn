@@ -5228,3 +5228,53 @@ for a glance; the depth is one tap into History.
 History has shown the same string since it was written; localising it means
 threading a locale through every caller, and it is a separate piece of work
 rather than something to bolt onto this one.
+
+## 2026-08-13: the five-tab bar is retired
+
+The audit's S2: "Log is daily; History, Progress, Coach, Friends are
+occasional. Equal tabs make the app feel bigger and harder than it is." What
+replaces it is the design's home — one Start action, a History circle beside
+it, and cards that are themselves the doors.
+
+**Where each screen went.** History is the circle beside Start, the one piece
+of navigation kept as furniture: every other screen is reached through
+something that says what it holds, and "what did I do before" has no card of
+its own. Progress is behind the Last PR card. Coach is behind a new "Ask the
+coach" chip on the coach brief — the design's coach card carries suggestion
+chips and they are what opens the chat, and this is the one of them the app
+can write without inventing the user's question. Settings is the header
+avatar. Friends is a row inside Settings, which is where somebody who wants it
+will look and nowhere in the way of somebody who does not.
+
+**Every screen needs a way out.** The header grows a back chevron on
+everything except home. Android back already returned home, but iOS has no
+system back gesture, and a screen you can enter and not leave is a trap. The
+smoke test now presses that chevron on every screen it opens, so a screen
+shipped without one fails CI rather than shipping.
+
+**The sticky arithmetic got simpler, not more complicated.** Both pinned
+clusters carried `+ 64px` for the tab bar's height and a hand-tuned negative
+margin to undo the `pb-28` that cleared it. The rule underneath is: a sticky
+element stops drifting at the end of a scroll when `marginBottom` equals
+`bottom` minus the trailing space below it. `main`'s padding is now exactly
+the safe-area inset:
+
+- The home's Start row sits at `bottom: 0` so its fade reaches the screen
+  edge, with `marginBottom` cancelling main's padding.
+- The workout's commit cluster sits at the inset, and its correction falls out
+  as a constant `-28px` — its own `pb-4` plus the wrapper's `py-3`, with the
+  safe-area terms cancelling on both sides.
+
+**The two harnesses navigated by tab name and had to be rewritten.** They now
+press the real doors in sequence, and `npm run shots` prints
+`no door to <screen>` when a route cannot be walked. That line found two real
+things immediately: the Last PR card had no `aria-label`, so it announced
+itself as "LAST PR 226 lbs Bench Press (Barbell) · today" and could not be
+addressed by name; and the empty-account pass never left the first-run screen.
+
+**A brand-new account cannot reach Progress, and that is deliberate.** The
+week and record cards are gated on `hasHistory`, so an account with no
+workouts has no door to a screen with nothing on it. One workout in, the Last
+PR card renders "None yet" and Progress is reachable. History stays reachable
+throughout — its empty state is screen 18, and it is the one somebody with no
+data might still want to open.

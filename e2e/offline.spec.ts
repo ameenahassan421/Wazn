@@ -25,7 +25,21 @@ import { stubSupabase, USER_ID, type StubServer } from './stub'
  *                        where the page still has to load from `vite preview`.
  */
 
-const tabBar = (page: Page) => page.locator('nav').first()
+/**
+ * The app has rendered and somebody is signed in.
+ *
+ * The avatar, because it is the one control on EVERY signed-in screen —
+ * including mid-workout, where there is no Start button because the board has
+ * replaced it. This used to wait on the tab bar, which had the same property
+ * until it was retired; substituting the Start row for it broke exactly the
+ * two tests that reload with a workout open.
+ */
+const appReady = (page: Page) =>
+  page.getByRole('button', { name: 'You — settings' }).first()
+
+/** The idle home, specifically: the Start row is only ever on that screen. */
+const signedInHome = (page: Page) =>
+  page.getByRole('button', { name: /start.*workout/i }).first()
 
 function makeServer(): StubServer {
   return { captured: [], rows: {}, offline: false }
@@ -34,13 +48,11 @@ function makeServer(): StubServer {
 async function signedIn(page: Page, server: StubServer) {
   await stubSupabase(page, server)
   await page.goto('/')
-  await expect(tabBar(page)).toBeVisible({ timeout: 15_000 })
+  await expect(appReady(page)).toBeVisible({ timeout: 15_000 })
   // The catalogue has to have landed before the network is cut, or there is
   // nothing cached to log against — which is a real first-run limitation and
   // not what these tests are about.
-  await expect(
-    page.getByRole('button', { name: /start.*workout/i }).first(),
-  ).toBeVisible({ timeout: 15_000 })
+  await expect(signedInHome(page)).toBeVisible({ timeout: 15_000 })
 }
 
 /** Pick a lift and log one set from the focused view. */
@@ -133,7 +145,7 @@ test.describe('GATE 4 — the airplane-mode workout', () => {
     server.offline = false
     await context.setOffline(false)
     await page.reload()
-    await expect(tabBar(page)).toBeVisible({ timeout: 15_000 })
+    await expect(appReady(page)).toBeVisible({ timeout: 15_000 })
 
     // The set is on the server, replayed from a queue that survived the reload.
     await expect
@@ -166,7 +178,7 @@ test.describe('GATE 4 — the airplane-mode workout', () => {
     // what an installed PWA gets from its precache anyway.
     server.offline = true
     await page.reload()
-    await expect(tabBar(page)).toBeVisible({ timeout: 15_000 })
+    await expect(appReady(page)).toBeVisible({ timeout: 15_000 })
 
     // Not an error screen, and not an empty one: the workout, the lift and the
     // set are all still there, read from the device.

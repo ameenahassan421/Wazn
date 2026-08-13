@@ -24,7 +24,7 @@
  * are for looking at during a session, not for review in a diff.
  */
 import { spawnSync } from 'node:child_process'
-import { mkdirSync } from 'node:fs'
+import { mkdirSync, readdirSync } from 'node:fs'
 import { chromium } from '@playwright/test'
 import {
   SUPABASE_ANON_KEY,
@@ -37,11 +37,30 @@ import {
 } from './harness/app-harness.mjs'
 
 const WIDTHS = [390, 430]
-const TABS = ['Log', 'History', 'Progress', 'Coach', 'Friends']
-// The Arabic pass: same five tabs by their AR accessible names, because the
-// class of defect this exists to catch (the mirrored ghost rows of 2026-08-09)
-// is invisible in the EN run and to every other check in the wall.
-const TABS_AR = ['التمارين', 'السجل', 'التقدم', 'المدرب', 'الأصدقاء']
+
+/**
+ * The five secondary screens, and how a user actually reaches each one now
+ * that the tab bar is gone.
+ *
+ * Each entry names the control to press on the HOME screen; the run returns
+ * home between screens. Friends is two presses deep because it is two presses
+ * deep for real — the audit retired it from the furniture.
+ *
+ * The Arabic names are the same controls by their AR accessible names,
+ * because the class of defect this exists to catch (the mirrored ghost rows
+ * of 2026-08-09) is invisible in the EN run and to every other check.
+ */
+const SCREENS = [
+  { key: 'history', en: ['History'], ar: ['السجل'] },
+  { key: 'progress', en: ['Last PR'], ar: ['آخر رقم قياسي'] },
+  { key: 'coach', en: ['Ask the coach'], ar: ['اسأل المدرب'] },
+  {
+    key: 'friends',
+    en: ['You — settings', 'Friends'],
+    ar: ['أنت — الإعدادات', 'الأصدقاء'],
+  },
+  { key: 'settings', en: ['You — settings'], ar: ['أنت — الإعدادات'] },
+]
 const OUT = 'shots'
 
 function build() {
@@ -360,16 +379,55 @@ async function shoot(browser, origin, { width, empty, active, locale, theme }) {
   }
 
   const state = empty ? 'empty' : 'full'
-  const tabs = locale === 'ar' ? TABS_AR : TABS
-  for (const [i, tab] of tabs.entries()) {
-    const button = page.getByRole('button', { name: tab, exact: true })
-    if (await button.count()) {
+
+  // A brand-new account opens on the first-run screen, not on the home. Step
+  // through it, because the home behind it is a real state — an account that
+  // has been welcomed and has not trained yet — and it is the one where the
+  // feed cards are absent and the doors they carry with them are the thing
+  // most likely to be got wrong.
+  if (empty) {
+    const skip = page.getByRole('button', {
+      name: locale === 'ar' ? 'سأبدأ التسجيل مباشرة' : 'I will just start logging',
+      exact: true,
+    })
+    if (await skip.count()) {
+      await page.screenshot({
+        path: `${OUT}/${pfx}${state}-${width}-welcome.png`,
+        fullPage: false,
+      })
+      await skip.first().click()
+      await page.waitForTimeout(800)
+    }
+  }
+
+  // The home screen itself, before any navigation.
+  await page.screenshot({
+    path: `${OUT}/${pfx}${state}-${width}-log.png`,
+    fullPage: false,
+  })
+
+  for (const screen of SCREENS) {
+    const steps = locale === 'ar' ? screen.ar : screen.en
+    let reached = true
+    for (const step of steps) {
+      const button = page.getByRole('button', { name: step, exact: true })
+      if (!(await button.count())) {
+        reached = false
+        break
+      }
       await button.first().click()
       // Lazy chunks plus the screens' own fetches.
       await page.waitForTimeout(1400)
     }
+    if (!reached) {
+      // Loudly, not silently: a door that has stopped existing is the exact
+      // defect retiring the tab bar could introduce, and a run that quietly
+      // skipped the screen would report success.
+      console.log(`  ! ${pfx}${state}-${width}: no door to ${screen.key}`)
+      continue
+    }
     await page.screenshot({
-      path: `${OUT}/${pfx}${state}-${width}-${TABS[i].toLowerCase()}.png`,
+      path: `${OUT}/${pfx}${state}-${width}-${screen.key}.png`,
       // Viewport, not fullPage — see the header comment. This is the rule.
       fullPage: false,
     })
@@ -391,7 +449,7 @@ async function shoot(browser, origin, { width, empty, active, locale, theme }) {
      * screenshot run: the same shape as the exercise detail page, which had
      * never been photographed either.
      */
-    if (tab === 'History' && !empty) {
+    if (screen.key === 'history' && !empty) {
       // The row's accessible name is the date, time and workout name, so it is
       // matched by the one word every fixture session carries.
       const row = page.getByRole('button', { name: /Workout|Upper A|Leg day/ })
@@ -429,7 +487,7 @@ async function shoot(browser, origin, { width, empty, active, locale, theme }) {
      * Delete are gated on `is_custom`, so without a custom lift in the fixture
      * and a click to reveal them, that whole surface goes unphotographed.
      */
-    if (tab === 'Progress' && !empty) {
+    if (screen.key === 'progress' && !empty) {
       const custom = page.getByRole('button', { name: /Hack Squat/i })
       if (await custom.count()) {
         await custom.first().click()
@@ -451,7 +509,7 @@ async function shoot(browser, origin, { width, empty, active, locale, theme }) {
       }
     }
 
-    if (tab === 'Progress' && !empty) {
+    if (screen.key === 'progress' && !empty) {
       const lift = page.getByRole('button', { name: /Bench Press/i })
       if (await lift.count()) {
         await lift.first().click()
@@ -468,6 +526,21 @@ async function shoot(browser, origin, { width, empty, active, locale, theme }) {
         })
       }
     }
+
+    // Home again, so the next screen's door is on screen. The header chevron
+    // is the way back now; pressing it is also the assertion that it exists.
+    const back = page.getByRole('button', {
+      name: locale === 'ar' ? 'رجوع' : 'Back',
+      exact: true,
+    })
+    if (await back.count()) {
+      await back.first().click()
+    } else {
+      await page.reload({ waitUntil: 'networkidle' })
+    }
+    await page.waitForTimeout(900)
+    await page.evaluate(() => window.scrollTo(0, 0))
+    await page.waitForTimeout(200)
   }
 
   await context.close()
@@ -533,9 +606,7 @@ async function main() {
     await server.close()
   }
 
-  console.log(
-    `\n${TABS.length * WIDTHS.length * 2 + WIDTHS.length * 9} screenshots in ${OUT}/`,
-  )
+  console.log(`\n${readdirSync(OUT).length} screenshots in ${OUT}/`)
   if (crashes.length) {
     // An uncaught error no longer blanks a tab — U1c's boundaries catch it —
     // so it would otherwise be invisible in a screenshot. Say it out loud.

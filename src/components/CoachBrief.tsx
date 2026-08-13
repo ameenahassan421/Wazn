@@ -33,7 +33,7 @@ import { useLocale } from '../lib/locale-context'
  * enforced by where this is mounted: the idle branch of LogScreen, which does
  * not render at all while a workout is open. Nothing here needs to check.
  */
-export function CoachBrief() {
+export function CoachBrief({ onOpen }: { onOpen?: () => void }) {
   const { t, locale } = useLocale()
   const { unit } = useUnit()
   const [block, setBlock] = useState<BriefBlock | null>(null)
@@ -114,6 +114,23 @@ export function CoachBrief() {
             <span dir="ltr" className="chip-data mt-2 inline-flex">
               {chip}
             </span>
+          )}
+          {/* The design's coach card carries suggestion chips, and they are
+              what opens the chat. This is the one of them the app can write
+              without inventing the user's question — and with the five-tab
+              bar retired it is also the coach's front door, so it is a real
+              control rather than decoration. */}
+          {onOpen && (
+            <div className="mt-3">
+              <button
+                type="button"
+                onClick={onOpen}
+                className="btn-base btn-secondary press h-9 px-3.5 text-[12.5px] font-semibold"
+                style={{ borderRadius: 'var(--radius-pill)' }}
+              >
+                {t('brief.ask')}
+              </button>
+            </div>
           )}
         </div>
         <button

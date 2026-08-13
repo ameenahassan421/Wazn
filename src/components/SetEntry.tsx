@@ -575,21 +575,23 @@ export function SetEntry({
           the one thing §2.1 does not allow. Consequences ledger row 5 claimed
           this pinning existed; it did not, and now it does.
 
-          Same recipe as the overview's rest bar: opaque, and lifted clear of
-          the tab bar's 60px plus its safe-area padding. */}
+          Same recipe as the overview's rest bar: opaque, and sitting at the
+          safe-area inset. It used to be lifted a further 60px to clear a tab
+          bar, which no longer exists. */}
       <div
         className="sticky z-10 -mx-[18px] flex flex-col gap-2 bg-ink px-[18px] pt-2"
         style={{
-          bottom: 'calc(max(env(safe-area-inset-bottom, 0px), 10px) + 64px)',
+          bottom: 'max(env(safe-area-inset-bottom, 0px), 10px)',
           // A pinned element stops being pinned when the space beneath it
-          // runs out, and there is 140px of it here: this section's pb-4,
-          // the workout wrapper's py-3, and main's pb-28 — clearance written
-          // for a page whose last control was in flow. Left alone, the
-          // cluster rode 66px up its own pinned line over the last stretch
-          // of the scroll. This pulls the trailing space back to exactly the
-          // offset above, and tracks the safe-area inset with it. main's
-          // padding stays: the other four tabs still need it.
-          marginBottom: 'calc(max(env(safe-area-inset-bottom, 0px), 10px) - 76px)',
+          // runs out, and left alone this cluster rode 66px up its own pinned
+          // line over the last stretch of the scroll.
+          //
+          // The correction is `bottom` minus the trailing space, and the
+          // trailing space is this section's pb-4, the workout wrapper's
+          // py-3, and main's padding. Main's padding is now exactly `bottom`,
+          // so it cancels and what is left is a constant 28px — no safe-area
+          // term, because both sides of the subtraction carried the same one.
+          marginBottom: '-28px',
           // The same hairline the tab bar and the overview's rest bar carry,
           // for the same reason: it marks where content stops and chrome
           // starts, so a chip passing behind reads as scrolling under a bar

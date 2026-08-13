@@ -65,6 +65,7 @@ export const messages: Record<Locale, Record<string, string>> = {
     // moved here out of the header, which was renting prime space on every
     // screen to two preferences that are set once.
     // The home feed's three cards (design screen 01).
+    'brief.ask': 'Ask the coach',
     'home.week': 'This week',
     'home.last_pr': 'Last PR',
     'home.pr': 'PR',
@@ -837,6 +838,7 @@ export const messages: Record<Locale, Record<string, string>> = {
     'when.months_ago': 'منذ {n} أشهر',
     // Settings ("You"), design screen 14.
     // The home feed's three cards (design screen 01).
+    'brief.ask': 'اسأل المدرب',
     'home.week': 'هذا الأسبوع',
     'home.last_pr': 'آخر رقم قياسي',
     'home.pr': 'رقم قياسي',

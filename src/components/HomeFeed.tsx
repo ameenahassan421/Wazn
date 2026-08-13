@@ -86,9 +86,16 @@ export function LastPrCard({
     <button
       type="button"
       onClick={onOpen}
+      // Named explicitly, like the week card beside it. Left to compose its
+      // own name from its contents, this button announces itself as
+      // "LAST PR 226 lbs Bench Press (Barbell) · today" — a sentence nobody
+      // asked for, and one that changes every time a record falls.
+      aria-label={t('home.last_pr')}
       className="surface-card flex-1 px-4 py-3.5 text-start"
     >
-      <p className="kicker mb-2">{t('home.last_pr')}</p>
+      <p className="kicker mb-2" aria-hidden="true">
+        {t('home.last_pr')}
+      </p>
       {record ? (
         <>
           <p

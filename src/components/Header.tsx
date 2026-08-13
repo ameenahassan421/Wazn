@@ -4,7 +4,7 @@ import { useBackLayer } from '../lib/use-back'
 import { useActiveWorkout } from '../lib/active-workout'
 import { Avatar } from './Avatar'
 import { Wordmark } from './Wordmark'
-import { IconMore } from './icons'
+import { IconBack, IconMore } from './icons'
 
 /**
  * The Log tab shows the mark; History and Progress show their name, because
@@ -20,6 +20,10 @@ import { IconMore } from './icons'
  *
  * The overflow menu survives with one item, Discard, and renders only while
  * a workout is open — so on every other screen it is not there at all.
+ *
+ * `onBack` is the other half of retiring the five-tab bar. Home has no back
+ * chevron because it is where back goes; every other screen has one, and it
+ * is the only way out on a platform without a system back gesture.
  */
 /**
  * `titleKey` is a catalogue key, not a rendered string. App sits ABOVE
@@ -30,11 +34,16 @@ import { IconMore } from './icons'
 export function Header({
   titleKey,
   name,
+  onBack,
   onOpenSettings,
 }: {
   titleKey?: string | null
   /** The username, for the monogram. Null until it loads, or if unclaimed. */
   name?: string | null
+  /** The way home from a secondary screen. This is what replaced the tab
+   *  bar as the exit — without it those screens are reachable and unleavable
+   *  by anything but the Android back gesture, which iOS does not have. */
+  onBack?: () => void
   onOpenSettings: () => void
 }) {
   const { t } = useLocale()
@@ -55,6 +64,16 @@ export function Header({
         className="mx-auto flex w-full max-w-[430px] items-center gap-1 px-[18px] pb-3"
         style={{ paddingTop: 'max(env(safe-area-inset-top), 10px)' }}
       >
+        {onBack && (
+          <button
+            type="button"
+            onClick={onBack}
+            aria-label={t('settings.back')}
+            className="btn-base btn-quiet -ms-3 h-12 w-12"
+          >
+            <IconBack size={20} />
+          </button>
+        )}
         <h1 className="flex items-center text-[17px] font-medium tracking-tight">
           {titleKey ? t(titleKey) : <Wordmark height={15.5} className="text-text" />}
         </h1>
