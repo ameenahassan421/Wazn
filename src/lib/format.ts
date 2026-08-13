@@ -106,6 +106,24 @@ export function formatRelativeDay(iso: string, locale: Locale = 'en'): string {
   return t(locale, 'when.months_ago', { n: String(Math.round(days / 30)) })
 }
 
+/**
+ * "Thursday" / "الخميس" — the weekday, for the one line on the home screen
+ * that names today rather than measuring it.
+ *
+ * Locale-aware through Intl, which is safe here for the reason the i18n
+ * catalogue's no-Intl rule exists to prevent: a weekday is a word, not a
+ * figure, and no digit passes through this. Falls back to English when a
+ * runtime does not carry the Arabic locale data.
+ */
+export function formatWeekday(date: Date, locale: Locale = 'en'): string {
+  if (Number.isNaN(date.getTime())) return NO_VALUE
+  try {
+    return new Intl.DateTimeFormat(locale, { weekday: 'long' }).format(date)
+  } catch {
+    return new Intl.DateTimeFormat('en', { weekday: 'long' }).format(date)
+  }
+}
+
 export function formatDuration(startIso: string, endIso: string | null): string {
   if (!endIso) return 'in progress'
   const start = parse(startIso)

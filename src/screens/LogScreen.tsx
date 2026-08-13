@@ -2,6 +2,7 @@ import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'rea
 import { describeError, supabase } from '../lib/supabase'
 import { useBackLayer } from '../lib/use-back'
 import { publishActiveWorkout } from '../lib/active-workout'
+import { dueRoutine } from '../lib/rotation'
 import type { RoutineWithRun } from '../lib/rotation'
 import { lazyScreen } from '../lib/lazy-screen'
 import { useUnit } from '../lib/unit-context'
@@ -10,7 +11,9 @@ import { formatWeight } from '../lib/units'
 import {
   formatDuration,
   formatRelativeDay,
+  formatShortDate,
   formatSyncedAt,
+  formatWeekday,
   formatWorkoutDate,
 } from '../lib/format'
 import type {
@@ -25,7 +28,10 @@ import type {
 } from '../lib/types'
 import { ExercisePicker } from '../components/ExercisePicker'
 import { ExerciseThumb } from '../components/ExerciseThumb'
+import { IconBack, PlateRing } from '../components/icons'
 import { SetEntry } from '../components/SetEntry'
+import { SessionQueue } from '../components/SessionQueue'
+import { UpNextCard } from '../components/UpNextCard'
 import { DEFAULT_REST_SECONDS, useRestTimer } from '../lib/use-rest-timer'
 import { FinishSummary } from '../components/FinishSummary'
 import { RoutineList } from '../components/RoutineList'
@@ -52,7 +58,8 @@ import { buildBlock, groupAdjacent, mergeOrder } from '../lib/plan'
 import type { OverviewRow, PlannedSet, WorkoutPlan } from '../lib/plan'
 import { WorkoutOverview } from '../components/WorkoutOverview'
 import type { OverviewBlock } from '../components/WorkoutOverview'
-import { RestTimerBar } from '../components/RestTimer'
+import { RestChip } from '../components/RestTimer'
+import { RestExpanded } from '../components/RestExpanded'
 import { RestCanvas } from '../components/RestCanvas'
 import { pickRestCard } from '../lib/rest-canvas'
 import type { CrewToday } from '../lib/rest-canvas'
@@ -205,6 +212,9 @@ export function LogScreen({
    * that (`advanceTo`), and this is the same answer kept for the canvas.
    */
   const [restingExerciseId, setRestingExerciseId] = useState<string | null>(null)
+  const [restExpanded, setRestExpanded] = useState(false)
+  // The layer never outlives the rest itself.
+  if (restExpanded && timer.remaining === null) setRestExpanded(false)
   /**
    * What the crew did today, fetched at most once per open workout and never on
    * the load path — see the effect below.
@@ -215,6 +225,16 @@ export function LogScreen({
   const canvasViewed = useRef(false)
   const [summary, setSummary] = useState<WorkoutSummary | null>(null)
   const [summaryDate, setSummaryDate] = useState('')
+  /**
+   * The finished session's sets and their board order, snapshotted.
+   *
+   * The finish handler clears `sets` in the same pass that builds the summary,
+   * so the breakdown card cannot read them off live state — it would render an
+   * empty card, silently, and only a screenshot would say so.
+   */
+  const [summarySets, setSummarySets] = useState<WorkoutSet[]>([])
+  const [summaryOrder, setSummaryOrder] = useState<string[]>([])
+  const [summaryOrdinal, setSummaryOrdinal] = useState<number | null>(null)
   // The finished workout's identity, kept past the point where `workout` is
   // cleared, so the summary can name and annotate the thing just logged.
   const [summaryWorkout, setSummaryWorkout] = useState<Workout | null>(null)
@@ -1727,7 +1747,30 @@ export function LogScreen({
       previousBests,
     )
     setSummary(deferred ? { ...computed, prs: [] } : computed)
+    // Snapshot before the clears below reach `sets` and `displayOrder`.
+    setSummarySets(sets)
+    setSummaryOrder(displayOrder)
     setSummaryDate(formatWorkoutDate(workout.started_at))
+    // Which session this was. Counted rather than stored — no column carries
+    // it — and never awaited: the finish screen's one job is to be instant,
+    // and the ordinal is a kicker. Offline it never arrives, and the kicker
+    // is the date alone, which is what it has always been.
+    setSummaryOrdinal(null)
+    if (!deferred) {
+      void supabase
+        .from('workouts')
+        .select('id', { count: 'exact', head: true })
+        // Scoped explicitly, NOT left to RLS. `workouts_select_visible`
+        // (0011_social.sql) also admits other lifters' finished workouts when
+        // their profile is public or followed, so an unscoped count would
+        // number this session against the whole visible feed.
+        .eq('user_id', userId)
+        .not('ended_at', 'is', null)
+        .lte('started_at', workout.started_at)
+        .then(({ count }) => {
+          if (typeof count === 'number' && count > 0) setSummaryOrdinal(count)
+        })
+    }
     setSummaryWorkout({ ...workout, ended_at: endedAt })
     // Mid-workout there is no such thing as a skipped exercise — there is only
     // not-yet-done, and saying otherwise is the app scolding somebody who is
@@ -1939,6 +1982,39 @@ export function LogScreen({
   ])
 
   /**
+   * Move the focused view to another lift on the board.
+   *
+   * The three clears are not optional. `editingKey` and `focusKey` are ROW
+   * keys scoped to the exercise being left, so carrying them across rings a
+   * row on the wrong block when the overview comes back; `pendingGroup` is
+   * the "a superset is starting from here" latch, and carrying it paints a
+   * superset badge on a lift that is not in one.
+   */
+  function jumpToExercise(exerciseId: string) {
+    const exercise = exercisesById.get(exerciseId)
+    if (!exercise) return
+    setCurrent(exercise)
+    setEditingKey(null)
+    setFocusKey(null)
+    setPendingGroup(null)
+    setView('entry')
+  }
+
+  /** Out of the focused view, back to the board. */
+  function backToOverview() {
+    setCurrent(null)
+    setEditingKey(null)
+    setView('overview')
+  }
+
+  /** The next lift after this one in board order, or null at the end. */
+  function nextOnBoard(exerciseId: string): Exercise | null {
+    const i = displayOrder.indexOf(exerciseId)
+    if (i === -1 || i >= displayOrder.length - 1) return null
+    return exercisesById.get(displayOrder[i + 1]) ?? null
+  }
+
+  /**
    * The crew's day, for the rest canvas's third card — §8-E1's "the crew's
    * activity today".
    *
@@ -1988,11 +2064,13 @@ export function LogScreen({
   const resting = timer.remaining !== null
   const restCard = useMemo(
     () =>
-      resting ? pickRestCard({ unit, restingExerciseId, blocks, sets, crew }) : null,
+      resting
+        ? pickRestCard({ unit, restingExerciseId, blocks, sets, crew }, locale)
+        : null,
     // `resting`, not `timer.remaining`: the countdown changes every second and
     // the card does not. Recomputing it 120 times a rest would hand the canvas
     // a new object each tick for no change in what it says.
-    [resting, unit, restingExerciseId, blocks, sets, crew],
+    [resting, unit, locale, restingExerciseId, blocks, sets, crew],
   )
 
   // Up to three exercises from the last finished session, in the order they
@@ -2080,6 +2158,9 @@ export function LogScreen({
           exercisesById={exercisesById}
           workout={summaryWorkout}
           skipped={skipped}
+          sets={summarySets}
+          order={summaryOrder}
+          ordinal={summaryOrdinal}
           routineUpdate={
             routineUpdate
               ? {
@@ -2092,6 +2173,9 @@ export function LogScreen({
           onDone={() => {
             setSummary(null)
             setSummaryWorkout(null)
+            setSummarySets([])
+            setSummaryOrder([])
+            setSummaryOrdinal(null)
             setSkipped([])
             setRoutineUpdate(null)
             setView('overview')
@@ -2122,6 +2206,12 @@ export function LogScreen({
   // Empty state: one button, then context. Nothing here is a control you have
   // to read before you can start lifting.
   if (!workout) {
+    // The lift the rotation is pointing at. `dueRoutine` returns null for a
+    // single routine — calling the only door "due" is telling somebody the
+    // only door is the door — but a single routine IS what is up next, so the
+    // card takes it while the "due" label does not.
+    const upNext = dueRoutine(routines) ?? (routines.length === 1 ? routines[0] : null)
+
     return (
       <div className="flex flex-col gap-[18px] pt-4">
         {error && <ErrorNote message={error} />}
@@ -2131,6 +2221,62 @@ export function LogScreen({
         {cachedAt !== null && <CachedNote savedAt={cachedAt} />}
         <SyncNote online={online} pending={pendingSetCount(queue)} />
 
+        {/* The greeting. Two lines, as the design has it: what today is by
+            the calendar, then what today is by the plan.
+
+            The design's hero is "{Plan} day, {Name}." — this app has no name
+            to put there. `profiles.display_name` has existed since migration
+            0001 and nothing has ever written it; the only name the app
+            collects is a username, and "Upper A, @ameen." is worse than no
+            greeting at all. So the hero names the session and stops, which is
+            the half of the sentence the app can actually stand behind. And it
+            is the routine name alone rather than "{Plan} day" — routine names
+            here are free text and most of them already end in "Day". */}
+        <div>
+          <p className="flex items-center gap-2 text-[13px] text-muted">
+            {/* The streak plates stay: they are this app's own mark for the
+                fact the design writes as "week 12", and they were already
+                built. What goes is the separate streak paragraph under the
+                Start button — it said the same thing twice.
+
+                Every figure is isolated. Unisolated, the two counts ended up
+                adjacent under Arabic — "6" and "0" printed side by side in a
+                sentence that never put them together. */}
+            {streak && streak.weeks > 0 && <StreakPlates weeks={streak.weeks} />}
+            <span className="min-w-0 truncate">
+              {streak && streak.weeks > 0 ? (
+                <>
+                  <span dir="ltr" className="tnum">
+                    {streak.weeks}
+                  </span>{' '}
+                  {t('log.streak.week_streak')}
+                  {streak.current_week_sessions > 0 && (
+                    <>
+                      {' · '}
+                      <span dir="ltr" className="tnum">
+                        {streak.current_week_sessions}
+                      </span>{' '}
+                      {t('log.streak.this_week')}
+                    </>
+                  )}
+                </>
+              ) : (
+                formatShortDate(new Date().toISOString())
+              )}
+            </span>
+          </p>
+          {/* The hero names today. The design's is "{Plan} day, {Name}." and
+              this app has neither half to put there: nothing has ever written
+              `profiles.display_name`, and the plan's name is already the
+              subject of the Up next card two rows down — using it here made
+              the screen say "Core & Conditioning" twice in one glance. The
+              weekday is what is left, and it is the honest half: it is the
+              question the design's hero actually answers. */}
+          <h1 className="font-display mt-2 text-[34px] leading-[1.12] font-extrabold tracking-[-0.03em]">
+            {formatWeekday(new Date(), locale)}.
+          </h1>
+        </div>
+
         {/* B1's pre-workout briefing. Mounted HERE and nowhere else, which is
             what enforces §4-A1's core-loop rule: this branch renders only
             when no workout is open, so the coach cannot appear mid-session
@@ -2138,30 +2284,14 @@ export function LogScreen({
             returns null when it has nothing to say, so it costs no layout on
             a new account and never delays Start. */}
         <CoachBrief />
-        <div>
-          <button
-            type="button"
-            onClick={() => void startWorkout()}
-            disabled={saving}
-            className="btn-base btn-hero press h-[62px] w-full text-[18px] disabled:opacity-45"
-          >
-            {hasHistory ? t('log.start') : t('log.start_first')}
-          </button>
 
-          {streak && streak.weeks > 0 && (
-            <p className="mt-2.5 flex items-center gap-2 whitespace-nowrap text-[13px] text-muted">
-              <StreakPlates weeks={streak.weeks} />
-              <span>
-                <span className="tnum font-medium text-text">{streak.weeks}</span>{' '}
-                {t('log.streak.week_streak')} ·{' '}
-                <span className="tnum font-medium text-text">
-                  {streak.current_week_sessions}
-                </span>{' '}
-                {t('log.streak.this_week')}
-              </span>
-            </p>
-          )}
-        </div>
+        {upNext && (
+          <UpNextCard
+            routine={upNext}
+            busy={routineBusy === upNext.id}
+            onStart={() => void startFromRoutine(upNext)}
+          />
+        )}
 
         <RoutineList
           routines={routines}
@@ -2222,6 +2352,37 @@ export function LogScreen({
             </ul>
           </section>
         )}
+
+        {/* Start, fixed at the thumb — the design's own placement, and the
+            reason the routines and the recap can sit below it without pushing
+            the one button this screen exists for off the bottom of a scroll.
+            Same sticky recipe and tab-bar clearance as the workout's commit
+            cluster, so the two screens' hot controls live in one place. */}
+        <div
+          className="sticky z-10 -mx-[18px] mt-auto bg-ink px-[18px] pt-3 pb-1"
+          style={{
+            bottom: 'calc(max(env(safe-area-inset-bottom, 0px), 10px) + 64px)',
+            // Same correction as the commit cluster, over less trailing
+            // space: this branch adds no bottom padding of its own, so only
+            // main's pb-28 is in the way.
+            marginBottom: 'calc(max(env(safe-area-inset-bottom, 0px), 10px) - 48px)',
+            borderTop: '1px solid var(--divider-solid)',
+          }}
+        >
+          <button
+            type="button"
+            onClick={() => void startWorkout()}
+            disabled={saving}
+            className="btn-base btn-hero press flex h-[58px] w-full items-center justify-center gap-2.5 text-[16px] font-bold disabled:opacity-45"
+            style={{
+              borderRadius: 'var(--radius-pill)',
+              boxShadow: 'var(--shadow-cta)',
+            }}
+          >
+            <PlateRing size={20} className="shrink-0" />
+            <span>{hasHistory ? t('log.start') : t('log.start_first')}</span>
+          </button>
+        </div>
       </div>
     )
   }
@@ -2231,6 +2392,22 @@ export function LogScreen({
       {error && <ErrorNote message={error} />}
 
       <div className="flex items-center gap-3">
+        {/* Back is a chevron at the inline start of the workout's chrome —
+            where forty years of phone interfaces put it, and where the design
+            puts it. It used to sit inside the focused view on a row of its
+            own, which cost a 48px band and read as floating; the chrome row
+            already exists, and the escape belongs beside the workout it
+            escapes to. */}
+        {view === 'entry' && (
+          <button
+            type="button"
+            onClick={backToOverview}
+            aria-label={t('entry.back')}
+            className="btn-base btn-quiet -ms-1 h-12 w-12 shrink-0"
+          >
+            <IconBack />
+          </button>
+        )}
         <div className="min-w-0 flex-1">
           <p className="flex items-center gap-2 text-[15px] font-medium">
             <span
@@ -2331,10 +2508,43 @@ export function LogScreen({
         />
       )}
 
+      {restExpanded && timer.remaining !== null && (
+        <RestExpanded
+          timer={timer}
+          onCollapse={() => setRestExpanded(false)}
+          card={restCard}
+          nextLabel={(() => {
+            const ex = exercises.find((e) => e.id === restingExerciseId)
+            if (!ex) return null
+            // Working sets only. Counting every row made this say "set 5"
+            // while the canvas card directly above it — which goes through
+            // `buildBlock`, and does filter — said set 3, on the same
+            // overlay, about the same lift.
+            const n =
+              sets.filter((x) => x.exercise_id === ex.id && x.set_type !== 'warmup')
+                .length + 1
+            return t('rest.next_set', { name: ex.name, n: String(n) })
+          })()}
+        />
+      )}
+
       {view === 'entry' && current && (
         <SetEntry
           exercise={current}
           unit={unit}
+          plannedSets={blocks.find((b) => b.exerciseId === current.id)?.planned}
+          nextExerciseName={nextOnBoard(current.id)?.name ?? null}
+          onNextExercise={() => {
+            const next = nextOnBoard(current.id)
+            if (next) jumpToExercise(next.id)
+          }}
+          sessionQueue={
+            <SessionQueue
+              blocks={blocks}
+              currentExerciseId={current.id}
+              onJump={jumpToExercise}
+            />
+          }
           setsThisWorkout={sets.filter((s) => s.exercise_id === current.id)}
           previousSession={previousByExercise.get(current.id) ?? []}
           // Presence in the map is the loaded flag. Seeding from an empty list
@@ -2343,6 +2553,7 @@ export function LogScreen({
           saving={saving}
           onAddSet={async (values) => (await addSet(values)) !== null}
           timer={timer}
+          onExpandRest={() => setRestExpanded(true)}
           restSeconds={restFor(current)}
           onSaveRest={(seconds) => void saveRestDefault(current.id, seconds)}
           supersetGroup={groupOf(sets, current.id) ?? pendingGroup}
@@ -2352,11 +2563,6 @@ export function LogScreen({
               ? () => void ungroupExercise(current.id)
               : undefined
           }
-          onBack={() => {
-            setCurrent(null)
-            setEditingKey(null)
-            setView('overview')
-          }}
         />
       )}
 
@@ -2454,7 +2660,7 @@ export function LogScreen({
                 }}
                 onDismiss={() => void recordCoachView('rest_canvas', 'dismiss')}
               />
-              <RestTimerBar timer={timer} />
+              <RestChip timer={timer} onExpand={() => setRestExpanded(true)} />
             </div>
           )}
         </>

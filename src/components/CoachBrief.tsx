@@ -9,7 +9,7 @@ import {
   recordCoachView,
 } from '../lib/coach'
 import type { BriefBlock } from '../lib/coach'
-import { IconClose } from './icons'
+import { IconClose, PlateDot } from './icons'
 import { useLocale } from '../lib/locale-context'
 
 /**
@@ -34,7 +34,7 @@ import { useLocale } from '../lib/locale-context'
  * not render at all while a workout is open. Nothing here needs to check.
  */
 export function CoachBrief() {
-  const { t } = useLocale()
+  const { t, locale } = useLocale()
   const { unit } = useUnit()
   const [block, setBlock] = useState<BriefBlock | null>(null)
   /**
@@ -66,7 +66,7 @@ export function CoachBrief() {
       // The sentence is asked for only when there is a card to improve. A
       // model call whose output has nowhere to go is a model call not worth
       // making — and on a brand-new account, that is every call.
-      if (!facts || !briefSkeleton(facts, unit)) return
+      if (!facts || !briefSkeleton(facts, unit, locale)) return
 
       const result = await fetchCoachLine('briefing', unit)
       if (!active || !result.line) return
@@ -78,12 +78,12 @@ export function CoachBrief() {
     // `unit` IS a dependency: the sentence is written by a model that was
     // handed one unit, so a toggle needs a different sentence. The function
     // caches per unit, so coming back to a unit already seen costs nothing.
-  }, [unit])
+  }, [unit, locale])
 
   const current = phrased?.unit === unit ? phrased : null
-  const skeleton = briefSkeleton(block, unit)
+  const skeleton = briefSkeleton(block, unit, locale)
   const line = current?.line ?? skeleton
-  const chip = current?.chip ?? briefChip(block, unit)
+  const chip = current?.chip ?? briefChip(block, unit, locale)
 
   // The card only exists when it has something to say. An empty briefing is
   // not an empty state — it is one fewer thing between a lifter and Start.
@@ -96,18 +96,18 @@ export function CoachBrief() {
   if (!line || dismissed) return null
 
   return (
-    <section
-      className="ring-edge bg-surface ps-3 pe-1 py-2.5"
-      style={{ borderRadius: 'var(--radius-md)' }}
-      aria-label={t('brief.label')}
-    >
-      <div className="flex items-start gap-1">
+    <section className="surface-card ps-[18px] pe-1 py-4" aria-label={t('brief.label')}>
+      {/* The design's coach card: the plate mark, the kicker, the sentence.
+          The mark is what makes this read as the coach speaking rather than
+          as one more panel — it is the only glyph on the home surface. */}
+      <div className="flex items-start gap-3">
+        <PlateDot size={30} className="mt-0.5 shrink-0" />
         <div className="min-w-0 flex-1 pe-1">
           <h2 className="kicker">{t('brief.title')}</h2>
           {/* Keyed on the text so the sentence arriving is an authored moment
               — it settles in rather than swapping under the eye. The skeleton
               is already correct, so this is the only motion the card has. */}
-          <p key={line} className="coach-in mt-1.5 text-[15px] leading-snug">
+          <p key={line} className="coach-in mt-1.5 text-[14.5px] leading-[1.55]">
             {line}
           </p>
           {chip && (

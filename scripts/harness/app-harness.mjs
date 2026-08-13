@@ -1083,10 +1083,27 @@ export async function installSupabaseStub(
           { bucket: '13–15', bucket_order: 4, set_count: 11 },
           { bucket: '16+', bucket_order: 5, set_count: 4 },
         ],
+        /*
+         * `best_weight_kg` is not optional, and leaving it out cost the
+         * finish screen its centrepiece.
+         *
+         * LogScreen reads `Number(r.best_weight_kg)` into the previous-best
+         * map. Undefined becomes NaN, every comparison against NaN is false,
+         * so `detectPrs` fired for nothing and the PR cards had never been
+         * photographed in any run of this harness — not because they were
+         * broken, but because the fixture could not produce one. This file's
+         * own rule (stub every column the real RPC returns) exists for
+         * exactly this, and this is the quiet version of it: no crash, just
+         * a surface that silently never draws.
+         *
+         * Set below the session's top set so the fixture agrees with itself
+         * — its bench rows already carry `pr_weight`.
+         */
         exercise_bests: data.strength.map((s) => ({
           exercise_id: s.exercise_id,
           name: s.name,
           best_e1rm_kg: s.best_e1rm_kg,
+          best_weight_kg: s.best_e1rm_kg / 1.15 - 2.5,
         })),
         resolve_invite: [],
       }

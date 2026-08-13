@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { platesFor, describePlates, DEFAULT_BAR } from './plates'
+import { platesFor, describeBarMath, DEFAULT_BAR } from './plates'
 
 describe('platesFor', () => {
   it('loads a 135 lb bench the way a lifter would', () => {
@@ -17,7 +17,7 @@ describe('platesFor', () => {
 
   it('uses smaller plates when the number is not round', () => {
     const r = platesFor(190, 'lbs')!
-    expect(describePlates(r)).toBe('45, 25, 2.5')
+    expect(describeBarMath(r)).toBe('45 + 25 + 2.5 = 190')
     expect(r.achievable).toBe(190)
   })
 
@@ -32,7 +32,7 @@ describe('platesFor', () => {
   it('returns an empty bar rather than nothing at exactly bar weight', () => {
     const r = platesFor(45, 'lbs')!
     expect(r.perSide).toEqual([])
-    expect(describePlates(r)).toBe('Empty bar')
+    expect(describeBarMath(r)).toBe('= 45')
   })
 
   it('returns null below the bar instead of throwing mid-workout', () => {
@@ -66,5 +66,34 @@ describe('platesFor', () => {
   it('defaults match the common bars', () => {
     expect(DEFAULT_BAR.lbs).toBe(45)
     expect(DEFAULT_BAR.kg).toBe(20)
+  })
+})
+
+describe('describeBarMath', () => {
+  it('writes the loading as an addition ending in the total', () => {
+    expect(describeBarMath(platesFor(62.5, 'kg', 20)!)).toBe('20 + 1.25 = 62.5')
+  })
+
+  it('repeats a plate rather than counting it', () => {
+    // "25 × 2" sits four lines above a set row reading "62.5 kg × 5". The
+    // repeat is what stops the count being read as reps.
+    expect(describeBarMath(platesFor(140, 'kg', 20)!)).toBe('25 + 25 + 10 = 140')
+  })
+
+  it('names a single plate without an addition', () => {
+    expect(describeBarMath(platesFor(60, 'kg', 20)!)).toBe('20 = 60')
+  })
+
+  it('states the bar alone when there is nothing on it', () => {
+    expect(describeBarMath(platesFor(20, 'kg', 20)!)).toBe('= 20')
+  })
+
+  it('reports what the plates make, not what was typed', () => {
+    // 46 lb on a 45 lb bar is unloadable; the card must not claim 46.
+    expect(describeBarMath(platesFor(46, 'lbs')!)).toBe('= 45')
+  })
+
+  it('keeps the figures free of floating-point tails', () => {
+    expect(describeBarMath(platesFor(47.5, 'kg')!)).toBe('10 + 2.5 + 1.25 = 47.5')
   })
 })

@@ -4881,3 +4881,182 @@ When the owner sees it and disagrees, the artifact was doing its job.
    an explicit go, per the standing rule.
 4. Two hardcoded dark hairlines (TabBar, the overview footer) moved to the
    divider token; the header band's gradient got a per-theme tint token.
+
+## 2026-08-12: Exact match ordered. The old surface rules are superseded.
+
+Ameen: "I need a full implementation of that design. Meaning that you
+refactor everything and make it look exactly like the design." Recorded
+consequences:
+
+1. WAZN_PLAN §2.4's no-shadow and no-pill constraints are superseded by
+   the adopted design's own language: pill controls, 18-20px cards, the
+   design's two shadows (card, CTA). They enter the token system rather
+   than being sprinkled ad hoc.
+2. The engines do not move: the deadline rest timer, the write queue and
+   offline ladder, commitOutcome, the RPCs. The refactor is presentation.
+3. The itemized pixel spec lives in docs/REBUILD_PLAN.md under the
+   exact-match mandate, so it survives session boundaries.
+
+## 2026-08-13: R5c, and the four calls inside it
+
+The exact-match mandate's remaining workout surfaces. Four decisions worth
+the record, and one bug worth more than any of them.
+
+**The bug first.** `--shadow-card` was written in R5a as
+`0 1px 2px var(--line), 0 0 0 1px var(--line)`, and this repo has never
+defined `--line` — it has `--color-line`. An undefined custom property makes
+the whole declaration invalid at computed-value time, so `box-shadow`
+resolved to `none` and every panel R5b shipped drew no edge whatsoever. It
+passed lint, typecheck, 851 tests and a build. It is now a real token,
+`--surface-line`, per theme, at the design's own faint value — and the
+recipe lives in two utilities (`surface-card`, `surface-panel`) instead of
+being hand-written at each site, which is how it drifted in the first place.
+
+1. **The plate card is promoted out of the disclosure; the ramp is not.**
+   `LoadHelper`'s whole argument was that plate maths is a question you ask
+   before the first working set, so putting it in the flow costs every set to
+   serve a few. Half of that is now wrong: "what do I put on the bar" is the
+   question standing between the number on screen and the set happening, and
+   the design answers it in the commit cluster. The bar picker, the
+   closest-loadable note and the warm-up ramp stay one tap deeper, where the
+   original argument still holds. The card is the control that opens them —
+   the one place this surface deliberately does not match the prototype,
+   which draws an inert div.
+
+2. **`describeBarMath` replaces `describePlates`.** The old formatter grouped
+   ("45 × 2, 5"); the new one repeats ("45 + 45 + 5 = 235"). Grouping is
+   wrong here for a specific reason: four lines above a set row reading
+   "237 lbs × 5", "45 × 2" invites reading the count as reps, and "45 × 2, 5"
+   reads as 45 × 2.5 at a glance — the wrong number and the wrong bar. The
+   total is always `achievable`, never what was typed, so the card cannot
+   claim a load the plates cannot build; the gap is the disclosure's job.
+
+3. **The commit cluster is pinned, and the queue is why.** The focused view
+   never had the design's structure — a scrolling column above a fixed
+   footer — and every surface R5 promoted pushed the log button further down
+   an ordinary page scroll. Consequences ledger row 5 asserted this pinning
+   already existed. It did not. It does now, on the overview rest bar's
+   sticky recipe and tab-bar clearance.
+
+4. **Logging stays primary even when the lift is "complete".** The design
+   swaps its CTA to Next/Finish once the planned sets are met. Here `planned`
+   is derived rather than declared — for a freestyle lift it is just last
+   session's working-set count — so a lift reads complete the moment you
+   match last week, and demoting the log button on that evidence would break
+   the one job this screen has. "Next: {name}" ships as a secondary pill;
+   one-tap "Finish workout" does not, because finishing is irreversible and
+   already guarded by a two-tap confirm in the chrome. The card's finished
+   state gets its own sentence ("3 of 3 done") so it can never read
+   "set 3 of 3" above a button offering set 4.
+
+Also, because the file was open: the back chevron moved out of the focused
+view — where it sat alone on a 48px row and read as floating — into the
+workout chrome beside the plan name and Finish, which is where the design has
+it and where the back gesture's owner already lives.
+
+**And the harness could not see any of this.** `scripts/shots.mjs` never
+opened the focused view: it photographed the overview, in five tabs, two
+widths, three locale/theme passes, and every R5 gate was met against a screen
+the phase had not touched. It now opens a row, shoots the card, the commit
+cluster and the plate card expanded, in EN, AR and dark. That sweep is what
+caught the lost RTL kicker resets, the wrapping weight label, and the English
+equipment names — none of which any other check in the wall can see.
+
+## 2026-08-13: R6, and what the home screen cannot honestly say
+
+**The home surface.** The design's hero is "{Plan} day, {Name}." — and the app
+has neither half. `profiles.display_name` has existed since migration 0001 and
+nothing in the app has ever written it; the only name collected is a username,
+so the realistic outputs were "Core & Conditioning, @ameen." and
+"Core & Conditioning, Someone." Both are worse than no greeting. Using the plan
+name alone read fine until the Up next card landed two rows below it and the
+screen said "Core & Conditioning" twice in one glance. So the hero is the
+weekday. It is the half of the design's sentence the app can stand behind, and
+it is the question the hero actually answers.
+
+The Up next meta drops the design's "~55 min". Nothing in the schema estimates a
+routine's duration — `duration_min` exists only per finished workout — and a
+guessed number on the opening screen is the kind of claim a lifter checks once
+and never trusts again. It carries the exercise count instead, which is real and
+now comes back with `listRoutines` on the existing embed.
+
+Start becomes a pill fixed at the thumb, which is what lets the routines and the
+recap sit below it. Same sticky recipe as the workout's commit cluster: the two
+screens' hot controls now live in the same place on the glass.
+
+**The finish ceremony.** The breakdown needed the session's sets, and the finish
+handler clears them in the same pass that builds the summary — so they are
+snapshotted alongside it. The ordinal ("workout 47") is counted rather than
+stored and never awaited; this screen's one job is to be instant.
+
+Two things the design does that this does not. Its duration tile reads M:SS;
+minutes are what a session is remembered in, and "1h 12m" survives a long
+session that "72:14" does not. And its debrief is a card, which reverses the
+comment that used to argue against exactly that — the old reasoning was that a
+box would make four boxes down the screen, and the design's finish IS a column
+of cards, so a bare sentence in the middle read as an orphan.
+
+**The Arabic pass found more than the layout.** Three things, all systemic:
+
+1. **Plex Mono has no Arabic.** Every mono line carrying a translated word fell
+   through to the platform monospace, which draws Arabic as disconnected letters
+   with gaps. R3 fixed this for kickers; `meta-mono` (and the same reset on
+   `chip-data`) names the rule for the lines that are neither uppercase nor
+   tracked — set rows, ghost lines, queue details, est-1RM lines, coach chips.
+2. **A figure must never lead a translated sentence.** "+5.5 lbs on last
+   session" translated with the figure still in front, and the bidi algorithm
+   put the Latin run on the wrong side of the Arabic. The Arabic strings are
+   rewritten so a word leads ("نقصان 5.5 lbs عن الجلسة السابقة"), which is
+   better Arabic anyway — the sign becomes a word. Pure figures get `dir="ltr"`;
+   mixed sentences inherit the page direction; a line whose direction depends on
+   its content (a PR title with an exercise name) gets `dir="auto"`.
+3. **The coach composed English.** `briefSkeleton`, `briefChip`,
+   `debriefSkeleton`, `debriefChip` and all four rest-canvas cards built their
+   sentences as template literals. R3's sweep caught the board and Progress and
+   never reached them, and R6 was about to make that card the hero of the
+   opening screen. They take a locale now, defaulting to `en` so nothing that
+   calls them without one changes. Muscle names go through `muscleLabel` on the
+   way, which is why two test expectations moved from "calves" to "Calves".
+
+**Still English under Arabic, deliberately:** the coach's MODEL-generated line,
+which overrides the skeleton when it arrives. Its language is a prompt question
+for the `coach-brief` Edge Function, not an i18n question, and it is out of this
+stage's scope — the same call recorded on 2026-08-12. Also `formatWorkoutDate`,
+which the finish kicker shares with History and the share-card canvas; changing
+it is a three-surface decision, not a finish-screen one.
+
+## 2026-08-13: what the adversarial review of R5/R6 actually found
+
+Four review passes over the branch diff, each finding independently refuted by
+a separate agent told to default to "refuted". Six survived, and every one of
+them was invisible to the wall — lint, typecheck, 851 tests and a build were
+green throughout.
+
+1. **`dir-flip` is not a class.** `RestExpanded` used it on the next-set
+   chevron. It exists only in the prototype's own inline stylesheet, which
+   never reaches the app; the real hook is `icon-start`. The chevron had never
+   mirrored in Arabic. Same shape as the `inset-block-0` defect the shots
+   script's header is written about: a class that does not exist generates no
+   CSS and raises no error.
+2. **The rest view's "next set" counted warm-ups.** `sets.filter(by exercise)
+.length + 1` is a row ordinal, not a working-set number — so the overlay
+   said "set 5" in its next row while the canvas card directly above it, which
+   goes through `buildBlock` and does filter, said set 3. About the same lift,
+   on the same screen.
+3. **The workout ordinal was not scoped to the user.** The new count relied on
+   RLS, and `workouts_select_visible` (0011_social.sql) also admits other
+   lifters' finished workouts when their profile is public or followed. "In the
+   books · workout 4,271" was one public profile away. Now `.eq('user_id')`.
+4. **The expanded rest ring filled while the chip drained.** R5a copied the
+   prototype's expression literally; the prototype fills on both of its rings
+   and is self-consistent, this app was not. Both drain now — ledger row 20.
+5. **Two more mono lines and one more isolate.** `rest.of` hand-rolled the
+   kicker and lost the RTL reset; the next row was `font-mono` with two Arabic
+   strings in it; and the queue's detail column and the canvas payload were
+   forced to `ltr` when they are figures on some rows and translated phrases on
+   others. Both take `dir="auto"` now, which is the honest answer: "3 × 12" has
+   no strong character and falls to ltr, "2/3 مجموعات" takes the Arabic.
+
+The lesson worth keeping: three of the six were introduced by this branch and
+three predate it, and no test could have caught any of them. The two that were
+caught by looking at pixels earlier in the session were caught the same way.

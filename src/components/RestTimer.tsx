@@ -4,23 +4,33 @@ import { describeRest } from '../lib/rest'
 import { useLocale } from '../lib/locale-context'
 
 /**
- * The countdown, shown inside the logging flow rather than over it.
+ * The rest chip — the design's compact presentation of the same deadline
+ * timer the bar carried since the U-series. Still inside the logging flow,
+ * never over it: §2.1 says nothing interrupts logging, and a rest timer
+ * that covers the weight input is exactly the interruption that makes
+ * people go back to the other app.
  *
- * Deliberately not a modal or an overlay: §2.1 says nothing interrupts
- * logging, and a rest timer that covers the weight input is exactly the
- * interruption that makes people go back to the other app. It sits in the
- * layout, and the inputs stay reachable the whole time.
+ * The chip flips its ground (ink chip on paper, paper chip on ink) so the
+ * countdown reads at arm's length without shouting. Tapping the body
+ * expands to the full rest view (RestExpanded); +30s and skip act without
+ * expanding. Two worlds, deliberately: the design's chip and expanded
+ * screen, the app's engine, keep-default affordance, and 48px targets.
  *
- * Remaining time is the filled part, draining from the inline start. The
- * fill is accent-900 — dark enough that the figures on top keep their
- * contrast, distinct enough to read at a glance from arm's length.
+ * The ring updates once a second with a one-second linear transition, for
+ * the same reason the old drain did: a countdown that eases is lying
+ * about the rate.
  */
-export function RestTimerBar({
+const CHIP_RING = 62.8
+
+export function RestChip({
   timer,
+  onExpand,
   defaultSeconds,
   onSaveDefault,
 }: {
   timer: Timer
+  /** Opens the full rest view. Optional: the chip works standalone. */
+  onExpand?: () => void
   /** What this lift's rest is currently set to, for the keep-it affordance. */
   defaultSeconds?: number
   onSaveDefault?: (seconds: number) => void
@@ -39,94 +49,108 @@ export function RestTimerBar({
     defaultSeconds !== undefined &&
     timer.total !== null &&
     timer.total !== defaultSeconds
-  const pct =
+  const fraction =
     timer.total && timer.total > 0
-      ? Math.max(0, Math.min(100, (timer.remaining / timer.total) * 100))
+      ? Math.max(0, Math.min(1, timer.remaining / timer.total))
       : 0
 
   return (
     <div
-      className="relative overflow-hidden bg-surface"
+      className="overflow-hidden"
       style={{
-        borderRadius: 'var(--radius-md)',
-        // The ring itself turns amber when the rest is up. Adding a border on
-        // top of the hairline instead would inset the content by a pixel and
-        // shuffle the whole row at the moment the timer lands.
-        boxShadow: done
-          ? '0 0 0 1px var(--color-accent), var(--top-light)'
-          : 'var(--ring-hairline)',
+        background: 'var(--color-text)',
+        color: 'var(--color-ink)',
+        borderRadius: '16px',
       }}
     >
-      {/* Progress drains right-to-left in LTR, start-to-end in RTL.
-          `pct` is computed from whole seconds, so it changes once a second.
-          The transition is a second long to match: at 300ms the bar lurched
-          for a third of every second and then sat frozen, which reads as a
-          stutter rather than as time passing. Linear, because a countdown
-          that eases is lying about the rate. This is the motion system's one
-          use of `linear` and its one duration off the four-token scale — it
-          is a readout, not a response to a tap.
-
-          `scaleX` on a full-width bar rather than an animated `width`: width
-          is a layout property, and making the transition continuous means it
-          would now recompute layout every frame for the whole 60-180s rest,
-          on a budget Android, mid-workout. A transform is composited instead
-          — no layout, no paint. The two are pixel-identical here because the
-          bar is a childless solid rectangle whose corners are clipped by the
-          parent, so there is nothing for the scale to distort.
-
-          `transform-origin` is physical, with no logical keyword, so it flips
-          for RTL the same way `layer-in` does. */}
-      <div
-        aria-hidden="true"
-        className="timer-drain absolute inset-block-0 start-0 w-full bg-accent-900"
-        style={{
-          transform: `scaleX(${pct / 100})`,
-          transition: `transform 1000ms var(--motion-linear)`,
-        }}
-      />
-      <div className="relative flex min-h-[50px] items-center gap-2 px-3 py-1">
-        <span className="kicker">{done ? t('rest.done') : t('rest.title')}</span>
-        <span
-          className={`tnum font-display text-[23px] font-medium ${done ? 'text-accent' : 'text-text'}`}
-          role="timer"
-          aria-live="off"
+      <div className="flex items-center gap-2 py-1.5 ps-3.5 pe-1.5">
+        <button
+          type="button"
+          onClick={onExpand}
+          aria-label={t('rest.expand')}
+          className="flex min-h-12 min-w-0 flex-1 items-center gap-2.5 text-start"
         >
-          {formatRest(timer.remaining)}
-        </span>
+          <svg
+            viewBox="0 0 24 24"
+            width={28}
+            height={28}
+            aria-hidden="true"
+            style={{ flexShrink: 0 }}
+          >
+            <circle
+              cx="12"
+              cy="12"
+              r="10"
+              fill="none"
+              stroke="currentColor"
+              strokeOpacity="0.25"
+              strokeWidth="3"
+            />
+            <circle
+              cx="12"
+              cy="12"
+              r="10"
+              fill="none"
+              stroke="var(--color-accent)"
+              strokeWidth="3"
+              strokeLinecap="round"
+              strokeDasharray={CHIP_RING}
+              strokeDashoffset={done ? 0 : CHIP_RING * (1 - fraction)}
+              transform="rotate(-90 12 12)"
+              style={{
+                transition: 'stroke-dashoffset 1000ms var(--motion-linear)',
+              }}
+            />
+          </svg>
+          <span
+            dir="ltr"
+            role="timer"
+            aria-live="off"
+            className="tnum font-display min-w-[52px] text-[17px] font-bold"
+          >
+            {formatRest(timer.remaining)}
+          </span>
+          <span className="truncate text-[12px] opacity-70">
+            {done ? t('rest.done') : t('rest.title')}
+          </span>
+        </button>
 
-        <div className="ms-auto flex items-center gap-1">
-          <button
-            type="button"
-            onClick={() => timer.adjust(-REST_STEP_SECONDS)}
-            aria-label={`Subtract ${REST_STEP_SECONDS} seconds`}
-            className="btn-base btn-secondary h-12 w-12 text-lg"
-          >
-            −
-          </button>
-          <button
-            type="button"
-            onClick={() => timer.adjust(REST_STEP_SECONDS)}
-            aria-label={`Add ${REST_STEP_SECONDS} seconds`}
-            className="btn-base btn-secondary h-12 w-12 text-lg"
-          >
-            +
-          </button>
-          <button
-            type="button"
-            onClick={timer.stop}
-            className="btn-base btn-quiet h-12 px-2 text-sm"
-          >
-            {t('rest.skip')}
-          </button>
-        </div>
+        <button
+          type="button"
+          onClick={() => timer.adjust(2 * REST_STEP_SECONDS)}
+          aria-label={`Add ${2 * REST_STEP_SECONDS} seconds`}
+          className="min-h-12 shrink-0 px-3 text-[13px] font-semibold"
+          style={{
+            background: 'color-mix(in srgb, currentColor 14%, transparent)',
+            borderRadius: 'var(--radius-pill)',
+          }}
+        >
+          <span dir="ltr">+30s</span>
+        </button>
+        <button
+          type="button"
+          onClick={timer.stop}
+          className="min-h-12 shrink-0 px-3 text-[13px] font-semibold"
+          style={{
+            background: 'color-mix(in srgb, currentColor 14%, transparent)',
+            borderRadius: 'var(--radius-pill)',
+          }}
+        >
+          {t('rest.skip')}
+        </button>
       </div>
 
       {adjusted && (
-        <div className="relative border-t border-line">
+        <div
+          className="relative"
+          style={{
+            borderTop: '1px solid color-mix(in srgb, currentColor 14%, transparent)',
+          }}
+        >
           <button
             type="button"
             onClick={() => onSaveDefault(timer.total as number)}
-            className="btn-base btn-ghost h-12 w-full justify-start px-3 text-[13px]"
+            className="flex h-12 w-full items-center px-3.5 text-start text-[13px] opacity-80"
           >
             {t('rest.keep_default', {
               duration: describeRest(timer.total as number),

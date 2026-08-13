@@ -46,6 +46,15 @@ export const messages: Record<Locale, Record<string, string>> = {
     'muscle.calves': 'Calves',
     'muscle.core': 'Core',
     'muscle.cardio': 'Cardio',
+    // Equipment, the seeded catalogue's six values. The design puts this on
+    // the exercise card's meta line, which is the first place the raw
+    // English token would have been read by an Arabic lifter.
+    'equipment.barbell': 'Barbell',
+    'equipment.dumbbell': 'Dumbbell',
+    'equipment.machine': 'Machine',
+    'equipment.cable': 'Cable',
+    'equipment.bodyweight': 'Bodyweight',
+    'equipment.other': 'Other',
     'when.today': 'today',
     'when.yesterday': 'yesterday',
     'when.days_ago': '{n} days ago',
@@ -270,6 +279,11 @@ export const messages: Record<Locale, Record<string, string>> = {
     'log.start_first': 'Start your first workout',
     'log.streak.week_streak': 'week streak',
     'log.streak.this_week': 'this week',
+    // Up next
+    'upnext.kicker': 'Up next',
+    'upnext.exercises': '{n} exercises',
+    'upnext.last_done': 'last done {day}',
+    'upnext.never': 'never run',
     'log.last_session': 'Last session · {day}',
     'log.in_progress': '{name} · in progress',
     'log.workout_fallback': 'Workout',
@@ -464,6 +478,12 @@ export const messages: Record<Locale, Record<string, string>> = {
     'rest.done': 'Rest done',
     'rest.skip': 'Skip',
     'rest.keep_default': 'Keep {duration} as the rest for this lift',
+    'rest.expand': 'Open the rest timer',
+    'rest.collapse': 'Back to the board',
+    'rest.skip_long': 'skip rest',
+    'rest.of': 'Rest · of {t}',
+    'rest.next': 'next',
+    'rest.next_set': '{name} — set {n}',
     // Exercise picker
     'picker.back': 'Back',
     'picker.search': 'Search exercises',
@@ -501,7 +521,18 @@ export const messages: Record<Locale, Record<string, string>> = {
     'calendar.hint': 'Brighter is a heavier day. Unlit is rest.',
     // Load helper
     'load.title': 'Plates & warm-up',
-    'load.per_side': 'Per side',
+    'load.on_bar': 'On the bar · per side',
+    'load.total': 'total',
+    'load.empty_bar': 'empty bar',
+    'load.bar': 'Bar',
+    'load.under_bar': 'under the {bar} {unit} bar',
+    'load.closest': 'Closest loadable is {weight} {unit} — off by {off}.',
+    'load.warmup': 'Warm-up',
+    'load.warmup_hint': 'Warm-up · tap a row to log it',
+    'load.logged': 'logged',
+    'load.log': 'Log',
+    'load.log_aria': 'Log {weight} {unit} for {reps} as a warm-up',
+    'load.logged_aria': '{weight} {unit} for {reps} already logged',
     // Exercise detail
     'detail.back': 'Back to progress',
     'detail.error.history': 'Loading the history for that exercise',
@@ -591,6 +622,9 @@ export const messages: Record<Locale, Record<string, string>> = {
       'Enter the reps you did. Weight can stay empty for bodyweight sets.',
     'entry.error.weight': 'Weight must be a number in {unit}, or empty for bodyweight.',
     'entry.back': 'Back to workout',
+    'entry.weight.panel': 'Weight · {unit}',
+    'entry.weight.optional': 'optional',
+    'entry.reps.panel': 'Reps',
     'entry.weight.decrease': 'Decrease weight',
     'entry.weight.increase': 'Increase weight',
     'entry.reps.decrease': 'Decrease reps',
@@ -607,6 +641,15 @@ export const messages: Record<Locale, Record<string, string>> = {
     'entry.saving': 'Saving…',
     'entry.log.warmup': 'Log warm-up {number}',
     'entry.log.set': 'Log set {number}',
+    'entry.log.next': 'Next: {name}',
+    'entry.set_of': 'set {n} of {total}',
+    'entry.set_done': '{total} of {total} done',
+    // Session queue
+    'queue.kicker': 'Session',
+    'queue.to_go': '{n} to go',
+    'queue.sets_short': '{a}/{b} sets',
+    'queue.scheme': '{sets} × {reps}',
+    'queue.jump': 'Go to {name}',
     // Finish summary
     'finish.share.saved': 'Saved the image — this browser has no share sheet.',
     'finish.share.error': 'Could not build the image.',
@@ -643,8 +686,14 @@ export const messages: Record<Locale, Record<string, string>> = {
     // Picker
     'picker.clear': 'Clear filters',
     // Finish
-    'finish.title': 'Workout complete',
+    'finish.title': 'In the books.',
     'finish.done': 'Done',
+    'finish.ordinal': 'workout {n}',
+    'finish.new_pr': 'New PR',
+    'finish.e1rm': 'est. 1RM {value} {unit}',
+    'finish.warmup': 'Warm-up',
+    'finish.set_n': 'Set {n}',
+    'finish.routine_update': 'Update {name} with today’s changes?',
     // Import
     'import.hero.title': 'Coming from Hevy',
     'import.hero.body': 'Bring your history with you.',
@@ -664,6 +713,37 @@ export const messages: Record<Locale, Record<string, string>> = {
     'ranges.title': 'How much am I lifting lately',
     // Rest canvas
     'canvas.undo': 'Rest canvas off · Bring it back',
+    // The coach's own sentences — composed from SQL, never from a model. Every
+    // one of these was a template literal in coach.ts or rest-canvas.ts and
+    // rendered English inside the Arabic build.
+    'coach.line.up': '{name} is up',
+    'coach.line.target': '{exercise} — {weight} {unit} × {reps} last time',
+    'coach.line.low_band': '{muscle} is at {n} sets this week',
+    'coach.line.low_band_one': '{muscle} is at {n} set this week',
+    'coach.line.days_since': '{n} days since your last session',
+    'coach.line.chip': '{weight} {unit} × {reps} beats {e1rm} e1RM',
+    'coach.line.streak': '{ordinal} straight {exercise} progression.',
+    'coach.line.gain_last': '{exercise} estimate up {gain} {unit} on last session.',
+    'coach.line.gain_month': '{exercise} estimate up {gain} {unit} this month.',
+    'coach.line.records': '{n} personal records logged.',
+    'coach.line.records_one': '{n} personal record logged.',
+    'coach.line.debrief_chip': '{exercise} {weight} {unit} × {reps}',
+    'canvas.next_up': 'Next up · set {label}',
+    'canvas.reps': '{n} reps',
+    'canvas.delta_up': '+{delta} {unit} on last session',
+    'canvas.delta_down': '−{delta} {unit} on last session',
+    'canvas.delta_reps': '+{n} reps on last session',
+    'canvas.delta_reps_one': '+{n} rep on last session',
+    'canvas.same': 'Same as last session',
+    'canvas.previous': '{weight} {unit} last session',
+    'canvas.record': 'Record',
+    'canvas.records_session': '{n} this session',
+    'canvas.crew': 'Your crew',
+    'canvas.crew_trained': '{n} trained today',
+    'canvas.volume': 'Volume so far',
+    'canvas.sets_of': '{done} of {planned} sets',
+    'canvas.sets': '{n} sets',
+    'canvas.sets_one': '{n} set',
     // Coach brief
     'brief.note': 'The moment a workout starts, the coach disappears until Finish.',
     // Routine editor
@@ -673,7 +753,6 @@ export const messages: Record<Locale, Record<string, string>> = {
     'routines.start_empty': 'Start empty workout',
     // Set entry
     'entry.previous.loading': 'Loading previous session…',
-    'entry.previous.kicker': 'Previous · {day}',
     'entry.previous.none': 'First time logging this exercise. No previous session yet.',
     'entry.reps': 'Reps',
     'entry.pr': 'Personal record',
@@ -715,6 +794,12 @@ export const messages: Record<Locale, Record<string, string>> = {
     'muscle.hamstrings': 'الفخذ الخلفي',
     'muscle.glutes': 'الأرداف',
     'muscle.calves': 'السمانة',
+    'equipment.barbell': 'بار',
+    'equipment.dumbbell': 'دمبل',
+    'equipment.machine': 'جهاز',
+    'equipment.cable': 'كابل',
+    'equipment.bodyweight': 'وزن الجسم',
+    'equipment.other': 'أخرى',
     'muscle.core': 'الجذع',
     'muscle.cardio': 'كارديو',
     'when.today': 'اليوم',
@@ -935,6 +1020,11 @@ export const messages: Record<Locale, Record<string, string>> = {
     'log.start_first': 'ابدأ أول تمرين لك',
     'log.streak.week_streak': 'أسبوع متتالٍ',
     'log.streak.this_week': 'هذا الأسبوع',
+    // Up next
+    'upnext.kicker': 'التالي',
+    'upnext.exercises': '{n} تمارين',
+    'upnext.last_done': 'آخر مرة {day}',
+    'upnext.never': 'لم يُنفَّذ بعد',
     'log.last_session': 'آخر جلسة · {day}',
     'log.in_progress': '{name} · في التقدّم',
     'log.workout_fallback': 'تمرين',
@@ -1121,6 +1211,12 @@ export const messages: Record<Locale, Record<string, string>> = {
     'rest.done': 'انتهت الراحة',
     'rest.skip': 'تخطٍ',
     'rest.keep_default': 'اجعل {duration} زمن الراحة لهذا التمرين',
+    'rest.expand': 'افتح مؤقت الراحة',
+    'rest.collapse': 'عودة إلى اللوحة',
+    'rest.skip_long': 'تخطَّ الراحة',
+    'rest.of': 'راحة · من {t}',
+    'rest.next': 'التالي',
+    'rest.next_set': '{name} — المجموعة {n}',
     // Exercise picker
     'picker.back': 'رجوع',
     'picker.search': 'ابحث عن تمرين',
@@ -1158,7 +1254,18 @@ export const messages: Record<Locale, Record<string, string>> = {
     'calendar.hint': 'الأكثر إضاءة يوم أثقل. غير المضيء راحة.',
     // Load helper
     'load.title': 'الأوزان والإحماء',
-    'load.per_side': 'لكل جهة',
+    'load.on_bar': 'على البار · لكل جانب',
+    'load.total': 'إجمالي',
+    'load.empty_bar': 'بار فارغ',
+    'load.bar': 'البار',
+    'load.under_bar': 'أقل من بار {bar} {unit}',
+    'load.closest': 'أقرب حمل ممكن {weight} {unit} — بفارق {off}.',
+    'load.warmup': 'الإحماء',
+    'load.warmup_hint': 'الإحماء · اضغط صفاً لتسجيله',
+    'load.logged': 'مسجَّل',
+    'load.log': 'سجّل',
+    'load.log_aria': 'سجّل {weight} {unit} لـ {reps} تكرارات كإحماء',
+    'load.logged_aria': '{weight} {unit} لـ {reps} تكرارات مسجَّل بالفعل',
     // Exercise detail
     'detail.back': 'العودة إلى التقدم',
     'detail.error.history': 'تحميل سجل هذا التمرين',
@@ -1245,6 +1352,9 @@ export const messages: Record<Locale, Record<string, string>> = {
       'أدخل التكرارات التي أدّيتها. يمكن ترك الوزن فارغاً لتمارين وزن الجسم.',
     'entry.error.weight': 'يجب أن يكون الوزن رقماً بـ {unit}، أو فارغاً لوزن الجسم.',
     'entry.back': 'العودة إلى التمرين',
+    'entry.weight.panel': 'الوزن · {unit}',
+    'entry.weight.optional': 'اختياري',
+    'entry.reps.panel': 'التكرارات',
     'entry.weight.decrease': 'إنقاص الوزن',
     'entry.weight.increase': 'زيادة الوزن',
     'entry.reps.decrease': 'إنقاص التكرارات',
@@ -1261,6 +1371,15 @@ export const messages: Record<Locale, Record<string, string>> = {
     'entry.saving': 'جارٍ الحفظ…',
     'entry.log.warmup': 'سجّل إحماء {number}',
     'entry.log.set': 'سجّل المجموعة {number}',
+    'entry.log.next': 'التالي: {name}',
+    'entry.set_of': 'المجموعة {n} من {total}',
+    'entry.set_done': 'اكتملت {total} من {total}',
+    // Session queue
+    'queue.kicker': 'الجلسة',
+    'queue.to_go': 'باقي {n}',
+    'queue.sets_short': '{a}/{b} مجموعات',
+    'queue.scheme': '{sets} × {reps}',
+    'queue.jump': 'انتقل إلى {name}',
     // Finish summary
     'finish.share.saved': 'حُفظت الصورة، هذا المتصفح بلا قائمة مشاركة.',
     'finish.share.error': 'تعذّر إنشاء الصورة.',
@@ -1295,8 +1414,14 @@ export const messages: Record<Locale, Record<string, string>> = {
     // Picker
     'picker.clear': 'مسح عوامل التصفية',
     // Finish
-    'finish.title': 'اكتمل التمرين',
+    'finish.title': 'في السجل.',
     'finish.done': 'تم',
+    'finish.ordinal': 'التمرين {n}',
+    'finish.new_pr': 'رقم قياسي',
+    'finish.e1rm': 'أقصى تقديري {value} {unit}',
+    'finish.warmup': 'إحماء',
+    'finish.set_n': 'المجموعة {n}',
+    'finish.routine_update': 'أتحدّث {name} بتغييرات اليوم؟',
     // Import
     'import.hero.title': 'قادم من Hevy',
     'import.hero.body': 'أحضِر سجلّك معك.',
@@ -1316,6 +1441,35 @@ export const messages: Record<Locale, Record<string, string>> = {
     'ranges.title': 'كم أرفع مؤخراً',
     // Rest canvas
     'canvas.undo': 'لوحة الراحة متوقفة · أعِدها',
+    'coach.line.up': 'التالي: {name}',
+    'coach.line.target': 'آخر مرة في {exercise}: {weight} {unit} × {reps}',
+    'coach.line.low_band': '{muscle} عند {n} مجموعات هذا الأسبوع',
+    'coach.line.low_band_one': '{muscle} عند مجموعة واحدة هذا الأسبوع',
+    'coach.line.days_since': 'مضى {n} يوماً على آخر جلسة',
+    'coach.line.chip': 'يتجاوز {e1rm} أقصى تقديري · {weight} {unit} × {reps}',
+    'coach.line.streak': 'تقدّم في {exercise} عبر {n} جلسات متتالية.',
+    'coach.line.gain_last':
+      'ارتفع تقدير {exercise} بمقدار {gain} {unit} عن الجلسة السابقة.',
+    'coach.line.gain_month': 'ارتفع تقدير {exercise} بمقدار {gain} {unit} هذا الشهر.',
+    'coach.line.records': 'سُجّلت {n} أرقام قياسية.',
+    'coach.line.records_one': 'سُجّل رقم قياسي واحد.',
+    'coach.line.debrief_chip': '{exercise} {weight} {unit} × {reps}',
+    'canvas.next_up': 'التالي · المجموعة {label}',
+    'canvas.reps': '{n} تكرارات',
+    'canvas.delta_up': 'زيادة {delta} {unit} عن الجلسة السابقة',
+    'canvas.delta_down': 'نقصان {delta} {unit} عن الجلسة السابقة',
+    'canvas.delta_reps': 'زيادة {n} تكرارات عن الجلسة السابقة',
+    'canvas.delta_reps_one': 'زيادة تكرار واحد عن الجلسة السابقة',
+    'canvas.same': 'كما في الجلسة السابقة',
+    'canvas.previous': 'الجلسة السابقة {weight} {unit}',
+    'canvas.record': 'رقم قياسي',
+    'canvas.records_session': 'في هذه الجلسة {n}',
+    'canvas.crew': 'رفاقك',
+    'canvas.crew_trained': 'تدرّب اليوم {n}',
+    'canvas.volume': 'الحجم حتى الآن',
+    'canvas.sets_of': 'أُنجز {done} من {planned} مجموعات',
+    'canvas.sets': 'أُنجز {n} مجموعات',
+    'canvas.sets_one': 'مجموعة واحدة',
     // Coach brief
     'brief.note': 'لحظة بدء التمرين يختفي المدرب حتى الإنهاء.',
     // Routine editor
@@ -1325,7 +1479,6 @@ export const messages: Record<Locale, Record<string, string>> = {
     'routines.start_empty': 'ابدأ تمريناً فارغاً',
     // Set entry
     'entry.previous.loading': 'جارٍ تحميل الجلسة السابقة…',
-    'entry.previous.kicker': 'السابقة · {day}',
     'entry.previous.none': 'أول مرة تسجّل هذا التمرين. لا توجد جلسة سابقة.',
     'entry.reps': 'التكرارات',
     'entry.pr': 'رقم قياسي شخصي',
@@ -1357,6 +1510,19 @@ export const messages: Record<Locale, Record<string, string>> = {
 export function muscleLabel(locale: Locale, group: string): string {
   const key = 'muscle.' + group.toLowerCase()
   return messages[locale]?.[key] ?? messages.en[key] ?? group
+}
+
+/**
+ * Equipment display name, same contract as `muscleLabel`.
+ *
+ * The column is free-form text seeded from a fuzzy import, so an unknown
+ * value renders as itself — a lift labelled "smith machine" is better read
+ * back verbatim than swallowed by a fallback.
+ */
+export function equipmentLabel(locale: Locale, equipment: string): string {
+  if (!equipment) return ''
+  const key = 'equipment.' + equipment.toLowerCase()
+  return messages[locale]?.[key] ?? messages.en[key] ?? equipment
 }
 
 export function t(

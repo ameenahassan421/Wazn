@@ -163,6 +163,37 @@
   --radius-sm: 4px;
   --radius-md: 8px;
   --radius-lg: 14px;
+  /* The exact-match mandate (DECISIONS.md 2026-08-12): the design's own
+     surface language. Cards at 18-20, controls as pills, and the design's
+     two shadows. These supersede the no-shadow rule for surfaces the
+     design draws with them; the hairline ring remains for everything else.
+
+     --surface-line is the design's own `--line`: far fainter than
+     --color-line, which is a drawn border. R5a wrote --shadow-card against
+     `var(--line)`, which this file never defined — an undefined custom
+     property makes the whole box-shadow invalid, so every panel that
+     shipped in R5b drew no edge at all. It is a token now, per theme. */
+  --radius-xl: 20px;
+  --radius-panel: 18px;
+  --radius-thumb: 12px;
+  --radius-pill: 999px;
+  --surface-line: rgba(22, 19, 14, 0.06);
+
+  /* The flip ground: the theme's opposite, for the surfaces that want to be
+     the darkest thing on a paper screen and the lightest on an ink one —
+     the rest chip, the Up next card.
+
+     Defined FROM the ramp rather than as its own pair of hex values, so
+     there is one truth about what ink and paper are. `--color-text` and
+     `--color-ink` already swap with the theme, so this needs no dark
+     override; the rest chip has been painting itself this way since R5a,
+     and now it has a name. */
+  --flip-bg: var(--color-text);
+  --flip-text: var(--color-ink);
+  --flip-muted: color-mix(in srgb, var(--color-ink) 58%, var(--color-text));
+  --shadow-panel: 0 0 0 1px var(--surface-line);
+  --shadow-card: 0 1px 2px var(--surface-line), 0 0 0 1px var(--surface-line);
+  --shadow-cta: 0 10px 26px rgba(232, 73, 29, 0.35);
 
   --divider: rgba(22, 19, 14, 0.14);
   --header-tint: #efe9df;
@@ -233,6 +264,7 @@ html[data-theme='dark'] {
   --divider-solid: rgba(236, 235, 232, 0.08);
   --top-light: inset 0 1px 0 rgba(236, 235, 232, 0.045);
   --header-tint: #131210;
+  --surface-line: rgba(247, 243, 236, 0.08);
 }
 
 html {
@@ -339,6 +371,26 @@ button {
   box-shadow: var(--ring-hairline);
 }
 
+/* The design's two surfaces, named as it names them. `card` is the object
+   you read from — 20px, lifted a millimetre off the ground. `panel` is the
+   object you operate — 18px, edge only, flush.
+
+   They are utilities rather than inline styles because R5a and R5b wrote
+   the same recipe by hand in four places and the fifth would have drifted.
+   The knurl does not go on either of them: consequences ledger row 12 —
+   one texture per surface, and these already carry a shadow. */
+@utility surface-card {
+  background: var(--color-surface);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-card);
+}
+
+@utility surface-panel {
+  background: var(--color-surface);
+  border-radius: var(--radius-panel);
+  box-shadow: var(--shadow-panel);
+}
+
 /* Pin an absolutely-positioned child to both block edges of its container.
    The inline axis has `start-0`/`end-0`; Tailwind v4 ships nothing for the
    block axis, and `inset-block-0` had been written in five places as if it
@@ -398,6 +450,23 @@ button {
   font-family: var(--font-sans);
   letter-spacing: 0;
   text-transform: none;
+}
+
+/* The meta voice at body scale: mono for a line of figures and stamped
+   labels, and NOT mono the moment the line is in Arabic.
+
+   Same rule `kicker` carries, named separately because it applies to lines
+   that are neither uppercase nor tracked — a set row, a ghost line, an
+   est-1RM line. Plex Mono has no Arabic, so those lines fell through to the
+   platform monospace, which renders Arabic as disconnected letters with
+   gaps between them. R3 fixed this class of defect for kickers; every mono
+   line carrying a translated word had the same hole. */
+@utility meta-mono {
+  font-family: var(--font-mono);
+}
+
+[dir='rtl'] .meta-mono {
+  font-family: var(--font-sans);
 }
 
 /* The knurl. Cross-hatched ember at ±45°, 1px line on a 5px period — the
@@ -513,6 +582,13 @@ button {
   font-size: 11px;
   line-height: 1.2;
   font-variant-numeric: tabular-nums;
+}
+
+/* The chip carries translated words beside its figures, so it takes the
+   same rule `meta-mono` names: Plex Mono has no Arabic, and the platform
+   monospace draws it as disconnected letters. */
+[dir='rtl'] .chip-data {
+  font-family: var(--font-sans);
 }
 
 /* The PR badge. Ember-800 fill with the knurl laid over it at low opacity —

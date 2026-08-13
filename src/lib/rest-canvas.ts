@@ -3,6 +3,8 @@ import type { WorkoutSet } from './types'
 import { formatCount, formatVolume } from './format'
 import { formatWeight } from './units'
 import type { Unit } from './units'
+import { t } from './i18n'
+import type { Locale } from './i18n'
 
 /**
  * The rest canvas — E1, offense plan §8-E1.
@@ -103,7 +105,7 @@ export interface RestCanvasInput {
  * The values are the ghost row's own — the same numbers one tap on the board
  * would commit — so the canvas can never disagree with the board it sits over.
  */
-function targetCard(input: RestCanvasInput): RestCard | null {
+function targetCard(input: RestCanvasInput, locale: Locale): RestCard | null {
   const block = input.blocks.find((b) => b.exerciseId === input.restingExerciseId)
   const name = block?.exercise?.name
   if (!block || !name) return null
@@ -122,17 +124,17 @@ function targetCard(input: RestCanvasInput): RestCard | null {
       : `${formatWeight(row.weightKg, input.unit)} ${input.unit}`
   const value =
     weight === null
-      ? `${row.reps} reps`
+      ? t(locale, 'canvas.reps', { n: String(row.reps) })
       : row.reps === null
         ? weight
         : `${weight} × ${row.reps}`
 
   return {
     kind: 'target',
-    kicker: `Next up · set ${row.label}`,
+    kicker: t(locale, 'canvas.next_up', { label: row.label }),
     subject: name,
     value,
-    note: whyItMoved(row.weightKg, row.reps, row.previous, input.unit),
+    note: whyItMoved(row.weightKg, row.reps, row.previous, input.unit, locale),
   }
 }
 
@@ -150,25 +152,40 @@ function whyItMoved(
   reps: number | null,
   previous: { weightKg: number | null; reps: number | null } | null,
   unit: Unit,
+  locale: Locale,
 ): string | undefined {
   if (!previous) return undefined
 
   if (weightKg !== null && previous.weightKg !== null) {
     const delta = Number((weightKg - previous.weightKg).toFixed(4))
-    if (delta > 0) return `+${formatWeight(delta, unit)} ${unit} on last session`
+    if (delta > 0) {
+      return t(locale, 'canvas.delta_up', {
+        delta: formatWeight(delta, unit),
+        unit,
+      })
+    }
     // U+2212, the same minus the timer's adjust control uses. A hyphen at 11px
     // mono sits too high and too short to read as a sign.
     if (delta < 0) {
-      return `−${formatWeight(Math.abs(delta), unit)} ${unit} on last session`
+      return t(locale, 'canvas.delta_down', {
+        delta: formatWeight(Math.abs(delta), unit),
+        unit,
+      })
     }
     if (reps !== null && previous.reps !== null && reps > previous.reps) {
-      return `+${reps - previous.reps} ${reps - previous.reps === 1 ? 'rep' : 'reps'} on last session`
+      const gained = reps - previous.reps
+      return t(locale, gained === 1 ? 'canvas.delta_reps_one' : 'canvas.delta_reps', {
+        n: String(gained),
+      })
     }
-    return 'Same as last session'
+    return t(locale, 'canvas.same')
   }
 
   if (previous.weightKg !== null) {
-    return `${formatWeight(previous.weightKg, unit)} ${unit} last session`
+    return t(locale, 'canvas.previous', {
+      weight: formatWeight(previous.weightKg, unit),
+      unit,
+    })
   }
   return undefined
 }
@@ -186,7 +203,7 @@ function whyItMoved(
  * a scoreboard and the set is the thing worth reading: the load and the reps
  * are what the next attempt has to beat.
  */
-function recordCard(input: RestCanvasInput): RestCard | null {
+function recordCard(input: RestCanvasInput, locale: Locale): RestCard | null {
   const records = input.sets.filter((s) => s.pr_weight || s.pr_e1rm)
   if (records.length === 0) return null
 
@@ -197,22 +214,24 @@ function recordCard(input: RestCanvasInput): RestCard | null {
 
   return {
     kind: 'record',
-    kicker: 'Record',
+    kicker: t(locale, 'canvas.record'),
     subject: name,
     value: `${formatWeight(latest.weight_kg, input.unit)} ${input.unit} × ${latest.reps}`,
     note:
-      records.length > 1 ? `${formatCount(records.length)} this session` : undefined,
+      records.length > 1
+        ? t(locale, 'canvas.records_session', { n: formatCount(records.length) })
+        : undefined,
   }
 }
 
 /** Who else trained today. Absent with no crew, no signal, and no news. */
-function crewCard(input: RestCanvasInput): RestCard | null {
+function crewCard(input: RestCanvasInput, locale: Locale): RestCard | null {
   const crew = input.crew
   if (!crew || crew.lifters <= 0) return null
   return {
     kind: 'crew',
-    kicker: 'Your crew',
-    value: `${formatCount(crew.lifters)} trained today`,
+    kicker: t(locale, 'canvas.crew'),
+    value: t(locale, 'canvas.crew_trained', { n: formatCount(crew.lifters) }),
     note: crew.best
       ? `${crew.best.name} · ${formatVolume(crew.best.volumeKg, input.unit)} ${input.unit}`
       : undefined,
@@ -223,7 +242,7 @@ function crewCard(input: RestCanvasInput): RestCard | null {
  * Where the session stands. The always-available floor, and the only card that
  * can speak when the board is between blocks with nothing else to report.
  */
-function sessionCard(input: RestCanvasInput): RestCard | null {
+function sessionCard(input: RestCanvasInput, locale: Locale): RestCard | null {
   const volumeKg = input.sets.reduce(
     (sum, s) =>
       s.weight_kg === null || s.reps === null ? sum : sum + s.weight_kg * s.reps,
@@ -236,12 +255,17 @@ function sessionCard(input: RestCanvasInput): RestCard | null {
 
   return {
     kind: 'session',
-    kicker: 'Volume so far',
+    kicker: t(locale, 'canvas.volume'),
     value: `${formatVolume(volumeKg, input.unit)} ${input.unit}`,
     note:
       planned > 0
-        ? `${formatCount(done)} of ${formatCount(planned)} sets`
-        : `${formatCount(done)} ${done === 1 ? 'set' : 'sets'}`,
+        ? t(locale, 'canvas.sets_of', {
+            done: formatCount(done),
+            planned: formatCount(planned),
+          })
+        : t(locale, done === 1 ? 'canvas.sets_one' : 'canvas.sets', {
+            n: formatCount(done),
+          }),
   }
 }
 
@@ -254,8 +278,16 @@ function sessionCard(input: RestCanvasInput): RestCard | null {
  * from shuffling — mid-block the answer is always the next set, and only when a
  * block closes does anything else get a turn.
  */
-export function pickRestCard(input: RestCanvasInput): RestCard | null {
-  return targetCard(input) ?? recordCard(input) ?? crewCard(input) ?? sessionCard(input)
+export function pickRestCard(
+  input: RestCanvasInput,
+  locale: Locale = 'en',
+): RestCard | null {
+  return (
+    targetCard(input, locale) ??
+    recordCard(input, locale) ??
+    crewCard(input, locale) ??
+    sessionCard(input, locale)
+  )
 }
 
 /* ── The permanent dismissal ──────────────────────────────────────────────── */
