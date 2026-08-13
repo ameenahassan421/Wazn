@@ -9,6 +9,7 @@ import { useBackLayer } from './lib/use-back'
 import { LocaleProvider, useLocale } from './lib/locale-context'
 import { ThemeProvider } from './lib/theme-context'
 import { UnitProvider } from './lib/unit-context'
+import { fetchMyProfile } from './lib/social'
 import { AuthScreen } from './components/AuthScreen'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import { Header } from './components/Header'
@@ -39,6 +40,13 @@ const CoachScreen = lazyScreen(() =>
   import('./screens/CoachScreen').then((m) => ({ default: m.CoachScreen })),
 )
 
+// Settings is lazy because it is the rarest screen in the app by design: it
+// holds preferences a person sets once. It is also the only lazy screen a
+// brand-new account is likely to open, which is why it is small.
+const SettingsScreen = lazyScreen(() =>
+  import('./screens/SettingsScreen').then((m) => ({ default: m.SettingsScreen })),
+)
+
 /**
  * The lazy-screen fallback, as its own component so `t()` runs INSIDE
  * LocaleProvider. Calling it from App would resolve against the default
@@ -50,8 +58,37 @@ function ScreenFallback() {
 }
 
 export default function App() {
-  const { loading, userId } = useAuth()
+  const { loading, session, userId } = useAuth()
   const [tab, setTab] = useState<Tab>('log')
+  /**
+   * The header's monogram. Fetched here rather than inside the header so the
+   * one request serves both the chip and the Settings screen behind it.
+   *
+   * The fetched name carries the id it belongs to, and the effect never
+   * clears state on its own — a different account simply stops matching, so
+   * the previous person's initial is inert rather than needing to be wiped.
+   * That is the pattern CLAUDE.md's state-handling section requires:
+   * `setState` inside an effect is what the lint rule forbids, and a "clear
+   * it on sign-out" effect is exactly the shape that broke the set auto-fill.
+   */
+  const [profile, setProfile] = useState<{
+    userId: string
+    username: string | null
+  } | null>(null)
+  const name = profile?.userId === userId ? profile.username : null
+
+  useEffect(() => {
+    if (!userId) return
+    let live = true
+    void fetchMyProfile(userId)
+      .then((p) => {
+        if (live) setProfile({ userId, username: p?.username ?? null })
+      })
+      .catch(() => {})
+    return () => {
+      live = false
+    }
+  }, [userId])
 
   /**
    * A different person on this phone gets a blank device.
@@ -98,6 +135,8 @@ export default function App() {
   }
 
   // The Log tab carries the mark; the others carry their name.
+  // Settings draws its own title beside its own back chevron, so the header
+  // stays on the mark there rather than saying the same word twice.
   const titleKey =
     tab === 'history'
       ? 'nav.history'
@@ -119,7 +158,11 @@ export default function App() {
       <ThemeProvider userId={userId}>
         <LocaleProvider userId={userId}>
           <UnitProvider userId={userId}>
-            <Header titleKey={titleKey} />
+            <Header
+              titleKey={titleKey}
+              name={name}
+              onOpenSettings={() => setTab('settings')}
+            />
             <main className="mx-auto w-full max-w-[430px] px-[18px] pb-28">
               <ErrorBoundary boundary={tab} resetKey={tab}>
                 {tab === 'log' && (
@@ -142,6 +185,17 @@ export default function App() {
                 {tab === 'friends' && (
                   <Suspense fallback={<ScreenFallback />}>
                     <FriendsScreen userId={userId} />
+                  </Suspense>
+                )}
+                {tab === 'settings' && (
+                  <Suspense fallback={<ScreenFallback />}>
+                    <SettingsScreen
+                      userId={userId}
+                      email={session?.user.email ?? null}
+                      joinedAt={session?.user.created_at ?? null}
+                      onFriends={() => setTab('friends')}
+                      onClose={() => setTab('log')}
+                    />
                   </Suspense>
                 )}
               </ErrorBoundary>

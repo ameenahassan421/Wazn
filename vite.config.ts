@@ -6,11 +6,17 @@ import { VitePWA } from 'vite-plugin-pwa'
 // One constant, shared with the app so the worker and `device-reset.ts`
 // cannot disagree about which cache holds cross-account data.
 import { READ_CACHE } from './src/lib/cache-names'
+import pkg from './package.json' with { type: 'json' }
 
 const slim = (name: string) =>
   fileURLToPath(new URL(`./build/supabase-slim/${name}.ts`, import.meta.url))
 
 export default defineConfig({
+  // The version the Settings footer prints. Read from package.json rather
+  // than typed into a string somewhere: a version a human has to remember to
+  // bump is a version that is wrong the first time it matters, which is when
+  // somebody is reporting a bug against it.
+  define: { __APP_VERSION__: JSON.stringify(pkg.version) },
   resolve: {
     alias: {
       // 78 KiB of `@supabase` client that Wazn has no feature for: realtime
@@ -32,12 +38,7 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: [
-        'icon.svg',
-        'icon-192.png',
-        'icon-512.png',
-        'icon-maskable-512.png',
-      ],
+      includeAssets: ['icon.svg', 'icon-192.png', 'icon-512.png'],
       manifest: {
         name: 'Wazn',
         short_name: 'Wazn',

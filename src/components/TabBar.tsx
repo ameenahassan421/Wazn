@@ -2,7 +2,7 @@ import { IconBarbell, IconHistory, IconPeople, IconStar, IconTrend } from './ico
 import type { ComponentType } from 'react'
 import { useLocale } from '../lib/locale-context'
 
-export type Tab = 'log' | 'history' | 'progress' | 'coach' | 'friends'
+export type Tab = 'log' | 'history' | 'progress' | 'coach' | 'friends' | 'settings'
 
 const TABS: {
   id: Tab

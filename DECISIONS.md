@@ -5124,3 +5124,55 @@ rings, not for moving the design's.
 So both fill now. Filling also retired a contradiction the chip was already
 carrying: it drained to nothing and then special-cased `done` back to a full
 ring. Under fill, `done` is just `offset = 0` and the special case disappears.
+
+## 2026-08-13: Settings exists now, and the header stopped charging rent
+
+CLAUDE.md's scope list says "a settings screen" is not to be built without
+being asked. This is the ask: the redesign handoff draws it as screen 14, and
+the UX audit files it as an S3 finding with the reason — "Header rents prime
+space to rare actions. kg/lb and language toggles sit in the header on every
+screen; both are set once." Logging the reversal here rather than silently
+deleting the line, the same way offline sync came off that list.
+
+**What moved.** The locale chip, the unit chip, the theme item and sign out.
+The header is now the design's home row: mark at the start, avatar at the end,
+and the avatar is the door. The overflow menu survives with exactly one item,
+Discard, and renders only while a workout is open — so on every other screen
+there is no menu at all.
+
+Discard stays in the header rather than following the others to Settings: it
+acts on the workout in front of you, and L8 exists because Ameen went looking
+for it and the only door was inside the finish control.
+
+**What is NOT on the screen, and why.** The design also draws a default-rest
+row, a body-weight sparkline with a month of history, a coach-nudges toggle
+and a CSV export. None of the four exists: there is no app-level rest default
+(only the per-exercise override and a hardcoded 120s), no measurements table,
+no nudges to switch off, and `lib/csv.ts` is a reader with no writer. Drawing
+four controls that do nothing would be a worse screen than the header was.
+"Import from Hevy" is left on the Log screen for the same class of reason —
+the import view is state inside LogScreen and is gated on an empty account,
+because running the same export twice would duplicate every workout in it.
+
+The theme control is the reverse case. It is not on the design's screen, but
+it exists, and the header was its only home. The audit's own "one conscious
+break" note keeps a gym dark mode on the roadmap, so it lands here beside the
+other two set-once preferences instead of being dropped on the way past.
+
+**Three things the screenshots caught that no check could.**
+
+`bg-raised` on top of `surface-panel` replaced the design's white card with
+the beige used for menus and chips, and the groups stopped reading as cards.
+`surface-panel` already paints the surface; the extra class was doing nothing
+but overriding it.
+
+The avatar came out bone-on-bone and nearly invisible. In this app `ink` names
+the app's GROUND and `text` its foreground, so `bg-ink`/`text-text` is a bone
+disc with dark text under the paper theme — the opposite of the design's ink
+disc. `--flip-bg`/`--flip-text` are the inverted pair and invert again under
+the dark theme, so the disc stays a disc in both.
+
+And `__APP_VERSION__` had to be declared in `vitest.config.ts` as well as
+`vite.config.ts`. Vitest does not read the Vite config, so without it every
+test rendering Settings dies on an undefined global rather than on anything
+real.

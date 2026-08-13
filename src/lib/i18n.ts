@@ -61,6 +61,26 @@ export const messages: Record<Locale, Record<string, string>> = {
     'when.last_week': 'last week',
     'when.weeks_ago': '{n} weeks ago',
     'when.months_ago': '{n} months ago',
+    // Settings ("You"), design screen 14. The kg/lb and language controls
+    // moved here out of the header, which was renting prime space on every
+    // screen to two preferences that are set once.
+    'settings.open': 'You — settings',
+    'settings.back': 'Back',
+    'settings.title': 'You',
+    'settings.since': 'since {when}',
+    'settings.units': 'Units',
+    'settings.language': 'Language',
+    'settings.language.en': 'EN',
+    // Not translated per locale: this is the name of the OTHER language, and
+    // a picker that renders both options in the reader's own script cannot be
+    // read by the person looking for the one they want to switch to.
+    'settings.language.ar': 'العربية',
+    'settings.theme': 'Theme',
+    'settings.theme.paper': 'Paper',
+    'settings.theme.dark': 'Dark',
+    'settings.friends': 'Friends',
+    'settings.signout': 'Sign out',
+    'settings.signout.confirm': 'Sign out?',
     'theme.to_dark': 'Dark theme',
     'theme.to_paper': 'Paper theme',
     // Suspense loading fallback
@@ -808,6 +828,21 @@ export const messages: Record<Locale, Record<string, string>> = {
     'when.last_week': 'الأسبوع الماضي',
     'when.weeks_ago': 'منذ {n} أسابيع',
     'when.months_ago': 'منذ {n} أشهر',
+    // Settings ("You"), design screen 14.
+    'settings.open': 'أنت — الإعدادات',
+    'settings.back': 'رجوع',
+    'settings.title': 'أنت',
+    'settings.since': 'منذ {when}',
+    'settings.units': 'الوحدات',
+    'settings.language': 'اللغة',
+    'settings.language.en': 'EN',
+    'settings.language.ar': 'العربية',
+    'settings.theme': 'المظهر',
+    'settings.theme.paper': 'فاتح',
+    'settings.theme.dark': 'داكن',
+    'settings.friends': 'الأصدقاء',
+    'settings.signout': 'تسجيل الخروج',
+    'settings.signout.confirm': 'تسجيل الخروج؟',
     'theme.to_dark': 'المظهر الداكن',
     'theme.to_paper': 'المظهر الفاتح',
     // Suspense loading fallback

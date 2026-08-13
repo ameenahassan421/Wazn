@@ -87,6 +87,32 @@ async function shoot(browser, origin, { width, empty, active, locale, theme }) {
   await page.goto(origin, { waitUntil: 'networkidle' })
   await page.waitForTimeout(900)
 
+  // Settings, reached the way a user reaches it: the avatar at the end of the
+  // header row. Shot on the empty pass only — the screen shows preferences,
+  // not data, so a populated account photographs identically, and the two
+  // segmented controls it exists for are the ones that used to sit in the
+  // header being pressed by accident.
+  if (!active) {
+    const door = page.getByRole('button', {
+      name: locale === 'ar' ? 'أنت — الإعدادات' : 'You — settings',
+    })
+    if (await door.count()) {
+      await door.first().click()
+      await page.waitForTimeout(600)
+      await page.screenshot({
+        path: `${OUT}/${pfx}${empty ? 'empty' : 'full'}-${width}-settings.png`,
+        fullPage: false,
+      })
+      const back = page.getByRole('button', {
+        name: locale === 'ar' ? 'رجوع' : 'Back',
+      })
+      if (await back.count()) {
+        await back.first().click()
+        await page.waitForTimeout(400)
+      }
+    }
+  }
+
   // The workout overview only exists while a workout is open, and every other
   // fixture workout is finished — so without this pass the screen v2.2 built
   // is never photographed and the §4 rule is met on paper only. Log tab alone:

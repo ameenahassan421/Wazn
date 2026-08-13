@@ -15,11 +15,15 @@ const STORAGE_KEY = 'workout.unit'
 interface UnitContextValue {
   unit: Unit
   toggleUnit: () => void
+  /** Set a specific unit. A segmented kg/lb control cannot use a toggle:
+   *  pressing "kg" when kg is already on must be a no-op, not a flip. */
+  setUnit: (unit: Unit) => void
 }
 
 const UnitContext = createContext<UnitContextValue>({
   unit: 'lbs',
   toggleUnit: () => {},
+  setUnit: () => {},
 })
 
 function readStoredUnit(): Unit {
@@ -81,26 +85,38 @@ export function UnitProvider({
     writeStoredUnit(unit)
   }, [unit])
 
+  const chooseUnit = useCallback(
+    (next: Unit) => {
+      setUnit((current) => {
+        // Nothing to write when the choice is already the state. A segmented
+        // control gets pressed on its live side often, and each press would
+        // otherwise be a wasted RPC.
+        if (next === current) return current
+        // Write to Supabase in the background. The RPC bootstraps the row if
+        // it does not exist. Failure is silent: the choice still holds for the
+        // session via localStorage, and the next login will re-sync.
+        if (userId) {
+          void Promise.resolve(
+            supabase.rpc('upsert_user_preference', {
+              p_column: 'weight_unit',
+              p_value: next,
+            }),
+          ).catch(() => {})
+        }
+        return next
+      })
+    },
+    [userId],
+  )
+
   const toggleUnit = useCallback(() => {
-    setUnit((current) => {
-      const next = current === 'lbs' ? 'kg' : 'lbs'
-      // Write to Supabase in the background. The RPC bootstraps the row if it
-      // does not exist. Failure is silent: the toggle still works for the
-      // session via localStorage, and the next login will re-sync.
-      if (userId) {
-        void Promise.resolve(
-          supabase.rpc('upsert_user_preference', {
-            p_column: 'weight_unit',
-            p_value: next,
-          }),
-        ).catch(() => {})
-      }
-      return next
-    })
-  }, [userId])
+    chooseUnit(unit === 'lbs' ? 'kg' : 'lbs')
+  }, [chooseUnit, unit])
 
   return (
-    <UnitContext.Provider value={{ unit, toggleUnit }}>{children}</UnitContext.Provider>
+    <UnitContext.Provider value={{ unit, toggleUnit, setUnit: chooseUnit }}>
+      {children}
+    </UnitContext.Provider>
   )
 }
 
