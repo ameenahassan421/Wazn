@@ -333,7 +333,7 @@ export function AuthScreen() {
           an app store rather than for a reader. */}
       <p className="mt-2 text-[11px] text-muted">
         {t('auth.privacy.body')}{' '}
-        <a href="/privacy" className="text-accent underline underline-offset-2">
+        <a href="/privacy" className="text-accent-300 underline underline-offset-2">
           {t('auth.privacy.link')}
         </a>
       </p>
@@ -634,7 +634,7 @@ export function AuthScreen() {
 
       {notice && !error && <p className="mt-4 text-sm text-muted">{notice}</p>}
       {error && (
-        <p role="alert" className="mt-4 text-sm text-accent">
+        <p role="alert" className="mt-4 text-sm text-accent-300">
           {error}
         </p>
       )}

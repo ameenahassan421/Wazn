@@ -63,7 +63,7 @@ export function NewExercise({
       {error && (
         <p
           role="alert"
-          className="ring-edge border border-accent px-3 py-2 text-sm text-accent"
+          className="ring-edge border border-accent px-3 py-2 text-sm text-accent-300"
           style={{ borderRadius: 'var(--radius-md)' }}
         >
           {error}

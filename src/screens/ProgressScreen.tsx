@@ -270,7 +270,7 @@ export function ProgressScreen({ onOpenCoach }: { onOpenCoach: () => void }) {
       {error && (
         <p
           role="alert"
-          className="border border-accent px-3 py-2 text-sm text-accent"
+          className="border border-accent px-3 py-2 text-sm text-accent-300"
           style={{ borderRadius: 'var(--radius-md)' }}
         >
           {error}
@@ -471,7 +471,7 @@ function MuscleBalance({
               className="record-row mt-2.5 flex w-full items-center gap-2 rounded-[6px] px-3 py-2.5 text-start"
             >
               <span className="min-w-0 flex-1 text-[13px]">
-                <span className="font-mono text-[11px] text-accent">
+                <span className="font-mono text-[11px] text-accent-300">
                   {t('progress.balance.focus')}
                 </span>{' '}
                 <span className="text-text">
@@ -1031,7 +1031,7 @@ function Delta({ deltaKg, unit }: { deltaKg: number | null; unit: Unit }) {
   const shown = Math.round(Math.abs(toDisplayWeight(deltaKg, unit)))
   if (shown === 0) return <span style={{ color: 'var(--color-tile-3)' }}>→ 0</span>
   return deltaKg > 0 ? (
-    <span className="text-accent">▲ {shown}</span>
+    <span className="text-accent-300">▲ {shown}</span>
   ) : (
     <span className="text-muted">▼ {shown}</span>
   )

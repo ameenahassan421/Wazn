@@ -102,7 +102,7 @@ export function RoutineList({
                         the meaning and "Start workout" below stays the only
                         filled control on the screen (§2.4). */}
                     {due?.id === routine.id && !busy && (
-                      <span className="kicker shrink-0 text-accent">
+                      <span className="kicker shrink-0 text-accent-300">
                         {t('routines.up_next')}
                       </span>
                     )}

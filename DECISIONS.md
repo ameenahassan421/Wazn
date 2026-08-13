@@ -4762,3 +4762,19 @@ line he dislikes is a one-string edit, but it is not a blocker.
 What this entry does NOT do: start the rebuild. Sequencing the adoption
 into stages (tokens and type first, then the logging screen, then coach
 statistics) is its own planning task and begins on Ameen's word.
+
+## 2026-08-12: R1 executed. Two calls made inside the phase.
+
+1. **Text on ember is ink, not white.** The prototype's CTA sets paper text
+   on ember at 3.7:1. The app's accent-ink token now resolves to a warm
+   near-black (#1c0e08, about 4.9:1 on ember-500), so every solid ember
+   control keeps AA and the flip aesthetic (ink on iron) rather than
+   inheriting the prototype's shortfall.
+2. **The small-text rule ember forces.** Amber-500 on ink was ~9:1 and safe
+   everywhere; ember-500 is ~4.7:1 on ink and ~4.35:1 on surface. Every
+   accent text at 14px and under moved to accent-300 (28 occurrences swept),
+   and the token block documents 500-on-ink body copy as a defect. The one
+   deliberate exception is aria-hidden glyphs, which are not text.
+
+Ground ramp, radii, motion, elevation: untouched. The identity change is
+the hue, the type triad, and nothing else; R2 begins the interaction work.

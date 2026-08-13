@@ -55,7 +55,7 @@ gs = font.getGlyphSet()
 
 INK = "#0c0b0a"
 TEXT = "#ecebe8"
-ACCENT = "#f0b429"
+ACCENT = "#e8491d"
 
 
 def glyph_contours(ch):

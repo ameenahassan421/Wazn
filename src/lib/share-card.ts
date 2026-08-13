@@ -29,10 +29,11 @@ const H = 1350
 const INK = '#0c0b0a'
 const TEXT = '#ecebe8'
 const MUTED = '#8a8a92'
-const ACCENT = '#f0b429'
-const ACCENT_700 = '#b7791f'
+const ACCENT = '#e8491d'
+const ACCENT_700 = '#9a3012'
 const LINE = '#26262a'
-const FONT = "'IBM Plex Sans', system-ui, sans-serif"
+const FONT = "'Hanken Grotesk', system-ui, sans-serif"
+const DISPLAY = "'Sora', system-ui, sans-serif"
 const MONO = "'IBM Plex Mono', ui-monospace, monospace"
 
 function hms(seconds: number | null): string {
@@ -58,9 +59,9 @@ function knurlBand(
   c.beginPath()
   c.rect(x, y, w, h)
   c.clip()
-  c.fillStyle = 'rgba(240, 180, 41, 0.16)'
+  c.fillStyle = 'rgba(232, 73, 29, 0.16)'
   c.fillRect(x, y, w, h)
-  c.strokeStyle = 'rgba(240, 180, 41, 0.7)'
+  c.strokeStyle = 'rgba(232, 73, 29, 0.7)'
   c.lineWidth = 2
   const period = 10
   for (let i = -h; i < w + h; i += period) {
@@ -136,7 +137,7 @@ export function drawShareCard(
 
   let y = 360
   c.fillStyle = TEXT
-  c.font = `600 168px ${FONT}`
+  c.font = `600 168px ${DISPLAY}`
   c.fillText(heroValue, M, y)
   y += 200
 
@@ -162,7 +163,7 @@ export function drawShareCard(
   stats.forEach(([value, label], i) => {
     const x = M + colW * i
     c.fillStyle = TEXT
-    c.font = `600 76px ${FONT}`
+    c.font = `600 76px ${DISPLAY}`
     c.fillText(value, x, y)
     c.fillStyle = MUTED
     c.font = `400 32px ${FONT}`
