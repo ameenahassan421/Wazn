@@ -99,7 +99,7 @@ export function EditSetDialog({
               value={weight}
               onChange={(e) => setWeight(e.target.value)}
               placeholder="BW"
-              className="tnum h-14 w-full rounded-lg border border-line bg-ink px-3 text-start text-2xl font-semibold outline-none placeholder:text-muted focus:border-accent"
+              className="tnum font-display h-14 w-full rounded-lg border border-line bg-ink px-3 text-start text-2xl font-semibold outline-none placeholder:text-muted focus:border-accent"
             />
           </div>
           <div className="flex-1">
@@ -113,7 +113,7 @@ export function EditSetDialog({
               min="0"
               value={repsText}
               onChange={(e) => setRepsText(e.target.value)}
-              className="tnum h-14 w-full rounded-lg border border-line bg-ink px-3 text-start text-2xl font-semibold outline-none focus:border-accent"
+              className="tnum font-display h-14 w-full rounded-lg border border-line bg-ink px-3 text-start text-2xl font-semibold outline-none focus:border-accent"
             />
           </div>
         </div>

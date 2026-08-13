@@ -87,7 +87,7 @@ export function RestTimerBar({
       <div className="relative flex min-h-[50px] items-center gap-2 px-3 py-1">
         <span className="kicker">{done ? t('rest.done') : t('rest.title')}</span>
         <span
-          className={`tnum text-[23px] font-medium ${done ? 'text-accent' : 'text-text'}`}
+          className={`tnum font-display text-[23px] font-medium ${done ? 'text-accent' : 'text-text'}`}
           role="timer"
           aria-live="off"
         >

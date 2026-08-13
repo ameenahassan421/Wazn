@@ -4778,3 +4778,23 @@ statistics) is its own planning task and begins on Ameen's word.
 
 Ground ramp, radii, motion, elevation: untouched. The identity change is
 the hue, the type triad, and nothing else; R2 begins the interaction work.
+
+## 2026-08-12: R2 shrank on contact with the code, and that is the point of rule 6
+
+The plan wrote R2 as "rest becomes the prototype's inline chip". The code
+already had something better. RestTimerBar has been inline since it was
+built: it never covers the inputs, auto-starts on commit, counts from a
+stored deadline so screen lock cannot drift it, drains with a composited
+transform for budget Androids, and carries the done-state ring and the
+keep-as-default row. The prototype's chip was the cure for the prototype's
+own full-screen rest, a disease the app never had. Porting it would have
+traded working mechanics for a cosmetic match, so the bar stays and the
+plan's language loses.
+
+What R2 actually was: the numerals voice. R1 wired Sora through the size
+tokens, but 17 figures that predate the tokens sit in raw pixel sizes and
+never picked it up: the weight and reps inputs (30px), the ghost rows on
+the board (15px), the rest countdown (23px), the edit dialog, the finish
+and progress records, the load helper. All now carry font-display. Mono
+figures were left alone on purpose; Plex Mono is the meta voice, and a
+timestamp is not a lift.

@@ -62,6 +62,6 @@ at /prototype stays as-is as the reference artifact.
 ## Status
 
 - R1: built 2026-08-12, PR open. Ember ramp under the old token names with the small-text rule enforced (accent-300 for anything 14px and under), Sora/Hanken/Plex Mono triad wired through the size tokens with zero component changes, logo iron and share card and SEO pages and privacy page recolored, PRODUCT.md and CLAUDE.md updated. Verified: 38-shot EN gallery both widths, AR pre-auth spot check, wall green except the known lazy-screen Node 26 case.
-- R2: next.
-- R3: not started.
+- R2: built 2026-08-12, PR open. Reduced on evidence: the incumbent rest bar already implements the chip pattern's intent with better mechanics than the prototype (deadline-based, composited drain, never blocks the board), so it was kept, not rebuilt; deviation logged in DECISIONS.md. The phase's real content was the numerals voice: 17 arm's-length figures set in raw pixel sizes (set inputs, ghost rows, rest countdown, edit dialog, records) now carry Sora via font-display. Active-flow gallery verified.
+- R3: next.
 - R4: not started.

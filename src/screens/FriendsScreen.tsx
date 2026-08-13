@@ -351,7 +351,7 @@ function Feed({
 function FeedStat({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex min-w-0 flex-1 flex-col items-center gap-0.5 px-1">
-      <span className="tnum truncate text-[17px] font-medium leading-none">
+      <span className="tnum font-display truncate text-[17px] font-medium leading-none">
         {value}
       </span>
       <span className="text-[11px] text-muted">{label}</span>
@@ -395,7 +395,7 @@ function Leaderboard({ rows, unit }: { rows: LeaderRow[]; unit: 'lbs' | 'kg' }) 
                   <span className="min-w-0 flex-1 truncate text-sm font-medium">
                     {row.is_me ? t('friends.leaderboard.you') : nameOf(row)}
                   </span>
-                  <span className="tnum shrink-0 text-[15px] font-medium">
+                  <span className="tnum font-display shrink-0 text-[15px] font-medium">
                     {formatVolume(row.volume_kg, unit)}
                   </span>
                   <span className="tnum w-16 shrink-0 text-end text-[11px] text-muted">
