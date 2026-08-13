@@ -102,7 +102,7 @@ export function ExerciseDetail({
   onChanged?: (exercise: Exercise) => void
   onDeleted?: (exerciseId: string) => void
 }) {
-  const { t } = useLocale()
+  const { t, locale } = useLocale()
   /**
    * `t` changes identity with the locale, and the effects below fetch. Adding
    * it to their deps would re-run a network load every time the language is
@@ -550,7 +550,7 @@ export function ExerciseDetail({
               </p>
               {rec.value.first_logged_at && (
                 <p className="tnum text-xs text-muted">
-                  Since {formatRelativeDay(rec.value.first_logged_at)}
+                  Since {formatRelativeDay(rec.value.first_logged_at, locale)}
                 </p>
               )}
             </>
@@ -592,7 +592,7 @@ export function ExerciseDetail({
               ? 'Level'
               : `${progress.delta_kg > 0 ? '+' : '−'}${formatEstimate(Math.abs(progress.delta_kg), unit)} ${unit}`}
             <span className="ms-2 text-xs font-normal text-muted">
-              since {formatRelativeDay(progress.since_at)}
+              since {formatRelativeDay(progress.since_at, locale)}
             </span>
           </p>
           <SeriesChart
@@ -609,7 +609,7 @@ export function ExerciseDetail({
             {progress.sessions} sessions · now{' '}
             {formatEstimate(progress.latest_kg, unit)} {unit}
             {progress.best_kg > progress.latest_kg &&
-              ` · best ${formatEstimate(progress.best_kg, unit)} ${formatRelativeDay(progress.best_at)}`}
+              ` · best ${formatEstimate(progress.best_kg, unit)} ${formatRelativeDay(progress.best_at, locale)}`}
           </p>
         </section>
       )}
@@ -672,7 +672,7 @@ export function ExerciseDetail({
                   <span className="ms-1 text-xs font-normal text-muted">{unit}</span>
                 </span>
                 <span className="text-xs text-muted">
-                  {formatRelativeDay(rung.achieved_at)}
+                  {formatRelativeDay(rung.achieved_at, locale)}
                 </span>
               </li>
             ))}
@@ -852,7 +852,7 @@ export function ExerciseDetail({
                   {i > 0 && <div className="rule-fade" />}
                   <div className="flex items-baseline gap-3 py-2.5">
                     <span className="shrink-0 text-xs text-muted">
-                      {formatRelativeDay(session.startedAt)}
+                      {formatRelativeDay(session.startedAt, locale)}
                     </span>
                     <span className="tnum min-w-0 flex-1 text-sm">
                       {shown

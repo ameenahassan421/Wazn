@@ -223,7 +223,10 @@ export function WorkoutOverview({
           <li key={run[0].exerciseId}>
             {round && (
               <p className="kicker mb-1.5 ps-3">
-                Superset · round {round.round} of {round.total}
+                {t('overview.superset_round', {
+                  round: String(round.round),
+                  total: String(round.total),
+                })}
               </p>
             )}
             <ul
@@ -337,7 +340,7 @@ export function WorkoutOverview({
                           onClick={() => onAddGhost(block.exerciseId)}
                           className="btn-base btn-quiet h-12 w-full justify-start px-2 text-[13px]"
                         >
-                          + Add set
+                          {t('overview.add_set')}
                         </button>
                       )}
                     </ul>
@@ -428,8 +431,9 @@ function BlockHeader({
           block with a note and a block without are the same height. */}
       <p className="mb-1 ms-[88px] flex min-w-0 items-baseline gap-1.5 pe-2">
         <span
+          dir="ltr"
           className={`tnum shrink-0 font-mono text-[11px] ${
-            complete ? 'text-accent' : 'text-muted'
+            complete ? 'text-accent-300' : 'text-muted'
           }`}
         >
           {block.committed} / {block.planned}
@@ -649,7 +653,11 @@ function SetRow({
       <button
         type="button"
         onClick={onOpen}
-        aria-label={`${exerciseName} set ${row.label}: ${values(row.weightKg, row.reps, unit)}. Open to edit.`}
+        aria-label={t('overview.open_row', {
+          name: exerciseName,
+          label: row.label,
+          values: values(row.weightKg, row.reps, unit),
+        })}
         className="flex min-w-0 flex-1 items-center gap-2 pe-2 text-start"
       >
         <span
@@ -755,7 +763,7 @@ function Previous({ row, unit }: { row: OverviewRow; unit: Unit }) {
       <span
         dir="ltr"
         className={`tnum shrink-0 font-mono text-[11px] ${
-          up ? 'text-accent' : 'text-muted'
+          up ? 'text-accent-300' : 'text-muted'
         }`}
         aria-label={`${up ? 'Up' : 'Down'} ${formatWeight(Math.abs(row.delta), unit)} ${unit} on last session`}
       >

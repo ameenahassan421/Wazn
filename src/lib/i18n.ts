@@ -35,6 +35,23 @@ export const messages: Record<Locale, Record<string, string>> = {
     'nav.progress': 'Progress',
     'nav.coach': 'Coach',
     'nav.friends': 'Friends',
+    'muscle.chest': 'Chest',
+    'muscle.back': 'Back',
+    'muscle.shoulders': 'Shoulders',
+    'muscle.biceps': 'Biceps',
+    'muscle.triceps': 'Triceps',
+    'muscle.quads': 'Quads',
+    'muscle.hamstrings': 'Hamstrings',
+    'muscle.glutes': 'Glutes',
+    'muscle.calves': 'Calves',
+    'muscle.core': 'Core',
+    'muscle.cardio': 'Cardio',
+    'when.today': 'today',
+    'when.yesterday': 'yesterday',
+    'when.days_ago': '{n} days ago',
+    'when.last_week': 'last week',
+    'when.weeks_ago': '{n} weeks ago',
+    'when.months_ago': '{n} months ago',
     // Suspense loading fallback
     'chrome.loading': 'Loading…',
 
@@ -547,6 +564,9 @@ export const messages: Record<Locale, Record<string, string>> = {
     'overview.rest': 'Rest',
     'overview.logged': 'Logged',
     'overview.log_row': 'Log {name} set {label}: {values}',
+    'overview.superset_round': 'Superset · round {round} of {total}',
+    'overview.add_set': '+ Add set',
+    'overview.open_row': '{name} set {label}: {values}. Open to edit.',
     'overview.row_needs_reps': 'Set {label} needs reps before it can be logged',
     'overview.matched': 'Matched last session',
     'overview.last_session': 'Last session: {values}',
@@ -651,6 +671,7 @@ export const messages: Record<Locale, Record<string, string>> = {
     'routines.start_empty': 'Start empty workout',
     // Set entry
     'entry.previous.loading': 'Loading previous session…',
+    'entry.previous.kicker': 'Previous · {day}',
     'entry.previous.none': 'First time logging this exercise. No previous session yet.',
     'entry.reps': 'Reps',
     'entry.pr': 'Personal record',
@@ -683,6 +704,23 @@ export const messages: Record<Locale, Record<string, string>> = {
     'nav.progress': 'التقدم',
     'nav.coach': 'المدرب',
     'nav.friends': 'الأصدقاء',
+    'muscle.chest': 'الصدر',
+    'muscle.back': 'الظهر',
+    'muscle.shoulders': 'الأكتاف',
+    'muscle.biceps': 'البايسبس',
+    'muscle.triceps': 'الترايسبس',
+    'muscle.quads': 'الفخذ الأمامي',
+    'muscle.hamstrings': 'الفخذ الخلفي',
+    'muscle.glutes': 'الأرداف',
+    'muscle.calves': 'السمانة',
+    'muscle.core': 'الجذع',
+    'muscle.cardio': 'كارديو',
+    'when.today': 'اليوم',
+    'when.yesterday': 'أمس',
+    'when.days_ago': 'منذ {n} أيام',
+    'when.last_week': 'الأسبوع الماضي',
+    'when.weeks_ago': 'منذ {n} أسابيع',
+    'when.months_ago': 'منذ {n} أشهر',
     // Suspense loading fallback
     'chrome.loading': 'جارٍ التحميل…',
 
@@ -1179,6 +1217,9 @@ export const messages: Record<Locale, Record<string, string>> = {
     'overview.rest': 'راحة',
     'overview.logged': 'مسجَّل',
     'overview.log_row': 'سجّل {name} المجموعة {label}: {values}',
+    'overview.superset_round': 'سوبرست · جولة {round} من {total}',
+    'overview.add_set': '+ أضف مجموعة',
+    'overview.open_row': '{name} المجموعة {label}: {values}. افتح للتعديل.',
     'overview.row_needs_reps': 'المجموعة {label} تحتاج تكرارات قبل تسجيلها',
     'overview.matched': 'مطابِق للجلسة السابقة',
     'overview.last_session': 'الجلسة السابقة: {values}',
@@ -1280,6 +1321,7 @@ export const messages: Record<Locale, Record<string, string>> = {
     'routines.start_empty': 'ابدأ تمريناً فارغاً',
     // Set entry
     'entry.previous.loading': 'جارٍ تحميل الجلسة السابقة…',
+    'entry.previous.kicker': 'السابقة · {day}',
     'entry.previous.none': 'أول مرة تسجّل هذا التمرين. لا توجد جلسة سابقة.',
     'entry.reps': 'التكرارات',
     'entry.pr': 'رقم قياسي شخصي',
@@ -1302,6 +1344,17 @@ export const messages: Record<Locale, Record<string, string>> = {
  * Replace {name} placeholders in a message string. An unknown key returns the
  * key itself, so a typo surfaces visually rather than rendering as blank.
  */
+
+/**
+ * Muscle-group display name. The database stores the canonical lowercase
+ * token (0001's check constraint); a custom or unknown value renders as
+ * itself rather than as a raw key.
+ */
+export function muscleLabel(locale: Locale, group: string): string {
+  const key = 'muscle.' + group.toLowerCase()
+  return messages[locale]?.[key] ?? messages.en[key] ?? group
+}
+
 export function t(
   locale: Locale,
   key: string,

@@ -110,7 +110,11 @@ export function CoachBrief() {
           <p key={line} className="coach-in mt-1.5 text-[15px] leading-snug">
             {line}
           </p>
-          {chip && <span className="chip-data mt-2 inline-flex">{chip}</span>}
+          {chip && (
+            <span dir="ltr" className="chip-data mt-2 inline-flex">
+              {chip}
+            </span>
+          )}
         </div>
         <button
           type="button"
