@@ -46,7 +46,6 @@ function setup(overrides: Partial<Parameters<typeof SetEntry>[0]> = {}) {
     previousLoading: false,
     saving: false,
     onAddSet,
-    onBack: vi.fn(),
     ...overrides,
   }
   const view = render(<SetEntry {...props} />)

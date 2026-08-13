@@ -166,10 +166,20 @@
   /* The exact-match mandate (DECISIONS.md 2026-08-12): the design's own
      surface language. Cards at 18-20, controls as pills, and the design's
      two shadows. These supersede the no-shadow rule for surfaces the
-     design draws with them; the hairline ring remains for everything else. */
+     design draws with them; the hairline ring remains for everything else.
+
+     --surface-line is the design's own `--line`: far fainter than
+     --color-line, which is a drawn border. R5a wrote --shadow-card against
+     `var(--line)`, which this file never defined — an undefined custom
+     property makes the whole box-shadow invalid, so every panel that
+     shipped in R5b drew no edge at all. It is a token now, per theme. */
   --radius-xl: 20px;
+  --radius-panel: 18px;
+  --radius-thumb: 12px;
   --radius-pill: 999px;
-  --shadow-card: 0 1px 2px var(--line), 0 0 0 1px var(--line);
+  --surface-line: rgba(22, 19, 14, 0.06);
+  --shadow-panel: 0 0 0 1px var(--surface-line);
+  --shadow-card: 0 1px 2px var(--surface-line), 0 0 0 1px var(--surface-line);
   --shadow-cta: 0 10px 26px rgba(232, 73, 29, 0.35);
 
   --divider: rgba(22, 19, 14, 0.14);
@@ -241,6 +251,7 @@ html[data-theme='dark'] {
   --divider-solid: rgba(236, 235, 232, 0.08);
   --top-light: inset 0 1px 0 rgba(236, 235, 232, 0.045);
   --header-tint: #131210;
+  --surface-line: rgba(247, 243, 236, 0.08);
 }
 
 html {
@@ -345,6 +356,26 @@ button {
 /* A hairline card edge. One ring, never stacked. */
 @utility ring-edge {
   box-shadow: var(--ring-hairline);
+}
+
+/* The design's two surfaces, named as it names them. `card` is the object
+   you read from — 20px, lifted a millimetre off the ground. `panel` is the
+   object you operate — 18px, edge only, flush.
+
+   They are utilities rather than inline styles because R5a and R5b wrote
+   the same recipe by hand in four places and the fifth would have drifted.
+   The knurl does not go on either of them: consequences ledger row 12 —
+   one texture per surface, and these already carry a shadow. */
+@utility surface-card {
+  background: var(--color-surface);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-card);
+}
+
+@utility surface-panel {
+  background: var(--color-surface);
+  border-radius: var(--radius-panel);
+  box-shadow: var(--shadow-panel);
 }
 
 /* Pin an absolutely-positioned child to both block edges of its container.

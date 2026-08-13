@@ -162,6 +162,55 @@ async function shoot(browser, origin, { width, empty, active, locale, theme }) {
       }
     }
 
+    /**
+     * The focused view, which this harness could not see at all until R5c.
+     *
+     * Everything the exact-match rebuild put in the commit cluster lives
+     * here — the exercise card, the plate card, the session queue, the
+     * composed CTA — and the run photographed the overview instead, so the
+     * §4 gate was being met on a screen the work had not touched. Reached
+     * the way a thumb reaches it: tap a row's values.
+     */
+    const openRe = locale === 'ar' ? /افتح للتعديل/ : /Open to edit/
+    const rows = page.getByRole('button', { name: openRe })
+    if (await rows.count()) {
+      await rows.first().click()
+      await page.waitForTimeout(500)
+      await page.screenshot({
+        path: `${OUT}/${pfx}active-${width}-entry.png`,
+        fullPage: false,
+      })
+      // The commit cluster: steppers, plate card, queue and CTA. On 390px
+      // this is below the fold, and whether it clears the tab bar is the
+      // question no test can answer.
+      await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight))
+      await page.waitForTimeout(400)
+      await page.screenshot({
+        path: `${OUT}/${pfx}active-${width}-entry-commit.png`,
+        fullPage: false,
+      })
+      // And the plate card opened, which is where the bar picker and the
+      // warm-up ramp went when the card took their place.
+      const plateCard = page.getByRole('button', {
+        name: locale === 'ar' ? /الأوزان والإحماء/ : /Plates & warm-up/,
+      })
+      if (await plateCard.count()) {
+        await plateCard.first().click()
+        await page.waitForTimeout(300)
+        await page.screenshot({
+          path: `${OUT}/${pfx}active-${width}-entry-plates.png`,
+          fullPage: false,
+        })
+        await plateCard.first().click()
+        await page.waitForTimeout(200)
+      }
+      const back = page.getByRole('button', {
+        name: locale === 'ar' ? 'العودة إلى التمرين' : 'Back to workout',
+      })
+      if (await back.count()) await back.first().click()
+      await page.waitForTimeout(400)
+    }
+
     await page.evaluate(() => window.scrollTo(0, 0))
     await page.waitForTimeout(300)
 

@@ -25,7 +25,9 @@ import type {
 } from '../lib/types'
 import { ExercisePicker } from '../components/ExercisePicker'
 import { ExerciseThumb } from '../components/ExerciseThumb'
+import { IconBack } from '../components/icons'
 import { SetEntry } from '../components/SetEntry'
+import { SessionQueue } from '../components/SessionQueue'
 import { DEFAULT_REST_SECONDS, useRestTimer } from '../lib/use-rest-timer'
 import { FinishSummary } from '../components/FinishSummary'
 import { RoutineList } from '../components/RoutineList'
@@ -1943,6 +1945,39 @@ export function LogScreen({
   ])
 
   /**
+   * Move the focused view to another lift on the board.
+   *
+   * The three clears are not optional. `editingKey` and `focusKey` are ROW
+   * keys scoped to the exercise being left, so carrying them across rings a
+   * row on the wrong block when the overview comes back; `pendingGroup` is
+   * the "a superset is starting from here" latch, and carrying it paints a
+   * superset badge on a lift that is not in one.
+   */
+  function jumpToExercise(exerciseId: string) {
+    const exercise = exercisesById.get(exerciseId)
+    if (!exercise) return
+    setCurrent(exercise)
+    setEditingKey(null)
+    setFocusKey(null)
+    setPendingGroup(null)
+    setView('entry')
+  }
+
+  /** Out of the focused view, back to the board. */
+  function backToOverview() {
+    setCurrent(null)
+    setEditingKey(null)
+    setView('overview')
+  }
+
+  /** The next lift after this one in board order, or null at the end. */
+  function nextOnBoard(exerciseId: string): Exercise | null {
+    const i = displayOrder.indexOf(exerciseId)
+    if (i === -1 || i >= displayOrder.length - 1) return null
+    return exercisesById.get(displayOrder[i + 1]) ?? null
+  }
+
+  /**
    * The crew's day, for the rest canvas's third card — §8-E1's "the crew's
    * activity today".
    *
@@ -2235,6 +2270,22 @@ export function LogScreen({
       {error && <ErrorNote message={error} />}
 
       <div className="flex items-center gap-3">
+        {/* Back is a chevron at the inline start of the workout's chrome —
+            where forty years of phone interfaces put it, and where the design
+            puts it. It used to sit inside the focused view on a row of its
+            own, which cost a 48px band and read as floating; the chrome row
+            already exists, and the escape belongs beside the workout it
+            escapes to. */}
+        {view === 'entry' && (
+          <button
+            type="button"
+            onClick={backToOverview}
+            aria-label={t('entry.back')}
+            className="btn-base btn-quiet -ms-1 h-12 w-12 shrink-0"
+          >
+            <IconBack />
+          </button>
+        )}
         <div className="min-w-0 flex-1">
           <p className="flex items-center gap-2 text-[15px] font-medium">
             <span
@@ -2353,6 +2404,19 @@ export function LogScreen({
         <SetEntry
           exercise={current}
           unit={unit}
+          plannedSets={blocks.find((b) => b.exerciseId === current.id)?.planned}
+          nextExerciseName={nextOnBoard(current.id)?.name ?? null}
+          onNextExercise={() => {
+            const next = nextOnBoard(current.id)
+            if (next) jumpToExercise(next.id)
+          }}
+          sessionQueue={
+            <SessionQueue
+              blocks={blocks}
+              currentExerciseId={current.id}
+              onJump={jumpToExercise}
+            />
+          }
           setsThisWorkout={sets.filter((s) => s.exercise_id === current.id)}
           previousSession={previousByExercise.get(current.id) ?? []}
           // Presence in the map is the loaded flag. Seeding from an empty list
@@ -2371,11 +2435,6 @@ export function LogScreen({
               ? () => void ungroupExercise(current.id)
               : undefined
           }
-          onBack={() => {
-            setCurrent(null)
-            setEditingKey(null)
-            setView('overview')
-          }}
         />
       )}
 

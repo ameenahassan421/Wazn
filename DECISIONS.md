@@ -4874,3 +4874,68 @@ consequences:
    offline ladder, commitOutcome, the RPCs. The refactor is presentation.
 3. The itemized pixel spec lives in docs/REBUILD_PLAN.md under the
    exact-match mandate, so it survives session boundaries.
+
+## 2026-08-13: R5c, and the four calls inside it
+
+The exact-match mandate's remaining workout surfaces. Four decisions worth
+the record, and one bug worth more than any of them.
+
+**The bug first.** `--shadow-card` was written in R5a as
+`0 1px 2px var(--line), 0 0 0 1px var(--line)`, and this repo has never
+defined `--line` — it has `--color-line`. An undefined custom property makes
+the whole declaration invalid at computed-value time, so `box-shadow`
+resolved to `none` and every panel R5b shipped drew no edge whatsoever. It
+passed lint, typecheck, 851 tests and a build. It is now a real token,
+`--surface-line`, per theme, at the design's own faint value — and the
+recipe lives in two utilities (`surface-card`, `surface-panel`) instead of
+being hand-written at each site, which is how it drifted in the first place.
+
+1. **The plate card is promoted out of the disclosure; the ramp is not.**
+   `LoadHelper`'s whole argument was that plate maths is a question you ask
+   before the first working set, so putting it in the flow costs every set to
+   serve a few. Half of that is now wrong: "what do I put on the bar" is the
+   question standing between the number on screen and the set happening, and
+   the design answers it in the commit cluster. The bar picker, the
+   closest-loadable note and the warm-up ramp stay one tap deeper, where the
+   original argument still holds. The card is the control that opens them —
+   the one place this surface deliberately does not match the prototype,
+   which draws an inert div.
+
+2. **`describeBarMath` replaces `describePlates`.** The old formatter grouped
+   ("45 × 2, 5"); the new one repeats ("45 + 45 + 5 = 235"). Grouping is
+   wrong here for a specific reason: four lines above a set row reading
+   "237 lbs × 5", "45 × 2" invites reading the count as reps, and "45 × 2, 5"
+   reads as 45 × 2.5 at a glance — the wrong number and the wrong bar. The
+   total is always `achievable`, never what was typed, so the card cannot
+   claim a load the plates cannot build; the gap is the disclosure's job.
+
+3. **The commit cluster is pinned, and the queue is why.** The focused view
+   never had the design's structure — a scrolling column above a fixed
+   footer — and every surface R5 promoted pushed the log button further down
+   an ordinary page scroll. Consequences ledger row 5 asserted this pinning
+   already existed. It did not. It does now, on the overview rest bar's
+   sticky recipe and tab-bar clearance.
+
+4. **Logging stays primary even when the lift is "complete".** The design
+   swaps its CTA to Next/Finish once the planned sets are met. Here `planned`
+   is derived rather than declared — for a freestyle lift it is just last
+   session's working-set count — so a lift reads complete the moment you
+   match last week, and demoting the log button on that evidence would break
+   the one job this screen has. "Next: {name}" ships as a secondary pill;
+   one-tap "Finish workout" does not, because finishing is irreversible and
+   already guarded by a two-tap confirm in the chrome. The card's finished
+   state gets its own sentence ("3 of 3 done") so it can never read
+   "set 3 of 3" above a button offering set 4.
+
+Also, because the file was open: the back chevron moved out of the focused
+view — where it sat alone on a 48px row and read as floating — into the
+workout chrome beside the plan name and Finish, which is where the design has
+it and where the back gesture's owner already lives.
+
+**And the harness could not see any of this.** `scripts/shots.mjs` never
+opened the focused view: it photographed the overview, in five tabs, two
+widths, three locale/theme passes, and every R5 gate was met against a screen
+the phase had not touched. It now opens a row, shoots the card, the commit
+cluster and the plate card expanded, in EN, AR and dark. That sweep is what
+caught the lost RTL kicker resets, the wrapping weight label, and the English
+equipment names — none of which any other check in the wall can see.

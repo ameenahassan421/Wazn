@@ -71,10 +71,28 @@ export function platesFor(
   }
 }
 
-/** "45 × 2, 10, 2.5" — one line, readable at arm's length. */
-export function describePlates(result: PlateResult): string {
-  if (result.perSide.length === 0) return 'Empty bar'
-  return result.perSide
-    .map(({ plate, count }) => (count === 1 ? `${plate}` : `${plate} × ${count}`))
-    .join(', ')
+/**
+ * "25 + 25 + 10 = 140" — the loading as an addition, the way the design
+ * writes it on the plate card.
+ *
+ * Plates REPEAT rather than group: "25 × 2" four lines above a set row reading
+ * "62.5 kg × 5" invites reading the count as reps, and the card sits in the
+ * commit cluster where that misread is expensive. And it names the total,
+ * because the question the card answers is "is this bar the weight I typed".
+ *
+ * The total is `achievable`, never the typed target: the card must not claim
+ * a number these plates cannot build. When the two differ, the disclosure
+ * says by how much.
+ *
+ * Unit-free by design. The stepper label directly above it already reads
+ * WEIGHT · KG, and there is no unit key in the catalogue — a literal "kg"
+ * here would be an untranslated latin token inside an Arabic surface.
+ */
+export function describeBarMath(result: PlateResult): string {
+  const fmt = (n: number) => Number(n.toFixed(2)).toString()
+  if (result.perSide.length === 0) return `= ${fmt(result.achievable)}`
+  const loaded = result.perSide.flatMap(({ plate, count }) =>
+    Array.from({ length: count }, () => fmt(plate)),
+  )
+  return `${loaded.join(' + ')} = ${fmt(result.achievable)}`
 }

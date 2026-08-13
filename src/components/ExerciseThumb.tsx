@@ -44,10 +44,17 @@ function toneFor(group: string | null | undefined): string {
 export function ExerciseThumb({
   exercise,
   size = 48,
+  radius,
 }: {
   exercise: Exercise
-  /** 64 in the picker and set-entry header, 48 in list rows and cards. */
+  /** 64 in the picker, 48 in list rows and cards, 44 on the exercise card. */
   size?: number
+  /**
+   * Overrides the size-derived radius. The exercise card wants the design's
+   * 12px at 44px, which the derivation reads as a small tile and rounds to
+   * 4px; every other caller keeps the derivation by omitting this.
+   */
+  radius?: string
 }) {
   const [failed, setFailed] = useState(false)
   // Truthiness rather than `!== null` for the same reason `toneFor` guards:
@@ -64,7 +71,7 @@ export function ExerciseThumb({
       style={{
         width: size,
         height: size,
-        borderRadius: size >= 56 ? 'var(--radius-md)' : 'var(--radius-sm)',
+        borderRadius: radius ?? (size >= 56 ? 'var(--radius-md)' : 'var(--radius-sm)'),
       }}
       aria-hidden="true"
     >

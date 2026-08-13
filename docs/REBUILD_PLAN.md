@@ -73,8 +73,9 @@ ember at 35%), the glyph component (ring/dot/plate marker set drawn once).
 
 **R5: Workout experience parity with the prototype (Ameen, 2026-08-12).**
 Exact spec per surface, referenced against /prototype:
+
 - Exercise card: 44px thumb radius 12, name Sora 17/-.02em, "set N of M ·
-  equipment" mono 12 muted, ghost line "last {day}  60×5 · 60×5 · 60×4"
+  equipment" mono 12 muted, ghost line "last {day} 60×5 · 60×5 · 60×4"
   mono 12, logged rows as donut + set number + "62.5 kg × 5" mono 14 with
   the inline PR tag kept.
 - Stepper panels: two white/surface cards, mono 11 uppercase labels
@@ -92,10 +93,11 @@ Exact spec per surface, referenced against /prototype:
   skip), tap expands to the full dark rest screen (240px ring drawing
   down, Sora 54 countdown, REST · OF total, ±30s pills, coach card, next
   row) as a layer over the workout screen; engine untouched.
-Gate: side-by-side frames against /prototype read as the same product, in
-paper, dark, EN, AR.
+  Gate: side-by-side frames against /prototype read as the same product, in
+  paper, dark, EN, AR.
 
 **R6: Home and finish ceremony parity.**
+
 - Home: date/week/progress line Hanken 13 muted, "{Plan} day," + name
   Sora 34/1.12, coach card (glyph + COACH kicker + body), the flip-ground
   "Up next" card (kicker, plan name Sora 22, meta line), routines and
@@ -105,8 +107,7 @@ paper, dark, EN, AR.
   (barbell-plate glyph, NEW PR kicker, name — best set, est 1RM line),
   debrief card (glyph + Hanken 14/1.6), per-exercise breakdown card with
   warm-up rows muted and PR tags, Share card + Done as paired pills.
-Gate: same side-by-side standard.
-
+  Gate: same side-by-side standard.
 
 ## Not doing in this stage
 
@@ -119,9 +120,29 @@ at /prototype stays as-is as the reference artifact.
 - R1: built 2026-08-12, PR open. Ember ramp under the old token names with the small-text rule enforced (accent-300 for anything 14px and under), Sora/Hanken/Plex Mono triad wired through the size tokens with zero component changes, logo iron and share card and SEO pages and privacy page recolored, PRODUCT.md and CLAUDE.md updated. Verified: 38-shot EN gallery both widths, AR pre-auth spot check, wall green except the known lazy-screen Node 26 case.
 - R2: built 2026-08-12, PR open. Reduced on evidence: the incumbent rest bar already implements the chip pattern's intent with better mechanics than the prototype (deadline-based, composited drain, never blocks the board), so it was kept, not rebuilt; deviation logged in DECISIONS.md. The phase's real content was the numerals voice: 17 arm's-length figures set in raw pixel sizes (set inputs, ghost rows, rest countdown, edit dialog, records) now carry Sora via font-display. Active-flow gallery verified.
 - R3: built 2026-08-12, PR open. The re-dress was already carried by R1/R2 tokens; the phase became the Arabic pass the wall cannot see. The shot harness grew an AR sweep (five tabs plus the live board, by Arabic accessible names), which caught and fixed: two hardcoded English strings on the workout board (superset round, add set), an untranslated aria-label, a scrambled bidi meta line and set counter, the coach data chip rendering RTL, English "today"-class day words everywhere (formatRelativeDay is now locale-aware with a when.* key family), and untranslated muscle-group names on Progress (muscle.* key family plus muscleLabel helper). Coach statistics already shipped as a template surface and stand.
-- R4: next.
+- R4: shipped 2026-08-12 (PR #75). Paper is the default; dark is the toggle.
+- R5a: the rest chip and the expanded rest view. Plate glyph set and the
+  design's surface tokens entered the system.
+- R5b: the stepper panels.
+- R5c: built 2026-08-13. The rest of the workout surface — exercise card
+  (44px thumb at radius 12, Sora 17 name, "set N of M · equipment", the
+  ghost line demoted to one mono row, logged rows as donut + mono 14
+  figures), the plate card promoted out of the LoadHelper disclosure with
+  a new `describeBarMath` formatter, the session queue, the composed CTA
+  pill, and the pinned commit cluster the design's structure requires.
+  Found and fixed on the way: `--shadow-card` was written against an
+  undefined `--line`, so every panel R5b shipped drew no edge at all;
+  three kickers had lost the RTL reset; the weight panel's label wrapped;
+  equipment names rendered in English under Arabic (new `equipment.*`
+  family and `equipmentLabel`); nine hardcoded English strings inside the
+  load disclosure. The shot harness could not reach the focused view at
+  all — it photographed the overview and called the gate met — so it grew
+  an entry sweep (card, commit cluster, plate card open) in EN, AR and
+  dark. Verified: 38 shots, full wall green.
+- R6: next.
 
 ## Consequences ledger (Ameen, 2026-08-12: "make best of two worlds,
+
 ## plan the consequences, account for them, solve them")
 
 Each row: what the exact-match refactor would break or risk, and the
@@ -140,8 +161,13 @@ resolution that keeps both worlds.
    row, and rest-end all collapse it; the board never unmounts under it.
    The deadline engine and the canvas rules are untouched.
 5. Space cost of the plate card and queue on 390px. The logging column
-   scrolls (R3 made it scrollable); the commit cluster is pinned; nothing
-   reachable only by luck.
+   scrolls; the commit cluster is pinned; nothing reachable only by luck.
+   **This row was a claim, not a fact, until R5c.** The focused view had no
+   pinning at all — the overview's sticky rest bar was overview-only — so
+   every surface R5 promoted pushed the commit button further below the
+   fold. R5c gives the focused view the design's own structure: a scrolling
+   column above a pinned cluster (rest chip, CTA, next), on the same
+   sticky recipe and the same tab-bar clearance as the overview's bar.
 6. Budget-Android performance. Ring updates are composited transforms on
    1s ticks that already existed; shadows are static; no new render loops;
    the font bill was paid in R1 (+23KB).
@@ -161,3 +187,25 @@ resolution that keeps both worlds.
     until then.
 12. The knurl stays the system's only texture; card shadows do not stack
     with it on the same surface.
+13. The logged-set rows drop from 24px figures to the design's mono 14.
+    That 24px was itself a logged raise, made under §2.4 when the row was
+    the only figure on the screen. It no longer is: the Sora 29 stepper
+    directly below carries the arm's-length job, and the design reads
+    these rows back as the ledger of what landed. The raise is reversed
+    on the reasoning that produced it, not against it.
+14. The design's CTA becomes "Finish workout" on the last finished lift.
+    Not ported. Finishing is irreversible and the app guards it with a
+    two-tap confirm in the chrome; a one-tap finish in the commit cluster,
+    where the thumb is already landing every 90 seconds, would trade that
+    guard away. "Next: {name}" — reversible — does ship.
+15. "Complete" is softer here than in the design. `planned` is derived
+    (routine target → last session's working count → one), so a freestyle
+    lift reads complete the moment it matches last week. Logging therefore
+    stays the primary action at all times, and the card carries its own
+    finished sentence ("3 of 3 done") so it can never read "set 3 of 3"
+    over a button offering set 4.
+16. Kickers use the app's `kicker` utility (mono 11, 0.14em) rather than
+    the design's 0.1em. The utility carries the rule Arabic needs —
+    tracking and uppercase reset under `[dir='rtl']`, because tracking out
+    a connected script breaks its joins. R5a/R5b hand-rolled the recipe in
+    Tailwind classes and lost that reset; the AR gallery caught it.

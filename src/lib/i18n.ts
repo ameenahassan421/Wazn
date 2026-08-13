@@ -46,6 +46,15 @@ export const messages: Record<Locale, Record<string, string>> = {
     'muscle.calves': 'Calves',
     'muscle.core': 'Core',
     'muscle.cardio': 'Cardio',
+    // Equipment, the seeded catalogue's six values. The design puts this on
+    // the exercise card's meta line, which is the first place the raw
+    // English token would have been read by an Arabic lifter.
+    'equipment.barbell': 'Barbell',
+    'equipment.dumbbell': 'Dumbbell',
+    'equipment.machine': 'Machine',
+    'equipment.cable': 'Cable',
+    'equipment.bodyweight': 'Bodyweight',
+    'equipment.other': 'Other',
     'when.today': 'today',
     'when.yesterday': 'yesterday',
     'when.days_ago': '{n} days ago',
@@ -507,7 +516,18 @@ export const messages: Record<Locale, Record<string, string>> = {
     'calendar.hint': 'Brighter is a heavier day. Unlit is rest.',
     // Load helper
     'load.title': 'Plates & warm-up',
-    'load.per_side': 'Per side',
+    'load.on_bar': 'On the bar · per side',
+    'load.total': 'total',
+    'load.empty_bar': 'empty bar',
+    'load.bar': 'Bar',
+    'load.under_bar': 'under the {bar} {unit} bar',
+    'load.closest': 'Closest loadable is {weight} {unit} — off by {off}.',
+    'load.warmup': 'Warm-up',
+    'load.warmup_hint': 'Warm-up · tap a row to log it',
+    'load.logged': 'logged',
+    'load.log': 'Log',
+    'load.log_aria': 'Log {weight} {unit} for {reps} as a warm-up',
+    'load.logged_aria': '{weight} {unit} for {reps} already logged',
     // Exercise detail
     'detail.back': 'Back to progress',
     'detail.error.history': 'Loading the history for that exercise',
@@ -616,6 +636,15 @@ export const messages: Record<Locale, Record<string, string>> = {
     'entry.saving': 'Saving…',
     'entry.log.warmup': 'Log warm-up {number}',
     'entry.log.set': 'Log set {number}',
+    'entry.log.next': 'Next: {name}',
+    'entry.set_of': 'set {n} of {total}',
+    'entry.set_done': '{total} of {total} done',
+    // Session queue
+    'queue.kicker': 'Session',
+    'queue.to_go': '{n} to go',
+    'queue.sets_short': '{a}/{b} sets',
+    'queue.scheme': '{sets} × {reps}',
+    'queue.jump': 'Go to {name}',
     // Finish summary
     'finish.share.saved': 'Saved the image — this browser has no share sheet.',
     'finish.share.error': 'Could not build the image.',
@@ -682,7 +711,6 @@ export const messages: Record<Locale, Record<string, string>> = {
     'routines.start_empty': 'Start empty workout',
     // Set entry
     'entry.previous.loading': 'Loading previous session…',
-    'entry.previous.kicker': 'Previous · {day}',
     'entry.previous.none': 'First time logging this exercise. No previous session yet.',
     'entry.reps': 'Reps',
     'entry.pr': 'Personal record',
@@ -724,6 +752,12 @@ export const messages: Record<Locale, Record<string, string>> = {
     'muscle.hamstrings': 'الفخذ الخلفي',
     'muscle.glutes': 'الأرداف',
     'muscle.calves': 'السمانة',
+    'equipment.barbell': 'بار',
+    'equipment.dumbbell': 'دمبل',
+    'equipment.machine': 'جهاز',
+    'equipment.cable': 'كابل',
+    'equipment.bodyweight': 'وزن الجسم',
+    'equipment.other': 'أخرى',
     'muscle.core': 'الجذع',
     'muscle.cardio': 'كارديو',
     'when.today': 'اليوم',
@@ -1173,7 +1207,18 @@ export const messages: Record<Locale, Record<string, string>> = {
     'calendar.hint': 'الأكثر إضاءة يوم أثقل. غير المضيء راحة.',
     // Load helper
     'load.title': 'الأوزان والإحماء',
-    'load.per_side': 'لكل جهة',
+    'load.on_bar': 'على البار · لكل جانب',
+    'load.total': 'إجمالي',
+    'load.empty_bar': 'بار فارغ',
+    'load.bar': 'البار',
+    'load.under_bar': 'أقل من بار {bar} {unit}',
+    'load.closest': 'أقرب حمل ممكن {weight} {unit} — بفارق {off}.',
+    'load.warmup': 'الإحماء',
+    'load.warmup_hint': 'الإحماء · اضغط صفاً لتسجيله',
+    'load.logged': 'مسجَّل',
+    'load.log': 'سجّل',
+    'load.log_aria': 'سجّل {weight} {unit} لـ {reps} تكرارات كإحماء',
+    'load.logged_aria': '{weight} {unit} لـ {reps} تكرارات مسجَّل بالفعل',
     // Exercise detail
     'detail.back': 'العودة إلى التقدم',
     'detail.error.history': 'تحميل سجل هذا التمرين',
@@ -1279,6 +1324,15 @@ export const messages: Record<Locale, Record<string, string>> = {
     'entry.saving': 'جارٍ الحفظ…',
     'entry.log.warmup': 'سجّل إحماء {number}',
     'entry.log.set': 'سجّل المجموعة {number}',
+    'entry.log.next': 'التالي: {name}',
+    'entry.set_of': 'المجموعة {n} من {total}',
+    'entry.set_done': 'اكتملت {total} من {total}',
+    // Session queue
+    'queue.kicker': 'الجلسة',
+    'queue.to_go': 'باقي {n}',
+    'queue.sets_short': '{a}/{b} مجموعات',
+    'queue.scheme': '{sets} × {reps}',
+    'queue.jump': 'انتقل إلى {name}',
     // Finish summary
     'finish.share.saved': 'حُفظت الصورة، هذا المتصفح بلا قائمة مشاركة.',
     'finish.share.error': 'تعذّر إنشاء الصورة.',
@@ -1343,7 +1397,6 @@ export const messages: Record<Locale, Record<string, string>> = {
     'routines.start_empty': 'ابدأ تمريناً فارغاً',
     // Set entry
     'entry.previous.loading': 'جارٍ تحميل الجلسة السابقة…',
-    'entry.previous.kicker': 'السابقة · {day}',
     'entry.previous.none': 'أول مرة تسجّل هذا التمرين. لا توجد جلسة سابقة.',
     'entry.reps': 'التكرارات',
     'entry.pr': 'رقم قياسي شخصي',
@@ -1375,6 +1428,19 @@ export const messages: Record<Locale, Record<string, string>> = {
 export function muscleLabel(locale: Locale, group: string): string {
   const key = 'muscle.' + group.toLowerCase()
   return messages[locale]?.[key] ?? messages.en[key] ?? group
+}
+
+/**
+ * Equipment display name, same contract as `muscleLabel`.
+ *
+ * The column is free-form text seeded from a fuzzy import, so an unknown
+ * value renders as itself — a lift labelled "smith machine" is better read
+ * back verbatim than swallowed by a fallback.
+ */
+export function equipmentLabel(locale: Locale, equipment: string): string {
+  if (!equipment) return ''
+  const key = 'equipment.' + equipment.toLowerCase()
+  return messages[locale]?.[key] ?? messages.en[key] ?? equipment
 }
 
 export function t(
