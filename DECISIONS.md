@@ -5431,3 +5431,31 @@ Friends inputs, which had ids and no `for`. A placeholder is a hint, not a
 name. The recent-session card was naming itself by concatenating its contents
 ("Upper A Today · 48 min · lifted 12,500 kg PR") and never saying where it
 went.
+
+## 2026-08-14: 0026 applied to production
+
+Ameen approved it. Applied through the Management API as migration
+`20260814002900_own_rows_only`, then **verified against the catalogue** rather
+than trusting the `{"success": true}` the call returned — a success flag says
+the statement was accepted, not that the database is in the shape you meant.
+
+Checked before applying, because the ledger is not a reliable account of what
+production has: both permissive policies were present with the `can_view` arm,
+`private.can_view` existed, and `social_feed`'s signature was the 0013 one with
+`best_record_name` / `best_record_e1rm_kg`. That last check was the one that
+mattered — `create or replace function` refuses to change a return type, so a
+signature drift would have failed the migration halfway, after the functions
+but before the policies, leaving the feed definer-scoped against a table that
+still admitted everyone.
+
+What `pg_policies` and `pg_proc` say now:
+
+- `workouts_select_own` — `user_id = (select auth.uid())`
+- `workout_sets_select_own` — the same, through the parent workout
+- both `*_select_visible` policies gone
+- `social_feed`, `weekly_leaderboard` — `prosecdef = true`
+- EXECUTE on both — `authenticated, postgres, service_role`; **`anon` absent**
+- INSERT / UPDATE / DELETE on both tables untouched, still `{authenticated}`
+
+The fifteen unscoped reporting functions are now correct without being
+touched, because the table underneath them means "mine".
