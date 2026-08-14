@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-08-14T15:45:00Z",
+  "generatedAt": "2026-08-14T16:05:00Z",
   "title": "Design System: Wazn",
   "extensions": {
     "colorMeta": {
@@ -208,8 +208,14 @@
       }
     ],
     "breakpoints": [
-      { "name": "container", "value": "430px" },
-      { "name": "gutter", "value": "18px" }
+      {
+        "name": "container",
+        "value": "430px"
+      },
+      {
+        "name": "gutter",
+        "value": "18px"
+      }
     ]
   },
   "components": [
@@ -300,7 +306,7 @@
     "keyCharacteristics": [
       "Two grounds from one token set — paper by default, iron on request, never a third",
       "One accent, ember #e8491d, and it is the only colour in the app",
-      "Numbers are the interface: Sora, tabular, never below 24px",
+      "Numbers are the interface: Sora, tabular, 24px or above for anything read at a glance (two logged exceptions)",
       "Depth is an edge and a fill, not a drop shadow",
       "One texture — the knurl — confined to thin bands and the PR badge",
       "Logical properties only, because the Arabic flip is a planned flip, not a rewrite"
@@ -323,7 +329,7 @@
       },
       {
         "name": "The Runtime-Token Rule",
-        "body": "Tailwind v4 drops any @theme token nothing statically references, so a class name assembled at runtime compiles to nothing at all — no error, no warning, an empty element on screen. Accent steps used dynamically are declared as static classes. This has already caused two shipped defects.",
+        "body": "Tailwind v4 drops any @theme token nothing statically references. The shipped failure was a custom-property name assembled at runtime — var(--color-accent-${step}) composed inside a component — not a Tailwind class. accent-400 and accent-700 were absent from the built CSS and two rep-range bars holding 31 and 11 sets rendered as empty tracks. No error, no warning, no failing check. A runtime-assembled class name fails too, because the scanner never sees the string. Accent steps used dynamically are now static classes.",
         "section": "colors"
       },
       {
@@ -333,22 +339,22 @@
       },
       {
         "name": "The Ramp-Is-The-Target Rule",
-        "body": "The type scale is where new work goes, not a description of where the app is. Measured 2026-08-14: 189 literal text-[Npx] uses against 31 uses of the named steps. 135 of those are on-ramp values written the long way (11/13/15/19px) and are safe to convert on sight — converting them changes no pixels. The other 54, across 16 values, are genuinely off-ramp and mostly came from matching public/prototype.html. Do not round those onto the ramp; those pixels were chosen against a spec.",
+        "body": "The type scale is where new work goes, not a description of where the app is. Measured 2026-08-14: 189 literal text-[Npx] uses against 5 uses of the named steps (text-figure x4, text-title x1; display, input, body, label and micro are used zero times). Sora arrives via the explicit font-display class — 31 uses — not through the ramp. Of the 189, 135 are on-ramp values written the long way and convert without moving a pixel; 54 across 16 values are genuinely off-ramp and mostly come from matching public/prototype.html. Do not round those onto the ramp.",
         "section": "typography"
       },
       {
         "name": "The Figure Floor Rule",
-        "body": "No number a lifter reads goes below the figure tier (24px). The scale binds size, weight and leading together in one token so a size cannot be used at the wrong weight by accident.",
+        "body": "No number a lifter reads at a glance goes below the figure tier (24px), and the scale binds size, weight and leading into one token so a size cannot be used at the wrong weight by accident. Two standing exceptions, both deliberate: the multi-set previous-session string at 20px (logged in DECISIONS.md), and the mono meta figures on a set row at 11px. Those are read beside a number, not as the number.",
         "section": "typography"
       },
       {
         "name": "The Arabic Opt-Out Rule",
-        "body": "IBM Plex Mono has no Arabic, and the platform monospace fallback draws Arabic as disconnected letters with gaps between them. Every mono class therefore has an RTL counterpart that drops to the sans stack and resets tracking and casing. Any new mono class that can hold a translated word needs the same escape hatch or it ships broken in Arabic.",
+        "body": "IBM Plex Mono has no Arabic, and the platform fallback draws it as disconnected letters. Any mono class that can hold a translated word carries an RTL counterpart dropping to the sans stack and resetting tracking and casing: kicker, meta-mono and chip-data have one. tag-pr does not, and that is correct rather than an oversight — its content is the fixed Latin literal PR. The test is what the element can contain, not whether it is mono.",
         "section": "typography"
       },
       {
         "name": "The Unlayered Voice Rule",
-        "body": "The Sora assignment rides on the size utilities themselves via an unlayered rule after the utilities layer, so no component names the family. Author CSS outside a layer outranks utilities — which is also why the native-control reset lists longhands and never `font: inherit` (the shorthand resets weight, and once pinned every button in the app to 400).",
+        "body": "The Sora assignment rides on the size utilities via an unlayered rule at the end of the stylesheet, so no component names the family; author CSS outside a layer outranks every cascade layer. Do not extend the mechanism to the native-control reset, whose own comment claims it applies there — that block now sits in @layer base, which loses to utilities under Tailwind v4's layer order. Keep the longhands anyway: font: inherit resetting weight is still true.",
         "section": "typography"
       },
       {
@@ -380,13 +386,13 @@
       "Don't introduce a second hue. Not for a chart series, not for a success state, not for a muscle group. The ember ramp and the neutral ramp carry every distinction this app needs to draw.",
       "Don't compose a box-shadow from an undefined custom property. It does not degrade to a weaker shadow — the whole declaration is invalid and the edge vanishes silently.",
       "Don't spread the knurl across a surface, or add it to something that already carries a shadow. One texture per surface, thin bands and the PR badge only.",
-      "Don't put a gradient anywhere except the header band, or a drop shadow anywhere except the four named tokens.",
+      "Don't add a third gradient. Two exist — the header band and the Log screen's sticky Start cluster — and both separate a pinned layer from scrolling content. Don't put a drop shadow anywhere except the four named tokens.",
       "Don't use emoji, decorative illustration, or a celebration screen. A PR gets an ember flash on its own row.",
       "Don't let anything on the logging path exceed 200ms, and don't put a spinner, modal or paywall on it at all.",
-      "Don't take an interactive touch target below 48px. (Display rows may be shorter — a logged set row is min-h-7. The floor governs things a thumb aims at.)",
+      "Don't take a touch target below 48px. The rule has four known violations that are backlog, not precedent: CoachBrief x2 and CoachScreen at h-9 (36px), FriendsScreen at h-10 (40px). btn-base sets no height, so the floor is only ever as good as the call site.",
       "Don't reach for rounded-2xl or anything above it. Only sm/md/lg/xl are overridden, so 2xl silently falls back to Tailwind's 16px and renders tighter than xl.",
       "Don't assume a component renders standalone. Most call useLocale, so they need LocaleProvider around them — without it they throw or render empty, which is how a component looks fine in the app and blank in a preview.",
-      "Don't write `font: inherit` on a native control; it silently resets weight and outranks the utility that asked for one.",
+      "Don't write font: inherit on a native control; the shorthand silently resets weight, and it once pinned every button in the app to 400. (The stylesheet's comment adds that it outranks the utility — that half is stale: the block now sits in @layer base, which loses to utilities.)",
       "Don't add a screen without a door to it on the home screen."
     ]
   }

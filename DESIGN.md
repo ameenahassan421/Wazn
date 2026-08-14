@@ -5,6 +5,7 @@ colors:
   ember: '#e8491d'
   ember-deep: '#9a3012'
   ember-ink: '#1c0e08'
+  ember-stamp: '#401407'
   chalk-ground: '#f7f3ec'
   chalk-surface: '#ffffff'
   chalk-raised: '#efe9dd'
@@ -56,6 +57,16 @@ typography:
     fontWeight: 500
     lineHeight: 1.2
     letterSpacing: '0.14em'
+  mono-meta:
+    fontFamily: 'IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace'
+    fontSize: '11px'
+    lineHeight: 1.2
+    fontFeature: 'tnum 1'
+  stamp:
+    fontFamily: 'IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace'
+    fontSize: '11px'
+    fontWeight: 600
+    letterSpacing: '0.08em'
   micro:
     fontFamily: 'Hanken Grotesk, ui-sans-serif, system-ui, sans-serif'
     fontSize: '11px'
@@ -112,15 +123,14 @@ components:
     width: '100%'
   chip-data:
     textColor: '{colors.ember-deep}'
-    rounded: '{rounded.sm}'
+    rounded: '{rounded.chip}'
     padding: '3px 7px'
-    typography: '{typography.kicker}'
+    typography: '{typography.mono-meta}'
   tag-pr:
-    textColor: '{colors.ember-ink}'
-    rounded: '{rounded.sm}'
+    textColor: '{colors.ember-stamp}'
+    rounded: '{rounded.chip}'
     padding: '0 6px'
-    height: '22px'
-    typography: '{typography.kicker}'
+    typography: '{typography.stamp}'
 ---
 
 # Design System: Wazn
@@ -147,8 +157,8 @@ _mirrored_ between them so each step keeps its role rather than its lightness.
 
 Density is the other half of the personality. This is a screen read at arm's
 length by someone with chalked hands, one thumb free, between sets, under
-whatever lighting the gym has. So the figures are enormous and tabular, the
-touch targets never go under 48px, and the chrome gets out of the way: no
+whatever lighting the gym has. So the figures are enormous and tabular, touch
+targets are held to 48px, and the chrome gets out of the way: no
 tab bar, no spinner on the hot path, no celebration screen. Motion is a plate
 landing, not a page turning — four durations in the whole app, two easings,
 and nothing on the logging path over 200ms.
@@ -158,7 +168,8 @@ and nothing on the logging path over 200ms.
 - Two grounds from one token set — paper by default, iron on request, never a
   third
 - One accent, ember `#e8491d`, and it is the only colour in the app
-- Numbers are the interface: Sora, tabular, never below 24px
+- Numbers are the interface: Sora, tabular, 24px or above for anything read at
+  a glance (two logged exceptions, see Typography)
 - Depth is an edge and a fill, not a drop shadow
 - One texture — the knurl — confined to thin bands and the PR badge
 - Logical properties only, because the Arabic flip is a planned flip, not a
@@ -172,7 +183,7 @@ exactly one hue.
 ### Primary
 
 - **Ember** (`#e8491d`): The material of the iron, never decoration. It marks
-  the one action a screen exists for, the record, the live rest bar, and the
+  the one action a screen exists for, the record, the live rest ring, and the
   data a coach's note was drawn from. Nothing else in the app carries hue.
 - **Ember Deep** (`#9a3012`): Not a shade choice — a contrast requirement. Every
   small accent string (chips, labels, meta, error text) uses this tier, and it
@@ -236,11 +247,19 @@ is a full step worse and clears only the 3:1 large-text bar. Treat 18.66px/700
 or 24px as the floor for any ember string, on either ground.
 
 **The Runtime-Token Rule.** Tailwind v4 drops any `@theme` token nothing
-statically references, so a class name assembled at runtime
-(`` `bg-accent-${step}` ``) compiles to nothing at all — no error, no warning,
-an empty element on screen. Accent steps used dynamically are declared as
-static classes (`.rep-fill-1`…`.rep-fill-5`). This has already caused two
-shipped defects.
+statically references. The shipped failure was a **custom-property name**
+assembled at runtime — `var(--color-accent-${step})` composed inside a
+component — not a Tailwind class: the token was never statically referenced, so
+it was never emitted, and the `var()` resolved to nothing. `accent-400` and
+`accent-700` were absent from the built CSS, and two rep-range bars holding 31
+and 11 sets rendered as empty tracks. No error, no warning, no failing check.
+Accent steps used dynamically are now static classes
+(`.rep-fill-1`…`.rep-fill-5`).
+
+A runtime-assembled _class_ name (`` `bg-accent-${step}` ``) fails too, for the
+adjacent reason that Tailwind's scanner never sees the string. Both end the
+same way — an element that draws nothing — which is why the rule is stated
+against runtime assembly of either kind.
 
 ## Typography
 
@@ -259,45 +278,67 @@ on Egyptian mobile data — and fails silently offline.
 
 ### Hierarchy
 
-- **Display** (Sora 600, 44px, 1.05): The finish ceremony's total, the one
-  number that gets the whole screen.
-- **Input** (Sora 500, 30px, 1.1, tabular): The weight and reps fields. The
-  thing the thumb is aiming at.
-- **Figure** (Sora 500, 24px, 1.15, tabular): Every other number a lifter
-  reads — volume, estimated 1RM, streak counts.
-- **Title** (Sora 600, 19px, 1.25): Exercise names, screen headings, card
-  titles.
-- **Body** (Hanken Grotesk 400, 15px, 1.45): Prose, coach sentences,
-  explanatory copy.
-- **Label** (Hanken Grotesk 400, 13px, 1.4): Button text, secondary controls.
-- **Kicker** (Plex Mono 500, 11px, 0.14em, uppercase, muted): The stamped
-  label under an object. Section headers, field labels, `ON BAR`.
-- **Micro** (Hanken Grotesk 500, 11px): Set counts, inline units, the smallest
-  legible tier.
+The **Used** column is not decoration. It is a count of how many times each
+step is referenced in `src/components`, `src/screens` and `src/App.tsx` —
+measured 2026-08-14 — and it is the most important fact in this section.
+
+| Step        | Spec                                  | Used | Purpose                                                             |
+| ----------- | ------------------------------------- | ---- | ------------------------------------------------------------------- |
+| **Display** | Sora 600 / 44px / 1.05                | 0    | Intended for the finish total; that heading is hand-set at 34px.    |
+| **Input**   | Sora 500 / 30px / 1.1 / tnum          | 0    | Intended for weight and reps; those are hand-set at 29px bold.      |
+| **Figure**  | Sora 500 / 24px / 1.15 / tnum         | 4    | Volume, estimated 1RM, streak counts. The one step with traction.   |
+| **Title**   | Sora 600 / 19px / 1.25                | 1    | Exercise names, screen headings, card titles.                       |
+| **Body**    | Hanken Grotesk 400 / 15px / 1.45      | 0    | Prose and coach sentences — written as `text-[15px]` instead.       |
+| **Label**   | Hanken Grotesk 400 / 13px / 1.4       | 0    | Button text is `btn-base`'s own 500 / 1.2, not this.                |
+| **Kicker**  | Plex Mono 500 / 11px / 0.14em / upper | —    | A utility, not a size step. Section labels, field labels, `ON BAR`. |
+| **Micro**   | Hanken Grotesk 500 / 11px             | 0    | Written as `text-[11px]` instead — 58 times.                        |
+
+**Five references, total.** The ramp is not drifting; it is very nearly unused,
+and the section below says what to do about that.
+
+**Sora does not reach the screen through this ramp.** The unlayered rule binds
+`--font-display` to `.text-display`/`.text-input`/`.text-figure`/`.text-title`,
+but since only two of those are used at all, Sora arrives almost entirely via
+the explicit `font-display` class — **31 uses**, against 25 for `font-mono`.
+The family and the size are chosen separately in practice, which is exactly
+what the combined tokens were designed to prevent.
 
 ### Named Rules
 
-**The Figure Floor Rule.** No number a lifter reads goes below the `figure`
-tier (24px). The scale binds size, weight and leading together in one token so
-a size cannot be used at the wrong weight by accident.
+**The Figure Floor Rule.** No number a lifter reads at a glance goes below the
+`figure` tier (24px), and the scale binds size, weight and leading into one
+token so a size cannot be used at the wrong weight by accident. **Two standing
+exceptions**, both deliberate: the multi-set previous-session string renders at
+20px (logged in DECISIONS.md), and the mono meta figures on a set row — set
+number, est. 1RM — are 11px in Plex Mono. Those are read _beside_ a number, not
+_as_ the number.
 
 **The Arabic Opt-Out Rule.** Plex Mono has no Arabic, and the platform
-monospace fallback draws Arabic as disconnected letters with gaps between
-them. Every mono class therefore has an RTL counterpart that drops to the sans
-stack and resets tracking and casing — `kicker`, `meta-mono` and `chip-data`
-all carry it. Any new mono class that can hold a translated word needs the
-same escape hatch or it ships broken in Arabic.
+monospace fallback draws Arabic as disconnected letters with gaps between them.
+So **any mono class that can hold a translated word** carries an RTL
+counterpart dropping to the sans stack and resetting tracking and casing:
+`kicker`, `meta-mono` and `chip-data` have one. `tag-pr` does **not**, and that
+is correct rather than an oversight — its content is the fixed Latin literal
+`PR`, which renders the same in both directions. The test is what the element
+can contain, not whether it is mono.
 
 **The Unlayered Voice Rule.** The Sora assignment rides on the size utilities
-themselves via an unlayered rule after the utilities layer, so no component
-names the family. Author CSS outside a layer outranks utilities — which is
-also why the native-control reset lists longhands and never `font: inherit`
-(the shorthand resets weight, and once pinned every button in the app to 400).
+via an unlayered rule at the end of the stylesheet, so no component names the
+family; author CSS outside a layer outranks every cascade layer.
+
+That mechanism is real, but **do not extend it to the native-control reset,
+whose own comment claims it applies there.** That reset now sits inside
+`@layer base` (`src/index.css`), and under Tailwind v4's
+`theme, base, components, utilities` order, `base` loses to `utilities`. The
+comment describes the world before the block was wrapped and was never updated.
+Keep the longhands anyway — `font: inherit` resetting weight is still true, and
+the reason it once pinned every button in the app to 400 is worth not
+re-testing — but the "outranks the utility" half no longer holds.
 
 **The Ramp-Is-The-Target Rule.** The scale above is where new work goes, not a
 description of where the app currently is. Measured on 2026-08-14, `src/` holds
-**189 literal `text-[Npx]` uses against 31 uses of the named steps** — and the
-split matters, because the two halves are different problems:
+**189 literal `text-[Npx]` uses against 5 uses of the named steps** — and the
+split within those 189 matters, because the two halves are different problems:
 
 - **135 of the 189 are on-ramp values written the long way** — `text-[11px]`
   (58), `text-[13px]` (53), `text-[15px]` (22), `text-[19px]` (2). These render
@@ -328,13 +369,23 @@ their content; Settings is behind the header avatar; Friends lives inside
 Settings. A new screen needs a door on the home screen or it is unreachable —
 `npm run shots` prints `no door to <screen>` when one is missing.
 
-The header is a sticky band with the app's only gradient. Pinned clusters
-(the log CTA, the rest bar) sit flush to the bottom edge; the sticky
-arithmetic only holds when `marginBottom = bottom − trailingSpace`, or the
-cluster drifts as the list grows.
+The header is a sticky band carrying a gradient. It is the app's **primary**
+gradient but not its only one — the sticky Start cluster on the Log screen
+fades to the ground with `linear-gradient(180deg, transparent, var(--color-ink)
+45%)`. Both exist for the same reason: to separate a pinned layer from
+scrolling content without a border cutting a hard line across the screen.
+Those two, and no others.
 
-**Touch targets are 48px minimum, everywhere, without exception.** That is the
-one number in this file that has never moved.
+Pinned clusters (the log CTA, the rest chip) sit flush to the bottom edge; the
+sticky arithmetic only holds when `marginBottom = bottom − trailingSpace`, or
+the cluster drifts as the list grows.
+
+**Touch targets are 48px minimum — as a rule with four known violations, not
+as a description.** `btn-base` sets no height and the caller does, so the floor
+is only ever as good as the call site. Measured 2026-08-14, these ship below
+it: `CoachBrief` ×2 and `CoachScreen` at `h-9` (36px), `FriendsScreen` at
+`h-10` (40px). Do not treat those as precedent — they are the backlog. New
+controls take 48.
 
 ## Elevation & Depth
 
@@ -355,8 +406,13 @@ for general use.
 
 ### Shadow Vocabulary
 
-- **`--ring-hairline`** (`0 0 0 1px var(--color-line), inset 0 1px 0 rgba(255,255,255,0.6)`):
-  The default. Every surface that is not a card or a panel.
+- **`--ring-hairline`** (`0 0 0 1px var(--color-line), var(--top-light)`): The
+  default. Every surface that is not a card or a panel. The second half is a
+  **token, not a literal, and it is theme-specific** — `inset 0 1px 0
+rgba(255,255,255,0.6)` on paper against `rgba(236,235,232,0.045)` on iron.
+  A bright inset light that reads as milled metal on paper reads as a seam of
+  glare on near-black, which is why the dark value is an order of magnitude
+  fainter. Never inline the paper literal.
 - **`--shadow-panel`** (`0 0 0 1px var(--surface-line)`): The object you
   _operate_ — edge only, flush to the page.
 - **`--shadow-card`** (`0 1px 2px var(--surface-line), 0 0 0 1px var(--surface-line)`):
@@ -369,8 +425,11 @@ for general use.
 **The Named-Token Rule.** `--surface-line` is a real token in both themes
 because it was once written as `var(--line)`, which this stylesheet never
 defined — and an undefined custom property invalidates the entire `box-shadow`
-declaration. Every panel in that release drew no edge at all, silently. A
-shadow composed from an undefined variable does not degrade; it vanishes.
+declaration. The gap between writing and shipping is the point: the bad
+reference was authored in one release and only reached screens in the next, and
+every panel that shipped in it drew no edge at all. A shadow composed from an
+undefined variable does not degrade to a weaker shadow; it vanishes, silently,
+and no check catches it.
 
 **The One Ring Rule.** Rings are never stacked. A surface carries exactly one
 of the four shadows above.
@@ -380,8 +439,11 @@ of the four shadows above.
 Corners are generous and graded by the object's job, not by its size. Controls
 are pills or 8px rectangles; **panels** (the things you operate — the weight
 field, the plate card) are 18px; **cards** (the things you read from) are
-20px; thumbnails are 12px; chips and tags take the two smallest steps, 5px and
-6px. A component picks the step that matches what it _is_.
+20px; chips and tags take the two smallest steps, 5px and 6px. A component
+picks the step that matches what it _is_. Thumbnails are nominally 12px
+(`--radius-thumb`), but only one of six call sites asks for it — `ExerciseThumb`
+picks its own radius by size, so the token describes an intent the component
+does not consult.
 
 The scale reaches components by two different routes, and the difference is a
 trap rather than a detail:
@@ -412,10 +474,14 @@ this reason, the only card in the app not shaped like a card. Never reach past
 `xl`; if you need a larger corner, add the override rather than climbing the
 Tailwind scale.
 
-Rules between list rows **fade out at both ends** (`rule-fade`), so a long
-list reads as one continuous column rather than a stack of boxes. Separators
-_inside_ a control stay solid (`rule-solid`). Cards are not given borders when
-an edge will do.
+Rules between list rows **fade out at both ends** (`rule-fade`), so a long list
+reads as one continuous column rather than a stack of boxes. `rule-solid` is
+its plain counterpart — the intent was "separators inside a control", but both
+call sites (the Friends leaderboard, the Coach plan list) in fact use it
+between `<li>` rows, where the list is short enough that a fading rule would
+read as an error. Treat it as "short list" rather than "inside a control".
+
+Cards are not given borders when an edge will do.
 
 **The Knurl.** The one texture in the system: cross-hatched ember at ±45°, a
 1px line on a 5px period — the grip cut into a bar. It appears only on thin
@@ -450,14 +516,19 @@ also get the knurl.
 
 ### Chips
 
-- **`chip-data`:** Mono 11 in ember-deep on a 7% ember tint, tabular. It
-  carries the exact figures a coach's note was drawn from — which makes the
-  claim checkable without trusting anything.
+- **`chip-data`:** Mono 11 in ember-deep on a 7% ember tint, tabular, 5px
+  radius. **Not the kicker voice** — no tracking, no uppercase, no weight
+  override; it is a line of figures, not a stamped label. It carries the exact
+  numbers a coach's note was drawn from, which makes the claim checkable
+  without trusting anything.
 - **`tag-neutral` / `tag-accent`:** 6px radius, 11px, for set types and
   superset markers.
 - **`tag-pr`:** The record stamp. Ember-800 fill with the knurl laid over it at
-  low opacity, mono 600 at 0.08em. The only place the texture appears outside
-  a rule, because a record is the one thing worth marking as machined.
+  low opacity; mono **600 at 0.08em, not uppercased** (it does not need to be —
+  its content is the literal `PR`). 5px radius. Height is set by the caller and
+  varies deliberately: 22px on a set row, 20px in History, 18px inline in the
+  finish summary. The only place the texture appears outside a rule, because a
+  record is the one thing worth marking as machined.
 
 ### Cards / Containers
 
@@ -520,9 +591,21 @@ value in a component is the smell that something is being invented.
 - **`--motion-transition`** (160ms, ease-out): "where did I come from?"
 - **`--motion-celebration`** (1140ms, ease-out): "did I beat it?"
 
-`linear` is used exactly once, for the rest timer's drain, because that bar is
-a readout of elapsed time rather than a response to a tap — its duration is
-the tick interval, not a feel value.
+`linear` is spent on one thing — the rest timer — across two call sites
+(`RestTimer` and `RestExpanded`, the chip and the expanded view of the same
+timer). It earns the exception because the timer is a readout of elapsed time
+rather than a response to a tap, so its duration is the tick interval, not a
+feel value.
+
+**The timer is an SVG ring, and it _fills_ as rest elapses.** It does not
+drain, and it is not a bar. That was reversed in DECISIONS.md on 2026-08-13,
+and the `timer-drain` utility still in `src/index.css` is dead code left from
+the earlier design — zero call sites. Don't build against it.
+
+**The 200ms ceiling has one carve-out, by construction.** Nothing on the
+logging path exceeds 200ms; the 1140ms celebration tier is reachable only
+_after_ a set is committed, never between one set and the next. That is what
+makes it affordable.
 
 **The Reduced-Motion Rule.** `prefers-reduced-motion` collapses the four
 tokens themselves _and_ applies a global blanket, so an inline style that
@@ -559,8 +642,10 @@ stays put.
 - **Don't** spread the knurl across a surface, or add it to something that
   already carries a shadow. One texture per surface, thin bands and the PR
   badge only.
-- **Don't** put a gradient anywhere except the header band, or a drop shadow
-  anywhere except the four named tokens.
+- **Don't** add a third gradient. Two exist — the header band and the Log
+  screen's sticky Start cluster — and both separate a pinned layer from
+  scrolling content. Don't put a drop shadow anywhere except the four named
+  tokens.
 - **Don't** use emoji, decorative illustration, or a celebration screen. A PR
   gets an ember flash on its own row.
 - **Don't** let anything on the logging path exceed 200ms, and don't put a
@@ -574,6 +659,8 @@ stays put.
 - **Don't** assume a component renders standalone. Most call `useLocale`, so
   they need `LocaleProvider` around them — without it they throw or render
   empty, which is how a component looks fine in the app and blank in a preview.
-- **Don't** write `font: inherit` on a native control; it silently resets
-  weight and outranks the utility that asked for one.
+- **Don't** write `font: inherit` on a native control; the shorthand silently
+  resets weight, and it once pinned every button in the app to 400. (The
+  stylesheet's comment adds that it "outranks the utility" — that half is
+  stale: the block now sits in `@layer base`, which loses to utilities.)
 - **Don't** add a screen without a door to it on the home screen.
