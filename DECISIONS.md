@@ -5663,3 +5663,36 @@ All three now use one recipe: `bottom: 0`, the inset as `paddingBottom`, and
 `marginBottom` equal to `bottom` minus the trailing space. With `bottom` at 0
 the safe-area term no longer cancels against main's padding, so it is
 subtracted explicitly rather than folded into a constant.
+
+## 2026-08-14: the reps stepper clips two-digit values — found, not fixed
+
+Visible in `shots/active-390-entry-commit.png`: the reps field shows `12` with
+the second digit cut off. Not a spinner (index.css already suppresses those)
+and not the `+` button overlapping — the field genuinely has no room.
+
+The arithmetic, at 390px:
+
+    main content            354
+    − gap-2.5                10   → 344 split 1.3 : 1
+    reps panel              ~153
+    − px-3.5 (14 × 2)        28
+    − two 48px steppers      96
+    − gap-1 (4 × 2)           8
+    = space for the value    ~21px
+
+A two-digit value in Sora 800 at 29px is about 32px wide. Measuring the
+rendered screenshot gives the same panel width, so this is not a rounding
+argument — twelve reps does not fit, and twelve reps is an ordinary set.
+
+**Not fixed, because every obvious fix trades against something stated.** The
+design's own spec says steppers are 44–46px squares and hit targets are
+minimum 44px; CLAUDE.md sets the floor at 48px, and that gap is already a
+recorded deliberate yield. Shrinking the buttons would silently reverse it.
+Shrinking the figure fights "numbers render large and tabular". Equalising the
+panels moves the problem onto weight, which needs three digits and a decimal
+and is the reason the split is 1.3 : 1 in the first place.
+
+What it actually needs is a different arrangement of the panel — value above,
+steppers below, or the two panels stacked — which is a design decision about
+the single most-used control in the app, not a padding tweak. Written down
+rather than guessed at.
