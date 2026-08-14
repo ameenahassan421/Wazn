@@ -128,6 +128,22 @@ export interface CoachNotes {
   regeneratesLeft?: number
 }
 
+/**
+ * Below this many regenerates left, the count is worth putting on screen.
+ *
+ * The quota limits stopped being product rules on 2026-08-14 and became loop
+ * backstops set at 500 (`supabase/functions/_shared/quota.ts`). A footer
+ * reading "500 regenerates left this week" is not information, it is
+ * furniture — and it invites the reader to manage a budget that no longer
+ * exists. Under this it is a real warning again, so it comes back.
+ *
+ * Deliberately declared here and not beside the limits it relates to. Nothing
+ * on the server renders anything, so there is no second copy to disagree with,
+ * and `src/edge-shims.d.ts` marks `supabase/functions/**` as Deno code that
+ * client modules do not import.
+ */
+export const QUOTA_VISIBLE_AT = 3
+
 /* ── Reads ────────────────────────────────────────────────────────────────── */
 
 /**

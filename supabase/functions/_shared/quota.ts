@@ -18,36 +18,35 @@
  */
 
 /**
- * Free-tier limits, per plan §2C: Coach's Notes regenerate at most weekly, and
- * routines are capped at three a month.
+ * Usage limits, derived by counting a ledger rather than by keeping a counter,
+ * because a counter needs something to reset it and a ledger just ages out.
  *
- * Derived by counting a ledger rather than by keeping a counter, because a
- * counter needs something to reset it and a ledger just ages out.
- */
-/**
- * B1's two surfaces are metered differently, and deliberately so.
+ * **These are no longer product rules. Every one of them is now a loop
+ * backstop** — Ameen's order, 2026-08-14: lift the limits, keep something that
+ * still stops a runaway client. That is a change of *kind*, not just of
+ * number, and it is why the reasoning below reads differently from the history
+ * in git.
  *
- * The weekly review is a thing the user *asks* for and can regenerate, so its
- * limit is the product decision: once a week. The briefing and the debrief are
- * things the app *offers*, lazily, at most once per logged session — a lifter
- * who trains six times a week and opens the app before each one costs six
- * briefings and six debriefs, and there is no way for them to spend more by
- * pressing anything, because neither surface has a regenerate control.
+ * The old design metered the two surfaces differently on purpose. The weekly
+ * review was a thing the user *asks* for, so its limit was the product
+ * decision: once a week. The briefing and the debrief are things the app
+ * *offers*, lazily, at most once per logged session, and neither has a
+ * regenerate control — so their limits were already only a cost backstop.
  *
- * So their limits are not a product rule but a **backstop on cost**: 20 a week
- * is roughly three sessions a day, which nobody does, and it is the number
- * that turns a client bug that calls in a loop from a bill into a 429. Free
- * models carry these first, so the expected marginal cost is zero and §12's
- * $0.01/user/week ceiling has a wide margin.
+ * Now they all are. 500 is far outside any human pattern: a lifter cannot
+ * press a button 500 times a week, so a number this size is never reached by
+ * use, only by a bug. What it still buys is the thing worth keeping — a client
+ * that calls in a loop gets a 429 instead of an open-ended bill.
+ *
+ * Cost stays bounded by the free-model-first route (`openrouter.ts` tries
+ * `:free` and only falls back on 429/402) and by OpenRouter's own monthly
+ * ceiling. It was never really bounded by these numbers.
  */
 export const QUOTAS = {
-  coach_notes: { limit: 1, days: 7 },
-  // Raised from 3 on Ameen's order (2026-08-12): the cap was throttling his
-  // own testing. Cost stays bounded by the free-model-first route and the
-  // OpenRouter monthly ceiling, not by this number.
-  routine: { limit: 30, days: 30 },
-  briefing: { limit: 20, days: 7 },
-  debrief: { limit: 20, days: 7 },
+  coach_notes: { limit: 500, days: 7 },
+  routine: { limit: 500, days: 30 },
+  briefing: { limit: 500, days: 7 },
+  debrief: { limit: 500, days: 7 },
 } as const
 
 export type Feature = keyof typeof QUOTAS
@@ -85,14 +84,17 @@ export function remaining(feature: Feature, used: number): number {
  */
 export function quotaMessage(feature: Feature): string {
   if (feature === 'routine') {
-    return `That is ${QUOTAS.routine.limit} generated routines this month. You can still build one by hand — it takes about a minute.`
+    return `That is ${QUOTAS.routine.limit} generated routines this month, which is past any normal use — something is likely retrying. You can still build one by hand; it takes about a minute.`
   }
-  // The briefing and the debrief have no regenerate control, so a user can
-  // only reach this through a bug. It reads as the surface being quiet rather
-  // than as a refusal, because from where they are sitting that is what it is
-  // — and both surfaces still render every figure from SQL underneath.
+  // No surface can reach these by pressing anything, so arriving here means a
+  // bug. It reads as the surface being quiet rather than as a refusal, because
+  // from where the user is sitting that is what it is — and both surfaces
+  // still render every figure from SQL underneath.
   if (feature === 'briefing' || feature === 'debrief') {
     return 'The coach is taking a break. Your numbers are all still here.'
   }
-  return 'Your notes were written recently. They refresh once a week, or whenever you log something new.'
+  // This used to read "they refresh once a week", which was the product rule
+  // when the limit was 1. It is not any more, and a message naming a rule the
+  // table no longer holds is exactly how a refusal starts reading as a fault.
+  return `That is ${QUOTAS.coach_notes.limit} regenerations in a week. Your notes are still here, and the count clears as the week rolls on.`
 }

@@ -51,16 +51,22 @@ describe('remaining', () => {
     expect(remaining('routine', 0)).toBe(QUOTAS.routine.limit)
   })
 
+  // Relative to the table, not hardcoded. These read `29` and `30` until
+  // 2026-08-14, when the limits were lifted and all four assertions failed on
+  // a change that was working exactly as intended. A test that has to be
+  // edited every time the number it guards moves is testing the number rather
+  // than the arithmetic.
   it('counts down', () => {
-    expect(remaining('routine', 1)).toBe(29)
-    expect(remaining('routine', 29)).toBe(1)
+    const max = QUOTAS.routine.limit
+    expect(remaining('routine', 1)).toBe(max - 1)
+    expect(remaining('routine', max - 1)).toBe(1)
   })
 
   it('is zero, never negative, past the limit', () => {
     // A limit lowered after the fact leaves users over it. "-2 left this
     // month" in the Coach footer is worse than the refusal it describes.
-    expect(remaining('routine', 30)).toBe(0)
-    expect(remaining('routine', 99)).toBe(0)
+    expect(remaining('routine', QUOTAS.routine.limit)).toBe(0)
+    expect(remaining('routine', QUOTAS.routine.limit + 69)).toBe(0)
   })
 
   it('treats a nonsense negative count as none used', () => {
@@ -69,17 +75,27 @@ describe('remaining', () => {
 })
 
 describe('quotaMessage', () => {
-  it('names the real routine limit rather than a hardcoded number', () => {
+  it('names the real limit rather than a hardcoded number', () => {
     // The copy and the table have to agree: a refusal citing a limit the
     // table does not hold is how a limit starts reading as a fault.
+    //
+    // coach_notes joined this on 2026-08-14. Its message read "they refresh
+    // once a week", which was true of the product rule when the limit was 1
+    // and false the moment it moved — the precise failure this test exists to
+    // catch, sitting in the file that defines it.
     expect(quotaMessage('routine')).toContain(String(QUOTAS.routine.limit))
+    expect(quotaMessage('coach_notes')).toContain(String(QUOTAS.coach_notes.limit))
+  })
+
+  it('does not promise a weekly refresh the limit no longer describes', () => {
+    expect(quotaMessage('coach_notes')).not.toMatch(/once a week/)
   })
 
   it('always leaves the user something they can still do', () => {
     // Under the one law, a dead end mid-session costs more than the limit
     // saves. Both messages point at a next action.
     expect(quotaMessage('routine')).toMatch(/by hand/)
-    expect(quotaMessage('coach_notes')).toMatch(/refresh|log/)
+    expect(quotaMessage('coach_notes')).toMatch(/still here|clears/)
   })
 
   it('is plain, with no exclamation and no apology', () => {

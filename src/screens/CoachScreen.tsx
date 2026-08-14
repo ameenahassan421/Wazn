@@ -7,6 +7,7 @@ import {
   type RoutinePreview,
 } from '../lib/ai'
 import {
+  QUOTA_VISIBLE_AT,
   REVIEW_SECTIONS,
   fetchWeeklyReview,
   recordCoachView,
@@ -216,10 +217,19 @@ function NotesCard() {
         <p className="mt-3 text-[11px] text-muted">
           {notes?.generatedAt &&
             t('coach.as_of', { date: formatWorkoutDate(notes.generatedAt) })}
-          {t(
-            left === 1 ? 'coach.regenerates_left.one' : 'coach.regenerates_left.other',
-            { count: String(left) },
-          )}
+          {/* Only once the count is a thing the reader is actually managing.
+              The limits became loop backstops rather than product rules on
+              2026-08-14 (see `_shared/quota.ts`), and this line rendered the
+              raw number — so the footer would have read "500 regenerates left
+              this week", which is not information, it is furniture. Below
+              QUOTA_VISIBLE_AT it is a real warning again and comes back. */}
+          {left <= QUOTA_VISIBLE_AT &&
+            t(
+              left === 1
+                ? 'coach.regenerates_left.one'
+                : 'coach.regenerates_left.other',
+              { count: String(left) },
+            )}
           {spent ? t('coach.resets_weekly') : ''}
           {/* An older answer served because the week's regenerate is spent.
               Said plainly here rather than dressed as an error: the numbers in
