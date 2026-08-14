@@ -14,6 +14,9 @@ import { AuthScreen } from './components/AuthScreen'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import { Header } from './components/Header'
 import { LogScreen } from './screens/LogScreen'
+import { takeInviteCode } from './lib/invite'
+import { resolveInvite } from './lib/social'
+import type { Inviter } from './lib/social'
 import { HistoryScreen } from './screens/HistoryScreen'
 
 // All three go through `lazyScreen`, not `lazy`. A deploy retires the hashed
@@ -93,6 +96,28 @@ export default function App() {
    * this removes.
    */
   const [progressSubView, setProgressSubView] = useState(false)
+
+  /**
+   * Whoever invited this person, if they arrived through a /join link.
+   *
+   * Resolved HERE because `takeInviteCode()` consumes the code and every
+   * screen in this app unmounts when you leave it. Owned by LogScreen, the
+   * offer was taken on the first home render and gone the moment you opened
+   * History — the same class of bug as the first-run screen replaying, and
+   * for the same reason. App mounts once per session.
+   */
+  const [inviter, setInviter] = useState<Inviter | null>(null)
+  useEffect(() => {
+    const code = takeInviteCode()
+    if (!code) return
+    let live = true
+    void resolveInvite(code).then((found) => {
+      if (live) setInviter(found)
+    })
+    return () => {
+      live = false
+    }
+  }, [])
   const [logView, setLogView] = useState<'overview' | 'picker' | 'import'>('overview')
   const openLog = (view: 'overview' | 'picker' | 'import' = 'overview') => {
     setLogView(view)
@@ -225,6 +250,7 @@ export default function App() {
                 {tab === 'log' && (
                   <LogScreen
                     initialView={logView}
+                    inviter={inviter}
                     userId={userId}
                     onOpenCoach={() => setTab('coach')}
                     onOpenHistory={() => setTab('history')}
@@ -248,7 +274,7 @@ export default function App() {
                     {/* Saving generated routines sends you to Log, where routines
                     live — the thing you just made is one tap from being
                     started. */}
-                    <CoachScreen onRoutinesSaved={() => setTab('log')} />
+                    <CoachScreen onRoutinesSaved={() => openLog()} />
                   </Suspense>
                 )}
                 {tab === 'friends' && (

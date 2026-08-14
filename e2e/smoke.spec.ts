@@ -35,7 +35,12 @@ const home = (page: Page) => page.getByRole('button', { name: 'Start workout' })
 
 async function open(page: Page, screen: keyof typeof ROUTES) {
   for (const step of ROUTES[screen]) {
-    await page.getByRole('button', { name: step, exact: true }).first().click()
+    // Substring, not exact. The home cards name themselves from their own
+    // content — a record card has to read out the record, not the word
+    // "Last PR" — so their accessible names carry live data and a trailing
+    // destination. Pinning the whole string would make this fail every time
+    // somebody set a PR.
+    await page.getByRole('button', { name: step, exact: false }).first().click()
   }
 }
 

@@ -40,8 +40,6 @@ import { InstallPrompt } from '../components/InstallPrompt'
 import { CoachBrief } from '../components/CoachBrief'
 import { Welcome } from '../components/Welcome'
 import { InviteCard } from '../components/InviteCard'
-import { takeInviteCode } from '../lib/invite'
-import { resolveInvite } from '../lib/social'
 import type { Inviter } from '../lib/social'
 import { hasBeenWelcomed, markWelcomed } from '../lib/welcomed'
 import { useWakeLock } from '../lib/use-wake-lock'
@@ -205,6 +203,7 @@ export function LogScreen({
   onOpenCoach,
   onOpenHistory,
   onOpenProgress,
+  inviter,
   initialView = 'overview',
 }: {
   userId: string
@@ -216,6 +215,8 @@ export function LogScreen({
    *  record opens Progress. */
   onOpenHistory: () => void
   onOpenProgress: () => void
+  /** Whoever invited this person, resolved once by App. */
+  inviter: Inviter | null
   /**
    * What to do on arrival.
    *
@@ -426,16 +427,6 @@ export function LogScreen({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loading, initialView])
 
-  // Once per mount, and only after the load has settled: the code is consumed
-  // on read, so taking it before we know which screen is about to render
-  // would spend it on whichever effect happened to run first.
-  useEffect(() => {
-    if (loading || inviteRead.current) return
-    inviteRead.current = true
-    const code = takeInviteCode()
-    if (!code) return
-    void resolveInvite(code).then(setInviter)
-  }, [loading])
   // Onboarding is shown once, to an account with nothing in it, and can be
   // dismissed forward into either path. It is state rather than a route
   // because it is a moment, not a place.
@@ -446,18 +437,6 @@ export function LogScreen({
    */
   const [welcomed, setWelcomed] = useState(() => hasBeenWelcomed(userId))
 
-  /**
-   * Whoever invited this person, if they arrived through a /join link.
-   *
-   * Owned here rather than inside `Welcome`, which is where it used to live.
-   * `takeInviteCode()` consumes the code, and Welcome mounts only for an
-   * account with no workouts, no routines and nothing in its history — so an
-   * invite clicked by anyone who had trained before was captured into
-   * sessionStorage and then read by nobody. The offer now reaches the home
-   * screen too, which is the only screen everybody sees.
-   */
-  const [inviter, setInviter] = useState<Inviter | null>(null)
-  const inviteRead = useRef(false)
   const dismissWelcome = () => {
     markWelcomed(userId)
     setWelcomed(true)
@@ -1078,12 +1057,18 @@ export function LogScreen({
           new Error('the server did not answer'),
         ),
       )
-      // The load path has finished reading the device, which is what this ref
-      // means — not that it succeeded. Left false, the two effects it gates
-      // never run again for the life of the screen, so the write queue and
-      // the checkpoint stop being persisted: a set logged after a failed load
-      // would not survive the tab dying, which is the one thing they exist to
-      // guarantee. A failed read is exactly when durability matters most.
+      // Read the durable queue off the device BEFORE declaring the load path
+      // finished. The ref gates the effect that persists `queue`, and on this
+      // path `restoreFromCache` returned false — so nothing has merged the
+      // stored queue into memory yet, and flipping the ref first would write
+      // an EMPTY queue straight over somebody's unsent sets. That is a worse
+      // bug than the one this line exists to fix.
+      await restoreQueue(null, [], new Set())
+      // Now the ref, which means "the load path has finished reading the
+      // device" — not that it succeeded. Left false, the effects it gates
+      // never run again for the life of the screen and a set logged after a
+      // failed load would not survive the tab dying. A failed read is exactly
+      // when durability matters most.
       restoredRef.current = true
       setLoading(false)
       return
@@ -1098,8 +1083,9 @@ export function LogScreen({
       // something went wrong if there is genuinely nothing to fall back to.
       if (classifyFailure(failure) === 'offline' && (await restoreFromCache())) return
       setError(describeError(tRef.current('log.error.load_workout'), failure))
-      // Same reason as the deadline path above: the read is over either way,
-      // and the queue and checkpoint must resume being written.
+      // Same as the deadline path above, in the same order: merge the durable
+      // queue in first, then declare the read over.
+      await restoreQueue(null, [], new Set())
       restoredRef.current = true
       setLoading(false)
       return

@@ -410,7 +410,8 @@ async function shoot(browser, origin, { width, empty, active, locale, theme }) {
     const steps = locale === 'ar' ? screen.ar : screen.en
     let reached = true
     for (const step of steps) {
-      const button = page.getByRole('button', { name: step, exact: true })
+      // Substring: the home cards carry live data in their accessible names.
+      const button = page.getByRole('button', { name: step, exact: false })
       if (!(await button.count())) {
         reached = false
         break

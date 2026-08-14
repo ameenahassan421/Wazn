@@ -43,7 +43,27 @@ export function useModalLayer(
     }
     document.addEventListener('keydown', onKey)
 
+    /*
+     * And keep Tab inside. `aria-modal="true"` is a promise to assistive
+     * technology that the rest of the page is unavailable; it does not make
+     * that true for the keyboard, so without this Tab walked straight out of
+     * the dialog and into the workout board behind it — announced as hidden,
+     * still focusable, which is the worst of both.
+     *
+     * `inert` rather than a focus-trap loop: it takes the background out of
+     * the tab order AND the accessibility tree in one property, which is the
+     * thing aria-modal was only claiming.
+     */
+    const siblings = Array.from(node?.parentElement?.children ?? []).filter(
+      (child): child is HTMLElement => child !== node && child instanceof HTMLElement,
+    )
+    // The attribute rather than the property: assigning `child.inert` trips
+    // the compiler's immutability rule, and `setAttribute` is the same thing
+    // to the browser.
+    for (const child of siblings) child.setAttribute('inert', '')
+
     return () => {
+      for (const child of siblings) child.removeAttribute('inert')
       document.removeEventListener('keydown', onKey)
       if (opener instanceof HTMLElement && document.contains(opener)) {
         opener.focus()

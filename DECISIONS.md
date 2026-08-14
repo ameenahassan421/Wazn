@@ -5601,3 +5601,53 @@ Two things worth keeping from this:
   modelled reads only, so `drain()` called `.insert` on undefined and threw
   inside a passive effect. An unhandled error that did not fail the run, and so
   said nothing, for as long as the mock has existed.
+
+## 2026-08-14: the rest of the regression pass — and a miscount
+
+I reported "two survived refutation" after reading only the truncated head of
+the workflow result. The real number was **14 real verdicts across 22 raised**,
+and most of the distinct ones were mine. Reading the head of a truncated result
+and reporting it as the whole is its own defect; the journal had the full list
+the entire time.
+
+Fixed here, beyond the two already committed:
+
+**The `restoredRef` fix was itself the more dangerous bug.** Flipping the ref on
+a failed load lets the effect that persists `queue` run — and on that path
+`restoreFromCache()` returned false, so nothing had merged the DURABLE queue
+into memory yet. The effect wrote an EMPTY queue straight over somebody's
+unsent sets. The device is read first now, then the ref flips. Fixing a
+durability bug by introducing a data-loss one is the exact shape of mistake the
+review existed to catch.
+
+**`onRoutinesSaved` bypassed `openLog()`.** Saving routines on the Coach screen
+called `setTab('log')` directly, so a stale `logView` survived — and after
+visiting the importer from Settings, saving a routine dropped the reader back
+into the importer. Every route home goes through `openLog` now, which is what
+resets the arrival intent.
+
+**The invite was consumed on the first home render.** `takeInviteCode()` takes,
+and LogScreen unmounts on every navigation — so the offer appeared once and was
+gone the moment you opened History. Same class as the first-run screen
+replaying, same fix: App owns it, because App mounts once.
+
+**`aria-label` on the home cards hid their contents.** A label REPLACES a
+button's content as its accessible name, so labelling the record card "Last PR"
+to stop it reciting itself also stopped it reading out the record — the only
+thing on the card worth hearing. The destination is appended in an `sr-only`
+span instead. Both harnesses now match doors by substring, because those names
+carry live data and pinning them would break on every new PR.
+
+**`aria-modal` was a claim with no mechanism.** Tab walked straight out of both
+dialogs into the page behind — announced as hidden, still focusable, the worst
+of both. The background siblings are now `inert` while a layer is open.
+
+**An empty catalogue is not a failure.** `openCatalogue` returned
+`rows.length > 0`, so a successful fetch of an empty table made "Add exercise"
+do nothing and say nothing. The picker has its own empty state and is the
+honest place to land.
+
+Left open: two pinned clusters still sit at the safe-area inset rather than
+flush, so a thin strip of content scrolls below them. The home row's recipe
+(`bottom: 0` plus internal padding) is the fix; it needs the negative-margin
+arithmetic redone per cluster and a screenshot each, and it is cosmetic.

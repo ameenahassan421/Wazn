@@ -90,6 +90,7 @@ describe('LogScreen locale strings', () => {
         onOpenCoach={() => {}}
         onOpenHistory={() => {}}
         onOpenProgress={() => {}}
+        inviter={null}
       />,
       {
         wrapper: Wrapper,
@@ -108,6 +109,7 @@ describe('LogScreen locale strings', () => {
         onOpenCoach={() => {}}
         onOpenHistory={() => {}}
         onOpenProgress={() => {}}
+        inviter={null}
       />,
       {
         wrapper: Wrapper,
@@ -135,6 +137,7 @@ describe('LogScreen arrival intent', () => {
     onOpenCoach: () => {},
     onOpenHistory: () => {},
     onOpenProgress: () => {},
+    inviter: null,
   }
 
   it('opens the picker when asked to start, rather than landing on home', async () => {

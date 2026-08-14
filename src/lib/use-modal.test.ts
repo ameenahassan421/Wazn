@@ -66,4 +66,19 @@ describe('useModalLayer', () => {
     fireEvent.keyDown(document, { key: 'Escape' })
     expect(onClose).not.toHaveBeenCalled()
   })
+
+  /*
+   * `aria-modal` is a claim, not a mechanism. Without this the keyboard walked
+   * straight out of the dialog into the page behind it — announced as hidden,
+   * still focusable.
+   */
+  it('takes the background out of the tab order while open, and puts it back', () => {
+    const { opener, ref } = layer('<button>close</button>')
+    const { unmount } = renderHook(() => useModalLayer(ref, () => {}))
+    // The attribute, because that is what the hook sets and what the browser
+    // reads; jsdom does not reflect it onto the `inert` property.
+    expect(opener.hasAttribute('inert')).toBe(true)
+    unmount()
+    expect(opener.hasAttribute('inert')).toBe(false)
+  })
 })

@@ -86,16 +86,15 @@ export function LastPrCard({
     <button
       type="button"
       onClick={onOpen}
-      // Named explicitly, like the week card beside it. Left to compose its
-      // own name from its contents, this button announces itself as
-      // "LAST PR 226 lbs Bench Press (Barbell) · today" — a sentence nobody
-      // asked for, and one that changes every time a record falls.
-      aria-label={t('home.last_pr')}
-      className="surface-card flex-1 px-4 py-3.5 text-start"
+      className="surface-card min-w-0 flex-1 px-4 py-3.5 text-start"
     >
-      <p className="kicker mb-2" aria-hidden="true">
-        {t('home.last_pr')}
-      </p>
+      {/* No `aria-label` here. An aria-label REPLACES a button's content as
+          its accessible name, so labelling this one "Last PR" to stop it
+          reciting its contents also stopped it reading out the record — the
+          only thing on the card worth hearing. The destination is added
+          instead, so the name is the record AND where pressing goes. */}
+      <p className="kicker mb-2">{t('home.last_pr')}</p>
+      <span className="sr-only">{t('home.last_pr.aria')}</span>
       {record ? (
         <>
           <p
@@ -148,14 +147,10 @@ export function RecentSessionCard({
     <button
       type="button"
       onClick={onOpen}
-      // Named for where it goes, like the two cards above it. Composing its
-      // name from its contents made it announce "Upper A Today · 48 min ·
-      // lifted 12,500 kg PR" — a sentence that changes every session and
-      // never says it opens History. The visible text stays as it is; a
-      // screen reader still reaches it by walking into the button.
-      aria-label={t('home.last_session.aria')}
       className="surface-card flex w-full items-center justify-between gap-3 px-[18px] py-3.5 text-start"
     >
+      {/* The destination, appended rather than substituted — see LastPrCard. */}
+      <span className="sr-only">{t('home.last_session.aria')}</span>
       <span className="min-w-0">
         <span dir="auto" className="block truncate text-[14.5px] font-bold">
           {name?.trim() || t('log.workout_fallback')}

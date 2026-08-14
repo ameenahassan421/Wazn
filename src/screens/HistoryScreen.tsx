@@ -298,9 +298,12 @@ export function HistoryScreen({ onStart }: { onStart: () => void }) {
       setError(describeError(t('history.error.catalogue'), failure))
       return false
     }
-    const rows = (data ?? []) as Exercise[]
-    setCatalogue(rows)
-    return rows.length > 0
+    setCatalogue((data ?? []) as Exercise[])
+    // Success is success, even with nothing in it. Returning `rows.length > 0`
+    // made a legitimately empty catalogue indistinguishable from a failure, so
+    // the button did nothing at all and said nothing either — the picker has
+    // its own empty state and is the honest place to land.
+    return true
   }
 
   async function removeSet(set: SetWithExercise) {
