@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-08-14T16:05:00Z",
+  "generatedAt": "2026-08-14T16:20:00Z",
   "title": "Design System: Wazn",
   "extensions": {
     "colorMeta": {
@@ -370,6 +370,16 @@
       {
         "name": "The Reduced-Motion Rule",
         "body": "prefers-reduced-motion collapses the four duration tokens themselves and applies a global blanket, so an inline style that reads a token is stilled too. Every animation is both-filled, so collapsing the duration keeps the end state: a record row stays tinted, a committed set stays put.",
+        "section": "components"
+      },
+      {
+        "name": "The Utilities-Set-Appearance Rule",
+        "body": "A component in this system is a CSS utility that sets appearance only — background, colour, radius, border, weight, leading. Size is nearly always the caller's: btn-base declares no height and no padding, surface-card and surface-panel declare no padding, tag-pr declares no height. So a measurement is either a value the utility genuinely sets or an observation about what callers do, and the two are not interchangeable. Stating a caller composition as a token is the easiest way to write a design system that lies.",
+        "section": "components"
+      },
+      {
+        "name": "The Border-Is-Always-There Rule",
+        "body": "btn-base sets border: 1px solid transparent and the variants only change border-color. Ghost, quiet and hero each still occupy that 1px, which is why swapping a variant never shifts a row by a pixel. There is no border to remove to save space.",
         "section": "components"
       }
     ],

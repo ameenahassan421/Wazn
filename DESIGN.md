@@ -67,6 +67,12 @@ typography:
     fontSize: '11px'
     fontWeight: 600
     letterSpacing: '0.08em'
+  field-figure:
+    fontFamily: 'Sora, ui-sans-serif, system-ui, sans-serif'
+    fontSize: '29px'
+    fontWeight: 700
+    letterSpacing: '-0.02em'
+    fontFeature: 'tnum 1'
   micro:
     fontFamily: 'Hanken Grotesk, ui-sans-serif, system-ui, sans-serif'
     fontSize: '11px'
@@ -93,23 +99,15 @@ components:
     backgroundColor: '{colors.ember}'
     textColor: '{colors.ember-ink}'
     rounded: '{rounded.md}'
-    height: '60px'
-    typography: '{typography.title}'
   button-primary:
     textColor: '{colors.ember}'
     rounded: '{rounded.md}'
-    height: '48px'
-    padding: '0 16px'
   button-secondary:
     textColor: '{colors.graphite}'
     rounded: '{rounded.md}'
-    height: '48px'
-    padding: '0 16px'
   button-quiet:
     textColor: 'color-mix(in srgb, #16130e 55%, transparent)'
     rounded: '{rounded.md}'
-    height: '48px'
-    padding: '0 16px'
   surface-card:
     backgroundColor: '{colors.chalk-surface}'
     rounded: '{rounded.xl}'
@@ -118,7 +116,7 @@ components:
     rounded: '{rounded.panel}'
   input-figure:
     textColor: '{colors.graphite}'
-    typography: '{typography.input}'
+    typography: '{typography.field-figure}'
     height: '44px'
     width: '100%'
   chip-data:
@@ -191,7 +189,11 @@ exactly one hue.
   6.77:1 on the chalk ground, 7.49:1 on chalk surface, and (as `#f4a68c`)
   9.28–10.00:1 on iron.
 - **Ember Ink** (`#1c0e08`): The near-black that sits _on_ a filled ember
-  surface — the hero button's label, the PR badge's stamp.
+  surface — the hero button's label. 4.84:1 against the ember fill.
+- **Ember Stamp** (`#401407`): The PR badge's lettering. A different value from
+  Ember Ink because it sits on the darker ember-800 fill rather than on
+  ember-500, and it is `accent-100` — so it swaps with the theme while Ember
+  Ink does not.
 
 ### Neutral — the chalk ground (default theme)
 
@@ -495,19 +497,38 @@ also get the knurl.
 
 ## Components
 
+**Read this before any value below.** In this system a "component" is a CSS
+utility that sets **appearance only** — background, colour, radius, border,
+weight, leading. **Size is nearly always the caller's**: `btn-base` declares no
+height and no padding at all, `surface-card` and `surface-panel` declare no
+padding, `tag-pr` declares no height. Every measurement here is therefore
+either a value the utility genuinely sets, or a labelled observation about what
+callers actually do. The two are not interchangeable, and earlier drafts of
+this file stated caller compositions as tokens — which is the easiest way to
+write a design system that lies. Where callers disagree, the disagreement is
+recorded rather than averaged.
+
 ### Buttons
 
-- **Shape:** Softly squared (8px, `--radius-md`), 1px border, inline-flex with
-  a 6px gap for an optional icon. Height is set by the caller; the 48px floor
-  always applies.
+- **Shape:** Softly squared (8px, `--radius-md`), inline-flex with a 6px gap
+  for an optional icon. **Height and padding are the caller's** and they do not
+  agree — `px-2.5`, `px-3`, `px-4` all ship. The 48px floor is a rule, not a
+  property of the utility (see Layout).
+- **The border is always in the box.** `btn-base` sets `border: 1px solid
+transparent`; the variants only change `border-color`. So ghost, quiet and
+  hero each still occupy that 1px, which is why swapping a variant never shifts
+  a row by a pixel. Don't "remove" the border to save space — there is none to
+  save.
 - **Hero** (`btn-hero`): Solid ember with `ember-ink` text at 600, plus a warm
   inset light along the top edge. **One per screen**, on the single action that
-  screen exists for — "Log set 3", "Start workout". Typically 60px tall.
+  screen exists for. Note the utility's 8px radius is routinely overridden at
+  the call site — the hot-path commit button in `SetEntry` is a `--radius-pill`
+  at 60px, and hero labels ship at 16/17/18px rather than any ramp step.
 - **Primary** (`btn-primary`): Outlined 1.5px in ember on a 10% ember tint,
   ember text. The default emphasis tier.
 - **Secondary** (`btn-secondary`): Divider-coloured border, normal text.
-- **Ghost** (`btn-ghost`): No border, ember text.
-- **Quiet** (`btn-quiet`): No border, text at 55% opacity. Header chrome and
+- **Ghost** (`btn-ghost`): Transparent border, ember text.
+- **Quiet** (`btn-quiet`): Transparent border, text at 55%. Header chrome and
   tertiary escapes.
 - **Press:** The only press effect in the app — dim to 0.85 and settle 1px
   down over 80ms. The give of a loaded bar, not a bounce.
@@ -545,24 +566,36 @@ also get the knurl.
 
 ### Inputs / Fields
 
-- **Text fields:** 48px tall, 14px radius, 1px `line` border on the ground
-  fill, 15px text. Focus shifts the border to ember; the placeholder is muted.
+- **Text fields:** There is **no text-field utility** — every one is composed at
+  the call site, and they do not all match. The shape to copy is `Welcome`'s:
+  48px tall, `rounded-lg` (14px), 1px `line` border on the ground fill, 15px
+  text, ember border on focus, muted placeholder. Treat that as the reference
+  composition, not as a token that already exists.
 - **Figure fields** (weight, reps): the signature input. A `surface-panel` holds
-  a mono kicker label, then the value on its own full-width 44px line in Sora
-  Bold at 29px, tabular, centred, on a transparent background with no border —
-  the number _is_ the field. Steppers sit on a separate row below it. They were
-  originally inline beside the value, which clipped `102.5` (83.1px of glyph in
-  62px of box).
+  a mono kicker label, then the value on its own full-width 44px line in **Sora
+  700 at 29px, `-0.02em`**, tabular, centred, on a transparent background with
+  no border — the number _is_ the field. That is hand-set, not the `input` ramp
+  step: `--text-input` (500 / 30px) is consumed nowhere in `src/`. Steppers sit
+  on a separate row below the value; they were originally inline beside it,
+  which clipped `102.5` — 83.1px of glyph in a 62px box.
 - **Native controls** inherit the app's family, size, leading, tracking and
   colour — but never `font: inherit`, which also resets weight.
 
 ### Navigation
 
-- **Header:** A sticky band carrying the app's one gradient, which separates
-  chrome from content without a border cutting a hard line directly above the
-  hot path. 430px inner container, 18px gutter, 12px-tall wordmark at centre-
-  start, back chevron at inline-start when a screen has a parent, avatar and
-  overflow at inline-end. All chrome buttons are 48×48 `btn-quiet`.
+- **Header:** A sticky band carrying a gradient, which separates chrome from
+  content without a border cutting a hard line directly above the hot path.
+  430px inner container, 18px gutter; back chevron at inline-start when a
+  screen has a parent, avatar and overflow at inline-end.
+- **The wordmark is `height={15.5}`, and that prop does not mean what it looks
+  like.** It sets the **Latin** lockup's ink height. The Arabic mark is drawn at
+  `height × SOUL_SCALE` with `SOUL_SCALE = 2.2`, so the same call renders a
+  **34.1px** وزن barbell. Changing this number changes the two locales by
+  different amounts; check both before touching it.
+- **Chrome buttons are 48×48, but only two of three are `btn-quiet`.** Back and
+  overflow are `btn-base btn-quiet h-12 w-12`; the avatar is a bare
+  `flex h-12 w-12` — same target, no button styling, because its appearance is
+  entirely the `Avatar` inside it.
 - **Layers** (picker, set entry, exercise detail) slide in 12px from the inline
   _end_ over 160ms, so they read as arriving from where the tap sent you. The
   translate is logical, so the Arabic flip reverses it for free.
