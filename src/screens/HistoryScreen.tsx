@@ -465,8 +465,10 @@ export function HistoryScreen({ onStart }: { onStart: () => void }) {
           {workouts.map((workout, i) => {
             const open = expanded === workout.id
             const sets = setsByWorkout[workout.id]
+            // tabIndex so focus has somewhere to go when the "Add exercise"
+            // button disables itself mid-await.
             return (
-              <li key={workout.id}>
+              <li key={workout.id} tabIndex={-1}>
                 {i > 0 && <div className="rule-fade" />}
                 <button
                   type="button"
@@ -598,10 +600,17 @@ export function HistoryScreen({ onStart }: { onStart: () => void }) {
                       <div className="mt-3 flex flex-wrap items-center gap-2">
                         <button
                           type="button"
-                          onClick={() => {
+                          onClick={(event) => {
                             // Awaited, so the overlay never opens onto an
                             // empty list. `busy` carries the wait, which is
                             // what the button already uses to say so.
+                            //
+                            // The blur is deliberate: disabling the button the
+                            // reader just pressed drops focus onto <body>, so
+                            // a keyboard or switch user lands back at the top
+                            // of the document. Moving focus to the row first
+                            // keeps them where they were.
+                            event.currentTarget.closest('li')?.focus()
                             setBusy(true)
                             void openCatalogue()
                               .then((ready) => {

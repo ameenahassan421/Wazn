@@ -267,6 +267,12 @@ export function SettingsScreen({
           }
           void supabase.auth.signOut()
         }}
+        // Disarms when you look away. Every other two-tap control in the app
+        // disarms — the header's Discard resets when its menu closes — but
+        // this one stayed primed for the life of the screen, so a stray second
+        // tap minutes later signed you out. The queue survives that; the
+        // session does not.
+        onBlur={() => setConfirmSignOut(false)}
         className={`flex min-h-12 items-center px-[18px] text-start text-sm font-semibold ${
           confirmSignOut ? 'text-accent' : 'text-muted'
         }`}

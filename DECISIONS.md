@@ -5733,3 +5733,23 @@ is in the app.
 It is a pure function with its own tests because it decides whether a row is
 destroyed, and that rule should be readable and pinned rather than inline in a
 two-hundred-line load.
+
+## 2026-08-14: the last three minor findings
+
+**Sign out stayed armed forever.** Every other two-tap control in the app
+disarms — the header's Discard resets when its menu closes — but this one held
+its primed state for the life of the screen, so a stray second tap minutes
+later signed you out. It disarms on blur now. The queue survives a sign-out;
+the session does not.
+
+**The Hevy importer's writing phase promised an exit it did not have.** Its own
+copy said "nothing is lost if you leave", and there was nothing to leave with:
+no control in that phase, and no header chevron either, because the importer is
+a view of the Log screen and App draws no chevron on `log`. Stop is checked
+between workouts — the same boundary `run(plan, i)` already resumes from — so
+stopping cannot land mid-write.
+
+**Focus fell to `<body>` on "Add exercise".** Awaiting the catalogue disables
+the button the reader just pressed, and disabling a focused element drops focus
+to the document. A keyboard or switch user was thrown back to the top of a long
+History page. Focus moves to the row first.
