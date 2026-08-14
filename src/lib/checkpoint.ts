@@ -56,6 +56,32 @@ export const CHECKPOINT_VERSION = 2
  */
 export const MAX_AGE_MS = 12 * 60 * 60 * 1000
 
+/**
+ * Is this open workout an abandoned tap rather than a session in progress?
+ *
+ * A workout row exists from the moment Start is pressed, before any set. The
+ * app used to delete empty ones when the Log screen unmounted, which meant
+ * leaving that screen at all destroyed them — tapping the avatar to check a
+ * setting between Start and the first set came back to nothing, because an
+ * unmount cannot tell "abandoned" from "went to look at something".
+ *
+ * Age can. Two conditions, both required: nothing logged, and older than the
+ * checkpoint's own expiry — past which the app has already stopped trying to
+ * restore it. A pure function because it decides whether a row is destroyed,
+ * and that rule should be readable and pinned rather than inline in a load.
+ */
+export function isAbandonedWorkout(
+  startedAt: string,
+  setCount: number,
+  nowMs: number = Date.now(),
+): boolean {
+  if (setCount > 0) return false
+  const started = new Date(startedAt).getTime()
+  // An unparseable date is not evidence of abandonment.
+  if (!Number.isFinite(started)) return false
+  return nowMs - started > MAX_AGE_MS
+}
+
 export interface WorkoutCheckpoint {
   version: number
   workoutId: string

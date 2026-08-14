@@ -428,22 +428,37 @@ export function SetEntry({
           <label htmlFor="weight" className="kicker mb-1.5 block">
             {t('entry.weight.panel', { unit })}
           </label>
-          <div className="flex items-center justify-between gap-1">
+          {/* Value above, steppers below.
+              
+              They used to flank the value in one row, which is what the design
+              draws — but the design's steppers are 44-46px squares and this
+              app's touch floor is 48px (a recorded deliberate yield), and at
+              390px that difference is decisive. Measured in the browser at the
+              shipped size: `102.5` is 83.1px wide and had 62px; `12` is 38.8px
+              and had 21px. Both fields clipped their own value, on the screen
+              whose entire job is logging a set in under thirty seconds.
+
+              Stacking gives the figure the panel's full inner width — 166px
+              and 125px — so it fits with room to spare, keeps the steppers at
+              48px, keeps the figures large and tabular, and puts the two
+              buttons further apart, which is easier to hit one-handed than a
+              pair squeezed either side of a number. */}
+          <input
+            id="weight"
+            type="number"
+            inputMode="decimal"
+            step="any"
+            min="0"
+            value={draft.weight}
+            onChange={(e) => setDraft((d) => ({ ...d, weight: e.target.value }))}
+            placeholder="BW"
+            className="tnum font-display h-11 w-full bg-transparent text-center text-[29px] font-bold tracking-[-0.02em] outline-none placeholder:text-muted"
+          />
+          <div className="mt-1.5 flex items-center justify-between">
             <StepperButton
               label={t('entry.weight.decrease')}
               sign="down"
               onPress={() => stepWeight(-1)}
-            />
-            <input
-              id="weight"
-              type="number"
-              inputMode="decimal"
-              step="any"
-              min="0"
-              value={draft.weight}
-              onChange={(e) => setDraft((d) => ({ ...d, weight: e.target.value }))}
-              placeholder="BW"
-              className="tnum font-display h-12 w-full min-w-0 flex-1 bg-transparent text-center text-[29px] font-bold tracking-[-0.02em] outline-none placeholder:text-muted"
             />
             <StepperButton
               label={t('entry.weight.increase')}
@@ -457,22 +472,22 @@ export function SetEntry({
           <label htmlFor="reps" className="kicker mb-1.5 block">
             {t('entry.reps.panel')}
           </label>
-          <div className="flex items-center justify-between gap-1">
+          <input
+            id="reps"
+            type="number"
+            inputMode="numeric"
+            step="1"
+            min="0"
+            value={draft.reps}
+            onChange={(e) => setDraft((d) => ({ ...d, reps: e.target.value }))}
+            placeholder="0"
+            className="tnum font-display h-11 w-full bg-transparent text-center text-[29px] font-bold tracking-[-0.02em] outline-none placeholder:text-muted"
+          />
+          <div className="mt-1.5 flex items-center justify-between">
             <StepperButton
               label={t('entry.reps.decrease')}
               sign="down"
               onPress={() => stepReps(-1)}
-            />
-            <input
-              id="reps"
-              type="number"
-              inputMode="numeric"
-              step="1"
-              min="0"
-              value={draft.reps}
-              onChange={(e) => setDraft((d) => ({ ...d, reps: e.target.value }))}
-              placeholder="0"
-              className="tnum font-display h-12 w-full min-w-0 flex-1 bg-transparent text-center text-[29px] font-bold tracking-[-0.02em] outline-none placeholder:text-muted"
             />
             <StepperButton
               label={t('entry.reps.increase')}

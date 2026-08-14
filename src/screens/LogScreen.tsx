@@ -75,7 +75,6 @@ import {
   discardWrites,
   enqueue,
   finishOpId,
-  hasPendingStart,
   head,
   newId,
   pendingSetCount,
@@ -90,6 +89,7 @@ import {
   isUsable,
   load as loadCheckpoint,
   save as saveCheckpoint,
+  isAbandonedWorkout,
 } from '../lib/checkpoint'
 import { indexedDbStore } from '../lib/idb'
 import {
@@ -534,36 +534,18 @@ export function LogScreen({
   /**
    * A workout with no sets in it is not a workout — it is a tap.
    *
-   * Four of them are sitting in production History right now as blank rows,
-   * from desktop taps that started a session and walked away. They cannot be
-   * distinguished from a real workout after the fact, so they are removed at
-   * the moment they are abandoned instead.
+   * Four of them are sitting in production History as blank rows, from desktop
+   * taps that started a session and walked away.
    *
-   * Only on unmount — leaving the Log tab — and on finish. Deliberately NOT on
-   * `pagehide`: that fires when a phone is pocketed, and a workout started at
-   * the rack before the first set is exactly the case that must survive it.
+   * This used to be swept on unmount, which was wrong in a way that cost real
+   * sessions: leaving the Log screen AT ALL destroyed an empty workout, so
+   * tapping the avatar to check a setting between pressing Start and logging
+   * the first set came back to nothing. An unmount cannot tell "abandoned"
+   * from "went to look at something".
+   *
+   * The sweep now happens in `load()` and is decided by age instead — see the
+   * `expired` check there. Nothing is deleted while somebody is in the app.
    */
-  const emptyWorkoutId = useRef<string | null>(null)
-  useEffect(() => {
-    emptyWorkoutId.current = workout && sets.length === 0 ? workout.id : null
-  }, [workout, sets.length])
-  useEffect(
-    () => () => {
-      const id = emptyWorkoutId.current
-      if (!id) return
-      // A workout whose own insert is still queued has never reached the
-      // server, so there is nothing to delete — dropping its writes IS the
-      // discard. Deleting anyway would be a request that can only 404, and
-      // leaving the insert queued would sync the blank row this guard exists
-      // to prevent.
-      const landed = !hasPendingStart(queueRef.current, id)
-      const rest = queueRef.current.filter((w) => w.workoutId !== id)
-      queueRef.current = rest
-      void putQueue(offlineStore, userId, rest)
-      if (landed) void supabase.from('workouts').delete().eq('id', id)
-    },
-    [offlineStore, userId],
-  )
 
   const updateQueue = useCallback((fn: (q: QueuedWrite[]) => QueuedWrite[]) => {
     queueRef.current = fn(queueRef.current)
@@ -1118,6 +1100,21 @@ export function LogScreen({
     const anyHistory = (anyWorkout.data ?? []).length > 0
     setHasHistory(anyHistory)
 
+    /*
+     * The open workout, unless it is an abandoned tap.
+     *
+     * A workout row is created the moment Start is pressed, before any set
+     * exists. That used to be cleaned up when the Log screen unmounted — which
+     * meant leaving home AT ALL destroyed it: tapping the avatar to check a
+     * setting between pressing Start and logging the first set came back to no
+     * workout. The cleanup could not tell "abandoned" from "went to look at
+     * something", because an unmount looks identical either way.
+     *
+     * Age can tell them apart. Nothing is deleted while you are in the app;
+     * an empty workout older than the checkpoint's own expiry is one nobody is
+     * coming back to, and the checkpoint has already given up on it. This
+     * costs no extra query — the row and its sets are both already in hand.
+     */
     const active = (open.data ?? [])[0] as Workout | undefined
     setWorkout(active ?? null)
 
@@ -1136,7 +1133,18 @@ export function LogScreen({
         setError(describeError(tRef.current('log.error.load_sets'), setsError))
       } else {
         restoredSets = (data ?? []) as WorkoutSet[]
-        setSets(restoredSets)
+        // Now is when the "nothing logged" half can be proved. See
+        // `isAbandonedWorkout` for why age decides this and not an unmount.
+        if (isAbandonedWorkout(active.started_at, restoredSets.length)) {
+          void supabase.from('workouts').delete().eq('id', active.id)
+          setWorkout(null)
+          setSets([])
+          setOrder([])
+          setRemoved(new Set())
+          setExtraRows(new Map())
+        } else {
+          setSets(restoredSets)
+        }
       }
 
       // The arrangement, restored. Absent when 0020 is not applied, in which
@@ -1706,7 +1714,6 @@ export function LogScreen({
 
     // Before clearing state, so the unmount guard cannot chase a row that is
     // already gone.
-    emptyWorkoutId.current = null
     clearBoardSnapshot()
     timer.stop()
     setWorkout(null)
@@ -1932,7 +1939,6 @@ export function LogScreen({
     // The session is over, so the cached board must stop describing it — or a
     // reopen with no signal would restore the workout that was just finished.
     clearBoardSnapshot()
-    emptyWorkoutId.current = null
     timer.stop()
     setWorkout(null)
     setSets([])

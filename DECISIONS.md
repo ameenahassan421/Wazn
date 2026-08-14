@@ -5696,3 +5696,60 @@ What it actually needs is a different arrangement of the panel — value above,
 steppers below, or the two panels stacked — which is a design decision about
 the single most-used control in the app, not a padding tweak. Written down
 rather than guessed at.
+
+## 2026-08-14: the two decisions Ameen deferred
+
+**The steppers stack.** Measured in the browser at the shipped size rather
+than estimated: `102.5` is 83.1px wide with 62px of room, and `12` is 38.8px
+with 21px. Both fields were clipping their own value — not just reps, and not
+just an unusual case: 102.5 kg is an ordinary barbell load.
+
+Every in-row fix failed. Trimming the panel padding and gaps recovers about
+44px across the row against the ~49px needed, with nothing left over.
+Shrinking the steppers would silently reverse the 48px touch floor, which is a
+recorded deliberate yield from the design's own 44–46px. Shrinking the figure
+fights "numbers render large and tabular". Equalising the panels moves the
+problem onto weight, which is why the split is 1.3 : 1 in the first place.
+
+So the value goes on its own line and the steppers sit below it, spread to the
+panel's edges. The figure gets the full inner width — 166px and 125px against
+83.1 and 38.8 — the buttons stay 48px, the figures stay large, and the two
+targets end up further apart, which is easier to hit one-handed than a pair
+squeezed either side of a number. It departs from the design's drawing, which
+assumed steppers this app does not use.
+
+**Empty workouts are swept by age, not by unmount.** A workout row exists from
+the moment Start is pressed, before any set. Deleting empty ones on unmount
+meant leaving the Log screen at all destroyed them — tapping the avatar to
+check a setting between Start and the first set came back to nothing. An
+unmount cannot tell "abandoned" from "went to look at something".
+
+Age can. `isAbandonedWorkout` requires both halves: nothing logged, and older
+than the checkpoint's own expiry, past which the app has already stopped
+trying to restore it. It runs during `load()` and costs no extra query — the
+row and its sets are both already in hand. Nothing is deleted while somebody
+is in the app.
+
+It is a pure function with its own tests because it decides whether a row is
+destroyed, and that rule should be readable and pinned rather than inline in a
+two-hundred-line load.
+
+## 2026-08-14: the last three minor findings
+
+**Sign out stayed armed forever.** Every other two-tap control in the app
+disarms — the header's Discard resets when its menu closes — but this one held
+its primed state for the life of the screen, so a stray second tap minutes
+later signed you out. It disarms on blur now. The queue survives a sign-out;
+the session does not.
+
+**The Hevy importer's writing phase promised an exit it did not have.** Its own
+copy said "nothing is lost if you leave", and there was nothing to leave with:
+no control in that phase, and no header chevron either, because the importer is
+a view of the Log screen and App draws no chevron on `log`. Stop is checked
+between workouts — the same boundary `run(plan, i)` already resumes from — so
+stopping cannot land mid-write.
+
+**Focus fell to `<body>` on "Add exercise".** Awaiting the catalogue disables
+the button the reader just pressed, and disabling a focused element drops focus
+to the document. A keyboard or switch user was thrown back to the top of a long
+History page. Focus moves to the row first.

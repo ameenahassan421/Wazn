@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  isAbandonedWorkout,
   CHECKPOINT_KEY,
   CHECKPOINT_VERSION,
   MAX_AGE_MS,
@@ -244,5 +245,35 @@ describe('storage, guarded', () => {
     expect(() => save(null, body)).not.toThrow()
     expect(load(null)).toBeNull()
     expect(() => clear(null)).not.toThrow()
+  })
+})
+
+/*
+ * The rule that decides whether a workout row is destroyed.
+ *
+ * It replaced an unmount-time sweep that could not tell "abandoned" from
+ * "went to check a setting", and so deleted a session somebody was about to
+ * come back to. Both halves matter, which is why both are asserted.
+ */
+describe('isAbandonedWorkout', () => {
+  const HOUR = 60 * 60 * 1000
+  const now = Date.parse('2026-08-14T12:00:00.000Z')
+  const ago = (ms: number) => new Date(now - ms).toISOString()
+
+  it('leaves a workout alone while anything is logged in it, however old', () => {
+    expect(isAbandonedWorkout(ago(48 * HOUR), 1, now)).toBe(false)
+  })
+
+  it('leaves a fresh empty workout alone — this is the Settings-visit case', () => {
+    expect(isAbandonedWorkout(ago(30 * 1000), 0, now)).toBe(false)
+    expect(isAbandonedWorkout(ago(11 * HOUR), 0, now)).toBe(false)
+  })
+
+  it('sweeps an empty workout once the checkpoint has given up on it', () => {
+    expect(isAbandonedWorkout(ago(13 * HOUR), 0, now)).toBe(true)
+  })
+
+  it('does not treat an unreadable date as evidence of abandonment', () => {
+    expect(isAbandonedWorkout('not a date', 0, now)).toBe(false)
   })
 })

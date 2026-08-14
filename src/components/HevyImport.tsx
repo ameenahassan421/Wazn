@@ -58,6 +58,8 @@ export function HevyImport({
   const [error, setError] = useState<string | null>(null)
   const [progress, setProgress] = useState<Progress>({ done: 0, total: 0 })
   const inputRef = useRef<HTMLInputElement>(null)
+  /** Set by Stop; read between workouts, never mid-write. */
+  const stopped = useRef(false)
 
   async function onFile(file: File | undefined) {
     if (!file) return
@@ -91,6 +93,7 @@ export function HevyImport({
   async function run(startPlan: ImportPlan, from: number) {
     setPhase('writing')
     setError(null)
+    stopped.current = false
 
     // Unmatched lifts become custom exercises owned by this user. Created once,
     // up front: a name that fails here would otherwise fail on every workout
@@ -132,6 +135,14 @@ export function HevyImport({
     setProgress({ done: from, total: startPlan.workouts.length })
 
     for (let i = from; i < startPlan.workouts.length; i += 1) {
+      // Checked between workouts, which is the boundary the whole flow is
+      // built on: what has landed stays, and `run(plan, i)` picks up here.
+      if (stopped.current) {
+        setProgress({ done: i, total: startPlan.workouts.length })
+        setPhase('preview')
+        if (i > from) onImported()
+        return
+      }
       const failure = await writeWorkout(startPlan.workouts[i], userId, byName, t)
       if (failure) {
         setError(failure)
@@ -238,9 +249,23 @@ export function HevyImport({
             {formatCount(progress.done)} / {formatCount(progress.total)}
           </p>
           <p className="mt-1 text-[11px] text-muted">
-            Keep this screen open. Nothing is lost if you leave — what has landed stays,
-            and you can pick up where you stopped.
+            Nothing is lost if you stop — what has landed stays, and you can pick up
+            where you left off.
           </p>
+          {/* The copy promised you could leave and there was nothing to leave
+              with: no control in this phase, and no header chevron either,
+              because the importer is a view of the Log screen. Stopping is
+              safe at a workout boundary, which is the same boundary the
+              resume path already restarts from. */}
+          <button
+            type="button"
+            onClick={() => {
+              stopped.current = true
+            }}
+            className="btn-base btn-secondary mt-3 h-12 w-full text-sm"
+          >
+            Stop
+          </button>
         </div>
       )}
 
