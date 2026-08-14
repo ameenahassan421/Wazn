@@ -63,6 +63,8 @@ typography:
     lineHeight: 1.2
 rounded:
   sm: '4px'
+  chip: '5px'
+  tag: '6px'
   md: '8px'
   thumb: '12px'
   lg: '14px'
@@ -93,18 +95,16 @@ components:
     height: '48px'
     padding: '0 16px'
   button-quiet:
-    textColor: '{colors.graphite-muted}'
+    textColor: 'color-mix(in srgb, #16130e 55%, transparent)'
     rounded: '{rounded.md}'
     height: '48px'
     padding: '0 16px'
   surface-card:
     backgroundColor: '{colors.chalk-surface}'
     rounded: '{rounded.xl}'
-    padding: '14px 18px'
   surface-panel:
     backgroundColor: '{colors.chalk-surface}'
     rounded: '{rounded.panel}'
-    padding: '12px 14px'
   input-figure:
     textColor: '{colors.graphite}'
     typography: '{typography.input}'
@@ -174,10 +174,11 @@ exactly one hue.
 - **Ember** (`#e8491d`): The material of the iron, never decoration. It marks
   the one action a screen exists for, the record, the live rest bar, and the
   data a coach's note was drawn from. Nothing else in the app carries hue.
-- **Ember Deep** (`#9a3012`): Not a shade choice — a contrast requirement. Ember
-  at full strength clears roughly 4.7:1, which is chrome-and-large-text only.
-  Every small accent string (chips, labels, meta, error text) uses this tier
-  instead, which clears 4.5:1 on every surface in both themes.
+- **Ember Deep** (`#9a3012`): Not a shade choice — a contrast requirement. Every
+  small accent string (chips, labels, meta, error text) uses this tier, and it
+  is the only accent value that clears 4.5:1 on every surface in both themes:
+  6.77:1 on the chalk ground, 7.49:1 on chalk surface, and (as `#f4a68c`)
+  9.28–10.00:1 on iron.
 - **Ember Ink** (`#1c0e08`): The near-black that sits _on_ a filled ember
   surface — the hero button's label, the PR badge's stamp.
 
@@ -187,7 +188,9 @@ exactly one hue.
   gym light.
 - **Chalk Surface** (`#ffffff`): Cards and panels — the objects lying on the
   page.
-- **Chalk Raised** (`#efe9dd`): Menus, the header tint, pressed states.
+- **Chalk Raised** (`#efe9dd`): Menus and pressed states. (The header band is a
+  separate token, `--header-tint: #efe9df` — one digit apart and deliberately
+  not the same value. Don't collapse them.)
 - **Chalk Hairline** (`#e6e0d4`): A drawn border, when something genuinely
   needs a line rather than an edge.
 - **Graphite** (`#16130e`): Text. Warm near-black, never pure black.
@@ -214,9 +217,23 @@ the two themes so that each step keeps its _role_: `300` is always "small
 accent text readable on this ground", `800`–`900` are always "tinted fill".
 Never reach for a step by its lightness; reach for it by its job.
 
-**The 500-Is-Chrome Rule.** `accent-500` on the ground is large text and chrome
-only. Small accent text uses `accent-300`. A 500-on-ground body-copy use is a
-contrast defect, not a taste question.
+**The 500-Is-Chrome Rule.** `accent-500` is large text and chrome only. Small
+accent text uses `accent-300`. A 500-on-ground body-copy use is a contrast
+defect, not a taste question — and it is **worse on the default theme than the
+rule's original wording admitted**. Measured 2026-08-14:
+
+| ember-500 against | ratio      | verdict         |
+| ----------------- | ---------- | --------------- |
+| chalk ground      | **3.51:1** | large text only |
+| chalk surface     | **3.89:1** | large text only |
+| iron surface      | 4.69:1     | passes AA       |
+| iron ground       | 5.06:1     | passes AA       |
+
+The `~4.7:1` figure in `src/index.css` is the **iron-surface** number, written
+when dark was the only theme. Paper became the default on 2026-08-12 and the
+figure was never re-measured; on the theme the app now ships by default, ember
+is a full step worse and clears only the 3:1 large-text bar. Treat 18.66px/700
+or 24px as the floor for any ember string, on either ground.
 
 **The Runtime-Token Rule.** Tailwind v4 drops any `@theme` token nothing
 statically references, so a class name assembled at runtime
@@ -276,6 +293,27 @@ themselves via an unlayered rule after the utilities layer, so no component
 names the family. Author CSS outside a layer outranks utilities — which is
 also why the native-control reset lists longhands and never `font: inherit`
 (the shorthand resets weight, and once pinned every button in the app to 400).
+
+**The Ramp-Is-The-Target Rule.** The scale above is where new work goes, not a
+description of where the app currently is. Measured on 2026-08-14, `src/` holds
+**189 literal `text-[Npx]` uses against 31 uses of the named steps** — and the
+split matters, because the two halves are different problems:
+
+- **135 of the 189 are on-ramp values written the long way** — `text-[11px]`
+  (58), `text-[13px]` (53), `text-[15px]` (22), `text-[19px]` (2). These render
+  identically to `text-micro`, `text-label`, `text-body` and `text-title`. They
+  are a naming inconsistency, safe to convert on sight, and converting them
+  changes no pixels.
+- **54 uses across 16 values are genuinely off-ramp**: 17px (15), 18px (7),
+  12px (4), 26px (4), 16px (3), 22px (3), 14.5px (3), 10px (2), 14px (2), 29px
+  (2), 34px (2), 11.5px (2), 12.5px (2), 20px (1), 27px (1), 54px (1). Most
+  came from the exact-match mandate — `public/prototype.html` is the pixel
+  spec, and matching it beat matching the ramp.
+
+Do not "fix" the second group by rounding it onto the ramp. Those pixels were
+chosen against a spec; changing them is a redesign, not a cleanup. Do use the
+named step for anything new, and do prefer the token when touching one of the
+135 for another reason.
 
 ## Layout
 
@@ -342,8 +380,37 @@ of the four shadows above.
 Corners are generous and graded by the object's job, not by its size. Controls
 are pills or 8px rectangles; **panels** (the things you operate — the weight
 field, the plate card) are 18px; **cards** (the things you read from) are
-20px; thumbnails are 12px. Radii step in a deliberate sequence — 4 / 8 / 12 /
-14 / 18 / 20 / pill — and a component picks the step that matches what it _is_.
+20px; thumbnails are 12px; chips and tags take the two smallest steps, 5px and
+6px. A component picks the step that matches what it _is_.
+
+The scale reaches components by two different routes, and the difference is a
+trap rather than a detail:
+
+| Step             | Value | How you reach it                                    |
+| ---------------- | ----- | --------------------------------------------------- |
+| `--radius-sm`    | 4px   | `rounded-sm`, or `var()`                            |
+| chip             | 5px   | `chip-data`, `tag-pr` (literal, inside the utility) |
+| tag              | 6px   | `tag-neutral`, `tag-accent` (literal)               |
+| `--radius-md`    | 8px   | `rounded-md`, or `var()`                            |
+| `--radius-thumb` | 12px  | `var()` only — **no utility exists**                |
+| `--radius-lg`    | 14px  | `rounded-lg`, or `var()`                            |
+| `--radius-panel` | 18px  | `surface-panel`, or `var()` — **no utility**        |
+| `--radius-xl`    | 20px  | `surface-card`, `rounded-xl`, or `var()`            |
+| `--radius-pill`  | 999px | `var()` only — **no utility**                       |
+
+**The Shadowed Scale Rule.** The radius tokens are declared in `:root`, _not_
+in `@theme`. Tailwind v4 still emits `.rounded-lg { border-radius:
+var(--radius-lg) }`, and the project's `:root` block is parsed after
+Tailwind's — so the project value wins and `rounded-lg` really is 14px, not
+Tailwind's 8px. That is four overrides deep: `sm` 4, `md` 8, `lg` 14, `xl` 20.
+
+**`2xl` is not overridden.** `rounded-2xl` therefore resolves to Tailwind's own
+`1rem` — **16px, smaller than `rounded-xl`'s 20px.** The scale is
+non-monotonic, and it will silently give you a _tighter_ corner than the step
+below it. `ErrorBoundary` was the app's only `rounded-2xl` and was, for exactly
+this reason, the only card in the app not shaped like a card. Never reach past
+`xl`; if you need a larger corner, add the override rather than climbing the
+Tailwind scale.
 
 Rules between list rows **fade out at both ends** (`rule-fade`), so a long
 list reads as one continuous column rather than a stack of boxes. Separators
@@ -395,9 +462,13 @@ also get the knurl.
 ### Cards / Containers
 
 - **`surface-card`** — the object you read from: 20px radius, surface fill,
-  `--shadow-card`, 14px × 18px padding.
+  `--shadow-card`.
 - **`surface-panel`** — the object you operate: 18px radius, surface fill,
   `--shadow-panel` (edge only), flush to the page.
+- **Neither utility sets padding**, and callers do not agree on one: `PlateCard`
+  uses `px-4 py-3`, `SetEntry`'s figure panels `px-3.5 py-3`, its exercise card
+  `px-[18px] py-3.5`. Match the neighbours of whatever you are building rather
+  than expecting the utility to space it.
 - Both are utilities rather than inline recipes because the same composition
   was hand-written in four places and the fifth would have drifted.
 
@@ -494,7 +565,15 @@ stays put.
   gets an ember flash on its own row.
 - **Don't** let anything on the logging path exceed 200ms, and don't put a
   spinner, modal or paywall on it at all.
-- **Don't** take a touch target below 48px.
+- **Don't** take an interactive touch target below 48px. (Display rows may be
+  shorter — a logged set row is `min-h-7`. The floor governs things a thumb
+  aims at.)
+- **Don't** reach for `rounded-2xl` or anything above it. Only `sm`/`md`/`lg`/
+  `xl` are overridden, so `2xl` silently falls back to Tailwind's 16px and
+  renders _tighter_ than `xl`.
+- **Don't** assume a component renders standalone. Most call `useLocale`, so
+  they need `LocaleProvider` around them — without it they throw or render
+  empty, which is how a component looks fine in the app and blank in a preview.
 - **Don't** write `font: inherit` on a native control; it silently resets
   weight and outranks the utility that asked for one.
 - **Don't** add a screen without a door to it on the home screen.
