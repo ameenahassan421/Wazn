@@ -683,9 +683,11 @@ stays put.
   gets an ember flash on its own row.
 - **Don't** let anything on the logging path exceed 200ms, and don't put a
   spinner, modal or paywall on it at all.
-- **Don't** take an interactive touch target below 48px. (Display rows may be
-  shorter — a logged set row is `min-h-7`. The floor governs things a thumb
-  aims at.)
+- **Don't** take an interactive touch target below 48px. Display rows may be
+  shorter — a logged set row is `min-h-7` — but the floor governs anything a
+  thumb aims at. Four shipped controls violate it (`CoachBrief` ×2 and
+  `CoachScreen` at 36px, `FriendsScreen` at 40px); those are backlog, not
+  precedent.
 - **Don't** reach for `rounded-2xl` or anything above it. Only `sm`/`md`/`lg`/
   `xl` are overridden, so `2xl` silently falls back to Tailwind's 16px and
   renders _tighter_ than `xl`.

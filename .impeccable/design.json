@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-08-14T16:20:00Z",
+  "generatedAt": "2026-08-14T16:35:00Z",
   "title": "Design System: Wazn",
   "extensions": {
     "colorMeta": {
@@ -32,6 +32,12 @@
         "displayName": "Ember Ink",
         "canonical": "#1c0e08",
         "note": "The near-black that sits on a filled ember surface."
+      },
+      "ember-stamp": {
+        "role": "primary",
+        "displayName": "Ember Stamp",
+        "canonical": "#401407",
+        "note": "accent-100. The PR badge's lettering, on the darker accent-800 fill rather than on accent-500 — which is why it is a different value from Ember Ink. Unlike Ember Ink it swaps with the theme: #401407 on paper, #fdece5 on iron. 11.14:1 and 9.91:1 against their respective fills."
       },
       "chalk-ground": {
         "role": "neutral",
@@ -84,17 +90,17 @@
         "role": "neutral",
         "displayName": "Iron Ground",
         "canonical": "#0c0b0a",
-        "note": "The dark theme's page. Warm as unlit iron — readable under gym lighting without flashing white mid-set.",
+        "note": "The dark theme's page. Warm as unlit iron — readable under gym lighting without flashing white mid-set. The ramp shown is the dark theme's neutral scale (900 to 100, darkest first). The ground tiers themselves are separate and deliberately tighter: #0c0b0a ground, #161513 surface, #1f1d1a raised, #2a2825 hairline.",
         "tonalRamp": [
-          "#0c0b0a",
-          "#161513",
-          "#1f1d1a",
-          "#2a2825",
           "#292724",
           "#3f3d38",
           "#595650",
           "#75716a",
-          "#8d8983"
+          "#938f88",
+          "#b2aea6",
+          "#cfccc5",
+          "#e5e3de",
+          "#f4f3f0"
         ]
       },
       "iron-surface": {
@@ -156,22 +162,34 @@
       "micro": {
         "displayName": "Micro",
         "purpose": "Set counts, inline units. The smallest legible tier."
+      },
+      "mono-meta": {
+        "displayName": "Mono meta",
+        "purpose": "chip-data's voice — a line of figures, not a stamped label. No tracking, no uppercase."
+      },
+      "stamp": {
+        "displayName": "Stamp",
+        "purpose": "tag-pr. Mono 600 at 0.08em, not uppercased — its content is the fixed literal PR."
+      },
+      "field-figure": {
+        "displayName": "Field figure",
+        "purpose": "The weight and reps values. Hand-set Sora 700/29px; the `input` ramp step is consumed nowhere in src/."
       }
     },
     "shadows": [
       {
         "name": "ring-hairline",
-        "value": "0 0 0 1px var(--color-line), inset 0 1px 0 rgba(255, 255, 255, 0.6)",
+        "value": "0 0 0 1px var(--color-line, #e6e0d4), inset 0 1px 0 rgba(255, 255, 255, 0.6)",
         "purpose": "The default elevation. A hairline ring plus a 1px inset light along the top edge — a milled surface catching room light, not an object floating over the page."
       },
       {
         "name": "shadow-panel",
-        "value": "0 0 0 1px var(--surface-line)",
+        "value": "0 0 0 1px var(--surface-line, rgba(22, 19, 14, 0.06))",
         "purpose": "The object you operate. Edge only, flush to the page."
       },
       {
         "name": "shadow-card",
-        "value": "0 1px 2px var(--surface-line), 0 0 0 1px var(--surface-line)",
+        "value": "0 1px 2px var(--surface-line, rgba(22, 19, 14, 0.06)), 0 0 0 1px var(--surface-line, rgba(22, 19, 14, 0.06))",
         "purpose": "The object you read from. Lifted one millimetre."
       },
       {
@@ -257,7 +275,7 @@
       "refersTo": null,
       "description": "The row a whole session is made of. Arrives with a 90ms 3px rise — it settles onto the stack rather than sliding in, because the question it answers is 'did that save?'",
       "html": "<ul class=\"ds-sets\"><li class=\"ds-set\"><svg class=\"ds-set-ring\" width=\"16\" height=\"16\" viewBox=\"0 0 16 16\" aria-hidden=\"true\"><circle cx=\"8\" cy=\"8\" r=\"6.25\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\"/><circle cx=\"8\" cy=\"8\" r=\"2\" fill=\"currentColor\"/></svg><span class=\"ds-set-n\">1</span><span class=\"ds-set-load\" dir=\"ltr\">100 &times; 8</span><span class=\"ds-set-e1rm\">127 kg</span></li><li class=\"ds-set ds-set--pr\"><svg class=\"ds-set-ring\" width=\"16\" height=\"16\" viewBox=\"0 0 16 16\" aria-hidden=\"true\"><circle cx=\"8\" cy=\"8\" r=\"6.25\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\"/><circle cx=\"8\" cy=\"8\" r=\"2\" fill=\"currentColor\"/></svg><span class=\"ds-set-n\">2</span><span class=\"ds-set-load\" dir=\"ltr\">102.5 &times; 8</span><span class=\"ds-pr\">PR</span><span class=\"ds-set-e1rm\">130 kg</span></li></ul>",
-      "css": ".ds-sets { display: flex; flex-direction: column; gap: 4px; margin: 0; padding: 0; list-style: none; } .ds-set { display: flex; align-items: center; gap: 10px; min-height: 28px; padding: 0 8px; border-radius: 8px; font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 14px; color: var(--color-text, #16130e); font-variant-numeric: tabular-nums; animation: ds-set-commit 90ms ease-out both; } .ds-set--pr { background-color: rgba(232, 73, 29, 0.07); } .ds-set-ring { flex-shrink: 0; color: var(--color-accent, #e8491d); } .ds-set-n { width: 16px; flex-shrink: 0; color: var(--color-muted, #6b6559); } .ds-set-load { flex: 1 1 0; min-width: 0; } .ds-set-e1rm { flex-shrink: 0; font-size: 11px; color: var(--color-muted, #6b6559); } .ds-pr { --ds-knurl: rgba(232, 73, 29, 0.28); display: inline-flex; align-items: center; justify-content: center; height: 22px; padding-inline: 6px; border-radius: 5px; background-color: var(--color-accent-800, #6b210c); background-image: repeating-linear-gradient(45deg, var(--ds-knurl) 0 1px, transparent 1px 5px), repeating-linear-gradient(-45deg, var(--ds-knurl) 0 1px, transparent 1px 5px); color: var(--color-accent-100, #401407); font-size: 11px; font-weight: 600; letter-spacing: 0.08em; } @keyframes ds-set-commit { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: translateY(0); } } @media (prefers-reduced-motion: reduce) { .ds-set { animation-duration: 0.01ms; } }"
+      "css": ".ds-sets { display: flex; flex-direction: column; gap: 4px; margin: 0; padding: 0; list-style: none; } .ds-set { display: flex; align-items: center; gap: 10px; min-height: 28px; padding: 0 8px; border-radius: 8px; font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 14px; color: var(--color-text, #16130e); font-variant-numeric: tabular-nums; animation: ds-set-commit 90ms ease-out both; } .ds-set--pr { background-color: rgba(232, 73, 29, 0.07); } .ds-set-ring { flex-shrink: 0; color: var(--color-accent, #e8491d); } .ds-set-n { width: 16px; flex-shrink: 0; color: var(--color-muted, #6b6559); } .ds-set-load { flex: 1 1 0; min-width: 0; } .ds-set-e1rm { flex-shrink: 0; font-size: 11px; color: var(--color-muted, #6b6559); } .ds-pr { --ds-knurl: rgba(232, 73, 29, 0.28); display: inline-flex; align-items: center; justify-content: center; height: 22px; padding-inline: 6px; border-radius: 5px; background-color: var(--color-accent-800, #f9cfc0); background-image: repeating-linear-gradient(45deg, var(--ds-knurl) 0 1px, transparent 1px 5px), repeating-linear-gradient(-45deg, var(--ds-knurl) 0 1px, transparent 1px 5px); color: var(--color-accent-100, #401407); font-size: 11px; font-weight: 600; letter-spacing: 0.08em; } @keyframes ds-set-commit { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: translateY(0); } } @media (prefers-reduced-motion: reduce) { .ds-set { animation-duration: 0.01ms; } }"
     },
     {
       "name": "PR Badge",
@@ -265,7 +283,7 @@
       "refersTo": "tag-pr",
       "description": "The record stamp. Ember-800 fill with the knurl over it — the only place the texture appears outside a rule, because a record is the one thing worth marking as machined.",
       "html": "<span class=\"ds-pr\">PR</span>",
-      "css": ".ds-pr { --ds-knurl: rgba(232, 73, 29, 0.28); display: inline-flex; align-items: center; justify-content: center; height: 22px; padding-inline: 6px; border-radius: 5px; background-color: var(--color-accent-800, #6b210c); background-image: repeating-linear-gradient(45deg, var(--ds-knurl) 0 1px, transparent 1px 5px), repeating-linear-gradient(-45deg, var(--ds-knurl) 0 1px, transparent 1px 5px); color: var(--color-accent-100, #401407); font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px; font-weight: 600; letter-spacing: 0.08em; }"
+      "css": ".ds-pr { --ds-knurl: rgba(232, 73, 29, 0.28); display: inline-flex; align-items: center; justify-content: center; height: 22px; padding-inline: 6px; border-radius: 5px; background-color: var(--color-accent-800, #f9cfc0); background-image: repeating-linear-gradient(45deg, var(--ds-knurl) 0 1px, transparent 1px 5px), repeating-linear-gradient(-45deg, var(--ds-knurl) 0 1px, transparent 1px 5px); color: var(--color-accent-100, #401407); font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px; font-weight: 600; letter-spacing: 0.08em; }"
     },
     {
       "name": "Data Chip",
@@ -399,10 +417,10 @@
       "Don't add a third gradient. Two exist — the header band and the Log screen's sticky Start cluster — and both separate a pinned layer from scrolling content. Don't put a drop shadow anywhere except the four named tokens.",
       "Don't use emoji, decorative illustration, or a celebration screen. A PR gets an ember flash on its own row.",
       "Don't let anything on the logging path exceed 200ms, and don't put a spinner, modal or paywall on it at all.",
-      "Don't take a touch target below 48px. The rule has four known violations that are backlog, not precedent: CoachBrief x2 and CoachScreen at h-9 (36px), FriendsScreen at h-10 (40px). btn-base sets no height, so the floor is only ever as good as the call site.",
+      "Don't take an interactive touch target below 48px. Display rows may be shorter — a logged set row is min-h-7 — but the floor governs anything a thumb aims at. Four shipped controls violate it (CoachBrief x2 and CoachScreen at 36px, FriendsScreen at 40px); those are backlog, not precedent.",
       "Don't reach for rounded-2xl or anything above it. Only sm/md/lg/xl are overridden, so 2xl silently falls back to Tailwind's 16px and renders tighter than xl.",
       "Don't assume a component renders standalone. Most call useLocale, so they need LocaleProvider around them — without it they throw or render empty, which is how a component looks fine in the app and blank in a preview.",
-      "Don't write font: inherit on a native control; the shorthand silently resets weight, and it once pinned every button in the app to 400. (The stylesheet's comment adds that it outranks the utility — that half is stale: the block now sits in @layer base, which loses to utilities.)",
+      "Don't write font: inherit on a native control; the shorthand silently resets weight, and it once pinned every button in the app to 400. (The stylesheet's comment adds that it \"outranks the utility\" — that half is stale: the block now sits in @layer base, which loses to utilities.)",
       "Don't add a screen without a door to it on the home screen."
     ]
   }
