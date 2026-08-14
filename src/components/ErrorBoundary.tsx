@@ -71,10 +71,15 @@ export class ErrorBoundary extends Component<Props, State> {
   render(): ReactNode {
     if (!this.state.error) return this.props.children
 
+    /* rounded-xl, not 2xl: the project's :root overrides Tailwind's
+       sm/md/lg/xl radii but not 2xl, so `rounded-2xl` resolved to Tailwind's
+       own 16px and rendered SMALLER than `rounded-xl`'s 20px. This card was
+       the app's only 2xl, and so the only card not shaped like a card.
+       See DESIGN.md, the Shadowed Scale Rule. */
     return (
       <section
         role="alert"
-        className="ring-edge mx-auto my-10 w-full max-w-[430px] rounded-2xl bg-surface p-5"
+        className="ring-edge mx-auto my-10 w-full max-w-[430px] rounded-xl bg-surface p-5"
       >
         {/* Amber and outlined, never red — §2.4. A crash is the app's fault,
             and shouting at the user in red does not make it less so. */}
