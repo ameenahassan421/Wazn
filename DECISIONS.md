@@ -5493,3 +5493,27 @@ ProgressScreen's props and tests.
 
 Left open deliberately, with the shape of the fix written down rather than
 half-applied.
+
+## 2026-08-14: invites reached only the people who did not need them
+
+`takeInviteCode()` had exactly one call site — inside `Welcome` — and `Welcome`
+mounts only for an account with no workouts, no routines and nothing in its
+history. So clicking a friend's `/join/` link worked for somebody signing up
+and silently did nothing for everybody else: the code was captured into
+sessionStorage by `captureInviteFromUrl()` and then read by nobody. No error,
+no offer, no follow. The one person guaranteed to be sent an invite link is
+someone who already uses the app.
+
+The card is now `InviteCard`, and `LogScreen` owns the code. It has to be
+LogScreen rather than Welcome: `takeInviteCode` consumes on read, so two
+effects racing for it would spend it on whichever ran first — and the effect
+waits for the load to settle before taking it, for the same reason. Welcome
+receives the resolved inviter as a prop.
+
+On the home it sits above the coach card. An invite is time-sensitive in a way
+a briefing is not: somebody is waiting to be followed back.
+
+Extracting it also gave the follow its own tests, including the one that
+matters — a refused follow says so. That failure was swallowed for as long as
+the feature existed "to keep the first screen calm", and the silence hid the
+fact that every follow was being refused.

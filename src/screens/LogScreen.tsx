@@ -39,6 +39,10 @@ import { RoutineList } from '../components/RoutineList'
 import { InstallPrompt } from '../components/InstallPrompt'
 import { CoachBrief } from '../components/CoachBrief'
 import { Welcome } from '../components/Welcome'
+import { InviteCard } from '../components/InviteCard'
+import { takeInviteCode } from '../lib/invite'
+import { resolveInvite } from '../lib/social'
+import type { Inviter } from '../lib/social'
 import { hasBeenWelcomed, markWelcomed } from '../lib/welcomed'
 import { useWakeLock } from '../lib/use-wake-lock'
 import { RoutineEditor } from '../components/RoutineEditor'
@@ -392,6 +396,17 @@ export function LogScreen({
   const [recordRows, setRecordRows] = useState<RecordSetRow[]>([])
 
   const [view, setView] = useState<View>(initialView)
+
+  // Once per mount, and only after the load has settled: the code is consumed
+  // on read, so taking it before we know which screen is about to render
+  // would spend it on whichever effect happened to run first.
+  useEffect(() => {
+    if (loading || inviteRead.current) return
+    inviteRead.current = true
+    const code = takeInviteCode()
+    if (!code) return
+    void resolveInvite(code).then(setInviter)
+  }, [loading])
   // Onboarding is shown once, to an account with nothing in it, and can be
   // dismissed forward into either path. It is state rather than a route
   // because it is a moment, not a place.
@@ -401,6 +416,19 @@ export function LogScreen({
    * first-run screen came back every time a new user returned to home.
    */
   const [welcomed, setWelcomed] = useState(() => hasBeenWelcomed(userId))
+
+  /**
+   * Whoever invited this person, if they arrived through a /join link.
+   *
+   * Owned here rather than inside `Welcome`, which is where it used to live.
+   * `takeInviteCode()` consumes the code, and Welcome mounts only for an
+   * account with no workouts, no routines and nothing in its history — so an
+   * invite clicked by anyone who had trained before was captured into
+   * sessionStorage and then read by nobody. The offer now reaches the home
+   * screen too, which is the only screen everybody sees.
+   */
+  const [inviter, setInviter] = useState<Inviter | null>(null)
+  const inviteRead = useRef(false)
   const dismissWelcome = () => {
     markWelcomed(userId)
     setWelcomed(true)
@@ -2300,6 +2328,7 @@ export function LogScreen({
   if (!error && !workout && !welcomed && !hasHistory && routines.length === 0) {
     return (
       <Welcome
+        inviter={inviter}
         onGenerate={() => {
           dismissWelcome()
           onOpenCoach()
@@ -2393,6 +2422,11 @@ export function LogScreen({
             without someone moving this line. It draws itself from SQL and
             returns null when it has nothing to say, so it costs no layout on
             a new account and never delays Start. */}
+        {/* Above the coach, because an invite is time-sensitive in a way a
+            briefing is not — somebody is waiting to be followed back. This is
+            the surface the invite never used to reach. */}
+        {inviter && <InviteCard inviter={inviter} />}
+
         <CoachBrief onOpen={onOpenCoach} />
 
         {upNext && (

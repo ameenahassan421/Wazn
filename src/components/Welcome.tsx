@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react'
-import { takeInviteCode } from '../lib/invite'
-import { follow, resolveInvite, nameOf, saveProfile, type Inviter } from '../lib/social'
+import { useState } from 'react'
+import { saveProfile, type Inviter } from '../lib/social'
+import { InviteCard } from './InviteCard'
 import { USERNAME_RE, normalizeUsername } from '../lib/auth-identity'
 import { useAuth } from '../lib/use-auth'
 import { useLocale } from '../lib/locale-context'
@@ -22,20 +22,19 @@ import { useLocale } from '../lib/locale-context'
  * something on their behalf.
  */
 export function Welcome({
+  inviter,
   onGenerate,
   onSkip,
   onImport,
 }: {
+  /** Resolved by LogScreen, which owns the code — see InviteCard. */
+  inviter: Inviter | null
   onGenerate: () => void
   onSkip: () => void
   /** Offered only to a switcher — see the section this renders. */
   onImport: () => void
 }) {
   const { locale, setLocale, t } = useLocale()
-  const [inviter, setInviter] = useState<Inviter | null>(null)
-  const [followed, setFollowed] = useState(false)
-  const [followError, setFollowError] = useState<string | null>(null)
-  const [busy, setBusy] = useState(false)
   const { userId } = useAuth()
   const [username, setUsername] = useState('')
   const [usernameSaved, setUsernameSaved] = useState<string | null>(null)
@@ -43,19 +42,6 @@ export function Welcome({
   const [savingUsername, setSavingUsername] = useState(false)
 
   const toggleLocale = () => setLocale(locale === 'en' ? 'ar' : 'en')
-
-  useEffect(() => {
-    let active = true
-    void (async () => {
-      const code = takeInviteCode()
-      if (!code) return
-      const found = await resolveInvite(code)
-      if (active) setInviter(found)
-    })()
-    return () => {
-      active = false
-    }
-  }, [])
 
   async function claimUsername() {
     if (!userId) return
@@ -75,28 +61,6 @@ export function Welcome({
       )
     } finally {
       setSavingUsername(false)
-    }
-  }
-
-  async function acceptInvite() {
-    if (!inviter) return
-    setBusy(true)
-    setFollowError(null)
-    try {
-      await follow(inviter.user_id)
-      setFollowed(true)
-    } catch (caught) {
-      // This used to swallow the failure to keep the first screen calm, and
-      // that decision hid a real defect for as long as the feature has
-      // existed: every follow was being refused, and the button simply did
-      // nothing. A button that does nothing is worse than an error — the user
-      // taps it again, then decides the app is broken. Say what happened.
-      setFollowed(false)
-      setFollowError(
-        caught instanceof Error ? caught.message : t('welcome.follow.error'),
-      )
-    } finally {
-      setBusy(false)
     }
   }
 
@@ -126,35 +90,7 @@ export function Welcome({
         <p className="mt-2 text-sm text-muted">{t('welcome.body')}</p>
       </div>
 
-      {inviter && (
-        <section
-          className="ring-edge bg-surface px-3 py-3"
-          style={{ borderRadius: 'var(--radius-md)' }}
-        >
-          <p className="kicker mb-1">{t('welcome.invited.heading')}</p>
-          <p className="text-[15px] font-medium">{nameOf(inviter)}</p>
-          <p className="mt-0.5 text-sm text-muted">{t('welcome.invited.body')}</p>
-          <button
-            type="button"
-            onClick={() => void acceptInvite()}
-            disabled={busy || followed}
-            className={`btn-base mt-2.5 h-12 w-full px-4 text-sm disabled:opacity-45 ${
-              followed ? 'btn-secondary' : 'btn-primary'
-            }`}
-          >
-            {followed
-              ? t('welcome.following', { name: nameOf(inviter) })
-              : busy
-                ? t('welcome.follow.busy')
-                : t('welcome.follow', { name: nameOf(inviter) })}
-          </button>
-          {followError && (
-            <p role="alert" className="mt-2 text-sm text-accent-300">
-              {followError}
-            </p>
-          )}
-        </section>
-      )}
+      {inviter && <InviteCard inviter={inviter} />}
 
       {/* Part of identity since the 2026-08-07 auth decisions — a username
           signs you in anywhere an email does — so it is offered here, at the
