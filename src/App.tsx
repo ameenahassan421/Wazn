@@ -9,12 +9,14 @@ import { useBackLayer } from './lib/use-back'
 import { LocaleProvider, useLocale } from './lib/locale-context'
 import { ThemeProvider } from './lib/theme-context'
 import { UnitProvider } from './lib/unit-context'
+import { fetchMyProfile } from './lib/social'
 import { AuthScreen } from './components/AuthScreen'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import { Header } from './components/Header'
-import { TabBar } from './components/TabBar'
-import type { Tab } from './components/TabBar'
 import { LogScreen } from './screens/LogScreen'
+import { takeInviteCode } from './lib/invite'
+import { resolveInvite } from './lib/social'
+import type { Inviter } from './lib/social'
 import { HistoryScreen } from './screens/HistoryScreen'
 
 // All three go through `lazyScreen`, not `lazy`. A deploy retires the hashed
@@ -39,6 +41,29 @@ const CoachScreen = lazyScreen(() =>
   import('./screens/CoachScreen').then((m) => ({ default: m.CoachScreen })),
 )
 
+// Settings is lazy because it is the rarest screen in the app by design: it
+// holds preferences a person sets once. It is also the only lazy screen a
+// brand-new account is likely to open, which is why it is small.
+const SettingsScreen = lazyScreen(() =>
+  import('./screens/SettingsScreen').then((m) => ({ default: m.SettingsScreen })),
+)
+
+/**
+ * Where you are. Not a tab any more.
+ *
+ * The five-tab bar is gone — the audit's S2 finding, "five equal tabs for
+ * five unequal jobs": Log is daily and the other four are occasional, and
+ * equal tabs made the app feel bigger and harder than it is. What replaces it
+ * is the design's home: one Start action, a History circle beside it, and
+ * cards that are themselves the doors to Progress and History.
+ *
+ * Friends keeps its screen and loses its place in the furniture. The audit
+ * calls it "a tab it hasn't earned"; it is now a row in Settings, which is
+ * where somebody who wants it will look, and nowhere in the way of somebody
+ * who does not.
+ */
+export type View = 'log' | 'history' | 'progress' | 'coach' | 'friends' | 'settings'
+
 /**
  * The lazy-screen fallback, as its own component so `t()` runs INSIDE
  * LocaleProvider. Calling it from App would resolve against the default
@@ -50,8 +75,83 @@ function ScreenFallback() {
 }
 
 export default function App() {
-  const { loading, userId } = useAuth()
-  const [tab, setTab] = useState<Tab>('log')
+  const { loading, session, userId } = useAuth()
+  const [tab, setTab] = useState<View>('log')
+  /**
+   * Which view the Log screen opens on when we go there.
+   *
+   * Set explicitly at every navigation site rather than cleared afterwards,
+   * so there is no stale intent to leak: going home from anywhere means the
+   * board, and the empty-history screen's "Start a workout" means the picker.
+   * That button used to be the only place in the app whose label promised
+   * something its press did not do.
+   */
+  /**
+   * True while Progress has a lift's detail page covering it.
+   *
+   * Only ever read while `tab === 'progress'`, so a stale `true` left behind
+   * by an unmount cannot strand another screen without a back chevron. That
+   * is the whole reason it is checked against the tab rather than trusted on
+   * its own — a screen with no way out is worse than the duplicate chevron
+   * this removes.
+   */
+  const [progressSubView, setProgressSubView] = useState(false)
+
+  /**
+   * Whoever invited this person, if they arrived through a /join link.
+   *
+   * Resolved HERE because `takeInviteCode()` consumes the code and every
+   * screen in this app unmounts when you leave it. Owned by LogScreen, the
+   * offer was taken on the first home render and gone the moment you opened
+   * History — the same class of bug as the first-run screen replaying, and
+   * for the same reason. App mounts once per session.
+   */
+  const [inviter, setInviter] = useState<Inviter | null>(null)
+  useEffect(() => {
+    const code = takeInviteCode()
+    if (!code) return
+    let live = true
+    void resolveInvite(code).then((found) => {
+      if (live) setInviter(found)
+    })
+    return () => {
+      live = false
+    }
+  }, [])
+  const [logView, setLogView] = useState<'overview' | 'picker' | 'import'>('overview')
+  const openLog = (view: 'overview' | 'picker' | 'import' = 'overview') => {
+    setLogView(view)
+    setTab('log')
+  }
+  /**
+   * The header's monogram. Fetched here rather than inside the header so the
+   * one request serves both the chip and the Settings screen behind it.
+   *
+   * The fetched name carries the id it belongs to, and the effect never
+   * clears state on its own — a different account simply stops matching, so
+   * the previous person's initial is inert rather than needing to be wiped.
+   * That is the pattern CLAUDE.md's state-handling section requires:
+   * `setState` inside an effect is what the lint rule forbids, and a "clear
+   * it on sign-out" effect is exactly the shape that broke the set auto-fill.
+   */
+  const [profile, setProfile] = useState<{
+    userId: string
+    username: string | null
+  } | null>(null)
+  const name = profile?.userId === userId ? profile.username : null
+
+  useEffect(() => {
+    if (!userId) return
+    let live = true
+    void fetchMyProfile(userId)
+      .then((p) => {
+        if (live) setProfile({ userId, username: p?.username ?? null })
+      })
+      .catch(() => {})
+    return () => {
+      live = false
+    }
+  }, [userId])
 
   /**
    * A different person on this phone gets a blank device.
@@ -67,9 +167,10 @@ export default function App() {
     void reconcileDeviceUser(userId, browserStorage())
   }, [userId])
 
-  // Android back from History or Progress returns to Log — the home tab —
-  // instead of closing the app, matching what a bottom tab bar promises.
-  useBackLayer(tab !== 'log', () => setTab('log'))
+  // Android back from any secondary screen returns home instead of closing
+  // the app. It backs up the header's chevron rather than replacing it: iOS
+  // has no system back gesture to fall back on.
+  useBackLayer(tab !== 'log', () => openLog())
 
   if (supabaseConfigError) {
     return (
@@ -98,16 +199,22 @@ export default function App() {
   }
 
   // The Log tab carries the mark; the others carry their name.
+  // Settings draws its own title beside its own back chevron, so the header
+  // stays on the mark there rather than saying the same word twice.
+  // A screen showing a sub-view carries its own title, so the header stands
+  // down and shows the mark — the same reason Settings has no header title.
   const titleKey =
-    tab === 'history'
-      ? 'nav.history'
-      : tab === 'progress'
-        ? 'nav.progress'
-        : tab === 'coach'
-          ? 'nav.coach'
-          : tab === 'friends'
-            ? 'nav.friends'
-            : null
+    tab === 'progress' && progressSubView
+      ? null
+      : tab === 'history'
+        ? 'nav.history'
+        : tab === 'progress'
+          ? 'nav.progress'
+          : tab === 'coach'
+            ? 'nav.coach'
+            : tab === 'friends'
+              ? 'nav.friends'
+              : null
 
   return (
     // Two boundaries. The inner one is keyed to the tab, so a crashed screen
@@ -119,16 +226,47 @@ export default function App() {
       <ThemeProvider userId={userId}>
         <LocaleProvider userId={userId}>
           <UnitProvider userId={userId}>
-            <Header titleKey={titleKey} />
-            <main className="mx-auto w-full max-w-[430px] px-[18px] pb-28">
+            <Header
+              titleKey={titleKey}
+              name={name}
+              onBack={
+                tab === 'log' || (tab === 'progress' && progressSubView)
+                  ? undefined
+                  : () => openLog()
+              }
+              onOpenSettings={() => setTab('settings')}
+            />
+            {/* The bottom padding matches the sticky clusters' `bottom` value
+                exactly. That is not a coincidence to preserve by accident: a
+                sticky element stops drifting at the end of a scroll precisely
+                when its natural resting place equals the offset it sticks at,
+                and the two hand-tuned negative margins this replaces existed
+                because the old `pb-28` was clearing a tab bar instead. */}
+            <main
+              className="mx-auto w-full max-w-[430px] px-[18px]"
+              style={{ paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 10px)' }}
+            >
               <ErrorBoundary boundary={tab} resetKey={tab}>
                 {tab === 'log' && (
-                  <LogScreen userId={userId} onOpenCoach={() => setTab('coach')} />
+                  <LogScreen
+                    initialView={logView}
+                    inviter={inviter}
+                    userId={userId}
+                    onOpenCoach={() => setTab('coach')}
+                    onOpenHistory={() => setTab('history')}
+                    onOpenProgress={() => setTab('progress')}
+                  />
                 )}
-                {tab === 'history' && <HistoryScreen />}
+                {tab === 'history' && (
+                  <HistoryScreen onStart={() => openLog('picker')} />
+                )}
                 {tab === 'progress' && (
                   <Suspense fallback={<ScreenFallback />}>
-                    <ProgressScreen onOpenCoach={() => setTab('coach')} />
+                    <ProgressScreen
+                      onOpenCoach={() => setTab('coach')}
+                      onStart={() => openLog('picker')}
+                      onSubView={setProgressSubView}
+                    />
                   </Suspense>
                 )}
                 {tab === 'coach' && (
@@ -136,7 +274,7 @@ export default function App() {
                     {/* Saving generated routines sends you to Log, where routines
                     live — the thing you just made is one tap from being
                     started. */}
-                    <CoachScreen onRoutinesSaved={() => setTab('log')} />
+                    <CoachScreen onRoutinesSaved={() => openLog()} />
                   </Suspense>
                 )}
                 {tab === 'friends' && (
@@ -144,9 +282,19 @@ export default function App() {
                     <FriendsScreen userId={userId} />
                   </Suspense>
                 )}
+                {tab === 'settings' && (
+                  <Suspense fallback={<ScreenFallback />}>
+                    <SettingsScreen
+                      userId={userId}
+                      email={session?.user.email ?? null}
+                      joinedAt={session?.user.created_at ?? null}
+                      onFriends={() => setTab('friends')}
+                      onImport={() => openLog('import')}
+                    />
+                  </Suspense>
+                )}
               </ErrorBoundary>
             </main>
-            <TabBar active={tab} onChange={setTab} />
             <Analytics />
           </UnitProvider>
         </LocaleProvider>

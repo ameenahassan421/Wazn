@@ -6,11 +6,17 @@ import { VitePWA } from 'vite-plugin-pwa'
 // One constant, shared with the app so the worker and `device-reset.ts`
 // cannot disagree about which cache holds cross-account data.
 import { READ_CACHE } from './src/lib/cache-names'
+import pkg from './package.json' with { type: 'json' }
 
 const slim = (name: string) =>
   fileURLToPath(new URL(`./build/supabase-slim/${name}.ts`, import.meta.url))
 
 export default defineConfig({
+  // The version the Settings footer prints. Read from package.json rather
+  // than typed into a string somewhere: a version a human has to remember to
+  // bump is a version that is wrong the first time it matters, which is when
+  // somebody is reporting a bug against it.
+  define: { __APP_VERSION__: JSON.stringify(pkg.version) },
   resolve: {
     alias: {
       // 78 KiB of `@supabase` client that Wazn has no feature for: realtime
@@ -32,12 +38,7 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: [
-        'icon.svg',
-        'icon-192.png',
-        'icon-512.png',
-        'icon-maskable-512.png',
-      ],
+      includeAssets: ['icon.svg', 'icon-192.png', 'icon-512.png'],
       manifest: {
         name: 'Wazn',
         short_name: 'Wazn',
@@ -50,17 +51,24 @@ export default defineConfig({
         orientation: 'portrait',
         background_color: '#f7f3ec',
         theme_color: '#f7f3ec',
+        // One tile, both purposes. Through v2 the mark was the وزن barbell
+        // running the full width of the icon, so a maskable crop — up to 20%
+        // off every edge — cut the sleeves off and needed a separate inset
+        // file. v3's mark is a centred plate at 52.6% of the tile: it sits
+        // well inside the safe circle, and a second rendering of the same
+        // artwork would only be another thing to forget to regenerate.
         icons: [
-          { src: '/icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
-          { src: '/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
-          // A separate, inset mark. Reusing the "any" icon here let a
-          // circular mask cut the sleeves off the bar — maskable crops up
-          // to 20% from every edge, and the wordmark runs full width.
           {
-            src: '/icon-maskable-512.png',
+            src: '/icon-192.png',
+            sizes: '192x192',
+            type: 'image/png',
+            purpose: 'any maskable',
+          },
+          {
+            src: '/icon-512.png',
             sizes: '512x512',
             type: 'image/png',
-            purpose: 'maskable',
+            purpose: 'any maskable',
           },
         ],
       },

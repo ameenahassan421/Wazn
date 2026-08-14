@@ -20,6 +20,14 @@ function makeQuery() {
     is: vi.fn(() => q),
     single: vi.fn(() => q),
     maybeSingle: vi.fn(() => q),
+    // The write half. The mock modelled reads only, so the moment a test
+    // exercised a path that starts a workout, `drain()` called
+    // `.insert(...)` on undefined and threw inside a passive effect — an
+    // unhandled error that did not fail the run and so said nothing.
+    insert: vi.fn(() => q),
+    update: vi.fn(() => q),
+    upsert: vi.fn(() => q),
+    delete: vi.fn(() => q),
   }
   q.then = (resolve: (v: unknown) => unknown) =>
     Promise.resolve({ data: [], error: null }).then(resolve)
@@ -76,9 +84,18 @@ beforeEach(() => {
 
 describe('LogScreen locale strings', () => {
   it('renders the English loading string', async () => {
-    render(<LogScreen userId="test-user" onOpenCoach={() => {}} />, {
-      wrapper: Wrapper,
-    })
+    render(
+      <LogScreen
+        userId="test-user"
+        onOpenCoach={() => {}}
+        onOpenHistory={() => {}}
+        onOpenProgress={() => {}}
+        inviter={null}
+      />,
+      {
+        wrapper: Wrapper,
+      },
+    )
     await waitFor(() => {
       expect(screen.getByText('Loading…')).toBeInTheDocument()
     })
@@ -86,11 +103,58 @@ describe('LogScreen locale strings', () => {
 
   it('renders the Arabic loading string when locale is ar', async () => {
     localStorage.setItem('workout.locale', 'ar')
-    render(<LogScreen userId="test-user" onOpenCoach={() => {}} />, {
-      wrapper: Wrapper,
-    })
+    render(
+      <LogScreen
+        userId="test-user"
+        onOpenCoach={() => {}}
+        onOpenHistory={() => {}}
+        onOpenProgress={() => {}}
+        inviter={null}
+      />,
+      {
+        wrapper: Wrapper,
+      },
+    )
     await waitFor(() => {
       expect(screen.getByText('جارٍ التحميل…')).toBeInTheDocument()
     })
+  })
+})
+
+/*
+ * `initialView` is how the empty History and Progress screens' "Start a
+ * workout" reaches the exercise picker.
+ *
+ * It shipped broken and the tests did not notice: seeding `view = 'picker'`
+ * does nothing, because the picker only renders inside the open-workout
+ * branch and the `if (!workout)` return fires first. The button landed the
+ * reader back on home — the exact dead end it was added to close. `'picker'`
+ * is an action, not a view, so it now starts a workout on arrival.
+ */
+describe('LogScreen arrival intent', () => {
+  const props = {
+    userId: 'test-user',
+    onOpenCoach: () => {},
+    onOpenHistory: () => {},
+    onOpenProgress: () => {},
+    inviter: null,
+  }
+
+  it('opens the picker when asked to start, rather than landing on home', async () => {
+    localStorage.setItem('wazn.welcomed.v1.test-user', '1')
+    render(<LogScreen {...props} initialView="picker" />, { wrapper: Wrapper })
+    // The picker's search field — the one control only it has.
+    expect(
+      await screen.findByRole('searchbox', { name: 'Search exercises' }),
+    ).toBeInTheDocument()
+  })
+
+  it('lands on home when no intent is given', async () => {
+    localStorage.setItem('wazn.welcomed.v1.test-user', '1')
+    render(<LogScreen {...props} />, { wrapper: Wrapper })
+    await waitFor(() => {
+      expect(screen.getByText('Start your first workout')).toBeInTheDocument()
+    })
+    expect(screen.queryByRole('searchbox')).not.toBeInTheDocument()
   })
 })

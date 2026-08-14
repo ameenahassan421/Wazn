@@ -1,10 +1,11 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import { describeError, supabase } from '../lib/supabase'
 import { useLocale } from '../lib/locale-context'
 import { muscleLabel } from '../lib/i18n'
 import { useBackLayer } from '../lib/use-back'
 import { useUnit } from '../lib/unit-context'
+import { PlateRing } from '../components/icons'
 import { formatWeight, toDisplayWeight } from '../lib/units'
 import type { Unit } from '../lib/units'
 import {
@@ -86,7 +87,17 @@ const SCALE_MAX = 30
  *  quarter. */
 const FREQUENCY_WEEKS = 13
 
-export function ProgressScreen({ onOpenCoach }: { onOpenCoach: () => void }) {
+export function ProgressScreen({
+  onOpenCoach,
+  onStart,
+  onSubView,
+}: {
+  onOpenCoach: () => void
+  /** The way out of the empty state: straight into the exercise picker. */
+  onStart: () => void
+  /** True while a lift's detail page is covering this screen. */
+  onSubView: (open: boolean) => void
+}) {
   const { unit } = useUnit()
   const { t } = useLocale()
 
@@ -96,7 +107,51 @@ export function ProgressScreen({ onOpenCoach }: { onOpenCoach: () => void }) {
   const [streak, setStreak] = useState<number>(0)
   const [exercises, setExercises] = useState<Exercise[]>([])
   const [detail, setDetail] = useState<Exercise | null>(null)
-  useBackLayer(detail !== null, () => setDetail(null))
+
+  /**
+   * Opening a lift is navigation, and App has to know.
+   *
+   * ExerciseDetail replaces this screen's content but renders UNDER the app
+   * Header, which draws a back chevron on every screen that is not home. So
+   * the reader got two chevrons, stacked, going different places: the
+   * header's to home, this one back to the lift list. Reporting the sub-view
+   * lets App stand its own chevron down and leave the detail owning the way
+   * back.
+   *
+   * Both transitions go through one pair, because the failure mode of getting
+   * this wrong is a screen with NO chevron — a trap, which is worse than the
+   * duplicate it replaces. App also ignores the flag unless it is actually on
+   * Progress, so a stale `true` cannot strand any other screen.
+   */
+  const openDetail = (exercise: Exercise) => {
+    setDetail(exercise)
+    onSubView(true)
+  }
+  /*
+   * And stand it down on the way out, however this screen leaves.
+   *
+   * `closeDetail` covers the chevron and the back gesture; the header avatar
+   * covers neither. It sits on top of the detail page — the Header is sticky
+   * and ExerciseDetail renders under it — so tapping through to Settings
+   * unmounted this screen with `detail` still set and left the flag true.
+   * Progress then came back with no chevron and no title, which is the exact
+   * trap the flag exists to avoid. The comment in App claiming a stale `true`
+   * could not strand another screen was right; it stranded THIS one.
+   */
+  const subViewRef = useRef(onSubView)
+  useEffect(() => {
+    subViewRef.current = onSubView
+  }, [onSubView])
+  // Through a ref, so the cleanup runs on unmount only. Depending on
+  // `onSubView` directly would re-run the effect — and fire its cleanup —
+  // whenever a caller passed a fresh arrow, standing the flag down while the
+  // detail page was still open.
+  useEffect(() => () => subViewRef.current(false), [])
+  const closeDetail = () => {
+    setDetail(null)
+    onSubView(false)
+  }
+  useBackLayer(detail !== null, closeDetail)
 
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -235,7 +290,7 @@ export function ProgressScreen({ onOpenCoach }: { onOpenCoach: () => void }) {
     return (
       <ExerciseDetail
         exercise={detail}
-        onBack={() => setDetail(null)}
+        onBack={closeDetail}
         // A rename has to reach the catalogue this screen is holding, or the
         // strength list keeps the old name until the tab is reloaded and the
         // user is left wondering whether the save took.
@@ -263,7 +318,7 @@ export function ProgressScreen({ onOpenCoach }: { onOpenCoach: () => void }) {
   // list uses, so a record is a way in rather than a dead end.
   const openRecord = (exerciseId: string) => {
     const exercise = byId.get(exerciseId)
-    if (exercise) setDetail(exercise)
+    if (exercise) openDetail(exercise)
   }
 
   return (
@@ -323,7 +378,7 @@ export function ProgressScreen({ onOpenCoach }: { onOpenCoach: () => void }) {
           onRange={setStrengthRange}
           onOpen={(id) => {
             const found = exercises.find((e) => e.id === id)
-            if (found) setDetail(found)
+            if (found) openDetail(found)
           }}
         />
       )}
@@ -331,8 +386,25 @@ export function ProgressScreen({ onOpenCoach }: { onOpenCoach: () => void }) {
       {empty && (
         /* "Log a workout to load the bar" already sits under the balance
            chart; with four blocks between them, saying it twice reads as a
-           stutter. What is left is the part only this line says. */
-        <p className="text-sm text-muted">{t('progress.empty_notice')}</p>
+           stutter. What is left is the part only this line says — and then
+           the thing that fills every chart above it. An empty screen that
+           explains itself and then offers no way forward is still a dead
+           end, however well it explains itself. */
+        <div className="flex flex-col items-start gap-5">
+          <p className="text-sm text-muted">{t('progress.empty_notice')}</p>
+          <button
+            type="button"
+            onClick={onStart}
+            className="btn-base btn-hero press flex h-[52px] items-center justify-center gap-2.5 px-7 text-[15px] font-bold"
+            style={{
+              borderRadius: 'var(--radius-pill)',
+              boxShadow: 'var(--shadow-cta)',
+            }}
+          >
+            <PlateRing size={18} className="shrink-0" />
+            <span>{t('history.empty.cta')}</span>
+          </button>
+        </div>
       )}
     </div>
   )
@@ -930,7 +1002,16 @@ function StrengthList({
   onOpen: (exerciseId: string) => void
 }) {
   const { t, locale } = useLocale()
-  const shown = rows.slice(0, STRENGTH_SHOWN)
+  /*
+   * The list is capped at twelve, and the caption says so out loud — "top 12
+   * of 40 lifts trained in 6M". Naming a truncation without offering a way
+   * past it is worse than either showing everything or saying nothing: the
+   * reader is told the rest exists and given nothing to press. The rows are
+   * already in hand (strength_summary returns them all and the range filter
+   * is client-side), so this costs no query.
+   */
+  const [showAll, setShowAll] = useState(false)
+  const shown = showAll ? rows : rows.slice(0, STRENGTH_SHOWN)
   const scope =
     range === 'ALL' ? '' : t('progress.strength.scope', { range: describeRange(range) })
   const caption =
@@ -1021,6 +1102,18 @@ function StrengthList({
       </ul>
 
       {rows.length > 0 && <p className="mt-1.5 text-[11px] text-muted">{caption}</p>}
+
+      {rows.length > STRENGTH_SHOWN && (
+        <button
+          type="button"
+          onClick={() => setShowAll((v) => !v)}
+          className="btn-base btn-secondary mt-2.5 h-12 w-full text-sm"
+        >
+          {showAll
+            ? t('progress.strength.show_fewer')
+            : t('progress.strength.show_all', { n: String(rows.length) })}
+        </button>
+      )}
 
       <div className="mt-2.5">
         <RangeChips

@@ -7,10 +7,8 @@ import type { RoutineWithRun } from '../lib/rotation'
 import { lazyScreen } from '../lib/lazy-screen'
 import { useUnit } from '../lib/unit-context'
 import { useLocale } from '../lib/locale-context'
-import { formatWeight } from '../lib/units'
 import {
   formatDuration,
-  formatRelativeDay,
   formatShortDate,
   formatSyncedAt,
   formatWeekday,
@@ -27,17 +25,23 @@ import type {
   WorkoutSet,
 } from '../lib/types'
 import { ExercisePicker } from '../components/ExercisePicker'
-import { ExerciseThumb } from '../components/ExerciseThumb'
-import { IconBack, PlateRing } from '../components/icons'
+import { IconBack, IconHistory, PlateRing } from '../components/icons'
 import { SetEntry } from '../components/SetEntry'
 import { SessionQueue } from '../components/SessionQueue'
 import { UpNextCard } from '../components/UpNextCard'
+import { recentRecords, thisWeek } from '../lib/progress'
+import type { RecordSetRow, SessionVolumeRow } from '../lib/progress'
+import { LastPrCard, RecentSessionCard, WeekCard } from '../components/HomeFeed'
+import { countsForRecords, totalVolumeKg } from '../lib/summary'
 import { DEFAULT_REST_SECONDS, useRestTimer } from '../lib/use-rest-timer'
 import { FinishSummary } from '../components/FinishSummary'
 import { RoutineList } from '../components/RoutineList'
 import { InstallPrompt } from '../components/InstallPrompt'
 import { CoachBrief } from '../components/CoachBrief'
 import { Welcome } from '../components/Welcome'
+import { InviteCard } from '../components/InviteCard'
+import type { Inviter } from '../lib/social'
+import { hasBeenWelcomed, markWelcomed } from '../lib/welcomed'
 import { useWakeLock } from '../lib/use-wake-lock'
 import { RoutineEditor } from '../components/RoutineEditor'
 import {
@@ -132,7 +136,24 @@ interface CatalogueSnapshot {
   exerciseNotes: [string, string][]
   routines: RoutineWithRun[]
   hasHistory: boolean
-  lastSession: { startedAt: string; sets: WorkoutSet[] } | null
+  lastSession: LastSession | null
+  /** Finished-workout volume per day, for the home's week row. */
+  weekRows?: SessionVolumeRow[]
+}
+
+/**
+ * The last finished workout, as the home feed needs it.
+ *
+ * `name` and `endedAt` were added for the recent-session card and are optional
+ * on the type for one reason: a snapshot cached by an earlier build has
+ * neither, and a device coming back online after an update must not render
+ * `undefined min`. Everything reading them treats missing as unknown.
+ */
+interface LastSession {
+  startedAt: string
+  sets: WorkoutSet[]
+  name?: string | null
+  endedAt?: string | null
 }
 
 interface BoardSnapshot {
@@ -180,11 +201,37 @@ interface ExerciseBestRow {
 export function LogScreen({
   userId,
   onOpenCoach,
+  onOpenHistory,
+  onOpenProgress,
+  inviter,
+  initialView = 'overview',
 }: {
   userId: string
   /** The routine builder lives on the Coach tab (design v2.1), so Log's
    *  "Generate" is navigation rather than a view of its own. */
   onOpenCoach: () => void
+  /** The home feed's cards are the doors to the other screens now that the
+   *  five-tab bar is going: the week and the last session open History, the
+   *  record opens Progress. */
+  onOpenHistory: () => void
+  onOpenProgress: () => void
+  /** Whoever invited this person, resolved once by App. */
+  inviter: Inviter | null
+  /**
+   * What to do on arrival.
+   *
+   * `'import'` is a view and is seeded straight into `view`. `'picker'` is
+   * NOT — it is an action. Seeding `view = 'picker'` did nothing at all: the
+   * picker only renders inside the open-workout branch, and the `if (!workout)`
+   * return above it fires first, so the empty-history screen's "Start a
+   * workout" landed the reader back on home. It also armed the back layer for
+   * a view that was never on screen, costing one phantom history entry.
+   *
+   * A workout has to exist for the picker to have anything to add to, and
+   * creating one enqueues a write — so it runs on arrival rather than in a
+   * state initialiser.
+   */
+  initialView?: 'overview' | 'picker' | 'import'
 }) {
   const { unit } = useUnit()
   const { t, locale } = useLocale()
@@ -349,16 +396,51 @@ export function LogScreen({
   const [hasHistory, setHasHistory] = useState(false)
   // The idle screen answers "what did I do last time" without a tab change.
   // Only fetched when there is no workout open — mid-session it is noise.
-  const [lastSession, setLastSession] = useState<{
-    startedAt: string
-    sets: WorkoutSet[]
-  } | null>(null)
+  const [lastSession, setLastSession] = useState<LastSession | null>(null)
+  // The home feed's two extra facts. Idle screen only — mid-workout neither
+  // card is on screen, so neither query runs.
+  const [weekRows, setWeekRows] = useState<SessionVolumeRow[]>([])
+  const [recordRows, setRecordRows] = useState<RecordSetRow[]>([])
 
-  const [view, setView] = useState<View>('overview')
+  const [view, setView] = useState<View>(
+    initialView === 'import' ? 'import' : 'overview',
+  )
+  const arrivalDone = useRef(false)
+
+  /*
+   * "Start a workout", arriving from the empty History or Progress screen.
+   *
+   * After the load, because `startWorkout` creates the workout and enqueues
+   * its insert — doing that before the load has read the device would race
+   * the checkpoint restore for the same screen.
+   */
+  useEffect(() => {
+    if (loading || initialView !== 'picker' || arrivalDone.current) return
+    arrivalDone.current = true
+    startWorkout()
+    // `startWorkout` is not a dependency: it is redefined every render and
+    // wrapping it — and `openWorkout`, and everything those two reach — in
+    // useCallback would be a large change to silence a warning about a call
+    // that runs exactly once, guarded by the ref above. Narrowly disabled
+    // rather than left as a standing warning, so a real omission here would
+    // still be visible in review.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading, initialView])
+
   // Onboarding is shown once, to an account with nothing in it, and can be
   // dismissed forward into either path. It is state rather than a route
   // because it is a moment, not a place.
-  const [welcomed, setWelcomed] = useState(false)
+  /**
+   * Read from storage on first render, not defaulted to false. Every screen
+   * here unmounts when you leave it, so a `useState(false)` meant the
+   * first-run screen came back every time a new user returned to home.
+   */
+  const [welcomed, setWelcomed] = useState(() => hasBeenWelcomed(userId))
+
+  const dismissWelcome = () => {
+    markWelcomed(userId)
+    setWelcomed(true)
+  }
   const [current, setCurrent] = useState<Exercise | null>(null)
 
   // The screen stays on while a workout is open. Racking the bar and finding
@@ -873,6 +955,8 @@ export function LogScreen({
     setRoutines(catalogue.value.routines)
     setHasHistory(catalogue.value.hasHistory)
     setLastSession(catalogue.value.lastSession)
+    // Absent from snapshots written before the home feed existed.
+    setWeekRows(catalogue.value.weekRows ?? [])
 
     const active = board?.value.workout ?? null
     setWorkout(active)
@@ -973,6 +1057,19 @@ export function LogScreen({
           new Error('the server did not answer'),
         ),
       )
+      // Read the durable queue off the device BEFORE declaring the load path
+      // finished. The ref gates the effect that persists `queue`, and on this
+      // path `restoreFromCache` returned false — so nothing has merged the
+      // stored queue into memory yet, and flipping the ref first would write
+      // an EMPTY queue straight over somebody's unsent sets. That is a worse
+      // bug than the one this line exists to fix.
+      await restoreQueue(null, [], new Set())
+      // Now the ref, which means "the load path has finished reading the
+      // device" — not that it succeeded. Left false, the effects it gates
+      // never run again for the life of the screen and a set logged after a
+      // failed load would not survive the tab dying. A failed read is exactly
+      // when durability matters most.
+      restoredRef.current = true
       setLoading(false)
       return
     }
@@ -986,6 +1083,10 @@ export function LogScreen({
       // something went wrong if there is genuinely nothing to fall back to.
       if (classifyFailure(failure) === 'offline' && (await restoreFromCache())) return
       setError(describeError(tRef.current('log.error.load_workout'), failure))
+      // Same as the deadline path above, in the same order: merge the durable
+      // queue in first, then declare the read over.
+      await restoreQueue(null, [], new Set())
+      restoredRef.current = true
       setLoading(false)
       return
     }
@@ -1021,7 +1122,9 @@ export function LogScreen({
     setWorkout(active ?? null)
 
     let restoredSets: WorkoutSet[] = []
-    let lastFinished: { startedAt: string; sets: WorkoutSet[] } | null = null
+    let lastFinished: LastSession | null = null
+    let weekHistory: SessionVolumeRow[] = []
+    let prHistory: RecordSetRow[] = []
 
     if (active) {
       const { data, error: setsError } = await supabase
@@ -1105,13 +1208,51 @@ export function LogScreen({
       // Idle screen only. A failure here must not block the screen — like the
       // streak, it is context, not data you cannot log without.
       try {
-        const { data: recent } = await supabase
-          .from('workouts')
-          .select('id, started_at')
-          .not('ended_at', 'is', null)
-          .order('started_at', { ascending: false })
-          .limit(1)
-        const last = (recent ?? [])[0] as { id: string; started_at: string } | undefined
+        /**
+         * The home feed, in one round trip rather than three.
+         *
+         * The recent-session card costs nothing extra: the sets fetched below
+         * already carry weight, reps and the PR flags, so its volume and its
+         * PR pill are arithmetic rather than another query. Only the week row
+         * and the last PR need the server, and the last PR needs it because a
+         * record set three sessions ago is not in the last session's sets.
+         *
+         * All of it is behind the `else` — no workout open. Mid-session none
+         * of these cards is on screen and none of these queries runs.
+         */
+        const [recent, volume, records] = await Promise.all([
+          supabase
+            .from('workouts')
+            .select('id, name, started_at, ended_at')
+            .not('ended_at', 'is', null)
+            .order('started_at', { ascending: false })
+            .limit(1),
+          supabase.rpc('session_volume_history'),
+          // The referenced-table order genuinely orders the parent rows here
+          // because the select uses `!inner`. The limit is a ceiling, not the
+          // list length: `recentRecords` sorts and slices after this.
+          supabase
+            .from('workout_sets')
+            .select(
+              'exercise_id, weight_kg, reps, pr_weight, pr_e1rm, workouts!inner(started_at)',
+            )
+            .or('pr_weight.eq.true,pr_e1rm.eq.true')
+            .order('started_at', { referencedTable: 'workouts', ascending: false })
+            .limit(20),
+        ])
+        weekHistory = (volume.data ?? []) as SessionVolumeRow[]
+        prHistory = ((records.data ?? []) as unknown[]).map((raw) => {
+          const row = raw as RecordSetRow & { workouts?: { started_at: string } | null }
+          return { ...row, started_at: row.workouts?.started_at ?? '' }
+        })
+        const last = (recent.data ?? [])[0] as
+          | {
+              id: string
+              name: string | null
+              started_at: string
+              ended_at: string | null
+            }
+          | undefined
         if (last) {
           const { data: lastSets } = await supabase
             .from('workout_sets')
@@ -1120,6 +1261,8 @@ export function LogScreen({
             .order('set_number')
           lastFinished = {
             startedAt: last.started_at,
+            name: last.name,
+            endedAt: last.ended_at,
             sets: (lastSets ?? []) as WorkoutSet[],
           }
         }
@@ -1127,6 +1270,8 @@ export function LogScreen({
         lastFinished = null
       }
       setLastSession(lastFinished)
+      setWeekRows(weekHistory)
+      setRecordRows(prHistory)
     }
 
     /**
@@ -1145,6 +1290,7 @@ export function LogScreen({
       routines: routineList,
       hasHistory: anyHistory,
       lastSession: lastFinished,
+      weekRows: weekHistory,
     } satisfies CatalogueSnapshot)
 
     restoredRef.current = true
@@ -2073,39 +2219,30 @@ export function LogScreen({
     [resting, unit, locale, restingExerciseId, blocks, sets, crew],
   )
 
-  // Up to three exercises from the last finished session, in the order they
-  // were performed, each collapsed to its working sets.
-  const lastSummary = useMemo(() => {
-    if (!lastSession) return []
-    const order: string[] = []
-    const byExercise = new Map<string, WorkoutSet[]>()
-    for (const set of lastSession.sets) {
-      if (!byExercise.has(set.exercise_id)) {
-        byExercise.set(set.exercise_id, [])
-        order.push(set.exercise_id)
-      }
-      byExercise.get(set.exercise_id)!.push(set)
-    }
-    return order.slice(0, 3).flatMap((id) => {
-      const exercise = exercisesById.get(id)
-      if (!exercise) return []
-      const rows = byExercise.get(id)!
-      const working = rows.filter((s) => s.set_type !== 'warmup')
-      return [
-        {
-          exercise,
-          summary: (working.length > 0 ? working : rows)
-            .slice(0, 2)
-            .map((s) =>
-              s.weight_kg === null
-                ? `BW × ${s.reps ?? '—'}`
-                : `${formatWeight(s.weight_kg, unit)} × ${s.reps ?? '—'}`,
-            )
-            .join(' · '),
-        },
-      ]
-    })
-  }, [lastSession, exercisesById, unit])
+  /**
+   * The three facts the recent-session card states, from sets already on the
+   * device. No query: the last session's rows were fetched for this screen
+   * anyway, and they carry weight, reps and the PR flags.
+   *
+   * `countsForRecords` is what makes the volume agree with the finish screen
+   * and with `session_debrief` — warm-ups and sets missing weight or reps are
+   * out, in all three.
+   */
+  const lastCounted = useMemo(
+    () => (lastSession?.sets ?? []).filter(countsForRecords),
+    [lastSession],
+  )
+  const lastVolumeKg = useMemo(() => totalVolumeKg(lastCounted), [lastCounted])
+  const lastHadPr = useMemo(
+    () => lastCounted.some((s) => s.pr_weight || s.pr_e1rm),
+    [lastCounted],
+  )
+
+  const week = useMemo(() => thisWeek(weekRows), [weekRows])
+  const lastRecord = useMemo(
+    () => recentRecords(recordRows, (id) => exercisesById.get(id)?.name, 1)[0] ?? null,
+    [recordRows, exercisesById],
+  )
 
   if (loading) {
     return <p className="py-10 text-sm text-muted">{t('log.loading')}</p>
@@ -2151,6 +2288,12 @@ export function LogScreen({
   if (view === 'summary' && summary) {
     return (
       <div className="py-3">
+        {/* The summary's own failures were invisible. `applyRoutineUpdate`
+            sets an error like every other mutation here, but this branch
+            rendered FinishSummary alone — so pressing "Update <routine>" and
+            having it fail looked identical to it succeeding. The routine
+            branch above has carried an ErrorNote all along. */}
+        {error && <ErrorNote message={error} />}
         <FinishSummary
           summary={summary}
           unit={unit}
@@ -2187,16 +2330,27 @@ export function LogScreen({
 
   // A brand-new account: no workouts, no routines, nothing to look at. Shown
   // once and only here, because this is the screen the app opens on.
-  if (!workout && !welcomed && !hasHistory && routines.length === 0) {
+  //
+  // `!error` is load-bearing. When `load()` gives up it sets an error and
+  // returns without touching `hasHistory` or `routines`, so they hold their
+  // initial `false` and `[]` — indistinguishable from an empty account. A
+  // lifter with years of history, on a cold device with a bad connection,
+  // was told "let's build your first routine" and never shown what went
+  // wrong. Worse, this screen offers the Hevy import, which is gated on an
+  // empty account precisely because running an export twice duplicates every
+  // workout in it — a failed read must not be what opens that door. Falling
+  // through renders the empty branch below, which already draws ErrorNote.
+  if (!error && !workout && !welcomed && !hasHistory && routines.length === 0) {
     return (
       <Welcome
+        inviter={inviter}
         onGenerate={() => {
-          setWelcomed(true)
+          dismissWelcome()
           onOpenCoach()
         }}
-        onSkip={() => setWelcomed(true)}
+        onSkip={dismissWelcome}
         onImport={() => {
-          setWelcomed(true)
+          dismissWelcome()
           setView('import')
         }}
       />
@@ -2283,13 +2437,48 @@ export function LogScreen({
             without someone moving this line. It draws itself from SQL and
             returns null when it has nothing to say, so it costs no layout on
             a new account and never delays Start. */}
-        <CoachBrief />
+        {/* Above the coach, because an invite is time-sensitive in a way a
+            briefing is not — somebody is waiting to be followed back. This is
+            the surface the invite never used to reach. */}
+        {inviter && <InviteCard inviter={inviter} />}
+
+        <CoachBrief onOpen={onOpenCoach} />
 
         {upNext && (
           <UpNextCard
             routine={upNext}
             busy={routineBusy === upNext.id}
             onStart={() => void startFromRoutine(upNext)}
+          />
+        )}
+
+        {/* The design's two-up row. Both halves are doors: the week goes to
+            History, the record to Progress. With the tab bar gone that is how
+            those screens are reached — content that is also navigation.
+
+            Rendered in every state, including the account that has never
+            trained. It was gated on `hasHistory` for one release, on the
+            reasoning that a card with nothing in it is clutter — but a door
+            that appears only once you have walked through it is not a door,
+            and Progress had no other way in. An empty week row is not empty
+            anyway: it shows today, which is the whole invitation. */}
+        <div className="flex gap-3">
+          <WeekCard days={week} onOpen={onOpenHistory} />
+          <LastPrCard record={lastRecord} onOpen={onOpenProgress} />
+        </div>
+
+        {/* One line where a list of exercise rows used to be. The old recap
+            was the same facts spread over four rows of thumbnails; the design
+            asks the home for a glance, and the depth is one tap away in
+            History rather than printed here. */}
+        {lastSession && (
+          <RecentSessionCard
+            name={lastSession.name ?? null}
+            startedAt={lastSession.startedAt}
+            endedAt={lastSession.endedAt ?? null}
+            volumeKg={lastVolumeKg}
+            hasPr={lastHadPr}
+            onOpen={onOpenHistory}
           />
         )}
 
@@ -2315,7 +2504,7 @@ export function LogScreen({
             duplicate every workout in it, and nothing here de-duplicates.
             Gating on an empty account makes that impossible instead of
             merely unlikely. */}
-        {!hasHistory && (
+        {!hasHistory && !error && (
           <button
             type="button"
             onClick={() => setView('import')}
@@ -2329,51 +2518,37 @@ export function LogScreen({
             at least one workout exists — and never while one is open. */}
         <InstallPrompt earned={hasHistory} />
 
-        {lastSummary.length > 0 && lastSession && (
-          <section>
-            <h2 className="kicker mb-2">
-              {t('log.last_session', {
-                day: formatRelativeDay(lastSession.startedAt, locale),
-              })}
-            </h2>
-            <ul>
-              {lastSummary.map(({ exercise, summary: text }, i) => (
-                <li key={exercise.id}>
-                  {i > 0 && <div className="rule-fade" />}
-                  <div className="flex items-center gap-3 py-2">
-                    <ExerciseThumb exercise={exercise} size={48} />
-                    <span className="min-w-0 flex-1 truncate text-sm">
-                      {exercise.name}
-                    </span>
-                    <span className="tnum shrink-0 text-[13px] text-muted">{text}</span>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          </section>
-        )}
-
         {/* Start, fixed at the thumb — the design's own placement, and the
             reason the routines and the recap can sit below it without pushing
             the one button this screen exists for off the bottom of a scroll.
             Same sticky recipe and tab-bar clearance as the workout's commit
             cluster, so the two screens' hot controls live in one place. */}
         <div
-          className="sticky z-10 -mx-[18px] mt-auto bg-ink px-[18px] pt-3 pb-1"
+          className="sticky z-10 -mx-[18px] mt-auto flex items-center gap-2.5 px-[18px] pt-4"
           style={{
-            bottom: 'calc(max(env(safe-area-inset-bottom, 0px), 10px) + 64px)',
-            // Same correction as the commit cluster, over less trailing
-            // space: this branch adds no bottom padding of its own, so only
-            // main's pb-28 is in the way.
-            marginBottom: 'calc(max(env(safe-area-inset-bottom, 0px), 10px) - 48px)',
-            borderTop: '1px solid var(--divider-solid)',
+            // Flush to the bottom edge, like the design's bar, so the fade
+            // reaches the edge of the screen. Anchored anywhere above it, a
+            // strip of the routines list shows underneath and reads as the
+            // bar having come loose.
+            bottom: 0,
+            // The row owns the safe-area inset now that it sits at 0.
+            paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 22px)',
+            // No drift at the end of the scroll: the correction is `bottom`
+            // minus the trailing space, and the only trailing space is main's
+            // padding. The old value added 64px for a tab bar that is no
+            // longer there.
+            marginBottom: 'calc(-1 * max(env(safe-area-inset-bottom, 0px), 10px))',
+            // The design's fade rather than a rule: the row floats over the
+            // feed instead of cutting it off, and the last card stays half
+            // visible under it as a hint that the list continues.
+            background: 'linear-gradient(180deg, transparent, var(--color-ink) 45%)',
           }}
         >
           <button
             type="button"
             onClick={() => void startWorkout()}
             disabled={saving}
-            className="btn-base btn-hero press flex h-[58px] w-full items-center justify-center gap-2.5 text-[16px] font-bold disabled:opacity-45"
+            className="btn-base btn-hero press flex h-[58px] flex-1 items-center justify-center gap-2.5 text-[16px] font-bold disabled:opacity-45"
             style={{
               borderRadius: 'var(--radius-pill)',
               boxShadow: 'var(--shadow-cta)',
@@ -2381,6 +2556,20 @@ export function LogScreen({
           >
             <PlateRing size={20} className="shrink-0" />
             <span>{hasHistory ? t('log.start') : t('log.start_first')}</span>
+          </button>
+          {/* The one piece of navigation the design keeps as furniture. Every
+              other screen is reached through something that says what it
+              holds — a record, a week, a coach line — but "what did I do
+              before" has no card of its own, and it is the question asked
+              most often after "what am I doing now". */}
+          <button
+            type="button"
+            onClick={onOpenHistory}
+            aria-label={t('nav.history')}
+            className="press flex h-[58px] w-[58px] shrink-0 items-center justify-center rounded-full"
+            style={{ background: 'var(--flip-bg)', color: 'var(--flip-text)' }}
+          >
+            <IconHistory size={22} />
           </button>
         </div>
       </div>
@@ -2630,15 +2819,21 @@ export function LogScreen({
               // objects in one place rather than one object with a seam. With
               // the canvas absent — which is most of the time — a single child
               // makes the gap a no-op and the bar is exactly what it was.
-              className="sticky z-10 -mx-[18px] flex flex-col gap-1.5 bg-ink px-[18px] pt-2 pb-1"
+              className="sticky z-10 -mx-[18px] flex flex-col gap-1.5 bg-ink px-[18px] pt-2"
               style={{
-                // The tab bar is 60px plus its own safe-area padding; 4px of
-                // air keeps the bar off it without a gap you could read as a
-                // seam.
-                bottom: 'calc(max(env(safe-area-inset-bottom, 0px), 10px) + 64px)',
-                // The same hairline the tab bar carries, for the same reason:
-                // it marks the edge where content stops and chrome starts, so
-                // a control passing behind reads as scrolling under a bar
+                // Flush, with the inset as its own padding — same recipe as
+                // the other two clusters. This one kept its `+ 64px` when the
+                // tab bar was retired, so it floated a tab-bar's height above
+                // the bottom with the board showing through underneath.
+                bottom: 0,
+                paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 10px)',
+                // Trailing space below this bar is the overview wrapper's
+                // py-3 plus main's padding. Without this the bar rides up its
+                // own pinned line over the last stretch of the scroll.
+                marginBottom:
+                  'calc(-12px - max(env(safe-area-inset-bottom, 0px), 10px))',
+                // A hairline where content stops and chrome starts, so a
+                // control passing behind reads as scrolling under a bar
                 // rather than as being cut in half.
                 borderTop: '1px solid var(--divider-solid)',
               }}

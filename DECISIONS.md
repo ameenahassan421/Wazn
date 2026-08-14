@@ -5060,3 +5060,639 @@ green throughout.
 The lesson worth keeping: three of the six were introduced by this branch and
 three predate it, and no test could have caught any of them. The two that were
 caught by looking at pixels earlier in the session were caught the same way.
+
+## 2026-08-13: V3 "The Plate" — the brand rollout, and a reversed ring
+
+The redesign handoff (`docs/design/v3-plate/`) gives Wazn a second wordmark:
+lowercase `wazn` with the **a** drawn as a vermilion plate. Four calls inside
+building it.
+
+**1. The Latin lockup is outlines, not live text.** The brand sheet builds it
+from a Sora 800 `<span>`, an SVG plate and another `<span>` in a flex row. The
+app cannot: every font here ships `font-display: swap`, so a wordmark set in
+real type renders in a fallback on first paint and then reflows — the one
+element on screen that must never do that. `scripts/build_logo.py` now
+instantiates the app's **own** `public/fonts/sora-latin.woff2` at wght 800,
+replicates the brand sheet's flex math exactly (advances, the −.05em track's
+trailing space, the 6px gap, the 2px margins, the 16px drop, and where a
+`line-height: 1` box puts the baseline given Sora's typo metrics), and emits
+one composed viewBox as `wordmark-latin-paths.ts`.
+
+Measured against the sheet's own lockup rendered live at 128px type: right
+edges identical, width within 0.25px, height within 1.25px — the residue is
+antialiasing on the `n` shoulder, which overshoots the x-height by 18 units.
+At the in-app 26px that is a quarter of a pixel.
+
+Using the app's own font subset rather than a fresh Google Fonts download is
+deliberate twice over: the letters in the mark are then provably the letters
+in the UI, and this step needs no network.
+
+**2. Both marks, one `height`.** `<Wordmark>` returns the Latin lockup in
+English and the وزن barbell in Arabic — the handoff keeps the barbell as "the
+soul" for the Arabic locale, the splash and About, which `soul` forces in any
+locale. They are different objects (a band of lowercase letters vs. three
+letters with a bar running past both ends and air in its viewBox), so sizing
+both to one number makes the barbell read as a caption. `SOUL_SCALE = 2.2`
+normalises them, and `height` means the Latin mark's ink height everywhere.
+
+**3. One app icon, both manifest purposes.** v2 needed a separate inset
+maskable file because a circular crop cut the sleeves off a full-width
+barbell. v3's mark is a centred gripped plate at 52.6% of the tile — the brand
+sheet's own figure — which sits well inside the 80% safe circle. `icon-192`
+and `icon-512` now declare `any maskable` and `icon-maskable-512.png` is gone.
+The tile is vermilion with a bone plate, the sheet's primary of three.
+
+The share card follows: v3 ink/bone/muted instead of v2's cool greys, and the
+Latin lockup in every locale — a share card is read by people who are not the
+lifter and may not read Arabic, and it is the one place the mark has to
+survive being seen once, small, by a stranger.
+
+**4. The rest ring FILLS. R5b was wrong, and this reverses it.**
+
+R5b read the prototype's `dashoffset = 257.6 × remaining/total` as a
+transcription slip and inverted it, on the grounds that the chip had drained
+since before R5, that the motion utility is named `timer-drain`, and that two
+rings for one timer disagreeing is worse than either convention.
+
+The argument about consistency was right. The conclusion was not. The handoff
+is not ambiguous here — the brand sheet states it as identity, "The rest timer
+_is_ the plate — it fills as you recover" — and the behaviour spec gives the
+same expression. That is two independent statements, one of them about what
+the brand _is_. The consistency objection was an argument for moving both
+rings, not for moving the design's.
+
+So both fill now. Filling also retired a contradiction the chip was already
+carrying: it drained to nothing and then special-cased `done` back to a full
+ring. Under fill, `done` is just `offset = 0` and the special case disappears.
+
+## 2026-08-13: Settings exists now, and the header stopped charging rent
+
+CLAUDE.md's scope list says "a settings screen" is not to be built without
+being asked. This is the ask: the redesign handoff draws it as screen 14, and
+the UX audit files it as an S3 finding with the reason — "Header rents prime
+space to rare actions. kg/lb and language toggles sit in the header on every
+screen; both are set once." Logging the reversal here rather than silently
+deleting the line, the same way offline sync came off that list.
+
+**What moved.** The locale chip, the unit chip, the theme item and sign out.
+The header is now the design's home row: mark at the start, avatar at the end,
+and the avatar is the door. The overflow menu survives with exactly one item,
+Discard, and renders only while a workout is open — so on every other screen
+there is no menu at all.
+
+Discard stays in the header rather than following the others to Settings: it
+acts on the workout in front of you, and L8 exists because Ameen went looking
+for it and the only door was inside the finish control.
+
+**What is NOT on the screen, and why.** The design also draws a default-rest
+row, a body-weight sparkline with a month of history, a coach-nudges toggle
+and a CSV export. None of the four exists: there is no app-level rest default
+(only the per-exercise override and a hardcoded 120s), no measurements table,
+no nudges to switch off, and `lib/csv.ts` is a reader with no writer. Drawing
+four controls that do nothing would be a worse screen than the header was.
+"Import from Hevy" is left on the Log screen for the same class of reason —
+the import view is state inside LogScreen and is gated on an empty account,
+because running the same export twice would duplicate every workout in it.
+
+The theme control is the reverse case. It is not on the design's screen, but
+it exists, and the header was its only home. The audit's own "one conscious
+break" note keeps a gym dark mode on the roadmap, so it lands here beside the
+other two set-once preferences instead of being dropped on the way past.
+
+**Three things the screenshots caught that no check could.**
+
+`bg-raised` on top of `surface-panel` replaced the design's white card with
+the beige used for menus and chips, and the groups stopped reading as cards.
+`surface-panel` already paints the surface; the extra class was doing nothing
+but overriding it.
+
+The avatar came out bone-on-bone and nearly invisible. In this app `ink` names
+the app's GROUND and `text` its foreground, so `bg-ink`/`text-text` is a bone
+disc with dark text under the paper theme — the opposite of the design's ink
+disc. `--flip-bg`/`--flip-text` are the inverted pair and invert again under
+the dark theme, so the disc stays a disc in both.
+
+And `__APP_VERSION__` had to be declared in `vitest.config.ts` as well as
+`vite.config.ts`. Vitest does not read the Vite config, so without it every
+test rendering Settings dies on an undefined global rather than on anything
+real.
+
+## 2026-08-13: the home feed's three cards, and the week that starts on Monday
+
+The design's home carries a "This week" bar row, a "Last PR" tile and a
+one-line recent-session card. All three are built. Four calls inside them.
+
+**Monday, not Sunday.** The design draws the week `S M T W T F S`. Every week
+boundary in this app is Monday-based — `weekStart` shifts so Monday is index
+0, `trainingCalendar` lays out Monday-started weeks, ProgressScreen's own tile
+does, and `weekly_streak` uses `date_trunc('week')`, which is ISO Monday in
+Postgres. Following the design here would put the new card and the streak pill
+six inches apart on one screen disagreeing about how many sessions the week
+has had. This is the second place "exact" deliberately yields, after ink-on-
+ember text and the 48px touch floors.
+
+Seven days always, unlike `trainingCalendar`, which stops at today: the design
+shows the rest of the week as empty cells, and a row that grew a column a day
+would be a strange thing to look at on a Tuesday. Days still to come carry an
+`ahead` flag but are drawn like rest days — nothing on the card distinguishes
+"did not train" from "has not happened", and a third tint would claim more
+than the app knows.
+
+**One heat ramp, not two.** `HEAT_RAMP` moved out of `TrainingCalendar.tsx`
+into `progress.ts`, and both surfaces read it. The design writes its busy
+steps as one vermilion at .45/.7/1 opacity; this app already had a five-step
+scale of theme-aware tokens for exactly that job. Two scales for one idea
+would drift the first time either was touched.
+
+**The recent-session card costs no query.** The idle branch already fetched
+the last finished workout's sets, and those rows carry weight, reps and the
+PR flags — so the volume and the PR pill are arithmetic. The query gained
+`name` and `ended_at` and nothing else. Volume goes through
+`countsForRecords`, so it agrees with the finish screen and with
+`session_debrief` rather than inventing a third definition of volume.
+
+Two facts DID need the server: the week row (`session_volume_history`) and the
+last PR — a record set three sessions ago is not in the last session's sets.
+Both are inside the `else` branch that only runs when no workout is open, and
+both go in the same `Promise.all` as the query that was already there, so the
+idle screen costs one round trip rather than three. Mid-workout none of these
+cards is on screen and none of these queries runs. The Log screen is the
+30-seconds-to-log path and it stays that way.
+
+**The old recap list is gone.** Three exercise rows with thumbnails, stating
+the same session these cards now state in one line. The design asks the home
+for a glance; the depth is one tap into History.
+
+**Known gap, not introduced here:** `formatDuration` returns `min`, `h` and
+`in progress` as hardcoded English, so the Arabic home now shows "52 min".
+History has shown the same string since it was written; localising it means
+threading a locale through every caller, and it is a separate piece of work
+rather than something to bolt onto this one.
+
+## 2026-08-13: the five-tab bar is retired
+
+The audit's S2: "Log is daily; History, Progress, Coach, Friends are
+occasional. Equal tabs make the app feel bigger and harder than it is." What
+replaces it is the design's home — one Start action, a History circle beside
+it, and cards that are themselves the doors.
+
+**Where each screen went.** History is the circle beside Start, the one piece
+of navigation kept as furniture: every other screen is reached through
+something that says what it holds, and "what did I do before" has no card of
+its own. Progress is behind the Last PR card. Coach is behind a new "Ask the
+coach" chip on the coach brief — the design's coach card carries suggestion
+chips and they are what opens the chat, and this is the one of them the app
+can write without inventing the user's question. Settings is the header
+avatar. Friends is a row inside Settings, which is where somebody who wants it
+will look and nowhere in the way of somebody who does not.
+
+**Every screen needs a way out.** The header grows a back chevron on
+everything except home. Android back already returned home, but iOS has no
+system back gesture, and a screen you can enter and not leave is a trap. The
+smoke test now presses that chevron on every screen it opens, so a screen
+shipped without one fails CI rather than shipping.
+
+**The sticky arithmetic got simpler, not more complicated.** Both pinned
+clusters carried `+ 64px` for the tab bar's height and a hand-tuned negative
+margin to undo the `pb-28` that cleared it. The rule underneath is: a sticky
+element stops drifting at the end of a scroll when `marginBottom` equals
+`bottom` minus the trailing space below it. `main`'s padding is now exactly
+the safe-area inset:
+
+- The home's Start row sits at `bottom: 0` so its fade reaches the screen
+  edge, with `marginBottom` cancelling main's padding.
+- The workout's commit cluster sits at the inset, and its correction falls out
+  as a constant `-28px` — its own `pb-4` plus the wrapper's `py-3`, with the
+  safe-area terms cancelling on both sides.
+
+**The two harnesses navigated by tab name and had to be rewritten.** They now
+press the real doors in sequence, and `npm run shots` prints
+`no door to <screen>` when a route cannot be walked. That line found two real
+things immediately: the Last PR card had no `aria-label`, so it announced
+itself as "LAST PR 226 lbs Bench Press (Barbell) · today" and could not be
+addressed by name; and the empty-account pass never left the first-run screen.
+
+**A brand-new account cannot reach Progress, and that is deliberate.** The
+week and record cards are gated on `hasHistory`, so an account with no
+workouts has no door to a screen with nothing on it. One workout in, the Last
+PR card renders "None yet" and Progress is reachable. History stays reachable
+throughout — its empty state is screen 18, and it is the one somebody with no
+data might still want to open.
+
+## 2026-08-13: dead ends are defects, not design
+
+A dead end I had described as deliberate — "a brand-new account can't reach
+Progress, and that is intentional" — was not defensible. Ameen's instruction:
+_"things like this, I expect you to solve."_ A six-lens audit over the whole
+app raised 49 findings; these are the ones that survived independent
+refutation and are fixed here.
+
+**Every screen has a door in every state.** The two-up week/PR row and the
+coach card were gated on having history, which meant the doors to History,
+Progress and Coach appeared only once you had already been there. They render
+in all states now. An empty week row still shows today, which is the whole
+invitation.
+
+**Onboarding did not stick.** `welcomed` was `useState(false)` inside
+LogScreen, and every screen here unmounts when you leave it — so a new user
+who skipped the welcome, opened History and came back was shown the welcome
+again, and again, until their first workout landed. The comment above it said
+"shown once"; nothing made that true. It is now `src/lib/welcomed.ts`, keyed
+by user id in localStorage.
+
+**A failed load was rendering onboarding.** When `load()` gives up it sets an
+error and returns without touching `hasHistory` or `routines`, which are
+indistinguishable from an empty account. A lifter with years of history, on a
+cold device with a bad connection, was told to build their first routine — and
+offered the Hevy import, which is gated on an empty account precisely because
+running an export twice duplicates every workout in it. Both are now gated on
+`!error`.
+
+**Empty states that named a tab bar that no longer exists.** Four strings sent
+people to the "Log tab" and the "Friends tab". History's empty state is now the
+design's screen 18 — the plate at 14%, "Your log starts today.", and a Start
+button that opens the exercise picker rather than merely going home. Progress's
+empty state gets the same button. The intent rides in as `initialView` rather
+than an effect, because a `setView` inside one would be the
+synchronous-setState-in-effect the lint rule forbids.
+
+**Two identical "Back" buttons on Settings.** App gives the Header a chevron on
+every non-home screen; Settings drew its own with the same label, same icon and
+same inline-start edge, directly underneath. App already suppressed the header
+title on Settings so the word was not said twice — the chevron half was missed.
+
+**A third sticky bar still cleared the retired tab bar.** The rest chip on the
+workout board kept its `+ 64px` when the other two were rebased, so it floated a
+tab-bar's height above the screen with the board showing through underneath.
+
+## 2026-08-13: migration 0026 — the tables mean "mine"
+
+The most serious thing the audit found, and it is not a dead end.
+
+`workouts_select_visible` (0011) admits `ended_at is not null and
+private.can_view(user_id)` so the friends feed can read the people you follow.
+That arm applies to **every** select on the table — and fifteen reporting
+functions read `workouts` with no user predicate of their own, trusting RLS to
+scope them: `session_volume_history`, `workout_totals`, `exercise_bests`,
+`muscle_group_weekly_sets`, `weekly_streak`, `adherence`, `exercise_records`,
+`exercise_rep_distribution`, `records_ladder`, `rep_distribution`,
+`weekly_band`, `session_brief`, `session_debrief`, `exercise_usage` and
+`previous_session`. All are SECURITY INVOKER, so all of them saw through it.
+
+Nothing leaks today only because `profiles.visibility` defaults to `'private'`
+and `can_view` answers false. One person setting themselves public or followers
+would have put their finished workouts inside other people's History pages,
+volume charts, streaks and PR comparisons — and `previous_session` feeds the
+mid-workout auto-fill, so a lifter could have been handed a stranger's working
+weight.
+
+**The fix is not fifteen predicates** that must each be remembered again by the
+sixteenth function. The two surfaces that legitimately read other people —
+`social_feed` and `weekly_leaderboard` — become SECURITY DEFINER and state the
+visibility check themselves as `private.can_view(w.user_id)`; both already
+filtered to the caller's follow graph, so that check was the only thing they
+took from RLS. The select policies then tighten to `user_id = (select
+auth.uid())`. A query that forgets to scope itself now returns the caller's own
+rows, which is the safe direction to be wrong in.
+
+`supabase/tests/rls_own_rows.sql` seeds the exact state that used to leak — A
+public and followed by B — and asserts both halves: B's reads and B's stats
+contain nothing of A's, AND B's feed and leaderboard still contain A. Half is
+not enough: tightening the policy while breaking the feed would pass a
+leak-only test. It also asserts B still sees B, because the first draft set
+only `request.jwt.claims` — which the local shim does not read, making
+`auth.uid()` NULL and every isolation assertion a tautology.
+
+**Not applied to production.** Plan §2.6 makes a change to auth an ask. It
+executes cleanly from empty and the suites pass; production is a separate
+decision and needs Ameen's go-ahead.
+
+## 2026-08-13: a failed load was disabling durability for the session
+
+`restoredRef` means "the load path has finished reading the device". Two
+effects gate on it: the one that persists the write queue, and the one that
+writes the workout checkpoint. Both error exits in `load()` returned without
+setting it, so after a failed read neither ran again for the life of the
+screen — a set logged afterwards would not have survived the tab dying, which
+is the single thing the queue and the checkpoint exist to guarantee.
+
+A failed read is exactly when durability matters most: it usually means the
+network is bad, which is when the queue is doing the most work. Both exits
+now set the ref, because the read IS over — the ref never meant "the read
+succeeded".
+
+## 2026-08-13: the second pass through the audit list
+
+Nine more of the confirmed findings, fixed.
+
+**"Open to edit" was a lie.** Tapping a committed row on the workout board
+opened the entry view, which appends. `setEditingKey(row.key)` runs first and
+looks like an edit path, but `editingKey` is read only by `WorkoutOverview`
+for a highlight — `SetEntry` never receives a target row. Correcting a logged
+set lives in History, behind `EditSetDialog`, the only place that component is
+used. The tap is still useful, so the action stays and the name tells the
+truth: `overview.open_logged`.
+
+**Two History failures that ended in nothing.** `openCatalogue` discarded its
+error (`const { data } = ...`) while the caller opened the full-screen picker
+without awaiting it, so a slow or failed fetch put up an empty overlay reading
+`No exercise matches ""`. It now returns whether there is anything to show and
+surfaces its own error, and the button waits. Separately, an expanded row
+whose sets failed to load sat on "Loading sets…" forever: absence from
+`setsByWorkout` is what the render reads as "still loading", so a fetch that
+errored and returned left the row that way with a banner at the top of a
+screen the reader had scrolled past. Failure is now recorded per workout and
+the row offers a retry.
+
+**Two silent failures.** A failed weekly review rendered muted text identical
+to the "no news this week" state, with Regenerate gated on `state === 'ready'`
+— so the one control was absent exactly when it was needed. The retry does not
+set `force`: a failed call produced nothing, so re-asking must not spend a
+regeneration. And the finish screen rendered `FinishSummary` alone, so a failed
+"Update <routine>" looked identical to a successful one.
+
+**Progress named a truncation it would not lift.** The strength list caps at
+twelve and the caption says "top 12 of 40 lifts trained in 6M". Telling the
+reader the rest exists and giving them nothing to press is worse than either
+showing everything or saying nothing. The rows are already in hand, so the
+toggle costs no query.
+
+**Two overlays that could be opened and not closed.** `useBackLayer` gave both
+the Android back gesture, and that was the entire escape route: iOS has no
+system back, the rest layer's only visible exit is a chevron a screen reader
+never reached, and the correction dialog's scrim was an inert div. The new
+`useModalLayer` moves focus in on mount, closes on Escape, and returns focus to
+whatever opened it; both get `aria-modal`, and the scrim now dismisses. The
+dialog's `aria-label` was also hardcoded English.
+
+**Three controls with no accessible name** — the picker's search field, which
+is the primary control of the screen every workout passes through, and both
+Friends inputs, which had ids and no `for`. A placeholder is a hint, not a
+name. The recent-session card was naming itself by concatenating its contents
+("Upper A Today · 48 min · lifted 12,500 kg PR") and never saying where it
+went.
+
+## 2026-08-14: 0026 applied to production
+
+Ameen approved it. Applied through the Management API as migration
+`20260814002900_own_rows_only`, then **verified against the catalogue** rather
+than trusting the `{"success": true}` the call returned — a success flag says
+the statement was accepted, not that the database is in the shape you meant.
+
+Checked before applying, because the ledger is not a reliable account of what
+production has: both permissive policies were present with the `can_view` arm,
+`private.can_view` existed, and `social_feed`'s signature was the 0013 one with
+`best_record_name` / `best_record_e1rm_kg`. That last check was the one that
+mattered — `create or replace function` refuses to change a return type, so a
+signature drift would have failed the migration halfway, after the functions
+but before the policies, leaving the feed definer-scoped against a table that
+still admitted everyone.
+
+What `pg_policies` and `pg_proc` say now:
+
+- `workouts_select_own` — `user_id = (select auth.uid())`
+- `workout_sets_select_own` — the same, through the parent workout
+- both `*_select_visible` policies gone
+- `social_feed`, `weekly_leaderboard` — `prosecdef = true`
+- EXECUTE on both — `authenticated, postgres, service_role`; **`anon` absent**
+- INSERT / UPDATE / DELETE on both tables untouched, still `{authenticated}`
+
+The fifteen unscoped reporting functions are now correct without being
+touched, because the table underneath them means "mine".
+
+## 2026-08-14: ExerciseDetail's two chevrons — tried a layer, reverted
+
+Progress does `if (detail) return <ExerciseDetail/>`, so the sub-view replaces
+the Progress content _inside_ `main` while the app Header stays above it. The
+screen ends up with two back chevrons, stacked, going to different places: the
+header's home, and the detail's back to the lift list.
+
+Fixing it the way Settings was fixed does not work here, because both chevrons
+are load-bearing — one of them has to become context-aware instead of being
+deleted.
+
+**Tried:** rendering ExerciseDetail as a `fixed inset-0` layer over the header,
+the same recipe History's exercise picker uses. It looks right — one chevron,
+full-screen — and typecheck and the unit suite passed. `npm run shots` did not:
+Playwright could not click "Edit" further down the page, because a fixed layer
+scrolls in its own container rather than with the window, so scrolling an
+element into view no longer works the way it does everywhere else in the app.
+
+That is not merely a harness problem. A long sub-page inside its own scroll
+container also loses the mobile address-bar collapse and the browser's scroll
+restoration. The picker gets away with it because it is a short list; this is a
+full page of charts.
+
+**Reverted.** The remaining honest options both cost more than the defect: lift
+`detail` into App so there is one source of truth for navigation, or let a
+screen register a back handler that App resets on every tab change. The second
+is smaller and the more dangerous — a desynced flag hides the header chevron on
+a screen that has no sub-view, which is a trap, and trading a confusing screen
+for an inescapable one is a bad trade. The first is correct and touches
+ProgressScreen's props and tests.
+
+Left open deliberately, with the shape of the fix written down rather than
+half-applied.
+
+## 2026-08-14: invites reached only the people who did not need them
+
+`takeInviteCode()` had exactly one call site — inside `Welcome` — and `Welcome`
+mounts only for an account with no workouts, no routines and nothing in its
+history. So clicking a friend's `/join/` link worked for somebody signing up
+and silently did nothing for everybody else: the code was captured into
+sessionStorage by `captureInviteFromUrl()` and then read by nobody. No error,
+no offer, no follow. The one person guaranteed to be sent an invite link is
+someone who already uses the app.
+
+The card is now `InviteCard`, and `LogScreen` owns the code. It has to be
+LogScreen rather than Welcome: `takeInviteCode` consumes on read, so two
+effects racing for it would spend it on whichever ran first — and the effect
+waits for the load to settle before taking it, for the same reason. Welcome
+receives the resolved inviter as a prop.
+
+On the home it sits above the coach card. An invite is time-sensitive in a way
+a briefing is not: somebody is waiting to be followed back.
+
+Extracting it also gave the follow its own tests, including the one that
+matters — a refused follow says so. That failure was swallowed for as long as
+the feature existed "to keep the first screen calm", and the silence hid the
+fact that every follow was being refused.
+
+## 2026-08-14: the Hevy importer had nowhere to be resumed from
+
+`HevyImport` is built around resumption. `run(plan, from)` restarts at the
+workout it stopped on, the preview says "Resume — N workouts left", and the
+progress panel promises that nothing is lost if you leave. None of that could
+ever be used: the only door to it was the home screen's import button, gated on
+`!hasHistory`, so the moment the first batch of workouts landed the door shut —
+taking the resume flow with it. An import that failed halfway was over.
+
+The gate is not wrong. Running the same export twice duplicates every workout
+in it and nothing de-duplicates, so an empty account is the only state where
+importing is unconditionally safe.
+
+So the door moves rather than opening wider: Settings gets an "Import from
+Hevy" row, which is where the design's screen 14 puts it anyway. The home
+button stays for the first-run case. Reaching it from Settings is a deliberate
+act on a screen nobody visits by accident, rather than a button beside Start.
+
+Mechanically this is `initialView` again — the same prop the empty-history
+screen's "Start a workout" uses — widened to accept `'import'`. The importer is
+a view of the Log screen, so routing to it is navigation, not a second mount.
+
+## 2026-08-14: ExerciseDetail's chevron, done the other way
+
+The layer approach was reverted a session earlier (see above) because a
+`fixed inset-0` sub-page scrolls in its own container rather than with the
+window. This is the fix that entry said was correct: let App know a screen has
+a sub-view, and have App stand its own chevron down.
+
+ProgressScreen reports through `onSubView`, and both transitions go through a
+single `openDetail` / `closeDetail` pair — because the failure mode of getting
+this wrong is a screen with NO chevron, which is a trap, and worse than the
+duplicate it replaces.
+
+The stale-flag risk is closed by reading rather than by writing: App checks
+`tab === 'progress' && progressSubView`, so a `true` left behind by an unmount
+is ignored everywhere else and cannot strand another screen. That is why the
+tab is in the condition at all.
+
+The header title stands down with the chevron — a screen showing a sub-view
+carries its own title, the same reason Settings has no header title. So the
+header shows the mark, and ExerciseDetail's chevron is the only way back.
+
+ExerciseDetail keeps rendering in normal flow, so the window still scrolls it.
+That is the thing the layer version traded away.
+
+## 2026-08-14: the regression pass caught two of my own fixes being wrong
+
+A four-lens review with independent refuters over everything changed since the
+dead-end audit, looking for defects the FIXES introduced. Two survived, and
+both were mine.
+
+**`progressSubView` stranded the screen it was guarding.** ProgressScreen
+reported the sub-view down from `closeDetail`, which covers the chevron and the
+back gesture — and not the header avatar, which sits on top of the detail page
+because the Header is sticky and ExerciseDetail renders under it. Tapping
+through to Settings unmounted ProgressScreen with `detail` still set and left
+the flag true, so Progress came back with no chevron and no title. The comment
+I wrote claiming a stale `true` "cannot strand another screen" was true and
+beside the point: it stranded Progress. It is now stood down on unmount, through
+a ref so the cleanup cannot fire while the detail is still open.
+
+**`initialView: 'picker'` never opened the picker.** The picker renders only
+inside the open-workout branch, and `if (!workout) return <idle home>` fires
+above it — so seeding `view = 'picker'` did nothing and the empty screens'
+"Start a workout" landed the reader back on home. That is the exact dead end
+the prop was added to close, shipped with a commit message saying it was
+closed. It also armed the back layer for a view that was never on screen,
+costing a phantom history entry.
+
+`'picker'` is an action, not a view: a workout has to exist for the picker to
+add to, and creating one enqueues a write, so it runs on arrival rather than in
+a state initialiser. `'import'` really is a view and still seeds directly.
+
+Two things worth keeping from this:
+
+- The claim was in a commit message and in a comment, and neither made it true.
+  What made it visible was an agent rendering the component and diffing the
+  output against `initialView="overview"` — byte-identical.
+- Writing the test afterwards surfaced a second thing: the LogScreen mock
+  modelled reads only, so `drain()` called `.insert` on undefined and threw
+  inside a passive effect. An unhandled error that did not fail the run, and so
+  said nothing, for as long as the mock has existed.
+
+## 2026-08-14: the rest of the regression pass — and a miscount
+
+I reported "two survived refutation" after reading only the truncated head of
+the workflow result. The real number was **14 real verdicts across 22 raised**,
+and most of the distinct ones were mine. Reading the head of a truncated result
+and reporting it as the whole is its own defect; the journal had the full list
+the entire time.
+
+Fixed here, beyond the two already committed:
+
+**The `restoredRef` fix was itself the more dangerous bug.** Flipping the ref on
+a failed load lets the effect that persists `queue` run — and on that path
+`restoreFromCache()` returned false, so nothing had merged the DURABLE queue
+into memory yet. The effect wrote an EMPTY queue straight over somebody's
+unsent sets. The device is read first now, then the ref flips. Fixing a
+durability bug by introducing a data-loss one is the exact shape of mistake the
+review existed to catch.
+
+**`onRoutinesSaved` bypassed `openLog()`.** Saving routines on the Coach screen
+called `setTab('log')` directly, so a stale `logView` survived — and after
+visiting the importer from Settings, saving a routine dropped the reader back
+into the importer. Every route home goes through `openLog` now, which is what
+resets the arrival intent.
+
+**The invite was consumed on the first home render.** `takeInviteCode()` takes,
+and LogScreen unmounts on every navigation — so the offer appeared once and was
+gone the moment you opened History. Same class as the first-run screen
+replaying, same fix: App owns it, because App mounts once.
+
+**`aria-label` on the home cards hid their contents.** A label REPLACES a
+button's content as its accessible name, so labelling the record card "Last PR"
+to stop it reciting itself also stopped it reading out the record — the only
+thing on the card worth hearing. The destination is appended in an `sr-only`
+span instead. Both harnesses now match doors by substring, because those names
+carry live data and pinning them would break on every new PR.
+
+**`aria-modal` was a claim with no mechanism.** Tab walked straight out of both
+dialogs into the page behind — announced as hidden, still focusable, the worst
+of both. The background siblings are now `inert` while a layer is open.
+
+**An empty catalogue is not a failure.** `openCatalogue` returned
+`rows.length > 0`, so a successful fetch of an empty table made "Add exercise"
+do nothing and say nothing. The picker has its own empty state and is the
+honest place to land.
+
+Left open: two pinned clusters still sit at the safe-area inset rather than
+flush, so a thin strip of content scrolls below them. The home row's recipe
+(`bottom: 0` plus internal padding) is the fix; it needs the negative-margin
+arithmetic redone per cluster and a screenshot each, and it is cosmetic.
+
+## 2026-08-14: all three pinned clusters flush
+
+The last of the tab-bar rebasing. The home Start row was already anchored at
+`bottom: 0` with the safe-area inset carried as its own padding; the workout's
+commit cluster and the rest bar were left at the inset, so a thin strip of
+board scrolled underneath each of them — the same seam, twice.
+
+All three now use one recipe: `bottom: 0`, the inset as `paddingBottom`, and
+`marginBottom` equal to `bottom` minus the trailing space. With `bottom` at 0
+the safe-area term no longer cancels against main's padding, so it is
+subtracted explicitly rather than folded into a constant.
+
+## 2026-08-14: the reps stepper clips two-digit values — found, not fixed
+
+Visible in `shots/active-390-entry-commit.png`: the reps field shows `12` with
+the second digit cut off. Not a spinner (index.css already suppresses those)
+and not the `+` button overlapping — the field genuinely has no room.
+
+The arithmetic, at 390px:
+
+    main content            354
+    − gap-2.5                10   → 344 split 1.3 : 1
+    reps panel              ~153
+    − px-3.5 (14 × 2)        28
+    − two 48px steppers      96
+    − gap-1 (4 × 2)           8
+    = space for the value    ~21px
+
+A two-digit value in Sora 800 at 29px is about 32px wide. Measuring the
+rendered screenshot gives the same panel width, so this is not a rounding
+argument — twelve reps does not fit, and twelve reps is an ordinary set.
+
+**Not fixed, because every obvious fix trades against something stated.** The
+design's own spec says steppers are 44–46px squares and hit targets are
+minimum 44px; CLAUDE.md sets the floor at 48px, and that gap is already a
+recorded deliberate yield. Shrinking the buttons would silently reverse it.
+Shrinking the figure fights "numbers render large and tabular". Equalising the
+panels moves the problem onto weight, which needs three digits and a decimal
+and is the reason the split is 1.3 : 1 in the first place.
+
+What it actually needs is a different arrangement of the panel — value above,
+steppers below, or the two panels stacked — which is a design decision about
+the single most-used control in the app, not a padding tweak. Written down
+rather than guessed at.

@@ -4,15 +4,21 @@ import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import type { ReactNode } from 'react'
 import { UnitProvider } from '../lib/unit-context'
-import { LocaleProvider, useLocale } from '../lib/locale-context'
+import { LocaleProvider } from '../lib/locale-context'
 import { Header } from './Header'
 
-// Minimal Supabase mock — supabase.auth.signOut is called from the Header menu.
 vi.mock('../lib/supabase', () => ({
   supabase: {
     rpc: () => Promise.resolve({ data: null, error: null }),
     auth: { signOut: vi.fn() },
   },
+}))
+
+// The overflow menu renders only while a workout is open, so the tests that
+// care about it need to say which world they are in.
+const active = vi.hoisted(() => ({ current: null as null | { discard: () => void } }))
+vi.mock('../lib/active-workout', () => ({
+  useActiveWorkout: () => active.current,
 }))
 
 function Wrapper({ children }: { children: ReactNode }) {
@@ -25,67 +31,66 @@ function Wrapper({ children }: { children: ReactNode }) {
 
 beforeEach(() => {
   localStorage.clear()
+  active.current = null
   document.documentElement.removeAttribute('dir')
   document.documentElement.removeAttribute('lang')
 })
 
-describe('Language toggle', () => {
-  it('renders the locale label', () => {
-    render(<Header />, { wrapper: Wrapper })
-    expect(screen.getByRole('button', { name: /Switch to Arabic/i })).toHaveTextContent(
-      'EN',
-    )
-  })
-
-  it('clicking it calls setLocale with the other locale', async () => {
+/**
+ * The language and unit chips used to live here and are now on Settings —
+ * the audit's S3 finding, two set-once preferences renting the best space in
+ * the app. Their tests went with them to SettingsScreen.test.tsx; what is
+ * left here is what the header still owes.
+ */
+describe('the settings door', () => {
+  it('opens Settings from the avatar', async () => {
     const user = userEvent.setup()
+    const onOpenSettings = vi.fn()
+    render(<Header name="ameen" onOpenSettings={onOpenSettings} />, {
+      wrapper: Wrapper,
+    })
 
-    // Helper to read locale from context.
-    function Reader() {
-      const { locale } = useLocale()
-      return <span data-testid="locale">{locale}</span>
-    }
-
-    const { rerender } = render(
-      <LocaleProvider>
-        <UnitProvider>
-          <Header />
-          <Reader />
-        </UnitProvider>
-      </LocaleProvider>,
-    )
-
-    expect(screen.getByTestId('locale')).toHaveTextContent('en')
-
-    await user.click(screen.getByRole('button', { name: /Switch to Arabic/i }))
-
-    rerender(
-      <LocaleProvider>
-        <UnitProvider>
-          <Header />
-          <Reader />
-        </UnitProvider>
-      </LocaleProvider>,
-    )
-
-    expect(screen.getByTestId('locale')).toHaveTextContent('ar')
-    expect(
-      screen.getByRole('button', { name: /تبديل إلى الإنجليزية/i }),
-    ).toHaveTextContent('AR')
+    await user.click(screen.getByRole('button', { name: 'You — settings' }))
+    expect(onOpenSettings).toHaveBeenCalledOnce()
   })
 
-  it('has an accessible name from the catalogue', () => {
-    render(<Header />, { wrapper: Wrapper })
-    const button = screen.getByRole('button', { name: /Switch to Arabic/i })
-    expect(button).toHaveAttribute('aria-label', 'Switch to Arabic')
-  })
-
-  it('label updates when locale is ar', async () => {
+  it('names the door in the locale the reader is in', () => {
     localStorage.setItem('workout.locale', 'ar')
-    render(<Header />, { wrapper: Wrapper })
+    render(<Header onOpenSettings={vi.fn()} />, { wrapper: Wrapper })
+    expect(screen.getByRole('button', { name: 'أنت — الإعدادات' })).toBeInTheDocument()
+  })
+})
+
+describe('the overflow menu', () => {
+  it('is absent with no workout open', () => {
+    render(<Header onOpenSettings={vi.fn()} />, { wrapper: Wrapper })
+    expect(screen.queryByRole('button', { name: 'Menu' })).not.toBeInTheDocument()
+  })
+
+  it('offers discard while a workout is open, and arms before it fires', async () => {
+    const user = userEvent.setup()
+    const discard = vi.fn()
+    active.current = { discard }
+    render(<Header onOpenSettings={vi.fn()} />, { wrapper: Wrapper })
+
+    await user.click(screen.getByRole('button', { name: 'Menu' }))
+    const item = screen.getByRole('menuitem', { name: 'Discard workout' })
+
+    await user.click(item)
+    expect(discard).not.toHaveBeenCalled()
+    await user.click(screen.getByRole('menuitem', { name: 'Discard workout?' }))
+    expect(discard).toHaveBeenCalledOnce()
+  })
+
+  it('no longer carries sign out — Settings owns it', async () => {
+    const user = userEvent.setup()
+    active.current = { discard: vi.fn() }
+    render(<Header onOpenSettings={vi.fn()} />, { wrapper: Wrapper })
+
+    await user.click(screen.getByRole('button', { name: 'Menu' }))
     expect(
-      screen.getByRole('button', { name: /تبديل إلى الإنجليزية/i }),
-    ).toHaveTextContent('AR')
+      screen.queryByRole('menuitem', { name: /sign out/i }),
+    ).not.toBeInTheDocument()
   })
 })
 
@@ -99,17 +104,19 @@ describe('Language toggle', () => {
  */
 describe('title translation', () => {
   it('renders the translated title, never the raw key', () => {
-    render(<Header titleKey="nav.history" />, { wrapper: Wrapper })
+    render(<Header titleKey="nav.history" onOpenSettings={vi.fn()} />, {
+      wrapper: Wrapper,
+    })
 
     expect(screen.getByRole('heading')).toHaveTextContent('History')
     expect(screen.queryByText('nav.history')).not.toBeInTheDocument()
   })
 
-  it('follows the locale', async () => {
-    const user = userEvent.setup()
-    render(<Header titleKey="nav.history" />, { wrapper: Wrapper })
-
-    await user.click(screen.getByRole('button', { name: 'Switch to Arabic' }))
+  it('follows the locale', () => {
+    localStorage.setItem('workout.locale', 'ar')
+    render(<Header titleKey="nav.history" onOpenSettings={vi.fn()} />, {
+      wrapper: Wrapper,
+    })
 
     expect(screen.getByRole('heading')).toHaveTextContent('السجل')
   })

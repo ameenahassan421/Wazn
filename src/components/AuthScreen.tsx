@@ -324,7 +324,7 @@ export function AuthScreen() {
       {/* The wordmark, not plain text: the sign-in screen is the first thing
           anyone sees, and it should look like the app behind it. */}
       <h1>
-        <Wordmark height={56} className="text-text" />
+        <Wordmark height={26} className="text-text" />
       </h1>
       {inviter && <p className="kicker mt-4">{nameOf(inviter)} invited you</p>}
       <p className="mt-4 text-sm text-muted">{t('auth.subhead')}</p>

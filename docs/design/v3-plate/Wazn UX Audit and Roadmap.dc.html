@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700;800&amp;family=Hanken+Grotesk:wght@400;500;600;700&amp;family=IBM+Plex+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>body{margin:0;background:#f7f3ec;color:#16130e;font-family:'Hanken Grotesk',ui-sans-serif,system-ui,sans-serif;-webkit-font-smoothing:antialiased}a{color:#e8491d;text-decoration:none}a:hover{color:#b83915}</style>
+</helmet>
+<div style="max-width:860px;margin:0 auto;padding:0 40px 120px">
+
+  <header data-screen-label="Cover" style="padding:90px 0 48px;border-bottom:1px solid #e3ddd1">
+    <div style="display:flex;align-items:center;gap:1px">
+      <span style="font:800 34px/1 'Sora',sans-serif;letter-spacing:-.05em">w</span>
+      <svg width="18" height="18" viewBox="0 0 100 100" style="position:relative;top:4px;margin:0 1px"><path fill="#e8491d" fill-rule="evenodd" d="M46 4 a46 46 0 1 0 0 92 a46 46 0 1 0 0 -92 Z M46 30 a16 16 0 1 1 0 32 a16 16 0 1 1 0 -32 Z"></path><path fill="#e8491d" d="M93 4 a7 7 0 0 1 7 7 v78 a7 7 0 0 1 -14 0 v-78 a7 7 0 0 1 7 -7 Z"></path></svg>
+      <span style="font:800 34px/1 'Sora',sans-serif;letter-spacing:-.05em">zn</span>
+    </div>
+    <p style="font:500 12px 'IBM Plex Mono',monospace;letter-spacing:.18em;text-transform:uppercase;color:#8a8378;margin:28px 0 10px">UX audit &amp; build roadmap · August 2026</p>
+    <h1 style="font:800 40px/1.15 'Sora',sans-serif;letter-spacing:-.03em;margin:0 0 16px">From workout log to workout partner.</h1>
+    <p style="font:400 16px/1.7 'Hanken Grotesk',sans-serif;color:#4f4a41;max-width:620px;margin:0;text-wrap:pretty">Scope: the shipped Wazn PWA (repo <span style="font-family:'IBM Plex Mono',monospace;font-size:14px">ameenahassan421/Wazn</span>), evaluated against its own stated job — a set logged in under 30 seconds, one hand, mid-workout — and against Hevy, the app it must replace.</p>
+  </header>
+
+  <section data-screen-label="Verdict" style="padding:56px 0 0">
+    <p style="font:500 12px 'IBM Plex Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#8a8378;margin:0 0 10px">01 · Verdict</p>
+    <h2 style="font:800 26px/1.2 'Sora',sans-serif;letter-spacing:-.02em;margin:0 0 16px">Strong engine, wrong cockpit.</h2>
+    <p style="font:400 15.5px/1.75 'Hanken Grotesk',sans-serif;color:#4f4a41;margin:0 0 12px;text-wrap:pretty">The engineering is genuinely solid: offline write queue, workout checkpoint that survives crashes, per-user device reconciliation, RLS, a real 3,200-set training history. The UX problem is structural, not cosmetic — the app is organized around its code (five equal tabs, one per module) instead of around the lifter's day (get in, lift, get out, feel progress).</p>
+    <p style="font:400 15.5px/1.75 'Hanken Grotesk',sans-serif;color:#4f4a41;margin:0;text-wrap:pretty">The coach — the one thing Hevy cannot copy at Wazn's price — is a destination you have to visit, not a partner who shows up. The redesign inverts both: one home feed with one Start action, and the coach woven into every moment that matters.</p>
+  </section>
+
+  <section data-screen-label="Findings" style="padding:56px 0 0">
+    <p style="font:500 12px 'IBM Plex Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#8a8378;margin:0 0 10px">02 · Findings, by severity</p>
+    <h2 style="font:800 26px/1.2 'Sora',sans-serif;letter-spacing:-.02em;margin:0 0 24px">Ten findings. Every fix already designed.</h2>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <div style="background:#ffffff;border-radius:16px;box-shadow:0 0 0 1px rgba(22,19,14,.06);padding:16px 20px;display:flex;gap:16px;align-items:flex-start">
+        <span style="font:700 11px 'Sora',sans-serif;color:#f7f3ec;background:#b8402a;border-radius:99px;padding:5px 10px;flex-shrink:0;margin-top:2px">S1</span>
+        <div><p style="font:700 15px 'Sora',sans-serif;letter-spacing:-.01em;margin:0 0 4px">Starting a workout has no obvious door</p><p style="font:400 14px/1.6 'Hanken Grotesk',sans-serif;color:#4f4a41;margin:0">The Log tab opens on a form, with routines below the fold. The single most frequent action in the app is not the single most visible thing. <strong>Fix:</strong> home feed with one vermilion Start (screen 01).</p></div>
+      </div>
+      <div style="background:#ffffff;border-radius:16px;box-shadow:0 0 0 1px rgba(22,19,14,.06);padding:16px 20px;display:flex;gap:16px;align-items:flex-start">
+        <span style="font:700 11px 'Sora',sans-serif;color:#f7f3ec;background:#b8402a;border-radius:99px;padding:5px 10px;flex-shrink:0;margin-top:2px">S1</span>
+        <div><p style="font:700 15px 'Sora',sans-serif;letter-spacing:-.01em;margin:0 0 4px">The coach is invisible when it matters</p><p style="font:400 14px/1.6 'Hanken Grotesk',sans-serif;color:#4f4a41;margin:0">AI advice lives on the 4th tab; mid-workout — the moment you asked for a buddy — it says nothing. <strong>Fix:</strong> one coach line above the log button, a companion on the rest screen, a debrief at finish (02, 03, 05).</p></div>
+      </div>
+      <div style="background:#ffffff;border-radius:16px;box-shadow:0 0 0 1px rgba(22,19,14,.06);padding:16px 20px;display:flex;gap:16px;align-items:flex-start">
+        <span style="font:700 11px 'Sora',sans-serif;color:#f7f3ec;background:#e8491d;border-radius:99px;padding:5px 10px;flex-shrink:0;margin-top:2px">S2</span>
+        <div><p style="font:700 15px 'Sora',sans-serif;letter-spacing:-.01em;margin:0 0 4px">Five equal tabs for five unequal jobs</p><p style="font:400 14px/1.6 'Hanken Grotesk',sans-serif;color:#4f4a41;margin:0">Log is daily; History, Progress, Coach, Friends are occasional. Equal tabs make the app feel bigger and harder than it is — your "hard to navigate." <strong>Fix:</strong> one feed, secondary surfaces behind chips (01).</p></div>
+      </div>
+      <div style="background:#ffffff;border-radius:16px;box-shadow:0 0 0 1px rgba(22,19,14,.06);padding:16px 20px;display:flex;gap:16px;align-items:flex-start">
+        <span style="font:700 11px 'Sora',sans-serif;color:#f7f3ec;background:#e8491d;border-radius:99px;padding:5px 10px;flex-shrink:0;margin-top:2px">S2</span>
+        <div><p style="font:700 15px 'Sora',sans-serif;letter-spacing:-.01em;margin:0 0 4px">No set types, no supersets</p><p style="font:400 14px/1.6 'Hanken Grotesk',sans-serif;color:#4f4a41;margin:0">The schema stores <span style="font-family:'IBM Plex Mono',monospace;font-size:12.5px">set_type</span> and RPE but the UI never exposes them — a hard blocker for replacing Hevy. <strong>Fix:</strong> set-options sheet (13).</p></div>
+      </div>
+      <div style="background:#ffffff;border-radius:16px;box-shadow:0 0 0 1px rgba(22,19,14,.06);padding:16px 20px;display:flex;gap:16px;align-items:flex-start">
+        <span style="font:700 11px 'Sora',sans-serif;color:#f7f3ec;background:#e8491d;border-radius:99px;padding:5px 10px;flex-shrink:0;margin-top:2px">S2</span>
+        <div><p style="font:700 15px 'Sora',sans-serif;letter-spacing:-.01em;margin:0 0 4px">Rest is separated from logging</p><p style="font:400 14px/1.6 'Hanken Grotesk',sans-serif;color:#4f4a41;margin:0">The timer is a control you operate, not a rhythm the app keeps for you. <strong>Fix:</strong> auto-start on log, per-exercise duration, lock-screen live activity (03, 13, 15).</p></div>
+      </div>
+      <div style="background:#ffffff;border-radius:16px;box-shadow:0 0 0 1px rgba(22,19,14,.06);padding:16px 20px;display:flex;gap:16px;align-items:flex-start">
+        <span style="font:700 11px 'Sora',sans-serif;color:#f7f3ec;background:#e8491d;border-radius:99px;padding:5px 10px;flex-shrink:0;margin-top:2px">S2</span>
+        <div><p style="font:700 15px 'Sora',sans-serif;letter-spacing:-.01em;margin:0 0 4px">Destructive actions are buried</p><p style="font:400 14px/1.6 'Hanken Grotesk',sans-serif;color:#4f4a41;margin:0">Discard-workout only exists inside the header overflow menu (the code's own comments record a user failing to find it). <strong>Fix:</strong> explicit finish flow with visible, two-tap discard (05).</p></div>
+      </div>
+      <div style="background:#ffffff;border-radius:16px;box-shadow:0 0 0 1px rgba(22,19,14,.06);padding:16px 20px;display:flex;gap:16px;align-items:flex-start">
+        <span style="font:700 11px 'Sora',sans-serif;color:#f7f3ec;background:#e8491d;border-radius:99px;padding:5px 10px;flex-shrink:0;margin-top:2px">S2</span>
+        <div><p style="font:700 15px 'Sora',sans-serif;letter-spacing:-.01em;margin:0 0 4px">No finish moment</p><p style="font:400 14px/1.6 'Hanken Grotesk',sans-serif;color:#4f4a41;margin:0">A workout ends with a state change, not a feeling. PRs deserve iron, and the session deserves a summary. <strong>Fix:</strong> finish screen with stats, PR plate, coach debrief (05).</p></div>
+      </div>
+      <div style="background:#ffffff;border-radius:16px;box-shadow:0 0 0 1px rgba(22,19,14,.06);padding:16px 20px;display:flex;gap:16px;align-items:flex-start">
+        <span style="font:700 11px 'Sora',sans-serif;color:#8a8378;background:#f0ece2;border-radius:99px;padding:5px 10px;flex-shrink:0;margin-top:2px">S3</span>
+        <div><p style="font:700 15px 'Sora',sans-serif;letter-spacing:-.01em;margin:0 0 4px">Header rents prime space to rare actions</p><p style="font:400 14px/1.6 'Hanken Grotesk',sans-serif;color:#4f4a41;margin:0">kg/lb and language toggles sit in the header on every screen; both are set once. <strong>Fix:</strong> Settings (14).</p></div>
+      </div>
+      <div style="background:#ffffff;border-radius:16px;box-shadow:0 0 0 1px rgba(22,19,14,.06);padding:16px 20px;display:flex;gap:16px;align-items:flex-start">
+        <span style="font:700 11px 'Sora',sans-serif;color:#8a8378;background:#f0ece2;border-radius:99px;padding:5px 10px;flex-shrink:0;margin-top:2px">S3</span>
+        <div><p style="font:700 15px 'Sora',sans-serif;letter-spacing:-.01em;margin:0 0 4px">Progress is a chart, not an answer</p><p style="font:400 14px/1.6 'Hanken Grotesk',sans-serif;color:#4f4a41;margin:0">A 1RM line with no interpretation. "Am I getting stronger?" should be answered in words. <strong>Fix:</strong> insight card + PR log under the chart (07).</p></div>
+      </div>
+      <div style="background:#ffffff;border-radius:16px;box-shadow:0 0 0 1px rgba(22,19,14,.06);padding:16px 20px;display:flex;gap:16px;align-items:flex-start">
+        <span style="font:700 11px 'Sora',sans-serif;color:#8a8378;background:#f0ece2;border-radius:99px;padding:5px 10px;flex-shrink:0;margin-top:2px">S3</span>
+        <div><p style="font:700 15px 'Sora',sans-serif;letter-spacing:-.01em;margin:0 0 4px">Friends costs a tab it hasn't earned</p><p style="font:400 14px/1.6 'Hanken Grotesk',sans-serif;color:#4f4a41;margin:0">You called it pointless; for a solo lifter it is. <strong>Fix:</strong> retire the tab; revisit social as shared PRs/share cards later (05's share card is the seed).</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section data-screen-label="Kept sacred" style="padding:56px 0 0">
+    <p style="font:500 12px 'IBM Plex Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#8a8378;margin:0 0 10px">03 · What the redesign keeps sacred</p>
+    <div style="background:#16130e;border-radius:20px;padding:26px 30px;color:#f7f3ec">
+      <ul style="font:400 15px/2 'Hanken Grotesk',sans-serif;color:#d6d1c6;margin:0;padding-inline-start:20px">
+        <li>A set logged in under 30 seconds, one hand — the flow is never interrupted, never paywalled.</li>
+        <li>Weight stored in kg, always; lbs display-only.</li>
+        <li>Terse gym-partner voice. PRs get iron, not confetti.</li>
+        <li>Arabic soul: the وزن barbell mark leads in the Arabic locale; RTL is a flip, not a rewrite (16).</li>
+        <li>One accent color, earned. If two things are vermilion, one is wrong.</li>
+      </ul>
+    </div>
+    <p style="font:400 14px/1.7 'Hanken Grotesk',sans-serif;color:#8a8378;margin:16px 0 0;text-wrap:pretty">One conscious break: the old system was dark-only for gym lighting. The new identity is light by default (your call — easier on the eye), but Workout-adjacent surfaces (Rest, lock screen) stay dark. A "gym mode" that darkens the live workout is on the roadmap to test.</p>
+  </section>
+
+  <section data-screen-label="Roadmap" style="padding:56px 0 0">
+    <p style="font:500 12px 'IBM Plex Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#8a8378;margin:0 0 10px">04 · Roadmap</p>
+    <h2 style="font:800 26px/1.2 'Sora',sans-serif;letter-spacing:-.02em;margin:0 0 24px">Quick wins first, identity second, platform third.</h2>
+    <div style="display:flex;flex-direction:column;gap:14px">
+      <div style="background:#ffffff;border-radius:20px;box-shadow:0 0 0 1px rgba(22,19,14,.06);padding:20px 24px">
+        <div style="display:flex;align-items:baseline;gap:12px;margin-bottom:10px"><span style="font:800 15px 'Sora',sans-serif;color:#e8491d">P0</span><p style="font:700 16px 'Sora',sans-serif;letter-spacing:-.01em;margin:0">Quick wins — current codebase, 1–2 weeks</p></div>
+        <ul style="font:400 14.5px/1.9 'Hanken Grotesk',sans-serif;color:#4f4a41;margin:0;padding-inline-start:20px">
+          <li>Coach brief card at the top of the Log tab (CoachBrief exists — move it, don't build it).</li>
+          <li>Plate calculator inside set entry (LoadHelper already computes it — surface it).</li>
+          <li>PR moment in FinishSummary: the plate badge + est. 1RM delta.</li>
+          <li>Move kg/lb + language into a Settings surface; make discard visible in the finish flow.</li>
+          <li>Auto-start rest on set log, default 2:00.</li>
+        </ul>
+      </div>
+      <div style="background:#ffffff;border-radius:20px;box-shadow:0 0 0 1px rgba(22,19,14,.06);padding:20px 24px">
+        <div style="display:flex;align-items:baseline;gap:12px;margin-bottom:10px"><span style="font:800 15px 'Sora',sans-serif;color:#e8491d">P1</span><p style="font:700 16px 'Sora',sans-serif;letter-spacing:-.01em;margin:0">Core loop redesign — 3–5 weeks</p></div>
+        <ul style="font:400 14.5px/1.9 'Hanken Grotesk',sans-serif;color:#4f4a41;margin:0;padding-inline-start:20px">
+          <li>Home feed replaces the tab bar (screens 01, prototype). Chips route to History / Progress / Coach.</li>
+          <li>New workout + rest + finish screens (02, 03, 05); coach lines from the existing coach.ts pipeline.</li>
+          <li>Set types, supersets, RPE, per-exercise rest (13) — schema already supports all of it.</li>
+        </ul>
+      </div>
+      <div style="background:#ffffff;border-radius:20px;box-shadow:0 0 0 1px rgba(22,19,14,.06);padding:20px 24px">
+        <div style="display:flex;align-items:baseline;gap:12px;margin-bottom:10px"><span style="font:800 15px 'Sora',sans-serif;color:#e8491d">P2</span><p style="font:700 16px 'Sora',sans-serif;letter-spacing:-.01em;margin:0">Identity &amp; growth — 3–4 weeks</p></div>
+        <ul style="font:400 14.5px/1.9 'Hanken Grotesk',sans-serif;color:#4f4a41;margin:0;padding-inline-start:20px">
+          <li>Plate logo rollout: app icon, splash, favicon, share cards (brand sheet).</li>
+          <li>Routines + "coach builds your week" (11); exercise detail with how-to (12).</li>
+          <li>Hevy import as a first-run flow, not a CLI script (09, 10) — the switching moment.</li>
+        </ul>
+      </div>
+      <div style="background:#ffffff;border-radius:20px;box-shadow:0 0 0 1px rgba(22,19,14,.06);padding:20px 24px">
+        <div style="display:flex;align-items:baseline;gap:12px;margin-bottom:10px"><span style="font:800 15px 'Sora',sans-serif;color:#e8491d">P3</span><p style="font:700 16px 'Sora',sans-serif;letter-spacing:-.01em;margin:0">Platform — ongoing</p></div>
+        <ul style="font:400 14.5px/1.9 'Hanken Grotesk',sans-serif;color:#4f4a41;margin:0;padding-inline-start:20px">
+          <li>Arabic RTL flip (16) — the logical-properties groundwork is already in the codebase.</li>
+          <li>Lock-screen live activity / widget via the Capacitor wrapper (15).</li>
+          <li>Body measurements (14), gym dark mode, share-card social seed.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section data-screen-label="Metrics" style="padding:56px 0 0">
+    <p style="font:500 12px 'IBM Plex Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#8a8378;margin:0 0 10px">05 · How we'll know it worked</p>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px">
+      <div style="background:#ffffff;border-radius:18px;box-shadow:0 0 0 1px rgba(22,19,14,.06);padding:18px 20px"><p style="font:700 15px 'Sora',sans-serif;margin:0 0 4px;letter-spacing:-.01em">Open → first set</p><p style="font:400 13.5px/1.6 'Hanken Grotesk',sans-serif;color:#8a8378;margin:0">Median seconds from app open to first logged set. Target: under 30.</p></div>
+      <div style="background:#ffffff;border-radius:18px;box-shadow:0 0 0 1px rgba(22,19,14,.06);padding:18px 20px"><p style="font:700 15px 'Sora',sans-serif;margin:0 0 4px;letter-spacing:-.01em">Routine starts</p><p style="font:400 13.5px/1.6 'Hanken Grotesk',sans-serif;color:#8a8378;margin:0">% of workouts started from a routine or coach plan, not empty.</p></div>
+      <div style="background:#ffffff;border-radius:18px;box-shadow:0 0 0 1px rgba(22,19,14,.06);padding:18px 20px"><p style="font:700 15px 'Sora',sans-serif;margin:0 0 4px;letter-spacing:-.01em">Import completion</p><p style="font:400 13.5px/1.6 'Hanken Grotesk',sans-serif;color:#8a8378;margin:0">% of Hevy switchers who finish the import — the moat metric.</p></div>
+      <div style="background:#ffffff;border-radius:18px;box-shadow:0 0 0 1px rgba(22,19,14,.06);padding:18px 20px"><p style="font:700 15px 'Sora',sans-serif;margin:0 0 4px;letter-spacing:-.01em">Week-4 retention</p><p style="font:400 13.5px/1.6 'Hanken Grotesk',sans-serif;color:#8a8378;margin:0">Lifters still logging in week 4 — the only number that decides the Hevy question.</p></div>
+    </div>
+  </section>
+
+</div>
+</x-dc>
+</body>
+</html>

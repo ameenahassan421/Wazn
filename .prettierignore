@@ -8,6 +8,10 @@ package-lock.json
 workouts_corrected.csv
 # Vendored impeccable design skills — third-party, not our style domain.
 .claude/skills/impeccable
+# The v3 "Plate" design handoff. These are the canonical spec as Claude Design
+# delivered them, and `npm run format` rewrites all five — which would edit the
+# thing the app is being measured against. They are read, never authored here.
+docs/design/v3-plate
 .github/skills
 .github/agents
 .github/hooks

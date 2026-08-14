@@ -169,6 +169,74 @@ export function trainingCalendar(
 }
 
 /**
+ * Five steps of one hue: rest, then four by volume. A sequential scale is one
+ * hue getting lighter or darker, never a second colour.
+ *
+ * Shared by the History heatmap and the home's week row so the two cannot
+ * disagree about what a heavy day looks like — which they would within a
+ * week of being written separately.
+ */
+export const HEAT_RAMP = [
+  'var(--color-tile-2)',
+  'var(--color-accent-900)',
+  'var(--color-accent-800)',
+  'var(--color-accent-600)',
+  'var(--color-accent-500)',
+]
+
+export interface WeekDay extends CalendarDay {
+  /** 0-4 heat, relative to the busiest day of THIS week. 0 = nothing. */
+  level: number
+  /** Marked separately by the design: a white cell with an ember ring. */
+  today: boolean
+  /** Later this week. Drawn as a rest day, but it has not happened yet. */
+  ahead: boolean
+}
+
+/**
+ * The seven days of the current week, for the home feed's bar row.
+ *
+ * Monday-started, like every other week boundary in this app: `weekStart`,
+ * `trainingCalendar`, ProgressScreen's own tile, and `weekly_streak`'s
+ * `date_trunc('week')` in SQL. The design draws the row Sunday-started
+ * (S M T W T F S), and following it here would put the home card and the
+ * streak pill six inches apart disagreeing about how many sessions the week
+ * has had.
+ *
+ * All seven days, unlike `trainingCalendar`, which stops at today: the design
+ * shows the rest of the week as empty cells, and a row that grew a column a
+ * day would be a strange thing to look at on a Tuesday.
+ */
+export function thisWeek(rows: SessionVolumeRow[], now = new Date()): WeekDay[] {
+  const byDay = new Map<string, number>()
+  for (const row of rows) {
+    const key = dayKey(row.started_at)
+    byDay.set(key, (byDay.get(key) ?? 0) + num(row.volume_kg))
+  }
+
+  const start = weekStart(now)
+  const todayKey = dayKey(now.toISOString())
+  const days = Array.from({ length: 7 }, (_, i) => {
+    const date = new Date(start)
+    date.setDate(date.getDate() + i)
+    const key = dayKey(date.toISOString())
+    return { date, key, volumeKg: byDay.get(key) ?? 0 }
+  })
+
+  // Scaled to this week alone, not to all history: the card answers "how has
+  // this week gone", and a light week next to a heavy one last month would
+  // otherwise render as seven identical stubs.
+  const max = Math.max(...days.map((d) => d.volumeKg))
+  return days.map(({ date, key, volumeKg }) => ({
+    date,
+    volumeKg,
+    level: heatStep(volumeKg, max),
+    today: key === todayKey,
+    ahead: date > now && key !== todayKey,
+  }))
+}
+
+/**
  * Five heat steps: rest day, then four by volume relative to the busiest day
  * in view. Returns 0-4, where 0 is "nothing logged".
  */

@@ -136,7 +136,15 @@ statistics can answer.
 
 ## Architecture
 
-- `src/screens/` — Log (default), History, Progress. Three, no router.
+- `src/screens/` — Log (home), History, Progress, Coach, Friends, Settings.
+  No router: one `View` union in `App.tsx` and one `useState`. **There is no
+  tab bar** — the v3 redesign retired it (audit S2, "five equal tabs for five
+  unequal jobs"). Home carries one Start action with a History circle beside
+  it; Progress and Coach are reached through the cards that hold their content
+  (Last PR, the coach brief), Settings through the header avatar, and Friends
+  from inside Settings. A new screen needs a door on the home or it is
+  unreachable — `npm run shots` prints `no door to <screen>` when one is
+  missing, and that line is a failure even though the run is green.
 - `src/lib/` — `supabase.ts` (client + `describeError`), `units.ts`,
   `epley.ts`, `unit-context.tsx`, `use-auth.ts`.
 - `supabase/migrations/0001_init.sql` — schema, RLS, and three security-invoker

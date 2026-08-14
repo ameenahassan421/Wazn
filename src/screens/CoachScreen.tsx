@@ -146,7 +146,27 @@ function NotesCard() {
         <p className="text-sm text-muted">{t('coach.loading.body')}</p>
       )}
 
-      {state === 'failed' && <p className="text-sm text-muted">{message}</p>}
+      {/* A failure gets a way out, not just a sentence. The Regenerate
+          control above is gated on `state === 'ready'`, so when the fetch
+          threw — network, 5xx, quota — this card rendered muted text that
+          looked exactly like the "no news this week" state and offered
+          nothing to press. The retry does NOT set `force`: a failed call
+          produced nothing, so re-asking must not spend a regeneration. */}
+      {state === 'failed' && (
+        <div className="flex flex-col items-start gap-3">
+          <p className="text-sm text-muted">{message}</p>
+          <button
+            type="button"
+            onClick={() => {
+              setState('loading')
+              setReload((n) => n + 1)
+            }}
+            className="btn-base btn-secondary h-12 px-4 text-sm"
+          >
+            {t('coach.retry')}
+          </button>
+        </div>
+      )}
 
       {state === 'ready' && notes && !notes.review && !notes.insights?.length && (
         <p className="text-sm text-muted">

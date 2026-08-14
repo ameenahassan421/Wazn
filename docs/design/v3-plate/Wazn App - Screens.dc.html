@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700;800&amp;family=Hanken+Grotesk:wght@400;500;600;700&amp;family=IBM+Plex+Mono:wght@400;500&amp;family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>body{margin:0;background:#e9e4d8;color:#16130e;font-family:'Hanken Grotesk',ui-sans-serif,system-ui,sans-serif;-webkit-font-smoothing:antialiased}a{color:#e8491d;text-decoration:none}a:hover{color:#b83915}</style>
+</helmet>
+<div style="display:flex;flex-wrap:wrap;gap:64px;padding:72px;align-items:flex-start">
+
+  <div data-screen-label="01 Home" style="display:flex;flex-direction:column;gap:16px">
+    <p style="font:500 13px 'IBM Plex Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#7d7668;margin:0">01 · Home</p>
+    <div style="border-radius:40px;box-shadow:0 20px 60px rgba(22,19,14,.14),0 0 0 1px rgba(22,19,14,.06);overflow:hidden">
+      <dc-import name="Wazn Redesign - Home" hint-size="390px,844px"></dc-import>
+    </div>
+  </div>
+
+  <div data-screen-label="02 Workout" style="display:flex;flex-direction:column;gap:16px">
+    <p style="font:500 13px 'IBM Plex Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#7d7668;margin:0">02 · Live workout — logging a set</p>
+    <div style="width:390px;height:844px;background:#f7f3ec;border-radius:40px;box-shadow:0 20px 60px rgba(22,19,14,.14),0 0 0 1px rgba(22,19,14,.06);overflow:hidden;display:flex;flex-direction:column;position:relative">
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 24px 4px;font:500 13px 'IBM Plex Mono',monospace;color:#8a8378"><span>9:41</span><span>●●●</span></div>
+      <div style="display:flex;align-items:center;gap:12px;padding:10px 22px 12px">
+        <span style="width:40px;height:40px;border-radius:50%;background:#ffffff;box-shadow:0 0 0 1px rgba(22,19,14,.08);display:flex;align-items:center;justify-content:center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#16130e" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M14 5l-7 7 7 7"></path></svg></span>
+        <div style="flex:1"><p style="font:700 16px 'Sora',sans-serif;letter-spacing:-.02em;margin:0">Push Day A</p><p style="font:500 12px 'IBM Plex Mono',monospace;color:#8a8378;margin:2px 0 0">23:14 · exercise 1 of 6</p></div>
+        <span style="font:700 13px 'Sora',sans-serif;color:#16130e;background:#ffffff;box-shadow:0 0 0 1px rgba(22,19,14,.1);border-radius:99px;padding:11px 16px">Finish</span>
+      </div>
+      <div style="flex:1;overflow:hidden;padding:6px 22px 0;display:flex;flex-direction:column;gap:12px">
+        <div style="background:#ffffff;border-radius:20px;box-shadow:0 1px 2px rgba(22,19,14,.06),0 0 0 1px rgba(22,19,14,.05);padding:16px 18px">
+          <div style="display:flex;align-items:center;gap:12px">
+            <img src="public/exercises/bench-press-barbell.jpg" alt="Bench press" style="width:46px;height:46px;border-radius:12px;object-fit:cover;filter:grayscale(1) contrast(1.05)">
+            <div style="flex:1"><p style="font:700 17px 'Sora',sans-serif;letter-spacing:-.02em;margin:0">Bench Press</p><p style="font:500 12px 'IBM Plex Mono',monospace;color:#8a8378;margin:3px 0 0">set 3 of 4 · barbell</p></div>
+            <span style="font:600 12px 'Hanken Grotesk',sans-serif;color:#8a8378">swap</span>
+          </div>
+          <p style="font:500 12px 'IBM Plex Mono',monospace;color:#8a8378;margin:14px 0 0">last Fri&nbsp;&nbsp;60×5 · 60×5 · 60×4</p>
+          <div style="display:flex;flex-direction:column;gap:6px;margin-top:10px">
+            <div style="display:flex;align-items:center;gap:10px;font:500 14px 'IBM Plex Mono',monospace;color:#16130e"><svg width="16" height="16" viewBox="0 0 96 96"><path fill="#e8491d" fill-rule="evenodd" d="M48 4 a44 44 0 1 0 0 88 a44 44 0 1 0 0 -88 Z M48 33 a15 15 0 1 1 0 30 a15 15 0 1 1 0 -30 Z"></path></svg><span style="width:36px;color:#8a8378">1</span><span>62.5 kg × 5</span></div>
+            <div style="display:flex;align-items:center;gap:10px;font:500 14px 'IBM Plex Mono',monospace;color:#16130e"><svg width="16" height="16" viewBox="0 0 96 96"><path fill="#e8491d" fill-rule="evenodd" d="M48 4 a44 44 0 1 0 0 88 a44 44 0 1 0 0 -88 Z M48 33 a15 15 0 1 1 0 30 a15 15 0 1 1 0 -30 Z"></path></svg><span style="width:36px;color:#8a8378">2</span><span>62.5 kg × 5</span></div>
+          </div>
+        </div>
+        <div style="display:flex;gap:10px">
+          <div style="flex:1.3;background:#ffffff;border-radius:18px;box-shadow:0 0 0 1px rgba(22,19,14,.06);padding:12px 14px">
+            <p style="font:500 11px 'IBM Plex Mono',monospace;letter-spacing:.1em;text-transform:uppercase;color:#8a8378;margin:0 0 6px">Weight · kg</p>
+            <div style="display:flex;align-items:center;justify-content:space-between">
+              <span style="width:44px;height:44px;border-radius:12px;background:#f7f3ec;display:flex;align-items:center;justify-content:center;font:600 22px 'Sora',sans-serif;color:#16130e">−</span>
+              <span style="font:700 30px 'Sora',sans-serif;letter-spacing:-.02em;font-variant-numeric:tabular-nums">62.5</span>
+              <span style="width:44px;height:44px;border-radius:12px;background:#f7f3ec;display:flex;align-items:center;justify-content:center;font:600 22px 'Sora',sans-serif;color:#16130e">+</span>
+            </div>
+          </div>
+          <div style="flex:1;background:#ffffff;border-radius:18px;box-shadow:0 0 0 1px rgba(22,19,14,.06);padding:12px 14px">
+            <p style="font:500 11px 'IBM Plex Mono',monospace;letter-spacing:.1em;text-transform:uppercase;color:#8a8378;margin:0 0 6px">Reps</p>
+            <div style="display:flex;align-items:center;justify-content:space-between">
+              <span style="width:44px;height:44px;border-radius:12px;background:#f7f3ec;display:flex;align-items:center;justify-content:center;font:600 22px 'Sora',sans-serif;color:#16130e">−</span>
+              <span style="font:700 30px 'Sora',sans-serif;letter-spacing:-.02em;font-variant-numeric:tabular-nums">5</span>
+              <span style="width:44px;height:44px;border-radius:12px;background:#f7f3ec;display:flex;align-items:center;justify-content:center;font:600 22px 'Sora',sans-serif;color:#16130e">+</span>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;gap:10px;align-items:flex-start;padding:2px 4px 0">
+          <svg width="22" height="22" viewBox="0 0 96 96" style="flex-shrink:0;margin-top:1px"><path fill="#16130e" fill-rule="evenodd" d="M48 4 a44 44 0 1 0 0 88 a44 44 0 1 0 0 -88 Z M48 33 a15 15 0 1 1 0 30 a15 15 0 1 1 0 -30 Z"></path><circle cx="48" cy="48" r="9" fill="#e8491d"></circle></svg>
+          <p style="font:500 13px/1.5 'Hanken Grotesk',sans-serif;color:#4f4a41;margin:0">Two clean fives. Same again — brace hard, this is the money set.</p>
+        </div>
+        <div style="background:#ffffff;border-radius:18px;box-shadow:0 0 0 1px rgba(22,19,14,.06);padding:14px 16px;display:flex;align-items:center;gap:16px">
+          <div style="flex:1">
+            <p style="font:500 11px 'IBM Plex Mono',monospace;letter-spacing:.1em;text-transform:uppercase;color:#8a8378;margin:0 0 4px">On the bar · per side</p>
+            <p style="font:700 16px 'Sora',sans-serif;letter-spacing:-.01em;margin:0;font-variant-numeric:tabular-nums">20 <span style="color:#8a8378;font-weight:500">+</span> 1.25 <span style="font:500 12px 'IBM Plex Mono',monospace;color:#8a8378">= 62.5 total</span></p>
+          </div>
+          <svg width="120" height="52" viewBox="0 0 120 52"><line x1="4" y1="26" x2="116" y2="26" stroke="#16130e" stroke-width="5" stroke-linecap="round"></line><rect x="30" y="3" width="11" height="46" rx="3" fill="#e8491d"></rect><rect x="45" y="16" width="7" height="20" rx="2.5" fill="#16130e"></rect><rect x="14" y="19" width="9" height="14" rx="2" fill="#16130e" opacity=".25"></rect></svg>
+        </div>
+        <div style="margin-top:auto;padding-bottom:14px;display:flex;flex-direction:column;gap:10px">
+          <div style="background:#ffffff;border-radius:16px;box-shadow:0 0 0 1px rgba(22,19,14,.06);padding:10px 16px 10px 10px;display:flex;align-items:center;gap:12px">
+            <div style="display:flex">
+              <img src="public/exercises/overhead-press-barbell.jpg" alt="Overhead press" style="width:38px;height:38px;border-radius:10px;object-fit:cover;filter:grayscale(1) contrast(1.05);box-shadow:0 0 0 2px #ffffff">
+              <img src="public/exercises/incline-bench-press-dumbbell.jpg" alt="Incline press" style="width:38px;height:38px;border-radius:10px;object-fit:cover;filter:grayscale(1) contrast(1.05);box-shadow:0 0 0 2px #ffffff;margin-inline-start:-12px">
+            </div>
+            <p style="font:500 12px 'IBM Plex Mono',monospace;color:#8a8378;margin:0;flex:1">up next&nbsp;&nbsp;<span style="color:#16130e">OHP 3×8</span> · Incline 3×10 · +3</p>
+            <span style="font:600 12px 'Hanken Grotesk',sans-serif;color:#e8491d">+ add</span>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:center;gap:11px;background:#e8491d;border-radius:99px;height:60px;box-shadow:0 10px 26px rgba(232,73,29,.35)">
+            <svg width="20" height="20" viewBox="0 0 96 96"><path fill="#f7f3ec" fill-rule="evenodd" d="M48 4 a44 44 0 1 0 0 88 a44 44 0 1 0 0 -88 Z M48 33 a15 15 0 1 1 0 30 a15 15 0 1 1 0 -30 Z"></path></svg>
+            <span style="font:700 16px 'Sora',sans-serif;color:#f7f3ec">Log set 3 — 62.5 × 5</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div data-screen-label="03 Rest" style="display:flex;flex-direction:column;gap:16px">
+    <p style="font:500 13px 'IBM Plex Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#7d7668;margin:0">03 · Rest — the plate fills as you recover</p>
+    <div style="width:390px;height:844px;background:#16130e;border-radius:40px;box-shadow:0 20px 60px rgba(22,19,14,.2),0 0 0 1px rgba(22,19,14,.1);overflow:hidden;display:flex;flex-direction:column;position:relative;color:#f7f3ec">
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 24px 4px;font:500 13px 'IBM Plex Mono',monospace;color:#7a7469"><span>9:41</span><span>●●●</span></div>
+      <div style="display:flex;align-items:center;gap:12px;padding:10px 22px 0">
+        <div style="flex:1"><p style="font:700 16px 'Sora',sans-serif;letter-spacing:-.02em;margin:0">Push Day A</p><p style="font:500 12px 'IBM Plex Mono',monospace;color:#7a7469;margin:2px 0 0">24:41 · set 3 logged ✓</p></div>
+        <span style="font:600 13px 'Hanken Grotesk',sans-serif;color:#9d968a">skip rest</span>
+      </div>
+      <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:34px;padding:0 22px">
+        <div style="position:relative;width:250px;height:250px;display:flex;align-items:center;justify-content:center">
+          <svg width="250" height="250" viewBox="0 0 96 96" style="position:absolute;inset:0"><circle cx="48" cy="48" r="41" fill="none" stroke="rgba(247,243,236,.12)" stroke-width="9"></circle><circle cx="48" cy="48" r="41" fill="none" stroke="#e8491d" stroke-width="9" stroke-linecap="round" stroke-dasharray="257.6" stroke-dashoffset="93" transform="rotate(-90 48 48)"></circle></svg>
+          <div style="text-align:center"><p style="font:800 56px 'Sora',sans-serif;letter-spacing:-.03em;margin:0;font-variant-numeric:tabular-nums">1:24</p><p style="font:500 12px 'IBM Plex Mono',monospace;letter-spacing:.16em;color:#9d968a;margin:4px 0 0">REST · OF 2:00</p></div>
+        </div>
+        <div style="display:flex;gap:10px">
+          <span style="font:600 14px 'Hanken Grotesk',sans-serif;color:#f7f3ec;background:rgba(247,243,236,.1);border-radius:99px;padding:13px 22px">− 30s</span>
+          <span style="font:600 14px 'Hanken Grotesk',sans-serif;color:#f7f3ec;background:rgba(247,243,236,.1);border-radius:99px;padding:13px 22px">+ 30s</span>
+        </div>
+        <div style="display:flex;gap:12px;align-items:flex-start;background:rgba(247,243,236,.06);border-radius:18px;padding:16px 18px;max-width:320px">
+          <svg width="24" height="24" viewBox="0 0 96 96" style="flex-shrink:0"><path fill="#f7f3ec" fill-rule="evenodd" d="M48 4 a44 44 0 1 0 0 88 a44 44 0 1 0 0 -88 Z M48 33 a15 15 0 1 1 0 30 a15 15 0 1 1 0 -30 Z"></path><circle cx="48" cy="48" r="9" fill="#e8491d"></circle></svg>
+          <p style="font:500 14px/1.55 'Hanken Grotesk',sans-serif;color:#d6d1c6;margin:0">Shake the arms out. Last set of bench — then we move to overhead press at 40.</p>
+        </div>
+      </div>
+      <div style="padding:0 22px 30px">
+        <div style="background:rgba(247,243,236,.06);border-radius:16px;padding:14px 18px;display:flex;justify-content:space-between;align-items:center">
+          <p style="font:500 13px 'IBM Plex Mono',monospace;color:#9d968a;margin:0">next&nbsp;&nbsp;<span style="color:#f7f3ec">Bench — set 4 · 62.5 × 5</span></p>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9d968a" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M10 5l7 7-7 7"></path></svg>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div data-screen-label="04 Exercise picker" style="display:flex;flex-direction:column;gap:16px">
+    <p style="font:500 13px 'IBM Plex Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#7d7668;margin:0">04 · Add exercise</p>
+    <div style="width:390px;height:844px;background:#f7f3ec;border-radius:40px;box-shadow:0 20px 60px rgba(22,19,14,.14),0 0 0 1px rgba(22,19,14,.06);overflow:hidden;display:flex;flex-direction:column">
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 24px 4px;font:500 13px 'IBM Plex Mono',monospace;color:#8a8378"><span>9:41</span><span>●●●</span></div>
+      <div style="display:flex;align-items:center;padding:10px 22px 0">
+        <p style="font:700 20px 'Sora',sans-serif;letter-spacing:-.02em;margin:0">Add exercise</p>
+        <span style="margin-inline-start:auto;width:40px;height:40px;border-radius:50%;background:#ffffff;box-shadow:0 0 0 1px rgba(22,19,14,.08);display:flex;align-items:center;justify-content:center;font:500 16px 'Hanken Grotesk',sans-serif;color:#8a8378">✕</span>
+      </div>
+      <div style="padding:16px 22px 0;display:flex;flex-direction:column;gap:12px">
+        <div style="display:flex;align-items:center;gap:10px;background:#ffffff;border-radius:14px;box-shadow:0 0 0 1px rgba(22,19,14,.07);padding:14px 16px">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#8a8378" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"></circle><path d="M20 20l-4-4"></path></svg>
+          <span style="font:500 14px 'Hanken Grotesk',sans-serif;color:#8a8378">Search 134 exercises…</span>
+        </div>
+        <div style="display:flex;gap:8px;overflow:hidden">
+          <span style="font:600 12.5px 'Hanken Grotesk',sans-serif;color:#f7f3ec;background:#16130e;border-radius:99px;padding:9px 15px;flex-shrink:0">All</span>
+          <span style="font:600 12.5px 'Hanken Grotesk',sans-serif;color:#16130e;background:#ffffff;box-shadow:0 0 0 1px rgba(22,19,14,.08);border-radius:99px;padding:9px 15px;flex-shrink:0">Chest</span>
+          <span style="font:600 12.5px 'Hanken Grotesk',sans-serif;color:#16130e;background:#ffffff;box-shadow:0 0 0 1px rgba(22,19,14,.08);border-radius:99px;padding:9px 15px;flex-shrink:0">Back</span>
+          <span style="font:600 12.5px 'Hanken Grotesk',sans-serif;color:#16130e;background:#ffffff;box-shadow:0 0 0 1px rgba(22,19,14,.08);border-radius:99px;padding:9px 15px;flex-shrink:0">Shoulders</span>
+          <span style="font:600 12.5px 'Hanken Grotesk',sans-serif;color:#16130e;background:#ffffff;box-shadow:0 0 0 1px rgba(22,19,14,.08);border-radius:99px;padding:9px 15px;flex-shrink:0">Legs</span>
+        </div>
+      </div>
+      <div style="flex:1;overflow:hidden;padding:14px 22px 0;display:flex;flex-direction:column;gap:8px">
+        <p style="font:500 11px 'IBM Plex Mono',monospace;letter-spacing:.14em;text-transform:uppercase;color:#8a8378;margin:0 0 2px">Recent</p>
+        <div style="background:#ffffff;border-radius:16px;box-shadow:0 0 0 1px rgba(22,19,14,.06);padding:12px 14px;display:flex;align-items:center;gap:12px">
+          <img src="public/exercises/bench-press-barbell.jpg" alt="" style="width:44px;height:44px;border-radius:11px;object-fit:cover;filter:grayscale(1) contrast(1.05)">
+          <div style="flex:1"><p style="font:600 14.5px 'Hanken Grotesk',sans-serif;margin:0">Bench Press <span style="color:#8a8378;font-weight:500">· barbell</span></p><p style="font:500 11.5px 'IBM Plex Mono',monospace;color:#8a8378;margin:3px 0 0">Fri · 4×5 @ 60 kg</p></div>
+          <span style="width:34px;height:34px;border-radius:50%;background:#f7f3ec;display:flex;align-items:center;justify-content:center;font:600 17px 'Sora',sans-serif;color:#e8491d">+</span>
+        </div>
+        <div style="background:#ffffff;border-radius:16px;box-shadow:0 0 0 1px rgba(22,19,14,.06);padding:12px 14px;display:flex;align-items:center;gap:12px">
+          <img src="public/exercises/deadlift-barbell.jpg" alt="" style="width:44px;height:44px;border-radius:11px;object-fit:cover;filter:grayscale(1) contrast(1.05)">
+          <div style="flex:1"><p style="font:600 14.5px 'Hanken Grotesk',sans-serif;margin:0">Deadlift <span style="color:#8a8378;font-weight:500">· barbell</span></p><p style="font:500 11.5px 'IBM Plex Mono',monospace;color:#8a8378;margin:3px 0 0">Sun · 3×5 @ 150 kg · <span style="color:#e8491d">PR</span></p></div>
+          <span style="width:34px;height:34px;border-radius:50%;background:#f7f3ec;display:flex;align-items:center;justify-content:center;font:600 17px 'Sora',sans-serif;color:#e8491d">+</span>
+        </div>
+        <p style="font:500 11px 'IBM Plex Mono',monospace;letter-spacing:.14em;text-transform:uppercase;color:#8a8378;margin:10px 0 2px">All exercises</p>
+        <div style="background:#ffffff;border-radius:16px;box-shadow:0 0 0 1px rgba(22,19,14,.06);padding:12px 14px;display:flex;align-items:center;gap:12px">
+          <img src="public/exercises/bicep-curl-dumbbell.jpg" alt="" style="width:44px;height:44px;border-radius:11px;object-fit:cover;filter:grayscale(1) contrast(1.05)">
+          <div style="flex:1"><p style="font:600 14.5px 'Hanken Grotesk',sans-serif;margin:0">Bicep Curl <span style="color:#8a8378;font-weight:500">· dumbbell</span></p><p style="font:500 11.5px 'IBM Plex Mono',monospace;color:#8a8378;margin:3px 0 0">biceps</p></div>
+          <span style="width:34px;height:34px;border-radius:50%;background:#f7f3ec;display:flex;align-items:center;justify-content:center;font:600 17px 'Sora',sans-serif;color:#e8491d">+</span>
+        </div>
+        <div style="background:#ffffff;border-radius:16px;box-shadow:0 0 0 1px rgba(22,19,14,.06);padding:12px 14px;display:flex;align-items:center;gap:12px">
+          <img src="public/exercises/chin-up.jpg" alt="" style="width:44px;height:44px;border-radius:11px;object-fit:cover;filter:grayscale(1) contrast(1.05)">
+          <div style="flex:1"><p style="font:600 14.5px 'Hanken Grotesk',sans-serif;margin:0">Chin Up <span style="color:#8a8378;font-weight:500">· bodyweight</span></p><p style="font:500 11.5px 'IBM Plex Mono',monospace;color:#8a8378;margin:3px 0 0">back</p></div>
+          <span style="width:34px;height:34px;border-radius:50%;background:#f7f3ec;display:flex;align-items:center;justify-content:center;font:600 17px 'Sora',sans-serif;color:#e8491d">+</span>
+        </div>
+        <div style="background:#ffffff;border-radius:16px;box-shadow:0 0 0 1px rgba(22,19,14,.06);padding:12px 14px;display:flex;align-items:center;gap:12px">
+          <img src="public/exercises/face-pull.jpg" alt="" style="width:44px;height:44px;border-radius:11px;object-fit:cover;filter:grayscale(1) contrast(1.05)">
+          <div style="flex:1"><p style="font:600 14.5px 'Hanken Grotesk',sans-serif;margin:0">Face Pull <span style="color:#8a8378;font-weight:500">· cable</span></p><p style="font:500 11.5px 'IBM Plex Mono',monospace;color:#8a8378;margin:3px 0 0">shoulders</p></div>
+          <span style="width:34px;height:34px;border-radius:50%;background:#f7f3ec;display:flex;align-items:center;justify-content:center;font:600 17px 'Sora',sans-serif;color:#e8491d">+</span>
+        </div>
+        <div style="background:#ffffff;border-radius:16px;box-shadow:0 0 0 1px rgba(22,19,14,.06);padding:12px 14px;display:flex;align-items:center;gap:12px">
+          <img src="public/exercises/full-squat.jpg" alt="" style="width:44px;height:44px;border-radius:11px;object-fit:cover;filter:grayscale(1) contrast(1.05)">
+          <div style="flex:1"><p style="font:600 14.5px 'Hanken Grotesk',sans-serif;margin:0">Full Squat <span style="color:#8a8378;font-weight:500">· barbell</span></p><p style="font:500 11.5px 'IBM Plex Mono',monospace;color:#8a8378;margin:3px 0 0">quads</p></div>
+          <span style="width:34px;height:34px;border-radius:50%;background:#f7f3ec;display:flex;align-items:center;justify-content:center;font:600 17px 'Sora',sans-serif;color:#e8491d">+</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div data-screen-label="05 Finish" style="display:flex;flex-direction:column;gap:16px">
+    <p style="font:500 13px 'IBM Plex Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#7d7668;margin:0">05 · Finish — debrief &amp; PR</p>
+    <div style="width:390px;height:844px;background:#f7f3ec;border-radius:40px;box-shadow:0 20px 60px rgba(22,19,14,.14),0 0 0 1px rgba(22,19,14,.06);overflow:hidden;display:flex;flex-direction:column">
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 24px 4px;font:500 13px 'IBM Plex Mono',monospace;color:#8a8378"><span>9:41</span><span>●●●</span></div>
+      <div style="padding:26px 22px 18px">
+        <p style="font:500 13px 'Hanken Grotesk',sans-serif;color:#8a8378;margin:0 0 8px">Tuesday · workout 47</p>
+        <p style="font:800 34px/1.12 'Sora',sans-serif;letter-spacing:-.03em;margin:0">In the books.</p>
+      </div>
+      <div style="flex:1;overflow:hidden;padding:0 22px;display:flex;flex-direction:column;gap:12px">
+        <div style="display:flex;gap:10px">
+          <div style="flex:1;background:#ffffff;border-radius:18px;box-shadow:0 0 0 1px rgba(22,19,14,.06);padding:14px 16px"><p style="font:700 22px 'Sora',sans-serif;letter-spacing:-.02em;margin:0;font-variant-numeric:tabular-nums">55:12</p><p style="font:500 11.5px 'Hanken Grotesk',sans-serif;color:#8a8378;margin:3px 0 0">duration</p></div>
+          <div style="flex:1;background:#ffffff;border-radius:18px;box-shadow:0 0 0 1px rgba(22,19,14,.06);padding:14px 16px"><p style="font:700 22px 'Sora',sans-serif;letter-spacing:-.02em;margin:0;font-variant-numeric:tabular-nums">12,480</p><p style="font:500 11.5px 'Hanken Grotesk',sans-serif;color:#8a8378;margin:3px 0 0">kg lifted</p></div>
+          <div style="flex:1;background:#ffffff;border-radius:18px;box-shadow:0 0 0 1px rgba(22,19,14,.06);padding:14px 16px"><p style="font:700 22px 'Sora',sans-serif;letter-spacing:-.02em;margin:0;font-variant-numeric:tabular-nums">18</p><p style="font:500 11.5px 'Hanken Grotesk',sans-serif;color:#8a8378;margin:3px 0 0">sets</p></div>
+        </div>
+        <div style="background:rgba(232,73,29,.09);border-radius:20px;padding:18px;display:flex;gap:14px;align-items:center">
+          <svg width="44" height="44" viewBox="0 0 96 96" style="flex-shrink:0"><path fill="#e8491d" fill-rule="evenodd" d="M48 4 a44 44 0 1 0 0 88 a44 44 0 1 0 0 -88 Z M48 33 a15 15 0 1 1 0 30 a15 15 0 1 1 0 -30 Z M17 43 h6 a5 5 0 0 1 5 5 a5 5 0 0 1 -5 5 h-6 a5 5 0 0 1 -5 -5 a5 5 0 0 1 5 -5 Z M73 43 h6 a5 5 0 0 1 5 5 a5 5 0 0 1 -5 5 h-6 a5 5 0 0 1 -5 -5 a5 5 0 0 1 5 -5 Z"></path></svg>
+          <div><p style="font:700 12px 'Sora',sans-serif;letter-spacing:.08em;text-transform:uppercase;color:#e8491d;margin:0 0 4px">New PR</p><p style="font:700 17px 'Sora',sans-serif;letter-spacing:-.02em;margin:0">Bench Press — 62.5 kg × 5</p><p style="font:500 12px 'IBM Plex Mono',monospace;color:#8a8378;margin:4px 0 0">est. 1RM 72.9 kg · up 2.9</p></div>
+        </div>
+        <div style="background:#ffffff;border-radius:20px;box-shadow:0 0 0 1px rgba(22,19,14,.06);padding:16px 18px;display:flex;gap:12px;align-items:flex-start">
+          <svg width="26" height="26" viewBox="0 0 96 96" style="flex-shrink:0"><path fill="#16130e" fill-rule="evenodd" d="M48 4 a44 44 0 1 0 0 88 a44 44 0 1 0 0 -88 Z M48 33 a15 15 0 1 1 0 30 a15 15 0 1 1 0 -30 Z"></path><circle cx="48" cy="48" r="9" fill="#e8491d"></circle></svg>
+          <p style="font:500 14px/1.6 'Hanken Grotesk',sans-serif;color:#4f4a41;margin:0">All four bench sets at speed — the 2.5 jump held. Dips were one rep short of last week; we keep them where they are and push again Friday. Eat, sleep. Pull day Thursday.</p>
+        </div>
+        <div style="background:#ffffff;border-radius:20px;box-shadow:0 0 0 1px rgba(22,19,14,.06);padding:14px 18px;display:flex;flex-direction:column;gap:8px">
+          <div style="display:flex;justify-content:space-between;font:500 13px 'IBM Plex Mono',monospace"><span style="color:#16130e">Bench Press</span><span style="color:#8a8378;white-space:nowrap">4×5 @ 62.5 <span style="color:#e8491d">PR</span></span></div>
+          <div style="display:flex;justify-content:space-between;font:500 13px 'IBM Plex Mono',monospace"><span style="color:#16130e">Overhead Press</span><span style="color:#8a8378">3×8 @ 40</span></div>
+          <div style="display:flex;justify-content:space-between;font:500 13px 'IBM Plex Mono',monospace"><span style="color:#16130e">Incline DB Press</span><span style="color:#8a8378">3×10 @ 24</span></div>
+          <div style="display:flex;justify-content:space-between;font:500 13px 'IBM Plex Mono',monospace"><span style="color:#16130e">Dips</span><span style="color:#8a8378">3× 11·9·8</span></div>
+          <div style="display:flex;justify-content:space-between;font:500 13px 'IBM Plex Mono',monospace"><span style="color:#16130e">Lateral Raise</span><span style="color:#8a8378">3×12 @ 10</span></div>
+          <div style="display:flex;justify-content:space-between;font:500 13px 'IBM Plex Mono',monospace"><span style="color:#16130e">Pushdown</span><span style="color:#8a8378">3×12 @ 25</span></div>
+        </div>
+      </div>
+      <div style="padding:14px 22px 30px;display:flex;gap:10px">
+        <span style="flex:1;display:flex;align-items:center;justify-content:center;font:700 15px 'Sora',sans-serif;color:#16130e;background:#ffffff;box-shadow:0 0 0 1px rgba(22,19,14,.1);border-radius:99px;height:56px">Share card</span>
+        <span style="flex:1;display:flex;align-items:center;justify-content:center;font:700 15px 'Sora',sans-serif;color:#f7f3ec;background:#16130e;border-radius:99px;height:56px">Done</span>
+      </div>
+    </div>
+  </div>
+
+  <div data-screen-label="06 History" style="display:flex;flex-direction:column;gap:16px">
+    <p style="font:500 13px 'IBM Plex Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#7d7668;margin:0">06 · History — heatmap + sessions</p>
+    <div style="width:390px;height:844px;background:#f7f3ec;border-radius:40px;box-shadow:0 20px 60px rgba(22,19,14,.14),0 0 0 1px rgba(22,19,14,.06);overflow:hidden;display:flex;flex-direction:column">
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 24px 4px;font:500 13px 'IBM Plex Mono',monospace;color:#8a8378"><span>9:41</span><span>●●●</span></div>
+      <div style="display:flex;align-items:center;padding:10px 22px 0">
+        <span style="width:40px;height:40px;border-radius:50%;background:#ffffff;box-shadow:0 0 0 1px rgba(22,19,14,.08);display:flex;align-items:center;justify-content:center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#16130e" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M14 5l-7 7 7 7"></path></svg></span>
+        <p style="font:700 20px 'Sora',sans-serif;letter-spacing:-.02em;margin:0 0 0 12px">History</p>
+        <span style="margin-inline-start:auto;font:500 13px 'IBM Plex Mono',monospace;color:#8a8378">August 2026</span>
+      </div>
+      <div style="flex:1;overflow:hidden;padding:16px 22px 0;display:flex;flex-direction:column;gap:12px">
+        <div style="background:#ffffff;border-radius:20px;box-shadow:0 0 0 1px rgba(22,19,14,.06);padding:16px 18px">
+          <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:8px;justify-items:center">
+            <span style="font:500 10px 'IBM Plex Mono',monospace;color:#8a8378">S</span><span style="font:500 10px 'IBM Plex Mono',monospace;color:#8a8378">M</span><span style="font:500 10px 'IBM Plex Mono',monospace;color:#8a8378">T</span><span style="font:500 10px 'IBM Plex Mono',monospace;color:#8a8378">W</span><span style="font:500 10px 'IBM Plex Mono',monospace;color:#8a8378">T</span><span style="font:500 10px 'IBM Plex Mono',monospace;color:#8a8378">F</span><span style="font:500 10px 'IBM Plex Mono',monospace;color:#8a8378">S</span>
+            <span style="width:26px;height:26px;border-radius:8px;background:#f0ece2"></span><span style="width:26px;height:26px;border-radius:8px;background:#e8491d;opacity:.5"></span><span style="width:26px;height:26px;border-radius:8px;background:#f0ece2"></span><span style="width:26px;height:26px;border-radius:8px;background:#e8491d;opacity:.7"></span><span style="width:26px;height:26px;border-radius:8px;background:#f0ece2"></span><span style="width:26px;height:26px;border-radius:8px;background:#e8491d"></span><span style="width:26px;height:26px;border-radius:8px;background:#f0ece2"></span>
+            <span style="width:26px;height:26px;border-radius:8px;background:#e8491d;opacity:.6"></span><span style="width:26px;height:26px;border-radius:8px;background:#f0ece2"></span><span style="width:26px;height:26px;border-radius:8px;background:#e8491d;opacity:.8"></span><span style="width:26px;height:26px;border-radius:8px;background:#f0ece2"></span><span style="width:26px;height:26px;border-radius:8px;background:#e8491d;opacity:.5"></span><span style="width:26px;height:26px;border-radius:8px;background:#e8491d;opacity:.9"></span><span style="width:26px;height:26px;border-radius:8px;background:#f0ece2"></span>
+            <span style="width:26px;height:26px;border-radius:8px;background:#e8491d;opacity:.7"></span><span style="width:26px;height:26px;border-radius:8px;background:#f0ece2"></span><span style="width:26px;height:26px;border-radius:8px;box-shadow:inset 0 0 0 2px #e8491d;background:#ffffff;display:flex;align-items:center;justify-content:center"><span style="width:8px;height:8px;border-radius:50%;background:#e8491d"></span></span><span style="width:26px;height:26px;border-radius:8px;background:#f0ece2"></span><span style="width:26px;height:26px;border-radius:8px;background:#f0ece2"></span><span style="width:26px;height:26px;border-radius:8px;background:#f0ece2"></span><span style="width:26px;height:26px;border-radius:8px;background:#f0ece2"></span>
+          </div>
+          <p style="font:500 12px 'IBM Plex Mono',monospace;color:#8a8378;margin:14px 0 0">11 workouts · 138,720 kg this month</p>
+        </div>
+        <div style="background:#ffffff;border-radius:20px;box-shadow:0 0 0 1px rgba(22,19,14,.06);padding:16px 18px">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div><p style="font:700 15.5px 'Sora',sans-serif;letter-spacing:-.02em;margin:0">Push Day A</p><p style="font:500 12px 'IBM Plex Mono',monospace;color:#8a8378;margin:4px 0 0">today · 55:12 · 12,480 kg</p></div>
+            <span style="font:700 11px 'Sora',sans-serif;color:#e8491d;background:rgba(232,73,29,.09);border-radius:99px;padding:6px 10px">PR</span>
+          </div>
+          <div style="height:1px;background:#f0ece2;margin:12px 0"></div>
+          <div style="display:flex;flex-direction:column;gap:7px">
+            <div style="display:flex;justify-content:space-between;font:500 12.5px 'IBM Plex Mono',monospace"><span style="color:#16130e">Bench Press</span><span style="color:#8a8378">4×5 @ 62.5</span></div>
+            <div style="display:flex;justify-content:space-between;font:500 12.5px 'IBM Plex Mono',monospace"><span style="color:#16130e">Overhead Press</span><span style="color:#8a8378">3×8 @ 40</span></div>
+            <div style="display:flex;justify-content:space-between;font:500 12.5px 'IBM Plex Mono',monospace"><span style="color:#8a8378">+ 4 more</span><span></span></div>
+          </div>
+        </div>
+        <div style="background:#ffffff;border-radius:20px;box-shadow:0 0 0 1px rgba(22,19,14,.06);padding:16px 18px;display:flex;justify-content:space-between;align-items:center">
+          <div><p style="font:700 15.5px 'Sora',sans-serif;letter-spacing:-.02em;margin:0">Pull Day A</p><p style="font:500 12px 'IBM Plex Mono',monospace;color:#8a8378;margin:4px 0 0">Sun · 52:40 · 14,320 kg</p></div>
+          <span style="font:700 11px 'Sora',sans-serif;color:#e8491d;background:rgba(232,73,29,.09);border-radius:99px;padding:6px 10px">PR</span>
+        </div>
+        <div style="background:#ffffff;border-radius:20px;box-shadow:0 0 0 1px rgba(22,19,14,.06);padding:16px 18px;display:flex;justify-content:space-between;align-items:center">
+          <div><p style="font:700 15.5px 'Sora',sans-serif;letter-spacing:-.02em;margin:0">Legs</p><p style="font:500 12px 'IBM Plex Mono',monospace;color:#8a8378;margin:4px 0 0">Fri · 61:05 · 18,940 kg</p></div>
+        </div>
+        <div style="background:#ffffff;border-radius:20px;box-shadow:0 0 0 1px rgba(22,19,14,.06);padding:16px 18px">
+          <p style="font:500 11px 'IBM Plex Mono',monospace;letter-spacing:.14em;text-transform:uppercase;color:#8a8378;margin:0 0 12px">Where August went</p>
+          <div style="display:flex;height:14px;border-radius:7px;overflow:hidden;gap:2px">
+            <span style="flex:34;background:#e8491d"></span><span style="flex:28;background:#16130e"></span><span style="flex:22;background:#8a8378"></span><span style="flex:16;background:#d8d2c4"></span>
+          </div>
+          <div style="display:flex;gap:14px;margin-top:10px;flex-wrap:wrap">
+            <span style="display:flex;align-items:center;gap:6px;font:500 11.5px 'IBM Plex Mono',monospace;color:#4f4a41"><span style="width:8px;height:8px;border-radius:2px;background:#e8491d"></span>push 34%</span>
+            <span style="display:flex;align-items:center;gap:6px;font:500 11.5px 'IBM Plex Mono',monospace;color:#4f4a41"><span style="width:8px;height:8px;border-radius:2px;background:#16130e"></span>pull 28%</span>
+            <span style="display:flex;align-items:center;gap:6px;font:500 11.5px 'IBM Plex Mono',monospace;color:#4f4a41"><span style="width:8px;height:8px;border-radius:2px;background:#8a8378"></span>legs 22%</span>
+            <span style="display:flex;align-items:center;gap:6px;font:500 11.5px 'IBM Plex Mono',monospace;color:#4f4a41"><span style="width:8px;height:8px;border-radius:2px;background:#d8d2c4"></span>core 16%</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div data-screen-label="07 Progress" style="display:flex;flex-direction:column;gap:16px">
+    <p style="font:500 13px 'IBM Plex Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#7d7668;margin:0">07 · Progress — strength over time</p>
+    <div style="width:390px;height:844px;background:#f7f3ec;border-radius:40px;box-shadow:0 20px 60px rgba(22,19,14,.14),0 0 0 1px rgba(22,19,14,.06);overflow:hidden;display:flex;flex-direction:column">
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 24px 4px;font:500 13px 'IBM Plex Mono',monospace;color:#8a8378"><span>9:41</span><span>●●●</span></div>
+      <div style="display:flex;align-items:center;padding:10px 22px 0">
+        <span style="width:40px;height:40px;border-radius:50%;background:#ffffff;box-shadow:0 0 0 1px rgba(22,19,14,.08);display:flex;align-items:center;justify-content:center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#16130e" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M14 5l-7 7 7 7"></path></svg></span>
+        <p style="font:700 20px 'Sora',sans-serif;letter-spacing:-.02em;margin:0 0 0 12px">Progress</p>
+      </div>
+      <div style="padding:16px 22px 0;display:flex;gap:8px">
+        <span style="font:600 12.5px 'Hanken Grotesk',sans-serif;color:#f7f3ec;background:#16130e;border-radius:99px;padding:9px 15px">Bench</span>
+        <span style="font:600 12.5px 'Hanken Grotesk',sans-serif;color:#16130e;background:#ffffff;box-shadow:0 0 0 1px rgba(22,19,14,.08);border-radius:99px;padding:9px 15px">Squat</span>
+        <span style="font:600 12.5px 'Hanken Grotesk',sans-serif;color:#16130e;background:#ffffff;box-shadow:0 0 0 1px rgba(22,19,14,.08);border-radius:99px;padding:9px 15px">Deadlift</span>
+        <span style="font:600 12.5px 'Hanken Grotesk',sans-serif;color:#16130e;background:#ffffff;box-shadow:0 0 0 1px rgba(22,19,14,.08);border-radius:99px;padding:9px 15px">OHP</span>
+      </div>
+      <div style="flex:1;overflow:hidden;padding:14px 22px 0;display:flex;flex-direction:column;gap:12px">
+        <div style="background:#ffffff;border-radius:20px;box-shadow:0 0 0 1px rgba(22,19,14,.06);padding:18px">
+          <p style="font:500 11px 'IBM Plex Mono',monospace;letter-spacing:.14em;text-transform:uppercase;color:#8a8378;margin:0 0 6px">Bench Press · est. 1RM</p>
+          <div style="display:flex;align-items:baseline;gap:10px"><p style="font:800 36px 'Sora',sans-serif;letter-spacing:-.03em;margin:0;font-variant-numeric:tabular-nums">72.9<span style="font-size:18px;color:#8a8378"> kg</span></p><span style="font:600 13px 'Hanken Grotesk',sans-serif;color:#e8491d">▲ 8.4 this year</span></div>
+          <svg viewBox="0 0 320 130" style="width:100%;margin-top:12px;display:block">
+            <line x1="0" y1="120" x2="320" y2="120" stroke="#f0ece2" stroke-width="1"></line>
+            <line x1="0" y1="80" x2="320" y2="80" stroke="#f0ece2" stroke-width="1"></line>
+            <line x1="0" y1="40" x2="320" y2="40" stroke="#f0ece2" stroke-width="1"></line>
+            <polyline points="10,104 55,98 100,100 145,88 190,80 235,66 280,52 310,38" fill="none" stroke="#e8491d" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"></polyline>
+            <circle cx="310" cy="38" r="6" fill="#e8491d"></circle><circle cx="310" cy="38" r="2.4" fill="#ffffff"></circle>
+          </svg>
+          <div style="display:flex;justify-content:space-between;font:500 10.5px 'IBM Plex Mono',monospace;color:#8a8378;margin-top:6px"><span>JAN</span><span>MAR</span><span>MAY</span><span>JUL</span><span>NOW</span></div>
+        </div>
+        <div style="display:flex;gap:10px">
+          <div style="flex:1;background:#ffffff;border-radius:18px;box-shadow:0 0 0 1px rgba(22,19,14,.06);padding:14px 16px"><p style="font:700 18px 'Sora',sans-serif;margin:0;font-variant-numeric:tabular-nums">62.5×5</p><p style="font:500 11.5px 'Hanken Grotesk',sans-serif;color:#8a8378;margin:3px 0 0">best set</p></div>
+          <div style="flex:1;background:#ffffff;border-radius:18px;box-shadow:0 0 0 1px rgba(22,19,14,.06);padding:14px 16px"><p style="font:700 18px 'Sora',sans-serif;margin:0;font-variant-numeric:tabular-nums">38</p><p style="font:500 11.5px 'Hanken Grotesk',sans-serif;color:#8a8378;margin:3px 0 0">sessions logged</p></div>
+          <div style="flex:1;background:#ffffff;border-radius:18px;box-shadow:0 0 0 1px rgba(22,19,14,.06);padding:14px 16px"><p style="font:700 18px 'Sora',sans-serif;margin:0;color:#e8491d;font-variant-numeric:tabular-nums">6</p><p style="font:500 11.5px 'Hanken Grotesk',sans-serif;color:#8a8378;margin:3px 0 0">PRs this year</p></div>
+        </div>
+        <div style="background:#ffffff;border-radius:20px;box-shadow:0 0 0 1px rgba(22,19,14,.06);padding:16px 18px;display:flex;gap:12px;align-items:flex-start">
+          <svg width="26" height="26" viewBox="0 0 96 96" style="flex-shrink:0"><path fill="#16130e" fill-rule="evenodd" d="M48 4 a44 44 0 1 0 0 88 a44 44 0 1 0 0 -88 Z M48 33 a15 15 0 1 1 0 30 a15 15 0 1 1 0 -30 Z"></path><circle cx="48" cy="48" r="9" fill="#e8491d"></circle></svg>
+          <p style="font:500 14px/1.6 'Hanken Grotesk',sans-serif;color:#4f4a41;margin:0">Bench climbs steadily since May — the slow 2.5 jumps are working. Your press lags behind it; I'd give OHP the first slot on the next push day.</p>
+        </div>
+        <div style="background:#ffffff;border-radius:20px;box-shadow:0 0 0 1px rgba(22,19,14,.06);padding:16px 18px">
+          <p style="font:500 11px 'IBM Plex Mono',monospace;letter-spacing:.14em;text-transform:uppercase;color:#8a8378;margin:0 0 12px">PR log</p>
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <div style="display:flex;align-items:center;gap:11px"><svg width="17" height="17" viewBox="0 0 96 96" style="flex-shrink:0"><path fill="#e8491d" fill-rule="evenodd" d="M48 4 a44 44 0 1 0 0 88 a44 44 0 1 0 0 -88 Z M48 33 a15 15 0 1 1 0 30 a15 15 0 1 1 0 -30 Z"></path></svg><span style="font:600 13.5px 'Hanken Grotesk',sans-serif;flex:1">Bench Press</span><span style="font:500 12.5px 'IBM Plex Mono',monospace;color:#8a8378;white-space:nowrap">62.5×5 · today</span></div>
+            <div style="display:flex;align-items:center;gap:11px"><svg width="17" height="17" viewBox="0 0 96 96" style="flex-shrink:0"><path fill="#e8491d" fill-rule="evenodd" d="M48 4 a44 44 0 1 0 0 88 a44 44 0 1 0 0 -88 Z M48 33 a15 15 0 1 1 0 30 a15 15 0 1 1 0 -30 Z"></path></svg><span style="font:600 13.5px 'Hanken Grotesk',sans-serif;flex:1">Deadlift</span><span style="font:500 12.5px 'IBM Plex Mono',monospace;color:#8a8378;white-space:nowrap">150×3 · Sun</span></div>
+            <div style="display:flex;align-items:center;gap:11px"><svg width="17" height="17" viewBox="0 0 96 96" style="flex-shrink:0"><path fill="#e8491d" fill-rule="evenodd" d="M48 4 a44 44 0 1 0 0 88 a44 44 0 1 0 0 -88 Z M48 33 a15 15 0 1 1 0 30 a15 15 0 1 1 0 -30 Z"></path></svg><span style="font:600 13.5px 'Hanken Grotesk',sans-serif;flex:1">Full Squat</span><span style="font:500 12.5px 'IBM Plex Mono',monospace;color:#8a8378;white-space:nowrap">110×5 · Jul 28</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div data-screen-label="08 Coach" style="display:flex;flex-direction:column;gap:16px">
+    <p style="font:500 13px 'IBM Plex Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#7d7668;margin:0">08 · Coach — ask anything</p>
+    <div style="width:390px;height:844px;background:#f7f3ec;border-radius:40px;box-shadow:0 20px 60px rgba(22,19,14,.14),0 0 0 1px rgba(22,19,14,.06);overflow:hidden;display:flex;flex-direction:column">
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 24px 4px;font:500 13px 'IBM Plex Mono',monospace;color:#8a8378"><span>9:41</span><span>●●●</span></div>
+      <div style="display:flex;align-items:center;gap:12px;padding:10px 22px 12px;border-bottom:1px solid rgba(22,19,14,.06)">
+        <span style="width:40px;height:40px;border-radius:50%;background:#ffffff;box-shadow:0 0 0 1px rgba(22,19,14,.08);display:flex;align-items:center;justify-content:center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#16130e" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M14 5l-7 7 7 7"></path></svg></span>
+        <svg width="36" height="36" viewBox="0 0 96 96"><path fill="#16130e" fill-rule="evenodd" d="M48 4 a44 44 0 1 0 0 88 a44 44 0 1 0 0 -88 Z M48 33 a15 15 0 1 1 0 30 a15 15 0 1 1 0 -30 Z"></path><circle cx="48" cy="48" r="9" fill="#e8491d"></circle></svg>
+        <div><p style="font:700 15px 'Sora',sans-serif;margin:0">Coach</p><p style="font:500 11px 'IBM Plex Mono',monospace;color:#e8491d;margin:2px 0 0">● knows your 47 workouts</p></div>
+      </div>
+      <div style="flex:1;overflow:hidden;padding:18px 22px 0;display:flex;flex-direction:column;gap:12px">
+        <div style="align-self:flex-end;background:#16130e;color:#f7f3ec;border-radius:18px 18px 5px 18px;padding:13px 16px;max-width:280px"><p style="font:500 14px/1.5 'Hanken Grotesk',sans-serif;margin:0">My shoulder still feels tight on incline. Should I drop it?</p></div>
+        <div style="align-self:flex-start;background:#ffffff;box-shadow:0 0 0 1px rgba(22,19,14,.06);border-radius:18px 18px 18px 5px;padding:13px 16px;max-width:300px"><p style="font:500 14px/1.55 'Hanken Grotesk',sans-serif;color:#16130e;margin:0">Not yet. It only showed up after Friday's volume jump. Two changes first: incline moves to last, and we cap it at 2×10 this week. If it still bites Thursday, we swap it for a machine press.</p></div>
+        <div style="align-self:flex-start;background:#ffffff;box-shadow:0 0 0 1px rgba(22,19,14,.06);border-radius:18px 18px 18px 5px;padding:13px 16px;max-width:300px"><p style="font:500 14px/1.55 'Hanken Grotesk',sans-serif;color:#16130e;margin:0 0 10px">Want me to update Push Day A now?</p><div style="display:flex;gap:8px"><span style="font:600 12.5px 'Hanken Grotesk',sans-serif;color:#f7f3ec;background:#e8491d;border-radius:99px;padding:8px 14px">Update routine</span><span style="font:600 12.5px 'Hanken Grotesk',sans-serif;color:#16130e;background:#f7f3ec;border-radius:99px;padding:8px 14px">Not now</span></div></div>
+      </div>
+      <div style="padding:14px 22px 30px;display:flex;flex-direction:column;gap:10px">
+        <div style="display:flex;gap:8px;overflow:hidden">
+          <span style="font:600 12px 'Hanken Grotesk',sans-serif;color:#16130e;background:#ffffff;box-shadow:0 0 0 1px rgba(22,19,14,.08);border-radius:99px;padding:8px 13px;flex-shrink:0">Plan my week</span>
+          <span style="font:600 12px 'Hanken Grotesk',sans-serif;color:#16130e;background:#ffffff;box-shadow:0 0 0 1px rgba(22,19,14,.08);border-radius:99px;padding:8px 13px;flex-shrink:0">Am I overtraining?</span>
+          <span style="font:600 12px 'Hanken Grotesk',sans-serif;color:#16130e;background:#ffffff;box-shadow:0 0 0 1px rgba(22,19,14,.08);border-radius:99px;padding:8px 13px;flex-shrink:0">Deload?</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;background:#ffffff;box-shadow:0 0 0 1px rgba(22,19,14,.08);border-radius:99px;padding:14px 18px">
+          <span style="font:500 14px 'Hanken Grotesk',sans-serif;color:#8a8378;flex:1">Message your coach…</span>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#e8491d" stroke-width="2" stroke-linecap="round"><path d="M12 4v10"></path><path d="M7 12a5 5 0 0 0 10 0"></path><path d="M12 17v4"></path></svg>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="flex-basis:100%;padding-top:24px;border-top:1px dashed rgba(22,19,14,.2)">
+    <p style="font:700 22px 'Sora',sans-serif;letter-spacing:-.02em;margin:0">Deep dive — what was missing</p>
+    <p style="font:500 13px 'IBM Plex Mono',monospace;color:#7d7668;margin:8px 0 0">onboarding · hevy import · routines · exercise detail · set types &amp; supersets · settings · widget · arabic rtl</p>
+  </div>
+
+  <div data-screen-label="09 Onboarding" style="display:flex;flex-direction:column;gap:16px">
+    <p style="font:500 13px 'IBM Plex Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#7d7668;margin:0">09 · Onboarding — code, not passwords</p>
+    <div style="width:390px;height:844px;background:#f7f3ec;border-radius:40px;box-shadow:0 20px 60px rgba(22,19,14,.14),0 0 0 1px rgba(22,19,14,.06);overflow:hidden;display:flex;flex-direction:column">
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 24px 4px;font:500 13px 'IBM Plex Mono',monospace;color:#8a8378"><span>9:41</span><span>●●●</span></div>
+      <div style="flex:1;display:flex;flex-direction:column;justify-content:center;padding:0 30px;gap:0">
+        <svg width="64" height="64" viewBox="0 0 96 96"><path fill="#e8491d" fill-rule="evenodd" d="M48 4 a44 44 0 1 0 0 88 a44 44 0 1 0 0 -88 Z M48 33 a15 15 0 1 1 0 30 a15 15 0 1 1 0 -30 Z M17 43 h6 a5 5 0 0 1 5 5 a5 5 0 0 1 -5 5 h-6 a5 5 0 0 1 -5 -5 a5 5 0 0 1 5 -5 Z M73 43 h6 a5 5 0 0 1 5 5 a5 5 0 0 1 -5 5 h-6 a5 5 0 0 1 -5 -5 a5 5 0 0 1 5 -5 Z"></path></svg>
+        <p style="font:800 32px/1.15 'Sora',sans-serif;letter-spacing:-.03em;margin:28px 0 10px">Your training,<br>on record.</p>
+        <p style="font:500 14.5px/1.6 'Hanken Grotesk',sans-serif;color:#8a8378;margin:0 0 34px">We sent a 6-digit code to<br><span style="color:#16130e;font-weight:600">ameen@gmail.com</span></p>
+        <div style="display:flex;gap:8px">
+          <span style="flex:1;height:58px;background:#ffffff;border-radius:14px;box-shadow:0 0 0 1px rgba(22,19,14,.08);display:flex;align-items:center;justify-content:center;font:700 24px 'Sora',sans-serif;font-variant-numeric:tabular-nums">4</span>
+          <span style="flex:1;height:58px;background:#ffffff;border-radius:14px;box-shadow:0 0 0 1px rgba(22,19,14,.08);display:flex;align-items:center;justify-content:center;font:700 24px 'Sora',sans-serif;font-variant-numeric:tabular-nums">2</span>
+          <span style="flex:1;height:58px;background:#ffffff;border-radius:14px;box-shadow:0 0 0 1px rgba(22,19,14,.08);display:flex;align-items:center;justify-content:center;font:700 24px 'Sora',sans-serif;font-variant-numeric:tabular-nums">7</span>
+          <span style="flex:1;height:58px;background:#ffffff;border-radius:14px;box-shadow:0 0 0 2px #e8491d;display:flex;align-items:center;justify-content:center;font:700 24px 'Sora',sans-serif;color:#e8491d">|</span>
+          <span style="flex:1;height:58px;background:#ffffff;border-radius:14px;box-shadow:0 0 0 1px rgba(22,19,14,.08)"></span>
+          <span style="flex:1;height:58px;background:#ffffff;border-radius:14px;box-shadow:0 0 0 1px rgba(22,19,14,.08)"></span>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:center;background:#16130e;border-radius:99px;height:56px;margin-top:22px"><span style="font:700 15px 'Sora',sans-serif;color:#f7f3ec">Verify</span></div>
+        <p style="font:500 13px 'Hanken Grotesk',sans-serif;color:#8a8378;margin:18px 0 0;text-align:center">Resend code · 0:42</p>
+      </div>
+      <div style="padding:0 30px 40px">
+        <div style="display:flex;align-items:center;gap:12px;background:#ffffff;border-radius:16px;box-shadow:0 0 0 1px rgba(22,19,14,.07);padding:15px 18px">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#e8491d" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"></path><path d="M7 10l5 5 5-5"></path><path d="M4 19h16"></path></svg>
+          <div style="flex:1"><p style="font:600 13.5px 'Hanken Grotesk',sans-serif;margin:0">Coming from Hevy?</p><p style="font:500 12px 'Hanken Grotesk',sans-serif;color:#8a8378;margin:2px 0 0">Bring every workout with you — 2 minutes.</p></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div data-screen-label="10 Hevy import" style="display:flex;flex-direction:column;gap:16px">
+    <p style="font:500 13px 'IBM Plex Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#7d7668;margin:0">10 · Hevy import — switch without losing a rep</p>
+    <div style="width:390px;height:844px;background:#f7f3ec;border-radius:40px;box-shadow:0 20px 60px rgba(22,19,14,.14),0 0 0 1px rgba(22,19,14,.06);overflow:hidden;display:flex;flex-direction:column">
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 24px 4px;font:500 13px 'IBM Plex Mono',monospace;color:#8a8378"><span>9:41</span><span>●●●</span></div>
+      <div style="padding:26px 22px 18px">
+        <p style="font:500 13px 'Hanken Grotesk',sans-serif;color:#8a8378;margin:0 0 8px">One-time import</p>
+        <p style="font:800 30px/1.15 'Sora',sans-serif;letter-spacing:-.03em;margin:0">Bring your<br>history.</p>
+      </div>
+      <div style="flex:1;padding:0 22px;display:flex;flex-direction:column;gap:12px">
+        <div style="background:#ffffff;border-radius:18px;box-shadow:0 0 0 1px rgba(22,19,14,.06);padding:15px 18px;display:flex;align-items:center;gap:12px">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#16130e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h9l5 5v13H6z"></path><path d="M14 3v6h6"></path></svg>
+          <div style="flex:1"><p style="font:600 14px 'Hanken Grotesk',sans-serif;margin:0">workouts.csv</p><p style="font:500 11.5px 'IBM Plex Mono',monospace;color:#8a8378;margin:2px 0 0">Hevy export · 412 KB</p></div>
+          <span style="font:600 12px 'Hanken Grotesk',sans-serif;color:#e8491d">change</span>
+        </div>
+        <div style="background:#ffffff;border-radius:18px;box-shadow:0 0 0 1px rgba(22,19,14,.06);padding:18px">
+          <div style="display:flex;flex-direction:column;gap:12px">
+            <div style="display:flex;align-items:center;gap:11px"><svg width="17" height="17" viewBox="0 0 96 96"><path fill="#e8491d" fill-rule="evenodd" d="M48 4 a44 44 0 1 0 0 88 a44 44 0 1 0 0 -88 Z M48 33 a15 15 0 1 1 0 30 a15 15 0 1 1 0 -30 Z"></path></svg><span style="font:500 13.5px 'IBM Plex Mono',monospace;flex:1">149 workouts</span><span style="font:600 12px 'Hanken Grotesk',sans-serif;color:#8a8378">done</span></div>
+            <div style="display:flex;align-items:center;gap:11px"><svg width="17" height="17" viewBox="0 0 96 96"><path fill="#e8491d" fill-rule="evenodd" d="M48 4 a44 44 0 1 0 0 88 a44 44 0 1 0 0 -88 Z M48 33 a15 15 0 1 1 0 30 a15 15 0 1 1 0 -30 Z"></path></svg><span style="font:500 13.5px 'IBM Plex Mono',monospace;flex:1">134 exercises matched</span><span style="font:600 12px 'Hanken Grotesk',sans-serif;color:#8a8378">done</span></div>
+            <div style="display:flex;align-items:center;gap:11px"><svg width="17" height="17" viewBox="0 0 96 96"><circle cx="48" cy="48" r="41" fill="none" stroke="#e8e2d4" stroke-width="12"></circle><circle cx="48" cy="48" r="41" fill="none" stroke="#e8491d" stroke-width="12" stroke-linecap="round" stroke-dasharray="257.6" stroke-dashoffset="52" transform="rotate(-90 48 48)"></circle></svg><span style="font:500 13.5px 'IBM Plex Mono',monospace;flex:1">3,197 sets</span><span style="font:600 12px 'IBM Plex Mono',monospace;color:#e8491d">80%</span></div>
+          </div>
+          <div style="height:8px;border-radius:4px;background:#f0ece2;margin-top:16px;overflow:hidden"><div style="width:80%;height:100%;border-radius:4px;background:#e8491d"></div></div>
+        </div>
+        <div style="display:flex;gap:12px;align-items:flex-start;padding:4px 4px 0">
+          <svg width="24" height="24" viewBox="0 0 96 96" style="flex-shrink:0"><path fill="#16130e" fill-rule="evenodd" d="M48 4 a44 44 0 1 0 0 88 a44 44 0 1 0 0 -88 Z M48 33 a15 15 0 1 1 0 30 a15 15 0 1 1 0 -30 Z"></path><circle cx="48" cy="48" r="9" fill="#e8491d"></circle></svg>
+          <p style="font:500 13.5px/1.55 'Hanken Grotesk',sans-serif;color:#4f4a41;margin:0">Everything you lifted comes with you. Your charts start full, your previous-set numbers are already there — and I'll know your whole history from day one.</p>
+        </div>
+      </div>
+      <div style="padding:14px 22px 30px">
+        <div style="display:flex;align-items:center;justify-content:center;background:#e8491d;border-radius:99px;height:58px;opacity:.45"><span style="font:700 15px 'Sora',sans-serif;color:#f7f3ec">Finish import</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div data-screen-label="11 Routines" style="display:flex;flex-direction:column;gap:16px">
+    <p style="font:500 13px 'IBM Plex Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#7d7668;margin:0">11 · Routines — templates &amp; the coach builds your week</p>
+    <div style="width:390px;height:844px;background:#f7f3ec;border-radius:40px;box-shadow:0 20px 60px rgba(22,19,14,.14),0 0 0 1px rgba(22,19,14,.06);overflow:hidden;display:flex;flex-direction:column">
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 24px 4px;font:500 13px 'IBM Plex Mono',monospace;color:#8a8378"><span>9:41</span><span>●●●</span></div>
+      <div style="display:flex;align-items:center;padding:10px 22px 0">
+        <span style="width:40px;height:40px;border-radius:50%;background:#ffffff;box-shadow:0 0 0 1px rgba(22,19,14,.08);display:flex;align-items:center;justify-content:center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#16130e" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M14 5l-7 7 7 7"></path></svg></span>
+        <p style="font:700 20px 'Sora',sans-serif;letter-spacing:-.02em;margin:0 0 0 12px">Routines</p>
+        <span style="margin-inline-start:auto;font:600 13px 'Sora',sans-serif;color:#e8491d">+ New</span>
+      </div>
+      <div style="flex:1;overflow:hidden;padding:16px 22px 0;display:flex;flex-direction:column;gap:12px">
+        <div style="background:#16130e;border-radius:20px;padding:18px;color:#f7f3ec;display:flex;gap:14px;align-items:center">
+          <svg width="36" height="36" viewBox="0 0 96 96" style="flex-shrink:0"><path fill="#f7f3ec" fill-rule="evenodd" d="M48 4 a44 44 0 1 0 0 88 a44 44 0 1 0 0 -88 Z M48 33 a15 15 0 1 1 0 30 a15 15 0 1 1 0 -30 Z"></path><circle cx="48" cy="48" r="9" fill="#e8491d"></circle></svg>
+          <div style="flex:1"><p style="font:700 15px 'Sora',sans-serif;letter-spacing:-.01em;margin:0">Let me build your week</p><p style="font:500 12.5px 'Hanken Grotesk',sans-serif;color:#9d968a;margin:3px 0 0">From your last 12 weeks — 4 days, push/pull/legs.</p></div>
+          <span style="font:700 12.5px 'Sora',sans-serif;color:#16130e;background:#f7f3ec;border-radius:99px;padding:9px 14px;white-space:nowrap">Build</span>
+        </div>
+        <p style="font:500 11px 'IBM Plex Mono',monospace;letter-spacing:.14em;text-transform:uppercase;color:#8a8378;margin:6px 0 0">PPL · 4 days / week</p>
+        <div style="background:#ffffff;border-radius:20px;box-shadow:0 0 0 1px rgba(22,19,14,.06);padding:16px 18px;display:flex;align-items:center;gap:14px">
+          <div style="flex:1"><p style="font:700 15.5px 'Sora',sans-serif;letter-spacing:-.02em;margin:0">Push Day A</p><p style="font:500 12px 'IBM Plex Mono',monospace;color:#8a8378;margin:4px 0 0">6 exercises · last done today</p></div>
+          <span style="width:44px;height:44px;border-radius:50%;background:rgba(232,73,29,.09);display:flex;align-items:center;justify-content:center"><svg width="15" height="15" viewBox="0 0 24 24" fill="#e8491d"><path d="M7 4l13 8-13 8z"></path></svg></span>
+        </div>
+        <div style="background:#ffffff;border-radius:20px;box-shadow:0 0 0 1px rgba(22,19,14,.06);padding:16px 18px;display:flex;align-items:center;gap:14px">
+          <div style="flex:1"><p style="font:700 15.5px 'Sora',sans-serif;letter-spacing:-.02em;margin:0">Pull Day A</p><p style="font:500 12px 'IBM Plex Mono',monospace;color:#8a8378;margin:4px 0 0">5 exercises · Sunday</p></div>
+          <span style="width:44px;height:44px;border-radius:50%;background:rgba(232,73,29,.09);display:flex;align-items:center;justify-content:center"><svg width="15" height="15" viewBox="0 0 24 24" fill="#e8491d"><path d="M7 4l13 8-13 8z"></path></svg></span>
+        </div>
+        <div style="background:#ffffff;border-radius:20px;box-shadow:0 0 0 1px rgba(22,19,14,.06);padding:16px 18px;display:flex;align-items:center;gap:14px">
+          <div style="flex:1"><p style="font:700 15.5px 'Sora',sans-serif;letter-spacing:-.02em;margin:0">Legs</p><p style="font:500 12px 'IBM Plex Mono',monospace;color:#8a8378;margin:4px 0 0">6 exercises · Friday</p></div>
+          <span style="width:44px;height:44px;border-radius:50%;background:rgba(232,73,29,.09);display:flex;align-items:center;justify-content:center"><svg width="15" height="15" viewBox="0 0 24 24" fill="#e8491d"><path d="M7 4l13 8-13 8z"></path></svg></span>
+        </div>
+        <p style="font:500 11px 'IBM Plex Mono',monospace;letter-spacing:.14em;text-transform:uppercase;color:#8a8378;margin:6px 0 0">Archive</p>
+        <div style="background:#ffffff;border-radius:20px;box-shadow:0 0 0 1px rgba(22,19,14,.06);padding:14px 18px;display:flex;justify-content:space-between;align-items:center">
+          <p style="font:600 14px 'Hanken Grotesk',sans-serif;color:#8a8378;margin:0">Upper / Lower · winter block</p>
+          <span style="font:500 12px 'IBM Plex Mono',monospace;color:#8a8378">4 routines</span>
+        </div>
+      </div>
+      <div style="padding:14px 22px 30px">
+        <div style="display:flex;align-items:center;justify-content:center;gap:10px;background:#ffffff;box-shadow:0 0 0 1px rgba(22,19,14,.1);border-radius:99px;height:54px"><span style="font:700 14px 'Sora',sans-serif;color:#16130e">Start empty workout</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div data-screen-label="12 Exercise detail" style="display:flex;flex-direction:column;gap:16px">
+    <p style="font:500 13px 'IBM Plex Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#7d7668;margin:0">12 · Exercise detail — how-to, records, history</p>
+    <div style="width:390px;height:844px;background:#f7f3ec;border-radius:40px;box-shadow:0 20px 60px rgba(22,19,14,.14),0 0 0 1px rgba(22,19,14,.06);overflow:hidden;display:flex;flex-direction:column">
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 24px 4px;font:500 13px 'IBM Plex Mono',monospace;color:#8a8378"><span>9:41</span><span>●●●</span></div>
+      <div style="display:flex;align-items:center;padding:10px 22px 0">
+        <span style="width:40px;height:40px;border-radius:50%;background:#ffffff;box-shadow:0 0 0 1px rgba(22,19,14,.08);display:flex;align-items:center;justify-content:center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#16130e" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M14 5l-7 7 7 7"></path></svg></span>
+        <p style="font:700 19px 'Sora',sans-serif;letter-spacing:-.02em;margin:0 0 0 12px">Bench Press</p>
+        <span style="margin-inline-start:auto;font:500 12px 'IBM Plex Mono',monospace;color:#8a8378">edit</span>
+      </div>
+      <div style="flex:1;overflow:hidden;padding:16px 22px 0;display:flex;flex-direction:column;gap:12px">
+        <div style="position:relative;border-radius:20px;overflow:hidden;height:170px">
+          <img src="public/exercises/bench-press-barbell.jpg" alt="Bench press form" style="width:100%;height:100%;object-fit:cover;filter:grayscale(1) contrast(1.05)">
+          <div style="position:absolute;inset-inline-start:14px;bottom:12px;display:flex;gap:6px">
+            <span style="font:600 11.5px 'Hanken Grotesk',sans-serif;color:#f7f3ec;background:rgba(22,19,14,.75);border-radius:99px;padding:6px 11px">chest</span>
+            <span style="font:600 11.5px 'Hanken Grotesk',sans-serif;color:#f7f3ec;background:rgba(22,19,14,.75);border-radius:99px;padding:6px 11px">triceps</span>
+            <span style="font:600 11.5px 'Hanken Grotesk',sans-serif;color:#f7f3ec;background:rgba(22,19,14,.75);border-radius:99px;padding:6px 11px">barbell</span>
+          </div>
+        </div>
+        <div style="display:flex;gap:10px">
+          <div style="flex:1;background:#ffffff;border-radius:18px;box-shadow:0 0 0 1px rgba(22,19,14,.06);padding:13px 15px"><p style="font:700 18px 'Sora',sans-serif;margin:0;font-variant-numeric:tabular-nums">72.9</p><p style="font:500 11px 'Hanken Grotesk',sans-serif;color:#8a8378;margin:3px 0 0">est. 1RM kg</p></div>
+          <div style="flex:1;background:#ffffff;border-radius:18px;box-shadow:0 0 0 1px rgba(22,19,14,.06);padding:13px 15px"><p style="font:700 18px 'Sora',sans-serif;margin:0;color:#e8491d;font-variant-numeric:tabular-nums">62.5×5</p><p style="font:500 11px 'Hanken Grotesk',sans-serif;color:#8a8378;margin:3px 0 0">best set</p></div>
+          <div style="flex:1;background:#ffffff;border-radius:18px;box-shadow:0 0 0 1px rgba(22,19,14,.06);padding:13px 15px"><p style="font:700 18px 'Sora',sans-serif;margin:0;font-variant-numeric:tabular-nums">38</p><p style="font:500 11px 'Hanken Grotesk',sans-serif;color:#8a8378;margin:3px 0 0">sessions</p></div>
+        </div>
+        <div style="background:#ffffff;border-radius:20px;box-shadow:0 0 0 1px rgba(22,19,14,.06);padding:16px 18px">
+          <p style="font:500 11px 'IBM Plex Mono',monospace;letter-spacing:.14em;text-transform:uppercase;color:#8a8378;margin:0 0 10px">How to</p>
+          <div style="display:flex;flex-direction:column;gap:9px">
+            <div style="display:flex;gap:10px"><span style="font:700 12px 'IBM Plex Mono',monospace;color:#e8491d;width:16px">1</span><p style="font:500 13.5px/1.5 'Hanken Grotesk',sans-serif;color:#4f4a41;margin:0">Shoulder blades pinned, feet planted, bar over wrists.</p></div>
+            <div style="display:flex;gap:10px"><span style="font:700 12px 'IBM Plex Mono',monospace;color:#e8491d;width:16px">2</span><p style="font:500 13.5px/1.5 'Hanken Grotesk',sans-serif;color:#4f4a41;margin:0">Lower to mid-chest with control, elbows ~45°.</p></div>
+            <div style="display:flex;gap:10px"><span style="font:700 12px 'IBM Plex Mono',monospace;color:#e8491d;width:16px">3</span><p style="font:500 13.5px/1.5 'Hanken Grotesk',sans-serif;color:#4f4a41;margin:0">Drive up and slightly back. Exhale at the top.</p></div>
+          </div>
+        </div>
+        <div style="background:#ffffff;border-radius:20px;box-shadow:0 0 0 1px rgba(22,19,14,.06);padding:14px 18px">
+          <p style="font:500 11px 'IBM Plex Mono',monospace;letter-spacing:.14em;text-transform:uppercase;color:#8a8378;margin:0 0 10px">Recent sessions</p>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <div style="display:flex;justify-content:space-between;font:500 12.5px 'IBM Plex Mono',monospace"><span style="color:#16130e">today</span><span style="color:#8a8378;white-space:nowrap">4×5 @ 62.5 <span style="color:#e8491d">PR</span></span></div>
+            <div style="display:flex;justify-content:space-between;font:500 12.5px 'IBM Plex Mono',monospace"><span style="color:#16130e">Fri</span><span style="color:#8a8378">5·5·4 @ 60</span></div>
+            <div style="display:flex;justify-content:space-between;font:500 12.5px 'IBM Plex Mono',monospace"><span style="color:#16130e">Aug 4</span><span style="color:#8a8378">4×5 @ 60</span></div>
+          </div>
+        </div>
+      </div>
+      <div style="padding:14px 22px 30px">
+        <div style="display:flex;align-items:center;justify-content:center;background:#e8491d;border-radius:99px;height:56px;box-shadow:0 10px 26px rgba(232,73,29,.3)"><span style="font:700 15px 'Sora',sans-serif;color:#f7f3ec">Add to workout</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div data-screen-label="13 Set options" style="display:flex;flex-direction:column;gap:16px">
+    <p style="font:500 13px 'IBM Plex Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#7d7668;margin:0">13 · Set options — warm-ups, drops, supersets, RPE</p>
+    <div style="width:390px;height:844px;background:#f7f3ec;border-radius:40px;box-shadow:0 20px 60px rgba(22,19,14,.14),0 0 0 1px rgba(22,19,14,.06);overflow:hidden;display:flex;flex-direction:column;position:relative">
+      <div style="position:absolute;inset:0;background:rgba(22,19,14,.45);z-index:2"></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 24px 4px;font:500 13px 'IBM Plex Mono',monospace;color:#8a8378"><span>9:41</span><span>●●●</span></div>
+      <div style="padding:16px 22px;display:flex;flex-direction:column;gap:12px;opacity:.6">
+        <div style="background:#ffffff;border-radius:20px;height:150px"></div>
+        <div style="display:flex;gap:10px"><div style="flex:1.3;background:#ffffff;border-radius:18px;height:88px"></div><div style="flex:1;background:#ffffff;border-radius:18px;height:88px"></div></div>
+      </div>
+      <div style="position:absolute;inset-inline:0;bottom:0;z-index:3;background:#f7f3ec;border-radius:28px 28px 0 0;padding:10px 22px 34px">
+        <div style="width:40px;height:4px;border-radius:2px;background:rgba(22,19,14,.15);margin:0 auto 16px"></div>
+        <p style="font:700 17px 'Sora',sans-serif;letter-spacing:-.02em;margin:0 0 2px">Set 3 · Bench Press</p>
+        <p style="font:500 12px 'IBM Plex Mono',monospace;color:#8a8378;margin:0 0 16px">62.5 kg × 5</p>
+        <div style="display:flex;gap:8px;margin-bottom:14px">
+          <span style="flex:1;text-align:center;font:600 12.5px 'Hanken Grotesk',sans-serif;background:#ffffff;box-shadow:0 0 0 1px rgba(22,19,14,.08);border-radius:14px;padding:12px 0">Warm-up</span>
+          <span style="flex:1;text-align:center;font:600 12.5px 'Hanken Grotesk',sans-serif;color:#f7f3ec;background:#16130e;border-radius:14px;padding:12px 0">Working</span>
+          <span style="flex:1;text-align:center;font:600 12.5px 'Hanken Grotesk',sans-serif;background:#ffffff;box-shadow:0 0 0 1px rgba(22,19,14,.08);border-radius:14px;padding:12px 0">Drop set</span>
+          <span style="flex:1;text-align:center;font:600 12.5px 'Hanken Grotesk',sans-serif;background:#ffffff;box-shadow:0 0 0 1px rgba(22,19,14,.08);border-radius:14px;padding:12px 0">Failure</span>
+        </div>
+        <div style="background:#ffffff;border-radius:16px;box-shadow:0 0 0 1px rgba(22,19,14,.06);padding:13px 16px;display:flex;align-items:center;gap:12px;margin-bottom:10px">
+          <img src="public/exercises/overhead-press-barbell.jpg" alt="" style="width:36px;height:36px;border-radius:10px;object-fit:cover;filter:grayscale(1) contrast(1.05)">
+          <div style="flex:1"><p style="font:600 13.5px 'Hanken Grotesk',sans-serif;margin:0">Superset with Overhead Press</p><p style="font:500 11.5px 'IBM Plex Mono',monospace;color:#8a8378;margin:2px 0 0">alternate sets, one rest timer</p></div>
+          <span style="width:42px;height:26px;border-radius:13px;background:#e8491d;position:relative"><span style="position:absolute;top:3px;inset-inline-end:3px;width:20px;height:20px;border-radius:50%;background:#ffffff"></span></span>
+        </div>
+        <div style="background:#ffffff;border-radius:16px;box-shadow:0 0 0 1px rgba(22,19,14,.06);padding:13px 16px;display:flex;align-items:center;gap:12px;margin-bottom:10px">
+          <div style="flex:1"><p style="font:600 13.5px 'Hanken Grotesk',sans-serif;margin:0">Rest after this exercise</p><p style="font:500 11.5px 'IBM Plex Mono',monospace;color:#8a8378;margin:2px 0 0">auto-starts when you log</p></div>
+          <div style="display:flex;align-items:center;gap:10px"><span style="width:34px;height:34px;border-radius:10px;background:#f7f3ec;display:flex;align-items:center;justify-content:center;font:600 17px 'Sora',sans-serif">−</span><span style="font:700 15px 'IBM Plex Mono',monospace">2:00</span><span style="width:34px;height:34px;border-radius:10px;background:#f7f3ec;display:flex;align-items:center;justify-content:center;font:600 17px 'Sora',sans-serif">+</span></div>
+        </div>
+        <div style="background:#ffffff;border-radius:16px;box-shadow:0 0 0 1px rgba(22,19,14,.06);padding:13px 16px;margin-bottom:14px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><p style="font:600 13.5px 'Hanken Grotesk',sans-serif;margin:0">RPE</p><span style="font:500 11.5px 'IBM Plex Mono',monospace;color:#8a8378">how hard was it?</span></div>
+          <div style="display:flex;gap:6px">
+            <span style="flex:1;text-align:center;font:600 13px 'IBM Plex Mono',monospace;background:#f7f3ec;border-radius:10px;padding:10px 0;color:#8a8378">6</span>
+            <span style="flex:1;text-align:center;font:600 13px 'IBM Plex Mono',monospace;background:#f7f3ec;border-radius:10px;padding:10px 0;color:#8a8378">7</span>
+            <span style="flex:1;text-align:center;font:600 13px 'IBM Plex Mono',monospace;background:#e8491d;border-radius:10px;padding:10px 0;color:#f7f3ec">8</span>
+            <span style="flex:1;text-align:center;font:600 13px 'IBM Plex Mono',monospace;background:#f7f3ec;border-radius:10px;padding:10px 0;color:#8a8378">9</span>
+            <span style="flex:1;text-align:center;font:600 13px 'IBM Plex Mono',monospace;background:#f7f3ec;border-radius:10px;padding:10px 0;color:#8a8378">10</span>
+          </div>
+        </div>
+        <p style="font:600 13.5px 'Hanken Grotesk',sans-serif;color:#b8402a;margin:0;text-align:center">Remove set</p>
+      </div>
+    </div>
+  </div>
+
+  <div data-screen-label="14 Settings" style="display:flex;flex-direction:column;gap:16px">
+    <p style="font:500 13px 'IBM Plex Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#7d7668;margin:0">14 · You — settings, units, language, measurements</p>
+    <div style="width:390px;height:844px;background:#f7f3ec;border-radius:40px;box-shadow:0 20px 60px rgba(22,19,14,.14),0 0 0 1px rgba(22,19,14,.06);overflow:hidden;display:flex;flex-direction:column">
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 24px 4px;font:500 13px 'IBM Plex Mono',monospace;color:#8a8378"><span>9:41</span><span>●●●</span></div>
+      <div style="display:flex;align-items:center;gap:14px;padding:16px 22px 4px">
+        <span style="width:56px;height:56px;border-radius:50%;background:#16130e;display:flex;align-items:center;justify-content:center;font:700 20px 'Sora',sans-serif;color:#f7f3ec">A</span>
+        <div><p style="font:700 19px 'Sora',sans-serif;letter-spacing:-.02em;margin:0">Ameen</p><p style="font:500 12px 'IBM Plex Mono',monospace;color:#8a8378;margin:3px 0 0">ameen@gmail.com · since Oct 2025</p></div>
+      </div>
+      <div style="flex:1;overflow:hidden;padding:16px 22px 0;display:flex;flex-direction:column;gap:12px">
+        <div style="background:#ffffff;border-radius:20px;box-shadow:0 0 0 1px rgba(22,19,14,.06);padding:6px 18px">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid #f0ece2">
+            <p style="font:600 14px 'Hanken Grotesk',sans-serif;margin:0">Units</p>
+            <div style="display:flex;background:#f7f3ec;border-radius:99px;padding:3px"><span style="font:700 12px 'Sora',sans-serif;color:#f7f3ec;background:#16130e;border-radius:99px;padding:7px 14px">kg</span><span style="font:600 12px 'Sora',sans-serif;color:#8a8378;padding:7px 14px">lb</span></div>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid #f0ece2">
+            <p style="font:600 14px 'Hanken Grotesk',sans-serif;margin:0">Language</p>
+            <div style="display:flex;background:#f7f3ec;border-radius:99px;padding:3px"><span style="font:700 12px 'Sora',sans-serif;color:#f7f3ec;background:#16130e;border-radius:99px;padding:7px 14px">EN</span><span style="font:600 13px 'IBM Plex Sans Arabic',sans-serif;color:#8a8378;padding:6px 14px">العربية</span></div>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0">
+            <p style="font:600 14px 'Hanken Grotesk',sans-serif;margin:0">Default rest</p>
+            <span style="font:600 13px 'IBM Plex Mono',monospace;color:#8a8378">2:00 ›</span>
+          </div>
+        </div>
+        <div style="background:#ffffff;border-radius:20px;box-shadow:0 0 0 1px rgba(22,19,14,.06);padding:15px 18px;display:flex;align-items:center;gap:14px">
+          <div style="flex:1"><p style="font:600 14px 'Hanken Grotesk',sans-serif;margin:0">Body weight</p><p style="font:500 12px 'IBM Plex Mono',monospace;color:#8a8378;margin:3px 0 0">78.4 kg · logged Mon</p></div>
+          <svg width="90" height="32" viewBox="0 0 90 32"><polyline points="4,24 18,22 32,25 46,20 60,18 74,14 86,12" fill="none" stroke="#e8491d" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"></polyline><circle cx="86" cy="12" r="3.5" fill="#e8491d"></circle></svg>
+          <span style="font:600 13px 'IBM Plex Mono',monospace;color:#8a8378">›</span>
+        </div>
+        <div style="background:#ffffff;border-radius:20px;box-shadow:0 0 0 1px rgba(22,19,14,.06);padding:6px 18px">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid #f0ece2"><p style="font:600 14px 'Hanken Grotesk',sans-serif;margin:0">Coach nudges</p><span style="width:42px;height:26px;border-radius:13px;background:#e8491d;position:relative"><span style="position:absolute;top:3px;inset-inline-end:3px;width:20px;height:20px;border-radius:50%;background:#ffffff"></span></span></div>
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid #f0ece2"><p style="font:600 14px 'Hanken Grotesk',sans-serif;margin:0">Import from Hevy</p><span style="font:600 13px 'IBM Plex Mono',monospace;color:#8a8378">›</span></div>
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0"><p style="font:600 14px 'Hanken Grotesk',sans-serif;margin:0">Export my data</p><span style="font:600 13px 'IBM Plex Mono',monospace;color:#8a8378">CSV ›</span></div>
+        </div>
+        <p style="font:600 14px 'Hanken Grotesk',sans-serif;color:#8a8378;margin:6px 0 0;padding:0 18px">Sign out</p>
+      </div>
+      <p style="font:500 11px 'IBM Plex Mono',monospace;color:#b0a998;margin:0;text-align:center;padding:14px 0 28px">wazn 2.0 · وزن</p>
+    </div>
+  </div>
+
+  <div data-screen-label="15 Live activity" style="display:flex;flex-direction:column;gap:16px">
+    <p style="font:500 13px 'IBM Plex Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#7d7668;margin:0">15 · Lock screen — rest without unlocking</p>
+    <div style="width:390px;height:844px;background:linear-gradient(170deg,#23201a,#0e0d0b 70%);border-radius:40px;box-shadow:0 20px 60px rgba(22,19,14,.2),0 0 0 1px rgba(22,19,14,.1);overflow:hidden;display:flex;flex-direction:column;color:#f7f3ec">
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 24px 4px;font:500 13px 'IBM Plex Mono',monospace;color:#7a7469"><span></span><span>●●●</span></div>
+      <div style="text-align:center;padding:40px 0 0">
+        <p style="font:500 15px 'Hanken Grotesk',sans-serif;color:#9d968a;margin:0">Tuesday, August 12</p>
+        <p style="font:700 76px/1 'Sora',sans-serif;letter-spacing:-.04em;margin:8px 0 0">9:41</p>
+      </div>
+      <div style="padding:44px 22px 0;display:flex;flex-direction:column;gap:12px">
+        <div style="background:rgba(247,243,236,.08);border-radius:24px;padding:16px 18px;display:flex;align-items:center;gap:16px;backdrop-filter:blur(10px)">
+          <div style="position:relative;width:56px;height:56px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+            <svg width="56" height="56" viewBox="0 0 96 96" style="position:absolute;inset:0"><circle cx="48" cy="48" r="41" fill="none" stroke="rgba(247,243,236,.15)" stroke-width="11"></circle><circle cx="48" cy="48" r="41" fill="none" stroke="#e8491d" stroke-width="11" stroke-linecap="round" stroke-dasharray="257.6" stroke-dashoffset="160" transform="rotate(-90 48 48)"></circle></svg>
+            <span style="font:700 13px 'IBM Plex Mono',monospace">0:45</span>
+          </div>
+          <div style="flex:1">
+            <p style="font:700 15px 'Sora',sans-serif;letter-spacing:-.01em;margin:0">Rest — then the money set</p>
+            <p style="font:500 12.5px 'IBM Plex Mono',monospace;color:#9d968a;margin:4px 0 0">Bench · set 4 of 4 · 62.5 × 5</p>
+          </div>
+          <svg width="24" height="24" viewBox="0 0 96 96" style="flex-shrink:0"><path fill="#f7f3ec" fill-rule="evenodd" d="M48 4 a44 44 0 1 0 0 88 a44 44 0 1 0 0 -88 Z M48 33 a15 15 0 1 1 0 30 a15 15 0 1 1 0 -30 Z"></path></svg>
+        </div>
+        <div style="background:rgba(247,243,236,.08);border-radius:24px;padding:16px 18px;display:flex;align-items:center;gap:14px;backdrop-filter:blur(10px);width:230px">
+          <svg width="30" height="30" viewBox="0 0 96 96" style="flex-shrink:0"><path fill="#e8491d" fill-rule="evenodd" d="M48 4 a44 44 0 1 0 0 88 a44 44 0 1 0 0 -88 Z M48 33 a15 15 0 1 1 0 30 a15 15 0 1 1 0 -30 Z"></path></svg>
+          <div><p style="font:700 16px 'Sora',sans-serif;margin:0;font-variant-numeric:tabular-nums">3<span style="color:#9d968a;font-size:12px">/4</span></p><p style="font:500 11px 'IBM Plex Mono',monospace;color:#9d968a;margin:2px 0 0">this week · wk 12</p></div>
+        </div>
+      </div>
+      <div style="margin-top:auto;text-align:center;padding-bottom:34px">
+        <p style="font:500 12px 'Hanken Grotesk',sans-serif;color:#7a7469;margin:0">swipe up to open</p>
+      </div>
+    </div>
+  </div>
+
+  <div data-screen-label="16 Arabic RTL" style="display:flex;flex-direction:column;gap:16px">
+    <p style="font:500 13px 'IBM Plex Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#7d7668;margin:0">16 · Arabic — the flip, day one</p>
+    <div dir="rtl" style="width:390px;height:844px;background:#f7f3ec;border-radius:40px;box-shadow:0 20px 60px rgba(22,19,14,.14),0 0 0 1px rgba(22,19,14,.06);overflow:hidden;display:flex;flex-direction:column;position:relative;font-family:'IBM Plex Sans Arabic',sans-serif">
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 24px 4px;font:500 13px 'IBM Plex Mono',monospace;color:#8a8378"><span>9:41</span><span>●●●</span></div>
+      <div style="display:flex;align-items:center;padding:10px 22px 0">
+        <svg viewBox="0 0 267.62 112.93" height="34" style="display:block;width:auto" role="img" aria-label="وزن"><line x1="17" y1="70.58" x2="250.62" y2="70.58" stroke="#e8491d" stroke-width="14" stroke-linecap="round"></line><path fill="#16130e" stroke="#16130e" stroke-width="4" stroke-linejoin="round" d="M209.03 63.03V62.88Q211.73 66.18 218.33 66.18Q220.73 66.18 222.68 65.73Q222.98 66.33 223.12 66.78Q223.12 66.93 223.12 67.16Q223.12 67.38 223.12 67.68Q223.12 67.83 223.2 67.91Q223.28 67.98 223.28 67.98V68.13Q219.23 72.63 213.08 75.18Q200.62 80.28 187.73 85.23Q174.83 90.18 163.43 96.48Q162.08 97.38 162.08 99.18Q162.08 101.43 164.47 101.73Q168.83 102.03 173.33 102.48Q177.83 102.93 182.33 102.93Q182.93 102.93 183.08 102.93Q183.23 102.93 183.83 102.93Q187.58 102.93 190.88 102.63Q194.18 102.33 197.48 101.73Q204.98 100.23 211.28 95.96Q217.58 91.68 222.6 85.91Q227.62 80.13 230.93 73.98Q233.18 69.63 234.83 64.31Q236.48 58.98 236.62 52.98V52.08Q236.62 41.73 229.43 34.38Q228.38 33.33 226.65 32.28Q224.93 31.23 222.83 31.23Q220.88 31.23 218.93 33.18Q216.23 36.18 214.43 39.86Q212.62 43.53 210.83 47.43Q209.78 49.53 208.35 52.31Q206.93 55.08 206.93 57.78Q206.93 59.58 207.53 60.78Q208.12 61.98 209.03 63.03ZM149.65 38.71Q148.13 38.71 147.75 39.95Q145.66 44.51 141.86 47.07Q137.49 49.92 132.22 51.92Q126.94 53.91 121.53 55.62Q119.44 56.29 117.68 56.91Q115.92 57.52 114.59 58.0Q113.27 58.47 111.7 59.14Q110.13 59.8 108.99 60.71Q107.85 61.61 107.85 62.84Q107.85 63.79 108.33 64.27Q109.66 65.5 113.93 65.88Q117.92 66.26 123.34 66.45H124.19Q131.12 66.45 135.83 64.27Q140.53 62.08 143.76 58.38Q145.38 56.38 146.75 53.44Q148.13 50.49 149.27 47.07Q150.41 43.65 151.07 40.61V40.23Q150.88 38.81 149.65 38.71ZM84.55 60.23V60.68Q82.9 62.18 81.1 63.53Q79.3 64.88 77.2 66.08Q72.85 68.63 67.08 70.66Q61.3 72.68 54.55 72.68Q52.6 72.68 50.58 72.53Q48.55 72.38 46.15 71.93Q39.7 68.93 39.7 64.13Q39.7 62.93 40.08 61.88Q40.45 60.83 40.75 59.78L40.6 59.93Q42.25 55.58 43.98 51.38Q45.7 47.18 47.65 43.28L56.8 49.28Q58.6 50.33 59.35 48.68Q61.75 44.48 64.0 40.36Q66.25 36.23 68.65 32.03Q69.1 31.28 68.88 30.61Q68.65 29.93 68.2 29.63L56.35 21.83H56.2L54.1 20.63Q53.5 20.18 52.75 20.41Q52.0 20.63 51.7 21.23L49.6 24.98Q45.55 32.03 41.28 40.58Q37.0 49.13 34.45 56.18Q31.0 66.08 31.0 72.83Q31.0 73.13 31.0 73.36Q31.0 73.58 31.0 74.03Q31.0 74.33 31.08 74.56Q31.15 74.78 31.15 75.08Q31.9 81.83 34.53 87.08Q37.15 92.33 41.95 94.73V94.58Q44.35 95.63 46.83 96.31Q49.3 96.98 51.85 96.98Q54.7 96.98 57.7 96.31Q60.7 95.63 64.0 94.58Q76.9 89.78 85.15 77.93Q87.25 74.93 88.9 71.63Q90.55 68.33 91.9 65.03Q94.0 59.93 95.43 54.38Q96.85 48.83 96.85 42.08Q96.85 31.88 92.05 21.53Q91.6 20.33 90.48 20.33Q89.35 20.33 88.9 21.53L80.65 40.28Q82.0 44.93 83.28 49.58Q84.55 54.23 84.55 60.23Z"></path><path fill="#e8491d" fill-rule="evenodd" d="M 130.48 22.47 a 12.47 12.47 0 1 0 24.94 0 a 12.47 12.47 0 1 0 -24.94 0 Z M 137.47 22.47 a 5.49 5.49 0 1 0 10.97 0 a 5.49 5.49 0 1 0 -10.97 0 Z"></path></svg>
+        <div style="margin-inline-start:auto;display:flex;gap:8px;align-items:center">
+          <span style="font:600 12px 'IBM Plex Sans Arabic',sans-serif;color:#e8491d;background:rgba(232,73,29,.09);border-radius:99px;padding:8px 13px">12 أسبوع</span>
+          <span style="width:38px;height:38px;border-radius:50%;background:#16130e;display:flex;align-items:center;justify-content:center;font:700 14px 'IBM Plex Sans Arabic',sans-serif;color:#f7f3ec">أ</span>
+        </div>
+      </div>
+      <div style="padding:26px 22px 18px">
+        <p style="font:500 13px 'IBM Plex Sans Arabic',sans-serif;color:#8a8378;margin:0 0 8px">الثلاثاء · الأسبوع 12 · أنجزت 3 من 4</p>
+        <p style="font:700 30px/1.3 'IBM Plex Sans Arabic',sans-serif;margin:0">يوم الدفع يا أمين.</p>
+      </div>
+      <div style="flex:1;overflow:hidden;padding:0 22px;display:flex;flex-direction:column;gap:12px">
+        <div style="background:#ffffff;border-radius:20px;box-shadow:0 1px 2px rgba(22,19,14,.06),0 0 0 1px rgba(22,19,14,.05);padding:16px 18px">
+          <div style="display:flex;gap:12px;align-items:flex-start">
+            <svg width="30" height="30" viewBox="0 0 96 96" style="flex-shrink:0"><path fill="#16130e" fill-rule="evenodd" d="M48 4 a44 44 0 1 0 0 88 a44 44 0 1 0 0 -88 Z M48 33 a15 15 0 1 1 0 30 a15 15 0 1 1 0 -30 Z"></path><circle cx="48" cy="48" r="9" fill="#e8491d"></circle></svg>
+            <div style="flex:1">
+              <p style="font:600 12px 'IBM Plex Sans Arabic',sans-serif;color:#8a8378;margin:0 0 5px">المدرب</p>
+              <p style="font:500 14.5px/1.75 'IBM Plex Sans Arabic',sans-serif;margin:0;color:#16130e">البنش تحسّن الأسبوع الماضي — <strong>62.5 كجم</strong> اليوم. سنطيل الإحماء لأن كتفك كان مشدودًا يوم الجمعة.</p>
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap">
+            <span style="font:500 12.5px 'IBM Plex Sans Arabic',sans-serif;color:#16130e;background:#f7f3ec;border-radius:99px;padding:8px 14px">ليه 62.5؟</span>
+            <span style="font:500 12.5px 'IBM Plex Sans Arabic',sans-serif;color:#16130e;background:#f7f3ec;border-radius:99px;padding:8px 14px">عندي 40 دقيقة فقط</span>
+          </div>
+        </div>
+        <div style="background:#16130e;border-radius:20px;padding:18px;color:#f7f3ec">
+          <p style="font:600 12px 'IBM Plex Sans Arabic',sans-serif;color:#9d968a;margin:0">التالي</p>
+          <p style="font:700 20px 'IBM Plex Sans Arabic',sans-serif;margin:8px 0 4px">تمرين الدفع أ</p>
+          <p style="font:400 13px 'IBM Plex Sans Arabic',sans-serif;color:#9d968a;margin:0">6 تمارين · حوالي 55 دقيقة · آخر مرة الجمعة</p>
+        </div>
+      </div>
+      <div style="padding:14px 22px 26px">
+        <div style="display:flex;align-items:center;justify-content:center;gap:11px;background:#e8491d;border-radius:99px;height:58px;box-shadow:0 10px 26px rgba(232,73,29,.35)">
+          <svg width="20" height="20" viewBox="0 0 96 96"><path fill="#f7f3ec" fill-rule="evenodd" d="M48 4 a44 44 0 1 0 0 88 a44 44 0 1 0 0 -88 Z M48 33 a15 15 0 1 1 0 30 a15 15 0 1 1 0 -30 Z"></path></svg>
+          <span style="font:700 16px 'IBM Plex Sans Arabic',sans-serif;color:#f7f3ec">ابدأ التمرين</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div data-screen-label="17 First run" style="display:flex;flex-direction:column;gap:16px">
+    <p style="font:500 13px 'IBM Plex Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#7d7668;margin:0">17 · Empty state — first run, no data</p>
+    <div style="width:390px;height:844px;background:#f7f3ec;border-radius:40px;box-shadow:0 20px 60px rgba(22,19,14,.14),0 0 0 1px rgba(22,19,14,.06);overflow:hidden;display:flex;flex-direction:column">
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 24px 4px;font:500 13px 'IBM Plex Mono',monospace;color:#8a8378"><span>9:41</span><span>●●●</span></div>
+      <div style="display:flex;align-items:center;padding:10px 22px 0">
+        <div style="display:flex;align-items:center;gap:1px" role="img" aria-label="Wazn">
+          <span style="font:800 26px/1 'Sora',sans-serif;letter-spacing:-.05em">w</span>
+          <svg width="14" height="14" viewBox="0 0 100 100" style="position:relative;top:3px;margin:0 1px"><path fill="#e8491d" fill-rule="evenodd" d="M46 4 a46 46 0 1 0 0 92 a46 46 0 1 0 0 -92 Z M46 30 a16 16 0 1 1 0 32 a16 16 0 1 1 0 -32 Z"></path><path fill="#e8491d" d="M93 4 a7 7 0 0 1 7 7 v78 a7 7 0 0 1 -14 0 v-78 a7 7 0 0 1 7 -7 Z"></path></svg>
+          <span style="font:800 26px/1 'Sora',sans-serif;letter-spacing:-.05em">zn</span>
+        </div>
+        <span style="margin-inline-start:auto;width:38px;height:38px;border-radius:50%;background:#16130e;display:flex;align-items:center;justify-content:center;font:700 14px 'Sora',sans-serif;color:#f7f3ec">A</span>
+      </div>
+      <div style="padding:26px 22px 18px">
+        <p style="font:500 13px 'Hanken Grotesk',sans-serif;color:#8a8378;margin:0 0 8px">Day one</p>
+        <p style="font:800 34px/1.12 'Sora',sans-serif;letter-spacing:-.03em;margin:0">Welcome,<br>Ameen.</p>
+      </div>
+      <div style="flex:1;padding:0 22px;display:flex;flex-direction:column;gap:12px">
+        <div style="background:#ffffff;border-radius:20px;box-shadow:0 1px 2px rgba(22,19,14,.06),0 0 0 1px rgba(22,19,14,.05);padding:16px 18px">
+          <div style="display:flex;gap:12px;align-items:flex-start">
+            <svg width="30" height="30" viewBox="0 0 96 96" style="flex-shrink:0"><path fill="#16130e" fill-rule="evenodd" d="M48 4 a44 44 0 1 0 0 88 a44 44 0 1 0 0 -88 Z M48 33 a15 15 0 1 1 0 30 a15 15 0 1 1 0 -30 Z"></path><circle cx="48" cy="48" r="9" fill="#e8491d"></circle></svg>
+            <div style="flex:1">
+              <p style="font:700 12px 'Sora',sans-serif;letter-spacing:.08em;text-transform:uppercase;color:#8a8378;margin:0 0 5px">Coach</p>
+              <p style="font:500 14.5px/1.55 'Hanken Grotesk',sans-serif;margin:0;color:#16130e">No history yet — two ways to fix that. Tell me your split and I'll build your week, or import from Hevy and I'll know you instantly.</p>
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap">
+            <span style="font:600 12.5px 'Hanken Grotesk',sans-serif;color:#f7f3ec;background:#16130e;border-radius:99px;padding:9px 15px">Build my first routine</span>
+            <span style="font:600 12.5px 'Hanken Grotesk',sans-serif;color:#16130e;background:#f7f3ec;box-shadow:0 0 0 1px rgba(22,19,14,.1);border-radius:99px;padding:9px 15px">Import from Hevy</span>
+          </div>
+        </div>
+        <div style="border:1.5px dashed rgba(22,19,14,.15);border-radius:20px;padding:22px 18px;display:flex;align-items:center;gap:14px">
+          <svg width="34" height="34" viewBox="0 0 96 96" style="opacity:.25"><path fill="#16130e" fill-rule="evenodd" d="M48 4 a44 44 0 1 0 0 88 a44 44 0 1 0 0 -88 Z M48 33 a15 15 0 1 1 0 30 a15 15 0 1 1 0 -30 Z"></path></svg>
+          <p style="font:500 13.5px/1.55 'Hanken Grotesk',sans-serif;color:#8a8378;margin:0">Your week, your streak, and your PRs will live here — after the first session.</p>
+        </div>
+      </div>
+      <div style="padding:14px 22px 26px">
+        <div style="display:flex;align-items:center;justify-content:center;gap:11px;background:#e8491d;border-radius:99px;height:58px;box-shadow:0 10px 26px rgba(232,73,29,.35)">
+          <svg width="20" height="20" viewBox="0 0 96 96"><path fill="#f7f3ec" fill-rule="evenodd" d="M48 4 a44 44 0 1 0 0 88 a44 44 0 1 0 0 -88 Z M48 33 a15 15 0 1 1 0 30 a15 15 0 1 1 0 -30 Z"></path></svg>
+          <span style="font:700 16px 'Sora',sans-serif;color:#f7f3ec">Start your first workout</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div data-screen-label="18 History empty" style="display:flex;flex-direction:column;gap:16px">
+    <p style="font:500 13px 'IBM Plex Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#7d7668;margin:0">18 · Empty state — history</p>
+    <div style="width:390px;height:844px;background:#f7f3ec;border-radius:40px;box-shadow:0 20px 60px rgba(22,19,14,.14),0 0 0 1px rgba(22,19,14,.06);overflow:hidden;display:flex;flex-direction:column">
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 24px 4px;font:500 13px 'IBM Plex Mono',monospace;color:#8a8378"><span>9:41</span><span>●●●</span></div>
+      <div style="display:flex;align-items:center;padding:10px 22px 0">
+        <span style="width:40px;height:40px;border-radius:50%;background:#ffffff;box-shadow:0 0 0 1px rgba(22,19,14,.08);display:flex;align-items:center;justify-content:center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#16130e" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M14 5l-7 7 7 7"></path></svg></span>
+        <p style="font:700 20px 'Sora',sans-serif;letter-spacing:-.02em;margin:0 0 0 12px">History</p>
+      </div>
+      <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;padding:0 44px;text-align:center">
+        <svg width="120" height="120" viewBox="0 0 96 96" style="opacity:.14"><path fill="#16130e" fill-rule="evenodd" d="M48 4 a44 44 0 1 0 0 88 a44 44 0 1 0 0 -88 Z M48 33 a15 15 0 1 1 0 30 a15 15 0 1 1 0 -30 Z M17 43 h6 a5 5 0 0 1 5 5 a5 5 0 0 1 -5 5 h-6 a5 5 0 0 1 -5 -5 a5 5 0 0 1 5 -5 Z M73 43 h6 a5 5 0 0 1 5 5 a5 5 0 0 1 -5 5 h-6 a5 5 0 0 1 -5 -5 a5 5 0 0 1 5 -5 Z"></path></svg>
+        <div>
+          <p style="font:800 24px/1.2 'Sora',sans-serif;letter-spacing:-.02em;margin:0 0 8px">Your log starts today.</p>
+          <p style="font:500 14px/1.6 'Hanken Grotesk',sans-serif;color:#8a8378;margin:0">Every set you log lands here — and the calendar fills in vermilion.</p>
+        </div>
+        <span style="font:700 14px 'Sora',sans-serif;color:#f7f3ec;background:#e8491d;border-radius:99px;padding:15px 26px;box-shadow:0 10px 26px rgba(232,73,29,.3)">Start a workout</span>
+      </div>
+    </div>
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>

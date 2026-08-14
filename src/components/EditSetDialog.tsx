@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { formatWeight, fromDisplayWeight } from '../lib/units'
 import type { Unit } from '../lib/units'
 import { useBackLayer } from '../lib/use-back'
+import { useModalLayer } from '../lib/use-modal'
 import { SET_TYPE_CYCLE, SET_TYPE_NAME } from '../lib/types'
 import type { SetType } from '../lib/types'
 import { useLocale } from '../lib/locale-context'
@@ -61,6 +62,8 @@ export function EditSetDialog({
   const [rpeValue, setRpeValue] = useState<number | null>(rpe)
   // The system back gesture dismisses the dialog, as it would any sheet.
   useBackLayer(true, onCancel)
+  const layerRef = useRef<HTMLDivElement>(null)
+  useModalLayer(layerRef, onCancel)
 
   function submit() {
     const parsedWeight = weight.trim() === '' ? null : Number.parseFloat(weight)
@@ -78,9 +81,18 @@ export function EditSetDialog({
 
   return (
     <div
+      ref={layerRef}
       role="dialog"
-      aria-label={`Edit set — ${exerciseName}`}
+      aria-modal="true"
+      tabIndex={-1}
+      aria-label={t('history.edit_set', { name: exerciseName })}
       className="fixed inset-0 z-30 flex items-end justify-center bg-ink/80 px-4 pb-6"
+      // Tapping the dark ground closes it, which is what a scrim means
+      // everywhere else. It was an inert div, so the only way out was the
+      // Android back gesture.
+      onClick={(event) => {
+        if (event.target === event.currentTarget) onCancel()
+      }}
     >
       <div className="w-full max-w-[430px] rounded-lg border border-line bg-surface p-4">
         <p className="text-sm font-semibold">{exerciseName}</p>

@@ -6,9 +6,7 @@ import type { ReactNode } from 'react'
 import { LocaleProvider, useLocale } from '../lib/locale-context'
 import { Welcome } from './Welcome'
 
-vi.mock('../lib/invite', () => ({
-  takeInviteCode: vi.fn(() => null),
-}))
+vi.mock('../lib/invite', () => ({}))
 
 vi.mock('../lib/social', () => ({
   follow: vi.fn(),
@@ -38,9 +36,17 @@ beforeEach(() => {
 
 describe('Pre-auth language toggle', () => {
   it('renders the locale toggle button', () => {
-    render(<Welcome onGenerate={vi.fn()} onSkip={vi.fn()} onImport={vi.fn()} />, {
-      wrapper: Wrapper,
-    })
+    render(
+      <Welcome
+        inviter={null}
+        onGenerate={vi.fn()}
+        onSkip={vi.fn()}
+        onImport={vi.fn()}
+      />,
+      {
+        wrapper: Wrapper,
+      },
+    )
     expect(screen.getByRole('button', { name: /Switch to Arabic/i })).toHaveTextContent(
       'EN',
     )
@@ -56,7 +62,12 @@ describe('Pre-auth language toggle', () => {
 
     const { rerender } = render(
       <LocaleProvider>
-        <Welcome onGenerate={vi.fn()} onSkip={vi.fn()} onImport={vi.fn()} />
+        <Welcome
+          inviter={null}
+          onGenerate={vi.fn()}
+          onSkip={vi.fn()}
+          onImport={vi.fn()}
+        />
         <Reader />
       </LocaleProvider>,
     )
@@ -67,7 +78,12 @@ describe('Pre-auth language toggle', () => {
 
     rerender(
       <LocaleProvider>
-        <Welcome onGenerate={vi.fn()} onSkip={vi.fn()} onImport={vi.fn()} />
+        <Welcome
+          inviter={null}
+          onGenerate={vi.fn()}
+          onSkip={vi.fn()}
+          onImport={vi.fn()}
+        />
         <Reader />
       </LocaleProvider>,
     )
@@ -81,18 +97,34 @@ describe('Pre-auth language toggle', () => {
 
 describe('Welcome strings from catalogue', () => {
   it('renders English strings by default', () => {
-    render(<Welcome onGenerate={vi.fn()} onSkip={vi.fn()} onImport={vi.fn()} />, {
-      wrapper: Wrapper,
-    })
+    render(
+      <Welcome
+        inviter={null}
+        onGenerate={vi.fn()}
+        onSkip={vi.fn()}
+        onImport={vi.fn()}
+      />,
+      {
+        wrapper: Wrapper,
+      },
+    )
     expect(screen.getByText('Welcome')).toBeInTheDocument()
     expect(screen.getByText('Log a set in under thirty seconds.')).toBeInTheDocument()
   })
 
   it('renders Arabic strings after locale switch', async () => {
     const user = userEvent.setup()
-    render(<Welcome onGenerate={vi.fn()} onSkip={vi.fn()} onImport={vi.fn()} />, {
-      wrapper: Wrapper,
-    })
+    render(
+      <Welcome
+        inviter={null}
+        onGenerate={vi.fn()}
+        onSkip={vi.fn()}
+        onImport={vi.fn()}
+      />,
+      {
+        wrapper: Wrapper,
+      },
+    )
 
     await user.click(screen.getByRole('button', { name: /Switch to Arabic/i }))
 

@@ -3,12 +3,13 @@ import type { Unit } from './units'
 import { formatWeight } from './units'
 import { formatCount, formatVolume } from './format'
 import {
-  DOT_D,
-  LETTERS_D,
-  LETTER_STROKE,
-  MARK_H,
-  SHAFT,
-} from '../components/wordmark-paths'
+  LATIN_BAR_D,
+  LATIN_H,
+  LATIN_LETTERS_D,
+  LATIN_PLATE_D,
+  LATIN_X,
+  LATIN_Y,
+} from '../components/wordmark-latin-paths'
 
 /**
  * Renders the post-workout summary to a PNG and hands it to the native share
@@ -26,12 +27,16 @@ const W = 1080
 const H = 1350
 // Pure tokens, matching src/index.css, so the export is pixel-identical to the
 // in-app preview rather than a near-miss rendered by a second set of values.
-const INK = '#0c0b0a'
-const TEXT = '#ecebe8'
-const MUTED = '#8a8a92'
+// v3 "The Plate" values. The card stays ink-grounded — a shared image lands in
+// somebody else's feed, and the dark plate is what makes it read as ours
+// rather than as a screenshot — but ink, bone and the muted greys are the
+// redesign's, not v2's cool-grey set.
+const INK = '#16130e'
+const TEXT = '#f7f3ec'
+const MUTED = '#9d968a'
 const ACCENT = '#e8491d'
 const ACCENT_700 = '#9a3012'
-const LINE = '#26262a'
+const LINE = 'rgba(247, 243, 236, 0.1)'
 const FONT = "'Hanken Grotesk', system-ui, sans-serif"
 const DISPLAY = "'Sora', system-ui, sans-serif"
 const MONO = "'IBM Plex Mono', ui-monospace, monospace"
@@ -99,26 +104,23 @@ export function drawShareCard(
   // The mark itself, not its name set in a UI font: this is the only organic
   // growth surface, so it carries the actual brand object. Same paths the
   // Wordmark component renders, via Path2D.
-  const markH = 88
-  const k = markH / MARK_H
+  //
+  // The Latin lockup in every locale, unlike the in-app header. A share card
+  // is read by people who are not the lifter and may not read Arabic, and it
+  // is the one place the mark has to survive being seen once, small, by a
+  // stranger. The وزن barbell keeps the surfaces that are the owner's own.
+  const markH = 52
+  const k = markH / LATIN_H
   c.save()
-  c.translate(M, 96)
+  // The lockup's coordinates are its own; canvas has no viewBox, so the
+  // translate has to undo the origin as well as place the mark.
+  c.translate(M - LATIN_X * k, 96 - LATIN_Y * k)
   c.scale(k, k)
-  c.strokeStyle = ACCENT
-  c.lineWidth = SHAFT.t
-  c.lineCap = 'round'
-  c.beginPath()
-  c.moveTo(SHAFT.x0, SHAFT.y)
-  c.lineTo(SHAFT.x1, SHAFT.y)
-  c.stroke()
-  const letters = new Path2D(LETTERS_D)
   c.fillStyle = TEXT
-  c.strokeStyle = TEXT
-  c.lineWidth = LETTER_STROKE
-  c.lineJoin = 'round'
-  c.fill(letters)
-  c.stroke(letters)
-  c.fill(new Path2D(DOT_D), 'evenodd')
+  c.fill(new Path2D(LATIN_LETTERS_D))
+  c.fillStyle = ACCENT
+  c.fill(new Path2D(LATIN_PLATE_D), 'evenodd')
+  c.fill(new Path2D(LATIN_BAR_D))
   c.restore()
 
   // ── The hero figure ─────────────────────────────────────────────────────

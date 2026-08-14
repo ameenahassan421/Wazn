@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { heatStep, trainingCalendar } from '../lib/progress'
+import { HEAT_RAMP, heatStep, trainingCalendar } from '../lib/progress'
 import type { SessionVolumeRow } from '../lib/progress'
 import {
   formatCount,
@@ -27,19 +27,6 @@ import { useLocale } from '../lib/locale-context'
  */
 
 const WEEKS = 39
-
-/**
- * Five steps of one hue, per `heatStep`: rest, then four by volume relative
- * to the busiest day in view. A sequential scale is one hue getting darker —
- * here lighter, because the ground is ink — and never a second colour.
- */
-const HEAT = [
-  'var(--color-tile-2)',
-  'var(--color-accent-900)',
-  'var(--color-accent-800)',
-  'var(--color-accent-600)',
-  'var(--color-accent-500)',
-]
 
 const GRID_COLUMNS = `repeat(${WEEKS}, minmax(0, 1fr))`
 
@@ -116,7 +103,7 @@ export function TrainingCalendar({
                 : `${formatDayLabel(day.date)} · rest`
             }
             style={{
-              backgroundColor: HEAT[heatStep(day.volumeKg, max)],
+              backgroundColor: HEAT_RAMP[heatStep(day.volumeKg, max)],
               borderRadius: '2px',
             }}
           />
@@ -128,7 +115,7 @@ export function TrainingCalendar({
           {trained === 0 ? t('calendar.hint.empty') : t('calendar.hint')}
         </p>
         <span aria-hidden="true" className="flex shrink-0 items-center gap-[3px]">
-          {HEAT.map((color) => (
+          {HEAT_RAMP.map((color) => (
             <span
               key={color}
               style={{

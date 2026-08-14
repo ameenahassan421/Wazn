@@ -24,7 +24,7 @@
  * are for looking at during a session, not for review in a diff.
  */
 import { spawnSync } from 'node:child_process'
-import { mkdirSync } from 'node:fs'
+import { mkdirSync, readdirSync } from 'node:fs'
 import { chromium } from '@playwright/test'
 import {
   SUPABASE_ANON_KEY,
@@ -37,11 +37,30 @@ import {
 } from './harness/app-harness.mjs'
 
 const WIDTHS = [390, 430]
-const TABS = ['Log', 'History', 'Progress', 'Coach', 'Friends']
-// The Arabic pass: same five tabs by their AR accessible names, because the
-// class of defect this exists to catch (the mirrored ghost rows of 2026-08-09)
-// is invisible in the EN run and to every other check in the wall.
-const TABS_AR = ['التمارين', 'السجل', 'التقدم', 'المدرب', 'الأصدقاء']
+
+/**
+ * The five secondary screens, and how a user actually reaches each one now
+ * that the tab bar is gone.
+ *
+ * Each entry names the control to press on the HOME screen; the run returns
+ * home between screens. Friends is two presses deep because it is two presses
+ * deep for real — the audit retired it from the furniture.
+ *
+ * The Arabic names are the same controls by their AR accessible names,
+ * because the class of defect this exists to catch (the mirrored ghost rows
+ * of 2026-08-09) is invisible in the EN run and to every other check.
+ */
+const SCREENS = [
+  { key: 'history', en: ['History'], ar: ['السجل'] },
+  { key: 'progress', en: ['Last PR'], ar: ['آخر رقم قياسي'] },
+  { key: 'coach', en: ['Ask the coach'], ar: ['اسأل المدرب'] },
+  {
+    key: 'friends',
+    en: ['You — settings', 'Friends'],
+    ar: ['أنت — الإعدادات', 'الأصدقاء'],
+  },
+  { key: 'settings', en: ['You — settings'], ar: ['أنت — الإعدادات'] },
+]
 const OUT = 'shots'
 
 function build() {
@@ -86,6 +105,47 @@ async function shoot(browser, origin, { width, empty, active, locale, theme }) {
 
   await page.goto(origin, { waitUntil: 'networkidle' })
   await page.waitForTimeout(900)
+
+  // The home feed's cards sit below the fold on a 390px phone, so the default
+  // home shot cannot see them. This is the frame that proves the week row,
+  // the record card and the recent-session line render against real data —
+  // and that the sticky Start still clears them at the end of the scroll.
+  if (!active) {
+    await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight))
+    await page.waitForTimeout(400)
+    await page.screenshot({
+      path: `${OUT}/${pfx}${empty ? 'empty' : 'full'}-${width}-log-feed.png`,
+      fullPage: false,
+    })
+    await page.evaluate(() => window.scrollTo(0, 0))
+    await page.waitForTimeout(300)
+  }
+
+  // Settings, reached the way a user reaches it: the avatar at the end of the
+  // header row. Shot on the empty pass only — the screen shows preferences,
+  // not data, so a populated account photographs identically, and the two
+  // segmented controls it exists for are the ones that used to sit in the
+  // header being pressed by accident.
+  if (!active) {
+    const door = page.getByRole('button', {
+      name: locale === 'ar' ? 'أنت — الإعدادات' : 'You — settings',
+    })
+    if (await door.count()) {
+      await door.first().click()
+      await page.waitForTimeout(600)
+      await page.screenshot({
+        path: `${OUT}/${pfx}${empty ? 'empty' : 'full'}-${width}-settings.png`,
+        fullPage: false,
+      })
+      const back = page.getByRole('button', {
+        name: locale === 'ar' ? 'رجوع' : 'Back',
+      })
+      if (await back.count()) {
+        await back.first().click()
+        await page.waitForTimeout(400)
+      }
+    }
+  }
 
   // The workout overview only exists while a workout is open, and every other
   // fixture workout is finished — so without this pass the screen v2.2 built
@@ -319,16 +379,64 @@ async function shoot(browser, origin, { width, empty, active, locale, theme }) {
   }
 
   const state = empty ? 'empty' : 'full'
-  const tabs = locale === 'ar' ? TABS_AR : TABS
-  for (const [i, tab] of tabs.entries()) {
-    const button = page.getByRole('button', { name: tab, exact: true })
-    if (await button.count()) {
+
+  // A brand-new account opens on the first-run screen, not on the home. Step
+  // through it, because the home behind it is a real state — an account that
+  // has been welcomed and has not trained yet — and it is the one where the
+  // feed cards are absent and the doors they carry with them are the thing
+  // most likely to be got wrong.
+  if (empty) {
+    const skip = page.getByRole('button', {
+      name: locale === 'ar' ? 'سأبدأ التسجيل مباشرة' : 'I will just start logging',
+      exact: true,
+    })
+    if (await skip.count()) {
+      await page.screenshot({
+        path: `${OUT}/${pfx}${state}-${width}-welcome.png`,
+        fullPage: false,
+      })
+      await skip.first().click()
+      await page.waitForTimeout(800)
+    }
+  }
+
+  // The home screen itself, before any navigation.
+  await page.screenshot({
+    path: `${OUT}/${pfx}${state}-${width}-log.png`,
+    fullPage: false,
+  })
+
+  for (const screen of SCREENS) {
+    const steps = locale === 'ar' ? screen.ar : screen.en
+    let reached = true
+    for (const step of steps) {
+      // Substring: the home cards carry live data in their accessible names.
+      const button = page.getByRole('button', { name: step, exact: false })
+      if (!(await button.count())) {
+        reached = false
+        break
+      }
       await button.first().click()
       // Lazy chunks plus the screens' own fetches.
       await page.waitForTimeout(1400)
     }
+    if (!reached) {
+      // Loudly, and with what WAS on screen. A door that has stopped existing
+      // is the exact defect retiring the tab bar could introduce, and "no
+      // door to coach" on its own sends you looking in the wrong place when
+      // the real fault is that the run never got back to the home screen.
+      const present = await page.getByRole('button').evaluateAll((els) =>
+        els
+          .map((e) => e.getAttribute('aria-label') || e.textContent?.trim())
+          .filter(Boolean)
+          .slice(0, 12),
+      )
+      console.log(`  ! ${pfx}${state}-${width}: no door to ${screen.key}`)
+      console.log(`      on screen: ${present.join(' · ')}`)
+      continue
+    }
     await page.screenshot({
-      path: `${OUT}/${pfx}${state}-${width}-${TABS[i].toLowerCase()}.png`,
+      path: `${OUT}/${pfx}${state}-${width}-${screen.key}.png`,
       // Viewport, not fullPage — see the header comment. This is the rule.
       fullPage: false,
     })
@@ -350,7 +458,7 @@ async function shoot(browser, origin, { width, empty, active, locale, theme }) {
      * screenshot run: the same shape as the exercise detail page, which had
      * never been photographed either.
      */
-    if (tab === 'History' && !empty) {
+    if (screen.key === 'history' && !empty) {
       // The row's accessible name is the date, time and workout name, so it is
       // matched by the one word every fixture session carries.
       const row = page.getByRole('button', { name: /Workout|Upper A|Leg day/ })
@@ -388,7 +496,7 @@ async function shoot(browser, origin, { width, empty, active, locale, theme }) {
      * Delete are gated on `is_custom`, so without a custom lift in the fixture
      * and a click to reveal them, that whole surface goes unphotographed.
      */
-    if (tab === 'Progress' && !empty) {
+    if (screen.key === 'progress' && !empty) {
       const custom = page.getByRole('button', { name: /Hack Squat/i })
       if (await custom.count()) {
         await custom.first().click()
@@ -410,7 +518,7 @@ async function shoot(browser, origin, { width, empty, active, locale, theme }) {
       }
     }
 
-    if (tab === 'Progress' && !empty) {
+    if (screen.key === 'progress' && !empty) {
       const lift = page.getByRole('button', { name: /Bench Press/i })
       if (await lift.count()) {
         await lift.first().click()
@@ -427,6 +535,21 @@ async function shoot(browser, origin, { width, empty, active, locale, theme }) {
         })
       }
     }
+
+    // Home again, so the next screen's door is on screen. The header chevron
+    // is the way back now; pressing it is also the assertion that it exists.
+    const back = page.getByRole('button', {
+      name: locale === 'ar' ? 'رجوع' : 'Back',
+      exact: true,
+    })
+    if (await back.count()) {
+      await back.first().click()
+    } else {
+      await page.reload({ waitUntil: 'networkidle' })
+    }
+    await page.waitForTimeout(900)
+    await page.evaluate(() => window.scrollTo(0, 0))
+    await page.waitForTimeout(200)
   }
 
   await context.close()
@@ -492,9 +615,7 @@ async function main() {
     await server.close()
   }
 
-  console.log(
-    `\n${TABS.length * WIDTHS.length * 2 + WIDTHS.length * 9} screenshots in ${OUT}/`,
-  )
+  console.log(`\n${readdirSync(OUT).length} screenshots in ${OUT}/`)
   if (crashes.length) {
     // An uncaught error no longer blanks a tab — U1c's boundaries catch it —
     // so it would otherwise be invisible in a screenshot. Say it out loud.

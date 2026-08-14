@@ -13,17 +13,40 @@ import { stubSupabase, USER_ID } from './stub'
  * headline is reworded gets muted, and a muted check is worse than none.
  */
 
-const TABS = ['Log', 'History', 'Progress', 'Coach', 'Friends'] as const
-
 /**
- * The tab bar is a `<nav>` of plain buttons with `aria-current`, not an ARIA
- * tablist. Selecting by the markup the app actually has — the first draft
+ * How each screen is reached now that the five-tab bar is retired: press these
+ * controls in order, starting from home. Friends is two deep because it is two
+ * deep for real — the audit took it out of the furniture.
+ *
+ * Selecting by accessible name, not by markup. An earlier draft of this file
  * asked for `role="tab"` and every test timed out against a page that was
- * rendering perfectly.
+ * rendering perfectly; names are what a user navigates by and what survives a
+ * layout being rebuilt underneath them.
  */
-const tabBar = (page: Page) => page.locator('nav').first()
-const openTab = (page: Page, name: string) =>
-  tabBar(page).getByRole('button', { name, exact: false }).click()
+const ROUTES = {
+  History: ['History'],
+  Progress: ['Last PR'],
+  Coach: ['Ask the coach'],
+  Friends: ['You — settings', 'Friends'],
+  Settings: ['You — settings'],
+} as const
+
+const home = (page: Page) => page.getByRole('button', { name: 'Start workout' })
+
+async function open(page: Page, screen: keyof typeof ROUTES) {
+  for (const step of ROUTES[screen]) {
+    // Substring, not exact. The home cards name themselves from their own
+    // content — a record card has to read out the record, not the word
+    // "Last PR" — so their accessible names carry live data and a trailing
+    // destination. Pinning the whole string would make this fail every time
+    // somebody set a PR.
+    await page.getByRole('button', { name: step, exact: false }).first().click()
+  }
+}
+
+/** Back to home, which is what the header chevron is for. */
+const goHome = (page: Page) =>
+  page.getByRole('button', { name: 'Back', exact: true }).first().click()
 
 /**
  * Things that legitimately fail outside Vercel's edge, and only those.
@@ -62,7 +85,7 @@ function watchForErrors(page: Page): string[] {
 }
 
 test.describe('the app renders', () => {
-  test('every tab opens without throwing', async ({ page }) => {
+  test('every screen opens, and every screen can be left', async ({ page }) => {
     const errors = watchForErrors(page)
     await stubSupabase(page)
     await page.goto('/')
@@ -70,36 +93,40 @@ test.describe('the app renders', () => {
     // Signed in, not on the auth screen. If the session injection ever stops
     // working this is the assertion that says so, rather than four confusing
     // failures below it.
-    await expect(tabBar(page)).toBeVisible({ timeout: 15_000 })
+    await expect(home(page)).toBeVisible({ timeout: 15_000 })
 
-    for (const tab of TABS) {
-      await openTab(page, tab)
+    for (const screen of Object.keys(ROUTES) as (keyof typeof ROUTES)[]) {
+      await open(page, screen)
       // The error boundary renders `role="alert"` with this copy. Its presence
       // means a screen crashed and was caught — which is the boundary working
       // and the screen not.
       await expect(page.getByText('Something broke')).toHaveCount(0)
-      await expect(tabBar(page)).toBeVisible()
+      // And the way back exists. With the tab bar gone this chevron is the
+      // only exit on a platform without a system back gesture, so a screen
+      // that renders without one is a trap rather than a screen.
+      await goHome(page)
+      await expect(home(page)).toBeVisible()
     }
 
     expect(errors, `page errors:\n${errors.join('\n')}`).toEqual([])
   })
 
-  test('the tab bar does not cover the content', async ({ page }) => {
+  test('the start row sits at the bottom of the screen, not over it', async ({
+    page,
+  }) => {
     await stubSupabase(page)
     await page.goto('/')
-    await expect(tabBar(page)).toBeVisible({ timeout: 15_000 })
-    await openTab(page, 'History')
+    await expect(home(page)).toBeVisible({ timeout: 15_000 })
 
-    // The invariant is not "main ends above the bar" — the bar is fixed, so
-    // main's box can legitimately run under it. It is that main reserves at
-    // least the bar's height as bottom padding, which is what `pb-28` buys.
-    // Nearly reported a fullPage screenshot artefact as an overlap bug once;
-    // measuring the actual rule avoids repeating that.
-    const navHeight = (await tabBar(page).boundingBox())!.height
-    const padding = await page
-      .locator('main')
-      .evaluate((el) => Number.parseFloat(getComputedStyle(el).paddingBottom))
-    expect(padding).toBeGreaterThanOrEqual(navHeight)
+    // The invariant the retired tab bar's test measured was "main reserves
+    // the bar's height as padding". There is no bar now; the equivalent is
+    // that the sticky Start row is fully on screen — it is the one control
+    // this app exists for, and it is pinned rather than in flow precisely so
+    // it can never be scrolled off.
+    const box = (await home(page).boundingBox())!
+    const viewport = page.viewportSize()!
+    expect(box.y).toBeGreaterThanOrEqual(0)
+    expect(box.y + box.height).toBeLessThanOrEqual(viewport.height)
   })
 })
 
@@ -117,8 +144,8 @@ test.describe('nothing renders at height zero', () => {
   test('the progress charts have height', async ({ page }) => {
     await stubSupabase(page)
     await page.goto('/')
-    await expect(tabBar(page)).toBeVisible({ timeout: 15_000 })
-    await openTab(page, 'Progress')
+    await expect(home(page)).toBeVisible({ timeout: 15_000 })
+    await open(page, 'Progress')
 
     // Wait for the lazy chunk rather than a fixed pause — and wait on an
     // `svg`, deliberately, not on one of the elements under test. Waiting on a
@@ -170,7 +197,7 @@ test.describe('what the client actually sends', () => {
   test('starting a workout sends the owner column', async ({ page }) => {
     const captured = await stubSupabase(page)
     await page.goto('/')
-    await expect(tabBar(page)).toBeVisible({ timeout: 15_000 })
+    await expect(home(page)).toBeVisible({ timeout: 15_000 })
 
     await page
       .getByRole('button', { name: /start.*workout/i })
@@ -204,11 +231,13 @@ test.describe('what the client actually sends', () => {
 
     const captured = await stubSupabase(page)
     await page.goto('/')
-    await expect(tabBar(page)).toBeVisible({ timeout: 15_000 })
+    await expect(home(page)).toBeVisible({ timeout: 15_000 })
 
-    for (const tab of TABS) {
-      await openTab(page, tab)
+    for (const screen of Object.keys(ROUTES) as (keyof typeof ROUTES)[]) {
+      await open(page, screen)
       await page.waitForTimeout(300)
+      await goHome(page)
+      await page.waitForTimeout(200)
     }
 
     const offenders = captured
