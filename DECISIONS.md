@@ -5459,3 +5459,37 @@ What `pg_policies` and `pg_proc` say now:
 
 The fifteen unscoped reporting functions are now correct without being
 touched, because the table underneath them means "mine".
+
+## 2026-08-14: ExerciseDetail's two chevrons — tried a layer, reverted
+
+Progress does `if (detail) return <ExerciseDetail/>`, so the sub-view replaces
+the Progress content _inside_ `main` while the app Header stays above it. The
+screen ends up with two back chevrons, stacked, going to different places: the
+header's home, and the detail's back to the lift list.
+
+Fixing it the way Settings was fixed does not work here, because both chevrons
+are load-bearing — one of them has to become context-aware instead of being
+deleted.
+
+**Tried:** rendering ExerciseDetail as a `fixed inset-0` layer over the header,
+the same recipe History's exercise picker uses. It looks right — one chevron,
+full-screen — and typecheck and the unit suite passed. `npm run shots` did not:
+Playwright could not click "Edit" further down the page, because a fixed layer
+scrolls in its own container rather than with the window, so scrolling an
+element into view no longer works the way it does everywhere else in the app.
+
+That is not merely a harness problem. A long sub-page inside its own scroll
+container also loses the mobile address-bar collapse and the browser's scroll
+restoration. The picker gets away with it because it is a short list; this is a
+full page of charts.
+
+**Reverted.** The remaining honest options both cost more than the defect: lift
+`detail` into App so there is one source of truth for navigation, or let a
+screen register a back handler that App resets on every tab change. The second
+is smaller and the more dangerous — a desynced flag hides the header chevron on
+a screen that has no sub-view, which is a trap, and trading a confusing screen
+for an inescapable one is a bad trade. The first is correct and touches
+ProgressScreen's props and tests.
+
+Left open deliberately, with the shape of the fix written down rather than
+half-applied.
