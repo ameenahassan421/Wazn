@@ -5517,3 +5517,25 @@ Extracting it also gave the follow its own tests, including the one that
 matters — a refused follow says so. That failure was swallowed for as long as
 the feature existed "to keep the first screen calm", and the silence hid the
 fact that every follow was being refused.
+
+## 2026-08-14: the Hevy importer had nowhere to be resumed from
+
+`HevyImport` is built around resumption. `run(plan, from)` restarts at the
+workout it stopped on, the preview says "Resume — N workouts left", and the
+progress panel promises that nothing is lost if you leave. None of that could
+ever be used: the only door to it was the home screen's import button, gated on
+`!hasHistory`, so the moment the first batch of workouts landed the door shut —
+taking the resume flow with it. An import that failed halfway was over.
+
+The gate is not wrong. Running the same export twice duplicates every workout
+in it and nothing de-duplicates, so an empty account is the only state where
+importing is unconditionally safe.
+
+So the door moves rather than opening wider: Settings gets an "Import from
+Hevy" row, which is where the design's screen 14 puts it anyway. The home
+button stays for the first-run case. Reaching it from Settings is a deliberate
+act on a screen nobody visits by accident, rather than a button beside Start.
+
+Mechanically this is `initialView` again — the same prop the empty-history
+screen's "Start a workout" uses — widened to accept `'import'`. The importer is
+a view of the Log screen, so routing to it is navigation, not a second mount.

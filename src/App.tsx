@@ -83,8 +83,8 @@ export default function App() {
    * That button used to be the only place in the app whose label promised
    * something its press did not do.
    */
-  const [logView, setLogView] = useState<'overview' | 'picker'>('overview')
-  const openLog = (view: 'overview' | 'picker' = 'overview') => {
+  const [logView, setLogView] = useState<'overview' | 'picker' | 'import'>('overview')
+  const openLog = (view: 'overview' | 'picker' | 'import' = 'overview') => {
     setLogView(view)
     setTab('log')
   }
@@ -244,6 +244,7 @@ export default function App() {
                       email={session?.user.email ?? null}
                       joinedAt={session?.user.created_at ?? null}
                       onFriends={() => setTab('friends')}
+                      onImport={() => openLog('import')}
                     />
                   </Suspense>
                 )}

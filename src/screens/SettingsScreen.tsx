@@ -132,11 +132,14 @@ export function SettingsScreen({
   joinedAt,
   userId,
   onFriends,
+  onImport,
 }: {
   email: string | null
   joinedAt: string | null
   userId: string
   onFriends: () => void
+  /** Opens the Hevy importer, which lives as a view on the Log screen. */
+  onImport: () => void
 }) {
   const { t, locale, setLocale } = useLocale()
   const { unit, setUnit } = useUnit()
@@ -242,7 +245,14 @@ export function SettingsScreen({
           with P2's first-run import flow, not with a link that would have to
           re-derive that gate from here. */}
       <Group>
-        <LinkRow label={t('settings.friends')} onClick={onFriends} last />
+        <LinkRow label={t('settings.friends')} onClick={onFriends} />
+        {/* The design's screen 14 lists this, and it is the only way a
+            part-finished import can be resumed: the home's import button is
+            gated on an empty account, so the moment the first workouts land
+            it disappears — taking the "Resume — N workouts left" flow with
+            it. HevyImport was built to resume and had nowhere to be resumed
+            from. */}
+        <LinkRow label={t('settings.import')} onClick={onImport} last />
       </Group>
 
       {/* Two taps, the same arm the discard controls use. Signing out of a

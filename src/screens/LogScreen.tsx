@@ -224,7 +224,7 @@ export function LogScreen({
    * `setView` would be the synchronous-setState-in-effect the lint rule
    * forbids, and a ref would be re-read by StrictMode's double invoke.
    */
-  initialView?: 'overview' | 'picker'
+  initialView?: 'overview' | 'picker' | 'import'
 }) {
   const { unit } = useUnit()
   const { t, locale } = useLocale()
