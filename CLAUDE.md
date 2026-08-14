@@ -76,7 +76,9 @@ production served the bug.
 throwaway local Postgres, applies `scripts/pg_shim.sql` (the `auth` schema, the
 platform roles, the default privileges) and then every migration in order from
 an empty database, and finishes by running the suites in `supabase/tests/`. No
-network, no project, no credentials. CI runs it too.
+network, no project, no credentials. CI runs it too. It runs **three** of the
+four files there — `coach_surfaces`, `rls_own_rows`, `body_and_coach`. A new
+suite is not run until it is added to the loop in `scripts/check_sql.sh`.
 
 `npm run check:migrations` (needs `pip install pglast`) still parses everything
 with the grammar Postgres itself uses, and it is still the cheap floor — 0007
@@ -136,17 +138,31 @@ statistics can answer.
 
 ## Architecture
 
-- `src/screens/` — Log (home), History, Progress, Coach, Friends, Settings.
-  No router: one `View` union in `App.tsx` and one `useState`. **There is no
-  tab bar** — the v3 redesign retired it (audit S2, "five equal tabs for five
-  unequal jobs"). Home carries one Start action with a History circle beside
-  it; Progress and Coach are reached through the cards that hold their content
-  (Last PR, the coach brief), Settings through the header avatar, and Friends
-  from inside Settings. A new screen needs a door on the home or it is
-  unreachable — `npm run shots` prints `no door to <screen>` when one is
-  missing, and that line is a failure even though the run is green.
+- `src/screens/` — Log (home), History, Progress, **Body**, Coach, Friends,
+  Settings. No router: one `View` union in `App.tsx` and one `useState`.
+- **There IS a tab bar again — six tabs, and this line said the opposite until
+  2026-08-14.** The audit retired the five-tab bar on 2026-08-13 (S2, "five
+  equal tabs for five unequal jobs"); design v3.0 brings back
+  `Log · History · Progress · Body · Coach · Friends`, and Ameen confirmed the
+  handoff wins. **The doors were kept.** Progress is still behind the Last PR
+  card, Coach behind the coach brief, Settings behind the header avatar,
+  Friends also from inside Settings, History also as the circle beside Start.
+  A new screen still needs a door — `npm run shots` prints
+  `no door to <screen>` when a route cannot be walked, and both harnesses
+  press the CARDS rather than the bar on purpose: the bar either renders or it
+  does not, and a run that navigated by it would pass on a build where every
+  card door had silently stopped working. Body is the one screen reached by
+  the bar, because it has no card.
+- **The tab bar's height lives in ONE place: `--tab-space` in `index.css`.**
+  Three sticky clusters clear it (the home's Start row, the focused view's
+  commit cluster, the board's rest bar). Last time this arithmetic lived in
+  three components, one of them kept its `+ 64px` after the bar was retired
+  and floated a tab-bar's height above the screen. Do not inline the number.
 - `src/lib/` — `supabase.ts` (client + `describeError`), `units.ts`,
-  `epley.ts`, `unit-context.tsx`, `use-auth.ts`.
+  `epley.ts`, `unit-context.tsx`, `use-auth.ts`; and v3's layer:
+  `coach-mode.ts` (mode + volume, and the two questions volume answers),
+  `readiness.ts`, `ghost-reason.ts` (the adaptive ghost — the hero),
+  `forecast.ts`, `body.ts`, `tell-coach.ts`, `streak.ts`.
 - `supabase/migrations/0001_init.sql` — schema, RLS, and three security-invoker
   functions the app calls as RPCs: `exercise_usage`, `previous_session`,
   `exercise_1rm_history`.
@@ -172,12 +188,16 @@ effects run before the parent's, which silently broke the set auto-fill once.
 
 - Supabase project ref: `ttasiwxeqerhsztxjxip`
 - Production: https://workout-theta-plum.vercel.app (Vercel, auto-deploys `main`)
-- **Sandboxed sessions CAN reach Supabase now**, which reverses what this line
-  said until 2026-08-08. `SUPABASE_ACCESS_TOKEN` and `SUPABASE_PROJECT_REF` are
-  in the environment, and `https://api.supabase.com/v1/projects/$REF/database/query`
+- **Whether a session can reach Supabase is PER-SESSION. Check, do not
+  assume.** When `SUPABASE_ACCESS_TOKEN` and `SUPABASE_PROJECT_REF` are in the
+  environment, `https://api.supabase.com/v1/projects/$REF/database/query`
   answers — that is a Management API personal access token, and it can run
-  arbitrary SQL, including DDL. Migrations 0020 and 0021 were applied through
-  it. Direct Postgres (5432 / the 6543 pooler) is still NOT reachable, so
+  arbitrary SQL, including DDL. Migrations 0020 and 0021 were applied that way.
+  **The 2026-08-14 session had neither variable, and the Supabase MCP server
+  needs an interactive OAuth flow a headless session cannot run** — so 0027 was
+  written, proven against a local Postgres, and left unapplied. `env | grep -i
+supabase` before promising anything about production. Direct Postgres (5432 /
+  the 6543 pooler) is still NOT reachable in any session, so
   `scripts/run_sql.sh` and its `DATABASE_URL` remain a laptop-only path.
 - **That token is production DDL access. Treat it as such.** Plan §2.6 makes a
   destructive change an ask, and applying a migration is a change to the

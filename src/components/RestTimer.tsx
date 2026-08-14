@@ -27,6 +27,7 @@ export function RestChip({
   onExpand,
   defaultSeconds,
   onSaveDefault,
+  effort,
 }: {
   timer: Timer
   /** Opens the full rest view. Optional: the chip works standalone. */
@@ -34,6 +35,16 @@ export function RestChip({
   /** What this lift's rest is currently set to, for the keep-it affordance. */
   defaultSeconds?: number
   onSaveDefault?: (seconds: number) => void
+  /**
+   * v3 §04: the percentage of the lift's best estimate the last set
+   * represented, so the bar can say `top set at 88%`.
+   *
+   * Null is the common case — no history for the lift, a bodyweight set, or
+   * the coach dial off — and null renders NO reason line. Doctrine 1 applies
+   * here exactly as it applies to a coach's sentence: the duration changed, so
+   * either the app can show the number behind it or it does not claim one.
+   */
+  effort?: number | null
 }) {
   const { t } = useLocale()
   if (timer.remaining === null) return null
@@ -114,9 +125,21 @@ export function RestChip({
           >
             {formatRest(timer.remaining)}
           </span>
-          <span className="truncate text-[12px] opacity-70">
+          <span className="min-w-0 truncate text-[12px] opacity-70">
             {done ? t('rest.done') : t('rest.title')}
           </span>
+          {/* The reason, at the far end of the bar, exactly as v3 draws it.
+              Hidden below 360px: the countdown and the two controls are what
+              the bar is for, and a reason that squeezes them is a reason
+              that cost more than it gave. */}
+          {effort !== null && effort !== undefined && (
+            <span
+              dir="ltr"
+              className="meta-mono tnum ms-auto hidden shrink-0 text-[11px] opacity-55 min-[360px]:inline"
+            >
+              {t('rest.effort', { n: String(effort) })}
+            </span>
+          )}
         </button>
 
         <button

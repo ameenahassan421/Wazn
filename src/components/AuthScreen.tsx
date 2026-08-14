@@ -327,7 +327,48 @@ export function AuthScreen() {
         <Wordmark height={26} className="text-text" />
       </h1>
       {inviter && <p className="kicker mt-4">{nameOf(inviter)} invited you</p>}
-      <p className="mt-4 text-sm text-muted">{t('auth.subhead')}</p>
+
+      {/* ── The v3 AuthHero (designs/AuthHero.html) ────────────────────────
+          The front page is the selling surface, so it says what the app does
+          rather than what it is. Three parts, in the mock's order: the kicker,
+          the promise, and the demo that proves it.
+
+          The mock is a two-column 1080px layout — copy and live demo on the
+          left, the auth card on the right. This app's auth surface is a 430px
+          phone column and always has been, so the two columns become two
+          stacked blocks. That is a layout consequence of the frame, not a
+          redesign: every string, figure and row of the demo is the mock's.
+
+          It is drawn on the flip ground rather than by forcing the dark theme.
+          The mock is dark-first because dark was the world when it was drawn;
+          this app shipped paper as the default on 2026-08-12, and overriding
+          a reader's chosen theme on the first screen they see would be the
+          app disagreeing with itself before they are even signed in. */}
+      <p className="kicker mt-6 text-accent-300">{t('auth.hero.kicker')}</p>
+      <h2 className="font-display mt-3 text-[30px] leading-[1.1] font-semibold tracking-[-0.015em] text-balance">
+        {t('auth.hero.headline')}
+      </h2>
+      <p className="mt-3 text-[15px] leading-[1.6] text-muted">{t('auth.hero.body')}</p>
+
+      <AuthDemo />
+
+      <ul className="mt-5 flex flex-wrap gap-x-5 gap-y-2">
+        {['seeded', 'rest', 'forecasts'].map((key) => (
+          <li
+            key={key}
+            className="meta-mono flex items-center gap-2 text-[11px] tracking-[0.1em] text-muted uppercase"
+          >
+            <span
+              aria-hidden="true"
+              className="block h-[7px] w-[7px] bg-accent"
+              style={{ borderRadius: 2 }}
+            />
+            {t(`auth.hero.${key}`)}
+          </li>
+        ))}
+      </ul>
+
+      <p className="mt-8 text-sm text-muted">{t('auth.subhead')}</p>
       {/* On the one screen where somebody hands over an email, and nowhere
           else. A privacy link buried in a settings menu is a link written for
           an app store rather than for a reader. */}
@@ -657,5 +698,177 @@ export function AuthScreen() {
         </button>
       </div>
     </main>
+  )
+}
+
+/**
+ * The live set-commit demo from `designs/AuthHero.html`.
+ *
+ * Four rows of a bench block: two committed, one that commits itself on a
+ * loop, one ghost. It is the app's own board anatomy — index, figure, reason,
+ * check — at the size the mock draws it, because the most honest thing the
+ * front page can show is the thing the app actually is.
+ *
+ * ── WHY IT IS HAND-DRAWN AND NOT `WorkoutOverview` ──────────────────────────
+ * The real board needs a workout, a plan, a previous session and a unit
+ * context, and there is no session here to give it one. Rendering it against
+ * a fake would mean a fixture on the sign-in screen that has to be kept in
+ * step with a component nobody would remember to check. This is four static
+ * rows; it cannot drift because it is not pretending to be live.
+ *
+ * The animation is CSS only, `both`-filled, and collapses under
+ * `prefers-reduced-motion` with the rest of the app's motion (index.css) — so
+ * a reader who has asked for stillness gets a committed row rather than a
+ * flickering one.
+ */
+function AuthDemo() {
+  const { t } = useLocale()
+  const rows = [
+    { n: '1', value: '100 × 8', reason: '▲ +2.5', accent: true, state: 'done' },
+    { n: '2', value: '102.5 × 8', reason: '↺ 100 × 8', accent: false, state: 'done' },
+    {
+      n: '3',
+      value: '102.5 × 8',
+      reason: '↑ 102.5 — 8/8 last time',
+      accent: true,
+      state: 'live',
+    },
+    { n: '4', value: '102.5 × 8', reason: '', accent: false, state: 'ghost' },
+  ] as const
+
+  return (
+    <section
+      aria-label={t('auth.hero.demo')}
+      className="mt-6 overflow-hidden"
+      style={{
+        background: 'var(--flip-bg)',
+        color: 'var(--flip-text)',
+        borderRadius: 'var(--radius-panel)',
+      }}
+    >
+      <div className="flex flex-col gap-[3px] px-[18px] pt-4 pb-2.5">
+        <p className="font-display text-[17px] font-semibold">
+          {t('auth.hero.demo.exercise')}
+        </p>
+        <p
+          className="meta-mono text-[11px]"
+          style={{ color: 'color-mix(in srgb, var(--flip-text) 55%, transparent)' }}
+        >
+          2 / 4 · {t('overview.coach_adjusted')}
+        </p>
+      </div>
+
+      <ul>
+        {rows.map((row) => (
+          <li
+            key={row.n}
+            className="grid items-center px-[18px]"
+            style={{
+              gridTemplateColumns: '30px 1fr auto 40px',
+              columnGap: 12,
+              height: 50,
+              borderTop:
+                row.state === 'ghost'
+                  ? '1px dashed color-mix(in srgb, var(--flip-text) 14%, transparent)'
+                  : '1px solid color-mix(in srgb, var(--flip-text) 9%, transparent)',
+            }}
+          >
+            <span
+              dir="ltr"
+              className="tnum font-mono text-[11px]"
+              style={{
+                color:
+                  row.state === 'ghost'
+                    ? 'color-mix(in srgb, var(--flip-text) 32%, transparent)'
+                    : 'color-mix(in srgb, var(--flip-text) 55%, transparent)',
+              }}
+            >
+              {row.n}
+            </span>
+            <span
+              dir="ltr"
+              className={`font-display tnum truncate text-[20px] font-medium ${
+                row.state === 'live' ? 'auth-demo-value' : ''
+              }`}
+              style={
+                row.state === 'ghost'
+                  ? { color: 'color-mix(in srgb, var(--flip-text) 32%, transparent)' }
+                  : undefined
+              }
+            >
+              {row.value}
+            </span>
+            <span
+              dir="ltr"
+              className="tnum truncate font-mono text-[11px]"
+              style={{
+                color: row.accent
+                  ? 'var(--color-accent-700)'
+                  : 'color-mix(in srgb, var(--flip-text) 55%, transparent)',
+              }}
+            >
+              {row.reason}
+            </span>
+            {row.state === 'done' ? (
+              <span
+                aria-hidden="true"
+                className="justify-self-end text-[14px] font-bold text-accent-ink"
+                style={{
+                  width: 24,
+                  height: 24,
+                  borderRadius: 6,
+                  background: 'var(--color-accent)',
+                  display: 'grid',
+                  placeItems: 'center',
+                }}
+              >
+                ✓
+              </span>
+            ) : (
+              <span
+                aria-hidden="true"
+                className={`justify-self-end ${
+                  row.state === 'live' ? 'auth-demo-check' : ''
+                }`}
+                style={{
+                  width: 24,
+                  height: 24,
+                  borderRadius: 6,
+                  border:
+                    '1.5px solid color-mix(in srgb, var(--flip-text) 22%, transparent)',
+                  display: 'grid',
+                  placeItems: 'center',
+                }}
+              >
+                {row.state === 'live' && (
+                  <span className="auth-demo-glyph text-[14px] font-bold text-accent-ink">
+                    ✓
+                  </span>
+                )}
+              </span>
+            )}
+          </li>
+        ))}
+      </ul>
+
+      <div
+        className="flex flex-wrap items-center gap-2.5 px-[18px] py-3"
+        style={{
+          borderTop: '1px solid color-mix(in srgb, var(--flip-text) 9%, transparent)',
+        }}
+      >
+        <span className="text-[13px]">{t('auth.hero.forecast')}</span>
+        <span
+          dir="ltr"
+          className="chip-data tnum"
+          style={{
+            backgroundColor: 'rgba(232, 73, 29, 0.14)',
+            color: 'var(--color-accent-700)',
+          }}
+        >
+          e1RM 112.5 ▲ 2.5 / 4 wk
+        </span>
+      </div>
+    </section>
   )
 }

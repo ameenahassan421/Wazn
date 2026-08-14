@@ -159,6 +159,14 @@
   --text-micro: 11px;
   --text-micro--line-height: 1.2;
   --text-micro--font-weight: 500;
+
+  /* v3's one step below micro, and the only one. A stamped machine label the
+     reader GLANCES at — a tab-bar name, the Coach footer's disclaimer — never
+     anything they read and never a figure. The Figure Floor Rule is untouched:
+     no number a lifter reads at a glance goes below `figure`. */
+  --text-nano: 9px;
+  --text-nano--line-height: 1.1;
+  --text-nano--font-weight: 500;
 }
 
 /* Radii, dividers and elevation are plain custom properties — consumed by
@@ -168,7 +176,15 @@
    refines shipped --shadow-md/-lg with real 18px and 40px blurs; both are
    dropped. A card is separated from the ground by its edge and its fill. */
 :root {
+  /* The top of a bar in a bar chart — the protein week, the week row. Just
+     enough to take the die-cut edge off a 3px-wide column; anything larger
+     rounds a short bar into a lozenge and it stops reading as a measurement.
+     Added in v3, which is the first design to draw bars this narrow. */
+  --radius-bar: 3px;
   --radius-sm: 4px;
+  /* The set row's check, v3. Between `sm` and `tag`: the check is a control
+     rather than a label, and at 26px the 4px step reads as a hard square. */
+  --radius-check: 7px;
   --radius-md: 8px;
   --radius-lg: 14px;
   /* The exact-match mandate (DECISIONS.md 2026-08-12): the design's own
@@ -206,6 +222,44 @@
   --divider: rgba(22, 19, 14, 0.14);
   --header-tint: #efe9df;
   --divider-solid: rgba(22, 19, 14, 0.08);
+
+  /* ── The tab bar's footprint, in ONE place ─────────────────────────────
+     v3 brings the tab bar back (six tabs now — see components/TabBar.tsx),
+     and with it the arithmetic that was retired on 2026-08-13. Three sticky
+     clusters have to clear it: the home's Start row, the focused view's
+     commit cluster, and the workout board's rest bar.
+
+     The last time this was hand-tuned per cluster, ONE of the three kept its
+     `+ 64px` when the bar was retired and floated a tab-bar's height above
+     the screen with the board showing through underneath. Nothing caught it
+     but a screenshot. So the height lives here, every cluster names it, and
+     the rule they all obey is written once:
+
+       a sticky element stops drifting at the end of a scroll when
+       `marginBottom` = `bottom` − (the trailing space below it)
+
+     With `main`'s padding at `--tab-space + 10px` and every cluster's
+     `bottom` at `--tab-space`, the safe-area term cancels on both sides and
+     each correction falls out as a constant. Change the bar's height and all
+     three follow; change it in a component and this comment is a lie. */
+  --tab-bar-height: 58px;
+  --tab-space: calc(var(--tab-bar-height) + env(safe-area-inset-bottom, 0px));
+
+  /* The data chip's ground, v3. 7% on paper, 14% on the dark theme — the
+     design specifies both, and it is not a rounding: a 7% ember tint on
+     near-black is invisible, so the chip would lose the thing that makes it
+     read as a chip rather than as coloured text. */
+  --chip-tint: rgba(232, 73, 29, 0.07);
+
+  /* The dashed rule that separates a ghost row from a committed one. v2.2 drew
+     this as an outline around the whole row; v3's board draws it as a divider
+     ABOVE the row, so a block reads as one column with the plan hanging off
+     the bottom of it rather than as a stack of boxes. */
+  --ghost-divider: #ded6c7;
+  /* Ghost figures and indices: the design's `#a39d90` tier — quieter than
+     muted, still legible at arm's length. Between tile-4 and muted on the
+     warm ramp, which is where it has to be: a ghost is not disabled. */
+  --ghost-ink: #a39d90;
 
   /* Elevation, v2: the hairline ring plus a 1px inset light along the top
      edge. It reads as a milled surface catching the room light rather than
@@ -273,6 +327,11 @@ html[data-theme='dark'] {
   --top-light: inset 0 1px 0 rgba(236, 235, 232, 0.045);
   --header-tint: #131210;
   --surface-line: rgba(247, 243, 236, 0.08);
+
+  /* Twice the paper tint. A 7% ember wash on near-black is not a chip. */
+  --chip-tint: rgba(232, 73, 29, 0.14);
+  --ghost-divider: #2a2825;
+  --ghost-ink: #595650;
 }
 
 html {
@@ -582,20 +641,51 @@ button {
 @utility chip-data {
   display: inline-flex;
   align-items: center;
-  border-radius: 5px;
-  padding: 3px 7px;
-  background-color: rgba(232, 73, 29, 0.07);
+  border-radius: 6px;
+  padding: 3px 8px;
+  background-color: var(--chip-tint);
   color: var(--color-accent-300);
   font-family: var(--font-mono);
   font-size: 11px;
   line-height: 1.2;
   font-variant-numeric: tabular-nums;
+  /* A chip is one span of figures. Wrapped across two lines it stops reading
+     as a stamp and starts reading as a sentence, which is the one thing the
+     grammar exists to prevent. On the board the FIGURE never yields and the
+     chip does — see the set row's grid. */
+  white-space: nowrap;
 }
 
 /* The chip carries translated words beside its figures, so it takes the
    same rule `meta-mono` names: Plex Mono has no Arabic, and the platform
    monospace draws it as disconnected letters. */
 [dir='rtl'] .chip-data {
+  font-family: var(--font-sans);
+}
+
+/* The reasoning chip — the same grammar one notch smaller, for the previous-
+   value slot on a set row. v3 §02: `↓ 100 — set 2` on the 7% tint.
+   Tighter than `chip-data` because it shares a 54px row with a 22px figure
+   and a 26px check, and the figure never yields. */
+@utility chip-reason {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 5px;
+  padding: 2px 6px;
+  background-color: var(--chip-tint);
+  color: var(--color-accent-300);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1.2;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  /* The chip is what shrinks when the row runs out of room. */
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+[dir='rtl'] .chip-reason {
   font-family: var(--font-sans);
 }
 
@@ -818,4 +908,77 @@ button {
 .text-figure,
 .text-title {
   font-family: var(--font-display);
+}
+
+/* ─── The auth hero's demo ─────────────────────────────────────────────────
+   `designs/AuthHero.html`'s one piece of motion: a set row committing itself
+   on a six-second loop, so the first thing a visitor sees is the thing the
+   app is for.
+
+   Three keyframes rather than one because the row's three parts animate
+   different properties — the check's fill, the glyph's opacity, the figure's
+   colour — and a single shared animation would need every property on every
+   element. The timings are the mock's own.
+
+   Not tokenised into the four motion tiers on purpose: those exist to answer
+   questions a USER is asking mid-workout ("did my set save?"), and nobody on
+   the sign-in screen is asking anything. It is a demonstration, it is the one
+   loop in the app, and it lives on a surface the hot path never reaches.
+   `prefers-reduced-motion` collapses it with everything else at the bottom of
+   this file, which lands the committed end state. */
+@keyframes auth-demo-check {
+  0%,
+  38% {
+    background: transparent;
+    border-color: color-mix(in srgb, var(--flip-text) 22%, transparent);
+  }
+  48%,
+  92% {
+    background: var(--color-accent);
+    border-color: var(--color-accent);
+  }
+  100% {
+    background: transparent;
+    border-color: color-mix(in srgb, var(--flip-text) 22%, transparent);
+  }
+}
+
+@keyframes auth-demo-glyph {
+  0%,
+  38% {
+    opacity: 0;
+  }
+  48%,
+  92% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes auth-demo-value {
+  0%,
+  38% {
+    color: color-mix(in srgb, var(--flip-text) 55%, transparent);
+  }
+  48%,
+  92% {
+    color: var(--flip-text);
+  }
+  100% {
+    color: color-mix(in srgb, var(--flip-text) 55%, transparent);
+  }
+}
+
+.auth-demo-check {
+  animation: auth-demo-check 6s infinite both;
+}
+
+.auth-demo-glyph {
+  animation: auth-demo-glyph 6s infinite both;
+}
+
+.auth-demo-value {
+  animation: auth-demo-value 6s infinite both;
 }

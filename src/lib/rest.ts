@@ -52,3 +52,58 @@ export function describeRest(seconds: number): string {
   const s = seconds % 60
   return `${m}:${String(s).padStart(2, '0')}`
 }
+
+/* ── The earned rest — design v3.0 §04 ─────────────────────────────────────
+   "RestChip duration becomes mode- and effort-aware: heavy single at 95% e1RM
+   earns 4 min where a warm-up earns 90 s." Two rules govern everything below:
+
+     MANUAL OVERRIDE ALWAYS WINS, and is remembered per exercise. `resolveRest`
+     above already implements that, and `earnedRest` is only ever consulted
+     when there is no override — which is why it takes the resolved value as
+     its floor rather than replacing it.
+
+     THE REASON IS A NUMBER, not a sentence. The bar shows `top set at 88%`,
+     and this returns 88 — the component says the words. */
+
+/**
+ * Effort as a percentage of the lift's best estimate, or null.
+ *
+ * Null when either side is missing, and null is what stops the rest bar
+ * claiming a reason: doctrine 1 applies to the chip on the rest bar exactly as
+ * it applies to a coach's sentence.
+ */
+export function effortPercent(
+  weightKg: number | null,
+  bestE1rmKg: number | null | undefined,
+): number | null {
+  if (weightKg === null || weightKg <= 0) return null
+  if (bestE1rmKg === null || bestE1rmKg === undefined || bestE1rmKg <= 0) return null
+  return Math.round((weightKg / bestE1rmKg) * 100)
+}
+
+/**
+ * How long this set earned, given the mode's band and what it cost.
+ *
+ * The scale is linear across the mode's own min–max, anchored at two points a
+ * lifter would recognise: 60% of an estimated max is easy work and gets the
+ * band's floor; 95% is a top single and gets its ceiling. Warm-ups are
+ * exempted outright — a ramp set that earns four minutes turns a ten-minute
+ * warm-up into half an hour.
+ *
+ * Returns null when effort is unknown, and the caller keeps the resolved
+ * per-exercise value. Guessing a duration from no evidence is how a rest timer
+ * stops being believed.
+ */
+export function earnedRest(
+  effort: number | null,
+  band: { min: number; max: number },
+  setType: string,
+): number | null {
+  if (setType === 'warmup') return clampRest(Math.min(90, band.min))
+  if (effort === null) return null
+  const t = Math.min(1, Math.max(0, (effort - 60) / 35))
+  const seconds = band.min + (band.max - band.min) * t
+  // To the nearest fifteen seconds. A rest timer that says 2:47 is reporting a
+  // calculation rather than a decision.
+  return clampRest(Math.round(seconds / 15) * 15)
+}

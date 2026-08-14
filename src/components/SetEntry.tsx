@@ -66,6 +66,7 @@ export function SetEntry({
   onAddSet,
   timer,
   restSeconds,
+  restEffort,
   onSaveRest,
   onExpandRest,
   supersetGroup,
@@ -92,6 +93,8 @@ export function SetEntry({
   timer?: RestTimer
   /** This lift's resolved rest length, for the timer's keep-it affordance. */
   restSeconds?: number
+  /** v3 §04: what the running rest was earned by, for the bar's reason. */
+  restEffort?: number | null
   onSaveRest?: (seconds: number) => void
   onExpandRest?: () => void
   supersetGroup?: number | null
@@ -596,20 +599,20 @@ export function SetEntry({
       <div
         className="sticky z-10 -mx-[18px] flex flex-col gap-2 bg-ink px-[18px] pt-2"
         style={{
-          // Flush to the bottom edge, with the inset carried as the cluster's
-          // own padding. Anchored at the inset instead, a 10px strip of board
-          // scrolled underneath it — the same seam the home Start row had.
-          bottom: 0,
-          paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 10px)',
+          // Flush to the top of the tab bar, which owns the safe-area inset
+          // now — so this cluster's own padding is just the 10px of breathing
+          // room. See `--tab-space` in index.css for the whole rule.
+          bottom: 'var(--tab-space)',
+          paddingBottom: '10px',
           // A pinned element stops being pinned when the space beneath it
           // runs out, and left alone this cluster rode 66px up its own pinned
           // line over the last stretch of the scroll.
           //
-          // The correction is `bottom` minus the trailing space, and the
-          // trailing space is this section's pb-4, the workout wrapper's py-3
-          // and main's padding. With `bottom` at 0 the safe-area term no
-          // longer cancels, so it is subtracted explicitly.
-          marginBottom: 'calc(-28px - max(env(safe-area-inset-bottom, 0px), 10px))',
+          // `bottom` − trailing space. Trailing space is this section's pb-4
+          // (16px), the workout wrapper's py-3 (12px) and main's padding
+          // (`--tab-space` + 10px). The `--tab-space` terms cancel and the
+          // correction is a constant: −(16 + 12 + 10).
+          marginBottom: '-38px',
           // The same hairline the tab bar and the overview's rest bar carry,
           // for the same reason: it marks where content stops and chrome
           // starts, so a chip passing behind reads as scrolling under a bar
@@ -637,6 +640,7 @@ export function SetEntry({
             onExpand={onExpandRest}
             defaultSeconds={restSeconds}
             onSaveDefault={onSaveRest}
+            effort={restEffort}
           />
         )}
 

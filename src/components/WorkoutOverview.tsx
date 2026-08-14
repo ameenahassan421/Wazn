@@ -10,6 +10,7 @@ import { REST_STEP_SECONDS } from '../lib/use-rest-timer'
 import { ExerciseThumb } from './ExerciseThumb'
 import { IconMore } from './icons'
 import { useLocale } from '../lib/locale-context'
+import type { GhostVerdict } from '../lib/ghost-reason'
 
 /**
  * The workout overview — design v2.2, the spine of a session.
@@ -35,9 +36,20 @@ export interface OverviewBlock extends WorkoutBlock {
   exercise: Exercise | undefined
   note: string | null
   restSeconds: number
+  /**
+   * v3: what the coach did to this block's ghosts, and why. Absent when the
+   * coach volume is `off` — which is what makes the board render v2.2
+   * verbatim rather than v3 with the chips hidden.
+   */
+  verdict?: GhostVerdict | null
+  /** v3: `coach adjusted today`, on the meta line. */
+  adjusted?: boolean
 }
 
 const ROW_HEIGHT = 56
+/** The design's set row. 54px, and the grid it is drawn on. */
+const V3_ROW_HEIGHT = 54
+const ROW_GRID = '26px 1fr auto 44px'
 /** Long-press before a drag starts, so a scroll that begins on the grip works. */
 const LONG_PRESS_MS = 250
 /** Movement that cancels the pending long-press: this was a scroll, not a drag. */
@@ -74,6 +86,8 @@ export function WorkoutOverview({
   onSaveRest,
   onUngroup,
   onRemove,
+  onExplain,
+  onTellCoach,
 }: {
   /** In display order. Superset members are already adjacent. */
   blocks: OverviewBlock[]
@@ -91,6 +105,10 @@ export function WorkoutOverview({
   onSaveRest: (exerciseId: string, seconds: number) => void
   onUngroup: (exerciseId: string) => void
   onRemove: (exerciseId: string) => void
+  /** v3 §02: tapping a reasoning chip opens the explainer. */
+  onExplain?: (exerciseId: string) => void
+  /** v3 §07: the `⋮` overflow's mid-workout entry to "Tell the coach". */
+  onTellCoach?: (exerciseId: string) => void
 }) {
   const { t } = useLocale()
   const [openMenu, setOpenMenu] = useState<string | null>(null)
@@ -290,6 +308,14 @@ export function WorkoutOverview({
                         block={block}
                         canMoveUp={i > 0}
                         canMoveDown={i < order.length - 1}
+                        onTellCoach={
+                          onTellCoach
+                            ? () => {
+                                setOpenMenu(null)
+                                onTellCoach(block.exerciseId)
+                              }
+                            : undefined
+                        }
                         onMove={(delta) => onReorder(moveItem(order, i, i + delta))}
                         onSaveNote={(note) => onSaveNote(block.exerciseId, note)}
                         onSaveRest={(s) => onSaveRest(block.exerciseId, s)}
@@ -308,8 +334,8 @@ export function WorkoutOverview({
                       />
                     )}
 
-                    <ul className="flex flex-col gap-1.5 px-2 pb-2">
-                      {block.rows.map((row) => (
+                    <ul className="flex flex-col px-2 pb-2">
+                      {block.rows.map((row, rowIndex) => (
                         <SetRow
                           key={row.key}
                           nodeRef={(node) => {
@@ -319,8 +345,23 @@ export function WorkoutOverview({
                           row={row}
                           unit={unit}
                           busy={busy}
+                          first={rowIndex === 0}
                           exerciseName={block.exercise?.name ?? 'this exercise'}
                           editing={editingKey === row.key}
+                          // One reasoning chip per BLOCK, on the first ghost.
+                          // "One chip per row maximum" is the ceiling; a
+                          // column of four identical chips saying the same
+                          // thing is the noise the once-per-cause rule exists
+                          // to prevent, so the later ghosts stay quiet.
+                          verdict={
+                            row.kind === 'ghost' &&
+                            block.rows.findIndex((r) => r.kind === 'ghost') === rowIndex
+                              ? (block.verdict ?? null)
+                              : null
+                          }
+                          onExplain={
+                            onExplain ? () => onExplain(block.exerciseId) : undefined
+                          }
                           onCommit={() => onCommit(block.exerciseId, row)}
                           onOpen={() => onOpenRow(block.exerciseId, row)}
                         />
@@ -438,6 +479,19 @@ function BlockHeader({
         >
           {block.committed} / {block.planned}
         </span>
+        {/* v3 §02's `2 / 4 · coach adjusted today`. It sits BEFORE the note
+            because it is a fact about the rows directly underneath it, and a
+            long user note would otherwise truncate it away. */}
+        {block.adjusted && (
+          <>
+            <span aria-hidden="true" className="shrink-0 text-[11px] text-muted">
+              ·
+            </span>
+            <span className="shrink-0 font-mono text-[11px] text-muted">
+              {t('overview.coach_adjusted')}
+            </span>
+          </>
+        )}
         {block.note && (
           <>
             <span aria-hidden="true" className="shrink-0 text-[11px] text-muted">
@@ -464,6 +518,7 @@ function BlockMenu({
   onSaveRest,
   onUngroup,
   onRemove,
+  onTellCoach,
 }: {
   block: OverviewBlock
   canMoveUp: boolean
@@ -473,6 +528,8 @@ function BlockMenu({
   onSaveRest: (seconds: number) => void
   onUngroup?: () => void
   onRemove: () => void
+  /** v3 §07: "behind the `⋮` on the exercise block". */
+  onTellCoach?: () => void
 }) {
   const { t } = useLocale()
   const [note, setNote] = useState(block.note ?? '')
@@ -487,6 +544,18 @@ function BlockMenu({
 
   return (
     <div className="mx-2 mb-2 flex flex-col gap-2 border-t border-line pt-2">
+      {/* First in the menu, because it is the only item here that is about
+          the set you are in the middle of. Everything below it is
+          housekeeping. */}
+      {onTellCoach && (
+        <button
+          type="button"
+          onClick={onTellCoach}
+          className="btn-base btn-secondary h-12 w-full justify-start px-3 text-[13px]"
+        >
+          {t('tell.open')}
+        </button>
+      )}
       <div>
         <label htmlFor={noteId} className="mb-1 block text-[11px] text-muted">
           {t('overview.note_label')}
@@ -586,19 +655,41 @@ function BlockMenu({
 }
 
 /**
- * One row: index, values, previous, check.
+ * One row — design v3.0 §02: `26px | 1fr | auto | 44px`, 54px tall.
  *
- * The value and the previous share a single tap target spanning between the
- * index and the check — roughly 270×56px at 390px wide. A target that size
- * cannot be missed with chalk on your hands.
+ * ── WHAT CHANGED FROM v2.2, AND WHAT DID NOT ────────────────────────────────
+ * The anatomy is the same and GATE U2 is untouched: **the check still commits
+ * the row exactly as shown, in one tap.** What changed is how a ghost is
+ * distinguished from a committed row. v2.2 drew a dashed outline around the
+ * whole ghost; v3 draws a dashed DIVIDER above it and drops the figure to the
+ * ghost tier, so a block reads as one column with the plan hanging off the
+ * bottom rather than as a stack of boxes.
+ *
+ * ── WHY FOUR CELLS AND NOT ONE BIG BUTTON ───────────────────────────────────
+ * v2.2 made the figure and the previous-value one tap target — "a target that
+ * size cannot be missed with chalk on your hands", and that reasoning still
+ * holds for the figure, which keeps the whole 1fr column. But v3's reasoning
+ * chip is itself a control (it opens the explainer), and a button inside a
+ * button is invalid and unreachable by keyboard. So the chip is its own cell,
+ * exactly as the design draws it, and the figure loses only the width the chip
+ * occupies.
+ *
+ * ── THE FIGURE NEVER YIELDS ─────────────────────────────────────────────────
+ * `102.5 × 8` is what the lifter is here to read. The grid gives the figure
+ * `1fr` and the chip `auto`, and the chip carries `min-width: 0` with an
+ * ellipsis (see `chip-reason`) — so a long reason shrinks and a long figure
+ * does not wrap.
  */
 function SetRow({
   nodeRef,
   row,
   unit,
   busy,
+  first,
   exerciseName,
   editing,
+  verdict,
+  onExplain,
   onCommit,
   onOpen,
 }: {
@@ -607,8 +698,12 @@ function SetRow({
   row: OverviewRow
   unit: Unit
   busy: boolean
+  /** The first row in a block draws no divider — the header is its top edge. */
+  first: boolean
   exerciseName: string
   editing: boolean
+  verdict: GhostVerdict | null
+  onExplain?: () => void
   onCommit: () => void
   onOpen: () => void
 }) {
@@ -618,33 +713,38 @@ function SetRow({
   // Nothing to commit without reps. The check goes quiet rather than lying
   // about what a tap would do; the values are the way in.
   const committable = !committed && row.reps !== null && row.reps > 0
+  const speaks = !committed && verdict !== null && verdict.cause !== 'none'
 
   return (
     <li
       ref={nodeRef}
-      className={`flex items-stretch overflow-hidden ${
+      className={`grid items-center overflow-hidden ${
         committed ? (record ? 'record-row set-commit' : 'set-commit') : ''
       }`}
       style={{
-        minHeight: ROW_HEIGHT,
-        borderRadius: 'var(--radius-md)',
-        // Ghost and committed differ by fill and border STYLE, never by hue —
-        // and both are drawn with outline/box-shadow rather than a border, so
-        // the row does not shift by a pixel at the moment it commits.
-        background: committed ? 'var(--color-surface)' : 'transparent',
-        boxShadow: committed ? 'var(--ring-hairline)' : undefined,
-        outline: editing
-          ? '1px solid var(--color-accent)'
+        gridTemplateColumns: ROW_GRID,
+        columnGap: 10,
+        minHeight: V3_ROW_HEIGHT,
+        paddingInline: 6,
+        // Solid above a committed row, dashed above a ghost. Never a hue
+        // difference — a lighter day is not an error, and §2.4 has no red.
+        borderTop: first
+          ? undefined
           : committed
-            ? undefined
-            : '1px dashed var(--color-line)',
+            ? '1px solid var(--divider-solid)'
+            : '1px dashed var(--ghost-divider)',
+        // The focused view's row keeps its accent edge, drawn as an outline so
+        // the row does not shift by a pixel when it lands.
+        outline: editing ? '1px solid var(--color-accent)' : undefined,
         outlineOffset: '-1px',
+        borderRadius: editing ? 'var(--radius-sm)' : undefined,
       }}
     >
       <span
-        className={`tnum flex w-7 shrink-0 items-center justify-center font-mono text-[11px] ${
-          row.setType === 'warmup' ? 'text-accent-600' : 'text-muted'
+        className={`tnum flex items-center justify-center font-mono text-[11px] ${
+          row.setType === 'warmup' ? 'text-accent-600' : committed ? 'text-muted' : ''
         }`}
+        style={committed ? undefined : { color: 'var(--ghost-ink)' }}
         title={row.setType !== 'normal' ? SET_TYPE_NAME[row.setType] : undefined}
       >
         {row.setType === 'warmup' ? SET_TYPE_LABEL.warmup : row.label}
@@ -663,13 +763,17 @@ function SetRow({
           label: row.label,
           values: values(row.weightKg, row.reps, unit),
         })}
-        className="flex min-w-0 flex-1 items-center gap-2 pe-2 text-start"
+        className="flex h-full min-w-0 items-center gap-2 text-start"
       >
         <span
           dir="ltr"
-          className={`tnum min-w-0 flex-1 truncate text-figure ${
-            committed ? 'text-text' : 'text-muted'
-          }`}
+          className="font-display tnum min-w-0 truncate text-[22px] font-medium"
+          // `nowrap` is the design's own rule for this span. The chip is what
+          // yields when the row runs out of room, never the figure.
+          style={{
+            whiteSpace: 'nowrap',
+            color: committed ? 'var(--color-text)' : 'var(--ghost-ink)',
+          }}
         >
           {values(row.weightKg, row.reps, unit)}
         </span>
@@ -688,9 +792,22 @@ function SetRow({
             {SET_TYPE_LABEL[row.setType]}
           </span>
         )}
-
-        <Previous row={row} unit={unit} />
       </button>
+
+      {speaks && onExplain ? (
+        <button
+          type="button"
+          onClick={onExplain}
+          aria-label={t('reason.open', { name: exerciseName })}
+          className="press flex h-full min-w-0 items-center justify-end"
+        >
+          <ReasonChip verdict={verdict} unit={unit} />
+        </button>
+      ) : speaks ? (
+        <ReasonChip verdict={verdict} unit={unit} />
+      ) : (
+        <Previous row={row} unit={unit} />
+      )}
 
       {committed ? (
         // Not a button. There is no per-set correction from here (that is a
@@ -699,12 +816,12 @@ function SetRow({
         <span
           role="img"
           aria-label={t('overview.logged')}
-          className="flex h-14 w-14 shrink-0 items-center justify-center"
+          className="flex h-full items-center justify-end"
         >
           <span
             aria-hidden="true"
-            className="flex h-[26px] w-[26px] items-center justify-center bg-accent text-[15px] font-semibold text-accent-ink"
-            style={{ borderRadius: 'var(--radius-sm)' }}
+            className="flex h-[26px] w-[26px] items-center justify-center bg-accent text-[14px] font-bold text-accent-ink"
+            style={{ borderRadius: 7 }}
           >
             ✓
           </span>
@@ -723,21 +840,71 @@ function SetRow({
                 })
               : t('overview.row_needs_reps', { label: row.label })
           }
-          className="press flex h-14 w-14 shrink-0 items-center justify-center disabled:opacity-40"
+          // The design's 44px column, on a 54px row: 44 × 54 of target for the
+          // one control GATE U2 measures. The drawn box stays 26px.
+          className="press flex h-full items-center justify-end disabled:opacity-40"
         >
           <span
             aria-hidden="true"
             className="block h-[26px] w-[26px]"
             style={{
-              borderRadius: 'var(--radius-sm)',
-              border: `1px solid ${
-                editing ? 'var(--color-accent)' : 'var(--color-line)'
+              borderRadius: 'var(--radius-check)',
+              border: `1.5px solid ${
+                editing ? 'var(--color-accent)' : 'var(--ghost-divider)'
               }`,
             }}
           />
         </button>
       )}
     </li>
+  )
+}
+
+/**
+ * The reasoning chip — what the coach did to this ghost, in one span.
+ *
+ * Raised reads in the accent; held and eased read muted. That is the design's
+ * own rule and it is doing real work: a raise is a claim about the lifter
+ * getting stronger and deserves the one colour in the app, while an ease is a
+ * fact about today and must not look like a warning. There is no red anywhere
+ * to reach for even if somebody wanted one.
+ */
+function ReasonChip({ verdict, unit }: { verdict: GhostVerdict; unit: Unit }) {
+  const { t } = useLocale()
+  const w = (kg: number | null) => (kg === null ? '—' : formatWeight(kg, unit))
+
+  const text =
+    verdict.cause === 'under-plan'
+      ? t('reason.chip.eased', {
+          weight: w(verdict.weightKg),
+          label: verdict.facts.causeSetLabel ?? '',
+        })
+      : verdict.cause === 'progression'
+        ? t('reason.chip.raised', {
+            weight: w(verdict.weightKg),
+            run: (verdict.facts.previousRepsRun ?? []).join('/'),
+          })
+        : verdict.cause === 'readiness'
+          ? t('reason.chip.hold')
+          : t('reason.chip.reps', { reps: String(verdict.reps ?? '') })
+
+  // Raised is the one that gets the accent; everything else is the muted step
+  // of the same chip, which keeps "one chip per row" true without giving an
+  // ease-off the visual weight of a personal record.
+  const raised = verdict.kind === 'raise'
+
+  return (
+    <span
+      dir="ltr"
+      className="chip-reason"
+      style={
+        raised
+          ? undefined
+          : { background: 'transparent', color: 'var(--color-muted)', paddingInline: 0 }
+      }
+    >
+      {text}
+    </span>
   )
 }
 
@@ -752,6 +919,26 @@ function SetRow({
 function Previous({ row, unit }: { row: OverviewRow; unit: Unit }) {
   const { t } = useLocale()
   if (row.kind === 'committed') {
+    // v3 §02: a set that came in under its target says so, muted, in the same
+    // slot. It outranks the load delta because it is the more recent and more
+    // actionable fact — and because it is what the auto-regulation downstream
+    // is about to act on, so the board should already have said it.
+    //
+    // Stated as the plan, never as a shortfall: `→ planned 8`, with the same
+    // `→` the matched-weight case uses. There is no vocabulary here for
+    // "missed" (doctrine 3), and no colour: it is muted, like a hold.
+    if (
+      row.plannedReps !== null &&
+      row.reps !== null &&
+      row.reps < row.plannedReps &&
+      row.setType !== 'warmup'
+    ) {
+      return (
+        <span dir="ltr" className="tnum shrink-0 font-mono text-[11px] text-muted">
+          {t('overview.under_plan', { reps: String(row.plannedReps) })}
+        </span>
+      )
+    }
     if (row.delta === null) return null
     if (row.delta === 0) {
       return (
@@ -778,11 +965,14 @@ function Previous({ row, unit }: { row: OverviewRow; unit: Unit }) {
     )
   }
 
+  // The `↺ previous` glyph remains when the AI has nothing to say — v3 keeps
+  // v2.2's honest silence rather than filling the slot.
   if (!row.previous) return null
   return (
     <span
       dir="ltr"
-      className="tnum shrink-0 font-mono text-[11px] text-muted"
+      className="tnum shrink-0 font-mono text-[11px]"
+      style={{ color: 'var(--ghost-ink)' }}
       aria-label={t('overview.last_session', {
         values: values(row.previous.weightKg, row.previous.reps, unit),
       })}

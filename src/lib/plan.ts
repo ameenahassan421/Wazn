@@ -49,6 +49,16 @@ export interface OverviewRow {
    * the same index. Null when either side is missing or the row is a warm-up.
    */
   delta: number | null
+  /**
+   * What the routine asked this row for, when there is a routine.
+   *
+   * Carried on the row rather than looked up by the component because v3's
+   * board reads it on COMMITTED rows too — the design's `→ planned 8` on a set
+   * that came in at six. Deriving that in the component would mean re-deciding
+   * which plan entry belongs to which row, which is the indexing this module
+   * exists to own.
+   */
+  plannedReps: number | null
 }
 
 export interface WorkoutBlock {
@@ -176,6 +186,7 @@ export function buildBlock({
         !isWarmup && set.weight_kg !== null && previousRow?.weight_kg != null
           ? Number((set.weight_kg - previousRow.weight_kg).toFixed(4))
           : null,
+      plannedReps: isWarmup ? null : (plan?.[workingIndex]?.reps ?? null),
     })
     if (!isWarmup) workingIndex += 1
   }
@@ -197,6 +208,7 @@ export function buildBlock({
         ? { weightKg: previousRow.weight_kg, reps: previousRow.reps }
         : null,
       delta: null,
+      plannedReps: plan?.[i]?.reps ?? null,
     })
   }
 

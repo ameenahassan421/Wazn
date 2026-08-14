@@ -3,6 +3,7 @@ import type { ReactNode } from 'react'
 import { supabase } from '../lib/supabase'
 import { useLocale } from '../lib/locale-context'
 import { useTheme } from '../lib/theme-context'
+import { useCoach } from '../lib/coach-context'
 import { useUnit } from '../lib/unit-context'
 import { fetchMyProfile } from '../lib/social'
 import type { Profile } from '../lib/social'
@@ -144,6 +145,7 @@ export function SettingsScreen({
   const { t, locale, setLocale } = useLocale()
   const { unit, setUnit } = useUnit()
   const { theme, setTheme } = useTheme()
+  const { mode, volume, setMode, setVolume } = useCoach()
   const [profile, setProfile] = useState<Profile | null>(null)
   const [confirmSignOut, setConfirmSignOut] = useState(false)
 
@@ -237,6 +239,50 @@ export function SettingsScreen({
           />
         </Row>
       </Group>
+
+      {/* v3 §12, the AI dial. One section, and only the controls that exist.
+          The spec lists a third — individually revocable data sources — and
+          there is nothing to revoke yet: no wearable grant, and the check-in
+          and body log are the lifter's own taps rather than a permission.
+          Drawing four toggles that all do nothing would be exactly what the
+          four missing rows above are left out to avoid. The promise the spec
+          makes about them is kept where it matters: revoking a source never
+          deletes its history, and nothing here deletes anything. */}
+      <div>
+        <h2 className="kicker mb-1.5 ps-[18px]">{t('settings.coach')}</h2>
+        <Group>
+          <Row label={t('settings.coach.volume')}>
+            <Segmented
+              name={t('settings.coach.volume')}
+              value={volume}
+              onChange={setVolume}
+              options={[
+                { id: 'full' as const, label: t('settings.coach.volume.full') },
+                { id: 'quiet' as const, label: t('settings.coach.volume.quiet') },
+                { id: 'off' as const, label: t('settings.coach.volume.off') },
+              ]}
+            />
+          </Row>
+          <Row label={t('settings.coach.mode')} last>
+            <Segmented
+              name={t('settings.coach.mode')}
+              value={mode}
+              onChange={setMode}
+              options={[
+                { id: 'strength' as const, label: t('mode.strength') },
+                { id: 'hypertrophy' as const, label: t('mode.hypertrophy') },
+              ]}
+            />
+          </Row>
+        </Group>
+        {/* Meet prep is deliberately absent from this control: it needs a date
+            before it means anything, and the place to give it one is the mode
+            selector on the Coach tab, which asks. A third chip here would set
+            a mode that could not seed a single ghost. */}
+        <p className="mt-2 px-[18px] text-[12px] leading-[1.5] text-muted">
+          {t('settings.coach.note')}
+        </p>
+      </div>
 
       {/* The design also puts "Import from Hevy" in this group. It stays on
           the Log screen for now: the import view is state inside LogScreen,

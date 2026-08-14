@@ -33,6 +33,51 @@ import { useLocale } from '../lib/locale-context'
  * enforced by where this is mounted: the idle branch of LogScreen, which does
  * not render at all while a workout is open. Nothing here needs to check.
  */
+/**
+ * The two-stage draw, as a hook — SQL first, the model's sentence second.
+ *
+ * Extracted so the v3 Today brief (§01) can carry the same line without a
+ * second copy of the ordering that makes it safe: a briefing that renders from
+ * statistics in one round trip and *improves* when a sentence arrives cannot
+ * be broken by a provider outage, a spent quota or an unapplied migration.
+ * Two implementations of that would be two chances to get the order wrong.
+ */
+export function useCoachBrief(): { line: string | null; chip: string | null } {
+  const { locale } = useLocale()
+  const { unit } = useUnit()
+  const [block, setBlock] = useState<BriefBlock | null>(null)
+  const [phrased, setPhrased] = useState<{
+    unit: Unit
+    line: string
+    chip?: string
+  } | null>(null)
+
+  useEffect(() => {
+    let active = true
+    void (async () => {
+      const facts = await fetchBriefBlock()
+      if (!active) return
+      setBlock(facts)
+      if (!facts || !briefSkeleton(facts, unit, locale)) return
+      const result = await fetchCoachLine('briefing', unit)
+      if (!active || !result.line) return
+      setPhrased({ unit, line: result.line, chip: result.chip })
+    })()
+    return () => {
+      active = false
+    }
+  }, [unit, locale])
+
+  // The unit rides along rather than being cleared by an effect when the
+  // toggle moves: a stale sentence goes inert instead of being wiped, and the
+  // skeleton (which converts locally) covers the gap.
+  const current = phrased?.unit === unit ? phrased : null
+  return {
+    line: current?.line ?? briefSkeleton(block, unit, locale),
+    chip: current?.chip ?? briefChip(block, unit, locale) ?? null,
+  }
+}
+
 export function CoachBrief({ onOpen }: { onOpen?: () => void }) {
   const { t, locale } = useLocale()
   const { unit } = useUnit()

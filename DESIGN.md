@@ -78,10 +78,50 @@ typography:
     fontSize: '11px'
     fontWeight: 500
     lineHeight: 1.2
+  nano:
+    fontFamily: 'IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace'
+    fontSize: '9px'
+    fontWeight: 500
+    lineHeight: 1.1
+  mono-micro:
+    fontFamily: 'IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace'
+    fontSize: '10px'
+    fontWeight: 500
+    lineHeight: 1.2
+    fontFeature: 'tnum 1'
+  card-body:
+    fontFamily: 'Hanken Grotesk, ui-sans-serif, system-ui, sans-serif'
+    fontSize: '14px'
+    lineHeight: 1.5
+  quiet:
+    fontFamily: 'Hanken Grotesk, ui-sans-serif, system-ui, sans-serif'
+    fontSize: '12px'
+    lineHeight: 1.4
+  brief-title:
+    fontFamily: 'Sora, ui-sans-serif, system-ui, sans-serif'
+    fontSize: '26px'
+    fontWeight: 600
+    letterSpacing: '-0.01em'
+  card-title:
+    fontFamily: 'Sora, ui-sans-serif, system-ui, sans-serif'
+    fontSize: '17px'
+    fontWeight: 600
+  row-figure:
+    fontFamily: 'Sora, ui-sans-serif, system-ui, sans-serif'
+    fontSize: '22px'
+    fontWeight: 500
+    fontFeature: 'tnum 1'
+  list-figure:
+    fontFamily: 'Sora, ui-sans-serif, system-ui, sans-serif'
+    fontSize: '20px'
+    fontWeight: 500
+    fontFeature: 'tnum 1'
 rounded:
+  bar: '3px'
   sm: '4px'
   chip: '5px'
   tag: '6px'
+  check: '7px'
   md: '8px'
   thumb: '12px'
   lg: '14px'
@@ -121,8 +161,13 @@ components:
     width: '100%'
   chip-data:
     textColor: '{colors.ember-deep}'
+    rounded: '{rounded.tag}'
+    padding: '3px 8px'
+    typography: '{typography.mono-meta}'
+  chip-reason:
+    textColor: '{colors.ember-deep}'
     rounded: '{rounded.chip}'
-    padding: '3px 7px'
+    padding: '2px 6px'
     typography: '{typography.mono-meta}'
   tag-pr:
     textColor: '{colors.ember-stamp}'
@@ -156,10 +201,20 @@ _mirrored_ between them so each step keeps its role rather than its lightness.
 Density is the other half of the personality. This is a screen read at arm's
 length by someone with chalked hands, one thumb free, between sets, under
 whatever lighting the gym has. So the figures are enormous and tabular, touch
-targets are held to 48px, and the chrome gets out of the way: no
-tab bar, no spinner on the hot path, no celebration screen. Motion is a plate
-landing, not a page turning — four durations in the whole app, two easings,
-and nothing on the logging path over 200ms.
+targets are held to 48px, and the chrome gets out of the way: no spinner on the
+hot path, no celebration screen. Motion is a plate landing, not a page turning
+— four durations in the whole app, two easings, and nothing on the logging path
+over 200ms.
+
+**This paragraph used to end "no tab bar", and that is no longer true.** The
+five-tab bar was retired on 2026-08-13 and design v3.0 brought back a six-tab
+one (`Log · History · Progress · Body · Coach · Friends`), which Ameen
+confirmed on 2026-08-14. What survives from the retirement is the part that
+mattered: every screen still has a **door** — a card that is itself the way
+into the screen it summarises — so the bar is the fast path rather than the
+only path. `--tab-space` in `index.css` is the single place its footprint is
+named; three sticky clusters read it, and the last time that arithmetic lived
+in three components one of them was wrong for a release.
 
 **Key Characteristics:**
 
@@ -294,9 +349,46 @@ measured 2026-08-14 — and it is the most important fact in this section.
 | **Label**   | Hanken Grotesk 400 / 13px / 1.4       | 0    | Button text is `btn-base`'s own 500 / 1.2, not this.                |
 | **Kicker**  | Plex Mono 500 / 11px / 0.14em / upper | —    | A utility, not a size step. Section labels, field labels, `ON BAR`. |
 | **Micro**   | Hanken Grotesk 500 / 11px             | 0    | Written as `text-[11px]` instead — 58 times.                        |
+| **Nano**    | Plex Mono 500 / 9px / 1.1             | —    | v3. Tab-bar labels and the Coach footer disclaimer. See below.      |
+
+**The stamp step is new in v3 and it is the only size below micro.** The v3
+handoff draws the six-tab bar's labels at mono 9px and the Coach tab's
+`AI-GENERATED · NOT MEDICAL ADVICE · N REGENERATES LEFT THIS WEEK` footer at
+the same size, and both are acceptance items. It exists as a token rather than
+as `text-[9px]` sprinkled twice so that the floor is written down: **9px is for
+a stamped machine label the reader glances at, never for anything they read.**
+Nothing that carries a figure, a name or a sentence may use it — those are
+governed by the Figure Floor Rule below, which this does not weaken.
 
 **Five references, total.** The ramp is not drifting; it is very nearly unused,
 and the section below says what to do about that.
+
+### v3's hand-set sizes, and why they are written down here
+
+The v3 handoff (`design_handoff_v3_ai_coach`) is normative to the pixel — "every
+color, size, weight, spacing … is a requirement, not a suggestion" — and its
+five hero screens are hand-set against a 390px frame rather than against this
+ramp. Rather than let each one arrive as an undocumented literal, the sizes it
+mandates are listed once, here, so a reviewer can tell a specified value from a
+drifted one:
+
+| px  | Where the v3 mocks use it                                                                                                                                                                                                         |
+| --- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 26  | The Today brief's routine name on the flip ground.                                                                                                                                                                                |
+| 22  | Stat-tile figures; the set-row figure on the workout board.                                                                                                                                                                       |
+| 21  | The wordmark in the app header.                                                                                                                                                                                                   |
+| 20  | The e1RM figure in the Progress strength list; the Body weight figure.                                                                                                                                                            |
+| 17  | Mode-card titles; the Today brief's CTA; the next-exercise card title.                                                                                                                                                            |
+| 16  | The Start CTA's label.                                                                                                                                                                                                            |
+| 14  | Card body sentences — the week review, the plateau fix, the cross-signal.                                                                                                                                                         |
+| 12  | Quiet secondary text: check-in chips, mode-card descriptions, "or start empty".                                                                                                                                                   |
+| 10  | The `mono-micro` step: the Progress forecast line. Section KICKERS at 10 in the mock map to `kicker` (11px) per the handoff's own token table — this step is for the mono meta lines that carry no tracking and are not headings. |
+
+**This table is a record, not a licence.** A new size that is not in it and not
+on the ramp above is drift, and should be one of the two. The Figure Floor Rule
+below still governs every one of them: nothing carrying a number a lifter reads
+at a glance sits below `figure`, and the two entries here that carry figures —
+22 and 20 — are above it.
 
 **Sora does not reach the screen through this ramp.** The unlayered rule binds
 `--font-display` to `.text-display`/`.text-input`/`.text-figure`/`.text-title`,
