@@ -1,0 +1,381 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-08-14T15:20:00Z",
+  "title": "Design System: Wazn",
+  "extensions": {
+    "colorMeta": {
+      "ember": {
+        "role": "primary",
+        "displayName": "Ember",
+        "canonical": "#e8491d",
+        "note": "Mirrored between themes so each step keeps its role, not its lightness. This ramp is the paper (default) order, darkest to lightest; the dark theme reverses it.",
+        "tonalRamp": [
+          "#401407",
+          "#6b210c",
+          "#9a3012",
+          "#c33d17",
+          "#e8491d",
+          "#ee7a51",
+          "#f4a68c",
+          "#f9cfc0",
+          "#fdece5"
+        ]
+      },
+      "ember-deep": {
+        "role": "primary",
+        "displayName": "Ember Deep",
+        "canonical": "#9a3012",
+        "note": "accent-300. The small-text tier: clears 4.5:1 on every surface in both themes, where full-strength ember only reaches ~4.7:1 and is chrome-only."
+      },
+      "ember-ink": {
+        "role": "primary",
+        "displayName": "Ember Ink",
+        "canonical": "#1c0e08",
+        "note": "The near-black that sits on a filled ember surface."
+      },
+      "chalk-ground": {
+        "role": "neutral",
+        "displayName": "Chalk Ground",
+        "canonical": "#f7f3ec",
+        "note": "The default theme's page. Warm, not white.",
+        "tonalRamp": [
+          "#292724",
+          "#3f3d38",
+          "#595650",
+          "#75716a",
+          "#938f88",
+          "#b2aea6",
+          "#cfccc5",
+          "#e5e3de",
+          "#f4f3f0"
+        ]
+      },
+      "chalk-surface": {
+        "role": "neutral",
+        "displayName": "Chalk Surface",
+        "canonical": "#ffffff",
+        "note": "Cards and panels — the objects lying on the page."
+      },
+      "chalk-raised": {
+        "role": "neutral",
+        "displayName": "Chalk Raised",
+        "canonical": "#efe9dd",
+        "note": "Menus, header tint, pressed states."
+      },
+      "chalk-hairline": {
+        "role": "neutral",
+        "displayName": "Chalk Hairline",
+        "canonical": "#e6e0d4",
+        "note": "A drawn border, for the rare case an edge will not do."
+      },
+      "graphite": {
+        "role": "neutral",
+        "displayName": "Graphite",
+        "canonical": "#16130e",
+        "note": "Text on chalk. Warm near-black, never pure black."
+      },
+      "graphite-muted": {
+        "role": "neutral",
+        "displayName": "Graphite Muted",
+        "canonical": "#6b6559",
+        "note": "Meta, timestamps, secondary lines."
+      },
+      "iron-ground": {
+        "role": "neutral",
+        "displayName": "Iron Ground",
+        "canonical": "#0c0b0a",
+        "note": "The dark theme's page. Warm as unlit iron — readable under gym lighting without flashing white mid-set.",
+        "tonalRamp": [
+          "#0c0b0a",
+          "#161513",
+          "#1f1d1a",
+          "#2a2825",
+          "#292724",
+          "#3f3d38",
+          "#595650",
+          "#75716a",
+          "#8d8983"
+        ]
+      },
+      "iron-surface": {
+        "role": "neutral",
+        "displayName": "Iron Surface",
+        "canonical": "#161513"
+      },
+      "iron-raised": {
+        "role": "neutral",
+        "displayName": "Iron Raised",
+        "canonical": "#1f1d1a"
+      },
+      "iron-hairline": {
+        "role": "neutral",
+        "displayName": "Iron Hairline",
+        "canonical": "#2a2825"
+      },
+      "chalk-text": {
+        "role": "neutral",
+        "displayName": "Chalk Text",
+        "canonical": "#ecebe8",
+        "note": "The written trace on iron."
+      },
+      "chalk-muted": {
+        "role": "neutral",
+        "displayName": "Chalk Muted",
+        "canonical": "#8d8983"
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "The finish ceremony's total. One number, the whole screen."
+      },
+      "input": {
+        "displayName": "Input",
+        "purpose": "Weight and reps. The thing the thumb is aiming at."
+      },
+      "figure": {
+        "displayName": "Figure",
+        "purpose": "Every other number a lifter reads. The floor for any figure."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Exercise names, screen headings, card titles."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Prose, coach sentences, explanatory copy."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Button text and secondary controls."
+      },
+      "kicker": {
+        "displayName": "Kicker",
+        "purpose": "The stamped label under an object. Mono, tracked, uppercase — and it drops to sans in Arabic, which has no case and whose joins tracking would break."
+      },
+      "micro": {
+        "displayName": "Micro",
+        "purpose": "Set counts, inline units. The smallest legible tier."
+      }
+    },
+    "shadows": [
+      {
+        "name": "ring-hairline",
+        "value": "0 0 0 1px var(--color-line), inset 0 1px 0 rgba(255, 255, 255, 0.6)",
+        "purpose": "The default elevation. A hairline ring plus a 1px inset light along the top edge — a milled surface catching room light, not an object floating over the page."
+      },
+      {
+        "name": "shadow-panel",
+        "value": "0 0 0 1px var(--surface-line)",
+        "purpose": "The object you operate. Edge only, flush to the page."
+      },
+      {
+        "name": "shadow-card",
+        "value": "0 1px 2px var(--surface-line), 0 0 0 1px var(--surface-line)",
+        "purpose": "The object you read from. Lifted one millimetre."
+      },
+      {
+        "name": "shadow-cta",
+        "value": "0 10px 26px rgba(232, 73, 29, 0.35)",
+        "purpose": "The ember glow under the hero action. One per screen, or it is not a hero."
+      }
+    ],
+    "motion": [
+      {
+        "name": "motion-press",
+        "value": "80ms ease-out",
+        "purpose": "The press dim. Answers: did my finger land?"
+      },
+      {
+        "name": "motion-instant",
+        "value": "90ms ease-out",
+        "purpose": "A set row arriving. Answers: did my set save? Under the threshold where a person waits for it."
+      },
+      {
+        "name": "motion-transition",
+        "value": "160ms ease-out",
+        "purpose": "A layer sliding in. Answers: where did I come from?"
+      },
+      {
+        "name": "motion-celebration",
+        "value": "1140ms ease-out",
+        "purpose": "The record flash. Answers: did I beat it? Reachable only after the set is logged, never between one set and the next."
+      },
+      {
+        "name": "motion-linear",
+        "value": "linear",
+        "purpose": "Used exactly once — the rest timer's drain, which is a readout of elapsed time rather than a response to a tap."
+      }
+    ],
+    "breakpoints": [
+      { "name": "container", "value": "430px" },
+      { "name": "gutter", "value": "18px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Hero Button",
+      "kind": "button",
+      "refersTo": "button-hero",
+      "description": "Solid ember, one per screen, on the single action that screen exists for.",
+      "html": "<button class=\"ds-btn-hero\">Log set 3</button>",
+      "css": ".ds-btn-hero { display: inline-flex; align-items: center; justify-content: center; gap: 6px; width: 100%; height: 60px; border: 1px solid transparent; border-radius: 8px; background: var(--color-accent, #e8491d); color: var(--color-accent-ink, #1c0e08); font-family: 'Sora', ui-sans-serif, system-ui, sans-serif; font-size: 16px; font-weight: 700; line-height: 1.2; cursor: pointer; box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25); transition: opacity 80ms ease-out, transform 80ms ease-out; } .ds-btn-hero:active { opacity: 0.85; transform: translateY(1px); } .ds-btn-hero:focus-visible { outline: 2px solid var(--color-accent, #e8491d); outline-offset: 2px; }"
+    },
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Outlined in ember on a 10% tint. The default emphasis tier — a solid ember slab in a column of controls shouts over everything near it.",
+      "html": "<button class=\"ds-btn-primary\">Add exercise</button>",
+      "css": ".ds-btn-primary { display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: 48px; padding: 0 16px; border: 1.5px solid var(--color-accent, #e8491d); border-radius: 8px; background: color-mix(in srgb, var(--color-accent, #e8491d) 10%, transparent); color: var(--color-accent, #e8491d); font-family: 'Hanken Grotesk', ui-sans-serif, system-ui, sans-serif; font-size: 13px; font-weight: 500; line-height: 1.2; cursor: pointer; transition: opacity 80ms ease-out, transform 80ms ease-out; } .ds-btn-primary:active { opacity: 0.85; transform: translateY(1px); } .ds-btn-primary:focus-visible { outline: 2px solid var(--color-accent, #e8491d); outline-offset: 2px; }"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Divider-coloured border, normal text. Everything that is neither the hero nor an accent action.",
+      "html": "<button class=\"ds-btn-secondary\">Skip for now</button>",
+      "css": ".ds-btn-secondary { display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: 48px; padding: 0 16px; border: 1px solid var(--divider, rgba(22, 19, 14, 0.14)); border-radius: 8px; background: transparent; color: var(--color-text, #16130e); font-family: 'Hanken Grotesk', ui-sans-serif, system-ui, sans-serif; font-size: 13px; font-weight: 500; line-height: 1.2; cursor: pointer; transition: opacity 80ms ease-out, transform 80ms ease-out; } .ds-btn-secondary:active { opacity: 0.85; transform: translateY(1px); } .ds-btn-secondary:focus-visible { outline: 2px solid var(--color-accent, #e8491d); outline-offset: 2px; }"
+    },
+    {
+      "name": "Figure Field",
+      "kind": "input",
+      "refersTo": "input-figure",
+      "description": "The signature input. A panel holds a mono kicker, then the value on its own full-width line — the number IS the field. Steppers sit on a row below it, never beside it: inline steppers clipped 102.5 (83.1px of glyph in 62px of box).",
+      "html": "<div class=\"ds-field\"><span class=\"ds-field-kicker\">WEIGHT (KG)</span><input class=\"ds-field-value\" value=\"102.5\" inputmode=\"decimal\" aria-label=\"Weight in kilograms\" /><div class=\"ds-field-steppers\"><button class=\"ds-step\" aria-label=\"Decrease\">&minus;</button><button class=\"ds-step\" aria-label=\"Increase\">+</button></div></div>",
+      "css": ".ds-field { box-sizing: border-box; width: 190px; padding: 12px 14px; border-radius: 18px; background: var(--color-surface, #ffffff); box-shadow: 0 0 0 1px var(--surface-line, rgba(22, 19, 14, 0.06)); } .ds-field-kicker { display: block; margin-bottom: 6px; font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px; font-weight: 500; line-height: 1.2; letter-spacing: 0.14em; text-transform: uppercase; color: var(--color-muted, #6b6559); } .ds-field-value { display: block; width: 100%; height: 44px; border: 0; background: transparent; outline: none; text-align: center; font-family: 'Sora', ui-sans-serif, system-ui, sans-serif; font-size: 29px; font-weight: 700; letter-spacing: -0.02em; color: var(--color-text, #16130e); font-variant-numeric: tabular-nums; } .ds-field-steppers { display: flex; align-items: center; justify-content: space-between; margin-top: 6px; } .ds-step { display: inline-flex; align-items: center; justify-content: center; width: 48px; height: 48px; border: 1px solid transparent; border-radius: 8px; background: var(--color-ink, #f7f3ec); color: var(--color-text, #16130e); font-family: 'Hanken Grotesk', ui-sans-serif, system-ui, sans-serif; font-size: 22px; font-weight: 600; cursor: pointer; transition: opacity 80ms ease-out, transform 80ms ease-out; } .ds-step:active { opacity: 0.85; transform: translateY(1px); } .ds-step:focus-visible { outline: 2px solid var(--color-accent, #e8491d); outline-offset: 2px; }"
+    },
+    {
+      "name": "Set Row",
+      "kind": "custom",
+      "refersTo": null,
+      "description": "The row a whole session is made of. Arrives with a 90ms 3px rise — it settles onto the stack rather than sliding in, because the question it answers is 'did that save?'",
+      "html": "<ul class=\"ds-sets\"><li class=\"ds-set\"><svg class=\"ds-set-ring\" width=\"16\" height=\"16\" viewBox=\"0 0 16 16\" aria-hidden=\"true\"><circle cx=\"8\" cy=\"8\" r=\"6.25\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\"/><circle cx=\"8\" cy=\"8\" r=\"2\" fill=\"currentColor\"/></svg><span class=\"ds-set-n\">1</span><span class=\"ds-set-load\" dir=\"ltr\">100 &times; 8</span><span class=\"ds-set-e1rm\">127 kg</span></li><li class=\"ds-set ds-set--pr\"><svg class=\"ds-set-ring\" width=\"16\" height=\"16\" viewBox=\"0 0 16 16\" aria-hidden=\"true\"><circle cx=\"8\" cy=\"8\" r=\"6.25\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\"/><circle cx=\"8\" cy=\"8\" r=\"2\" fill=\"currentColor\"/></svg><span class=\"ds-set-n\">2</span><span class=\"ds-set-load\" dir=\"ltr\">102.5 &times; 8</span><span class=\"ds-pr\">PR</span><span class=\"ds-set-e1rm\">130 kg</span></li></ul>",
+      "css": ".ds-sets { display: flex; flex-direction: column; gap: 4px; margin: 0; padding: 0; list-style: none; } .ds-set { display: flex; align-items: center; gap: 10px; min-height: 28px; padding: 0 8px; border-radius: 8px; font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 14px; color: var(--color-text, #16130e); font-variant-numeric: tabular-nums; animation: ds-set-commit 90ms ease-out both; } .ds-set--pr { background-color: rgba(232, 73, 29, 0.07); } .ds-set-ring { flex-shrink: 0; color: var(--color-accent, #e8491d); } .ds-set-n { width: 16px; flex-shrink: 0; color: var(--color-muted, #6b6559); } .ds-set-load { flex: 1 1 0; min-width: 0; } .ds-set-e1rm { flex-shrink: 0; font-size: 11px; color: var(--color-muted, #6b6559); } @keyframes ds-set-commit { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: translateY(0); } } @media (prefers-reduced-motion: reduce) { .ds-set { animation-duration: 0.01ms; } }"
+    },
+    {
+      "name": "PR Badge",
+      "kind": "chip",
+      "refersTo": "tag-pr",
+      "description": "The record stamp. Ember-800 fill with the knurl over it — the only place the texture appears outside a rule, because a record is the one thing worth marking as machined.",
+      "html": "<span class=\"ds-pr\">PR</span>",
+      "css": ".ds-pr { --ds-knurl: rgba(232, 73, 29, 0.28); display: inline-flex; align-items: center; justify-content: center; height: 22px; padding-inline: 6px; border-radius: 5px; background-color: var(--color-accent-800, #6b210c); background-image: repeating-linear-gradient(45deg, var(--ds-knurl) 0 1px, transparent 1px 5px), repeating-linear-gradient(-45deg, var(--ds-knurl) 0 1px, transparent 1px 5px); color: var(--color-accent-100, #401407); font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px; font-weight: 600; letter-spacing: 0.08em; }"
+    },
+    {
+      "name": "Data Chip",
+      "kind": "chip",
+      "refersTo": "chip-data",
+      "description": "Carries the exact figures a coach's note was drawn from — which is also the cheapest honesty check the feature has: a chip that disagrees with the charts is a claim the reader can catch without trusting anything.",
+      "html": "<span class=\"ds-chip\">4 sessions &middot; 12,480 kg</span>",
+      "css": ".ds-chip { display: inline-flex; align-items: center; padding: 3px 7px; border-radius: 5px; background-color: rgba(232, 73, 29, 0.07); color: var(--color-accent-300, #9a3012); font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px; line-height: 1.2; font-variant-numeric: tabular-nums; }"
+    },
+    {
+      "name": "Card",
+      "kind": "card",
+      "refersTo": "surface-card",
+      "description": "The object you read from. 20px, lifted a millimetre off the ground by a 1px offset shadow.",
+      "html": "<section class=\"ds-card\"><span class=\"ds-card-kicker\">THIS WEEK</span><p class=\"ds-card-figure\">18,240 <span class=\"ds-card-unit\">kg</span></p><p class=\"ds-card-body\">Four sessions. Your heaviest week since March.</p></section>",
+      "css": ".ds-card { box-sizing: border-box; max-width: 320px; padding: 14px 18px; border-radius: 20px; background: var(--color-surface, #ffffff); box-shadow: 0 1px 2px var(--surface-line, rgba(22, 19, 14, 0.06)), 0 0 0 1px var(--surface-line, rgba(22, 19, 14, 0.06)); } .ds-card-kicker { display: block; font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px; font-weight: 500; letter-spacing: 0.14em; text-transform: uppercase; color: var(--color-muted, #6b6559); } .ds-card-figure { margin: 6px 0 0; font-family: 'Sora', ui-sans-serif, system-ui, sans-serif; font-size: 24px; font-weight: 500; line-height: 1.15; color: var(--color-text, #16130e); font-variant-numeric: tabular-nums; } .ds-card-unit { font-size: 15px; color: var(--color-muted, #6b6559); } .ds-card-body { margin: 4px 0 0; font-family: 'Hanken Grotesk', ui-sans-serif, system-ui, sans-serif; font-size: 15px; line-height: 1.45; color: var(--color-muted, #6b6559); }"
+    },
+    {
+      "name": "Panel",
+      "kind": "card",
+      "refersTo": "surface-panel",
+      "description": "The object you operate. 18px, edge only, flush to the page — the counterpart to Card, and the distinction is functional, not decorative.",
+      "html": "<button class=\"ds-panel\"><span class=\"ds-panel-text\"><span class=\"ds-panel-kicker\">ON BAR</span><span class=\"ds-panel-value\">20 + 20 + 10 per side</span></span><svg class=\"ds-panel-chev\" width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><polyline points=\"6 9 12 15 18 9\"/></svg></button>",
+      "css": ".ds-panel { box-sizing: border-box; display: flex; align-items: center; gap: 16px; width: 320px; padding: 12px 16px; border: 0; border-radius: 18px; background: var(--color-surface, #ffffff); box-shadow: 0 0 0 1px var(--surface-line, rgba(22, 19, 14, 0.06)); text-align: start; cursor: pointer; transition: opacity 80ms ease-out, transform 80ms ease-out; } .ds-panel:active { opacity: 0.85; transform: translateY(1px); } .ds-panel:focus-visible { outline: 2px solid var(--color-accent, #e8491d); outline-offset: 2px; } .ds-panel-text { flex: 1 1 0; min-width: 0; } .ds-panel-kicker { display: block; font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px; font-weight: 500; letter-spacing: 0.14em; text-transform: uppercase; color: var(--color-muted, #6b6559); } .ds-panel-value { display: block; margin-top: 3px; font-family: 'Sora', ui-sans-serif, system-ui, sans-serif; font-size: 15px; font-weight: 700; letter-spacing: -0.01em; color: var(--color-text, #16130e); font-variant-numeric: tabular-nums; } .ds-panel-chev { flex-shrink: 0; color: var(--color-muted, #6b6559); }"
+    },
+    {
+      "name": "Knurl Rule",
+      "kind": "custom",
+      "refersTo": null,
+      "description": "The one texture in the system: cross-hatched ember at ±45°, 1px on a 5px period — the grip cut into a bar. Confined to thin bands, because knurling exists where a hand grips.",
+      "html": "<div class=\"ds-knurl-rule\"></div>",
+      "css": ".ds-knurl-rule { --ds-knurl-ink: rgba(232, 73, 29, 0.7); width: 240px; height: 4px; border-radius: 999px; background-image: repeating-linear-gradient(45deg, var(--ds-knurl-ink) 0 1px, transparent 1px 5px), repeating-linear-gradient(-45deg, var(--ds-knurl-ink) 0 1px, transparent 1px 5px); }"
+    }
+  ],
+  "narrative": {
+    "northStar": "Loaded Ink",
+    "overview": "Loaded Ink is the conviction that a word can have mass — not describe mass, have it. The mark, the numerals and the surfaces are all treated the way a lifter treats iron: as objects with a centre of gravity and a load path. Everything either bears on the horizontal axis or hangs from it. Nothing floats, and nothing is decorative.\n\nTwo materials, and only two: chalk and iron. Chalk is the human trace — the off-white ground of the default paper theme, the written word, the hand. Iron is the machine — the warm near-black of the dark theme, and the single ember accent that is the material of the bar itself. The system ships both grounds from one token set: the same semantic names resolve to paper by default and to iron under [data-theme='dark'], and the ember ramp is mirrored between them so each step keeps its role rather than its lightness.\n\nDensity is the other half of the personality. This is a screen read at arm's length by someone with chalked hands, one thumb free, between sets, under whatever lighting the gym has. So the figures are enormous and tabular, the touch targets never go under 48px, and the chrome gets out of the way: no tab bar, no spinner on the hot path, no celebration screen. Motion is a plate landing, not a page turning — four durations in the whole app, two easings, and nothing on the logging path over 200ms.",
+    "keyCharacteristics": [
+      "Two grounds from one token set — paper by default, iron on request, never a third",
+      "One accent, ember #e8491d, and it is the only colour in the app",
+      "Numbers are the interface: Sora, tabular, never below 24px",
+      "Depth is an edge and a fill, not a drop shadow",
+      "One texture — the knurl — confined to thin bands and the PR badge",
+      "Logical properties only, because the Arabic flip is a planned flip, not a rewrite"
+    ],
+    "rules": [
+      {
+        "name": "The Two Materials Rule",
+        "body": "Chalk and iron, plus ember. A third hue is not a design decision to be weighed; it is a defect. Charts, states, categories and muscle groups all express difference through the ember ramp or the neutral ramp, never through a second colour.",
+        "section": "colors"
+      },
+      {
+        "name": "The Mirrored Ramp Rule",
+        "body": "accent-100 through accent-900 swap ends between the two themes so that each step keeps its role: 300 is always \"small accent text readable on this ground\", 800–900 are always \"tinted fill\". Never reach for a step by its lightness; reach for it by its job.",
+        "section": "colors"
+      },
+      {
+        "name": "The 500-Is-Chrome Rule",
+        "body": "accent-500 on the ground is large text and chrome only. Small accent text uses accent-300. A 500-on-ground body-copy use is a contrast defect, not a taste question.",
+        "section": "colors"
+      },
+      {
+        "name": "The Runtime-Token Rule",
+        "body": "Tailwind v4 drops any @theme token nothing statically references, so a class name assembled at runtime compiles to nothing at all — no error, no warning, an empty element on screen. Accent steps used dynamically are declared as static classes. This has already caused two shipped defects.",
+        "section": "colors"
+      },
+      {
+        "name": "The Figure Floor Rule",
+        "body": "No number a lifter reads goes below the figure tier (24px). The scale binds size, weight and leading together in one token so a size cannot be used at the wrong weight by accident.",
+        "section": "typography"
+      },
+      {
+        "name": "The Arabic Opt-Out Rule",
+        "body": "IBM Plex Mono has no Arabic, and the platform monospace fallback draws Arabic as disconnected letters with gaps between them. Every mono class therefore has an RTL counterpart that drops to the sans stack and resets tracking and casing. Any new mono class that can hold a translated word needs the same escape hatch or it ships broken in Arabic.",
+        "section": "typography"
+      },
+      {
+        "name": "The Unlayered Voice Rule",
+        "body": "The Sora assignment rides on the size utilities themselves via an unlayered rule after the utilities layer, so no component names the family. Author CSS outside a layer outranks utilities — which is also why the native-control reset lists longhands and never `font: inherit` (the shorthand resets weight, and once pinned every button in the app to 400).",
+        "section": "typography"
+      },
+      {
+        "name": "The Named-Token Rule",
+        "body": "--surface-line is a real token in both themes because it was once written as var(--line), which the stylesheet never defined — and an undefined custom property invalidates the entire box-shadow declaration. Every panel in that release drew no edge at all, silently. A shadow composed from an undefined variable does not degrade; it vanishes.",
+        "section": "elevation"
+      },
+      {
+        "name": "The One Ring Rule",
+        "body": "Rings are never stacked. A surface carries exactly one of the four named shadows.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Reduced-Motion Rule",
+        "body": "prefers-reduced-motion collapses the four duration tokens themselves and applies a global blanket, so an inline style that reads a token is stilled too. Every animation is both-filled, so collapsing the duration keeps the end state: a record row stays tinted, a committed set stays put.",
+        "section": "components"
+      }
+    ],
+    "dos": [
+      "Do use logical properties exclusively — ms-, ps-, start-, text-start. ESLint fails the build on ml-, pl-, left-, text-left. The Arabic locale is a planned flip, not a rewrite.",
+      "Do give every accent step used dynamically a static class. A class name assembled at runtime compiles to no CSS and fails no check.",
+      "Do reach for accent-300 for any accent text under the figure tier, and accent-500 only for chrome and large text.",
+      "Do pair every mono utility with an [dir='rtl'] sans fallback if it can ever hold a translated word.",
+      "Do keep exactly one btn-hero per screen. Its authority comes entirely from being the only filled thing on the ground.",
+      "Do render numbers with .tnum, in Sora, at the figure tier or above.",
+      "Do state elevation with one of the four named shadow tokens."
+    ],
+    "donts": [
+      "Don't introduce a second hue. Not for a chart series, not for a success state, not for a muscle group. The ember ramp and the neutral ramp carry every distinction this app needs to draw.",
+      "Don't compose a box-shadow from an undefined custom property. It does not degrade to a weaker shadow — the whole declaration is invalid and the edge vanishes silently.",
+      "Don't spread the knurl across a surface, or add it to something that already carries a shadow. One texture per surface, thin bands and the PR badge only.",
+      "Don't put a gradient anywhere except the header band, or a drop shadow anywhere except the four named tokens.",
+      "Don't use emoji, decorative illustration, or a celebration screen. A PR gets an ember flash on its own row.",
+      "Don't let anything on the logging path exceed 200ms, and don't put a spinner, modal or paywall on it at all.",
+      "Don't take a touch target below 48px.",
+      "Don't write `font: inherit` on a native control; it silently resets weight and outranks the utility that asked for one.",
+      "Don't add a screen without a door to it on the home screen."
+    ]
+  }
+}
