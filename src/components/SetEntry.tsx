@@ -581,17 +581,20 @@ export function SetEntry({
       <div
         className="sticky z-10 -mx-[18px] flex flex-col gap-2 bg-ink px-[18px] pt-2"
         style={{
-          bottom: 'max(env(safe-area-inset-bottom, 0px), 10px)',
+          // Flush to the bottom edge, with the inset carried as the cluster's
+          // own padding. Anchored at the inset instead, a 10px strip of board
+          // scrolled underneath it — the same seam the home Start row had.
+          bottom: 0,
+          paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 10px)',
           // A pinned element stops being pinned when the space beneath it
           // runs out, and left alone this cluster rode 66px up its own pinned
           // line over the last stretch of the scroll.
           //
           // The correction is `bottom` minus the trailing space, and the
-          // trailing space is this section's pb-4, the workout wrapper's
-          // py-3, and main's padding. Main's padding is now exactly `bottom`,
-          // so it cancels and what is left is a constant 28px — no safe-area
-          // term, because both sides of the subtraction carried the same one.
-          marginBottom: '-28px',
+          // trailing space is this section's pb-4, the workout wrapper's py-3
+          // and main's padding. With `bottom` at 0 the safe-area term no
+          // longer cancels, so it is subtracted explicitly.
+          marginBottom: 'calc(-28px - max(env(safe-area-inset-bottom, 0px), 10px))',
           // The same hairline the tab bar and the overview's rest bar carry,
           // for the same reason: it marks where content stops and chrome
           // starts, so a chip passing behind reads as scrolling under a bar

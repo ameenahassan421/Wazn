@@ -5651,3 +5651,15 @@ Left open: two pinned clusters still sit at the safe-area inset rather than
 flush, so a thin strip of content scrolls below them. The home row's recipe
 (`bottom: 0` plus internal padding) is the fix; it needs the negative-margin
 arithmetic redone per cluster and a screenshot each, and it is cosmetic.
+
+## 2026-08-14: all three pinned clusters flush
+
+The last of the tab-bar rebasing. The home Start row was already anchored at
+`bottom: 0` with the safe-area inset carried as its own padding; the workout's
+commit cluster and the rest bar were left at the inset, so a thin strip of
+board scrolled underneath each of them — the same seam, twice.
+
+All three now use one recipe: `bottom: 0`, the inset as `paddingBottom`, and
+`marginBottom` equal to `bottom` minus the trailing space. With `bottom` at 0
+the safe-area term no longer cancels against main's padding, so it is
+subtracted explicitly rather than folded into a constant.

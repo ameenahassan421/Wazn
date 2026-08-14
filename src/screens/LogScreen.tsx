@@ -2819,20 +2819,19 @@ export function LogScreen({
               // objects in one place rather than one object with a seam. With
               // the canvas absent — which is most of the time — a single child
               // makes the gap a no-op and the bar is exactly what it was.
-              className="sticky z-10 -mx-[18px] flex flex-col gap-1.5 bg-ink px-[18px] pt-2 pb-1"
+              className="sticky z-10 -mx-[18px] flex flex-col gap-1.5 bg-ink px-[18px] pt-2"
               style={{
-                // At the safe-area inset, like the other pinned clusters.
-                // This one kept its `+ 64px` when the tab bar was retired and
-                // the other two were rebased — so the rest bar floated a
-                // tab-bar's height above the bottom of the screen with the
-                // board showing through underneath it.
-                bottom: 'max(env(safe-area-inset-bottom, 0px), 10px)',
+                // Flush, with the inset as its own padding — same recipe as
+                // the other two clusters. This one kept its `+ 64px` when the
+                // tab bar was retired, so it floated a tab-bar's height above
+                // the bottom with the board showing through underneath.
+                bottom: 0,
+                paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 10px)',
                 // Trailing space below this bar is the overview wrapper's
-                // py-3 plus main's padding; main's padding is now exactly
-                // `bottom` and cancels, leaving a constant 12px. Without it
-                // the bar rides up its own pinned line over the last stretch
-                // of the scroll.
-                marginBottom: '-12px',
+                // py-3 plus main's padding. Without this the bar rides up its
+                // own pinned line over the last stretch of the scroll.
+                marginBottom:
+                  'calc(-12px - max(env(safe-area-inset-bottom, 0px), 10px))',
                 // A hairline where content stops and chrome starts, so a
                 // control passing behind reads as scrolling under a bar
                 // rather than as being cut in half.
