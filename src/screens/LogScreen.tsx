@@ -217,12 +217,18 @@ export function LogScreen({
   onOpenHistory: () => void
   onOpenProgress: () => void
   /**
-   * Which view to open on. `'picker'` is how the empty-history screen's
-   * "Start a workout" actually starts one: this screen unmounts when you
-   * leave it, so the intent rides in as a prop and is read once by the
-   * `view` initialiser. A prop rather than an effect — an effect that called
-   * `setView` would be the synchronous-setState-in-effect the lint rule
-   * forbids, and a ref would be re-read by StrictMode's double invoke.
+   * What to do on arrival.
+   *
+   * `'import'` is a view and is seeded straight into `view`. `'picker'` is
+   * NOT — it is an action. Seeding `view = 'picker'` did nothing at all: the
+   * picker only renders inside the open-workout branch, and the `if (!workout)`
+   * return above it fires first, so the empty-history screen's "Start a
+   * workout" landed the reader back on home. It also armed the back layer for
+   * a view that was never on screen, costing one phantom history entry.
+   *
+   * A workout has to exist for the picker to have anything to add to, and
+   * creating one enqueues a write — so it runs on arrival rather than in a
+   * state initialiser.
    */
   initialView?: 'overview' | 'picker' | 'import'
 }) {
@@ -395,7 +401,30 @@ export function LogScreen({
   const [weekRows, setWeekRows] = useState<SessionVolumeRow[]>([])
   const [recordRows, setRecordRows] = useState<RecordSetRow[]>([])
 
-  const [view, setView] = useState<View>(initialView)
+  const [view, setView] = useState<View>(
+    initialView === 'import' ? 'import' : 'overview',
+  )
+  const arrivalDone = useRef(false)
+
+  /*
+   * "Start a workout", arriving from the empty History or Progress screen.
+   *
+   * After the load, because `startWorkout` creates the workout and enqueues
+   * its insert — doing that before the load has read the device would race
+   * the checkpoint restore for the same screen.
+   */
+  useEffect(() => {
+    if (loading || initialView !== 'picker' || arrivalDone.current) return
+    arrivalDone.current = true
+    startWorkout()
+    // `startWorkout` is not a dependency: it is redefined every render and
+    // wrapping it — and `openWorkout`, and everything those two reach — in
+    // useCallback would be a large change to silence a warning about a call
+    // that runs exactly once, guarded by the ref above. Narrowly disabled
+    // rather than left as a standing warning, so a real omission here would
+    // still be visible in review.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading, initialView])
 
   // Once per mount, and only after the load has settled: the code is consumed
   // on read, so taking it before we know which screen is about to render

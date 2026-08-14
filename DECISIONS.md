@@ -5563,3 +5563,41 @@ header shows the mark, and ExerciseDetail's chevron is the only way back.
 
 ExerciseDetail keeps rendering in normal flow, so the window still scrolls it.
 That is the thing the layer version traded away.
+
+## 2026-08-14: the regression pass caught two of my own fixes being wrong
+
+A four-lens review with independent refuters over everything changed since the
+dead-end audit, looking for defects the FIXES introduced. Two survived, and
+both were mine.
+
+**`progressSubView` stranded the screen it was guarding.** ProgressScreen
+reported the sub-view down from `closeDetail`, which covers the chevron and the
+back gesture — and not the header avatar, which sits on top of the detail page
+because the Header is sticky and ExerciseDetail renders under it. Tapping
+through to Settings unmounted ProgressScreen with `detail` still set and left
+the flag true, so Progress came back with no chevron and no title. The comment
+I wrote claiming a stale `true` "cannot strand another screen" was true and
+beside the point: it stranded Progress. It is now stood down on unmount, through
+a ref so the cleanup cannot fire while the detail is still open.
+
+**`initialView: 'picker'` never opened the picker.** The picker renders only
+inside the open-workout branch, and `if (!workout) return <idle home>` fires
+above it — so seeding `view = 'picker'` did nothing and the empty screens'
+"Start a workout" landed the reader back on home. That is the exact dead end
+the prop was added to close, shipped with a commit message saying it was
+closed. It also armed the back layer for a view that was never on screen,
+costing a phantom history entry.
+
+`'picker'` is an action, not a view: a workout has to exist for the picker to
+add to, and creating one enqueues a write, so it runs on arrival rather than in
+a state initialiser. `'import'` really is a view and still seeds directly.
+
+Two things worth keeping from this:
+
+- The claim was in a commit message and in a comment, and neither made it true.
+  What made it visible was an agent rendering the component and diffing the
+  output against `initialView="overview"` — byte-identical.
+- Writing the test afterwards surfaced a second thing: the LogScreen mock
+  modelled reads only, so `drain()` called `.insert` on undefined and threw
+  inside a passive effect. An unhandled error that did not fail the run, and so
+  said nothing, for as long as the mock has existed.

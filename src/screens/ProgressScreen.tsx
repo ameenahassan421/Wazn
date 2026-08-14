@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import { describeError, supabase } from '../lib/supabase'
 import { useLocale } from '../lib/locale-context'
@@ -127,6 +127,26 @@ export function ProgressScreen({
     setDetail(exercise)
     onSubView(true)
   }
+  /*
+   * And stand it down on the way out, however this screen leaves.
+   *
+   * `closeDetail` covers the chevron and the back gesture; the header avatar
+   * covers neither. It sits on top of the detail page — the Header is sticky
+   * and ExerciseDetail renders under it — so tapping through to Settings
+   * unmounted this screen with `detail` still set and left the flag true.
+   * Progress then came back with no chevron and no title, which is the exact
+   * trap the flag exists to avoid. The comment in App claiming a stale `true`
+   * could not strand another screen was right; it stranded THIS one.
+   */
+  const subViewRef = useRef(onSubView)
+  useEffect(() => {
+    subViewRef.current = onSubView
+  }, [onSubView])
+  // Through a ref, so the cleanup runs on unmount only. Depending on
+  // `onSubView` directly would re-run the effect — and fire its cleanup —
+  // whenever a caller passed a fresh arrow, standing the flag down while the
+  // detail page was still open.
+  useEffect(() => () => subViewRef.current(false), [])
   const closeDetail = () => {
     setDetail(null)
     onSubView(false)
