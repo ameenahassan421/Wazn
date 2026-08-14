@@ -56,7 +56,7 @@ beforeEach(() => {
 
 describe('ProgressScreen locale strings', () => {
   it('renders the English empty-state message', async () => {
-    render(<ProgressScreen onOpenCoach={() => {}} onStart={() => {}} />, {
+    render(<ProgressScreen onOpenCoach={() => {}} onStart={() => {}} onSubView={() => {}} />, {
       wrapper: Wrapper,
     })
     await waitFor(() => {
@@ -66,7 +66,7 @@ describe('ProgressScreen locale strings', () => {
 
   it('renders the Arabic empty-state message when locale is ar', async () => {
     localStorage.setItem('workout.locale', 'ar')
-    render(<ProgressScreen onOpenCoach={() => {}} onStart={() => {}} />, {
+    render(<ProgressScreen onOpenCoach={() => {}} onStart={() => {}} onSubView={() => {}} />, {
       wrapper: Wrapper,
     })
     await waitFor(() => {

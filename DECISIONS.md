@@ -5539,3 +5539,27 @@ act on a screen nobody visits by accident, rather than a button beside Start.
 Mechanically this is `initialView` again — the same prop the empty-history
 screen's "Start a workout" uses — widened to accept `'import'`. The importer is
 a view of the Log screen, so routing to it is navigation, not a second mount.
+
+## 2026-08-14: ExerciseDetail's chevron, done the other way
+
+The layer approach was reverted a session earlier (see above) because a
+`fixed inset-0` sub-page scrolls in its own container rather than with the
+window. This is the fix that entry said was correct: let App know a screen has
+a sub-view, and have App stand its own chevron down.
+
+ProgressScreen reports through `onSubView`, and both transitions go through a
+single `openDetail` / `closeDetail` pair — because the failure mode of getting
+this wrong is a screen with NO chevron, which is a trap, and worse than the
+duplicate it replaces.
+
+The stale-flag risk is closed by reading rather than by writing: App checks
+`tab === 'progress' && progressSubView`, so a `true` left behind by an unmount
+is ignored everywhere else and cannot strand another screen. That is why the
+tab is in the condition at all.
+
+The header title stands down with the chevron — a screen showing a sub-view
+carries its own title, the same reason Settings has no header title. So the
+header shows the mark, and ExerciseDetail's chevron is the only way back.
+
+ExerciseDetail keeps rendering in normal flow, so the window still scrolls it.
+That is the thing the layer version traded away.

@@ -83,6 +83,16 @@ export default function App() {
    * That button used to be the only place in the app whose label promised
    * something its press did not do.
    */
+  /**
+   * True while Progress has a lift's detail page covering it.
+   *
+   * Only ever read while `tab === 'progress'`, so a stale `true` left behind
+   * by an unmount cannot strand another screen without a back chevron. That
+   * is the whole reason it is checked against the tab rather than trusted on
+   * its own — a screen with no way out is worse than the duplicate chevron
+   * this removes.
+   */
+  const [progressSubView, setProgressSubView] = useState(false)
   const [logView, setLogView] = useState<'overview' | 'picker' | 'import'>('overview')
   const openLog = (view: 'overview' | 'picker' | 'import' = 'overview') => {
     setLogView(view)
@@ -166,16 +176,20 @@ export default function App() {
   // The Log tab carries the mark; the others carry their name.
   // Settings draws its own title beside its own back chevron, so the header
   // stays on the mark there rather than saying the same word twice.
+  // A screen showing a sub-view carries its own title, so the header stands
+  // down and shows the mark — the same reason Settings has no header title.
   const titleKey =
-    tab === 'history'
-      ? 'nav.history'
-      : tab === 'progress'
-        ? 'nav.progress'
-        : tab === 'coach'
-          ? 'nav.coach'
-          : tab === 'friends'
-            ? 'nav.friends'
-            : null
+    tab === 'progress' && progressSubView
+      ? null
+      : tab === 'history'
+        ? 'nav.history'
+        : tab === 'progress'
+          ? 'nav.progress'
+          : tab === 'coach'
+            ? 'nav.coach'
+            : tab === 'friends'
+              ? 'nav.friends'
+              : null
 
   return (
     // Two boundaries. The inner one is keyed to the tab, so a crashed screen
@@ -190,7 +204,11 @@ export default function App() {
             <Header
               titleKey={titleKey}
               name={name}
-              onBack={tab === 'log' ? undefined : () => openLog()}
+              onBack={
+                tab === 'log' || (tab === 'progress' && progressSubView)
+                  ? undefined
+                  : () => openLog()
+              }
               onOpenSettings={() => setTab('settings')}
             />
             {/* The bottom padding matches the sticky clusters' `bottom` value
@@ -221,6 +239,7 @@ export default function App() {
                     <ProgressScreen
                       onOpenCoach={() => setTab('coach')}
                       onStart={() => openLog('picker')}
+                      onSubView={setProgressSubView}
                     />
                   </Suspense>
                 )}

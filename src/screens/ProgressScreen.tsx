@@ -90,10 +90,13 @@ const FREQUENCY_WEEKS = 13
 export function ProgressScreen({
   onOpenCoach,
   onStart,
+  onSubView,
 }: {
   onOpenCoach: () => void
   /** The way out of the empty state: straight into the exercise picker. */
   onStart: () => void
+  /** True while a lift's detail page is covering this screen. */
+  onSubView: (open: boolean) => void
 }) {
   const { unit } = useUnit()
   const { t } = useLocale()
@@ -104,7 +107,31 @@ export function ProgressScreen({
   const [streak, setStreak] = useState<number>(0)
   const [exercises, setExercises] = useState<Exercise[]>([])
   const [detail, setDetail] = useState<Exercise | null>(null)
-  useBackLayer(detail !== null, () => setDetail(null))
+
+  /**
+   * Opening a lift is navigation, and App has to know.
+   *
+   * ExerciseDetail replaces this screen's content but renders UNDER the app
+   * Header, which draws a back chevron on every screen that is not home. So
+   * the reader got two chevrons, stacked, going different places: the
+   * header's to home, this one back to the lift list. Reporting the sub-view
+   * lets App stand its own chevron down and leave the detail owning the way
+   * back.
+   *
+   * Both transitions go through one pair, because the failure mode of getting
+   * this wrong is a screen with NO chevron — a trap, which is worse than the
+   * duplicate it replaces. App also ignores the flag unless it is actually on
+   * Progress, so a stale `true` cannot strand any other screen.
+   */
+  const openDetail = (exercise: Exercise) => {
+    setDetail(exercise)
+    onSubView(true)
+  }
+  const closeDetail = () => {
+    setDetail(null)
+    onSubView(false)
+  }
+  useBackLayer(detail !== null, closeDetail)
 
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -243,7 +270,7 @@ export function ProgressScreen({
     return (
       <ExerciseDetail
         exercise={detail}
-        onBack={() => setDetail(null)}
+        onBack={closeDetail}
         // A rename has to reach the catalogue this screen is holding, or the
         // strength list keeps the old name until the tab is reloaded and the
         // user is left wondering whether the save took.
@@ -271,7 +298,7 @@ export function ProgressScreen({
   // list uses, so a record is a way in rather than a dead end.
   const openRecord = (exerciseId: string) => {
     const exercise = byId.get(exerciseId)
-    if (exercise) setDetail(exercise)
+    if (exercise) openDetail(exercise)
   }
 
   return (
@@ -331,7 +358,7 @@ export function ProgressScreen({
           onRange={setStrengthRange}
           onOpen={(id) => {
             const found = exercises.find((e) => e.id === id)
-            if (found) setDetail(found)
+            if (found) openDetail(found)
           }}
         />
       )}
