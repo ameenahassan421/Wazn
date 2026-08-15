@@ -118,6 +118,24 @@ export function breakerState(): { open: boolean; consecutiveFailures: number } {
  * the free model cost nothing, and on the paid fallback a routine is a fraction
  * of a cent. Truncating a response you have already paid for is the expensive
  * outcome, not the large ceiling.
+ *
+ * ── AND A THIRD TIME, 2026-08-15 ────────────────────────────────────────────
+ * Both times above, the cap was sized against the ANSWER. It is not an answer
+ * budget: on a reasoning model it is shared between thinking and answering, and
+ * the thinking goes first. `nvidia/nemotron-3-super-120b-a12b:free` spent 3627
+ * to 4485 completion tokens on a routine whose JSON is a few hundred — the rest
+ * was reasoning, inside the same ceiling.
+ *
+ * Which is why the ledger for that day reads exactly backwards: generate-routine
+ * at 6000 succeeded three times, coach-notes at 1600 and coach-brief at 400
+ * failed thirteen times between them, all on the same slug, all interleaved
+ * within four minutes. The surface with the largest output was the only one with
+ * room to think. The other two truncated inside the reasoning block and returned
+ * a fragment, which every parser reads as "unreadable".
+ *
+ * So: `finish_reason === 'length'` is now caught HERE rather than in one of the
+ * three callers, it fails that attempt rather than returning a fragment, and the
+ * caps below leave room for a model that thinks before it answers.
  */
 const DEFAULT_MAX_TOKENS = 2400
 const TIMEOUT_MS = 45_000
@@ -312,6 +330,8 @@ async function converse({
 
   let lastStatus = 502
   let lastBody = ''
+  /** Set when the reason is more specific than the HTTP status. */
+  let lastCode: string | null = null
 
   for (const attempt of attempts) {
     let response: Response
@@ -351,12 +371,28 @@ async function converse({
       const message = payload.choices?.[0]?.message
       const rawCalls = message?.tool_calls ?? []
       const content = message?.content
+      const finishReason = payload.choices?.[0]?.finish_reason
 
       // A turn that asks for tools is a valid turn with no prose in it, so
       // "no content" is only a failure when nothing was requested either.
       if (!content && rawCalls.length === 0) {
         lastStatus = 502
         lastBody = 'the model returned no content'
+        lastCode = 'no_content'
+        continue
+      }
+
+      // A response cut off at the ceiling is not a response. Every caller here
+      // asks for a JSON object, and half an object parses as nothing — which is
+      // how "the review came back unreadable" was the symptom of a token cap
+      // three separate times. Rejecting it at the source means one attempt's
+      // truncation falls through to the paid model (a different provider, which
+      // may not spend the budget thinking) instead of being handed upward as a
+      // fragment, and means the ledger records `truncated` rather than `parse`.
+      if (finishReason === 'length') {
+        lastStatus = 502
+        lastBody = `the model ran out of room at max_tokens=${maxTokens}`
+        lastCode = 'truncated'
         continue
       }
 
@@ -365,7 +401,7 @@ async function converse({
         content: content ?? '',
         model: attempt.model,
         usedFree: attempt.free,
-        finishReason: payload.choices?.[0]?.finish_reason,
+        finishReason,
         tokensIn: payload.usage?.prompt_tokens,
         tokensOut: payload.usage?.completion_tokens,
         toolCalls: rawCalls.map((call) => ({
@@ -397,11 +433,12 @@ async function converse({
   throw new ModelError(
     `the model provider refused the request (${lastStatus}): ${lastBody.slice(0, 200)}`,
     lastStatus === 429 ? 429 : 502,
-    lastStatus === 429
-      ? 'provider_429'
-      : lastStatus === 504
-        ? 'timeout'
-        : `provider_${lastStatus}`,
+    lastCode ??
+      (lastStatus === 429
+        ? 'provider_429'
+        : lastStatus === 504
+          ? 'timeout'
+          : `provider_${lastStatus}`),
   )
 }
 

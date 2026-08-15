@@ -180,6 +180,22 @@ export function isGrounded(claim: number, allowed: Set<number>): boolean {
  *  - **A lift that is not in the catalog at all.** Nothing here can tell
  *    "Bulgarian Split Squat" from a phrase, if the catalog has no such row.
  *  - **The right lift described wrongly.** Semantics again, not membership.
+ *
+ * ── AND THE FALSE POSITIVE THAT COST FIVE DAYS ──────────────────────────────
+ * A catalog name can be *contained in* a block name. The catalog has a "Chest
+ * Press (Machine)"; Ameen's block had a win on "Iso-Lateral Chest Press
+ * (Machine)". The model quoted the block correctly, the scan found " chest
+ * press " inside " iso lateral chest press ", and `allowed` did not hold the
+ * shorter string — so the one true sentence in the review was reported as an
+ * invented lift. Twice per attempt, which is a refused review, which is 22
+ * consecutive failures between 2026-08-10 and 2026-08-14 and a Coach tab that
+ * said "the review came back unreadable" the whole time.
+ *
+ * The fix is `maskBlockNames`: take out every lift the block DID mention
+ * before looking for one it did not. Longest first, so the long name is
+ * consumed whole rather than leaving its own tail behind for the scan to find.
+ * A model that writes "Iso-Lateral Chest Press" and separately recommends a
+ * "Chest Press" still gets caught — the second mention survives the mask.
  */
 
 /**
@@ -235,7 +251,7 @@ export function ungroundedNames(
 ): string[] {
   if (catalog.length === 0) return []
   const allowed = collectBlockNames(block)
-  const haystack = ` ${text.toLowerCase().replace(/[^a-z0-9]+/g, ' ')} `
+  const haystack = maskBlockNames(searchable(text), allowed)
 
   const found = new Set<string>()
   for (const entry of catalog) {
@@ -243,10 +259,48 @@ export function ungroundedNames(
     // Multi-word only — see the note above.
     if (!base.includes(' ')) continue
     if (allowed.has(base)) continue
-    const needle = ` ${base.replace(/[^a-z0-9]+/g, ' ')} `
-    if (haystack.includes(needle)) found.add(base)
+    if (haystack.includes(searchable(base))) found.add(base)
   }
   return [...found]
+}
+
+/**
+ * A string in the one shape both sides of the scan are compared in: lower
+ * case, every run of punctuation collapsed to a single space, and padded so
+ * `includes` can only match on whole words.
+ *
+ * Hyphens matter here. `baseName` keeps them ("iso-lateral chest press") and
+ * prose may or may not, so both sides are normalised the same way rather than
+ * one of them being trusted to already be right.
+ */
+function searchable(value: string): string {
+  return ` ${value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim()} `
+}
+
+/**
+ * Blank out every lift the block mentioned, so the catalog scan sees only what
+ * is left over.
+ *
+ * Longest name first: "iso-lateral chest press" has to go before anything can
+ * ask about "chest press", or the tail of the long name is still sitting there
+ * to be found. Each pass strictly shortens the string, so the loop terminates.
+ */
+function maskBlockNames(haystack: string, allowed: ReadonlySet<string>): string {
+  let masked = haystack
+  const names = [...allowed].sort((a, b) => b.length - a.length)
+  for (const name of names) {
+    const needle = searchable(name)
+    // `searchable('')` is a lone space, which is in every haystack — masking
+    // on it would loop until the string was empty.
+    if (needle.trim() === '') continue
+    while (masked.includes(needle)) {
+      masked = masked.replace(needle, ' ')
+    }
+  }
+  return masked
 }
 
 export interface GroundingResult {

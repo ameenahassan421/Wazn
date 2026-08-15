@@ -43,6 +43,7 @@ import {
 import { chat, ModelError } from '../_shared/openrouter.ts'
 import { parseJsonObject } from '../_shared/parse-json-object.ts'
 import { checkBriefContract } from '../_shared/brief-contract.ts'
+import type { ContractViolation } from '../_shared/note-contract.ts'
 import { exerciseCatalog } from '../_shared/catalog.ts'
 import { parseUnit, toDisplayBlock } from '../_shared/display-units.ts'
 
@@ -270,11 +271,29 @@ Deno.serve(async (request) => {
     const startedAt = Date.now()
     let brief: BriefResult
     let result: Awaited<ReturnType<typeof chat>>
+    /** See the note on the same variable in `coach-notes`. */
+    let lastCall: Awaited<ReturnType<typeof chat>> | undefined
 
     try {
       const catalog = await exerciseCatalog(caller)
       let attempt = 0
       let extra = ''
+
+      /** Parse and check together, so an unreadable answer is retried too. */
+      const read = (raw: string): [BriefResult | null, ContractViolation[]] => {
+        try {
+          const parsed = parseBrief(raw)
+          return [parsed, checkBriefContract(parsed, facts, { catalog })]
+        } catch (error) {
+          if (error instanceof HttpError) {
+            return [
+              null,
+              [{ index: -1, rule: error.code ?? 'parse', detail: error.message }],
+            ]
+          }
+          throw error
+        }
+      }
 
       for (;;) {
         result = await chat({
@@ -283,24 +302,32 @@ Deno.serve(async (request) => {
           system: SYSTEM,
           user: JSON.stringify(facts) + INSTRUCTIONS[surface] + extra,
           jsonSchema: SCHEMA,
-          // One short line. A low ceiling is a cost control AND a style
-          // control: a model that cannot write four sentences does not.
-          maxTokens: 400,
+          // One short line — but this ceiling is not an answer budget. On a
+          // reasoning model the thinking is spent from it first, and 400 was
+          // not enough to reach the answer at all on 2026-08-15: six straight
+          // "the coach came back unreadable" on a fragment of an object.
+          //
+          // The style control this number used to carry has not gone anywhere.
+          // `parseBrief` slices the line to 200 characters and the contract
+          // checks its length, so brevity is enforced by the two things that
+          // read the answer rather than by starving the model that writes it.
+          maxTokens: 2400,
         })
+        lastCall = result
 
-        const parsed = parseBrief(result.content)
-        const violations = checkBriefContract(parsed, facts, { catalog })
+        const [parsed, violations] = read(result.content)
 
-        if (violations.length === 0) {
+        if (parsed && violations.length === 0) {
           brief = parsed
           break
         }
 
-        console.warn('brief contract violations', {
+        console.warn('brief rejected', {
           surface,
           attempt,
           violations,
           model: result.model,
+          finishReason: result.finishReason,
           promptVersion: PROMPT_VERSION,
         })
 
@@ -310,7 +337,7 @@ Deno.serve(async (request) => {
             `\n\nYour previous answer broke these rules: ` +
             `${violations.map((v) => `${v.rule} (${v.detail})`).join('; ')}. ` +
             `Write the line again, using only numbers and exercise names from ` +
-            `the block above.`
+            `the block above. Output only the JSON object.`
           continue
         }
 
@@ -318,6 +345,9 @@ Deno.serve(async (request) => {
         // honest outcome is no sentence rather than a doubtful one — this is
         // the one place where the deterministic skeleton being good enough
         // lets the AI layer simply decline.
+        if (violations[0].rule === 'parse' || violations[0].rule === 'empty') {
+          throw new HttpError(violations[0].detail, 502, violations[0].rule)
+        }
         throw new HttpError(
           'The coach could not write that one.',
           502,
@@ -335,6 +365,11 @@ Deno.serve(async (request) => {
               : 'unknown',
         latencyMs: Date.now() - startedAt,
         promptVersion: PROMPT_VERSION,
+        model: lastCall?.model,
+        usedFree: lastCall?.usedFree,
+        finishReason: lastCall?.finishReason,
+        tokensIn: lastCall?.tokensIn,
+        tokensOut: lastCall?.tokensOut,
       })
       throw error
     }

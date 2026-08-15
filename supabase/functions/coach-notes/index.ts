@@ -45,6 +45,7 @@ import {
   SECTIONS,
   checkReviewBlock,
   checkReviewContract,
+  type ContractViolation,
   type SectionKey,
   type WeeklyReview,
 } from '../_shared/review-contract.ts'
@@ -294,11 +295,46 @@ Deno.serve(async (request) => {
     const startedAt = Date.now()
     let review: WeeklyReview
     let result: Awaited<ReturnType<typeof chat>>
+    /**
+     * What the last provider call returned, kept beside `result` so the catch
+     * below can put it in the ledger.
+     *
+     * `result` cannot be read there — TypeScript only knows it is assigned on
+     * the path that breaks out of the loop — and every failed row written
+     * before this had a null model, null finish_reason and null token counts.
+     * Twenty-eight of them, which is why five days of outage had to be
+     * diagnosed by inference instead of being read off the table.
+     */
+    let lastCall: Awaited<ReturnType<typeof chat>> | undefined
 
     try {
       const catalog = await exerciseCatalog(caller)
       let attempt = 0
       let extra = ''
+
+      /**
+       * Parse and check in one step, so an unreadable answer takes the same
+       * road as a wrong one.
+       *
+       * `parseReview` used to throw straight past the retry below. That made a
+       * single malformed response a hard 502 on a surface that already knew
+       * how to ask again — and "ask again" is the correct answer to a model
+       * that wrote prose, since the next sample usually does not.
+       */
+      const read = (raw: string): [WeeklyReview | null, ContractViolation[]] => {
+        try {
+          const parsed = parseReview(raw)
+          return [parsed, checkReviewContract(parsed, block, { catalog })]
+        } catch (error) {
+          if (error instanceof HttpError) {
+            return [
+              null,
+              [{ index: -1, rule: error.code ?? 'parse', detail: error.message }],
+            ]
+          }
+          throw error
+        }
+      }
 
       for (;;) {
         result = await chat({
@@ -307,24 +343,27 @@ Deno.serve(async (request) => {
           system: SYSTEM,
           user: JSON.stringify(block) + extra,
           jsonSchema: SCHEMA,
-          // Five sections with chips is a bigger structure than the old list,
-          // and a truncated one parses as "empty" — which reads as a model
-          // fault rather than a ceiling. Raised deliberately.
-          maxTokens: 1600,
+          // Five sections with chips, and on a reasoning model the ceiling is
+          // shared with the thinking that precedes them. 1600 was sized against
+          // the answer alone and truncated inside the reasoning block on
+          // 2026-08-15 — see the note in `_shared/openrouter.ts`. The answer is
+          // about 500 tokens; the rest of this is headroom to think in.
+          maxTokens: 4000,
         })
+        lastCall = result
 
-        const parsed = parseReview(result.content)
-        const violations = checkReviewContract(parsed, block, { catalog })
+        const [parsed, violations] = read(result.content)
 
-        if (violations.length === 0) {
+        if (parsed && violations.length === 0) {
           review = parsed
           break
         }
 
-        console.warn('review contract violations', {
+        console.warn('review rejected', {
           attempt,
           violations,
           model: result.model,
+          finishReason: result.finishReason,
           promptVersion: PROMPT_VERSION,
         })
 
@@ -334,7 +373,8 @@ Deno.serve(async (request) => {
             `\n\nYour previous answer broke these rules: ` +
             `${violations.map((v) => `${v.rule} (${v.detail})`).join('; ')}. ` +
             `Write the review again. Use only numbers and exercise names from ` +
-            `the block above, and write all five sections.`
+            `the block above, and write all five sections. Output only the ` +
+            `JSON object.`
           continue
         }
 
@@ -342,6 +382,13 @@ Deno.serve(async (request) => {
         // keep the rest: the contract IS the five sections, and four of five
         // is not a review. So a second failure is a failed generation, said
         // plainly, and the client keeps whatever it had.
+        //
+        // An answer that could not be read twice keeps its own wording. Telling
+        // someone their figures do not match their log, when the truth is that
+        // nothing came back to check, sends them looking at the wrong thing.
+        if (violations[0].rule === 'parse' || violations[0].rule === 'empty') {
+          throw new HttpError(violations[0].detail, 502, violations[0].rule)
+        }
         throw new HttpError(
           'The review came back with figures that do not match your log, so it was not saved. Try again in a moment.',
           502,
@@ -359,6 +406,11 @@ Deno.serve(async (request) => {
               : 'unknown',
         latencyMs: Date.now() - startedAt,
         promptVersion: PROMPT_VERSION,
+        model: lastCall?.model,
+        usedFree: lastCall?.usedFree,
+        finishReason: lastCall?.finishReason,
+        tokensIn: lastCall?.tokensIn,
+        tokensOut: lastCall?.tokensOut,
       })
       throw error
     }

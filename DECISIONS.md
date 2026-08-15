@@ -6012,3 +6012,141 @@ an assumption the codebase has since moved past. The tab bar was the loud
 version of this and got asked about. This was the quiet version — a hardcoded
 `3` that happened to be right for a reason the mock's author never knew — and
 it took reading the surrounding file, not a checklist, to see it.
+
+## 2026-08-15 — The weekly review had not worked since 2026-08-05, for two different reasons
+
+Ameen reported one symptom — **"The review came back unreadable."** on the Coach
+tab — and the ledger turned it into two defects with a five-day seam between
+them. `ai_generations` is the whole story:
+
+| day        | coach_notes | briefing | routine | failure code       |
+| ---------- | ----------- | -------- | ------- | ------------------ |
+| 2026-08-05 | 2 ok        | —        | 5 ok    | —                  |
+| 2026-08-10 | **0/6**     | 6 ok     | —       | `unknown-exercise` |
+| 2026-08-11 | **0/7**     | 2 ok     | —       | `unknown-exercise` |
+| 2026-08-13 | **0/8**     | 5 ok     | 1 ok    | `unknown-exercise` |
+| 2026-08-14 | **0/1**     | 3 ok     | —       | `unknown-exercise` |
+| 2026-08-15 | **0/7**     | **0/6**  | 3 ok    | `parse`            |
+
+Twenty-eight consecutive failures. The feature's last success was the day it
+shipped.
+
+### Defect one: the grounding check refused the truest sentence in the review
+
+`ungroundedNames` catches the failure worth catching — a model handed a block
+about a stalled bench reaching for a lift it knows from training rather than
+from the data. It matches catalog names inside the model's text and flags any
+that the block never mentioned.
+
+A catalog name can be **contained in** a block name. Ameen's block has one win:
+`Iso-Lateral Chest Press (Machine)`. The catalog also holds a
+`Chest Press (Machine)`. Normalised and space-padded, `chest press` is a
+whole-word substring of `iso lateral chest press`, and `allowed` held only the
+longer string — so every review that correctly quoted the win was reported as
+naming an invented lift. Twice per request, and the contract cannot drop a bad
+section and keep four, so twice is a refused review.
+
+Confirmed against production rather than reasoned about:
+
+```sql
+select o.b as block_lift, i.b as flagged
+from multi o join multi i on o.b <> i.b
+ and (' '||o.b||' ') like ('%'||' '||i.b||' '||'%')
+-- iso-lateral chest press | chest press
+```
+
+The fix is `maskBlockNames`: blank out every lift the block **did** mention
+before looking for one it did not, longest name first so a long name is consumed
+whole rather than leaving its own tail behind. A model that quotes the win and
+_separately_ recommends a "Chest Press" is still caught — the second mention
+survives the mask, and that case is now a test.
+
+**`ungroundedNames` had no test.** That is the actual root cause of five days:
+the numbers half of `grounding.ts` has fifteen assertions and the names half had
+none, so the one function that could refuse a whole review had nothing holding
+it to account. Six now, and the first two fail on the old code with exactly the
+production output, `['chest press']`.
+
+### Defect two: `max_tokens` is not an answer budget
+
+On 2026-08-15 the failure code changed to `parse`, and `briefing` — healthy for
+seven days — started failing with it too. The ledger reads exactly backwards:
+
+| function         | `maxTokens` | 2026-08-15      |
+| ---------------- | ----------- | --------------- |
+| generate-routine | 6000        | **3 ok**        |
+| coach-notes      | 1600        | 0 ok, 7 `parse` |
+| coach-brief      | 400         | 0 ok, 6 `parse` |
+
+Same model (`nvidia/nemotron-3-super-120b-a12b:free`), same four minutes,
+interleaved. The surface with the **largest** output was the only one that
+worked, which rules out the provider and points at the ceiling.
+
+Because the ceiling is not an output budget. On a reasoning model it is shared
+between the thinking and the answer, and the thinking goes first. The successful
+routine spent 3627–4485 completion tokens on a JSON object worth a few hundred;
+the rest was reasoning, inside the same `max_tokens`. At 400 and at 1600 the
+budget was gone before the answer began, and a fragment of an object parses as
+nothing — which every caller reported as "came back unreadable".
+
+`openrouter.ts` already carried the note that this cap "has now been too low
+twice, and both times the symptom was the same: a truncated object that no
+parser can read". This is the third, and the reason it recurred is that both
+previous fixes sized the number against the answer. So the fix is structural
+rather than another number:
+
+1. **`finish_reason === 'length'` fails the attempt, in `converse`.** Half an
+   object is not an answer and is no longer returned as one. A truncated _free_
+   attempt now falls through to the paid model — the documented rule for the
+   free attempt is that it is an optimisation, and an optimisation that fails
+   should cost latency, never the result.
+2. **The caps leave room to think**: coach-brief 400 → 2400, coach-notes
+   1600 → 4000. generate-routine stays at 6000, being the one that works.
+   The brief's low ceiling was also described as a style control; that job
+   belongs to `parseBrief`'s 200-character slice and the contract's length
+   check, both of which read the answer, rather than to starving the model
+   writing it.
+3. **The ledger says `truncated` instead of `parse`.** `ModelError` codes now
+   survive alongside the HTTP status, so the next occurrence is a row you can
+   read rather than an inference from three functions' constants.
+
+That check used to exist in exactly one place — `generate-routine`, the surface
+that works. Moving it into `openrouter.ts` is the `parse-json-object.ts` lesson
+again: one parser, all callers, so a lesson learned on one surface cannot go
+missing on the other two. Routine keeps its own advice ("try fewer days"), which
+is the part no shared layer can write — it is the only output whose size the
+caller can actually reduce.
+
+### And the reason both of these had to be inferred
+
+Every one of the 28 failed rows has `model`, `finish_reason`, `tokens_in` and
+`tokens_out` **null**. The catch blocks passed only `errorCode` and `latencyMs`,
+because `result` is not readable there — TypeScript knows it is assigned only on
+the path that breaks out of the retry loop. A single `finish_reason: 'length'`
+would have named the second defect on the day it started. All three functions
+now keep a `lastCall` beside `result` for the ledger.
+
+Same class as the grant that read correctly and did nothing (0027): the
+instrumentation was present, plausible, and recording nothing that could
+distinguish one failure from another.
+
+### One more, found while fixing these
+
+`parseReview` and `parseBrief` threw straight **past** the retry loop that sits
+around them. A contract violation got a second attempt with the violation named;
+an unreadable answer got none — despite being the failure most likely to fix
+itself on a resample, and despite the retry mechanism being right there. Parsing
+and checking now happen in one `read()` step so both take the same road, and a
+parse failure that survives two attempts keeps its own wording: telling someone
+their figures do not match their log, when the truth is that nothing came back
+to check, sends them looking at the wrong thing.
+
+No extra provider calls on the path that already worked — two attempts before,
+two attempts now.
+
+### What is not covered
+
+The retry and ledger changes live in `*/index.ts`, which call `Deno.serve` at
+module scope and cannot be imported by vitest. They are typechecked by
+`deno check` in CI and reviewed by reading; `grounding.ts` and `openrouter.ts`
+carry the tests, and those are where the two defects actually were.
