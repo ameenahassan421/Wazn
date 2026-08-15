@@ -114,7 +114,7 @@ App-store publishing happens AFTER beta testing — see Stage 4B.
 Each stage = one or more Claude Code work sessions. The **gate** must
 pass before the next stage begins. Gates are evidence, not vibes.
 
-### Stage 0 — Foundation fix (ACTIVE)
+### Stage 0 — Foundation fix (SHIPPED 2026-08-01)
 
 The app exists (repo `ameenahassan421/workout`, deployed on Vercel,
 Supabase healthy) but is empty and misnamed. Punch list:
@@ -265,7 +265,7 @@ gym dead zones reported by testers.
 
 **GATE 4:** an airplane-mode workout syncs clean on reconnect.
 
-### Stage 4B — App Store + Google Play publishing (after beta testing)
+### Stage 4B — App Store + Google Play publishing (ACTIVE — the sequenced next stage)
 
 The PWA at trywazn.app stays canonical; stores add discoverability
 and native capabilities. Wrap the same React codebase with Capacitor
@@ -416,23 +416,47 @@ verbatim, so they survive even if this file isn't read.**
 > down the log; the log is history, not state. Verify against the database
 > before trusting either.
 
-### 7.0 CURRENT STATE — verified 2026-08-09 against production
+### 7.0 CURRENT STATE — verified 2026-08-15 against production
 
 Read live via the Management API, not recited. Re-verify before relying on it.
+**This block was stale for six days and said so nowhere** — on 2026-08-15 it
+still claimed 0024, 12 routines and 17 generations. If you are reading it on a
+later date, re-run the counts before quoting them.
 
-|                         |                                   |
-| ----------------------- | --------------------------------- |
-| Accounts / profiles     | 7 / 7 (2 with usernames)          |
-| Workouts                | 150, of which 1 is unfinished     |
-| Routines                | 12                                |
-| Exercises               | 134 (0 custom)                    |
-| AI generations          | 17                                |
-| `client_errors`         | 0, including since today's deploy |
-| `user_preferences` rows | 1 (locale `en`, unit `kg`)        |
-| Last workout            | 2026-08-09                        |
+|                         |                                      |
+| ----------------------- | ------------------------------------ |
+| Accounts / profiles     | 7 / 7 (2 with usernames)             |
+| Workouts                | 151, of which 1 is unfinished        |
+| Workout sets            | 3199                                 |
+| Routines                | 9                                    |
+| Exercises               | 134 (0 custom)                       |
+| AI generations          | 71 (see the Coach health note below) |
+| `client_errors`         | 0                                    |
+| `user_preferences` rows | 3                                    |
+| Last workout, any user  | 2026-08-14                           |
 
-**Migrations, the only reliable account.** Production has **0001 through 0024
-applied, including 0023**, confirmed against `information_schema`.
+**Only three of the seven accounts have ever logged anything, and two of those
+logged one set each.** Ameen has 149 workouts and 3197 sets — and **his last
+real session was 2026-07-20**. The 149 are the Hevy import; the app has had
+essentially no new training data for four weeks. Any reading of the Coach's
+output as "wrong" should check this first: `weekly_review()` currently reports
+`sessions_this_week: 0` and `sessions_last_28: 1` because that is true.
+
+**The second dataset is empty.** `body_weights` 0, `body_measurements` 0,
+`protein_days` 1, `daily_checkins` 1. v3 built the Body tab, the readiness
+score and the cross-signal against data that does not exist yet, so every one
+of those surfaces is running its degraded render in production today. Nothing
+supplies `sleepMinutes` or `hrv` at all — `readiness.ts` accepts them and no
+caller passes them, so readiness is the check-in alone.
+
+**Coach health, 2026-08-15.** The weekly review succeeded twice ever, on
+2026-08-05, then failed **28 consecutive times** — 22 on `unknown-exercise`
+(a grounding false positive) and 6 on `parse` (a token ceiling spent on a
+reasoning model's thinking). Both fixed the same day; see DECISIONS.md
+2026-08-15, three entries. `generate-routine` never broke.
+
+**Migrations, the only reliable account.** Production has **0001 through 0028
+applied**, confirmed against `information_schema`.
 `supabase_migrations.schema_migrations` holds 7 entries and has never known
 about 0020, 0021, 0023's predecessors or 0024, so **the ledger is not a record
 of what is applied and must never be treated as one**. `0019` is the one

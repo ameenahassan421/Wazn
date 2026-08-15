@@ -505,6 +505,33 @@ async function shoot(browser, origin, { width, empty, active, locale, theme }) {
     }
 
     /*
+     * The strength list, which is where v3's forecast line and plateau card
+     * live — and which no shot reached, because Progress is photographed at
+     * the top of the page and both surfaces sit below the fold.
+     *
+     * Until `strength_forecast` was stubbed (app-harness.mjs) the RPC answered
+     * `[]` and there was nothing to see anyway. Now the fixture straddles the
+     * eight-week gate on purpose, so this frame should show a forecast line on
+     * the top lift, the muted placeholder on the one under the gate, and at
+     * most one plateau card. Acceptance item 9 is three claims about this
+     * frame and none of them had ever been looked at.
+     *
+     * Anchored on the heading rather than a wheel distance, for the reason the
+     * history block above gives.
+     */
+    if (screen.key === 'progress' && !empty) {
+      const strength = page.getByText(/STRENGTH/i)
+      if (await strength.count()) {
+        await strength.first().scrollIntoViewIfNeeded()
+        await page.waitForTimeout(500)
+        await page.screenshot({
+          path: `${OUT}/${pfx}${state}-${width}-progress-strength.png`,
+          fullPage: false,
+        })
+      }
+    }
+
+    /*
      * The custom exercise's own page with its editor open. Edit, Archive and
      * Delete are gated on `is_custom`, so without a custom lift in the fixture
      * and a click to reveal them, that whole surface goes unphotographed.

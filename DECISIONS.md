@@ -6150,3 +6150,211 @@ The retry and ledger changes live in `*/index.ts`, which call `Deno.serve` at
 module scope and cannot be imported by vitest. They are typechecked by
 `deno check` in CI and reviewed by reading; `grounding.ts` and `openrouter.ts`
 carry the tests, and those are where the two defects actually were.
+
+## 2026-08-15 (later) — The fix for the grounding false positive was worse than the bug
+
+Merged as PR #83, live for ~6 minutes, and wrong. An adversarial review of my
+own change caught it; three independent lenses converged on the same defect and
+a verifier reproduced it against the shipped module.
+
+### What was wrong
+
+The morning's fix was `maskBlockNames`: delete the block's own lift names from
+the text, then scan what is left for catalog names. It read correctly, passed
+its tests, and **masking is directional**.
+
+It fixed short-inside-long — "chest press" hiding inside "Iso-Lateral Chest
+Press" — and simultaneously broke long-inside-short. Deleting a block's
+`bench press` out of `add incline bench press on friday` leaves
+`add incline on friday`, and the scan for `incline bench press` finds
+nothing. Worse, the mask had no multi-word filter, so **single-word** block
+lifts masked too: a block plateauing on `Deadlift` blanked that word out of the
+whole review and hid `Romanian Deadlift` — which is the module's own worked
+example of the failure it exists to catch.
+
+Reproduced against the shipped code, old → new:
+
+```
+block 'Bench Press (Barbell)',  'Add Incline Bench Press on Friday.'
+  old ['incline bench press']     -> new []
+block 'Deadlift (Barbell)',     'Add Romanian Deadlift on Thursday.'
+  old ['romanian deadlift']       -> new []
+block 'Squat (Barbell)',        'Add Bulgarian Split Squat on Friday.'
+  old ['bulgarian split squat']   -> new []
+```
+
+Parsing `workouts_corrected.csv` (131 distinct lifts) yields **23** base-name
+containment pairs — bench press ⊂ incline bench press, lat pulldown ⊂ reverse
+grip lat pulldown, lateral raise ⊂ seated lateral raise, crunch ⊂ cable crunch,
+and so on. Every one of them was a hole.
+
+**The direction of the error is what makes this the more serious bug.** The
+original defect was a false positive: it refused good reviews, which is
+annoying and loud. This was a false negative in the one check that stands
+between a model and a fabricated lift on screen, and §12 treats one confirmed
+fabrication as grounds for pausing the feature. A model handed a block about a
+stalled Bench Press and asked for exactly one change is _most_ likely to reach
+for a variation of that same lift — precisely the shape the mask blinded.
+
+And the test I wrote to prove the guard still worked —
+_"still catches a lift the model reached for rather than read"_ — passed only
+because the fixture happened to contain no Deadlift. A test that passes by
+accident of its fixture is not evidence.
+
+### The fix, and why it has no direction
+
+`spansOf` records **where** each name occurs, and the rule is longest match
+wins: a catalog name is reported only where it appears outside every longer
+name's span. Containment is symmetric, so both cases fall out of one rule with
+no special-casing — the "chest press" inside "Iso-Lateral Chest Press" is
+covered by a longer span and is that lift's own name; "Incline Bench Press" is
+covered by nothing and is a lift. As a bonus it stops the guard double-reporting
+`['seated lateral raise', 'lateral raise']` for one mention.
+
+The fixture now deliberately carries a single-word plateau (`Deadlift`) and
+catalog variations that contain block names. All four new cases fail on what
+was live.
+
+### And a second one, same commit
+
+`lastCode` in `converse()` was never cleared between attempts. A free-model
+truncation followed by a paid-model 429 threw `code: 'truncated'`, so
+`generate-routine` told the user _"That routine was too long to finish. Try
+fewer days"_ **for a rate limit** — advice that cannot help, for a condition
+that clears on its own — and wrote `truncated` into `ai_generations` as the
+cause of a throttle. In the exact table that commit existed to make readable.
+One line: reset per attempt.
+
+### The lesson worth keeping
+
+Two of these are the same shape as 0027's `revoke … from public`: **a change
+that reads correctly, executes, passes its tests, and does not do the thing.**
+The pattern that catches them is not more care while writing. It is asking
+something else to try to break it afterwards, with the code in front of it —
+0027 was caught by Supabase's advisor, this by an adversarial review, and
+neither by the author re-reading their own work.
+
+Both defects were introduced and shipped inside one hour. The wall was green
+for both.
+
+## 2026-08-15 (later still) — Four fixes from the evaluation, and the one that found itself
+
+Ameen asked for a full Coach evaluation and then for the issues found in it to
+be fixed. Four were code, one of them found only by doing the thing the
+evaluation itself had flagged as not done.
+
+### 1. The Coach card was rendering developer text
+
+`ModelError.message` is a diagnostic: it carries the provider's HTTP status and
+the first 200 characters of its body. All three functions passed it to the
+client verbatim, so a double truncation would put
+
+> the model provider refused the request (502): the model ran out of room at
+> max_tokens=4000
+
+on the Coach card, under the "AI-generated" label, beside the numbers. Two
+rules broken at once — one sentence then silence, and never show a lifter a
+figure that means nothing to them.
+
+`ModelError` gains `userMessage`, a copy table keyed by code, and the three
+outer catches use it. `message` still goes to `console.warn` and the code still
+goes to the ledger, so nothing is lost — the diagnostic just stops being the
+thing on screen. **An unmapped code gets the generic line rather than the
+diagnostic**, which is the point: a code added later cannot leak by being
+forgotten in the table.
+
+`HttpError` keeps `message`. Those strings are written for readers already
+("The review came back with figures that do not match your log"), and a blanket
+swap would have replaced good copy with worse. The first pass did exactly that
+by doing a blind find-and-replace across three files; caught by reading the
+diff, which is the only reason it is not in the commit.
+
+### 2. GATE V3 · 5 as a test rather than a review
+
+The gate asks for a **streak copy review** — "no loss-framed sentence ships".
+A review is a thing that happens once, to the strings that existed that day.
+`i18n.test.ts` now runs it on every string, in both locales, on every run:
+guilt vocabulary (D3's own list, plus the loss framings streaks attract) and a
+positive check that streak copy states a count and never something at risk.
+
+It passes today, and the patterns bite: "You missed 2 sessions", "Your streak
+ends tomorrow", "Keep it alive", "Don't lose your 6-week streak" all fail;
+"3 week streak" passes. Four exemptions are named individually rather than
+pattern-matched — three auth "code expired" strings and the crash boundary's
+"Something broke" — because a blanket rule would let a guilt-framed auth
+sentence through, and naming each one makes adding a fifth a decision somebody
+has to write down.
+
+### 3. §7.0 was stale in five places and said so nowhere
+
+It claimed migrations 0001–0024 (production is 0028), 12 routines (9), 17 AI
+generations (71), 150 workouts (151), and `Stage 0 — Foundation fix (ACTIVE)`
+while its own "next action" paragraph named 4B. The stage headers now say
+SHIPPED and ACTIVE in the right places, and the table is re-read from
+production.
+
+Three facts were added because they change how everything else reads:
+
+- **Only three of seven accounts have logged anything, two of them one set.**
+- **Ameen's last real session was 2026-07-20.** The 149 workouts are the Hevy
+  import; there has been no new training data for four weeks. `weekly_review()`
+  reporting `sessions_this_week: 0` is not a defect.
+- **The second dataset is empty.** 0 weigh-ins, 0 measurements, 1 protein day,
+  1 check-in — so every Body and readiness surface is running its degraded
+  render in production right now, and nothing supplies `sleepMinutes` or `hrv`
+  at all.
+
+### 4. The one that found itself: `full-390-body.png` was the empty state
+
+The evaluation's own caveat was that the acceptance checklist had been verified
+by reading code, not by rendering the app — "treat my ticks as 'the code says
+so', not 'I looked'". Looking took ten minutes and found this:
+
+**`body_overview` and `strength_forecast` were stubbed nowhere.** Both shipped
+with 0027; `byName[fn] ?? []` answered `[]` for both. So `npm run shots`
+rendered the Body tab's empty state in the POPULATED fixture, and
+`full-390-body.png` was indistinguishable from `empty-390-body.png` — an empty
+screen that is meant to be empty looks exactly like an empty screen that is
+not. The newest tab in the app had **no populated visual coverage at all**, and
+neither did the forecast line or the plateau card.
+
+Both are stubbed now, to the shapes 0027 actually returns, and deliberately
+uneven: weigh-ins that trend down with noise (a monotonic fixture hides a chart
+that sorts wrong), a protein week with two days under target and one missing
+entirely (the third state `proteinWeek` returns), measurements moving in both
+directions, and a forecast fixture that **straddles the eight-week gate** so
+the muted placeholder gets photographed alongside the forecast line. A fixture
+where every row forecasts would photograph one of the three states the design
+specifies.
+
+`shots.mjs` also gains a `progress-strength` frame. The forecast line and
+plateau card sit below the fold on Progress and every existing shot is
+viewport-only, so acceptance item 9 is three claims about a frame nobody had
+ever taken.
+
+What the frames now show: the Body tab renders its weight trend, protein week
+and measurement rows correctly, with the kg→lbs conversion right (82.8 kg →
+182.5 lbs) and both delta directions in the single accent, no second hue. The
+forecast list shows `270 BY OCT 24` on lifts past the gate and
+`FORECAST AT WK 5 OF 8` muted on the one under it — acceptance item 9's first
+claim, verified by looking rather than by reading.
+
+**This is `iso()` vs `day()` all over again.** A `date` column serialises to a
+bare `YYYY-MM-DD`, and a fixture using `iso()` would hand the screen a
+timestamp that parses to a different calendar day either side of midnight
+depending on the runner's timezone. The harness now has both helpers, and the
+reason is written next to the new one.
+
+### Left alone deliberately
+
+The empty Body screen is about 55% blank below its two collapsed cards. That is
+what Ameen sees today. It is honest and it does not nag for data, which is what
+acceptance item 13 asks for, and filling it would mean designing something the
+normative handoff does not contain. Reported, not redesigned — R1 says the
+value in the handoff wins over an instinct, and "this looks sparse" is an
+instinct.
+
+Also noted and not chased: every row of the strength list renders `→ 0` as its
+delta under the current fixture. Almost certainly fixture thinness — one shared
+`exercise_1rm_history` for every lift — rather than an app defect, but it has
+not been proven either way and should not be recorded as if it had.

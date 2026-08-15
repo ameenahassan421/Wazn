@@ -454,10 +454,15 @@ Deno.serve(async (request) => {
   } catch (error) {
     if (error instanceof HttpError) return json({ error: error.message }, error.status)
     if (error instanceof ModelError) {
+      // The diagnostic, which is no longer what the reader is shown.
+      console.warn('coach-notes model error', {
+        code: error.code,
+        detail: error.message,
+      })
       if (error.code === 'breaker_open') {
-        return json({ error: error.message, degraded: true }, 503)
+        return json({ error: error.userMessage, degraded: true }, 503)
       }
-      return json({ error: error.message }, error.status)
+      return json({ error: error.userMessage }, error.status)
     }
     console.error('coach-notes', error)
     return json({ error: 'Could not write your review right now.' }, 500)
