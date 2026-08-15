@@ -5,6 +5,7 @@ import {
   extractNumbers,
   isGrounded,
   partitionGrounded,
+  ungroundedNames,
 } from '../../supabase/functions/_shared/grounding'
 
 /**
@@ -216,5 +217,91 @@ describe('partitionGrounded', () => {
       BLOCK,
     )
     expect(kept).toHaveLength(1)
+  })
+})
+
+/**
+ * The invented-lift check, which had no test and cost five days for it.
+ *
+ * From 2026-08-10 to 2026-08-14 the weekly review failed 22 times in a row with
+ * `unknown-exercise`, and the Coach tab said "the review came back unreadable"
+ * the whole time. Nothing was wrong with the model: the block's single win was
+ * "Iso-Lateral Chest Press (Machine)", the catalog also holds a "Chest Press
+ * (Machine)", and the shorter name is a whole-word substring of the longer one.
+ * The model quoted the block correctly and was refused for the one true
+ * sentence in the review — twice per request, which is a refused review.
+ *
+ * The first case below is that exact block. The two after it are why the fix
+ * cannot be "stop checking": the guard still has to catch a lift that was
+ * genuinely reached for rather than read.
+ */
+describe('ungroundedNames', () => {
+  const WIN_BLOCK = {
+    unit: 'kg',
+    wins: [
+      { exercise: 'Iso-Lateral Chest Press (Machine)', gain: 23.9, e1rm_28d: 72.6 },
+    ],
+    plateaus: [{ exercise: 'Bench Press (Barbell)', sessions: 8, last_e1rm: 70.8 }],
+  }
+  const CATALOG = [
+    'Iso-Lateral Chest Press (Machine)',
+    'Chest Press (Machine)',
+    'Bench Press (Barbell)',
+    'Romanian Deadlift (Barbell)',
+    'Lateral Raise (Dumbbell)',
+    'Squat',
+  ]
+
+  it('does not report a lift the block named as an invention', () => {
+    expect(
+      ungroundedNames(
+        'Iso-Lateral Chest Press is up 23.9 kg to 72.6.',
+        WIN_BLOCK,
+        CATALOG,
+      ),
+    ).toEqual([])
+  })
+
+  it('still catches a lift the model reached for rather than read', () => {
+    // The failure the check exists for: every figure grounded, the lift
+    // invented. The user may not own a barbell and certainly was not measured
+    // on this one.
+    expect(
+      ungroundedNames('Add Romanian Deadlift on Thursday.', WIN_BLOCK, CATALOG),
+    ).toEqual(['romanian deadlift'])
+  })
+
+  it('catches a short lift recommended beside the long one it hides inside', () => {
+    // The mask takes out the block's own mention, not the word forever. A
+    // second, standalone "Chest Press" is still a recommendation for a lift
+    // the block never measured.
+    expect(
+      ungroundedNames(
+        'Iso-Lateral Chest Press is up. Add a Chest Press on Friday.',
+        WIN_BLOCK,
+        CATALOG,
+      ),
+    ).toEqual(['chest press'])
+  })
+
+  it('ignores punctuation and case on both sides of the comparison', () => {
+    // `baseName` keeps the hyphen; prose may not. Whichever way the model
+    // writes it, this is the block's own lift.
+    expect(
+      ungroundedNames('ISO LATERAL CHEST PRESS held at 72.6.', WIN_BLOCK, CATALOG),
+    ).toEqual([])
+  })
+
+  it('never flags a single-word lift', () => {
+    // A documented limit, not an oversight: "Squat" is an exercise and an
+    // ordinary English word, and a check that flags the sentence "your squat
+    // is behind" gets turned off inside a day.
+    expect(ungroundedNames('Your squat is behind.', WIN_BLOCK, CATALOG)).toEqual([])
+  })
+
+  it('is disabled by an empty catalog rather than flagging everything', () => {
+    expect(
+      ungroundedNames('Add Romanian Deadlift on Thursday.', WIN_BLOCK, []),
+    ).toEqual([])
   })
 })

@@ -267,6 +267,8 @@ Deno.serve(async (request) => {
 
     const startedAt = Date.now()
     let result: Awaited<ReturnType<typeof chat>>
+    /** See the note on the same variable in `coach-notes`. */
+    let lastCall: Awaited<ReturnType<typeof chat>> | undefined
     let validated: ReturnType<typeof validatePlan>['days']
     let dropped: string[]
 
@@ -293,23 +295,13 @@ Deno.serve(async (request) => {
         // the paid fallback; a truncated answer costs the whole feature.
         maxTokens: 6000,
       })
+      lastCall = result
 
       // Validated against the real table by the one module in this codebase the
       // test suite can reach directly — see src/lib/validate-plan.test.ts. A
       // model told to copy from a list will still occasionally invent an
       // exercise, and the failure mode of trusting it is a routine containing a
       // lift that does not exist.
-      // A truncated response and a malformed one look identical to a parser and
-      // need opposite fixes, so the provider's own reason is checked first rather
-      // than guessed at later.
-      if (result.finishReason === 'length') {
-        throw new HttpError(
-          'That routine was too long to finish. Try fewer days, or fewer kinds of equipment.',
-          502,
-          'truncated',
-        )
-      }
-
       const plan = validatePlan(parsePlan(result.content), available, days)
       validated = plan.days
       dropped = plan.dropped
@@ -322,21 +314,43 @@ Deno.serve(async (request) => {
         )
       }
     } catch (error) {
+      // A truncated response and a malformed one look identical to a parser and
+      // need opposite fixes, so the provider's own reason decides the wording.
+      // That check used to live here, on `result.finishReason`, and it is now in
+      // `_shared/openrouter.ts` where all three surfaces get it — it arrives as
+      // a ModelError instead of being read off a result that should never have
+      // been returned. What stays here is this feature's own advice, which is
+      // the part no shared layer can write: a routine is the one output whose
+      // size the caller can actually reduce.
+      const failure =
+        error instanceof ModelError && error.code === 'truncated'
+          ? new HttpError(
+              'That routine was too long to finish. Try fewer days, or fewer kinds of equipment.',
+              502,
+              'truncated',
+            )
+          : error
+
       // Failed attempts are ledger rows too, with `ok = false`. Quota counts
       // only successes, so a truncated routine or a provider outage does not
       // spend one of the caller's three for the month.
       await recordGeneration(caller, 'routine', {
         ok: false,
         errorCode:
-          error instanceof ModelError
-            ? error.code
-            : error instanceof HttpError
-              ? (error.code ?? 'http')
+          failure instanceof ModelError
+            ? failure.code
+            : failure instanceof HttpError
+              ? (failure.code ?? 'http')
               : 'unknown',
         latencyMs: Date.now() - startedAt,
         promptVersion: PROMPT_VERSION,
+        model: lastCall?.model,
+        usedFree: lastCall?.usedFree,
+        finishReason: lastCall?.finishReason,
+        tokensIn: lastCall?.tokensIn,
+        tokensOut: lastCall?.tokensOut,
       })
-      throw error
+      throw failure
     }
 
     await recordGeneration(caller, 'routine', {
