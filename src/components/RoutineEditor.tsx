@@ -249,6 +249,10 @@ export function RoutineEditor({
       </div>
 
       {items.length > 0 && (
+        <p className="text-[11px] text-muted">{t('editor.weight_hint')}</p>
+      )}
+
+      {items.length > 0 && (
         <ul className="flex flex-col gap-2">
           {items.map((item, index) => {
             const exercise = byId.get(item.exerciseId)
@@ -277,16 +281,6 @@ export function RoutineEditor({
                     className="h-12 w-10 rounded-md border border-line text-sm"
                   >
                     ↓
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setSwapping(index)}
-                    aria-label={t('editor.swap', {
-                      name: exercise?.name ?? t('editor.exercise_fallback'),
-                    })}
-                    className="h-12 rounded-md border border-line px-2 text-[11px] font-mono text-muted"
-                  >
-                    {t('editor.swap')}
                   </button>
                   <button
                     type="button"
@@ -328,9 +322,22 @@ export function RoutineEditor({
                     placeholder="—"
                     className="tnum h-12 w-16 rounded-md border border-line bg-ink px-2 text-start text-base outline-none placeholder:text-muted focus:border-accent"
                   />
-                  <span className="ms-auto text-xs text-muted">
-                    weight from last time
-                  </span>
+                  {/* Row two, not row one. Adding a sixth control beside the
+                      name truncated it to "Lat Pu…" and "Trice…" on a 390px
+                      screen — the row's most important element paying for its
+                      least. This space held "weight from last time", which is
+                      one rule repeated identically on every row; it is stated
+                      once above the list now. */}
+                  <button
+                    type="button"
+                    onClick={() => setSwapping(index)}
+                    aria-label={t('editor.swap.title', {
+                      name: exercise?.name ?? t('editor.exercise_fallback'),
+                    })}
+                    className="btn-base btn-secondary press ms-auto h-12 px-3 text-[13px]"
+                  >
+                    {t('editor.swap')}
+                  </button>
                 </div>
               </li>
             )

@@ -6457,3 +6457,57 @@ opened during a session — is not built. The ranking is deliberately in
 `src/lib/` and takes no React, so wiring it there is a component change and not
 a rewrite. Routine editing was the surface Ameen asked for; the other one
 should be its own change with its own screenshot.
+
+## 2026-08-15 — Looking at the swap found two things reading it could not
+
+PR #85 shipped the swap and merged. Then I photographed it, which is the
+discipline this whole day kept teaching, and the frames disagreed with the
+code in two places.
+
+### The routine editor had never been photographed with a row in it
+
+`routine_exercises` and `routine_sets` were stubbed as literal `[]` in the
+harness table map. So `loadRoutine` always returned a routine with no
+exercises, and every run of `npm run shots` photographed an **empty editor** —
+no reorder arrows, no remove control, no sets or reps fields, and no swap.
+
+An editor that renders an empty list looks exactly like an editor whose
+fixture is empty. **That is the third time today**: `body_overview`,
+`strength_forecast`, and now this. The pattern is identical every time — a
+table stubbed as `[]` at the moment it was added, because nothing rendered it
+yet, and then never revisited when something did. Worth naming as a class
+rather than fixing three times: **`[]` is a fixture that can never fail.**
+
+Both tables are stubbed properly now, with five exercises per routine spanning
+implements on purpose — the swap ranks same-movement-different-implement
+first, so a fixture of five barbell lifts would photograph a suggestion list
+that never exercises tier one. `shots.mjs` gains `routine-editor` and
+`routine-swap` frames, reached the way a user reaches them (overflow menu →
+Edit → Swap), so the surface stays covered.
+
+### And the swap button I had just added broke the exercise name
+
+The row was thumb + name + ↑ + ↓ + ×. I made it six controls on a 390px
+screen, and the flex row paid for it out of the one element that matters:
+
+```
+Lat Pu…      Squat…      Trice…      Later…
+```
+
+The row's most important element paying for its least, which is precisely the
+"glanceability beats density" law the wellness skill opens with. Typecheck,
+lint and 1111 tests were all green, because none of them can see a screen.
+
+Swap moved to row two, into the space held by "weight from last time" — one
+rule that was being repeated identically on all five rows, now stated once
+above the list. Names are readable again ("Squat (Barbell)" fits whole) and
+Swap gets a proper 48px target instead of a cramped 11px chip.
+
+### The one that was not a defect
+
+The swap sheet's thumbnail looked like a thin vertical sliver, and I nearly
+"fixed" it. It is the letter **I** of "Incline" on a pale chest-tone tile —
+`ExerciseThumb` already carries `shrink-0` and was rendering correctly at its
+default 48px. Recorded because the near-miss is the point: a screenshot shows
+you everything, including things that are fine, and changing one of those is
+its own way to break a screen.
