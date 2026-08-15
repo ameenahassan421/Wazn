@@ -1,7 +1,8 @@
 import { useState } from 'react'
-import type { Exercise } from '../lib/types'
+import type { Exercise, ExerciseUsageRow } from '../lib/types'
 import type { RoutineDetail, RoutineDraft } from '../lib/routines'
 import { ExercisePicker } from './ExercisePicker'
+import { variationsFor } from '../lib/variations'
 import { ExerciseThumb } from './ExerciseThumb'
 import { IconBack } from './icons'
 import { useLocale } from '../lib/locale-context'
@@ -30,12 +31,19 @@ function toDraftExercises(routine: RoutineDetail | null): DraftExercise[] {
 export function RoutineEditor({
   routine,
   exercises,
+  usage = new Map(),
   saving,
   onSave,
   onCancel,
 }: {
   routine: RoutineDetail | null
   exercises: Exercise[]
+  /**
+   * Set counts per exercise, used to rank swap candidates and to order the
+   * picker. Optional, because the ranking's first two tiers work without it
+   * and a caller that has not loaded usage should still be able to swap.
+   */
+  usage?: Map<string, ExerciseUsageRow>
   saving: boolean
   onSave: (draft: RoutineDraft) => void
   onCancel: () => void
@@ -44,6 +52,17 @@ export function RoutineEditor({
   const [name, setName] = useState(routine?.name ?? '')
   const [items, setItems] = useState<DraftExercise[]>(() => toDraftExercises(routine))
   const [picking, setPicking] = useState(false)
+  /**
+   * Which row is being swapped, or null.
+   *
+   * Swapping used to be: remove, open the picker, search, pick — which appends
+   * to the END — then press ↑ once per exercise in between, losing the sets
+   * and reps on the way. Nine taps on a six-exercise routine to turn a bench
+   * press into dumbbells. The rack being busy is the commonest reason anyone
+   * departs from a plan, so the app charged the most for the thing that
+   * happens the most.
+   */
+  const [swapping, setSwapping] = useState<number | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   const byId = new Map(exercises.map((e) => [e.id, e]))
@@ -58,6 +77,18 @@ export function RoutineEditor({
       },
     ])
     setPicking(false)
+  }
+
+  /**
+   * Replace one row in place. Position and prescribed sets are kept, because
+   * they belong to the slot in the routine rather than to the lift filling it
+   * — swapping to dumbbells does not make it a different number of sets.
+   */
+  function swapExercise(index: number, exercise: Exercise) {
+    setItems((prev) =>
+      prev.map((it, i) => (i === index ? { ...it, exerciseId: exercise.id } : it)),
+    )
+    setSwapping(null)
   }
 
   function move(index: number, direction: -1 | 1) {
@@ -110,12 +141,79 @@ export function RoutineEditor({
     })
   }
 
+  // The swap sheet: §10's "Closest to your plan", pinned above search. Three
+  // candidates and a way out, which is the whole surface — a lifter standing
+  // at a busy rack is choosing, not browsing.
+  if (swapping !== null && items[swapping]) {
+    const current = byId.get(items[swapping].exerciseId)
+    const candidates = current ? variationsFor(current, exercises, usage) : []
+    return (
+      <section className="flex flex-col gap-3 pb-4">
+        <div className="flex items-center gap-1">
+          <button
+            type="button"
+            onClick={() => setSwapping(null)}
+            aria-label={t('editor.back')}
+            className="btn-base btn-quiet -ms-2 h-12 w-12 shrink-0"
+          >
+            <IconBack />
+          </button>
+          <h2 className="flex-1 truncate text-base font-semibold">
+            {t('editor.swap.title', { name: current?.name ?? '' })}
+          </h2>
+        </div>
+
+        {candidates.length > 0 ? (
+          <ul className="flex flex-col gap-2">
+            {candidates.map(({ exercise, reason }) => (
+              <li key={exercise.id}>
+                <button
+                  type="button"
+                  onClick={() => swapExercise(swapping, exercise)}
+                  className="ring-edge bg-surface press flex min-h-[60px] w-full items-center gap-3 px-3 py-2 text-start"
+                  style={{ borderRadius: 'var(--radius-md)' }}
+                >
+                  <ExerciseThumb exercise={exercise} />
+                  <span className="flex flex-1 flex-col gap-0.5 overflow-hidden">
+                    <span className="truncate text-base">{exercise.name}</span>
+                    {/* The reason travels with the suggestion. No claim
+                        without the figure beside it — doctrine 1, applied to
+                        a ranking rather than a sentence. */}
+                    <span className="chip-tint w-fit px-1.5 py-0.5 font-mono text-[11px] text-accent-300">
+                      {reason}
+                    </span>
+                  </span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="text-sm text-muted">{t('editor.swap.none')}</p>
+        )}
+
+        <button
+          type="button"
+          onClick={() => {
+            setPicking(true)
+          }}
+          className="btn-base btn-secondary h-12 w-full text-sm"
+        >
+          {t('editor.swap.search')}
+        </button>
+      </section>
+    )
+  }
+
   if (picking) {
     return (
       <ExercisePicker
         exercises={exercises}
-        usage={new Map()}
-        onPick={addExercise}
+        usage={usage}
+        onPick={(exercise) => {
+          setPicking(false)
+          if (swapping !== null) swapExercise(swapping, exercise)
+          else addExercise(exercise)
+        }}
         onCancel={() => setPicking(false)}
       />
     )
@@ -179,6 +277,16 @@ export function RoutineEditor({
                     className="h-12 w-10 rounded-md border border-line text-sm"
                   >
                     ↓
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setSwapping(index)}
+                    aria-label={t('editor.swap', {
+                      name: exercise?.name ?? t('editor.exercise_fallback'),
+                    })}
+                    className="h-12 rounded-md border border-line px-2 text-[11px] font-mono text-muted"
+                  >
+                    {t('editor.swap')}
                   </button>
                   <button
                     type="button"
