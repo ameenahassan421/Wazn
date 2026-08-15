@@ -14,9 +14,19 @@ import { stubSupabase, USER_ID } from './stub'
  */
 
 /**
- * How each screen is reached now that the five-tab bar is retired: press these
- * controls in order, starting from home. Friends is two deep because it is two
- * deep for real — the audit took it out of the furniture.
+ * How each screen is reached: press these controls in order, starting from
+ * home.
+ *
+ * ── WHY THE CARD DOORS ARE STILL THE ROUTE, WITH A TAB BAR PRESENT ──────────
+ * v3 brought back a six-tab bar, and every one of these screens is now one tap
+ * away in it. The routes below deliberately do NOT use it. The tab bar is the
+ * easy thing to test and the useless thing to test: it is one component, it
+ * either renders or it does not, and a run that navigates by it would pass on
+ * a build where every card door had silently stopped working. The doors are
+ * the fragile path — they are content that happens to be navigation, they are
+ * gated on data, and they are what broke last time. So the harness keeps
+ * pressing them, and the bar's own coverage is the `Body` row, which has no
+ * card door and is reached the way a user reaches it.
  *
  * Selecting by accessible name, not by markup. An earlier draft of this file
  * asked for `role="tab"` and every test timed out against a page that was
@@ -26,7 +36,14 @@ import { stubSupabase, USER_ID } from './stub'
 const ROUTES = {
   History: ['History'],
   Progress: ['Last PR'],
-  Coach: ['Ask the coach'],
+  // Coach and Body go through the tab bar; everything else through its card.
+  // Coach's chip lives on `CoachBrief`, which v3's Today brief replaces
+  // whenever there is a routine — so the chip is an empty-account control now
+  // and the tab is the door. `npm run shots` found that on a populated
+  // fixture; this stub has no routines, so pinning the chip here would have
+  // passed on a coincidence.
+  Coach: ['Coach'],
+  Body: ['Body'],
   Friends: ['You — settings', 'Friends'],
   Settings: ['You — settings'],
 } as const

@@ -13,12 +13,23 @@
  */
 export function SeriesChart({
   values,
+  projection = [],
   ariaLabel,
   height = 96,
   baseline = 'zero',
 }: {
   /** In series order, oldest first. Fewer than two points draws no line. */
   values: number[]
+  /**
+   * The dashed continuation past the last real point — design v3.0 §08.
+   *
+   * Dashed already means "not yet real" in this grammar, so a projection needs
+   * no legend beyond the one the caller draws. It shares the series' scale, so
+   * a forecast above the highest measurement lifts the ceiling rather than
+   * being clipped: a projection drawn off the top of the card would be the
+   * chart hiding the thing it was added to show.
+   */
+  projection?: number[]
   ariaLabel: string
   height?: number
   /**
@@ -38,8 +49,12 @@ export function SeriesChart({
   const W = 320
   const H = height
   const PAD = 6
-  const hi = Math.max(...values, 0)
-  const lo = Math.min(...values, hi)
+  // The projection shares the scale, so it is included in the extremes. A
+  // forecast plotted against the measurements' own ceiling would be drawn off
+  // the top of the card, which is the one thing it must not be.
+  const extremes = [...values, ...projection]
+  const hi = Math.max(...extremes, 0)
+  const lo = Math.min(...extremes, hi)
   // A flat series still needs a denominator, and a series of zeroes must not
   // divide by zero.
   const floor = baseline === 'data' ? (hi === lo ? lo - 1 : lo) : 0
@@ -53,15 +68,32 @@ export function SeriesChart({
   const DOT = 3.5
   const x0 = DOT
   const x1 = W - DOT
-  const step = values.length > 1 ? (x1 - x0) / (values.length - 1) : 0
+  // The x-axis spans real points AND projected ones, so the solid line keeps
+  // the same slope it would have had alone and the dashed segment extends it.
+  const total = values.length + projection.length
+  const step = total > 1 ? (x1 - x0) / (total - 1) : 0
+  const yFor = (value: number) =>
+    H - PAD - ((value - floor) / (ceiling - floor)) * (H - PAD * 2)
   const plotted = values.map((value, i) => ({
-    x: values.length > 1 ? x0 + i * step : W / 2,
-    y: H - PAD - ((value - floor) / (ceiling - floor)) * (H - PAD * 2),
+    x: total > 1 ? x0 + i * step : W / 2,
+    y: yFor(value),
   }))
   const line = plotted.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x} ${p.y}`).join(' ')
-  const area = `${line} L${x1} ${H} L${x0} ${H} Z`
+  const lastX = plotted.at(-1)?.x ?? x0
+  const area = `${line} L${lastX} ${H} L${x0} ${H} Z`
   const last = plotted.at(-1)
   const filled = baseline === 'zero' && plotted.length > 1
+  // Starts AT the last real point, so the dashed segment leaves the solid line
+  // exactly where the data stops rather than floating beside it.
+  const projected =
+    last && projection.length > 0
+      ? [
+          `M${last.x} ${last.y}`,
+          ...projection.map(
+            (value, i) => `L${x0 + (values.length + i) * step} ${yFor(value)}`,
+          ),
+        ].join(' ')
+      : null
 
   return (
     <svg
@@ -95,6 +127,17 @@ export function SeriesChart({
           strokeLinecap="round"
         />
       )}
+      {projected && (
+        <path
+          d={projected}
+          fill="none"
+          stroke="var(--color-accent)"
+          strokeWidth="2"
+          strokeDasharray="3 5"
+          strokeLinecap="round"
+        />
+      )}
+      {/* The dot marks where measurement stops and projection begins. */}
       {last && <circle cx={last.x} cy={last.y} r="3.5" fill="var(--color-accent)" />}
     </svg>
   )

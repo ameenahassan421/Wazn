@@ -46,6 +46,24 @@ import {
   withinRange,
 } from '../lib/range'
 import type { RangeKey, VolumeSpan } from '../lib/range'
+import {
+  FORECAST_MAX_WEEKS,
+  FORECAST_MIN_WEEKS,
+  detectPlateau,
+  nextMilestone,
+  type Plateau,
+} from '../lib/forecast'
+import { useCoach } from '../lib/coach-context'
+import { showsCoachSurfaces } from '../lib/coach-mode'
+
+/** One row of `strength_forecast` (migration 0027). */
+interface ForecastRow {
+  exercise_id: string
+  weeks_of_data: number | string | null
+  sessions: number | string | null
+  slope_kg_per_week: number | string | null
+  latest_e1rm_kg: number | string | null
+}
 
 /**
  * Progress — design v2.1 screen 02.
@@ -100,6 +118,8 @@ export function ProgressScreen({
 }) {
   const { unit } = useUnit()
   const { t } = useLocale()
+  const { volume: coachVolume } = useCoach()
+  const coachSpeaks = showsCoachSurfaces(coachVolume)
 
   const [sessions, setSessions] = useState<SessionVolumeRow[]>([])
   const [groups, setGroups] = useState<MuscleGroupSets[]>([])
@@ -230,6 +250,88 @@ export function ProgressScreen({
     }
   }, [t])
 
+  /**
+   * v3 §08's forecasts, in their own request.
+   *
+   * Deliberately NOT part of the `Promise.all` above and deliberately not in
+   * its error check. `strength_forecast` needs migration 0027; until that is
+   * applied the RPC does not exist, and a Progress screen that renders an
+   * error page because one meta line could not be computed would be the exact
+   * failure the records block is already kept out of the check to avoid.
+   * A failure here means no forecast lines and nothing else.
+   */
+  const [forecasts, setForecasts] = useState<Map<string, ForecastRow> | null>(null)
+  useEffect(() => {
+    let active = true
+    void (async () => {
+      try {
+        const { data, error: failed } = await supabase.rpc('strength_forecast')
+        if (!active || failed || !Array.isArray(data)) return
+        setForecasts(
+          new Map((data as ForecastRow[]).map((row) => [String(row.exercise_id), row])),
+        )
+      } catch {
+        /* no forecasts is a valid screen */
+      }
+    })()
+    return () => {
+      active = false
+    }
+  }, [])
+
+  /**
+   * COACH'S FIX — §08's plateau card. At most one, ever.
+   *
+   * ── WHY IT READS ONE LIFT AND NOT ALL OF THEM ───────────────────────────
+   * "Never more than one plateau card at a time" is in the spec, so scanning
+   * forty lifts to pick a winner would be forty round trips spent on
+   * thirty-nine answers nobody sees. It reads the lift at the top of the
+   * strength list — the one with the most work behind it in the window, which
+   * is the one a lifter would actually want a fix for.
+   *
+   * `detectPlateau` is the tested pure function, given the same series the
+   * exercise detail page charts. So the card and the chart cannot disagree
+   * about whether a lift has moved, which is the failure mode a second
+   * plateau implementation in SQL would have introduced.
+   *
+   * Volume is passed as steady, and that is a real limit rather than an
+   * oversight: a lift that flattened because its sets were cut in half is a
+   * deload, not a plateau. `weekly_review` computes per-lift volume trend
+   * server-side and this does not read it yet; until it does, the card is
+   * gated on the coach speaking at all, and `Later` dismisses it for the
+   * session. Named in DECISIONS.md rather than left as a silent assumption.
+   */
+  const [plateau, setPlateau] = useState<{ name: string; plateau: Plateau } | null>(
+    null,
+  )
+  const [plateauDismissed, setPlateauDismissed] = useState(false)
+  const topLift = strength[0]
+  const topLiftId = topLift?.exercise_id
+  const topLiftName = topLift?.name
+  useEffect(() => {
+    if (!topLiftId || !topLiftName) return
+    let active = true
+    void (async () => {
+      try {
+        const { data, error: failed } = await supabase.rpc('exercise_1rm_history', {
+          p_exercise_id: topLiftId,
+        })
+        if (!active || failed || !Array.isArray(data)) return
+        const found = detectPlateau(
+          (data as { started_at: string; best_1rm_kg: number | string | null }[]).map(
+            (p) => ({ started_at: p.started_at, kg: p.best_1rm_kg }),
+          ),
+        )
+        if (found) setPlateau({ name: topLiftName, plateau: found })
+      } catch {
+        /* no card is a valid screen */
+      }
+    })()
+    return () => {
+      active = false
+    }
+  }, [topLiftId, topLiftName])
+
   // `session_volume_history` comes back oldest first, so the first row is the
   // first workout ever — which is how far "All" has to reach.
   const oldest = sessions[0]?.started_at ?? null
@@ -333,6 +435,22 @@ export function ProgressScreen({
         </p>
       )}
 
+      {/* v3 §08 puts the plateau card at the TOP of this screen, above
+          everything the lifter came to read. That placement is the whole
+          point: it is the one card here that asks for a decision, and a
+          prescription buried under four charts is a prescription nobody
+          fills. Silenced with the rest of the coach's surfaces under volume
+          Quiet or Off. */}
+      {coachSpeaks && plateau && !plateauDismissed && (
+        <PlateauCard
+          name={plateau.name}
+          plateau={plateau.plateau}
+          unit={unit}
+          onPreview={onOpenCoach}
+          onLater={() => setPlateauDismissed(true)}
+        />
+      )}
+
       <ThisWeek
         sessions={thisWeek.sessions}
         volumeKg={thisWeek.volumeKg}
@@ -376,6 +494,7 @@ export function ProgressScreen({
           unit={unit}
           range={strengthRange}
           onRange={setStrengthRange}
+          forecasts={forecasts}
           onOpen={(id) => {
             const found = exercises.find((e) => e.id === id)
             if (found) openDetail(found)
@@ -991,6 +1110,7 @@ function StrengthList({
   unit,
   range,
   onRange,
+  forecasts,
   onOpen,
 }: {
   rows: StrengthRow[]
@@ -999,6 +1119,8 @@ function StrengthList({
   unit: Unit
   range: RangeKey
   onRange: (key: RangeKey) => void
+  /** Null until `strength_forecast` answers, or forever if 0027 is unapplied. */
+  forecasts: Map<string, ForecastRow> | null
   onOpen: (exerciseId: string) => void
 }) {
   const { t, locale } = useLocale()
@@ -1082,12 +1204,24 @@ function StrengthList({
                 />
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-sm font-medium">{row.name}</span>
-                  <span className="block text-[11px] text-muted">
-                    {t('progress.strength.last')}{' '}
-                    {row.last_trained_at
-                      ? formatRelativeDay(row.last_trained_at, locale)
-                      : '—'}
-                  </span>
+                  {/* v3 §08's forecast line, in the meta slot. It REPLACES the
+                      "last trained" line rather than being added under it: two
+                      mono lines under a name is a paragraph, and the forecast
+                      is the more useful of the two on a lift the app can
+                      forecast. Under eight weeks the muted placeholder says
+                      when the line will arrive, which is the honest version of
+                      "not yet" — and the last-trained line comes back, because
+                      then it is the only thing there is to say. */}
+                  <ForecastLine
+                    forecast={forecasts?.get(row.exercise_id)}
+                    fallback={`${t('progress.strength.last')} ${
+                      row.last_trained_at
+                        ? formatRelativeDay(row.last_trained_at, locale)
+                        : '—'
+                    }`}
+                    unit={unit}
+                    locale={locale}
+                  />
                 </span>
                 <span className="tnum shrink-0 text-[20px] font-medium">
                   {Math.round(toDisplayWeight(best, unit))}
@@ -1121,6 +1255,180 @@ function StrengthList({
           onChange={onRange}
           label={t('progress.strength.range_label')}
         />
+      </div>
+    </section>
+  )
+}
+
+/**
+ * `120 BY OCT 3 · ON PACE`, or the muted placeholder, or the fallback.
+ *
+ * Design v3.0 §08. Three states and the order matters:
+ *
+ *  1. **A forecast**, once the lift has ≥8 weeks of data AND is actually
+ *     moving. Accent, because it is the one line on the row making a claim.
+ *  2. **`FORECAST AT WK n OF 8`**, while the window is still filling. Muted,
+ *     and it names the wait rather than leaving a blank — the reader learns
+ *     that the line exists and that it is coming.
+ *  3. **The fallback** ("last trained…"), for a lift with the weeks but no
+ *     upward slope. There is nothing to forecast and nothing to wait for, and
+ *     a placeholder counting to eight on a lift that has trained for a year
+ *     would be a promise the app cannot keep.
+ */
+function ForecastLine({
+  forecast,
+  fallback,
+  unit,
+  locale,
+}: {
+  forecast: ForecastRow | undefined
+  fallback: string
+  unit: Unit
+  locale: string
+}) {
+  const { t } = useLocale()
+  if (!forecast) {
+    return <span className="block text-[11px] text-muted">{fallback}</span>
+  }
+
+  const weeks = Number(forecast.weeks_of_data ?? 0)
+  if (weeks < FORECAST_MIN_WEEKS) {
+    return (
+      <span
+        dir="ltr"
+        className="meta-mono tnum block text-[10px] uppercase"
+        style={{ color: 'var(--ghost-ink)' }}
+      >
+        {t('progress.forecast.pending', {
+          n: String(weeks),
+          of: String(FORECAST_MIN_WEEKS),
+        })}
+      </span>
+    )
+  }
+
+  const slope = Number(forecast.slope_kg_per_week ?? 0)
+  const latest = Number(forecast.latest_e1rm_kg ?? 0)
+  if (!Number.isFinite(slope) || slope <= 0 || latest <= 0) {
+    return <span className="block text-[11px] text-muted">{fallback}</span>
+  }
+
+  const current = toDisplayWeight(latest, unit)
+  const target = nextMilestone(current)
+  const slopeDisplay = toDisplayWeight(latest + slope, unit) - current
+  const to = Math.ceil((target - current) / slopeDisplay)
+  // The same ceiling `lib/forecast.ts` enforces: past a year it is a wish.
+  if (!Number.isFinite(to) || to <= 0 || to > FORECAST_MAX_WEEKS) {
+    return <span className="block text-[11px] text-muted">{fallback}</span>
+  }
+
+  const by = new Date()
+  by.setDate(by.getDate() + to * 7)
+
+  return (
+    <span
+      dir="ltr"
+      className="meta-mono tnum block text-[10px] text-accent-300 uppercase"
+    >
+      {t('progress.forecast.line', {
+        target: String(Math.round(target)),
+        date: shortDate(by, locale),
+      })}
+    </span>
+  )
+}
+
+/** `OCT 3`. Latin figures in both locales, per §RTL. */
+function shortDate(date: Date, locale: string): string {
+  const opts: Intl.DateTimeFormatOptions = {
+    month: 'short',
+    day: 'numeric',
+    numberingSystem: 'latn',
+  }
+  try {
+    return new Intl.DateTimeFormat(locale, opts).format(date)
+  } catch {
+    return new Intl.DateTimeFormat('en', opts).format(date)
+  }
+}
+
+/**
+ * COACH'S FIX — design v3.0 §08's plateau card.
+ *
+ * "Flat e1RM ≥6 weeks with steady volume → one card naming it and prescribing
+ * one change." Two rules are enforced by the caller and stated here because
+ * they are what keep the card from becoming noise:
+ *
+ *   **At most one at a time.** A screen with four plateau cards is a screen
+ *   telling somebody their training is broken, which is both untrue and the
+ *   opposite of what the doctrine allows.
+ *
+ *   **Apply goes through the builder's preview.** `Preview change` opens the
+ *   existing flow rather than editing a routine in place: the AI proposes and
+ *   the lifter commits, and this is one of the places that rule is most
+ *   load-bearing because the change is to a plan they will follow for weeks.
+ */
+function PlateauCard({
+  name,
+  plateau,
+  unit,
+  onPreview,
+  onLater,
+}: {
+  name: string
+  plateau: {
+    weeks: number
+    fromKg: number
+    toKg: number
+    fromWeek: number
+    toWeek: number
+  }
+  unit: Unit
+  onPreview: () => void
+  onLater: () => void
+}) {
+  const { t } = useLocale()
+  return (
+    <section
+      aria-labelledby="coach-fix-kicker"
+      className="flex flex-col items-start gap-2.5 p-4"
+      style={{
+        background: 'var(--color-surface)',
+        borderRadius: 'var(--radius-panel)',
+        boxShadow: 'var(--shadow-card)',
+      }}
+    >
+      <h2 id="coach-fix-kicker" className="kicker text-accent-300">
+        {t('progress.plateau.kicker')}
+      </h2>
+      <p className="text-[14px] leading-[1.5]">
+        {t('progress.plateau.line', { name, weeks: String(plateau.weeks) })}
+      </p>
+      <span dir="ltr" className="chip-data tnum">
+        {t('progress.plateau.chip', {
+          from: formatWeight(plateau.fromKg, unit),
+          to: formatWeight(plateau.toKg, unit),
+          fromWeek: String(plateau.fromWeek),
+          toWeek: String(plateau.toWeek),
+        })}
+      </span>
+      <div className="flex w-full gap-2">
+        <button
+          type="button"
+          onClick={onPreview}
+          className="btn-base btn-hero press h-11 flex-1 text-[15px]"
+          style={{ borderRadius: 10 }}
+        >
+          {t('progress.plateau.preview')}
+        </button>
+        <button
+          type="button"
+          onClick={onLater}
+          className="btn-base btn-secondary press h-11 flex-1 text-[15px]"
+          style={{ borderRadius: 10 }}
+        >
+          {t('progress.plateau.later')}
+        </button>
       </div>
     </section>
   )

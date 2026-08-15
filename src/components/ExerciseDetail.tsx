@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useMemo, useState, useRef } from 'react'
 import { describeError, supabase } from '../lib/supabase'
 import { useBackLayer } from '../lib/use-back'
 import { useUnit } from '../lib/unit-context'
@@ -16,6 +16,9 @@ import {
 import { ExerciseFields } from './ExerciseFields'
 import { ExerciseThumb } from './ExerciseThumb'
 import { SeriesChart } from './SeriesChart'
+import { FORECAST_MIN_WEEKS, projectionSegment, weeksOfData } from '../lib/forecast'
+import { useCoach } from '../lib/coach-context'
+import { showsCoachSurfaces } from '../lib/coach-mode'
 import { useLocale } from '../lib/locale-context'
 
 /** One session's worth of this exercise, newest first. */
@@ -115,6 +118,7 @@ export function ExerciseDetail({
     tRef.current = t
   }, [t])
   const { unit } = useUnit()
+  const coachSpeaks = showsCoachSurfaces(useCoach().volume)
   useBackLayer(true, onBack)
 
   // Each piece of state carries the exercise it belongs to, so switching
@@ -502,6 +506,27 @@ export function ExerciseDetail({
     : 0
 
   const points = trend?.exerciseId === exerciseId ? trend.points : null
+
+  /**
+   * The dashed continuation — v3 §08. Empty unless the lift clears the same
+   * eight-week window the forecast line does and the coach is speaking.
+   *
+   * Both halves are computed from `points`, the series the solid line is drawn
+   * from, so the chart cannot show a projection its own line disagrees with.
+   */
+  const projection = useMemo(() => {
+    if (!coachSpeaks || !points || points.length < 2) return []
+    const series = points.map((p) => ({
+      started_at: p.started_at,
+      kg: p.best_1rm_kg,
+    }))
+    if (weeksOfData(series) < FORECAST_MIN_WEEKS) return []
+    const values = points.map((p) => Number(p.best_1rm_kg))
+    const segment = projectionSegment(values, 2)
+    // A flat or falling fit is not a forecast, and drawing one downward would
+    // be the chart predicting decline from noise.
+    return segment.length > 0 && segment[0] > values[values.length - 1] ? segment : []
+  }, [coachSpeaks, points])
   const progress = points ? e1rmProgress(points) : null
   const ladder = hist
     ? ladderBands(
@@ -595,8 +620,27 @@ export function ExerciseDetail({
               since {formatRelativeDay(progress.since_at, locale)}
             </span>
           </p>
+          {/* v3 §08: the chart gains a dashed projection continuing from the
+              last real point. Dashed already means "not yet real" in this
+              grammar — it is what a ghost row's divider says — so the segment
+              needs no legend beyond the one above it.
+
+              Gated on the same eight weeks the forecast line is, and computed
+              from the same series the solid line is drawn from, so the two
+              cannot disagree about where the lift is heading. Under the
+              window, or with the coach silenced, the chart is exactly what it
+              was before v3. */}
+          <div className="flex items-baseline justify-between gap-2">
+            <span className="sr-only">{t('detail.e1rm')}</span>
+            {projection.length > 0 && (
+              <span className="meta-mono ms-auto text-[10px] text-accent-300 uppercase">
+                {t('detail.projection')}
+              </span>
+            )}
+          </div>
           <SeriesChart
             values={points.map((p) => Number(p.best_1rm_kg))}
+            projection={projection}
             baseline="data"
             ariaLabel={t('detail.chart.aria', {
               sessions: String(progress.sessions),

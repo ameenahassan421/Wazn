@@ -506,7 +506,37 @@ entries). While verifying it, one pre-existing test failure surfaced on
 clean `main` (`lazy-screen.test.tsx`, sessionStorage case); tracked as its own
 task.
 
-**Blocked on Ameen:** run `LAUNCH.md` on a real phone with a second account
+**Design v3.0 "the coach everywhere" BUILT 2026-08-14, NOT APPLIED.** The
+`design_handoff_v3_ai_coach` bundle is implemented: the six-tab bar (Ameen's
+call — the handoff reverses the 2026-08-13 retirement, and the card doors are
+kept alongside it), the check-in row and Today brief, the adaptive ghost rows
+with reasoning chips and once-per-cause auto-regulation, the explainer sheet,
+"Tell the coach", the mode selector and week review, forecasts and the plateau
+card, the Body tab, the AI dial in Settings, and the AuthHero front page.
+114 new message keys in both locales. Full detail and the four deliberately
+unbuilt items are in DECISIONS.md 2026-08-14.
+
+**Migration 0027 is written and proven, and is NOT in production.** It executes
+from empty through `npm run check:sql` and its own suite
+(`supabase/tests/body_and_coach.sql`) passes, alongside the two that existed.
+**Ameen approved applying it; the session that built it could not.** There is
+no `SUPABASE_ACCESS_TOKEN` in this environment and the Supabase MCP server
+needs an interactive OAuth flow, so the Management API path CLAUDE.md describes
+was not available. That reverses, for this session only, the "sandboxed
+sessions CAN reach Supabase" line — the capability is per-session, not
+permanent, and it should be checked rather than assumed.
+
+Until it is applied, every v3 surface degrades to an empty state and nothing
+throws: the Body tab reads "Log a weigh-in to start the second chart.", the
+check-in row's write fails silently and readiness falls back to Normal, mode
+and volume stay in localStorage, and the forecast lines are absent. That is the
+same shape 0023 and 0025 shipped in. **What is NOT true until it is applied:
+the acceptance items that depend on stored data** — forecasts, the protein
+week, measurements, and cross-device mode/volume.
+
+**Blocked on Ameen:** apply migration 0027 (see above — it is the one piece of
+v3 that a session without a Management API token cannot finish);
+run `LAUNCH.md` on a real phone with a second account
 (also GATE U7's last item, not reachable from a sandboxed session); rotate the
 OpenRouter key, which was shared in a chat session and is compromised by
 construction; raise `rate_limit_email_sent` from 2 before any invite wave.

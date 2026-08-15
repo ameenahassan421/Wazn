@@ -9,6 +9,7 @@ import { useUnit } from '../lib/unit-context'
 import { useLocale } from '../lib/locale-context'
 import {
   formatDuration,
+  formatRelativeDay,
   formatShortDate,
   formatSyncedAt,
   formatWeekday,
@@ -29,7 +30,23 @@ import { IconBack, IconHistory, PlateRing } from '../components/icons'
 import { SetEntry } from '../components/SetEntry'
 import { SessionQueue } from '../components/SessionQueue'
 import { UpNextCard } from '../components/UpNextCard'
-import { recentRecords, thisWeek } from '../lib/progress'
+import { recentRecords, sessionsPerWeek, thisWeek } from '../lib/progress'
+import { useCoach } from '../lib/coach-context'
+import {
+  MODE_BEHAVIOUR,
+  showsCoachSurfaces,
+  usesGhostIntelligence,
+} from '../lib/coach-mode'
+import { computeReadiness, readinessChip, type CheckIn } from '../lib/readiness'
+import { fetchCheckIn, logCheckIn } from '../lib/body-store'
+import { trimmedPlan, verdictFor } from '../lib/ghost-reason'
+import { streakState } from '../lib/streak'
+import { CheckInRow } from '../components/CheckInRow'
+import { TodayBrief } from '../components/TodayBrief'
+import { NextRoutineRow, StatTiles } from '../components/StatTiles'
+import { ReasonSheet } from '../components/ReasonSheet'
+import { TellCoachSheet } from '../components/TellCoachSheet'
+import type { ProposedEdit } from '../lib/tell-coach'
 import type { RecordSetRow, SessionVolumeRow } from '../lib/progress'
 import { LastPrCard, RecentSessionCard, WeekCard } from '../components/HomeFeed'
 import { countsForRecords, totalVolumeKg } from '../lib/summary'
@@ -37,7 +54,7 @@ import { DEFAULT_REST_SECONDS, useRestTimer } from '../lib/use-rest-timer'
 import { FinishSummary } from '../components/FinishSummary'
 import { RoutineList } from '../components/RoutineList'
 import { InstallPrompt } from '../components/InstallPrompt'
-import { CoachBrief } from '../components/CoachBrief'
+import { CoachBrief, useCoachBrief } from '../components/CoachBrief'
 import { Welcome } from '../components/Welcome'
 import { InviteCard } from '../components/InviteCard'
 import type { Inviter } from '../lib/social'
@@ -55,7 +72,7 @@ import type { RoutineDetail, RoutineDraft } from '../lib/routines'
 import { groupOf, nextGroupId, ungroupIds } from '../lib/supersets'
 import { summarise } from '../lib/summary'
 import type { WorkoutSummary } from '../lib/summary'
-import { resolveRest } from '../lib/rest'
+import { clampRest, earnedRest, effortPercent, resolveRest } from '../lib/rest'
 import { commitOutcome } from '../lib/commit'
 import type { CommitOutcome } from '../lib/commit'
 import { buildBlock, groupAdjacent, mergeOrder } from '../lib/plan'
@@ -103,6 +120,17 @@ import {
 import { isOnline, useOnline } from '../lib/use-online'
 
 type View = 'overview' | 'picker' | 'entry' | 'summary' | 'routine' | 'import'
+
+/**
+ * The smallest jump a lifter can actually load, in kilograms.
+ *
+ * "Plates decide the jumps" (mode.strength.body), and the smallest pair of
+ * plates in a normal gym is 1.25 kg a side — so 2.5 kg on the bar. A constant
+ * rather than a preference because there is no UI for it yet and inventing one
+ * would be a settings row nobody asked for; `plates.ts` already knows the real
+ * plate inventory and this is the number that inventory implies.
+ */
+const INCREMENT_KG = 2.5
 
 /**
  * The Hevy import, loaded on demand.
@@ -235,6 +263,9 @@ export function LogScreen({
 }) {
   const { unit } = useUnit()
   const { t, locale } = useLocale()
+  const { mode, volume: coachVolume, weeklyTarget } = useCoach()
+  const coachSpeaks = showsCoachSurfaces(coachVolume)
+  const ghostsThink = usesGhostIntelligence(coachVolume)
   /**
    * `t` changes identity when the locale does. `load` and `drain` must NOT:
    * an effect calls `load()` whenever its identity changes, so putting `t` in
@@ -400,6 +431,50 @@ export function LogScreen({
   // The home feed's two extra facts. Idle screen only — mid-workout neither
   // card is on screen, so neither query runs.
   const [weekRows, setWeekRows] = useState<SessionVolumeRow[]>([])
+
+  /**
+   * v3 §New inputs 1: today's one tap, and the two mid-workout sheets.
+   *
+   * The check-in is optimistic — the row shows the tap immediately and the
+   * write is fire-and-forget. A check-in that fails to save must not produce
+   * an error mid-warm-up; readiness falls back to Normal on the next load,
+   * silently, which is what a skipped check-in means anyway.
+   */
+  const [checkIn, setCheckIn] = useState<CheckIn | null>(null)
+  /**
+   * Per-exercise ghost weights the lifter accepted from "Tell the coach".
+   *
+   * Session-scoped and never persisted: it is a decision about today, and a
+   * lifter who eased off because a shoulder was sore on Tuesday must not find
+   * Thursday's ghosts still eased. Cleared with the rest of the board state
+   * when a workout ends.
+   */
+  const [ghostOverrides, setGhostOverrides] = useState<
+    Map<string, { weightKg: number }>
+  >(new Map())
+  /**
+   * Lifts where the reader pressed "Use last session" on the explainer.
+   *
+   * Session-scoped, per exercise, and it stops `verdictFor` being consulted at
+   * all for that block — so the ghosts fall back to v2.2's precedence and the
+   * chip disappears with them.
+   *
+   * The first cut of this cleared the check-in instead, which only unwound the
+   * READINESS cause: press "Use last session" on a progression verdict and the
+   * bar stayed up, which is a button that does not do what it says. Overruling
+   * the coach has to overrule all of it.
+   */
+  const [overruled, setOverruled] = useState<Set<string>>(new Set())
+  /**
+   * What the running rest was earned by, as a percentage of the lift's best.
+   *
+   * Set alongside the timer for the same reason `restingExerciseId` is: "how
+   * hard was that set" is a fact about the commit, and the board cannot
+   * recover it afterwards once the next ghost has been drawn.
+   */
+  const [restEffort, setRestEffort] = useState<number | null>(null)
+  const [explaining, setExplaining] = useState<string | null>(null)
+  const [telling, setTelling] = useState<string | null>(null)
   const [recordRows, setRecordRows] = useState<RecordSetRow[]>([])
 
   const [view, setView] = useState<View>(
@@ -812,10 +887,91 @@ export function LogScreen({
   }, [offlineStore, userId, workout, sets, order, planned, plan, previousByExercise])
 
   /** Override, then the catalogue's default for the movement, then the app's. */
+  /**
+   * Today's check-in, read once.
+   *
+   * Never blocks anything: the row renders unselected while this is in
+   * flight, and a tap in the meantime wins because the handler sets state
+   * directly. A failure — offline, or 0027 unapplied — leaves it null, which
+   * `computeReadiness` reads as Normal, silently.
+   */
+  useEffect(() => {
+    if (!ghostsThink) return
+    let active = true
+    void fetchCheckIn().then((state) => {
+      if (active && state) setCheckIn(state)
+    })
+    return () => {
+      active = false
+    }
+  }, [ghostsThink])
+
+  /**
+   * How long to rest after a set of this lift — v3 §04, the earned rest.
+   *
+   * **Manual override always wins and is remembered per exercise.** That is
+   * the spec's rule and it is the first branch here: if this lifter has set a
+   * duration for this lift, nothing computed gets a say. `earnedRest` is
+   * consulted only where `resolveRest` would otherwise fall through to the
+   * catalogue default or the app default — the two cases where the app was
+   * guessing anyway, and where a guess informed by what the set actually cost
+   * is a better guess.
+   *
+   * `restEffort` is the percentage the last committed set represented against
+   * that lift's best estimate. Null when either half is unknown, and null
+   * means the computed duration is skipped entirely rather than invented.
+   */
+  /**
+   * Each lift's best estimated 1RM, for v3 §04's effort-aware rest.
+   *
+   * Its own request rather than a seventh entry in the deadline-bound load
+   * above: that `Promise.all` decides whether the Log screen renders at all,
+   * and a rest duration is not worth a share of that risk. A failure here
+   * means `effortPercent` answers null and rest falls back to the
+   * per-exercise value — which is what it was before v3.
+   */
+  const [bestE1rm, setBestE1rm] = useState<Map<string, number>>(new Map())
+  useEffect(() => {
+    if (!ghostsThink) return
+    let active = true
+    void (async () => {
+      try {
+        const { data, error: failed } = await supabase.rpc('exercise_bests')
+        if (!active || failed || !Array.isArray(data)) return
+        setBestE1rm(
+          new Map(
+            (data as ExerciseBestRow[]).map((r) => [
+              r.exercise_id,
+              Number(r.best_e1rm_kg),
+            ]),
+          ),
+        )
+      } catch {
+        /* rest keeps its per-exercise value */
+      }
+    })()
+    return () => {
+      active = false
+    }
+  }, [ghostsThink])
+
+  const bestE1rmFor = useCallback(
+    (exerciseId: string) => bestE1rm.get(exerciseId) ?? null,
+    [bestE1rm],
+  )
+
   const restFor = useCallback(
-    (exercise: Exercise) =>
-      resolveRest(exercise.default_rest_seconds, restOverrides.get(exercise.id)),
-    [restOverrides],
+    (exercise: Exercise, effort?: number | null) => {
+      const override = restOverrides.get(exercise.id)
+      if (override !== null && override !== undefined) return clampRest(override)
+      if (!ghostsThink) {
+        return resolveRest(exercise.default_rest_seconds, override)
+      }
+      const earned = earnedRest(effort ?? null, MODE_BEHAVIOUR[mode].rest, 'normal')
+      if (earned !== null) return earned
+      return resolveRest(exercise.default_rest_seconds, override)
+    },
+    [restOverrides, ghostsThink, mode],
   )
 
   /**
@@ -1658,6 +1814,48 @@ export function LogScreen({
    * the table's own constraint says so, so blanking it removes the row rather
    * than storing an empty string the block would render as a stray separator.
    */
+  /**
+   * Accept a proposed edit from "Tell the coach" — v3 §07.
+   *
+   * Four shapes, and every one of them lands in state the board already
+   * understands. Nothing here writes a set: the AI proposes and the lifter
+   * commits, and pressing Accept moves the PLAN, never the log. That is the
+   * same boundary a ghost row has had since v2.2 and this does not cross it.
+   */
+  async function applyProposedEdit(edit: ProposedEdit) {
+    setTelling(null)
+    switch (edit.kind) {
+      case 'ease-load': {
+        // The eased weight is carried as a per-exercise override that the
+        // block memo reads through `ghostOverrides`; the next commit takes it
+        // from there exactly as it would take a routine target.
+        setGhostOverrides((prev) =>
+          new Map(prev).set(edit.exerciseId, { weightKg: edit.toKg }),
+        )
+        return
+      }
+      case 'trim': {
+        // A trim is negative `extra`, which `buildBlock` already floors at
+        // what has been committed — so it can never retract a logged set.
+        setExtraRows((prev) =>
+          new Map(prev).set(edit.exerciseId, edit.toSets - edit.fromSets),
+        )
+        return
+      }
+      case 'swap': {
+        // §10's smart swap is the picker's job. Opening it with the block
+        // still on the board is the honest version: the lifter picks the
+        // replacement and the old block is theirs to remove.
+        setView('picker')
+        return
+      }
+      case 'note': {
+        if (edit.text) await saveExerciseNote(edit.exerciseId, edit.text)
+        return
+      }
+    }
+  }
+
   async function saveExerciseNote(exerciseId: string, note: string) {
     const trimmed = note.trim()
     setExerciseNotes((prev) => {
@@ -2046,12 +2244,19 @@ export function LogScreen({
     // rest timer that starts a round trip late is a rest timer that is wrong by
     // a round trip. Everything else the commit implies — round-rest, alternation, warm-ups, "no timer on this
     // lift" — is decided by `commitOutcome`, which is tested.
+    // v3 §04: what this set cost, as a percentage of the lift's best estimate.
+    // A heavy single earns four minutes where a warm-up earns ninety seconds,
+    // and the figure is computed HERE because the commit is the only moment
+    // that knows what was actually lifted. Null — no history for the lift, or
+    // a bodyweight set — leaves `restFor` on the per-exercise value.
+    const effort =
+      setType === 'warmup' ? null : effortPercent(weightKg, bestE1rmFor(exercise.id))
     const outcome = commitOutcome({
       sets: nextSets,
       exerciseId: exercise.id,
       setType,
       supersetGroup,
-      restSeconds: restFor(exercise),
+      restSeconds: restFor(exercise, effort),
     })
     if (outcome.advanceTo) {
       const target = exercisesById.get(outcome.advanceTo)
@@ -2059,6 +2264,7 @@ export function LogScreen({
     }
     if (outcome.restSeconds !== null) {
       timer.start(outcome.restSeconds)
+      setRestEffort(effort)
       // The lift the canvas will talk about: the partner in a superset, this
       // exercise otherwise. Set alongside the timer rather than derived from
       // the board, because "whose rest is this" is a fact about the commit and
@@ -2100,6 +2306,29 @@ export function LogScreen({
    * Everything here is derived. No ghost is stored anywhere, and nothing in
    * this memo writes — pressing a check is the only thing that does.
    */
+  /**
+   * v3's readiness, and everything downstream of it.
+   *
+   * Computed, never displayed as a gauge (§New inputs). `daysRested` comes
+   * from the log — the only one of the four inputs the app always has — and
+   * the wearable terms are absent until a platform health grant exists, which
+   * `computeReadiness` treats as Normal rather than as a reason to nag.
+   */
+  const daysRested = useMemo(() => {
+    if (!lastSession?.startedAt) return null
+    const then = new Date(lastSession.startedAt).getTime()
+    if (Number.isNaN(then)) return null
+    return Math.floor((Date.now() - then) / 86_400_000)
+  }, [lastSession])
+
+  const readiness = useMemo(
+    () =>
+      usesGhostIntelligence(coachVolume)
+        ? computeReadiness({ checkIn, daysRested })
+        : ('normal' as const),
+    [checkIn, daysRested, coachVolume],
+  )
+
   const blocks = useMemo<OverviewBlock[]>(() => {
     const byExercise = new Map<string, WorkoutSet[]>()
     for (const set of sets) {
@@ -2108,18 +2337,95 @@ export function LogScreen({
     }
     return displayOrder.map((exerciseId) => {
       const exercise = exercisesById.get(exerciseId)
+      const previous = previousByExercise.get(exerciseId) ?? []
+      const block = buildBlock({
+        exerciseId,
+        sets: byExercise.get(exerciseId) ?? [],
+        previous,
+        plan: plan.get(exerciseId),
+        supersetGroup: groupOf(sets, exerciseId),
+        extra: extraRows.get(exerciseId) ?? 0,
+      })
+
+      /**
+       * v3 §02: the ghost's precedence becomes routine targets + progression
+       * verdict + readiness.
+       *
+       * The verdict is computed for the FIRST ghost in the block and applied
+       * to every ghost after it, which is what "recalculates once, silently"
+       * means in practice — every remaining row gets the same values from the
+       * same cause, rather than each row re-deciding and drifting apart. The
+       * cause itself is derived from the log (`causeOf`), so re-running this
+       * memo on every render is free and idempotent.
+       *
+       * Under Coach volume `off` this is skipped entirely and `buildBlock`'s
+       * v2.2 output ships verbatim — no verdict, no chip, no adjustment.
+       */
+      const verdict =
+        ghostsThink && !overruled.has(exerciseId)
+          ? verdictFor(block.committed, {
+              mode,
+              readiness,
+              previous: previous
+                .filter((p) => p.set_type !== 'warmup')
+                .map((p) => ({ weightKg: p.weight_kg, reps: p.reps })),
+              plan: plan.get(exerciseId),
+              committed: block.rows
+                .filter((r) => r.kind === 'committed' && r.setType !== 'warmup')
+                .map((r) => ({
+                  weightKg: r.weightKg,
+                  reps: r.reps,
+                  label: r.label,
+                })),
+              incrementKg: INCREMENT_KG,
+            })
+          : null
+
+      // A verdict is only a claim if there is a ghost left for it to be about.
+      // Without this the meta line read "3 / 3 · coach adjusted today" on a
+      // finished block — an adjustment to rows that no longer exist, which is
+      // the app describing something the reader cannot see.
+      const hasGhost = block.rows.some((r) => r.kind === 'ghost')
+      const speaks = hasGhost && verdict !== null && verdict.cause !== 'none'
+      const planned = ghostsThink
+        ? trimmedPlan(block.planned, block.committed, readiness)
+        : block.planned
+
+      // An accepted "Tell the coach" edit outranks the verdict: the lifter
+      // pressed Accept on it, and a coach that immediately re-proposed its own
+      // number would be a coach that does not listen.
+      const override = ghostOverrides.get(exerciseId)
+      const rows =
+        override || (speaks && verdict !== null)
+          ? block.rows.map((row) =>
+              row.kind === 'ghost'
+                ? {
+                    ...row,
+                    weightKg: override?.weightKg ?? verdict?.weightKg ?? row.weightKg,
+                    reps: verdict?.reps ?? row.reps,
+                  }
+                : row,
+            )
+          : block.rows
+
       return {
-        ...buildBlock({
-          exerciseId,
-          sets: byExercise.get(exerciseId) ?? [],
-          previous: previousByExercise.get(exerciseId) ?? [],
-          plan: plan.get(exerciseId),
-          supersetGroup: groupOf(sets, exerciseId),
-          extra: extraRows.get(exerciseId) ?? 0,
-        }),
+        ...block,
+        // A light day is "same lifts, two fewer sets", and the board has to
+        // agree with the Today brief that said so. Committed rows are never
+        // dropped — `trimmedPlan` floors at what has been logged.
+        planned,
+        rows: rows.slice(
+          0,
+          Math.max(
+            planned + rows.filter((r) => r.setType === 'warmup').length,
+            block.committed,
+          ),
+        ),
         exercise,
         note: exerciseNotes.get(exerciseId) ?? null,
         restSeconds: exercise ? restFor(exercise) : DEFAULT_REST_SECONDS,
+        verdict: speaks ? verdict : null,
+        adjusted: speaks,
       }
     })
   }, [
@@ -2131,6 +2437,11 @@ export function LogScreen({
     exerciseNotes,
     exercisesById,
     restFor,
+    ghostsThink,
+    ghostOverrides,
+    overruled,
+    mode,
+    readiness,
   ])
 
   /**
@@ -2245,6 +2556,52 @@ export function LogScreen({
   )
 
   const week = useMemo(() => thisWeek(weekRows), [weekRows])
+
+  /**
+   * v3's weekly-target streak, with freezes. Distinct from `streak` above,
+   * which is `weekly_streak`'s server-side count of weeks with ANY session —
+   * the number the greeting has always shown. Both are kept on purpose: the
+   * server's answer is what the app has always said, and this one is measured
+   * against the target the lifter set, which is what the FREEZE tile needs.
+   */
+  /**
+   * The Today brief's sentence and chip.
+   *
+   * Two sources, and readiness wins when it has something to say. "Sleep ran
+   * short. Same lifts, two fewer sets." is a claim about TODAY, and it
+   * outranks "chest has rested four days" — which is a claim about the plan —
+   * because the board underneath is about to act on the first one.
+   *
+   * `readinessChip` returns null when nothing was actually measured, and that
+   * null is what stops the readiness sentence rendering with no evidence: the
+   * brief falls back to its ordinary line rather than claiming a reason it
+   * cannot show (doctrine 1). Without a wearable the chip is built from the
+   * check-in and the rest days, which are figures the app genuinely has.
+   */
+  const coachBrief = useCoachBrief()
+  const readinessLine = useMemo(() => {
+    if (readiness !== 'light') return null
+    const chip = readinessChip(
+      { checkIn, daysRested },
+      {
+        duration: (minutes) =>
+          `${Math.floor(minutes / 60)}:${String(minutes % 60).padStart(2, '0')}`,
+        sleep: (value) => t('readiness.chip.sleep', { value }),
+        checkIn: (state) => t(`readiness.chip.${state}`),
+        rested: (days) => t('readiness.chip.rested', { n: String(days) }),
+      },
+    )
+    if (!chip) return null
+    return { line: t('readiness.light'), chip }
+  }, [readiness, checkIn, daysRested, t])
+
+  const briefLine = readinessLine?.line ?? coachBrief.line
+  const briefChipText = readinessLine?.chip ?? coachBrief.chip
+
+  const weekStreak = useMemo(
+    () => streakState(sessionsPerWeek(weekRows, 26), weeklyTarget),
+    [weekRows, weeklyTarget],
+  )
   const lastRecord = useMemo(
     () => recentRecords(recordRows, (id) => exercisesById.get(id)?.name, 1)[0] ?? null,
     [recordRows, exercisesById],
@@ -2371,6 +2728,12 @@ export function LogScreen({
     // only door is the door — but a single routine IS what is up next, so the
     // card takes it while the "due" label does not.
     const upNext = dueRoutine(routines) ?? (routines.length === 1 ? routines[0] : null)
+    // The one after it, for §01's next-routine row. Null when there is only
+    // one routine — "next: the only routine you have" is not a fact worth a
+    // card, and it is the same row the brief is already about.
+    const nextRoutine = upNext
+      ? (routines.find((r) => r.id !== upNext.id) ?? null)
+      : null
 
     return (
       <div className="flex flex-col gap-[18px] pt-4">
@@ -2381,61 +2744,58 @@ export function LogScreen({
         {cachedAt !== null && <CachedNote savedAt={cachedAt} />}
         <SyncNote online={online} pending={pendingSetCount(queue)} />
 
-        {/* The greeting. Two lines, as the design has it: what today is by
-            the calendar, then what today is by the plan.
+        {/* v3 §01 replaces the greeting with the check-in row. The two facts
+            the greeting carried — the streak and today's date — move to the
+            STREAK and WEEK tiles below, which is exactly where the design puts
+            them; keeping both would say the same thing twice, six inches
+            apart, which is what the greeting's own comment says it removed
+            once already.
 
-            The design's hero is "{Plan} day, {Name}." — this app has no name
-            to put there. `profiles.display_name` has existed since migration
-            0001 and nothing has ever written it; the only name the app
-            collects is a username, and "Upper A, @ameen." is worse than no
-            greeting at all. So the hero names the session and stops, which is
-            the half of the sentence the app can actually stand behind. And it
-            is the routine name alone rather than "{Plan} day" — routine names
-            here are free text and most of them already end in "Day". */}
-        <div>
-          <p className="flex items-center gap-2 text-[13px] text-muted">
-            {/* The streak plates stay: they are this app's own mark for the
-                fact the design writes as "week 12", and they were already
-                built. What goes is the separate streak paragraph under the
-                Start button — it said the same thing twice.
-
-                Every figure is isolated. Unisolated, the two counts ended up
-                adjacent under Arabic — "6" and "0" printed side by side in a
-                sentence that never put them together. */}
-            {streak && streak.weeks > 0 && <StreakPlates weeks={streak.weeks} />}
-            <span className="min-w-0 truncate">
-              {streak && streak.weeks > 0 ? (
-                <>
-                  <span dir="ltr" className="tnum">
-                    {streak.weeks}
-                  </span>{' '}
-                  {t('log.streak.week_streak')}
-                  {streak.current_week_sessions > 0 && (
-                    <>
-                      {' · '}
-                      <span dir="ltr" className="tnum">
-                        {streak.current_week_sessions}
-                      </span>{' '}
-                      {t('log.streak.this_week')}
-                    </>
-                  )}
-                </>
-              ) : (
-                formatShortDate(new Date().toISOString())
-              )}
-            </span>
-          </p>
-          {/* The hero names today. The design's is "{Plan} day, {Name}." and
-              this app has neither half to put there: nothing has ever written
-              `profiles.display_name`, and the plan's name is already the
-              subject of the Up next card two rows down — using it here made
-              the screen say "Core & Conditioning" twice in one glance. The
-              weekday is what is left, and it is the honest half: it is the
-              question the design's hero actually answers. */}
-          <h1 className="font-display mt-2 text-[34px] leading-[1.12] font-extrabold tracking-[-0.03em]">
-            {formatWeekday(new Date(), locale)}.
-          </h1>
-        </div>
+            Under Coach volume Off the greeting comes back and the check-in
+            row does not exist: `off` renders the v2.2 app verbatim, and the
+            check-in is a v3 input. */}
+        {coachSpeaks ? (
+          <CheckInRow
+            value={checkIn}
+            onChange={(state) => {
+              // Optimistic. A check-in that failed to save must not produce an
+              // error mid-warm-up; the next load reads null, which is Normal,
+              // silently — the same thing a skipped check-in means.
+              setCheckIn(state)
+              void logCheckIn(state)
+            }}
+          />
+        ) : (
+          <div>
+            <p className="flex items-center gap-2 text-[13px] text-muted">
+              {streak && streak.weeks > 0 && <StreakPlates weeks={streak.weeks} />}
+              <span className="min-w-0 truncate">
+                {streak && streak.weeks > 0 ? (
+                  <>
+                    <span dir="ltr" className="tnum">
+                      {streak.weeks}
+                    </span>{' '}
+                    {t('log.streak.week_streak')}
+                    {streak.current_week_sessions > 0 && (
+                      <>
+                        {' · '}
+                        <span dir="ltr" className="tnum">
+                          {streak.current_week_sessions}
+                        </span>{' '}
+                        {t('log.streak.this_week')}
+                      </>
+                    )}
+                  </>
+                ) : (
+                  formatShortDate(new Date().toISOString())
+                )}
+              </span>
+            </p>
+            <h1 className="font-display mt-2 text-[34px] leading-[1.12] font-extrabold tracking-[-0.03em]">
+              {formatWeekday(new Date(), locale)}.
+            </h1>
+          </div>
+        )}
 
         {/* B1's pre-workout briefing. Mounted HERE and nowhere else, which is
             what enforces §4-A1's core-loop rule: this branch renders only
@@ -2448,13 +2808,59 @@ export function LogScreen({
             the surface the invite never used to reach. */}
         {inviter && <InviteCard inviter={inviter} />}
 
-        <CoachBrief onOpen={onOpenCoach} />
+        {/* v3 §01: the dashed "Up next" card gains a coach line and becomes
+            the Today brief. It REPLACES both `UpNextCard` and `CoachBrief`
+            when there is a routine to brief on — the two of them side by side
+            would be two coach cards saying one thing.
 
-        {upNext && (
-          <UpNextCard
-            routine={upNext}
+            With no routine, `CoachBrief` renders instead, in its first-run
+            branch: on an empty home the coach is the one thing with something
+            to offer, because it can draft the week that fills everything else
+            in. Under Coach volume Quiet or Off it is v2.2's pair, unchanged. */}
+        {coachSpeaks && upNext ? (
+          <TodayBrief
+            title={upNext.name}
+            line={briefLine}
+            chip={briefChipText}
             busy={routineBusy === upNext.id}
             onStart={() => void startFromRoutine(upNext)}
+            onStartEmpty={() => void startWorkout()}
+          />
+        ) : (
+          <>
+            <CoachBrief onOpen={onOpenCoach} />
+            {upNext && (
+              <UpNextCard
+                routine={upNext}
+                busy={routineBusy === upNext.id}
+                onStart={() => void startFromRoutine(upNext)}
+              />
+            )}
+          </>
+        )}
+
+        {/* WEEK · STREAK · FREEZE. The freeze count is visible BEFORE it is
+            needed rather than announced after it is spent: a streak with
+            hidden protection is still a streak that threatens you. */}
+        {coachSpeaks && (
+          <StatTiles
+            tiles={[
+              {
+                key: 'week',
+                labelKey: 'home.tile.week',
+                value: `${weekStreak.thisWeek} / ${weekStreak.target}`,
+              },
+              {
+                key: 'streak',
+                labelKey: 'home.tile.streak',
+                value: t('home.tile.weeks', { n: String(weekStreak.weeks) }),
+              },
+              {
+                key: 'freeze',
+                labelKey: 'home.tile.freeze',
+                value: String(weekStreak.freezesLeft),
+              },
+            ]}
           />
         )}
 
@@ -2468,10 +2874,43 @@ export function LogScreen({
             that appears only once you have walked through it is not a door,
             and Progress had no other way in. An empty week row is not empty
             anyway: it shows today, which is the whole invitation. */}
+        {/* The record card is a door to Progress and says something no tile
+            does. The WEEK bar row that used to sit beside it is gone under v3:
+            the WEEK tile above already answers "how has this week gone", and
+            two summaries of one week six inches apart is the thing the
+            greeting was removed for. It comes back with the tiles under Coach
+            volume Off, where there are no tiles to duplicate.
+
+            History loses nothing — it has the circle beside Start and a tab. */}
         <div className="flex gap-3">
-          <WeekCard days={week} onOpen={onOpenHistory} />
+          {!coachSpeaks && <WeekCard days={week} onOpen={onOpenHistory} />}
           <LastPrCard record={lastRecord} onOpen={onOpenProgress} />
         </div>
+
+        {/* v3 §01's next-routine row: what is after today. Not a second CTA —
+            the Today brief above is this screen's one hero (§2.4) and this is
+            the answer to "and then what", which is read rather than pressed.
+            It opens the routine's own start, so a lifter who wants tomorrow's
+            session today is one tap from it. */}
+        {coachSpeaks && nextRoutine && (
+          <NextRoutineRow
+            name={nextRoutine.name}
+            meta={[
+              nextRoutine.exercise_count == null
+                ? null
+                : t('upnext.exercises', { n: String(nextRoutine.exercise_count) }),
+              nextRoutine.last_run_at === null
+                ? t('upnext.never')
+                : t('upnext.last_done', {
+                    day: formatRelativeDay(nextRoutine.last_run_at, locale),
+                  }),
+            ]
+              .filter(Boolean)
+              .join(' · ')}
+            when={null}
+            onOpen={() => void startFromRoutine(nextRoutine)}
+          />
+        )}
 
         {/* One line where a list of exercise rows used to be. The old recap
             was the same facts spread over four rows of thumbnails; the design
@@ -2532,18 +2971,15 @@ export function LogScreen({
         <div
           className="sticky z-10 -mx-[18px] mt-auto flex items-center gap-2.5 px-[18px] pt-4"
           style={{
-            // Flush to the bottom edge, like the design's bar, so the fade
-            // reaches the edge of the screen. Anchored anywhere above it, a
-            // strip of the routines list shows underneath and reads as the
-            // bar having come loose.
-            bottom: 0,
-            // The row owns the safe-area inset now that it sits at 0.
-            paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 22px)',
-            // No drift at the end of the scroll: the correction is `bottom`
-            // minus the trailing space, and the only trailing space is main's
-            // padding. The old value added 64px for a tab bar that is no
-            // longer there.
-            marginBottom: 'calc(-1 * max(env(safe-area-inset-bottom, 0px), 10px))',
+            // Flush to the top of the tab bar, which owns the safe-area inset.
+            // Anchored anywhere above that, a strip of the routines list shows
+            // underneath and reads as the bar having come loose.
+            bottom: 'var(--tab-space)',
+            paddingBottom: '22px',
+            // No drift at the end of the scroll: `bottom` minus the trailing
+            // space, and the only trailing space is main's padding
+            // (`--tab-space` + 10px). The `--tab-space` terms cancel.
+            marginBottom: '-10px',
             // The design's fade rather than a rule: the row floats over the
             // feed instead of cutting it off, and the last card stays half
             // visible under it as a hint that the list continues.
@@ -2749,7 +3185,8 @@ export function LogScreen({
           onAddSet={async (values) => (await addSet(values)) !== null}
           timer={timer}
           onExpandRest={() => setRestExpanded(true)}
-          restSeconds={restFor(current)}
+          restSeconds={restFor(current, restEffort)}
+          restEffort={coachSpeaks ? restEffort : null}
           onSaveRest={(seconds) => void saveRestDefault(current.id, seconds)}
           supersetGroup={groupOf(sets, current.id) ?? pendingGroup}
           onSuperset={() => void beginSuperset()}
@@ -2793,8 +3230,60 @@ export function LogScreen({
               }
               onUngroup={(exerciseId) => void ungroupExercise(exerciseId)}
               onRemove={(exerciseId) => void removeFromBoard(exerciseId)}
+              // Both are absent under Coach volume Off, so the board renders
+              // v2.2 verbatim: no chip to tap and no coach in the overflow.
+              onExplain={coachSpeaks ? (id) => setExplaining(id) : undefined}
+              onTellCoach={coachSpeaks ? (id) => setTelling(id) : undefined}
             />
           )}
+
+          {/* v3 §02's explainer. "Trust is built by showing the work." */}
+          {explaining &&
+            (() => {
+              const block = blocks.find((b) => b.exerciseId === explaining)
+              if (!block?.verdict) return null
+              return (
+                <ReasonSheet
+                  verdict={block.verdict}
+                  exerciseName={block.exercise?.name ?? t('overview.exercise_fallback')}
+                  onKeep={() => setExplaining(null)}
+                  onUseLast={() => {
+                    // The lifter overruling the coach, for this lift and this
+                    // session. The block falls back to v2.2's precedence —
+                    // last session's values, with the `↺` glyph — and the chip
+                    // goes with it. The dial in Settings is what makes it
+                    // permanent and app-wide.
+                    setOverruled((prev) => new Set(prev).add(explaining))
+                    setExplaining(null)
+                  }}
+                  onClose={() => setExplaining(null)}
+                />
+              )
+            })()}
+
+          {/* v3 §07. Mid-workout only — this branch does not render when no
+              workout is open, which is what makes "the surface does not exist
+              outside an active workout" true rather than merely intended. */}
+          {telling &&
+            (() => {
+              const block = blocks.find((b) => b.exerciseId === telling)
+              if (!block) return null
+              const ghost = block.rows.find((r) => r.kind === 'ghost')
+              return (
+                <TellCoachSheet
+                  exerciseName={block.exercise?.name ?? t('overview.exercise_fallback')}
+                  context={{
+                    exerciseId: block.exerciseId,
+                    currentKg: ghost?.weightKg ?? null,
+                    plannedSets: block.planned,
+                    committedSets: block.committed,
+                    incrementKg: INCREMENT_KG,
+                  }}
+                  onAccept={(edit) => void applyProposedEdit(edit)}
+                  onClose={() => setTelling(null)}
+                />
+              )
+            })()}
 
           {/* Adding an exercise is the one thing this screen does that is not
               logging, so it sits below the board rather than above it — the
@@ -2827,17 +3316,17 @@ export function LogScreen({
               // makes the gap a no-op and the bar is exactly what it was.
               className="sticky z-10 -mx-[18px] flex flex-col gap-1.5 bg-ink px-[18px] pt-2"
               style={{
-                // Flush, with the inset as its own padding — same recipe as
-                // the other two clusters. This one kept its `+ 64px` when the
-                // tab bar was retired, so it floated a tab-bar's height above
-                // the bottom with the board showing through underneath.
-                bottom: 0,
-                paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 10px)',
-                // Trailing space below this bar is the overview wrapper's
-                // py-3 plus main's padding. Without this the bar rides up its
-                // own pinned line over the last stretch of the scroll.
-                marginBottom:
-                  'calc(-12px - max(env(safe-area-inset-bottom, 0px), 10px))',
+                // Flush to the top of the tab bar — same recipe as the other
+                // two clusters, and all three name `--tab-space` rather than
+                // repeating its height. THIS is the bar that kept its `+ 64px`
+                // when the tab bar was retired and floated a tab-bar's height
+                // above the bottom with the board showing through underneath;
+                // the token exists so that class of drift cannot recur.
+                bottom: 'var(--tab-space)',
+                paddingBottom: '10px',
+                // `bottom` minus the trailing space: the overview wrapper's
+                // py-3 (12px) and main's padding (`--tab-space` + 10px).
+                marginBottom: '-22px',
                 // A hairline where content stops and chrome starts, so a
                 // control passing behind reads as scrolling under a bar
                 // rather than as being cut in half.
@@ -2861,7 +3350,11 @@ export function LogScreen({
                 }}
                 onDismiss={() => void recordCoachView('rest_canvas', 'dismiss')}
               />
-              <RestChip timer={timer} onExpand={() => setRestExpanded(true)} />
+              <RestChip
+                timer={timer}
+                onExpand={() => setRestExpanded(true)}
+                effort={coachSpeaks ? restEffort : null}
+              />
             </div>
           )}
         </>

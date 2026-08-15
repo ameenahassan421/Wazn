@@ -7,7 +7,7 @@
  * signature muscle-balance chart drew nothing for weeks; and a duplicated
  * empty-state sentence. Both were found by looking at pixels.
  *
- * Coverage: five tabs x 390/430px x populated/empty.
+ * Coverage: six screens x 390/430px x populated/empty, EN and AR.
  *
  * Two rules, learned by getting them wrong on the first run (DECISIONS.md,
  * 2026-08-07):
@@ -53,7 +53,20 @@ const WIDTHS = [390, 430]
 const SCREENS = [
   { key: 'history', en: ['History'], ar: ['السجل'] },
   { key: 'progress', en: ['Last PR'], ar: ['آخر رقم قياسي'] },
-  { key: 'coach', en: ['Ask the coach'], ar: ['اسأل المدرب'] },
+  // Coach and Body are reached by the TAB, and the rest by their cards.
+  //
+  // Coach used to be behind the "Ask the coach" chip on the coach brief. v3's
+  // Today brief replaces that card whenever there is a routine to brief on —
+  // so on a populated account the chip does not exist, and this run said so
+  // loudly ("no door to coach") the first time it was pointed at one. The
+  // honest fix is not to put a second coach control on a card whose whole body
+  // is the Start button; it is that Coach's door is its tab now. The chip
+  // survives on an empty account, where CoachBrief still renders.
+  //
+  // Body never had a card. Everything else still goes through its content,
+  // because content-as-navigation is the fragile path and the bar is not.
+  { key: 'coach', en: ['Coach'], ar: ['المدرب'] },
+  { key: 'body', en: ['Body'], ar: ['الجسم'] },
   {
     key: 'friends',
     en: ['You — settings', 'Friends'],

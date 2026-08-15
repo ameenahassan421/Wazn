@@ -1,4 +1,6 @@
 import { describe, expect, it } from 'vitest'
+import { earnedRest, effortPercent } from './rest'
+import { MODE_BEHAVIOUR } from './coach-mode'
 import {
   REST_MAX_SECONDS,
   clampRest,
@@ -67,5 +69,68 @@ describe('describeRest', () => {
 
   it('says off rather than showing 0:00', () => {
     expect(describeRest(0)).toBe('off')
+  })
+})
+
+describe('effortPercent', () => {
+  it('reads a top set against the lift’s own best estimate', () => {
+    expect(effortPercent(100, 112.5)).toBe(89)
+  })
+
+  it('is null when either half is missing — and null is what stops the claim', () => {
+    // Doctrine 1 applies to the rest bar's chip exactly as it applies to a
+    // coach's sentence: no number, no reason line.
+    expect(effortPercent(null, 112.5)).toBeNull()
+    expect(effortPercent(100, null)).toBeNull()
+    expect(effortPercent(100, 0)).toBeNull()
+    expect(effortPercent(0, 112.5)).toBeNull()
+  })
+})
+
+describe('earnedRest — mode and effort aware', () => {
+  const strength = MODE_BEHAVIOUR.strength.rest
+  const hypertrophy = MODE_BEHAVIOUR.hypertrophy.rest
+
+  it('gives a heavy single the top of the band', () => {
+    // "heavy single at 95% e1RM earns 4 min"
+    expect(earnedRest(95, strength, 'normal')).toBe(240)
+  })
+
+  it('gives easy work the floor of the band', () => {
+    expect(earnedRest(60, strength, 'normal')).toBe(120)
+  })
+
+  it('scales in between, in fifteen-second steps', () => {
+    const mid = earnedRest(78, strength, 'normal') as number
+    expect(mid).toBeGreaterThan(120)
+    expect(mid).toBeLessThan(240)
+    expect(mid % 15).toBe(0)
+  })
+
+  it('gives a warm-up 90 seconds whatever the mode', () => {
+    // "a warm-up earns 90 s" — and a ramp set that earned four minutes would
+    // turn a ten-minute warm-up into half an hour.
+    expect(earnedRest(95, strength, 'warmup')).toBe(90)
+    expect(earnedRest(null, strength, 'warmup')).toBe(90)
+  })
+
+  it('never exceeds a warm-up’s band in a short-rest mode', () => {
+    expect(earnedRest(95, hypertrophy, 'warmup')).toBe(60)
+  })
+
+  it('honours the mode’s band rather than one global scale', () => {
+    expect(earnedRest(95, hypertrophy, 'normal')).toBe(120)
+    expect(earnedRest(60, hypertrophy, 'normal')).toBe(60)
+  })
+
+  it('clamps past the ends rather than extrapolating', () => {
+    expect(earnedRest(140, strength, 'normal')).toBe(240)
+    expect(earnedRest(20, strength, 'normal')).toBe(120)
+  })
+
+  it('is null with no effort reading, so the per-exercise value stands', () => {
+    // Manual override always wins and is remembered per exercise; guessing a
+    // duration from no evidence is how a rest timer stops being believed.
+    expect(earnedRest(null, strength, 'normal')).toBeNull()
   })
 })
