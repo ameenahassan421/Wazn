@@ -334,6 +334,13 @@ async function converse({
   let lastCode: string | null = null
 
   for (const attempt of attempts) {
+    // Cleared per attempt. Without this a free-model truncation survives into
+    // the paid attempt's failure: a 429 or a 402 would be thrown as
+    // `truncated`, generate-routine would tell the user to try fewer days for
+    // a rate limit, and the ledger would record a token cap that was never the
+    // problem — in the exact table this code exists to make readable.
+    lastCode = null
+
     let response: Response
     try {
       response = await callOnce(

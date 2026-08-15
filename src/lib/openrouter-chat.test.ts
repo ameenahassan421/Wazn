@@ -140,6 +140,19 @@ describe('chat', () => {
     await expect(call().catch((e: ModelError) => e.code)).resolves.toBe('no_content')
   })
 
+  it("does not carry the free attempt's reason onto the paid attempt", async () => {
+    // The free model truncates; the paid one is rate-limited. These are
+    // different problems with different fixes, and only the second one is why
+    // the call failed. Without clearing the code per attempt this threw
+    // `truncated` for a 429 — which made generate-routine tell the user to try
+    // fewer days for a rate limit, and wrote a token cap into the ledger as the
+    // cause of a throttle.
+    turns = [{ content: 'cut', finishReason: 'length' }, { status: 429 }]
+    const error = await call().catch((e: ModelError) => e)
+    expect((error as ModelError).code).toBe('provider_429')
+    expect((error as ModelError).status).toBe(429)
+  })
+
   it('still reports a provider refusal as a provider refusal', async () => {
     // The new codes are more specific than the status, not a replacement for
     // it: a 429 is still a 429 and still the thing that means "slow down".

@@ -231,9 +231,22 @@ describe('partitionGrounded', () => {
  * The model quoted the block correctly and was refused for the one true
  * sentence in the review — twice per request, which is a refused review.
  *
- * The first case below is that exact block. The two after it are why the fix
- * cannot be "stop checking": the guard still has to catch a lift that was
- * genuinely reached for rather than read.
+ * The first case below is that exact block. The rest are why the fix cannot be
+ * "stop checking", and they are written the way they are because the FIRST fix
+ * for this was wrong in the opposite direction.
+ *
+ * That fix masked the block's lift names out of the text before scanning. It
+ * passed every test above and shipped, and it had turned the guard off for a
+ * whole class: deleting a block's "bench press" out of an invented "Incline
+ * Bench Press" leaves "incline", so the scan finds nothing. Any block holding
+ * Bench Press, Squat or Deadlift — most weeks — silently stopped flagging
+ * every variation of them. A false negative here is a fabricated lift on
+ * screen, which §12 treats as grounds for pausing the feature; the bug it
+ * replaced only refused good reviews.
+ *
+ * So the fixture below deliberately holds a **single-word** plateau
+ * (`Deadlift`) and the catalog holds variations that CONTAIN block names. The
+ * old masking fix passes the two original cases and fails these.
  */
 describe('ungroundedNames', () => {
   const WIN_BLOCK = {
@@ -241,14 +254,20 @@ describe('ungroundedNames', () => {
     wins: [
       { exercise: 'Iso-Lateral Chest Press (Machine)', gain: 23.9, e1rm_28d: 72.6 },
     ],
-    plateaus: [{ exercise: 'Bench Press (Barbell)', sessions: 8, last_e1rm: 70.8 }],
+    plateaus: [
+      { exercise: 'Bench Press (Barbell)', sessions: 8, last_e1rm: 70.8 },
+      { exercise: 'Deadlift (Barbell)', sessions: 6, last_e1rm: 140.2 },
+    ],
   }
   const CATALOG = [
     'Iso-Lateral Chest Press (Machine)',
     'Chest Press (Machine)',
     'Bench Press (Barbell)',
+    'Incline Bench Press (Dumbbell)',
+    'Deadlift (Barbell)',
     'Romanian Deadlift (Barbell)',
     'Lateral Raise (Dumbbell)',
+    'Seated Lateral Raise (Dumbbell)',
     'Squat',
   ]
 
@@ -263,12 +282,49 @@ describe('ungroundedNames', () => {
   })
 
   it('still catches a lift the model reached for rather than read', () => {
-    // The failure the check exists for: every figure grounded, the lift
-    // invented. The user may not own a barbell and certainly was not measured
-    // on this one.
+    // The failure the check exists for, and the module's own example: every
+    // figure grounded, the lift invented. Note the block plateaus on
+    // "Deadlift" — a single word, contained in this recommendation — which is
+    // exactly the shape that made the masking fix fail open.
     expect(
       ungroundedNames('Add Romanian Deadlift on Thursday.', WIN_BLOCK, CATALOG),
     ).toEqual(['romanian deadlift'])
+  })
+
+  it('catches a variation of a lift the block DOES contain', () => {
+    // The mirror of the original bug, and the more dangerous direction. The
+    // block plateaus on Bench Press; a model asked for one change is most
+    // likely to reach for a variation of the lift it was just told about.
+    // "Incline Bench Press" contains "bench press", and the user has never
+    // performed it.
+    expect(
+      ungroundedNames('Add Incline Bench Press on Friday.', WIN_BLOCK, CATALOG),
+    ).toEqual(['incline bench press'])
+  })
+
+  it('catches a variation built on a single-word block lift', () => {
+    // "Seated Lateral Raise" is not in the block. Nothing in the block is
+    // called "Lateral Raise" either — but if a future block held one, the
+    // seated version would still be a different lift.
+    expect(
+      ungroundedNames(
+        'Your deadlift has not moved in 6 sessions. Try Seated Lateral Raise.',
+        WIN_BLOCK,
+        CATALOG,
+      ),
+    ).toEqual(['seated lateral raise'])
+  })
+
+  it('reads both directions in one sentence', () => {
+    // The long-inside-short and short-inside-long cases together: the win is
+    // quoted correctly and must pass, the invented variation must not.
+    expect(
+      ungroundedNames(
+        'Iso-Lateral Chest Press is up 23.9 kg. Add Incline Bench Press on Friday.',
+        WIN_BLOCK,
+        CATALOG,
+      ),
+    ).toEqual(['incline bench press'])
   })
 
   it('catches a short lift recommended beside the long one it hides inside', () => {

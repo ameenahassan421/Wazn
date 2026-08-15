@@ -191,11 +191,14 @@ export function isGrounded(claim: number, allowed: Set<number>): boolean {
  * consecutive failures between 2026-08-10 and 2026-08-14 and a Coach tab that
  * said "the review came back unreadable" the whole time.
  *
- * The fix is `maskBlockNames`: take out every lift the block DID mention
- * before looking for one it did not. Longest first, so the long name is
- * consumed whole rather than leaving its own tail behind for the scan to find.
- * A model that writes "Iso-Lateral Chest Press" and separately recommends a
- * "Chest Press" still gets caught — the second mention survives the mask.
+ * The fix is positional. `spansOf` records WHERE each name occurs, and a
+ * catalog name is only reported when it appears somewhere that no block lift
+ * covers. "Chest press" inside "Iso-Lateral Chest Press" is contained, so it
+ * is that lift's own name; a separate "add a Chest Press on Friday" is not
+ * contained by anything, so it is still caught.
+ *
+ * Containment rather than deletion, and that distinction cost a second bug —
+ * see the note on `spansOf`.
  */
 
 /**
@@ -251,15 +254,47 @@ export function ungroundedNames(
 ): string[] {
   if (catalog.length === 0) return []
   const allowed = collectBlockNames(block)
-  const haystack = maskBlockNames(searchable(text), allowed)
+  const haystack = searchable(text)
 
-  const found = new Set<string>()
+  // Every lift name that actually appears in the text — the block's and the
+  // catalog's alike — and where each one appears.
+  const mentions: { base: string; grounded: boolean; start: number; end: number }[] = []
+  const note = (base: string, grounded: boolean) => {
+    for (const span of spansOf(haystack, base))
+      mentions.push({ base, grounded, ...span })
+  }
+
+  for (const name of allowed) note(name, true)
+
+  const considered = new Set<string>()
   for (const entry of catalog) {
     const base = baseName(entry)
     // Multi-word only — see the note above.
     if (!base.includes(' ')) continue
+    // The block named it, so it is not an invention wherever it appears.
     if (allowed.has(base)) continue
-    if (haystack.includes(searchable(base))) found.add(base)
+    if (considered.has(base)) continue
+    considered.add(base)
+    note(base, false)
+  }
+
+  // Longest match wins, in both directions and with no special cases. A name
+  // is reported only where it appears OUTSIDE every longer name's span, which
+  // is what separates the "chest press" inside "Iso-Lateral Chest Press" (part
+  // of that lift's name) from a "Chest Press" written on its own (a lift), and
+  // what stops "Incline Bench Press" from being waved through because the
+  // block happens to mention a bench press.
+  const found = new Set<string>()
+  for (const mention of mentions) {
+    if (mention.grounded) continue
+    const width = mention.end - mention.start
+    const covered = mentions.some(
+      (other) =>
+        other.end - other.start > width &&
+        other.start <= mention.start &&
+        mention.end <= other.end,
+    )
+    if (!covered) found.add(mention.base)
   }
   return [...found]
 }
@@ -281,26 +316,44 @@ function searchable(value: string): string {
 }
 
 /**
- * Blank out every lift the block mentioned, so the catalog scan sees only what
- * is left over.
+ * Every whole-word occurrence of `name` in `haystack`, as character spans.
  *
- * Longest name first: "iso-lateral chest press" has to go before anything can
- * ask about "chest press", or the tail of the long name is still sitting there
- * to be found. Each pass strictly shortens the string, so the loop terminates.
+ * Spans rather than a boolean, because the only reliable way to tell "the
+ * catalog name IS this block lift" from "the catalog name is a different lift
+ * that happens to share words with it" is where in the sentence each one sat.
+ *
+ * The first attempt at this used masking — delete the block's names, then scan
+ * what was left — and it was wrong in a way worth recording, because it read
+ * perfectly. Masking is directional: it fixes "chest press" hiding inside
+ * "Iso-Lateral Chest Press" and simultaneously breaks the mirror case, where
+ * deleting a block's "bench press" out of an invented "Incline Bench Press"
+ * leaves "incline" and the scan finds nothing. A block containing Bench Press,
+ * Squat or Deadlift — which is most weeks — switched the guard off for every
+ * variation of them in the catalog. That is a false NEGATIVE in a check whose
+ * entire job is to refuse fabricated lifts, and the plan treats one confirmed
+ * fabrication as grounds for pausing the feature. Strictly worse than the
+ * false positive it replaced.
+ *
+ * Spans have no direction. Containment answers both cases with one rule.
  */
-function maskBlockNames(haystack: string, allowed: ReadonlySet<string>): string {
-  let masked = haystack
-  const names = [...allowed].sort((a, b) => b.length - a.length)
-  for (const name of names) {
-    const needle = searchable(name)
-    // `searchable('')` is a lone space, which is in every haystack — masking
-    // on it would loop until the string was empty.
-    if (needle.trim() === '') continue
-    while (masked.includes(needle)) {
-      masked = masked.replace(needle, ' ')
-    }
+function spansOf(haystack: string, name: string): { start: number; end: number }[] {
+  const spans: { start: number; end: number }[] = []
+  const needle = searchable(name)
+  // `searchable('')` is a lone space, which occurs in every haystack.
+  if (needle.trim() === '') return spans
+
+  let from = 0
+  for (;;) {
+    const at = haystack.indexOf(needle, from)
+    if (at === -1) return spans
+    // The span of the name itself, without the boundary spaces the needle
+    // carries, so containment compares like with like.
+    spans.push({ start: at + 1, end: at + needle.length - 1 })
+    // Advance by one rather than by the needle's length: two adjacent mentions
+    // share the single space between them, and skipping past it would miss the
+    // second.
+    from = at + 1
   }
-  return masked
 }
 
 export interface GroundingResult {
