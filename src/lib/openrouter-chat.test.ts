@@ -153,6 +153,36 @@ describe('chat', () => {
     expect((error as ModelError).status).toBe(429)
   })
 
+  it('keeps the provider detail for the log and off the screen', async () => {
+    // `message` is a diagnostic: it carries the provider's status and the
+    // first 200 characters of its body. All three functions handed it to the
+    // client verbatim, so a double truncation put "the model provider refused
+    // the request (502): the model ran out of room at max_tokens=400" on the
+    // Coach card, under the "AI-generated" label, beside the numbers.
+    turns = [
+      { content: 'cut', finishReason: 'length' },
+      { content: 'cut', finishReason: 'length' },
+    ]
+    const error = (await call().catch((e: ModelError) => e)) as ModelError
+    expect(error.message).toContain('max_tokens=400')
+    expect(error.userMessage).toBe(
+      'That one ran long and did not finish. Try again in a moment.',
+    )
+    expect(error.userMessage).not.toContain('max_tokens')
+    expect(error.userMessage).not.toContain('502')
+  })
+
+  it('gives an unmapped code the generic line rather than the diagnostic', async () => {
+    // The default is the point: a code added later cannot leak by being
+    // forgotten in the copy table.
+    const error = new ModelError(
+      'upstream said something raw and long',
+      502,
+      'brand_new',
+    )
+    expect(error.userMessage).toBe('The coach could not answer right now.')
+  })
+
   it('still reports a provider refusal as a provider refusal', async () => {
     // The new codes are more specific than the status, not a replacement for
     // it: a 429 is still a 429 and still the thing that means "slow down".

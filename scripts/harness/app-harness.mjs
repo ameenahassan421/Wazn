@@ -168,6 +168,21 @@ const iso = (daysAgo, hour = 18) => {
   return d.toISOString()
 }
 
+/**
+ * A bare `YYYY-MM-DD`, which is what a Postgres `date` column serialises to.
+ *
+ * `body_overview` returns three of them (`measured_on`, `day`) and `body.ts`
+ * parses them as calendar days. A fixture that used `iso()` here would hand
+ * the screen a timestamp, which parses to a different day either side of
+ * midnight depending on the runner's timezone — a fixture inventing a
+ * one-day-off defect is the same class of noise this file already warns about.
+ */
+const day = (daysAgo) => {
+  const d = new Date()
+  d.setDate(d.getDate() - daysAgo)
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
 export function fixtures({ empty = false, active = false } = {}) {
   const exercises = LIFTS.map(([name, muscle_group, equipment], i) => ({
     id: uuid(100 + i),
@@ -257,6 +272,11 @@ export function fixtures({ empty = false, active = false } = {}) {
         target: null,
         low_bands: [],
       },
+      // The Body tab with nothing in it — which is production today, for every
+      // account: `body_weights` 0, `body_measurements` 0, `protein_days` 1.
+      // Every key present and empty, because `body.ts` derives from all three
+      // and an omitted key is a crash rather than an empty state.
+      bodyOverview: { unit: 'kg', weights: [], protein: [], measurements: [] },
       sessionDebrief: {
         unit: 'kg',
         productive_range: [10, 20],
@@ -708,6 +728,50 @@ export function fixtures({ empty = false, active = false } = {}) {
      * finished" rather than "the stub is not finished". Same class of hole as
      * the missing Edge Function routes and the missing in-progress workout.
      */
+    /*
+     * The Body tab, populated — which no run of this harness had ever
+     * photographed, because `body_overview` was not stubbed at all and
+     * `byName[fn] ?? []` answered `[]`. `full-390-body.png` was byte-identical
+     * to `empty-390-body.png`, and an empty screen that is meant to be empty
+     * looks exactly like an empty screen that is not.
+     *
+     * Shapes copied from 0027's `jsonb_build_object`, not invented: weights
+     * are `{on, kg}`, protein is `{on, g, target}`, measurements are
+     * `{site, cm, on, previous_cm}`. `previous_cm` is the 4-week-back reading
+     * and the delta the row draws comes from it, so a fixture without it would
+     * photograph every measurement as unchanged.
+     *
+     * Deliberately uneven: the weigh-ins trend down with noise (a monotonic
+     * line would hide a chart that sorts wrong), the protein week has two days
+     * under target and one missing entirely (the third state `proteinWeek`
+     * returns), and one measurement is up while another is down.
+     */
+    bodyOverview: {
+      unit: 'kg',
+      weights: [
+        { on: day(27), kg: 84.2 },
+        { on: day(23), kg: 83.9 },
+        { on: day(19), kg: 84.4 },
+        { on: day(15), kg: 83.6 },
+        { on: day(11), kg: 83.4 },
+        { on: day(7), kg: 83.7 },
+        { on: day(3), kg: 82.9 },
+        { on: day(0), kg: 82.8 },
+      ],
+      protein: [
+        { on: day(6), g: 168, target: 160 },
+        { on: day(5), g: 172, target: 160 },
+        { on: day(4), g: 141, target: 160 },
+        { on: day(3), g: 165, target: 160 },
+        { on: day(1), g: 133, target: 160 },
+        { on: day(0), g: 164, target: 160 },
+      ],
+      measurements: [
+        { site: 'chest', cm: 104.0, on: day(2), previous_cm: 103.0 },
+        { site: 'waist', cm: 81.5, on: day(2), previous_cm: 83.0 },
+        { site: 'arm', cm: 38.4, on: day(9), previous_cm: 38.4 },
+      ],
+    },
     sessionBrief: {
       unit: 'kg',
       productive_range: [10, 20],
@@ -1031,6 +1095,21 @@ export async function installSupabaseStub(
       if (fn === 'session_brief') return json(data.sessionBrief)
       if (fn === 'session_debrief') return json(data.sessionDebrief)
 
+      // `body_overview()` is the third single-jsonb function, and it was
+      // missing from this file entirely — as was `strength_forecast()`. Both
+      // shipped with migration 0027 and neither was ever stubbed, so
+      // `byName[fn] ?? []` answered `[]` and **the Body tab rendered its empty
+      // state in the POPULATED fixture**. `npm run shots` produced a
+      // `full-390-body.png` byte-identical to `empty-390-body.png` and nobody
+      // noticed, because an empty screen that is supposed to be empty looks
+      // exactly like an empty screen that is not.
+      //
+      // So the newest tab in the app, and the forecast line and plateau card
+      // on Progress, had no populated visual coverage at all. This file's own
+      // rule — stub every column the real RPC returns — had simply never been
+      // applied to 0027.
+      if (fn === 'body_overview') return json(data.bodyOverview)
+
       const byName = {
         session_volume_history: data.sessionVolume,
         workout_totals: data.workoutTotals,
@@ -1104,6 +1183,19 @@ export async function installSupabaseStub(
           name: s.name,
           best_e1rm_kg: s.best_e1rm_kg,
           best_weight_kg: s.best_e1rm_kg / 1.15 - 2.5,
+        })),
+        // Every column `strength_forecast()` declares (0027). The gate is
+        // `weeks_of_data >= 8`, so the fixture straddles it deliberately: the
+        // top lift forecasts, one lift sits under the gate and must render the
+        // muted placeholder instead, and one is flat enough to be a plateau.
+        // A fixture where every row forecasts would photograph one of the
+        // three states the design specifies.
+        strength_forecast: data.strength.map((s, i) => ({
+          exercise_id: s.exercise_id,
+          weeks_of_data: i === 1 ? 5 : 14 - i,
+          sessions: 24 - i * 3,
+          slope_kg_per_week: i === 2 ? 0.02 : 0.42 - i * 0.05,
+          latest_e1rm_kg: s.best_e1rm_kg,
         })),
         resolve_invite: [],
       }

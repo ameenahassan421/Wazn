@@ -6236,3 +6236,125 @@ neither by the author re-reading their own work.
 
 Both defects were introduced and shipped inside one hour. The wall was green
 for both.
+
+## 2026-08-15 (later still) — Four fixes from the evaluation, and the one that found itself
+
+Ameen asked for a full Coach evaluation and then for the issues found in it to
+be fixed. Four were code, one of them found only by doing the thing the
+evaluation itself had flagged as not done.
+
+### 1. The Coach card was rendering developer text
+
+`ModelError.message` is a diagnostic: it carries the provider's HTTP status and
+the first 200 characters of its body. All three functions passed it to the
+client verbatim, so a double truncation would put
+
+> the model provider refused the request (502): the model ran out of room at
+> max_tokens=4000
+
+on the Coach card, under the "AI-generated" label, beside the numbers. Two
+rules broken at once — one sentence then silence, and never show a lifter a
+figure that means nothing to them.
+
+`ModelError` gains `userMessage`, a copy table keyed by code, and the three
+outer catches use it. `message` still goes to `console.warn` and the code still
+goes to the ledger, so nothing is lost — the diagnostic just stops being the
+thing on screen. **An unmapped code gets the generic line rather than the
+diagnostic**, which is the point: a code added later cannot leak by being
+forgotten in the table.
+
+`HttpError` keeps `message`. Those strings are written for readers already
+("The review came back with figures that do not match your log"), and a blanket
+swap would have replaced good copy with worse. The first pass did exactly that
+by doing a blind find-and-replace across three files; caught by reading the
+diff, which is the only reason it is not in the commit.
+
+### 2. GATE V3 · 5 as a test rather than a review
+
+The gate asks for a **streak copy review** — "no loss-framed sentence ships".
+A review is a thing that happens once, to the strings that existed that day.
+`i18n.test.ts` now runs it on every string, in both locales, on every run:
+guilt vocabulary (D3's own list, plus the loss framings streaks attract) and a
+positive check that streak copy states a count and never something at risk.
+
+It passes today, and the patterns bite: "You missed 2 sessions", "Your streak
+ends tomorrow", "Keep it alive", "Don't lose your 6-week streak" all fail;
+"3 week streak" passes. Four exemptions are named individually rather than
+pattern-matched — three auth "code expired" strings and the crash boundary's
+"Something broke" — because a blanket rule would let a guilt-framed auth
+sentence through, and naming each one makes adding a fifth a decision somebody
+has to write down.
+
+### 3. §7.0 was stale in five places and said so nowhere
+
+It claimed migrations 0001–0024 (production is 0028), 12 routines (9), 17 AI
+generations (71), 150 workouts (151), and `Stage 0 — Foundation fix (ACTIVE)`
+while its own "next action" paragraph named 4B. The stage headers now say
+SHIPPED and ACTIVE in the right places, and the table is re-read from
+production.
+
+Three facts were added because they change how everything else reads:
+
+- **Only three of seven accounts have logged anything, two of them one set.**
+- **Ameen's last real session was 2026-07-20.** The 149 workouts are the Hevy
+  import; there has been no new training data for four weeks. `weekly_review()`
+  reporting `sessions_this_week: 0` is not a defect.
+- **The second dataset is empty.** 0 weigh-ins, 0 measurements, 1 protein day,
+  1 check-in — so every Body and readiness surface is running its degraded
+  render in production right now, and nothing supplies `sleepMinutes` or `hrv`
+  at all.
+
+### 4. The one that found itself: `full-390-body.png` was the empty state
+
+The evaluation's own caveat was that the acceptance checklist had been verified
+by reading code, not by rendering the app — "treat my ticks as 'the code says
+so', not 'I looked'". Looking took ten minutes and found this:
+
+**`body_overview` and `strength_forecast` were stubbed nowhere.** Both shipped
+with 0027; `byName[fn] ?? []` answered `[]` for both. So `npm run shots`
+rendered the Body tab's empty state in the POPULATED fixture, and
+`full-390-body.png` was indistinguishable from `empty-390-body.png` — an empty
+screen that is meant to be empty looks exactly like an empty screen that is
+not. The newest tab in the app had **no populated visual coverage at all**, and
+neither did the forecast line or the plateau card.
+
+Both are stubbed now, to the shapes 0027 actually returns, and deliberately
+uneven: weigh-ins that trend down with noise (a monotonic fixture hides a chart
+that sorts wrong), a protein week with two days under target and one missing
+entirely (the third state `proteinWeek` returns), measurements moving in both
+directions, and a forecast fixture that **straddles the eight-week gate** so
+the muted placeholder gets photographed alongside the forecast line. A fixture
+where every row forecasts would photograph one of the three states the design
+specifies.
+
+`shots.mjs` also gains a `progress-strength` frame. The forecast line and
+plateau card sit below the fold on Progress and every existing shot is
+viewport-only, so acceptance item 9 is three claims about a frame nobody had
+ever taken.
+
+What the frames now show: the Body tab renders its weight trend, protein week
+and measurement rows correctly, with the kg→lbs conversion right (82.8 kg →
+182.5 lbs) and both delta directions in the single accent, no second hue. The
+forecast list shows `270 BY OCT 24` on lifts past the gate and
+`FORECAST AT WK 5 OF 8` muted on the one under it — acceptance item 9's first
+claim, verified by looking rather than by reading.
+
+**This is `iso()` vs `day()` all over again.** A `date` column serialises to a
+bare `YYYY-MM-DD`, and a fixture using `iso()` would hand the screen a
+timestamp that parses to a different calendar day either side of midnight
+depending on the runner's timezone. The harness now has both helpers, and the
+reason is written next to the new one.
+
+### Left alone deliberately
+
+The empty Body screen is about 55% blank below its two collapsed cards. That is
+what Ameen sees today. It is honest and it does not nag for data, which is what
+acceptance item 13 asks for, and filling it would mean designing something the
+normative handoff does not contain. Reported, not redesigned — R1 says the
+value in the handoff wins over an instinct, and "this looks sparse" is an
+instinct.
+
+Also noted and not chased: every row of the strength list renders `→ 0` as its
+delta under the current fixture. Almost certainly fixture thinness — one shared
+`exercise_1rm_history` for every lift — rather than an app defect, but it has
+not been proven either way and should not be recorded as if it had.

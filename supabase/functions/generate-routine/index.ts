@@ -384,11 +384,16 @@ Deno.serve(async (request) => {
   } catch (error) {
     if (error instanceof HttpError) return json({ error: error.message }, error.status)
     if (error instanceof ModelError) {
+      // The diagnostic, which is no longer what the reader is shown.
+      console.warn('generate-routine model error', {
+        code: error.code,
+        detail: error.message,
+      })
       // An open breaker is a degraded surface, not a fault the user caused.
       if (error.code === 'breaker_open') {
-        return json({ error: error.message, degraded: true }, 503)
+        return json({ error: error.userMessage, degraded: true }, 503)
       }
-      return json({ error: error.message }, error.status)
+      return json({ error: error.userMessage }, error.status)
     }
     console.error('generate-routine', error)
     return json({ error: 'Could not generate a routine right now.' }, 500)

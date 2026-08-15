@@ -36,6 +36,33 @@ export interface ChatResult {
   finishReason?: string
 }
 
+/**
+ * What a reader is told, per failure class.
+ *
+ * `ModelError.message` is a diagnostic — it carries the provider's status and
+ * the first 200 characters of its body, which is right for a log and wrong for
+ * a Coach card. All three functions passed it to the client verbatim, so a
+ * double truncation put
+ *
+ *   the model provider refused the request (502): the model ran out of room at
+ *   max_tokens=4000
+ *
+ * on screen, next to the numbers, under the "AI-generated" label. Two rules
+ * broken at once: one sentence then silence, and never show a lifter a number
+ * that means nothing to them.
+ *
+ * A code with no entry gets the generic line rather than the diagnostic. That
+ * default is the point — a new code added later cannot leak by being
+ * forgotten.
+ */
+const USER_MESSAGE: Record<string, string> = {
+  breaker_open: 'The coach is offline for a moment. Your numbers are all still here.',
+  truncated: 'That one ran long and did not finish. Try again in a moment.',
+  provider_429: 'The coach is busy right now. Try again in a minute.',
+  timeout: 'The coach took too long to answer. Try again.',
+  no_content: 'The coach came back empty. Try again in a moment.',
+}
+
 export class ModelError extends Error {
   constructor(
     message: string,
@@ -45,6 +72,16 @@ export class ModelError extends Error {
   ) {
     super(message)
     this.name = 'ModelError'
+  }
+
+  /**
+   * The sentence for the reader. Never the provider's own words.
+   *
+   * `message` stays as it was and still goes to the console and the ledger —
+   * the diagnostic is not lost, it just stops being the thing on screen.
+   */
+  get userMessage(): string {
+    return USER_MESSAGE[this.code] ?? 'The coach could not answer right now.'
   }
 }
 

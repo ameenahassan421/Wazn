@@ -418,7 +418,12 @@ Deno.serve(async (request) => {
       return json({ error: error.message, degraded: true }, error.status)
     }
     if (error instanceof ModelError) {
-      return json({ error: error.message, degraded: true }, error.status)
+      // The diagnostic, which is no longer what the reader is shown.
+      console.warn('coach-brief model error', {
+        code: error.code,
+        detail: error.message,
+      })
+      return json({ error: error.userMessage, degraded: true }, error.status)
     }
     console.error('coach-brief', error)
     return json({ error: 'The coach is quiet right now.', degraded: true }, 500)

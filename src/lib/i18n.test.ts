@@ -161,3 +161,61 @@ describe('resolveInitialLocale', () => {
     expect(resolveInitialLocale(null, '')).toBe('en')
   })
 })
+
+/**
+ * The voice doctrine, as a test rather than a review.
+ *
+ * Design v3.0 §Doctrine D3: "**Never guilt.** The AI has no vocabulary for
+ * 'missed', 'failed', 'only'. A lighter day is data, not a lapse." GATE V3's
+ * fifth criterion is a **streak copy review** — "no loss-framed sentence
+ * ships" — and a review is a thing that happens once, to the strings that
+ * existed that day. This is the same criterion applied to every string, on
+ * every run.
+ *
+ * The engagement section is explicit about why it matters here specifically:
+ * streaks are weekly, not daily, "because daily streaks punish rest, which a
+ * strength app must never do". A loss-framed sentence would undo the choice
+ * the data model already made.
+ *
+ * Exemptions are listed one by one rather than being pattern-matched away. A
+ * blanket "ignore auth strings" rule would let a guilt-framed auth sentence
+ * through; naming each one means adding a new exemption is a decision someone
+ * has to write down.
+ */
+describe('copy doctrine — never guilt (v3 D3, GATE V3 · 5)', () => {
+  /** Vocabulary the doctrine names, plus the loss framings streaks attract. */
+  const GUILT =
+    /\b(missed|failed|lapse|lazy|shame|forfeit|slipped|streak ends|keep it alive|don'?t lose|last chance|you should have)\b/i
+
+  const EXEMPT = new Set([
+    // Not about training, and factually the right word for a one-time code.
+    'auth.confirm.error.expired',
+    'auth.code.verify.error.expired',
+    'auth.reset.error.expired',
+    // The crash boundary. Not the coach's voice, and honesty beats softening
+    // when the app has actually broken.
+    'error.title',
+  ])
+
+  for (const locale of ['en', 'ar'] as const) {
+    it(`has no guilt vocabulary in ${locale}`, () => {
+      const offenders = Object.entries(messages[locale])
+        .filter(([key, value]) => !EXEMPT.has(key) && GUILT.test(value))
+        .map(([key, value]) => `${key}: ${value}`)
+      expect(offenders).toEqual([])
+    })
+  }
+
+  it('frames every streak string as a count, never as something at risk', () => {
+    // The check is positive rather than negative: a streak string may say what
+    // the streak IS, and must not say what happens if it stops.
+    const streakStrings = Object.entries(messages.en).filter(([key]) =>
+      /streak|freeze/.test(key),
+    )
+    expect(streakStrings.length).toBeGreaterThan(0)
+    for (const [key, value] of streakStrings) {
+      expect(`${key}: ${value}`).not.toMatch(GUILT)
+      expect(`${key}: ${value}`).not.toMatch(/\b(lose|lost|losing|break|broken)\b/i)
+    }
+  })
+})
