@@ -795,6 +795,10 @@ export const messages: Record<Locale, Record<string, string>> = {
     'editor.move_up': 'Move up',
     'editor.move_down': 'Move down',
     'editor.remove': 'Remove {name}',
+    'editor.swap': 'Swap',
+    'editor.swap.title': 'Swap {name}',
+    'editor.swap.search': 'Search all exercises',
+    'editor.swap.none': 'Nothing close enough to suggest. Search instead.',
     'editor.saving': 'Saving…',
     'editor.save': 'Save routine',
     // Set entry
@@ -1692,6 +1696,10 @@ export const messages: Record<Locale, Record<string, string>> = {
     'editor.move_up': 'تحريك لأعلى',
     'editor.move_down': 'تحريك لأسفل',
     'editor.remove': 'إزالة {name}',
+    'editor.swap': 'تبديل',
+    'editor.swap.title': 'تبديل {name}',
+    'editor.swap.search': 'ابحث في كل التمارين',
+    'editor.swap.none': 'لا يوجد بديل قريب لاقتراحه. ابحث بدلاً من ذلك.',
     'editor.saving': 'جارٍ الحفظ…',
     'editor.save': 'حفظ البرنامج',
     // Set entry

@@ -76,6 +76,30 @@ export interface ImportPlan {
   problems: string[]
   /** Set when the file is not a Hevy export. Nothing can be imported. */
   fatal: string | null
+  /**
+   * Sessions in the file that are already in the log, matched on the exact
+   * start instant. Removed from `workouts` — never written twice.
+   */
+  duplicates: number
+  /**
+   * The newest session already in the log, or null for an empty account.
+   *
+   * This is what the cutoff below is offered against, and it is the only
+   * defence that survives a timezone difference. The exact-instant match above
+   * catches a re-import of the same file from the same device; it does NOT
+   * catch a file whose times were first imported under a different zone —
+   * `scripts/import_hevy.ts` hardcodes `America/Chicago` and this module reads
+   * the browser's, so the same session can arrive hours off and match nothing.
+   * A date cutoff does not care.
+   */
+  latestLogged: string | null
+  /**
+   * Sessions at or before `latestLogged` that did NOT match an existing start
+   * instant. Kept in `workouts`, because they may be real sessions this app
+   * has never seen — but counted, because they are also what a timezone shift
+   * looks like, and the user is the one who can tell which.
+   */
+  overlapping: number
 }
 
 const EMPTY: ImportPlan = {
@@ -86,6 +110,9 @@ const EMPTY: ImportPlan = {
   range: null,
   problems: [],
   fatal: null,
+  duplicates: 0,
+  latestLogged: null,
+  overlapping: 0,
 }
 
 function num(value: string | undefined): number | null {
@@ -201,6 +228,14 @@ export function analyse(
   text: string,
   catalogue: string[],
   timeZone: string = 'UTC',
+  /**
+   * `started_at` of every workout already in the log, as ISO strings.
+   *
+   * Defaulted to empty so the first-import case and every existing caller are
+   * unchanged. Passing it is what turns a second import from a silent
+   * doubling of the user's history into a decision they get to make.
+   */
+  existing: string[] = [],
 ): ImportPlan {
   let records: Record<string, string>[]
   try {
@@ -308,19 +343,71 @@ export function analyse(
     )
   }
 
-  const workouts = [...byStart.values()].sort((a, b) =>
+  const parsed = [...byStart.values()].sort((a, b) =>
     a.startedAt < b.startedAt ? -1 : a.startedAt > b.startedAt ? 1 : 0,
   )
+
+  // ── What the log already holds ──────────────────────────────────────────
+  // The importer used to know nothing about it, and `writeWorkout` is a plain
+  // insert with no unique constraint behind it, so a second import of the same
+  // export silently doubled the user's entire history. Volume, e1RM, adherence
+  // and every forecast built on them go with it.
+  const logged = new Set(
+    existing.map((iso) => new Date(iso).getTime()).filter((n) => Number.isFinite(n)),
+  )
+  const latestLogged =
+    existing.length === 0 ? null : new Date(Math.max(...[...logged])).toISOString()
+
+  const workouts = parsed.filter((w) => !logged.has(new Date(w.startedAt).getTime()))
+  const duplicates = parsed.length - workouts.length
+
+  // Kept, not dropped — see the note on `overlapping`. A session this app has
+  // never seen is data, even when it sits inside a period the log covers.
+  const overlapping =
+    latestLogged === null
+      ? 0
+      : workouts.filter((w) => w.startedAt <= latestLogged).length
+
+  if (duplicates > 0) {
+    problems.push(
+      `${duplicates} session${duplicates === 1 ? ' is' : 's are'} already in your log and will be skipped.`,
+    )
+  }
+  if (overlapping > 0) {
+    problems.push(
+      `${overlapping} session${overlapping === 1 ? '' : 's'} in this file happened on or before your last logged workout but did not match one. Check the cutoff below before importing.`,
+    )
+  }
+
+  // Recount against what will actually be written, or the preview promises a
+  // number of sets it is not going to insert.
+  setCount = workouts.reduce((n, w) => n + w.sets.length, 0)
 
   const names = [...seen.values()].sort((a, b) => a.localeCompare(b))
   const matched = names.filter((n) => known.has(n.toLowerCase()))
   const unmatched = names.filter((n) => !known.has(n.toLowerCase()))
 
-  if (workouts.length === 0) {
+  if (parsed.length === 0) {
     return {
       ...EMPTY,
       problems,
       fatal: 'Nothing in that file could be read as a workout.',
+    }
+  }
+
+  // Every session in the file is already logged. Not a fault, and not an
+  // error state: it is what re-importing the same export looks like, and
+  // saying so plainly is better than an empty preview the user has to
+  // interpret.
+  if (workouts.length === 0) {
+    return {
+      ...EMPTY,
+      matched,
+      unmatched,
+      problems,
+      duplicates,
+      latestLogged,
+      fatal: 'Every session in that file is already in your log.',
     }
   }
 
@@ -335,5 +422,36 @@ export function analyse(
     },
     problems,
     fatal: null,
+    duplicates,
+    latestLogged,
+    overlapping,
+  }
+}
+
+/**
+ * Drop everything on or before `cutoff` — the "only what is new" control.
+ *
+ * Separate from `analyse` because it is the user's decision, taken after they
+ * have seen the counts, and because it must be reversible without re-reading
+ * the file. It is also the only defence that survives a timezone difference:
+ * exact-instant matching cannot tell a re-import from a shifted one, and a
+ * date can.
+ */
+export function afterCutoff(plan: ImportPlan, cutoff: string | null): ImportPlan {
+  if (!cutoff) return plan
+  const workouts = plan.workouts.filter((w) => w.startedAt > cutoff)
+  if (workouts.length === plan.workouts.length) return plan
+  return {
+    ...plan,
+    workouts,
+    setCount: workouts.reduce((n, w) => n + w.sets.length, 0),
+    overlapping: 0,
+    range:
+      workouts.length === 0
+        ? null
+        : {
+            from: workouts[0].startedAt,
+            to: workouts[workouts.length - 1].startedAt,
+          },
   }
 }

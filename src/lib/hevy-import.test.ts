@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { LBS_TO_KG, analyse, parseHevyDate } from './hevy-import'
+import { LBS_TO_KG, afterCutoff, analyse, parseHevyDate } from './hevy-import'
 
 const HEADER =
   'title,start_time,end_time,exercise_title,superset_id,exercise_notes,set_index,set_type,weight_lbs,reps,distance_miles,duration_seconds,rpe'
@@ -233,5 +233,121 @@ describe('analyse — problems are reported, never silent', () => {
 
   it('says nothing when there is nothing to say', () => {
     expect(analyse(file(row()), CATALOGUE, 'UTC').problems).toEqual([])
+  })
+})
+
+/**
+ * The second import.
+ *
+ * The importer was written for a switcher's first session against an empty
+ * account, and it was never told what the log already held. `writeWorkout` is
+ * a plain insert, `public.workouts` has no unique constraint beyond its
+ * primary key, and the resume counter only skips within one interrupted run.
+ * So importing the same export twice wrote every session again: 149 workouts
+ * became 298, volume doubled, and every e1RM, plateau and forecast built on
+ * them became fiction.
+ *
+ * Nothing warned. That is the part these tests exist for.
+ */
+describe('analyse — a log that already has workouts in it', () => {
+  // 18:04 Chicago on 21 Oct 2025 is 23:04Z; the second is a day later.
+  const FIRST = '2025-10-21T23:04:00.000Z'
+  const SECOND = '2025-10-22T23:04:00.000Z'
+  const two = () =>
+    file(
+      row(),
+      row({ start_time: '22 Oct 2025, 18:04', exercise_title: 'Squat (Barbell)' }),
+    )
+
+  it('writes nothing twice when the file has already been imported', () => {
+    const plan = analyse(two(), CATALOGUE, 'America/Chicago', [FIRST, SECOND])
+    expect(plan.workouts).toHaveLength(0)
+    expect(plan.duplicates).toBe(2)
+    expect(plan.fatal).toBe('Every session in that file is already in your log.')
+  })
+
+  it('keeps only the sessions the log has never seen', () => {
+    const plan = analyse(two(), CATALOGUE, 'America/Chicago', [FIRST])
+    expect(plan.workouts.map((w) => w.startedAt)).toEqual([SECOND])
+    expect(plan.duplicates).toBe(1)
+    // The preview must not promise sets it will not write.
+    expect(plan.setCount).toBe(1)
+  })
+
+  it('says so, rather than skipping silently', () => {
+    const plan = analyse(two(), CATALOGUE, 'America/Chicago', [FIRST])
+    expect(plan.problems.join(' ')).toContain('already in your log')
+  })
+
+  it('is unchanged for a first import', () => {
+    // Every existing caller passes no fourth argument, and must behave
+    // exactly as it did.
+    const plan = analyse(two(), CATALOGUE, 'America/Chicago')
+    expect(plan.workouts).toHaveLength(2)
+    expect(plan.duplicates).toBe(0)
+    expect(plan.latestLogged).toBeNull()
+    expect(plan.problems.join(' ')).not.toContain('already in your log')
+  })
+
+  it('flags a session inside the logged period that matched nothing', () => {
+    // This is what a timezone difference looks like: the same session, hours
+    // off, matching no instant. It is NOT dropped — it might be a real session
+    // this app has never seen — but the user is told.
+    const shifted = file(row({ start_time: '21 Oct 2025, 12:04' }))
+    const plan = analyse(shifted, CATALOGUE, 'America/Chicago', [FIRST, SECOND])
+    expect(plan.workouts).toHaveLength(1)
+    expect(plan.overlapping).toBe(1)
+    expect(plan.problems.join(' ')).toContain('did not match one')
+  })
+
+  it('reports the newest logged session, for the cutoff to be offered against', () => {
+    const plan = analyse(two(), CATALOGUE, 'America/Chicago', [SECOND, FIRST])
+    expect(plan.latestLogged).toBe(SECOND)
+  })
+})
+
+describe('afterCutoff', () => {
+  const FIRST = '2025-10-21T23:04:00.000Z'
+  const three = () =>
+    file(
+      row(),
+      row({ start_time: '22 Oct 2025, 18:04' }),
+      row({ start_time: '23 Oct 2025, 18:04' }),
+    )
+
+  it('drops everything on or before the cutoff', () => {
+    const plan = analyse(three(), CATALOGUE, 'America/Chicago')
+    const cut = afterCutoff(plan, FIRST)
+    expect(cut.workouts.map((w) => w.startedAt)).toEqual([
+      '2025-10-22T23:04:00.000Z',
+      '2025-10-23T23:04:00.000Z',
+    ])
+    expect(cut.setCount).toBe(2)
+    expect(cut.range?.from).toBe('2025-10-22T23:04:00.000Z')
+  })
+
+  it('is the defence that survives a timezone difference', () => {
+    // None of these instants match the log, so exact-instant dedupe saves
+    // nothing. The cutoff still does.
+    const shifted = file(
+      row({ start_time: '21 Oct 2025, 12:04' }),
+      row({ start_time: '23 Oct 2025, 12:04' }),
+    )
+    const plan = analyse(shifted, CATALOGUE, 'America/Chicago', [FIRST])
+    expect(plan.duplicates).toBe(0)
+    expect(afterCutoff(plan, FIRST).workouts).toHaveLength(1)
+  })
+
+  it('returns the plan untouched when there is no cutoff', () => {
+    const plan = analyse(three(), CATALOGUE, 'America/Chicago')
+    expect(afterCutoff(plan, null)).toBe(plan)
+  })
+
+  it('can empty the plan without throwing', () => {
+    const plan = analyse(three(), CATALOGUE, 'America/Chicago')
+    const cut = afterCutoff(plan, '2030-01-01T00:00:00.000Z')
+    expect(cut.workouts).toHaveLength(0)
+    expect(cut.range).toBeNull()
+    expect(cut.setCount).toBe(0)
   })
 })

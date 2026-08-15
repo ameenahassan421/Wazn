@@ -6358,3 +6358,102 @@ Also noted and not chased: every row of the strength list renders `→ 0` as its
 delta under the current fixture. Almost certainly fixture thinness — one shared
 `exercise_1rm_history` for every lift — rather than an app defect, but it has
 not been proven either way and should not be recorded as if it had.
+
+## 2026-08-15 — The importer could not see the log, and swapping a lift cost nine taps
+
+Two things Ameen asked for after the evaluation: import the four weeks the app
+is missing, and "instead of bench press I can change to dumbbells".
+
+### First, what was NOT true
+
+He asked me to "connect to Hevy using the api we have saved". **There is no
+saved Hevy API key and no Hevy API integration** — not in the environment, not
+anywhere in the repo, and no `api.hevyapp.com` call has ever existed here. The
+Hevy path is CSV, in both `hevy-import.ts` and `scripts/import_hevy.ts`.
+`api.hevyapp.com` is also refused by this environment's egress policy
+(`CONNECT tunnel failed, response 403`), so it is unreachable from a session
+regardless. Both reported rather than worked around.
+
+He also asked for "all the missing exercises". **There are none**: all 131
+distinct exercises in the export already exist, because the 134-row catalogue
+was seeded from that same CSV. And the gap is **26 days**, not two weeks —
+last logged session 2026-07-20.
+
+### The importer had no idea what was already in the account
+
+`analyse()` was given the CSV, the exercise catalogue and a timezone. Never the
+log. `writeWorkout` is a bare `.insert()`, `public.workouts` has no unique
+constraint beyond its primary key, and the resume counter only skips within one
+interrupted run. So a second import wrote **every session again**: 149 workouts
+would have become 298, volume doubled, and every e1RM, plateau and forecast
+built on them turned to fiction. Nothing warned.
+
+That was a live trap — Ameen was one file away from it, and the honest sequence
+was to check before he imported rather than after.
+
+Two defences, because one is not enough:
+
+1. **Exact-instant match.** `analyse(..., existing)` drops sessions whose start
+   instant is already in the log, counts them, and says so. Catches the common
+   case: re-importing the same export from the same device.
+2. **A date cutoff**, `afterCutoff(plan, cutoff)`, defaulted ON whenever the
+   file reaches into a period the log covers. This is the one that survives a
+   **timezone difference**, and that case is not hypothetical here:
+   `scripts/import_hevy.ts` hardcodes `America/Chicago` and the browser
+   importer reads the device zone, so the very sessions Ameen already has can
+   arrive hours off and match no instant at all. Exact matching cannot see
+   that; a date can.
+
+Sessions inside the covered period that matched nothing are **kept, not
+dropped**, and counted as `overlapping` — they may be real sessions this app
+has never seen, and only the user can tell. The preview says which is which,
+and the figures recompute against the cutoff so the number on screen is the
+number that gets written.
+
+The `fatal` path gained a case: every session already logged is not an error,
+it is what re-importing looks like, and it says so in a sentence.
+
+### Swapping a lift cost nine taps and lost the sets
+
+To change one exercise in a routine: press ×, open the picker, search, pick —
+which **appends to the end** — then press ↑ once per exercise in between. On a
+six-exercise routine that is nine taps, and the prescribed sets and reps are
+gone. A busy rack is the single commonest reason anyone departs from a plan, so
+the app charged the most for the thing that happens the most.
+
+This is v3 §10, "the smart swap", which the evaluation listed as one of the ten
+unbuilt surfaces. Built now as `src/lib/variations.ts` plus a sheet in
+`RoutineEditor`: **Swap → three candidates → done.** Two taps, position and
+sets preserved, because those belong to the slot rather than to the lift
+filling it.
+
+The ranking is three tiers, in this order and for these reasons:
+
+1. **Same base movement, different implement** — "Bench Press (Barbell)" →
+   "(Dumbbell)". Literally the request, and the strongest signal available
+   without a movement taxonomy nobody has written.
+2. **A named variant of the same movement** — "Incline Bench Press". Requires
+   BOTH the base name and the same muscle group, because "Press" also appears
+   in "Leg Press" and a picker that suggests that costs a read to reject.
+3. **Same muscle group, by usage.** Usage is this app's only honest proxy for
+   "equipment on hand": a machine used forty times is a machine the gym owns.
+
+**One judgment worth recording.** The first tie-break was alphabetical, and on
+an account with no usage data it put "Bench Press (Cable)" above "Bench Press
+(Dumbbell)" — the exact opposite of what anyone means when the rack is busy.
+Caught by the test written from Ameen's own sentence. Fixed with a free-weight
+/ fixed-path affinity that only ever decides ties usage could not, so a new
+account gets sensible order and an established one still gets its own history
+first.
+
+Each candidate carries its reason as a chip ("as dumbbell", "also chest"),
+which is doctrine D1 applied to a ranking rather than to a sentence: no claim
+without the reason beside it.
+
+### Not done
+
+The mid-workout half of §10 — the same row pinned inside the picker when it is
+opened during a session — is not built. The ranking is deliberately in
+`src/lib/` and takes no React, so wiring it there is a component change and not
+a rewrite. Routine editing was the surface Ameen asked for; the other one
+should be its own change with its own screenshot.

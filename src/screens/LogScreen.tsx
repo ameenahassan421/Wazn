@@ -2637,6 +2637,9 @@ export function LogScreen({
         <RoutineEditor
           routine={editing}
           exercises={exercises}
+          // Ranks the swap candidates by what he actually trains, which is
+          // this app's only honest proxy for what his gym has.
+          usage={usage}
           saving={saving}
           onSave={(draft) => void persistRoutine(draft)}
           onCancel={() => {

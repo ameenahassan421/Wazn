@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react'
 import { describeError, supabase } from '../lib/supabase'
-import { analyse } from '../lib/hevy-import'
+import { afterCutoff, analyse } from '../lib/hevy-import'
 import type { ImportPlan, PlannedWorkout } from '../lib/hevy-import'
 import { formatCount, formatWorkoutDate } from '../lib/format'
 import type { Exercise } from '../lib/types'
@@ -60,6 +60,13 @@ export function HevyImport({
   const inputRef = useRef<HTMLInputElement>(null)
   /** Set by Stop; read between workouts, never mid-write. */
   const stopped = useRef(false)
+  /**
+   * Skip everything on or before this instant, or null to import all of it.
+   *
+   * Held here rather than folded into the plan so the file is read once and
+   * the decision stays reversible — the counts below recompute as it moves.
+   */
+  const [cutoff, setCutoff] = useState<string | null>(null)
 
   async function onFile(file: File | undefined) {
     if (!file) return
@@ -68,12 +75,30 @@ export function HevyImport({
     setFileName(file.name)
     try {
       const text = await file.text()
+      // What the log already holds. Without this the importer cannot tell a
+      // first import from a second, and a second silently doubles the user's
+      // entire history — there is no unique constraint behind `writeWorkout`
+      // to catch it. RLS scopes the read to the caller.
+      const { data: logged } = await supabase
+        .from('workouts')
+        .select('started_at')
+        .order('started_at', { ascending: false })
+      const existing = ((logged ?? []) as { started_at: string }[]).map(
+        (w) => w.started_at,
+      )
       const next = analyse(
         text,
         exercises.map((e) => e.name),
         Intl.DateTimeFormat().resolvedOptions().timeZone,
+        existing,
       )
       setPlan(next)
+      // Default ON whenever the file reaches into a period the log already
+      // covers. The safe choice is the one that does not need to be noticed:
+      // a user who wants the older sessions can turn it off and see the count
+      // change, and a user who does not read this screen at all cannot
+      // duplicate their history by pressing the obvious button.
+      setCutoff(next.overlapping > 0 ? next.latestLogged : null)
       setPhase('preview')
     } catch {
       setError(t('import.error.read'))
@@ -160,6 +185,12 @@ export function HevyImport({
 
   const imported = progress.done
   const canResume = phase === 'preview' && imported > 0
+  /**
+   * The plan as the cutoff leaves it — what the preview describes and what
+   * `run` writes, so the number on screen and the number inserted cannot
+   * drift apart.
+   */
+  const shown = plan ? afterCutoff(plan, cutoff) : null
 
   return (
     <section className="flex flex-col gap-4 py-2">
@@ -224,14 +255,19 @@ export function HevyImport({
         </>
       )}
 
-      {phase === 'preview' && plan && (
+      {phase === 'preview' && plan && shown && (
         <Preview
-          plan={plan}
+          plan={shown}
           fileName={fileName}
           alreadyDone={imported}
-          onConfirm={() => void run(plan, imported)}
+          cutoff={cutoff}
+          latestLogged={plan.latestLogged}
+          skipped={plan.workouts.length - shown.workouts.length}
+          onCutoff={setCutoff}
+          onConfirm={() => void run(shown, imported)}
           onCancel={() => {
             setPlan(null)
+            setCutoff(null)
             setProgress({ done: 0, total: 0 })
             setPhase('idle')
           }}
@@ -305,6 +341,10 @@ function Preview({
   fileName,
   alreadyDone,
   resuming,
+  cutoff,
+  latestLogged,
+  skipped,
+  onCutoff,
   onConfirm,
   onCancel,
 }: {
@@ -312,6 +352,13 @@ function Preview({
   fileName: string | null
   alreadyDone: number
   resuming: boolean
+  /** Active cutoff, or null when the whole file is being imported. */
+  cutoff: string | null
+  /** Newest session already in the log — what the cutoff is offered against. */
+  latestLogged: string | null
+  /** How many sessions the cutoff is currently holding back. */
+  skipped: number
+  onCutoff: (next: string | null) => void
   onConfirm: () => void
   onCancel: () => void
 }) {
@@ -364,6 +411,60 @@ function Preview({
           </p>
         )}
       </div>
+
+      {/*
+        The second-import control.
+
+        It only renders for an account that already has history, because for a
+        switcher's first import there is nothing to collide with and a control
+        about a decision you do not have is noise. When it does render it is
+        ON, and the figures above have already been recomputed against it — so
+        the number on screen is the number that will be written, which is the
+        whole promise of this screen.
+      */}
+      {latestLogged && (
+        <div
+          className="ring-edge bg-surface px-3 py-3"
+          style={{ borderRadius: 'var(--radius-md)' }}
+        >
+          <p className="kicker">Already in your log</p>
+          <p className="mt-2 text-[13px] text-muted">
+            Your last logged workout was {formatWorkoutDate(latestLogged)}.
+          </p>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={cutoff !== null}
+            onClick={() => onCutoff(cutoff === null ? latestLogged : null)}
+            className="btn-base btn-secondary press mt-2.5 flex h-12 w-full items-center gap-3 px-3 text-start text-sm"
+          >
+            <span
+              aria-hidden="true"
+              className={`grid h-5 w-5 shrink-0 place-items-center border ${
+                cutoff !== null
+                  ? 'border-accent bg-accent text-accent-ink'
+                  : 'border-line'
+              }`}
+              style={{ borderRadius: 'var(--radius-check)' }}
+            >
+              {cutoff !== null ? '✓' : ''}
+            </span>
+            <span className="flex-1">Only bring across what is newer</span>
+          </button>
+          {cutoff !== null && skipped > 0 && (
+            <p className="mt-2 text-[11px] text-muted">
+              {formatCount(skipped)} older session{skipped === 1 ? '' : 's'} in this
+              file will be left out.
+            </p>
+          )}
+          {cutoff === null && (
+            <p className="mt-2 text-[11px] text-accent-300">
+              The whole file will be imported. Sessions you already have will appear
+              twice.
+            </p>
+          )}
+        </div>
+      )}
 
       {plan.unmatched.length > 0 && (
         <div
