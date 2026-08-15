@@ -240,6 +240,34 @@ begin
     end if;
   end;
 
+  -- ── Who may call these at all ───────────────────────────────────────────
+  -- 0027 shipped three functions with a `revoke … from public` that does
+  -- nothing, because Supabase grants EXECUTE to `anon` directly. All three
+  -- were callable by a signed-out request until 0028. Supabase's advisor
+  -- caught it; this suite did not, because it asserted that the functions
+  -- WORK and never asserted who may call them.
+  --
+  -- `has_function_privilege` is the check, not the presence of a GRANT line
+  -- in the migration — the whole defect was a grant statement that read
+  -- correctly and had no effect.
+  declare
+    v_fn text;
+  begin
+    set local role postgres;
+    foreach v_fn in array array[
+      'public.upsert_user_preference(text, text)',
+      'public.body_overview(integer)',
+      'public.strength_forecast()'
+    ] loop
+      if has_function_privilege('anon', v_fn, 'EXECUTE') then
+        raise exception 'FAIL: anon can execute %', v_fn;
+      end if;
+      if not has_function_privilege('authenticated', v_fn, 'EXECUTE') then
+        raise exception 'FAIL: authenticated CANNOT execute %', v_fn;
+      end if;
+    end loop;
+  end;
+
   set local role postgres;
   raise notice 'body_and_coach: all assertions passed';
 end $$;

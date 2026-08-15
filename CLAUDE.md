@@ -88,10 +88,20 @@ in its entirety. But a parser is not a server: 0021 shipped a
 Postgres rejects, and an `order by` on a column its own subquery had aliased
 away. Both died on the first execution.
 
-**Executed locally is still not applied.** Production is at 0018 with a ledger
-that only knows about three migrations, so "applies cleanly from empty" and
-"applies cleanly to production" remain different claims. The PR should say
-which one it has.
+**Executed locally is still not applied.** "Applies cleanly from empty" and
+"applies cleanly to production" are different claims; the PR should say which
+one it has. Production is at **0028** as of 2026-08-15.
+
+**And applied is still not verified.** `apply_migration` answers
+`{"success": true}` for DDL that did nothing useful. 0027's
+`revoke all … from public` executed, succeeded, and had no effect — Supabase
+grants EXECUTE to `anon` DIRECTLY via `alter default privileges`, so revoking
+from PUBLIC leaves it callable by a signed-out request. Read
+`information_schema` / `has_function_privilege` afterwards, and run
+`get_advisors` — Supabase's own linter found that one in under a minute and the
+repo's SQL suite, which tested only that the functions worked, did not.
+**A test that asserts behaviour will never catch a grant that reads correctly
+and does nothing. Assert the privilege.**
 
 ## Hard rules
 

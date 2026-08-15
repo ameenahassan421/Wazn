@@ -101,9 +101,17 @@ export function CoachScreen({ onRoutinesSaved }: { onRoutinesSaved: () => void }
       >
         {[
           t('coach.footer'),
-          // Only once there is a number. "N regenerates left" with N unknown
-          // is the footer inventing a quota.
-          regeneratesLeft === null
+          // Only once there is a number, and only once that number is worth
+          // saying. `QUOTA_VISIBLE_AT` is the rule PR #80 set a day before v3:
+          // the limits were lifted to ~500 and printing "500 regenerates left"
+          // is furniture, not information.
+          //
+          // The v3 mock draws this footer as `… · 3 REGENERATES LEFT THIS
+          // WEEK`, and 3 IS the threshold — so the design and that decision
+          // agree, and the footer renders exactly as drawn at the moment the
+          // number starts to matter. Without this gate the footer contradicted
+          // the notes card two inches above it, which already obeys the rule.
+          regeneratesLeft === null || regeneratesLeft > QUOTA_VISIBLE_AT
             ? null
             : t('coach.footer.quota', { n: String(regeneratesLeft) }),
         ]

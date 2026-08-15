@@ -516,26 +516,38 @@ card, the Body tab, the AI dial in Settings, and the AuthHero front page.
 114 new message keys in both locales. Full detail and the four deliberately
 unbuilt items are in DECISIONS.md 2026-08-14.
 
-**Migration 0027 is written and proven, and is NOT in production.** It executes
-from empty through `npm run check:sql` and its own suite
-(`supabase/tests/body_and_coach.sql`) passes, alongside the two that existed.
-**Ameen approved applying it; the session that built it could not.** There is
-no `SUPABASE_ACCESS_TOKEN` in this environment and the Supabase MCP server
-needs an interactive OAuth flow, so the Management API path CLAUDE.md describes
-was not available. That reverses, for this session only, the "sandboxed
-sessions CAN reach Supabase" line — the capability is per-session, not
-permanent, and it should be checked rather than assumed.
+**Migrations 0027 and 0028 APPLIED to production 2026-08-15, verified against
+`information_schema` rather than a success flag.** What actually landed:
 
-Until it is applied, every v3 surface degrades to an empty state and nothing
-throws: the Body tab reads "Log a weigh-in to start the second chart.", the
-check-in row's write fails silently and readiness falls back to Normal, mode
-and volume stay in localStorage, and the forecast lines are absent. That is the
-same shape 0023 and 0025 shipped in. **What is NOT true until it is applied:
-the acceptance items that depend on stored data** — forecasts, the protein
-week, measurements, and cross-device mode/volume.
+|                    |                                                                                                                                 |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------- |
+| Tables             | `daily_checkins`, `body_weights`, `protein_days`, `body_measurements` — all four, RLS **enabled**, policies 3/4/3/4             |
+| Owner default      | `auth.uid()` on all four `user_id` columns (0016's lesson)                                                                      |
+| `user_preferences` | +`coach_mode`, `coach_volume`, `meet_date`, `weekly_target`, `protein_target_g`; existing rows backfilled `strength / full / 3` |
+| Functions          | `body_overview()` returns the correct empty shape; `strength_forecast()` answers **107 lifts, 72 past the 8-week gate**         |
+| Grants             | anon **cannot** execute the three new/rewritten functions; authenticated can                                                    |
 
-**Blocked on Ameen:** apply migration 0027 (see above — it is the one piece of
-v3 that a session without a Management API token cannot finish);
+**0027 shipped a security defect and 0028 fixes it — the sequence is worth
+keeping.** 0027 ended each function with `revoke all … from public`, which is a
+no-op: Supabase grants EXECUTE to `anon` **directly**, via `alter default
+privileges`, not through PUBLIC. So all three functions were callable by a
+signed-out request for the minutes between the two migrations. Nothing was
+exposed — `upsert_user_preference` is the only SECURITY DEFINER one and its
+first statement inserts a NULL `auth.uid()` into a NOT NULL key, so an anon
+call raises before touching a row; the other two are SECURITY INVOKER and match
+no rows under anon. **Supabase's own security advisor caught it; the repo's SQL
+suite did not**, because the suite asserted the functions WORK and never
+asserted who may call them. It does now, via `has_function_privilege`, and the
+assertion was confirmed to fail with 0028 removed.
+
+The ledger now has entries for 0027 and 0028 (applied through the Management
+API's migration path). It still does not know about 0019–0026; §7.0's older
+note stands — the ledger is not a record of what is applied.
+
+**Blocked on Ameen:** enable Supabase's leaked-password protection (the one
+security advisor warning that is a real setting rather than an intentional
+grant — Auth → Passwords → HaveIBeenPwned; it is a config change, and auth
+config is Ameen's per §2.8);
 run `LAUNCH.md` on a real phone with a second account
 (also GATE U7's last item, not reachable from a sandboxed session); rotate the
 OpenRouter key, which was shared in a chat session and is compromised by
