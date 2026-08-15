@@ -5911,3 +5911,104 @@ one screenshot found on 2026-08-09.** `npm run shots` was run and the six
 screens photographed at 390 and 430px in both locales; the tab bar, the sticky
 clusters and the Arabic flip are the three things in this change that only
 pixels can verify.
+
+## 2026-08-15: 0027 and 0028 applied — and 0027 shipped a hole the suite missed
+
+Ameen said "lets run it" and tried the curl from his home directory, where the
+migration file is not and `$SUPABASE_ACCESS_TOKEN` was not set. He did not need
+to: **the Supabase MCP server was authenticated in the session by then**, which
+it had not been an hour earlier. That is the second time in two days that
+Supabase reachability turned out to be a per-session fact rather than a
+property of the environment. Check it; do not carry an answer forward.
+
+**Applied, then verified against `information_schema` rather than a success
+flag** — the tool answered `{"success": true}` for both, and that phrase is
+exactly what §7.0 says not to trust. Four tables with RLS on and 3/4/3/4
+policies, `auth.uid()` defaulting every owner column, five preference columns
+backfilled `strength / full / 3`, and both functions executing: `body_overview()`
+returns the right empty shape, `strength_forecast()` answers 107 lifts of which
+72 clear the eight-week gate. The gate is doing real work on real data, which
+is the thing a green test suite could not tell me.
+
+### The defect, and why the suite did not catch it
+
+0027 ends each function with
+
+    revoke all on function … from public;
+    grant  execute on function … to authenticated;
+
+and **the first line does nothing.** Supabase does not grant EXECUTE through
+PUBLIC — it grants it to `anon` directly, through `alter default privileges …
+grant all on functions to anon, authenticated, service_role`. Revoking from
+PUBLIC never touches a privilege held by `anon`. All three functions shipped
+callable by a signed-out request at `/rest/v1/rpc/…`.
+
+**Supabase's security advisor found it within a minute of the apply. The repo's
+own SQL suite did not, and that is the more useful half.** `body_and_coach.sql`
+asserted the functions WORK — RLS both ways, every allowlist branch, the
+forecast's arithmetic — and never once asserted **who may call them**. A
+migration can contain a grant statement that reads correctly, passes a parser,
+executes without error, and has no effect. Nothing that tests behaviour will
+see that; only a test of the privilege itself will.
+
+So the suite now checks `has_function_privilege('anon', …)` for all three, and
+the check was confirmed to bite: with 0028 removed, `check:sql` fails with
+`FAIL: anon can execute public.upsert_user_preference(text, text)`. A test that
+has never been seen to fail is a test nobody should trust.
+
+### What was actually exposed: nothing, and the reason matters
+
+Being relieved is not the same as knowing why.
+
+- `upsert_user_preference` is the only SECURITY DEFINER one of the three, so it
+  is the one that mattered. Under anon, `auth.uid()` is NULL and its first
+  statement inserts NULL into a NOT NULL primary key — the call raises before
+  it can read or write anything.
+- `body_overview` and `strength_forecast` are SECURITY INVOKER. Under anon the
+  RLS added by 0027 and 0026 matches no rows, so both return empty.
+
+A hardening, then, not an incident. But it was luck of construction rather than
+design, and the fix belongs in the repo either way.
+
+### 0028 is a new migration, not an edit to 0027
+
+0027 is applied. An applied migration is history, and editing one means the next
+person to run the sequence gets something different from what production got.
+0028 carries the three revokes and restates the three grants — restated because
+a future `create or replace` that forgets them is precisely the silent failure
+this file exists to make loud.
+
+`resolve_invite` is deliberately left flagged. Migration 0011 grants it to
+`anon` on purpose so an invite link can name its sender before the recipient has
+an account, and the advisor will keep reporting it forever. The remaining
+"signed-in users can execute" notes on `social_feed`, `weekly_leaderboard` and
+`upsert_user_preference` are what those functions are for. The one advisor
+warning that is a genuine open item is leaked-password protection, which is an
+Auth setting and Ameen's under §2.8.
+
+### And one defect v3 introduced against a decision one day older
+
+Reading `CoachScreen` while applying 0028 turned up something no gate caught.
+PR #80, merged the day before v3, lifted the AI usage limits to ~500 and hid
+the regenerate quota above `QUOTA_VISIBLE_AT = 3`, with the reasoning in the
+code: _"the footer would have read '500 regenerates left this week', which is
+not information, it is furniture."_
+
+v3's screen footer printed it unconditionally. So the Coach tab shipped saying
+`AI-GENERATED · NOT MEDICAL ADVICE · 500 REGENERATES LEFT THIS WEEK` — the
+exact furniture removed a day earlier — while the notes card two inches above
+correctly said nothing. Two surfaces disagreeing about one number, in a change
+whose whole doctrine is that a figure is either anchored or absent.
+
+The fix is one condition, and the design agrees with it rather than being
+overruled by it: the v3 mock draws the footer as `… · 3 REGENERATES LEFT THIS
+WEEK`, and **3 is the threshold**. Gated on `QUOTA_VISIBLE_AT`, the footer
+renders exactly as drawn at the moment the number starts to matter, and is
+silent when it does not.
+
+Worth naming the class: implementing a normative handoff means reproducing a
+mock drawn against a snapshot of the app, and a value in that mock can encode
+an assumption the codebase has since moved past. The tab bar was the loud
+version of this and got asked about. This was the quiet version — a hardcoded
+`3` that happened to be right for a reason the mock's author never knew — and
+it took reading the surrounding file, not a checklist, to see it.
