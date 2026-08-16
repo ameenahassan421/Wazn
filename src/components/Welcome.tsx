@@ -76,7 +76,7 @@ export function Welcome({
           aria-label={t('toggle.locale.name')}
           className="flex h-12 items-center px-1"
         >
-          <span className="btn-base btn-secondary tnum h-[34px] min-w-[52px] px-3 text-sm">
+          <span className="btn-base btn-secondary tnum h-[34px] min-w-[52px] px-3 text-body">
             {t('toggle.locale.label')}
           </span>
         </button>
@@ -84,10 +84,10 @@ export function Welcome({
 
       <div>
         <p className="kicker">{t('welcome.heading')}</p>
-        <h1 className="mt-1 text-[26px] font-semibold leading-tight">
+        <h1 className="mt-1 text-fig font-semibold leading-tight">
           {t('welcome.subhead')}
         </h1>
-        <p className="mt-2 text-sm text-muted">{t('welcome.body')}</p>
+        <p className="mt-2 text-body text-muted">{t('welcome.body')}</p>
       </div>
 
       {inviter && <InviteCard inviter={inviter} />}
@@ -103,11 +103,11 @@ export function Welcome({
         <label htmlFor="welcome-username" className="kicker mb-1 block">
           {t('welcome.username.label')}
         </label>
-        <p className="mb-2 text-sm text-muted">{t('welcome.username.body')}</p>
+        <p className="mb-2 text-body text-muted">{t('welcome.username.body')}</p>
         {usernameSaved ? (
-          <p className="text-[15px] font-medium">
+          <p className="row-title font-medium">
             @{usernameSaved}{' '}
-            <span className="text-sm text-muted">{t('welcome.username.saved')}</span>
+            <span className="text-label text-muted">{t('welcome.username.saved')}</span>
           </p>
         ) : (
           <div className="flex gap-2">
@@ -121,13 +121,13 @@ export function Welcome({
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               placeholder={t('welcome.username.placeholder')}
-              className="h-12 min-w-0 flex-1 rounded-lg border border-line bg-ink px-3 text-start text-[15px] outline-none placeholder:text-muted focus:border-accent"
+              className="h-12 min-w-0 flex-1 rounded-lg border border-line bg-ink px-3 text-start field-text outline-none placeholder:text-muted focus:border-accent"
             />
             <button
               type="button"
               onClick={() => void claimUsername()}
               disabled={savingUsername || username.trim().length === 0}
-              className="btn-base btn-secondary h-12 px-4 text-sm disabled:opacity-45"
+              className="btn-base btn-secondary h-12 px-4 text-body disabled:opacity-45"
             >
               {savingUsername
                 ? t('welcome.username.claim.busy')
@@ -136,7 +136,7 @@ export function Welcome({
           </div>
         )}
         {usernameError && (
-          <p role="alert" className="mt-2 text-sm text-accent-300">
+          <p role="alert" className="mt-2 text-body text-accent-300">
             {usernameError}
           </p>
         )}
@@ -144,21 +144,21 @@ export function Welcome({
 
       <section>
         <p className="kicker mb-2">{t('welcome.start.heading')}</p>
-        <p className="text-sm text-muted">{t('welcome.start.body')}</p>
+        <p className="text-body text-muted">{t('welcome.start.body')}</p>
 
         {/* The one hero on this screen. Starting from nothing is the harder
             problem of the two, so it gets the thumb's destination. */}
         <button
           type="button"
           onClick={onGenerate}
-          className="btn-base btn-hero mt-3 h-[60px] w-full text-[17px]"
+          className="btn-base btn-hero mt-3 h-[60px] w-full btn-text"
         >
           {t('welcome.generate')}
         </button>
         <button
           type="button"
           onClick={onSkip}
-          className="btn-base btn-secondary mt-2 h-12 w-full text-sm"
+          className="btn-base btn-secondary mt-2 h-12 w-full text-body"
         >
           {t('welcome.skip')}
         </button>
@@ -176,7 +176,7 @@ export function Welcome({
         <button
           type="button"
           onClick={onImport}
-          className="btn-base btn-quiet mt-2 h-12 w-full text-sm"
+          className="btn-base btn-quiet mt-2 h-12 w-full text-body"
         >
           {t('welcome.import')}
         </button>

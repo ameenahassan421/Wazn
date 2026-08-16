@@ -549,13 +549,15 @@ export function ExerciseDetail({
         >
           <IconBack />
         </button>
-        <h2 className="min-w-0 flex-1 truncate text-lg font-medium">{exercise.name}</h2>
+        <h2 className="min-w-0 flex-1 truncate text-title font-medium">
+          {exercise.name}
+        </h2>
       </div>
 
       {error && (
         <p
           role="status"
-          className="ring-edge border border-accent px-3 py-2 text-sm text-accent-300"
+          className="ring-edge border border-accent px-3 py-2 text-body text-accent-300"
           style={{ borderRadius: 'var(--radius-md)' }}
         >
           {error}
@@ -565,22 +567,22 @@ export function ExerciseDetail({
       <div className="flex items-center gap-3">
         <ExerciseThumb exercise={exercise} size={80} />
         <div className="min-w-0 flex-1">
-          <p className="text-xs text-muted">
+          <p className="text-meta text-muted">
             {exercise.muscle_group} · {exercise.equipment}
           </p>
           {rec?.value && rec.value.total_sets > 0 ? (
             <>
-              <p className="tnum font-display mt-0.5 text-[15px]">
+              <p className="tnum font-display mt-0.5 text-body">
                 {rec.value.total_sets} sets · {rec.value.total_sessions} sessions
               </p>
               {rec.value.first_logged_at && (
-                <p className="tnum text-xs text-muted">
+                <p className="tnum text-meta text-muted">
                   Since {formatRelativeDay(rec.value.first_logged_at, locale)}
                 </p>
               )}
             </>
           ) : (
-            <p className="mt-0.5 text-[15px] text-muted">{t('detail.not_logged')}</p>
+            <p className="mt-0.5 text-label text-muted">{t('detail.not_logged')}</p>
           )}
         </div>
       </div>
@@ -593,15 +595,15 @@ export function ExerciseDetail({
               className="ring-edge bg-surface px-2.5 py-2.5"
               style={{ borderRadius: 'var(--radius-md)' }}
             >
-              <p className="tnum font-display text-2xl font-medium">{value}</p>
-              <p className="mt-0.5 text-[10px] text-muted">{label}</p>
+              <p className="tnum font-display text-num font-medium">{value}</p>
+              <p className="mt-0.5 text-label text-muted">{label}</p>
             </li>
           ))}
         </ul>
       )}
 
       {rec?.missing && (
-        <p className="text-sm text-muted">
+        <p className="text-body text-muted">
           Records and notes need migration 0008. Apply it and reload.
         </p>
       )}
@@ -612,11 +614,11 @@ export function ExerciseDetail({
       {points && progress && progress.sessions > 1 && (
         <section>
           <h3 className="kicker mb-2">{t('detail.e1rm')}</h3>
-          <p className="tnum font-display text-2xl font-medium">
+          <p className="tnum font-display text-num font-medium">
             {progress.delta_kg === 0
               ? 'Level'
               : `${progress.delta_kg > 0 ? '+' : '−'}${formatEstimate(Math.abs(progress.delta_kg), unit)} ${unit}`}
-            <span className="ms-2 text-xs font-normal text-muted">
+            <span className="ms-2 text-meta font-normal text-muted">
               since {formatRelativeDay(progress.since_at, locale)}
             </span>
           </p>
@@ -633,7 +635,7 @@ export function ExerciseDetail({
           <div className="flex items-baseline justify-between gap-2">
             <span className="sr-only">{t('detail.e1rm')}</span>
             {projection.length > 0 && (
-              <span className="meta-mono ms-auto text-[10px] text-accent-300 uppercase">
+              <span className="meta-mono ms-auto text-kick text-accent-300 uppercase">
                 {t('detail.projection')}
               </span>
             )}
@@ -649,7 +651,7 @@ export function ExerciseDetail({
               unit,
             })}
           />
-          <p className="tnum mt-1 text-[11px] text-muted">
+          <p className="tnum mt-1 text-meta text-muted">
             {progress.sessions} sessions · now{' '}
             {formatEstimate(progress.latest_kg, unit)} {unit}
             {progress.best_kg > progress.latest_kg &&
@@ -669,7 +671,7 @@ export function ExerciseDetail({
               const count = Number(b.set_count)
               return (
                 <div key={b.bucket} className="flex items-center gap-2">
-                  <span className="tnum w-[46px] shrink-0 text-[13px] text-muted">
+                  <span className="tnum w-[46px] shrink-0 text-label text-muted">
                     {b.bucket}
                   </span>
                   <span
@@ -683,14 +685,14 @@ export function ExerciseDetail({
                       style={{ width: `${(count / bucketMax) * 100}%` }}
                     />
                   </span>
-                  <span className="tnum w-7 shrink-0 text-end font-mono text-[13px]">
+                  <span className="tnum w-7 shrink-0 text-end font-mono text-label">
                     {count}
                   </span>
                 </div>
               )
             })}
           </div>
-          <p className="tnum mt-1.5 text-[11px] text-muted">
+          <p className="tnum mt-1.5 text-meta text-muted">
             {bucketTotal} working sets · warm-ups excluded
           </p>
         </section>
@@ -708,14 +710,14 @@ export function ExerciseDetail({
                 key={rung.label}
                 className="flex items-baseline gap-3 border-b border-line px-3 py-2 last:border-b-0"
               >
-                <span className="tnum w-12 shrink-0 text-xs text-muted">
+                <span className="tnum w-12 shrink-0 text-label text-muted">
                   {rung.label} rep
                 </span>
-                <span className="tnum font-display flex-1 text-2xl font-medium">
+                <span className="tnum font-display flex-1 text-num font-medium">
                   {formatWeight(rung.best_weight_kg, unit)}
-                  <span className="ms-1 text-xs font-normal text-muted">{unit}</span>
+                  <span className="ms-1 text-meta font-normal text-muted">{unit}</span>
                 </span>
-                <span className="text-xs text-muted">
+                <span className="text-meta text-muted">
                   {formatRelativeDay(rung.achieved_at, locale)}
                 </span>
               </li>
@@ -734,7 +736,7 @@ export function ExerciseDetail({
             <button
               type="button"
               onClick={() => setEditing((v) => !v)}
-              className="btn-base btn-secondary h-12 px-4 text-sm"
+              className="btn-base btn-secondary h-12 px-4 text-body"
             >
               {editing ? t('detail.cancel') : t('detail.edit')}
             </button>
@@ -757,7 +759,7 @@ export function ExerciseDetail({
                   type="button"
                   onClick={() => void saveEdit()}
                   disabled={savingEdit}
-                  className="btn-base btn-hero h-14 flex-1 text-base"
+                  className="btn-base btn-hero h-14 flex-1 btn-text"
                 >
                   {savingEdit ? t('detail.saving') : t('detail.save')}
                 </button>
@@ -770,7 +772,7 @@ export function ExerciseDetail({
                   type="button"
                   onClick={() => void toggleArchived()}
                   disabled={savingEdit}
-                  className="btn-base btn-secondary h-14 px-4 text-sm"
+                  className="btn-base btn-secondary h-14 px-4 text-body"
                 >
                   {exercise.archived_at ? t('detail.restore') : t('detail.archive')}
                 </button>
@@ -784,7 +786,7 @@ export function ExerciseDetail({
                     void removeExercise()
                   }}
                   disabled={savingEdit}
-                  className={`btn-base h-14 px-4 text-sm ${
+                  className={`btn-base h-14 px-4 text-body ${
                     confirmDeleteExercise ? 'btn-primary' : 'btn-quiet'
                   }`}
                 >
@@ -808,18 +810,18 @@ export function ExerciseDetail({
               type="button"
               onClick={() => stepRestBy(-1)}
               aria-label={t('detail.rest.shorter')}
-              className="btn-base btn-secondary h-12 w-12 shrink-0 text-xl"
+              className="btn-base btn-secondary h-12 w-12 shrink-0 text-num"
             >
               −
             </button>
-            <span className="tnum flex-1 text-center text-figure">
+            <span className="tnum flex-1 text-center text-num">
               {describeRest(restForThis)}
             </span>
             <button
               type="button"
               onClick={() => stepRestBy(1)}
               aria-label={t('detail.rest.longer')}
-              className="btn-base btn-secondary h-12 w-12 shrink-0 text-xl"
+              className="btn-base btn-secondary h-12 w-12 shrink-0 text-num"
             >
               +
             </button>
@@ -827,13 +829,13 @@ export function ExerciseDetail({
               <button
                 type="button"
                 onClick={() => void clearRest()}
-                className="btn-base btn-quiet h-12 shrink-0 px-2.5 text-[13px]"
+                className="btn-base btn-quiet h-12 shrink-0 px-2.5 text-label"
               >
                 {t('detail.reset')}
               </button>
             )}
           </div>
-          <p className="mt-1 text-[11px] text-muted">
+          <p className="mt-1 text-label text-muted">
             {restState?.override == null
               ? t('detail.rest.default_note')
               : t('detail.rest.yours', {
@@ -857,10 +859,10 @@ export function ExerciseDetail({
             rows={2}
             maxLength={2000}
             placeholder={t('detail.note.placeholder')}
-            className="ring-edge w-full resize-y bg-surface px-3 py-2.5 text-sm text-text outline-none placeholder:text-muted focus:border-accent"
+            className="ring-edge w-full resize-y bg-surface px-3 py-2.5 field-text text-text outline-none placeholder:text-muted focus:border-accent"
             style={{ borderRadius: 'var(--radius-md)' }}
           />
-          <p className="mt-1 text-[11px] text-muted">
+          <p className="mt-1 text-label text-muted">
             {noteSaving ? t('detail.saving') : t('detail.note.saved')}
           </p>
         </div>
@@ -872,8 +874,8 @@ export function ExerciseDetail({
           <ol className="flex flex-col gap-2.5">
             {instructions.map((step, i) => (
               <li key={step} className="flex gap-3">
-                <span className="tnum w-4 shrink-0 text-xs text-muted">{i + 1}</span>
-                <span className="flex-1 text-[13px] leading-relaxed">{step}</span>
+                <span className="tnum w-4 shrink-0 text-meta text-muted">{i + 1}</span>
+                <span className="flex-1 text-body leading-relaxed">{step}</span>
               </li>
             ))}
           </ol>
@@ -883,9 +885,9 @@ export function ExerciseDetail({
       <div>
         <h3 className="kicker mb-2">{t('detail.recent')}</h3>
         {hist === null ? (
-          <p className="py-2 text-sm text-muted">{t('chrome.loading')}</p>
+          <p className="py-2 text-body text-muted">{t('chrome.loading')}</p>
         ) : hist.length === 0 ? (
-          <p className="py-2 text-sm text-muted">{t('detail.empty')}</p>
+          <p className="py-2 text-body text-muted">{t('detail.empty')}</p>
         ) : (
           <ul>
             {hist.slice(0, 8).map((session, i) => {
@@ -895,10 +897,10 @@ export function ExerciseDetail({
                 <li key={session.workoutId}>
                   {i > 0 && <div className="rule-fade" />}
                   <div className="flex items-baseline gap-3 py-2.5">
-                    <span className="shrink-0 text-xs text-muted">
+                    <span className="shrink-0 text-meta text-muted">
                       {formatRelativeDay(session.startedAt, locale)}
                     </span>
-                    <span className="tnum min-w-0 flex-1 text-sm">
+                    <span className="tnum min-w-0 flex-1 text-meta">
                       {shown
                         .map((s) =>
                           s.weight_kg === null

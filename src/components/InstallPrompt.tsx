@@ -97,7 +97,7 @@ export function InstallPrompt({ earned }: { earned: boolean }) {
       style={{ borderRadius: 'var(--radius-md)' }}
     >
       <p className="kicker mb-1">{t('install.title')}</p>
-      <p className="text-sm text-muted">
+      <p className="text-body text-muted">
         {isIos() && !deferred ? t('install.ios') : t('install.generic')}
       </p>
       <div className="mt-2.5 flex gap-2">
@@ -111,7 +111,7 @@ export function InstallPrompt({ earned }: { earned: boolean }) {
                 dismiss()
               })
             }}
-            className="btn-base btn-primary h-12 flex-1 px-4 text-sm"
+            className="btn-base btn-primary h-12 flex-1 px-4 text-body"
           >
             {t('install.action')}
           </button>
@@ -119,7 +119,7 @@ export function InstallPrompt({ earned }: { earned: boolean }) {
         <button
           type="button"
           onClick={dismiss}
-          className="btn-base btn-quiet h-12 px-4 text-sm"
+          className="btn-base btn-quiet h-12 px-4 text-body"
         >
           {t('install.dismiss')}
         </button>

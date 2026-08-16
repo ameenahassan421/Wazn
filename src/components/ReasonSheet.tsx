@@ -81,12 +81,12 @@ export function ReasonSheet({
       <p id={titleId} className="kicker" style={{ color: 'var(--color-accent-300)' }}>
         {t('reason.kicker')}
       </p>
-      <p dir="auto" className="mt-2 text-[15px] font-semibold">
+      <p dir="auto" className="mt-2 text-title font-semibold">
         {exerciseName}
       </p>
       <div className="mt-2 flex flex-col gap-1.5">
         {lines.map((line) => (
-          <p key={line} className="text-[14px] leading-[1.5] text-muted">
+          <p key={line} className="text-body leading-[1.5] text-muted">
             {line}
           </p>
         ))}
@@ -107,7 +107,7 @@ export function ReasonSheet({
         <button
           type="button"
           onClick={onKeep}
-          className="btn-base btn-hero press h-12 flex-1 text-[15px]"
+          className="btn-base btn-hero press h-12 flex-1 btn-text"
           style={{ borderRadius: 10 }}
         >
           {t('reason.keep')}
@@ -115,7 +115,7 @@ export function ReasonSheet({
         <button
           type="button"
           onClick={onUseLast}
-          className="btn-base btn-secondary press h-12 flex-1 text-[15px]"
+          className="btn-base btn-secondary press h-12 flex-1 btn-text"
           style={{ borderRadius: 10 }}
         >
           {t('reason.use_last')}

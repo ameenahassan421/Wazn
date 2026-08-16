@@ -82,16 +82,16 @@ export function ModeSelector({
               }}
             >
               <span className="flex min-w-0 flex-col gap-0.5">
-                <span className="font-display text-[17px] font-semibold">
+                <span className="font-display text-title font-semibold">
                   {t(behaviour.titleKey)}
                 </span>
-                <span className="text-[12px] leading-[1.4] text-muted">
+                <span className="text-label leading-[1.4] text-muted">
                   {t(behaviour.bodyKey)}
                 </span>
               </span>
               <span
                 dir="ltr"
-                className="meta-mono shrink-0 text-[11px] tracking-[0.1em] text-accent-300"
+                className="meta-mono shrink-0 text-meta tracking-[0.1em] text-accent-300"
               >
                 {active
                   ? t('mode.active')
@@ -124,12 +124,12 @@ export function ModeSelector({
                   type="date"
                   value={draft}
                   onChange={(event) => setDraft(event.target.value)}
-                  className="h-12 min-w-0 flex-1 border border-line bg-surface px-3 text-[14px] outline-none focus:border-accent"
+                  className="h-12 min-w-0 flex-1 border border-line bg-surface px-3 field-text outline-none focus:border-accent"
                   style={{ borderRadius: 'var(--radius-md)' }}
                 />
                 <button
                   type="submit"
-                  className="btn-base btn-secondary h-12 shrink-0 px-4 text-[13px]"
+                  className="btn-base btn-secondary h-12 shrink-0 px-4 text-label"
                 >
                   {t('mode.meet_date.save')}
                 </button>
@@ -143,7 +143,7 @@ export function ModeSelector({
                   setDraft(meetDate ?? '')
                   setEditingDate(true)
                 }}
-                className="btn-base btn-quiet mt-1 h-12 self-start px-1 text-[12px]"
+                className="btn-base btn-quiet mt-1 h-12 self-start px-1 text-label"
               >
                 {t('mode.meet_date.change', { date: meetDate ?? '' })}
               </button>

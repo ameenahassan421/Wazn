@@ -75,14 +75,14 @@ export function LoadHelper({
           style={{ borderRadius: 'var(--radius-panel)' }}
         >
           <div className="flex items-center gap-2">
-            <span className="text-xs text-muted">{t('load.bar')}</span>
+            <span className="text-label text-muted">{t('load.bar')}</span>
             {BAR_WEIGHTS[unit].map((b) => (
               <button
                 key={b}
                 type="button"
                 onClick={() => setBar(b)}
                 aria-pressed={bar === b}
-                className={`tnum h-12 min-w-14 rounded-md border px-3 text-sm font-semibold ${
+                className={`tnum h-12 min-w-14 rounded-md border px-3 text-body font-semibold ${
                   bar === b ? 'border-accent text-accent' : 'border-line text-muted'
                 }`}
               >
@@ -98,7 +98,7 @@ export function LoadHelper({
               the part the card cannot say — that the plates do not reach
               what was typed. */}
           {plates && plates.remainder !== 0 && (
-            <p className="text-xs text-muted">
+            <p className="text-body text-muted">
               {t('load.closest', {
                 weight: String(plates.achievable),
                 unit,
@@ -108,7 +108,7 @@ export function LoadHelper({
           )}
 
           <div>
-            <p className="text-xs text-muted">
+            <p className="text-label text-muted">
               {onLogStep ? t('load.warmup_hint') : t('load.warmup')}
             </p>
             {ramp ? (
@@ -122,7 +122,7 @@ export function LoadHelper({
                   )
                   const figures = (
                     <>
-                      <span className="w-10 shrink-0 text-xs text-muted">
+                      <span className="w-10 shrink-0 text-meta text-muted">
                         {Math.round(s.percent * 100)}%
                       </span>
                       <span className="flex-1 text-start font-semibold" dir="ltr">
@@ -134,7 +134,7 @@ export function LoadHelper({
                     </>
                   )
                   return (
-                    <li key={s.percent} className="tnum text-base">
+                    <li key={s.percent} className="tnum text-body">
                       {onLogStep ? (
                         <button
                           type="button"
@@ -148,7 +148,7 @@ export function LoadHelper({
                           className="flex h-12 w-full items-center gap-3 disabled:opacity-45"
                         >
                           {figures}
-                          <span className="w-12 shrink-0 text-end text-[11px] font-medium text-accent-300">
+                          <span className="w-12 shrink-0 text-end text-label font-medium text-accent-300">
                             {logged ? t('load.logged') : t('load.log')}
                           </span>
                         </button>
@@ -160,7 +160,7 @@ export function LoadHelper({
                 })}
               </ul>
             ) : (
-              <p className="text-sm text-muted">{t('load.no_ramp')}</p>
+              <p className="text-body text-muted">{t('load.no_ramp')}</p>
             )}
           </div>
         </div>

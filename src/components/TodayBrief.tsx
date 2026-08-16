@@ -57,7 +57,7 @@ export function TodayBrief({
 
       <h2
         dir="auto"
-        className="font-display text-[26px] leading-[1.15] font-semibold tracking-[-0.01em]"
+        className="font-display text-fig leading-[1.15] font-semibold tracking-[-0.01em]"
       >
         {title}
       </h2>
@@ -69,7 +69,7 @@ export function TodayBrief({
               `coach-in` treatment CoachBrief uses, and the only motion here. */}
           <p
             key={line}
-            className="coach-in text-[13px] leading-[1.55]"
+            className="coach-in text-body leading-[1.55]"
             style={{ color: 'color-mix(in srgb, var(--flip-text) 66%, transparent)' }}
           >
             {line}
@@ -91,7 +91,7 @@ export function TodayBrief({
         type="button"
         onClick={onStart}
         disabled={busy}
-        className="press font-display flex h-[52px] w-full items-center justify-center text-[17px] font-semibold disabled:opacity-45"
+        className="press font-display flex h-[52px] w-full items-center justify-center btn-text font-semibold disabled:opacity-45"
         style={{
           background: 'var(--color-accent)',
           color: 'var(--color-accent-ink)',
@@ -110,7 +110,7 @@ export function TodayBrief({
           // 48px of target under a 12px label. The design draws the link at
           // its text height; the floor is not negotiable, so the target grows
           // and the type stays where it was drawn.
-          className="press -my-2 flex h-12 items-center justify-center self-center text-[12px] disabled:opacity-45"
+          className="press -my-2 flex h-12 items-center justify-center self-center text-label disabled:opacity-45"
           style={{ color: 'color-mix(in srgb, var(--flip-text) 45%, transparent)' }}
         >
           {t('today.start_empty')}

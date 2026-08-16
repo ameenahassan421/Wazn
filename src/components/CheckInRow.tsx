@@ -54,7 +54,7 @@ export function CheckInRow({
         className="press flex h-12 items-center gap-2 self-start text-start"
       >
         <span className="kicker">{t('checkin.kicker')}</span>
-        <span className="meta-mono text-[11px] text-accent-300 uppercase">
+        <span className="meta-mono text-meta text-accent-300 uppercase">
           {t(LABEL_KEY[value])}
         </span>
       </button>
@@ -83,7 +83,7 @@ export function CheckInRow({
               className="press flex h-12 items-center"
             >
               <span
-                className="grid h-[30px] place-items-center px-3 text-[12px]"
+                className="grid h-[30px] place-items-center px-3 text-label"
                 style={{
                   borderRadius: 15,
                   background: on ? 'var(--flip-bg)' : 'transparent',

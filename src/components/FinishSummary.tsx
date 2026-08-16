@@ -170,7 +170,7 @@ export function FinishSummary({
   return (
     <section className="flex flex-col gap-3 pb-6">
       <div>
-        <p className="text-[13px] text-muted">
+        <p className="text-meta text-muted">
           {dateLabel}
           {ordinal !== null && (
             <>
@@ -179,7 +179,7 @@ export function FinishSummary({
             </>
           )}
         </p>
-        <h2 className="font-display mt-2 text-[34px] leading-[1.12] font-extrabold tracking-[-0.03em]">
+        <h2 className="font-display mt-2 text-fig leading-[1.12] font-extrabold tracking-[-0.03em]">
           {t('finish.title')}
         </h2>
       </div>
@@ -193,11 +193,11 @@ export function FinishSummary({
           <div key={label} className="surface-panel min-w-0 flex-1 px-4 py-3.5">
             <p
               dir="ltr"
-              className="tnum font-display truncate text-[22px] font-bold tracking-[-0.02em]"
+              className="tnum font-display truncate text-num font-bold tracking-[-0.02em]"
             >
               {value}
             </p>
-            <p className="mt-[3px] truncate text-[11.5px] text-muted">{label}</p>
+            <p className="mt-[3px] truncate text-label text-muted">{label}</p>
           </div>
         ))}
       </div>
@@ -232,7 +232,7 @@ export function FinishSummary({
                   language the exercise is named in. */}
               <p
                 dir="auto"
-                className="font-display mt-1 text-[17px] font-bold tracking-[-0.02em]"
+                className="font-display mt-1 text-title font-bold tracking-[-0.02em]"
               >
                 {pr.exerciseName}
                 {best && (
@@ -244,7 +244,7 @@ export function FinishSummary({
                   </>
                 )}
               </p>
-              <p className="meta-mono mt-1 text-xs text-muted">
+              <p className="meta-mono mt-1 text-meta text-muted">
                 {t('finish.e1rm', {
                   value: formatEstimate(e1rm ?? pr.value, unit),
                   unit,
@@ -268,7 +268,7 @@ export function FinishSummary({
               {rows.map(({ set, workingNumber }) => (
                 <div
                   key={set.id}
-                  className="meta-mono flex min-h-[22px] items-center justify-between text-[13px]"
+                  className="meta-mono flex min-h-[22px] items-center justify-between text-meta"
                 >
                   <span
                     className={set.set_type === 'warmup' ? 'text-muted' : 'text-text'}
@@ -299,7 +299,7 @@ export function FinishSummary({
           <ul className="mt-2 flex flex-col gap-2">
             {skipped.map((name) => (
               <li key={name} className="flex items-center gap-2">
-                <span className="min-w-0 flex-1 truncate text-[13px] text-muted">
+                <span className="min-w-0 flex-1 truncate row-title text-muted">
                   {name}
                 </span>
                 <span className="tag-neutral h-[22px] shrink-0 px-1.5 font-mono tracking-[0.08em]">
@@ -337,7 +337,7 @@ export function FinishSummary({
             type="button"
             onClick={() => void onShare()}
             disabled={sharing}
-            className="btn-base press h-14 flex-1 text-[15px] font-bold disabled:opacity-45"
+            className="btn-base press h-14 flex-1 btn-text font-bold disabled:opacity-45"
             style={{
               background: 'var(--color-surface)',
               boxShadow: 'var(--shadow-panel)',
@@ -349,7 +349,7 @@ export function FinishSummary({
           <button
             type="button"
             onClick={onDone}
-            className="btn-base press h-14 flex-1 text-[15px] font-bold"
+            className="btn-base press h-14 flex-1 btn-text font-bold"
             style={{
               background: 'var(--flip-bg)',
               color: 'var(--flip-text)',
@@ -364,14 +364,14 @@ export function FinishSummary({
             type="button"
             onClick={routineUpdate.onUpdate}
             disabled={routineUpdate.saving}
-            className="btn-base btn-ghost h-12 w-full text-[13px] disabled:opacity-45"
+            className="btn-base btn-ghost h-12 w-full text-label disabled:opacity-45"
           >
             {t('finish.routine_update', { name: routineUpdate.name })}
           </button>
         )}
       </div>
 
-      {status && <p className="text-xs text-muted">{status}</p>}
+      {status && <p className="text-body text-muted">{status}</p>}
     </section>
   )
 }
@@ -427,7 +427,7 @@ function CoachDebrief({ workoutId, unit }: { workoutId: string | null; unit: Uni
     <div className="surface-card flex items-start gap-3 px-[18px] py-4">
       <PlateDot size={26} className="mt-0.5 shrink-0" />
       <div className="min-w-0 flex-1">
-        <p key={line} className="coach-in text-[14px] leading-[1.6]">
+        <p key={line} className="coach-in text-body leading-[1.6]">
           {line}
         </p>
         {chip && (

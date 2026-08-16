@@ -96,7 +96,7 @@ export function RestExpanded({
             timer.stop()
             onCollapse()
           }}
-          className="h-12 px-2 text-[13px] font-semibold"
+          className="h-12 px-2 text-label font-semibold"
           style={{ color: 'var(--color-muted)' }}
         >
           {t('rest.skip_long')}
@@ -138,7 +138,7 @@ export function RestExpanded({
               dir="ltr"
               role="timer"
               aria-live="off"
-              className="tnum font-display text-[54px] font-extrabold tracking-[-0.03em]"
+              className="tnum font-display text-hero font-extrabold tracking-[-0.03em]"
             >
               {formatRest(timer.remaining)}
             </p>
@@ -154,7 +154,7 @@ export function RestExpanded({
           <button
             type="button"
             onClick={() => timer.adjust(-2 * REST_STEP_SECONDS)}
-            className="min-h-12 px-6 text-sm font-semibold"
+            className="min-h-12 px-6 text-body font-semibold"
             style={{
               background: 'rgba(236, 231, 220, 0.1)',
               borderRadius: 'var(--radius-pill)',
@@ -165,7 +165,7 @@ export function RestExpanded({
           <button
             type="button"
             onClick={() => timer.adjust(2 * REST_STEP_SECONDS)}
-            className="min-h-12 px-6 text-sm font-semibold"
+            className="min-h-12 px-6 text-body font-semibold"
             style={{
               background: 'rgba(236, 231, 220, 0.1)',
               borderRadius: 'var(--radius-pill)',
@@ -185,7 +185,7 @@ export function RestExpanded({
           >
             <PlateDot size={24} />
             <p
-              className="text-sm leading-relaxed"
+              className="text-body leading-relaxed"
               style={{ color: 'var(--color-text)' }}
             >
               {card.kicker} · <span dir="ltr">{card.value}</span>
@@ -210,7 +210,7 @@ export function RestExpanded({
             }}
           >
             <span
-              className="meta-mono text-[13px]"
+              className="meta-mono text-meta"
               style={{ color: 'var(--color-muted)' }}
             >
               {t('rest.next')}&nbsp;&nbsp;

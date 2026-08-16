@@ -387,7 +387,8 @@ export function ProgressScreen({
     }
   }, [sessions])
 
-  if (loading) return <p className="py-10 text-sm text-muted">{t('chrome.loading')}</p>
+  if (loading)
+    return <p className="py-10 text-body text-muted">{t('chrome.loading')}</p>
   if (detail)
     return (
       <ExerciseDetail
@@ -428,7 +429,7 @@ export function ProgressScreen({
       {error && (
         <p
           role="alert"
-          className="border border-accent px-3 py-2 text-sm text-accent-300"
+          className="border border-accent px-3 py-2 text-body text-accent-300"
           style={{ borderRadius: 'var(--radius-md)' }}
         >
           {error}
@@ -510,11 +511,11 @@ export function ProgressScreen({
            explains itself and then offers no way forward is still a dead
            end, however well it explains itself. */
         <div className="flex flex-col items-start gap-5">
-          <p className="text-sm text-muted">{t('progress.empty_notice')}</p>
+          <p className="text-body text-muted">{t('progress.empty_notice')}</p>
           <button
             type="button"
             onClick={onStart}
-            className="btn-base btn-hero press flex h-[52px] items-center justify-center gap-2.5 px-7 text-[15px] font-bold"
+            className="btn-base btn-hero press flex h-[52px] items-center justify-center gap-2.5 px-7 btn-text font-bold"
             style={{
               borderRadius: 'var(--radius-pill)',
               boxShadow: 'var(--shadow-cta)',
@@ -575,10 +576,10 @@ function Figure({
 }) {
   return (
     <div className="flex min-w-0 flex-1 flex-col items-center gap-1 px-1">
-      <span className="tnum font-display truncate text-[27px] font-semibold leading-none">
+      <span className="tnum font-display truncate text-fig font-semibold leading-none">
         {value}
       </span>
-      <span className="flex items-center gap-1.5 text-[11px] text-muted">
+      <span className="flex items-center gap-1.5 text-label text-muted">
         {label}
         {extra}
       </span>
@@ -622,7 +623,7 @@ function MuscleBalance({
     <section>
       <div className="mb-2.5 flex items-baseline gap-2">
         <h2 className="kicker flex-1">{t('progress.balance.title')}</h2>
-        <span className="font-mono text-[11px] text-muted">
+        <span className="font-mono text-meta text-muted">
           {SET_BAND[0]}–{SET_BAND[1]}
         </span>
       </div>
@@ -633,7 +634,7 @@ function MuscleBalance({
               information, and a screen that shows the target explains itself.
               What it never does is draw a fill that is not there. */}
           <BalanceRow label="—" sets={0} />
-          <p className="mt-2 text-sm text-muted">{t('progress.balance.empty')}</p>
+          <p className="mt-2 text-body text-muted">{t('progress.balance.empty')}</p>
         </>
       ) : (
         <div className="flex flex-col gap-1.5">
@@ -665,8 +666,8 @@ function MuscleBalance({
               onClick={onOpenCoach}
               className="record-row mt-2.5 flex w-full items-center gap-2 rounded-[6px] px-3 py-2.5 text-start"
             >
-              <span className="min-w-0 flex-1 text-[13px]">
-                <span className="font-mono text-[11px] text-accent-300">
+              <span className="min-w-0 flex-1 text-body">
+                <span className="font-mono text-kick text-accent-300">
                   {t('progress.balance.focus')}
                 </span>{' '}
                 <span className="text-text">
@@ -705,7 +706,7 @@ function BalanceRow({ label, sets }: { label: string; sets: number }) {
 
   return (
     <div className="flex items-center gap-2">
-      <span className="w-[74px] shrink-0 truncate text-[13px] capitalize text-muted">
+      <span className="w-[74px] shrink-0 truncate text-label capitalize text-muted">
         {label}
       </span>
       <span
@@ -725,7 +726,7 @@ function BalanceRow({ label, sets }: { label: string; sets: number }) {
           style={{ width: `${pct}%`, backgroundColor: fill }}
         />
       </span>
-      <span className="tnum w-7 shrink-0 text-end font-mono text-[13px]">{sets}</span>
+      <span className="tnum w-7 shrink-0 text-end font-mono text-label">{sets}</span>
     </div>
   )
 }
@@ -758,7 +759,7 @@ function SessionFrequency({ weeks }: { weeks: WeekBucket[] }) {
     <section>
       <div className="mb-2.5 flex items-baseline gap-2">
         <h2 className="kicker flex-1">{t('progress.frequency.title')}</h2>
-        <span className="tnum font-mono text-[11px] text-muted">
+        <span className="tnum font-mono text-meta text-muted">
           {formatCount(weeks.length)} {t('progress.wk')}
         </span>
       </div>
@@ -818,7 +819,7 @@ function SessionFrequency({ weeks }: { weeks: WeekBucket[] }) {
         )}
         <line x1="0" x2={W} y1={H} y2={H} stroke="var(--divider)" strokeWidth="1" />
       </svg>
-      <p className="tnum mt-1 text-[11px] text-muted">
+      <p className="tnum mt-1 text-label text-muted">
         {total === 0
           ? t('progress.frequency.empty_caption')
           : t('progress.frequency.caption', {
@@ -876,7 +877,7 @@ function VolumeTrend({
           peak: formatVolumeWithUnit(max, unit),
         })}
       />
-      <p className="tnum mb-2.5 mt-1 text-[11px] text-muted">
+      <p className="tnum mb-2.5 mt-1 text-label text-muted">
         {t('progress.volume.caption', {
           bucket: t(`progress.volume.bucket.${bucket}`),
           peak: formatVolume(max, unit),
@@ -933,17 +934,17 @@ function Records({
               className="flex h-14 w-full items-center gap-3 border-b border-line px-3 text-start last:border-b-0"
             >
               <span className="min-w-0 flex-1">
-                <span className="block truncate text-[15px] font-medium">
+                <span className="block truncate row-title font-medium">
                   {entry.name}
                 </span>
-                <span className="block truncate text-[11px] text-muted">
+                <span className="block truncate text-meta text-muted">
                   {t(RECORD_LABEL_KEY[entry.kind])} ·{' '}
                   {formatRelativeDay(entry.at, locale)}
                 </span>
               </span>
-              <span className="tnum shrink-0 text-2xl font-medium">
+              <span className="tnum shrink-0 text-num font-medium">
                 {formatWeight(entry.weight_kg, unit)}
-                <span className="ms-1 text-xs font-normal text-muted">
+                <span className="ms-1 text-meta font-normal text-muted">
                   {unit} × {entry.reps}
                 </span>
               </span>
@@ -996,7 +997,7 @@ function AnchorLifts({ rows, unit }: { rows: AnchorRow[]; unit: Unit }) {
     <section>
       <div className="mb-2.5 flex items-baseline gap-2">
         <h2 className="kicker flex-1">{t('progress.anchor.title')}</h2>
-        <span className="font-mono text-[11px] text-muted">
+        <span className="font-mono text-meta text-muted">
           {t('progress.anchor.1rm')}
         </span>
       </div>
@@ -1007,7 +1008,7 @@ function AnchorLifts({ rows, unit }: { rows: AnchorRow[]; unit: Unit }) {
         ))}
       </div>
 
-      <p className="mt-2 text-[11px] leading-relaxed text-muted">
+      <p className="mt-2 text-label leading-relaxed text-muted">
         {measured.length === 0
           ? t('progress.anchor.empty')
           : !predicted
@@ -1055,7 +1056,7 @@ function AnchorRowBar({
 
   return (
     <div className="flex items-center gap-2">
-      <span className="w-[74px] shrink-0 truncate text-[13px] text-muted">
+      <span className="w-[74px] shrink-0 truncate text-label text-muted">
         {row.label}
       </span>
       <span
@@ -1080,7 +1081,7 @@ function AnchorRowBar({
           />
         )}
       </span>
-      <span className="tnum w-11 shrink-0 text-end font-mono text-[13px]">
+      <span className="tnum w-11 shrink-0 text-end font-mono text-label">
         {measured === null ? (
           <span style={{ color: 'var(--color-tile-3)' }}>—</span>
         ) : (
@@ -1157,14 +1158,14 @@ function StrengthList({
       <div className="mb-2 flex items-baseline gap-2">
         <h2 className="kicker flex-1">{t('progress.strength.title')}</h2>
         {rows.length < total && (
-          <span className="tnum font-mono text-[11px] text-muted">
+          <span className="tnum font-mono text-meta text-muted">
             {rows.length}/{total}
           </span>
         )}
       </div>
 
       {rows.length === 0 && (
-        <p className="py-2 text-sm text-muted">
+        <p className="py-2 text-body text-muted">
           {t('progress.strength.empty', { range: describeRange(range) })}
         </p>
       )}
@@ -1203,7 +1204,9 @@ function StrengthList({
                   size={40}
                 />
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate text-sm font-medium">{row.name}</span>
+                  <span className="block truncate row-title font-medium">
+                    {row.name}
+                  </span>
                   {/* v3 §08's forecast line, in the meta slot. It REPLACES the
                       "last trained" line rather than being added under it: two
                       mono lines under a name is a paragraph, and the forecast
@@ -1223,10 +1226,10 @@ function StrengthList({
                     locale={locale}
                   />
                 </span>
-                <span className="tnum shrink-0 text-[20px] font-medium">
+                <span className="tnum shrink-0 text-num font-medium">
                   {Math.round(toDisplayWeight(best, unit))}
                 </span>
-                <span className="tnum w-14 shrink-0 text-end font-mono text-[12px]">
+                <span className="tnum w-14 shrink-0 text-end font-mono text-meta">
                   <Delta deltaKg={delta} unit={unit} />
                 </span>
               </button>
@@ -1235,13 +1238,13 @@ function StrengthList({
         })}
       </ul>
 
-      {rows.length > 0 && <p className="mt-1.5 text-[11px] text-muted">{caption}</p>}
+      {rows.length > 0 && <p className="mt-1.5 text-label text-muted">{caption}</p>}
 
       {rows.length > STRENGTH_SHOWN && (
         <button
           type="button"
           onClick={() => setShowAll((v) => !v)}
-          className="btn-base btn-secondary mt-2.5 h-12 w-full text-sm"
+          className="btn-base btn-secondary mt-2.5 h-12 w-full text-body"
         >
           {showAll
             ? t('progress.strength.show_fewer')
@@ -1288,7 +1291,7 @@ function ForecastLine({
 }) {
   const { t } = useLocale()
   if (!forecast) {
-    return <span className="block text-[11px] text-muted">{fallback}</span>
+    return <span className="block text-meta text-muted">{fallback}</span>
   }
 
   const weeks = Number(forecast.weeks_of_data ?? 0)
@@ -1296,7 +1299,7 @@ function ForecastLine({
     return (
       <span
         dir="ltr"
-        className="meta-mono tnum block text-[10px] uppercase"
+        className="meta-mono tnum block text-kick uppercase"
         style={{ color: 'var(--ghost-ink)' }}
       >
         {t('progress.forecast.pending', {
@@ -1310,7 +1313,7 @@ function ForecastLine({
   const slope = Number(forecast.slope_kg_per_week ?? 0)
   const latest = Number(forecast.latest_e1rm_kg ?? 0)
   if (!Number.isFinite(slope) || slope <= 0 || latest <= 0) {
-    return <span className="block text-[11px] text-muted">{fallback}</span>
+    return <span className="block text-meta text-muted">{fallback}</span>
   }
 
   const current = toDisplayWeight(latest, unit)
@@ -1319,7 +1322,7 @@ function ForecastLine({
   const to = Math.ceil((target - current) / slopeDisplay)
   // The same ceiling `lib/forecast.ts` enforces: past a year it is a wish.
   if (!Number.isFinite(to) || to <= 0 || to > FORECAST_MAX_WEEKS) {
-    return <span className="block text-[11px] text-muted">{fallback}</span>
+    return <span className="block text-meta text-muted">{fallback}</span>
   }
 
   const by = new Date()
@@ -1328,7 +1331,7 @@ function ForecastLine({
   return (
     <span
       dir="ltr"
-      className="meta-mono tnum block text-[10px] text-accent-300 uppercase"
+      className="meta-mono tnum block text-kick text-accent-300 uppercase"
     >
       {t('progress.forecast.line', {
         target: String(Math.round(target)),
@@ -1401,7 +1404,7 @@ function PlateauCard({
       <h2 id="coach-fix-kicker" className="kicker text-accent-300">
         {t('progress.plateau.kicker')}
       </h2>
-      <p className="text-[14px] leading-[1.5]">
+      <p className="text-body leading-[1.5]">
         {t('progress.plateau.line', { name, weeks: String(plateau.weeks) })}
       </p>
       <span dir="ltr" className="chip-data tnum">
@@ -1416,7 +1419,7 @@ function PlateauCard({
         <button
           type="button"
           onClick={onPreview}
-          className="btn-base btn-hero press h-11 flex-1 text-[15px]"
+          className="btn-base btn-hero press h-11 flex-1 btn-text"
           style={{ borderRadius: 10 }}
         >
           {t('progress.plateau.preview')}
@@ -1424,7 +1427,7 @@ function PlateauCard({
         <button
           type="button"
           onClick={onLater}
-          className="btn-base btn-secondary press h-11 flex-1 text-[15px]"
+          className="btn-base btn-secondary press h-11 flex-1 btn-text"
           style={{ borderRadius: 10 }}
         >
           {t('progress.plateau.later')}

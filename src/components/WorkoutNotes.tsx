@@ -76,7 +76,7 @@ export function WorkoutNotes({
           onChange={(e) => setName(e.target.value)}
           onBlur={(e) => void save({ name: e.target.value })}
           placeholder={t('notes.name.placeholder')}
-          className="ring-edge h-12 w-full bg-surface px-3 text-start text-base outline-none placeholder:text-muted focus:border-accent"
+          className="ring-edge h-12 w-full bg-surface px-3 text-start field-text outline-none placeholder:text-muted focus:border-accent"
           style={{ borderRadius: 'var(--radius-md)' }}
         />
       </div>
@@ -93,13 +93,13 @@ export function WorkoutNotes({
           onChange={(e) => setNote(e.target.value)}
           onBlur={(e) => void save({ notes: e.target.value })}
           placeholder={t('notes.note.placeholder')}
-          className="ring-edge w-full resize-y bg-surface px-3 py-2.5 text-sm outline-none placeholder:text-muted focus:border-accent"
+          className="ring-edge w-full resize-y bg-surface px-3 py-2.5 field-text outline-none placeholder:text-muted focus:border-accent"
           style={{ borderRadius: 'var(--radius-md)' }}
         />
       </div>
 
       <p
-        className={`text-[11px] ${status ? 'text-accent-300' : 'text-muted'}`}
+        className={`text-label ${status ? 'text-accent-300' : 'text-muted'}`}
         role="status"
       >
         {status ?? (saving ? t('notes.saving') : t('notes.saved'))}

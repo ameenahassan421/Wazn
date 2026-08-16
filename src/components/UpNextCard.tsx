@@ -57,10 +57,10 @@ export function UpNextCard({
       >
         {t('upnext.kicker')}
       </span>
-      <span className="font-display mt-2 block text-[22px] font-bold tracking-[-0.02em]">
+      <span className="font-display mt-2 block text-title font-bold tracking-[-0.02em]">
         {busy ? t('routines.starting') : routine.name}
       </span>
-      <span className="mt-1 block text-[13px]" style={{ color: 'var(--flip-muted)' }}>
+      <span className="mt-1 block text-meta" style={{ color: 'var(--flip-muted)' }}>
         {meta}
       </span>
     </button>

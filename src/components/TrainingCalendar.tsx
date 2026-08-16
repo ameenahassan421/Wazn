@@ -58,14 +58,14 @@ export function TrainingCalendar({
     <section>
       <div className="mb-2 flex items-baseline gap-2">
         <h2 className="kicker flex-1">{t('calendar.title')}</h2>
-        <span className="tnum font-mono text-[11px] text-muted">
+        <span className="tnum font-mono text-meta text-muted">
           {formatCount(trained)} {trained === 1 ? 'day' : 'days'}
         </span>
       </div>
 
       <div
         aria-hidden="true"
-        className="mb-1 grid font-mono text-[11px] leading-none text-muted"
+        className="mb-1 grid font-mono text-nano leading-none text-muted"
         style={{ gridTemplateColumns: GRID_COLUMNS }}
       >
         {months.map(({ day, column }) => (
@@ -111,7 +111,7 @@ export function TrainingCalendar({
       </div>
 
       <div className="mt-2 flex items-center gap-2">
-        <p className="min-w-0 flex-1 text-[11px] text-muted">
+        <p className="min-w-0 flex-1 text-label text-muted">
           {trained === 0 ? t('calendar.hint.empty') : t('calendar.hint')}
         </p>
         <span aria-hidden="true" className="flex shrink-0 items-center gap-[3px]">

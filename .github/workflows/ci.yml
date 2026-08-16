@@ -42,6 +42,13 @@ jobs:
         # module where follows and likes silently failed for every user.
         run: npm run check:coverage
 
+      - name: Check the type ramp
+        # Every font size in src/ is a named step or a named idiom. The gate
+        # the P0 plan proposed was `grep text-[Npx]`, which would have passed
+        # with 203 Tailwind default size classes still in place — text-sm is
+        # every bit as unnamed as text-[14px], it just looks tidier.
+        run: npm run check:type
+
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'

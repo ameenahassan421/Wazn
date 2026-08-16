@@ -38,7 +38,7 @@ export function WeekCard({ days, onOpen }: { days: WeekDay[]; onOpen: () => void
               }}
             />
             <p
-              className="meta-mono mt-[5px] text-[10px]"
+              className="meta-mono mt-[5px] text-nano"
               style={{ color: day.today ? 'var(--color-accent)' : undefined }}
             >
               {formatWeekdayNarrow(day.date, locale)}
@@ -99,16 +99,16 @@ export function LastPrCard({
         <>
           <p
             dir="ltr"
-            className="font-display tnum text-xl font-extrabold tracking-[-0.02em] text-accent"
+            className="font-display tnum text-num font-extrabold tracking-[-0.02em] text-accent"
           >
             {formatWeightWithUnit(record.weight_kg, unit)}
           </p>
-          <p dir="auto" className="mt-[3px] truncate text-[11.5px] text-muted">
+          <p dir="auto" className="mt-[3px] truncate text-label text-muted">
             {record.name} · {formatRelativeDay(record.at, locale)}
           </p>
         </>
       ) : (
-        <p className="text-[13px] text-muted">{t('home.no_pr')}</p>
+        <p className="text-label text-muted">{t('home.no_pr')}</p>
       )}
     </button>
   )
@@ -152,16 +152,16 @@ export function RecentSessionCard({
       {/* The destination, appended rather than substituted — see LastPrCard. */}
       <span className="sr-only">{t('home.last_session.aria')}</span>
       <span className="min-w-0">
-        <span dir="auto" className="block truncate text-[14.5px] font-bold">
+        <span dir="auto" className="block truncate row-title font-bold">
           {name?.trim() || t('log.workout_fallback')}
         </span>
-        <span dir="auto" className="mt-[3px] block truncate text-xs text-muted">
+        <span dir="auto" className="mt-[3px] block truncate text-meta text-muted">
           {meta}
         </span>
       </span>
       {hasPr && (
         <span
-          className="font-display text-accent-300 shrink-0 px-2.5 py-1.5 text-[11px] font-bold"
+          className="font-display text-accent-300 shrink-0 px-2.5 py-1.5 text-meta font-bold"
           style={{
             background: 'color-mix(in srgb, var(--color-accent) 9%, transparent)',
             borderRadius: 'var(--radius-pill)',

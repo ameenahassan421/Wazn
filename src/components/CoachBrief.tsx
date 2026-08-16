@@ -157,12 +157,12 @@ export function CoachBrief({ onOpen }: { onOpen?: () => void }) {
           <PlateDot size={30} className="mt-0.5 shrink-0" />
           <div className="min-w-0 flex-1">
             <h2 className="kicker">{t('brief.title')}</h2>
-            <p className="mt-1.5 text-[14.5px] leading-[1.55]">{t('brief.first')}</p>
+            <p className="mt-1.5 text-body leading-[1.55]">{t('brief.first')}</p>
             <div className="mt-3">
               <button
                 type="button"
                 onClick={onOpen}
-                className="btn-base btn-secondary press h-9 px-3.5 text-[12.5px] font-semibold"
+                className="btn-base btn-secondary press h-9 px-3.5 text-label font-semibold"
                 style={{ borderRadius: 'var(--radius-pill)' }}
               >
                 {t('brief.ask')}
@@ -186,7 +186,7 @@ export function CoachBrief({ onOpen }: { onOpen?: () => void }) {
           {/* Keyed on the text so the sentence arriving is an authored moment
               — it settles in rather than swapping under the eye. The skeleton
               is already correct, so this is the only motion the card has. */}
-          <p key={line} className="coach-in mt-1.5 text-[14.5px] leading-[1.55]">
+          <p key={line} className="coach-in mt-1.5 text-body leading-[1.55]">
             {line}
           </p>
           {chip && (
@@ -204,7 +204,7 @@ export function CoachBrief({ onOpen }: { onOpen?: () => void }) {
               <button
                 type="button"
                 onClick={onOpen}
-                className="btn-base btn-secondary press h-9 px-3.5 text-[12.5px] font-semibold"
+                className="btn-base btn-secondary press h-9 px-3.5 text-label font-semibold"
                 style={{ borderRadius: 'var(--radius-pill)' }}
               >
                 {t('brief.ask')}

@@ -91,7 +91,7 @@ function ChipScroller({
             // Tapping the chosen chip clears it: the fastest way out of a
             // filter is the control that put you in it.
             onClick={() => onChange(on ? null : option)}
-            className={`btn-base h-12 shrink-0 px-3.5 text-sm capitalize ${
+            className={`btn-base h-12 shrink-0 px-3.5 text-body capitalize ${
               on ? 'btn-primary' : 'btn-secondary'
             }`}
           >
@@ -186,7 +186,7 @@ export function ExercisePicker({
           autoComplete="off"
           autoCapitalize="none"
           spellCheck={false}
-          className="h-12 flex-1 rounded-lg border border-line bg-surface px-3 text-start text-base outline-none placeholder:text-muted focus:border-accent"
+          className="h-12 flex-1 rounded-lg border border-line bg-surface px-3 text-start field-text outline-none placeholder:text-muted focus:border-accent"
         />
       </div>
 
@@ -214,13 +214,13 @@ export function ExercisePicker({
           {/* `ordered`, not `exercises`: the denominator has to be what could
               be shown, and archived rows never can be. "12 of 14" while two of
               the fourteen are archived is a count that cannot be reached. */}
-          <span className="tnum flex-1 font-mono text-[11px] text-muted">
+          <span className="tnum flex-1 font-mono text-meta text-muted">
             {results.length} of {ordered.length}
           </span>
           <button
             type="button"
             onClick={() => setFilter(NO_FILTER)}
-            className="btn-base btn-quiet h-12 px-2 text-[13px]"
+            className="btn-base btn-quiet h-12 px-2 text-label"
           >
             {t('picker.clear')}
           </button>
@@ -229,7 +229,7 @@ export function ExercisePicker({
 
       {results.length === 0 ? (
         <div className="py-6">
-          <p className="text-sm text-muted">
+          <p className="text-body text-muted">
             {filtered
               ? query.trim()
                 ? `Nothing matching “${query.trim()}” in ${describeFilter(filter)}.`
@@ -240,7 +240,7 @@ export function ExercisePicker({
             <button
               type="button"
               onClick={() => setFilter(NO_FILTER)}
-              className="btn-base btn-secondary mt-3 h-12 w-full text-sm"
+              className="btn-base btn-secondary mt-3 h-12 w-full text-body"
             >
               {t('picker.clear')}
             </button>
@@ -251,7 +251,7 @@ export function ExercisePicker({
             <button
               type="button"
               onClick={() => setCreating(true)}
-              className="btn-base btn-hero mt-3 h-[60px] w-full text-[17px]"
+              className="btn-base btn-hero mt-3 h-[60px] w-full btn-text"
             >
               Add “{query.trim()}”
             </button>
@@ -268,10 +268,10 @@ export function ExercisePicker({
               >
                 <ExerciseThumb exercise={exercise} size={64} />
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate text-base font-medium">
+                  <span className="block truncate row-title font-medium">
                     {exercise.name}
                   </span>
-                  <span className="mt-0.5 block text-xs text-muted">
+                  <span className="mt-0.5 block text-label text-muted">
                     {exercise.muscle_group} · {exercise.equipment}
                   </span>
                 </span>
@@ -283,7 +283,7 @@ export function ExercisePicker({
               <button
                 type="button"
                 onClick={() => setCreating(true)}
-                className="flex min-h-14 w-full items-center py-3 text-start text-sm text-accent-300"
+                className="flex min-h-14 w-full items-center py-3 text-start text-body text-accent-300"
               >
                 + New exercise
               </button>

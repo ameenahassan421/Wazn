@@ -85,7 +85,7 @@ export function SessionQueue({
               <PlateHollow size={16} className="shrink-0 text-muted" />
             )}
             <span
-              className={`min-w-0 flex-1 truncate text-[13px] ${
+              className={`min-w-0 flex-1 truncate row-title ${
                 current ? 'font-semibold' : 'text-muted'
               }`}
             >
@@ -97,7 +97,7 @@ export function SessionQueue({
                 direction from the Arabic in them. Forcing ltr printed the
                 Arabic backwards; forcing nothing printed the figures
                 backwards. */}
-            <span dir="auto" className="meta-mono tnum shrink-0 text-xs text-muted">
+            <span dir="auto" className="meta-mono tnum shrink-0 text-meta text-muted">
               {detail}
             </span>
           </button>

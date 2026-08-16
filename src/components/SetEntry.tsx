@@ -48,7 +48,7 @@ function StepperButton({
       onClick={onPress}
       disabled={disabled}
       aria-label={label}
-      className="btn-base press bg-ink h-12 w-12 shrink-0 text-[22px] font-semibold disabled:opacity-45"
+      className="btn-base press bg-ink h-12 w-12 shrink-0 text-num font-semibold disabled:opacity-45"
       style={{ borderRadius: '12px' }}
     >
       {sign === 'down' ? '−' : '+'}
@@ -329,10 +329,10 @@ export function SetEntry({
         <div className="flex items-center gap-3">
           <ExerciseThumb exercise={exercise} size={44} radius="var(--radius-thumb)" />
           <div className="min-w-0 flex-1">
-            <h2 className="font-display truncate text-[17px] font-bold tracking-[-0.02em]">
+            <h2 className="font-display truncate text-title font-bold tracking-[-0.02em]">
               {exercise.name}
             </h2>
-            <p className="meta-mono mt-[3px] truncate text-xs text-muted">
+            <p className="meta-mono mt-[3px] truncate text-meta text-muted">
               {setLabel}
               {equipment && ` · ${equipment}`}
             </p>
@@ -342,7 +342,7 @@ export function SetEntry({
         {/* The ghost line: when, then what. One mono line, not a card — the
             design demotes it the moment the steppers carry the figure you
             are about to commit. */}
-        <p className="meta-mono mt-3 truncate text-xs text-muted">
+        <p className="meta-mono mt-3 truncate text-meta text-muted">
           {previousLoading ? (
             t('entry.previous.loading')
           ) : previousSession.length > 0 ? (
@@ -373,7 +373,7 @@ export function SetEntry({
                     the question louder. Keyed by set.id, so the animation
                     runs when the row mounts and never again on re-render. */}
                 <div
-                  className={`meta-mono flex min-h-7 items-center gap-2.5 rounded-md text-sm ${
+                  className={`meta-mono flex min-h-7 items-center gap-2.5 rounded-md text-meta ${
                     i === setsThisWorkout.length - 1
                       ? isRecord(set)
                         ? 'record-flash'
@@ -410,7 +410,7 @@ export function SetEntry({
                     </span>
                   )}
                   {set.rpe !== null && (
-                    <span className="tnum shrink-0 text-[11px] text-muted">
+                    <span className="tnum shrink-0 text-meta text-muted">
                       @{set.rpe}
                     </span>
                   )}
@@ -455,7 +455,7 @@ export function SetEntry({
             value={draft.weight}
             onChange={(e) => setDraft((d) => ({ ...d, weight: e.target.value }))}
             placeholder="BW"
-            className="tnum font-display h-11 w-full bg-transparent text-center text-[29px] font-bold tracking-[-0.02em] outline-none placeholder:text-muted"
+            className="tnum font-display h-11 w-full bg-transparent text-center text-fig font-bold tracking-[-0.02em] outline-none placeholder:text-muted"
           />
           <div className="mt-1.5 flex items-center justify-between">
             <StepperButton
@@ -484,7 +484,7 @@ export function SetEntry({
             value={draft.reps}
             onChange={(e) => setDraft((d) => ({ ...d, reps: e.target.value }))}
             placeholder="0"
-            className="tnum font-display h-11 w-full bg-transparent text-center text-[29px] font-bold tracking-[-0.02em] outline-none placeholder:text-muted"
+            className="tnum font-display h-11 w-full bg-transparent text-center text-fig font-bold tracking-[-0.02em] outline-none placeholder:text-muted"
           />
           <div className="mt-1.5 flex items-center justify-between">
             <StepperButton
@@ -514,7 +514,7 @@ export function SetEntry({
           type="button"
           onClick={cycleSetType}
           aria-label={`${SET_TYPE_NAME[setType]}. Tap to change.`}
-          className={`btn-base h-12 min-w-14 px-3 text-sm ${
+          className={`btn-base h-12 min-w-14 px-3 text-body ${
             setType === 'normal' ? 'btn-secondary' : 'btn-primary'
           }`}
         >
@@ -529,7 +529,7 @@ export function SetEntry({
               ? t('entry.rpe.add')
               : t('entry.rpe.change', { value: String(rpe) })
           }
-          className={`btn-base tnum h-12 min-w-14 px-3 text-sm ${
+          className={`btn-base tnum h-12 min-w-14 px-3 text-body ${
             rpe === null ? 'btn-secondary' : 'btn-primary'
           }`}
         >
@@ -545,7 +545,7 @@ export function SetEntry({
                 ? t('entry.superset.add', { group: String(supersetGroup) })
                 : t('entry.superset.start')
             }
-            className={`btn-base h-12 px-3 text-sm ${
+            className={`btn-base h-12 px-3 text-body ${
               supersetGroup != null ? 'btn-primary' : 'btn-secondary'
             }`}
           >
@@ -569,7 +569,7 @@ export function SetEntry({
               }
             }}
             aria-label={t('entry.superset.leave', { group: String(supersetGroup) })}
-            className={`btn-base h-12 px-2.5 text-[13px] ${
+            className={`btn-base h-12 px-2.5 text-label ${
               confirmUngroup ? 'btn-primary' : 'btn-quiet'
             }`}
           >
@@ -578,7 +578,7 @@ export function SetEntry({
         )}
 
         {supersetGroup == null && (
-          <span className="ms-auto truncate text-[11px] text-muted">
+          <span className="ms-auto truncate text-label text-muted">
             {SET_TYPE_NAME[setType]}
           </span>
         )}
@@ -621,7 +621,7 @@ export function SetEntry({
         }}
       >
         {error && (
-          <p role="alert" className="text-sm text-accent-300">
+          <p role="alert" className="text-body text-accent-300">
             {error}
           </p>
         )}
@@ -655,7 +655,7 @@ export function SetEntry({
           type="button"
           onClick={() => void submit()}
           disabled={saving}
-          className={`btn-base press flex h-[60px] w-full items-center justify-center gap-2.5 text-[16px] font-bold disabled:opacity-45 ${
+          className={`btn-base press flex h-[60px] w-full items-center justify-center gap-2.5 btn-text font-bold disabled:opacity-45 ${
             setType === 'warmup' ? 'btn-primary' : 'btn-hero'
           }`}
           style={{
@@ -690,7 +690,7 @@ export function SetEntry({
           <button
             type="button"
             onClick={onNextExercise}
-            className="btn-base btn-secondary press h-12 w-full text-sm"
+            className="btn-base btn-secondary press h-12 w-full text-body"
             style={{ borderRadius: 'var(--radius-pill)' }}
           >
             {t('entry.log.next', { name: nextExerciseName })}

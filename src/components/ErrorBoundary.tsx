@@ -83,20 +83,20 @@ export class ErrorBoundary extends Component<Props, State> {
       >
         {/* Amber and outlined, never red — §2.4. A crash is the app's fault,
             and shouting at the user in red does not make it less so. */}
-        <p className="font-mono text-[12px] tracking-[0.08em] text-accent-300 uppercase">
+        <p className="font-mono text-kick tracking-[0.08em] text-accent-300 uppercase">
           Something broke
         </p>
-        <p className="mt-3 text-[15px] text-text">
+        <p className="mt-3 text-body text-text">
           Every set you logged is already saved. This screen stopped working — nothing
           else did.
         </p>
-        <p className="mt-2 text-[13px] text-muted">
+        <p className="mt-2 text-body text-muted">
           Try it again, or use the arrow at the top of the screen to go back.
         </p>
         <button
           type="button"
           onClick={this.retry}
-          className="press btn-base btn-primary mt-5 h-[58px] w-full text-[15px]"
+          className="press btn-base btn-primary mt-5 h-[58px] w-full btn-text"
         >
           Try again
         </button>

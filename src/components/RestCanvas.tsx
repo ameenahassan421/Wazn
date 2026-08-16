@@ -117,7 +117,7 @@ export function RestCanvas({
           setEnabled(true)
           setUndo(false)
         }}
-        className="btn-base btn-quiet h-12 w-full justify-start px-3 text-[13px]"
+        className="btn-base btn-quiet h-12 w-full justify-start px-3 text-label"
       >
         {t('canvas.undo')}
       </button>
@@ -148,7 +148,7 @@ export function RestCanvas({
               it in the kicker and it truncated mid-word, which is the one
               failure a surface built to be read at three feet cannot have. */}
           {card.subject && (
-            <p className="mt-0.5 truncate text-[14px] leading-tight text-muted">
+            <p className="mt-0.5 truncate text-label leading-tight text-muted">
               {card.subject}
             </p>
           )}
@@ -163,7 +163,7 @@ export function RestCanvas({
           <div className="mt-2 flex flex-wrap items-baseline gap-x-2.5 gap-y-1.5">
             <span
               dir="auto"
-              className="tnum font-display text-[26px] font-medium leading-none"
+              className="tnum font-display text-fig font-medium leading-none"
             >
               {card.value}
             </span>
