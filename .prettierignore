@@ -23,3 +23,14 @@ docs/design/v5-momentum
 .impeccable
 test-results
 playwright-report
+
+# The Expo app. Its SOURCE is formatted with everything else — same house
+# style — so only the parts that are installed, generated or exported are
+# skipped here.
+mobile/node_modules
+mobile/.expo-export
+mobile/.expo
+mobile/package-lock.json
+# Generated from src/lib/tokens.ts by `npm run check:tokens -- --write`.
+mobile/tailwind.tokens.js
+mobile/expo-env.d.ts

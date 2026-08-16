@@ -1,0 +1,23 @@
+import { useRouter } from 'expo-router'
+
+import { Txt, Kick } from '@/design/Txt'
+import { Btn } from '@/components/ui/Btn'
+import { Screen } from '@/components/ui/Screen'
+
+/**
+ * A route that does not exist — reached from a stale deep link or a bad
+ * `wazn://` URL, never from inside the app.
+ *
+ * No apology and no error styling. Ember is spent on the way out, because
+ * the only useful thing here is the door.
+ */
+export default function NotFound() {
+  const router = useRouter()
+  return (
+    <Screen scroll={false} style={{ justifyContent: 'center', gap: 14 }}>
+      <Kick>NOTHING HERE</Kick>
+      <Txt step="title">That link does not go anywhere.</Txt>
+      <Btn kind="hero" label="BACK TO THE LOG" onPress={() => router.replace('/')} />
+    </Screen>
+  )
+}

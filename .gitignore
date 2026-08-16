@@ -41,3 +41,7 @@ playwright-report
 # without it. Pin deliberately, with a step that verifies the lock, or not
 # at all.
 deno.lock
+
+# `npm run bundle:ios` in mobile/ writes the Metro bundle here. It is a build
+# artifact and it is 4.6 MB.
+mobile/.expo-export*

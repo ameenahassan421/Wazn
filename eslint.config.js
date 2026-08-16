@@ -11,6 +11,10 @@ export default tseslint.config(
       'dist',
       'dev-dist',
       'node_modules',
+      // The Expo app is linted by its own `expo lint`, against React Native
+      // rules. Running the web config over it would flag every RN style
+      // object and miss everything that actually matters there.
+      'mobile',
       '.agents',
       '.claude/worktrees',
       'coverage',

@@ -155,6 +155,40 @@ var, the model never sits on the critical path, and no model output is written
 to the database without the user pressing something. Statistics answer anything
 statistics can answer.
 
+## There are TWO apps now (2026-08-16)
+
+`mobile/` is an Expo Router + NativeWind native app, and it is a **separate npm
+package with its own lockfile** — not tidiness, a hard constraint: NativeWind v4
+needs Tailwind 3.4 and the web app is Tailwind v4. Do not add a `workspaces` key
+to the root `package.json`; that changes how Vercel installs.
+
+```bash
+cd mobile && npm ci
+npm run typecheck        # tsc
+npm run bundle:ios       # THE gate — real Metro + Babel + NativeWind
+npm run bundle:android
+```
+
+- **`src/lib/portable.ts` is the only door between the two apps.** Mobile
+  resolves `@wazn/domain` to it via `mobile/metro.config.js`. Adding an export
+  there is a decision; `portable.test.ts` walks the TRANSITIVE import graph and
+  fails on any browser global. Domain shared, I/O adapted — `supabase.ts` and
+  every `use-*` hook stay per-platform on purpose.
+- **`src/lib/tokens.ts` is the palette's source of truth for BOTH stacks.**
+  `npm run check:tokens` compares it against `index.css` and regenerates
+  `mobile/tailwind.tokens.js`; CI fails on drift. Never type a colour into
+  `mobile/tailwind.config.js`. It found three shipped defects on its first run.
+- **Type is a component on native (`<Txt step="hero">`), not a class.** RN picks
+  a font cut by family NAME, not weight — a `text-hero` carrying `fontWeight`
+  renders Saira Medium and looks almost right.
+- **`npm run typecheck` in mobile is not a build.** A broken babel preset, a bad
+  metro alias, a missing font subpath and a NativeWind/RN version fight are all
+  clean to tsc and fatal to `expo export`. Bundle before claiming it works.
+- **`api.expo.dev` and `reactnative.directory` are 403 from this org's egress
+  proxy**, so `npx expo install` cannot resolve versions and EAS cannot run from
+  a session. Read `node_modules/expo/bundledNativeModules.json` instead — it is
+  the same version map, offline.
+
 ## Architecture
 
 - `src/screens/` — Log (home), History, Progress, **Body**, Coach, Friends,

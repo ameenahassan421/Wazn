@@ -1,0 +1,10 @@
+/* NativeWind's entry point. Metro compiles this with Tailwind 3.4 and hands
+   the result to the runtime as styles — nothing here is served as CSS to a
+   browser, and the three directives are the whole file on purpose.
+
+   The v5 tokens are NOT declared here. They live in `src/lib/tokens.ts`,
+   reach this stack through the generated `tailwind.tokens.js`, and are
+   verified against the web app's `index.css` by `npm run check:tokens`. */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;

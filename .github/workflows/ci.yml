@@ -42,6 +42,20 @@ jobs:
         # module where follows and likes silently failed for every user.
         run: npm run check:coverage
 
+      - name: Check the design tokens agree across both stacks
+        # The palette now feeds TWO rendering stacks that cannot share a
+        # stylesheet: the web app's Tailwind v4 `@theme` block in index.css,
+        # and the Expo app's Tailwind 3.4 config, which NativeWind requires as
+        # JavaScript. `src/lib/tokens.ts` is the source and this compares all
+        # three.
+        #
+        # It found three real defects the hour it was written: the data chip
+        # shipped at 14% against the handoff's 15%, `nano` shipped with no
+        # letter-spacing at all against a specified 0.1em, and the brass chip
+        # ground had no token in the app despite brass being drawn on four
+        # surfaces. None of those were visible; all three were a diff away.
+        run: npm run check:tokens
+
       - name: Check the type ramp
         # Every font size in src/ is a named step or a named idiom. The gate
         # the P0 plan proposed was `grep text-[Npx]`, which would have passed
@@ -119,6 +133,52 @@ jobs:
           VITE_SUPABASE_URL: https://example.supabase.co
           VITE_SUPABASE_ANON_KEY: ci-placeholder-anon-key
         run: npm run build
+
+  mobile:
+    # The Expo app. A separate job with its own `npm ci`, because `mobile/` is
+    # a separate package on purpose: NativeWind v4 needs Tailwind 3.4 and the
+    # web app is on Tailwind v4, so the two cannot share a lockfile.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: mobile/package-lock.json
+
+      - run: npm ci
+        working-directory: mobile
+
+      - name: Typecheck
+        run: npm run typecheck
+        working-directory: mobile
+
+      - name: Bundle for iOS
+        # THE gate for this app, and the reason it is worth a CI job.
+        #
+        # `expo export` runs the real Metro bundler through the real Babel
+        # pipeline — NativeWind's `jsxImportSource`, the Reanimated plugin, the
+        # React Compiler — and resolves every import including the shared
+        # domain modules that live outside this package (metro.config.js
+        # reaches into ../src/lib). Typecheck sees none of that: a broken
+        # babel preset, a metro alias that does not resolve, a font subpath
+        # that does not exist, and a NativeWind version that has fallen out
+        # with React Native are all clean to tsc and fatal here.
+        #
+        # It is not a simulator and it does not prove pixels. It proves the
+        # app builds, which is the claim CI is allowed to make.
+        run: npm run bundle:ios
+        working-directory: mobile
+
+      - name: Bundle for Android
+        # Both platforms, because the two bundles differ: platform-specific
+        # module resolution (`.ios.tsx` / `.android.tsx`) means an import can
+        # resolve on one and not the other, and Android is the platform this
+        # app's users are more likely to be on.
+        run: npm run bundle:android
+        working-directory: mobile
 
   smoke:
     # A separate job so it runs alongside `check` rather than after it — the
