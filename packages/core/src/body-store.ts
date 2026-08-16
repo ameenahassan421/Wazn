@@ -1,4 +1,4 @@
-import { supabase } from './supabase'
+import { db } from './supabase'
 import type { Measurement, ProteinDay, WeighIn } from '@wazn/core/body'
 import { asCheckIn, type CheckIn } from '@wazn/core/readiness'
 
@@ -45,7 +45,7 @@ export function localDay(date = new Date()): string {
 
 export async function fetchBodyOverview(weeks = 12): Promise<BodyOverview> {
   try {
-    const { data, error } = await supabase.rpc('body_overview', { p_weeks: weeks })
+    const { data, error } = await db().rpc('body_overview', { p_weeks: weeks })
     if (error || !isBlock(data)) return EMPTY
     return {
       weights: asArray<WeighIn>(data.weights),
@@ -67,7 +67,7 @@ export async function fetchBodyOverview(weeks = 12): Promise<BodyOverview> {
  */
 export async function logWeighIn(weightKg: number, day = localDay()): Promise<boolean> {
   try {
-    const { error } = await supabase
+    const { error } = await db()
       .from('body_weights')
       .upsert(
         { measured_on: day, weight_kg: weightKg },
@@ -85,7 +85,7 @@ export async function logProtein(
   day = localDay(),
 ): Promise<boolean> {
   try {
-    const { error } = await supabase
+    const { error } = await db()
       .from('protein_days')
       .upsert({ day, grams, target_g: targetG }, { onConflict: 'user_id,day' })
     return !error
@@ -100,7 +100,7 @@ export async function logMeasurement(
   day = localDay(),
 ): Promise<boolean> {
   try {
-    const { error } = await supabase
+    const { error } = await db()
       .from('body_measurements')
       .upsert(
         { site, measured_on: day, value_cm: valueCm },
@@ -117,7 +117,7 @@ export async function logMeasurement(
 /** Today's tap, or null. Null is "not asked yet", which reads as Normal. */
 export async function fetchCheckIn(day = localDay()): Promise<CheckIn | null> {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await db()
       .from('daily_checkins')
       .select('state')
       .eq('day', day)
@@ -137,7 +137,7 @@ export async function fetchCheckIn(day = localDay()): Promise<CheckIn | null> {
  */
 export async function logCheckIn(state: CheckIn, day = localDay()): Promise<boolean> {
   try {
-    const { error } = await supabase
+    const { error } = await db()
       .from('daily_checkins')
       .upsert({ day, state }, { onConflict: 'user_id,day' })
     return !error

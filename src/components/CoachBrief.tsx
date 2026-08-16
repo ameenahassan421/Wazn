@@ -7,8 +7,8 @@ import {
   fetchBriefBlock,
   fetchCoachLine,
   recordCoachView,
-} from '../lib/coach'
-import type { BriefBlock } from '../lib/coach'
+} from '@wazn/core/coach'
+import type { BriefBlock } from '@wazn/core/coach'
 import { IconClose, PlateDot } from './icons'
 import { useLocale } from '../lib/locale-context'
 

@@ -28,7 +28,7 @@ vi.mock('../lib/social', () => ({
   resolveInvite: vi.fn(() => Promise.resolve(null)),
 }))
 
-vi.mock('../lib/auth-alias', () => ({
+vi.mock('@wazn/core/auth-alias', () => ({
   passwordSignInForUsername: vi.fn(),
   requestCodeForUsername: vi.fn(),
   verifyCodeForUsername: vi.fn(),

@@ -61,7 +61,7 @@ const calls: { table: string; op: string; payload?: unknown }[] = []
 
 vi.mock('./supabase', () => ({
   describeError: (what: string) => `${what} failed`,
-  supabase: {
+  db: () => ({
     from: (table: string) => {
       const chain = {
         update: (payload: unknown) => {
@@ -80,7 +80,7 @@ vi.mock('./supabase', () => ({
       }
       return chain
     },
-  },
+  }),
 }))
 
 beforeEach(() => {

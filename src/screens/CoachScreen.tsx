@@ -5,14 +5,14 @@ import {
   generateRoutines,
   saveGeneratedRoutines,
   type RoutinePreview,
-} from '../lib/ai'
+} from '@wazn/core/ai'
 import {
   QUOTA_VISIBLE_AT,
   REVIEW_SECTIONS,
   fetchWeeklyReview,
   recordCoachView,
   type CoachNotes,
-} from '../lib/coach'
+} from '@wazn/core/coach'
 import { formatWorkoutDate } from '@wazn/core/format'
 import { useLocale } from '../lib/locale-context'
 import { useUnit } from '../lib/unit-context'

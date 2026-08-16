@@ -12,7 +12,7 @@ import {
   deleteCustomExercise,
   setExerciseArchived,
   updateCustomExercise,
-} from '../lib/exercises'
+} from '@wazn/core/exercises'
 import { ExerciseFields } from './ExerciseFields'
 import { ExerciseThumb } from './ExerciseThumb'
 import { SeriesChart } from './SeriesChart'

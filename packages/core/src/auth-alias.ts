@@ -1,4 +1,4 @@
-import { supabase } from './supabase'
+import { db } from './supabase'
 
 /**
  * Client half of username sign-in. The `auth-alias` Edge Function resolves a
@@ -27,7 +27,7 @@ interface AliasSession {
 }
 
 async function invoke(body: Record<string, string>): Promise<AliasSession> {
-  const { data, error } = await supabase.functions.invoke<AliasSession>('auth-alias', {
+  const { data, error } = await db().functions.invoke<AliasSession>('auth-alias', {
     body,
   })
   if (error) throw new Error(await describeFunctionError(error))
@@ -36,7 +36,7 @@ async function invoke(body: Record<string, string>): Promise<AliasSession> {
 
 async function adopt(result: AliasSession): Promise<void> {
   if (!result.session) throw new Error('Sign-in did not complete. Try again.')
-  const { error } = await supabase.auth.setSession(result.session)
+  const { error } = await db().auth.setSession(result.session)
   if (error) throw new Error(error.message)
 }
 

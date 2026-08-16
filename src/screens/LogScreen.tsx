@@ -38,7 +38,7 @@ import {
   usesGhostIntelligence,
 } from '@wazn/core/coach-mode'
 import { computeReadiness, readinessChip, type CheckIn } from '@wazn/core/readiness'
-import { fetchCheckIn, logCheckIn } from '../lib/body-store'
+import { fetchCheckIn, logCheckIn } from '@wazn/core/body-store'
 import { trimmedPlan, verdictFor } from '@wazn/core/ghost-reason'
 import { streakState } from '@wazn/core/streak'
 import { CheckInRow } from '../components/CheckInRow'
@@ -67,8 +67,8 @@ import {
   saveRoutine,
   duplicateRoutine,
   deleteRoutine,
-} from '../lib/routines'
-import type { RoutineDetail, RoutineDraft } from '../lib/routines'
+} from '@wazn/core/routines'
+import type { RoutineDetail, RoutineDraft } from '@wazn/core/routines'
 import { groupOf, nextGroupId, ungroupIds } from '@wazn/core/supersets'
 import { summarise } from '@wazn/core/summary'
 import type { WorkoutSummary } from '@wazn/core/summary'
@@ -84,7 +84,7 @@ import { RestExpanded } from '../components/RestExpanded'
 import { RestCanvas } from '../components/RestCanvas'
 import { pickRestCard } from '@wazn/core/rest-canvas'
 import type { CrewToday } from '@wazn/core/rest-canvas'
-import { recordCoachView } from '../lib/coach'
+import { recordCoachView } from '@wazn/core/coach'
 import { fetchFeed, nameOf } from '../lib/social'
 import {
   ack,

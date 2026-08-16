@@ -43,13 +43,13 @@ vi.mock('./supabase', () => {
     return chain
   }
   return {
-    supabase: {
+    db: () => ({
       from: (table: string) => builder(table),
       rpc: () => {
         if (throwOnCall) throw new Error('offline')
         return Promise.resolve(rpcResult)
       },
-    },
+    }),
   }
 })
 

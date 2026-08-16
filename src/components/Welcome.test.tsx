@@ -20,7 +20,7 @@ vi.mock('@wazn/core/auth-identity', () => ({
   normalizeUsername: vi.fn((v: string) => v.trim()),
 }))
 
-vi.mock('../lib/use-auth', () => ({
+vi.mock('@wazn/core/use-auth', () => ({
   useAuth: vi.fn(() => ({ userId: 'test-user-id' })),
 }))
 

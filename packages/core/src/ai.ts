@@ -1,4 +1,4 @@
-import { supabase } from './supabase'
+import { db } from './supabase'
 
 /**
  * The client half of the AI layer.
@@ -80,7 +80,7 @@ export async function generateRoutines(request: {
   days: number
   equipment: string[]
 }): Promise<RoutinePreview> {
-  const { data, error } = await supabase.functions.invoke<RoutinePreview>(
+  const { data, error } = await db().functions.invoke<RoutinePreview>(
     'generate-routine',
     { body: request },
   )
@@ -93,7 +93,7 @@ export async function generateRoutines(request: {
 export async function saveGeneratedRoutines(
   plan: RoutinePreview['preview'],
 ): Promise<SavedRoutines> {
-  const { data, error } = await supabase.functions.invoke<SavedRoutines>(
+  const { data, error } = await db().functions.invoke<SavedRoutines>(
     'generate-routine',
     {
       body: {

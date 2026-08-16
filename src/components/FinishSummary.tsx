@@ -13,7 +13,7 @@ import {
   fetchCoachLine,
   fetchDebriefBlock,
   recordCoachView,
-} from '../lib/coach'
+} from '@wazn/core/coach'
 import { PlateDot, PlateLoaded } from './icons'
 import { WorkoutNotes } from './WorkoutNotes'
 import { useLocale } from '../lib/locale-context'

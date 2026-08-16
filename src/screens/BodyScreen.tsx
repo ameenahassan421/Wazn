@@ -18,7 +18,7 @@ import {
   logProtein,
   logWeighIn,
   type BodyOverview,
-} from '../lib/body-store'
+} from '@wazn/core/body-store'
 import { supabase } from '../lib/supabase'
 
 /**

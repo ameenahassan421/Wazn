@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { createCustomExercise } from '../lib/exercises'
+import { createCustomExercise } from '@wazn/core/exercises'
 import type { Exercise, MuscleGroup } from '@wazn/core/types'
 import { IconBack } from './icons'
 import { ExerciseFields } from './ExerciseFields'

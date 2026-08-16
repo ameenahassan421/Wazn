@@ -1,4 +1,4 @@
-import { describeError, supabase } from './supabase'
+import { describeError, db } from './supabase'
 import type { Exercise, MuscleGroup } from '@wazn/core/types'
 
 /**
@@ -16,7 +16,7 @@ import type { Exercise, MuscleGroup } from '@wazn/core/types'
  * re-exported here so every existing caller kept working. They are pure data;
  * this module is not, because of the Supabase client above.
  */
-export { EQUIPMENT, MUSCLE_GROUPS } from '@wazn/core/exercise-taxonomy'
+export { EQUIPMENT, MUSCLE_GROUPS } from './exercise-taxonomy'
 
 export async function createCustomExercise(input: {
   name: string
@@ -27,11 +27,11 @@ export async function createCustomExercise(input: {
   if (name.length < 2) throw new Error('Give the exercise a name.')
   if (name.length > 80) throw new Error('That name is too long.')
 
-  const { data: user } = await supabase.auth.getUser()
+  const { data: user } = await db().auth.getUser()
   const ownerId = user.user?.id
   if (!ownerId) throw new Error('Sign in to add an exercise.')
 
-  const { data, error } = await supabase
+  const { data, error } = await db()
     .from('exercises')
     .insert({
       name,
@@ -72,7 +72,7 @@ export async function updateCustomExercise(
   if (name.length < 2) throw new Error('Give the exercise a name.')
   if (name.length > 80) throw new Error('That name is too long.')
 
-  const { data, error } = await supabase
+  const { data, error } = await db()
     .from('exercises')
     .update({
       name,
@@ -106,7 +106,7 @@ export async function updateCustomExercise(
  * of what they have already done.
  */
 export async function deleteCustomExercise(exerciseId: string): Promise<void> {
-  const { error } = await supabase.from('exercises').delete().eq('id', exerciseId)
+  const { error } = await db().from('exercises').delete().eq('id', exerciseId)
   if (!error) return
   if ((error as { code?: string }).code === '23503') {
     throw new Error(
@@ -134,7 +134,7 @@ export async function setExerciseArchived(
   archived: boolean,
 ): Promise<string | null> {
   const archivedAt = archived ? new Date().toISOString() : null
-  const { data, error } = await supabase
+  const { data, error } = await db()
     .from('exercises')
     .update({ archived_at: archivedAt })
     .eq('id', exerciseId)

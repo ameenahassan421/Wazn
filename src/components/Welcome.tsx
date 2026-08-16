@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { saveProfile, type Inviter } from '../lib/social'
 import { InviteCard } from './InviteCard'
 import { USERNAME_RE, normalizeUsername } from '@wazn/core/auth-identity'
-import { useAuth } from '../lib/use-auth'
+import { useAuth } from '@wazn/core/use-auth'
 import { useLocale } from '../lib/locale-context'
 
 /**

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import type { Exercise, ExerciseUsageRow } from '@wazn/core/types'
-import type { RoutineDetail, RoutineDraft } from '../lib/routines'
+import type { RoutineDetail, RoutineDraft } from '@wazn/core/routines'
 import { ExercisePicker } from './ExercisePicker'
 import { variationsFor } from '@wazn/core/variations'
 import { ExerciseThumb } from './ExerciseThumb'

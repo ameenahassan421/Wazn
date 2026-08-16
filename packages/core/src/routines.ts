@@ -1,4 +1,4 @@
-import { supabase } from './supabase'
+import { db } from './supabase'
 import { rotationOrder } from '@wazn/core/rotation'
 import type { RoutineWithRun } from '@wazn/core/rotation'
 import type { Routine, RoutineExercise, RoutineSet, SetType } from '@wazn/core/types'
@@ -28,7 +28,7 @@ export interface RoutineDetail extends Routine {
  * the list out of step with the briefing card's "X is up" (L9).
  */
 export async function listRoutines(): Promise<RoutineWithRun[]> {
-  const { data, error } = await supabase
+  const { data, error } = await db()
     .from('routines')
     .select('*, workouts(started_at, ended_at), routine_exercises(count)')
     .order('position')
@@ -68,8 +68,8 @@ export async function listRoutines(): Promise<RoutineWithRun[]> {
  */
 export async function loadRoutine(routineId: string): Promise<RoutineDetail | null> {
   const [routineRes, exRes] = await Promise.all([
-    supabase.from('routines').select('*').eq('id', routineId).maybeSingle(),
-    supabase
+    db().from('routines').select('*').eq('id', routineId).maybeSingle(),
+    db()
       .from('routine_exercises')
       .select('*')
       .eq('routine_id', routineId)
@@ -84,7 +84,7 @@ export async function loadRoutine(routineId: string): Promise<RoutineDetail | nu
     return { ...(routineRes.data as Routine), exercises: [] }
   }
 
-  const { data: setRows, error: setErr } = await supabase
+  const { data: setRows, error: setErr } = await db()
     .from('routine_sets')
     .select('*')
     .in(
@@ -122,7 +122,7 @@ export interface RoutineDraft {
  * worse answer to a transient error.
  */
 async function nextPosition(): Promise<number> {
-  const { data, error } = await supabase
+  const { data, error } = await db()
     .from('routines')
     .select('position')
     .order('position', { ascending: false })
@@ -148,18 +148,18 @@ export async function saveRoutine(
   let id = routineId
 
   if (id) {
-    const { error } = await supabase
+    const { error } = await db()
       .from('routines')
       .update({ name: draft.name, updated_at: new Date().toISOString() })
       .eq('id', id)
     if (error) throw error
-    const { error: delErr } = await supabase
+    const { error: delErr } = await db()
       .from('routine_exercises')
       .delete()
       .eq('routine_id', id)
     if (delErr) throw delErr
   } else {
-    const { data, error } = await supabase
+    const { data, error } = await db()
       .from('routines')
       // O15: `position` is sorted on by `listRoutines` and was never written,
       // so every routine sat at the column default and the "user's own order"
@@ -172,7 +172,7 @@ export async function saveRoutine(
   }
 
   for (const [position, ex] of draft.exercises.entries()) {
-    const { data: exRow, error: exErr } = await supabase
+    const { data: exRow, error: exErr } = await db()
       .from('routine_exercises')
       .insert({ routine_id: id, exercise_id: ex.exerciseId, position })
       .select('id')
@@ -180,14 +180,16 @@ export async function saveRoutine(
     if (exErr) throw exErr
 
     if (ex.sets.length > 0) {
-      const { error: setErr } = await supabase.from('routine_sets').insert(
-        ex.sets.map((s, i) => ({
-          routine_exercise_id: (exRow as { id: string }).id,
-          set_number: i + 1,
-          reps: s.reps,
-          set_type: s.setType,
-        })),
-      )
+      const { error: setErr } = await db()
+        .from('routine_sets')
+        .insert(
+          ex.sets.map((s, i) => ({
+            routine_exercise_id: (exRow as { id: string }).id,
+            set_number: i + 1,
+            reps: s.reps,
+            set_type: s.setType,
+          })),
+        )
       if (setErr) throw setErr
     }
   }
@@ -211,6 +213,6 @@ export async function duplicateRoutine(
 }
 
 export async function deleteRoutine(routineId: string): Promise<void> {
-  const { error } = await supabase.from('routines').delete().eq('id', routineId)
+  const { error } = await db().from('routines').delete().eq('id', routineId)
   if (error) throw error
 }

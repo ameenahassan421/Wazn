@@ -7293,3 +7293,51 @@ on clean `main` at d2ad091** and fails identically on this branch, so E1 did
 not cause it. It is GATE 4's checkpoint rung and the CI comment calls this spec
 the only thing that can answer GATE 4. CI was green on #97. Unexplained, and it
 needs its own session.
+
+## 2026-08-16 (E1b) — the Supabase client becomes an injected dependency
+
+`supabase.ts` was the one module in the calculation set that could not move: it
+read `import.meta.env` at module scope, which is a Vite construct Metro does
+not have, and 13 modules imported the singleton it exported.
+
+**The seam is `db()`, not an exported binding.** `packages/core/src/supabase.ts`
+now holds `createWaznClient(config)`, `initSupabase(client)`, `db()` and
+`describeError`. The app builds the client and hands it over:
+`src/lib/supabase.ts` is now a thin web adapter that reads `import.meta.env`,
+sets `detectSessionInUrl` (which reads the browser URL and is web-only), and
+re-exports `supabase` so **all 47 component and screen call sites were left
+untouched**. `SupabaseConfig` already carries the `storage` slot AsyncStorage
+will fill in E2.
+
+An exported `const supabase` is exactly what forced the env read to happen at
+module scope, so `db()` is deliberately a function. It throws by name if the
+app never called `initSupabase`.
+
+That moved **7 more modules** into the core — `ai`, `auth-alias`, `body-store`,
+`coach`, `exercises`, `routines`, `use-auth` — for **41 in core against 22 left
+in `src/lib`**. Only 17 call sites had to change, all inside those 7.
+
+### Two guards fired, and both were right
+
+**The duplicate-basename check.** `supabase.ts` now exists under both roots on
+purpose. The real hazard was not the duplicate: it was that `EXEMPT` was keyed
+by BASENAME, so one entry would have silently excused both files. `EXEMPT` is
+keyed by path now and a shared basename is reported as a note rather than a
+failure.
+
+**The test default.** Before the split, a component test mocking
+`../lib/supabase` covered every data path it touched, because everything went
+through that module. Core modules call `db()` and bypass that mock, so two
+LogScreen tests died on plumbing. `src/test/setup.ts` installs a permissive
+empty client instead: no rows, no error, which is what those tests already
+assumed. A throwing default was tried first and it fails tests that are only
+rendering an empty state.
+
+### The GATE 4 e2e is FLAKY, not broken — correcting the E1 entry
+
+The E1 entry above says `e2e/offline.spec.ts:153` fails on clean `main`. That
+is true but incomplete and the framing was wrong. Three consecutive runs of
+that spec on this branch: **pass, fail, fail.** It is intermittent at roughly a
+two-in-three failure rate, which is also why CI has been green on it. A
+timing-dependent test guarding a data-loss promise is worse than a failing one,
+because the green runs read as evidence.

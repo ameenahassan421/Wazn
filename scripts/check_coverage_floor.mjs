@@ -1,6 +1,6 @@
 /**
- * Every module in `src/lib/` must have a test file, or an exemption with a
- * written reason.
+ * Every logic module must have a test file, or an exemption with a written
+ * reason. Since E1 that means BOTH roots: `packages/core/src` and `src/lib`.
  *
  * WHY A LIST AND NOT A PERCENTAGE
  *   `docs/INFRASTRUCTURE_AUDIT.md` §5-I6. The suite is large and green — that
@@ -14,15 +14,19 @@
  *   already has them. A list only closes when someone writes the missing file.
  *
  * WHY IT FAILS ON UNKNOWN MODULES
- *   A new module in `src/lib/` lands in neither list, so this fails and the
- *   author has to decide: write the test, or write down why not. That is the
- *   whole mechanism. An exemption is cheap and honest; silence is what
+ *   A new module under either root lands in neither list, so this fails and
+ *   the author has to decide: write the test, or write down why not. That is
+ *   the whole mechanism. An exemption is cheap and honest; silence is what
  *   produced the bug.
  *
  * SCOPE
- *   `src/lib/` only. That is where logic lives. Screens and components are
- *   covered by the Playwright smoke run instead, because what matters about
- *   them is that they render and what they send — not their internals.
+ *   `packages/core/src` and `src/lib`. That is where logic lives. Screens and
+ *   components are covered by the Playwright smoke run instead, because what
+ *   matters about them is that they render and what they send — not their
+ *   internals.
+ *
+ *   EXEMPT is keyed by PATH, not basename: `supabase.ts` exists under both
+ *   roots on purpose, and a basename key would let one entry excuse both.
  *
  *   Run: node scripts/check_coverage_floor.mjs
  */
@@ -52,27 +56,30 @@ const LIB_DIRS = ['packages/core/src', 'src/lib'].map((d) => path.join(ROOT, d))
  * the bug it was hiding had been in production for the life of the feature.
  */
 const EXEMPT = {
-  'types.ts': 'Type declarations only — no runtime behaviour to assert.',
-  'supabase.ts':
+  'packages/core/src/types.ts':
+    'Type declarations only — no runtime behaviour to assert.',
+  'packages/core/src/supabase.ts':
     'Client construction plus describeError. Constructing it is what every other test mocks away; describeError is exercised through the modules that call it.',
-  'ai.ts':
+  'packages/core/src/ai.ts':
     'Thin functions.invoke wrappers with no branching beyond error passthrough. The contract they wrap is asserted in the Edge Function tests and the eval harness.',
-  'auth-alias.ts':
+  'packages/core/src/auth-alias.ts':
     'Thin functions.invoke wrapper. The logic it fronts is server-side in supabase/functions/auth-alias, where identical-response behaviour is the thing worth testing.',
-  'use-auth.ts':
+  'packages/core/src/use-auth.ts':
     'A subscription to supabase.auth.onAuthStateChange. Faking the whole auth client to assert a passthrough would test the fake.',
-  'use-rest-timer.ts':
+  'src/lib/use-rest-timer.ts':
     'Wall-clock interval hook. Its arithmetic lives in rest.ts, which is tested; what is left is setInterval.',
-  'use-wake-lock.ts':
+  'src/lib/use-wake-lock.ts':
     'A guarded navigator.wakeLock call. Absent in jsdom and in most browsers, so the test would assert the fallback path only.',
-  'share-card.ts':
+  'src/lib/share-card.ts':
     'Canvas rendering. jsdom has no canvas; asserting the drawing calls would pin the implementation rather than the image.',
-  'routines.ts':
+  'packages/core/src/routines.ts':
     'PostgREST query shapes with no client-side branching. The ordering caveat it documents is a database behaviour.',
-  'cache-names.ts':
+  'packages/core/src/cache-names.ts':
     'One string constant, shared between vite.config.ts and device-reset.ts so the two cannot disagree. There is no behaviour to assert.',
-  'exercise-taxonomy.ts':
+  'packages/core/src/exercise-taxonomy.ts':
     'Two frozen vocabularies and nothing else. exercise-guess.test.ts asserts against them, which is the only claim they make.',
+  'src/lib/supabase.ts':
+    'The web adapter: reads import.meta.env and hands the client to the core. Its only branch is the config error, and the seam it feeds is exercised by every module that calls db().',
 }
 
 const files = LIB_DIRS.flatMap((dir) =>
@@ -87,15 +94,16 @@ const missing = []
 const unexplained = []
 const staleExemptions = []
 const seen = new Set()
+const duplicates = []
 
 for (const { file, dir, shown } of files) {
-  // A module name must not exist under both roots: the import rewrite maps a
-  // bare name to exactly one of them, so a duplicate is an ambiguity, not a
-  // coverage question.
-  if (seen.has(file)) {
-    console.error(`\n${file} exists under both logic roots. Pick one.\n`)
-    process.exit(1)
-  }
+  // `supabase.ts` deliberately exists under both roots after E1b: the core
+  // holds the client seam, `src/lib` holds the web adapter that feeds it
+  // `import.meta.env`. They are different modules that happen to share a
+  // basename, which is fine — what is NOT fine is EXEMPT being keyed by
+  // basename, because one entry would then silently excuse both. So the key
+  // is the path, and a duplicate basename is merely a note.
+  if (seen.has(file)) duplicates.push(shown)
   seen.add(file)
 
   const base = file.replace(/\.(ts|tsx)$/, '')
@@ -104,12 +112,12 @@ for (const { file, dir, shown } of files) {
     fs.existsSync(path.join(dir, `${base}.test.tsx`))
 
   if (hasTest) {
-    if (EXEMPT[file]) staleExemptions.push(shown)
+    if (EXEMPT[shown]) staleExemptions.push(shown)
     continue
   }
-  if (EXEMPT[file]) continue
+  if (EXEMPT[shown]) continue
   // No test, no exemption. Somebody has to choose.
-  ;(file in EXEMPT ? unexplained : missing).push(shown)
+  ;(shown in EXEMPT ? unexplained : missing).push(shown)
 }
 
 let failed = false
@@ -133,14 +141,20 @@ if (unexplained.length > 0) {
 if (staleExemptions.length > 0) {
   // Not a failure. Someone wrote the test — the exemption is just stale now.
   console.log('\nExemptions that are no longer needed (a test file exists):\n')
-  for (const file of staleExemptions) console.log(`  src/lib/${file}`)
+  for (const file of staleExemptions) console.log(`  ${file}`)
   console.log('\nRemove them from EXEMPT.\n')
+}
+
+if (duplicates.length > 0) {
+  // Also not a failure, but worth saying out loud: two modules sharing a
+  // basename across the roots is easy to misread in a stack trace.
+  console.log(`\nSame basename under both roots: ${duplicates.join(', ')}\n`)
 }
 
 if (!failed) {
   const tested = files.length - Object.keys(EXEMPT).length
   console.log(
-    `coverage floor: ${tested} of ${files.length} modules in src/lib have tests, ` +
+    `coverage floor: ${tested} of ${files.length} logic modules have tests, ` +
       `${Object.keys(EXEMPT).length} exempt with reasons`,
   )
 }

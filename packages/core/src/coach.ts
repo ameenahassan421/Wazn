@@ -1,4 +1,4 @@
-import { supabase } from './supabase'
+import { db } from './supabase'
 import { formatEstimate, formatWeight } from '@wazn/core/units'
 import type { Unit } from '@wazn/core/units'
 import { muscleLabel, t } from '@wazn/core/i18n'
@@ -194,7 +194,7 @@ function isBlock(value: unknown): value is Record<string, unknown> {
  * standing between a lifter and the Start button.
  */
 export async function fetchBriefBlock(): Promise<BriefBlock | null> {
-  const { data, error } = await supabase.rpc('session_brief')
+  const { data, error } = await db().rpc('session_brief')
   if (error || !isBlock(data)) return null
   return data as unknown as BriefBlock
 }
@@ -202,7 +202,7 @@ export async function fetchBriefBlock(): Promise<BriefBlock | null> {
 export async function fetchDebriefBlock(
   workoutId: string,
 ): Promise<DebriefBlock | null> {
-  const { data, error } = await supabase.rpc('session_debrief', {
+  const { data, error } = await db().rpc('session_debrief', {
     p_workout: workoutId,
   })
   if (error || !isBlock(data)) return null
@@ -216,7 +216,7 @@ export async function fetchCoachLine(
   workoutId?: string,
 ): Promise<CoachLine> {
   try {
-    const { data, error } = await supabase.functions.invoke<CoachLine>('coach-brief', {
+    const { data, error } = await db().functions.invoke<CoachLine>('coach-brief', {
       // The display unit travels with the request. The model writes the
       // sentence, so it has to be handed the unit the reader is looking at —
       // otherwise the card reads "102.5 kg" under a header toggled to lbs,
@@ -239,7 +239,7 @@ export async function fetchWeeklyReview(
 ): Promise<CoachNotes> {
   const query = new URLSearchParams({ unit })
   if (options.force) query.set('force', '1')
-  const { data, error } = await supabase.functions.invoke<CoachNotes>(
+  const { data, error } = await db().functions.invoke<CoachNotes>(
     `coach-notes?${query}`,
     { method: 'POST' },
   )
@@ -266,7 +266,7 @@ export async function recordCoachView(
     // `user_id` is filled by the column default (migration 0021), which is the
     // lesson of 0016: the client forgetting to send an owner column is how
     // following and liking shipped broken and stayed broken.
-    await supabase.from('coach_views').insert({ surface, action })
+    await db().from('coach_views').insert({ surface, action })
   } catch {
     /* telemetry must never be visible */
   }

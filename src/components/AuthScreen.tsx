@@ -8,7 +8,7 @@ import {
   passwordSignInForUsername,
   requestCodeForUsername,
   verifyCodeForUsername,
-} from '../lib/auth-alias'
+} from '@wazn/core/auth-alias'
 import { useLocale } from '../lib/locale-context'
 import { Wordmark } from './Wordmark'
 
