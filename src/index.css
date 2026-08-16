@@ -815,9 +815,31 @@ button {
   transform: translateY(1px);
 }
 
-/* A bar fill moving: momentum, rank, import progress. */
+/* A bar fill moving: momentum, rank, import progress.
+ *
+ * `scaleX` on a full-width bar, NOT an animated `width`, even though the
+ * handoff §Shape writes the rule as `width .5s cubic-bezier(.2,.8,.2,1)`. The
+ * duration and the curve are the handoff's and are kept exactly; the property
+ * is this repo's, and it was already decided once: `RestTimer.tsx` animates its
+ * drain the same way with the reason written out at the call site, because
+ * width animation lays out every frame and the phone doing it is a budget
+ * Android mid-workout. A transform is composited. The momentum bar moves on
+ * commit, which is the one path where nothing may jank.
+ *
+ * The result on screen is identical: these fills are solid colour with no
+ * children to stretch and no radius of their own — the track carries the radius
+ * and clips them.
+ *
+ * `transform-origin` has no logical keyword, so the flip is explicit, the same
+ * shape as `timer-drain` below. The caller sets `transform: scaleX(pct/100)`.
+ */
 @utility fill-move {
-  transition: width var(--motion-bar) var(--motion-ease-fill);
+  transform-origin: left center;
+  transition: transform var(--motion-bar) var(--motion-ease-fill);
+}
+
+[dir='rtl'] .fill-move {
+  transform-origin: right center;
 }
 
 /* Entering a layer — picker, set entry, exercise detail. Slides in from the
