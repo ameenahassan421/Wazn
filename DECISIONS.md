@@ -6653,3 +6653,86 @@ obviously undone. This is the first item of PR 2 or its own small PR.
 **Every screen now renders on the iron ground with the old sizes**, which is
 what PR 1 was scoped to produce and is not what v5 looks like. PR 2 (the ramp
 migration) and PR 3 (tab bar + hunt card) are where it starts to.
+
+## 2026-08-16 (later) — Eight tokens that stayed paper, and what "one theme" actually deleted
+
+PR 1 inverted the palette and deleted the `html[data-theme='dark']` block. The
+screenshot pass afterwards showed a **`#efe9df` header band across the top of
+every screen** — a light-to-dark gradient slab sitting above the hot path on
+the iron ground.
+
+The cause is worth writing down because nothing in the wall could have caught
+it. The block held two kinds of thing: the `@theme` colour ramp, which PR 1
+inverted deliberately, and dark values for **eight tokens defined outside
+`@theme`**, which PR 1 simply dropped:
+
+| token             | kept (paper)                          | now                        |
+| ----------------- | ------------------------------------- | -------------------------- |
+| `--header-tint`   | `#efe9df`                             | `#181510`                  |
+| `--top-light`     | `inset 0 1px 0 rgba(255,255,255,0.6)` | `…rgba(236,231,220,0.045)` |
+| `--divider`       | `rgba(22,19,14,0.14)`                 | `rgba(236,231,220,0.14)`   |
+| `--divider-solid` | `rgba(22,19,14,0.08)`                 | `rgba(236,231,220,0.08)`   |
+| `--surface-line`  | `rgba(22,19,14,0.06)`                 | `rgba(236,231,220,0.05)`   |
+| `--chip-tint`     | `rgba(232,73,29,0.07)`                | `rgba(232,73,29,0.14)`     |
+| `--ghost-divider` | `#ded6c7`                             | `var(--color-line-2)`      |
+| `--ghost-ink`     | `#a39d90`                             | `var(--color-faint)`       |
+
+Three of those are not cosmetic. A **60% white inset light** ran along the top
+edge of every `ring-edge` card. The ember **chip tint at 7% on near-black is
+invisible**, so every data chip in the app — the thing design v3 requires
+before any claim — was rendering as coloured text with no ground. And
+`--divider` is `btn-secondary`'s border, so every secondary button on the
+screen had an invisible edge: "Adjust" on the Coach card was floating text.
+
+`--ghost-divider` and `--ghost-ink` are now expressed as `var(--color-line-2)`
+and `var(--color-faint)` rather than new hexes. v5 already names both tiers —
+"the border that is drawn" and "below muted, above the ground" — and the paper
+values stood in exactly those relationships. Two fewer values to keep true.
+
+**Lint passed, the type checker passed, 1104 tests passed, the build passed.**
+A screenshot found it. The rule that generalises: _if a token is not in
+`@theme`, a palette change did not reach it — grep for it._
+
+### The hardcoded paper hexes went too
+
+Three files carried paper values as literals rather than tokens, each for a
+reason that the single theme retires:
+
+- **`RestExpanded.tsx`** grounded itself at `#16130e` on `#f7f3ec` explicitly
+  _"in BOTH themes"_ — rest is the one moment the phone is at arm's length, so
+  it stayed dark under the paper default. With one ground the hardcoding says
+  nothing the tokens do not, and it had become a paper-coloured full-screen
+  layer over an iron app. Its `rgba(247,243,236,…)` tints and `#9d968a` /
+  `#d6d1c6` foregrounds move to the ramp with it.
+- **`icons.tsx`** — `PlateCheck`'s stroke, now `var(--color-text)`.
+- **`share-card.ts`** — the canvas export claims in its own comment to use
+  "pure tokens, matching src/index.css, so the export is pixel-identical to the
+  in-app preview rather than a near-miss". After PR 1 it was the near-miss. Its
+  `INK`/`TEXT`/`MUTED`/`LINE` now match. `ACCENT_700` needed no change: the
+  collapsed ramp landed on `#9a3012`, which is what it already held.
+
+### The dark screenshot pass was still running
+
+`npm run shots` took two extra passes with `localStorage['workout.theme'] =
+'dark'` set — a key nothing reads any more. 37 of the 141 shots were duplicates
+of shots taken beside them, under a prefix claiming to prove something about a
+theme that no longer exists. Removed; 104 shots now, all of one theme.
+
+### What was NOT fixed, deliberately
+
+`--flip-bg` / `--flip-text` invert the ground for surfaces that want to be the
+loudest thing on screen. Under paper that was a dark card; on iron it is a
+**cream** card, and two of them are large: the home's Today card and the
+board's rest chip. v5 disagrees with both — its hunt card is a normal `Card` on
+`sur`, and its rest overlay is `K.bg`. But it agrees with the mechanism
+everywhere else: `HomeScreen`'s mood chips fill with `K.text` on selection,
+which is exactly what the Settings segmented controls already do here.
+
+So the flip stays. The hunt card is PR 3 and the rest surfaces are PR 4, both
+of which restructure those components rather than recolour them — fixing the
+ground now would mean styling them twice.
+
+Two pre-existing findings in `RestExpanded.tsx` are also left alone: the
+`text-[54px]` timer is one of the 81 type orphans PR 2 decides (the plan's
+table lists 54px explicitly, one use), and the `16px` radius on the next-up
+button is a shape value this change does not touch.

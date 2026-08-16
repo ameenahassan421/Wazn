@@ -13,9 +13,10 @@ import { PlateDot } from './icons'
  * or the rest ending. It is a LAYER over the workout screen, never a route:
  * the board underneath does not unmount, so collapsing costs nothing.
  *
- * Deliberately ink-grounded in BOTH themes, like the design: rest is the
- * one moment the phone is at arm's length and the room is the point, so
- * the surface goes dark and quiet regardless of the paper default.
+ * Ink-grounded on the app's own tokens. This used to hardcode `#16130e` on
+ * `#f7f3ec` so it stayed dark under the paper theme; v5 leaves one ground, so
+ * the hardcoding says nothing the tokens do not, and it survived the palette
+ * inversion as a paper-coloured layer over an iron app.
  *
  * The engine is untouched: the same deadline-based timer the chip reads.
  */
@@ -61,7 +62,7 @@ export function RestExpanded({
       tabIndex={-1}
       aria-label={t('rest.title')}
       className="fixed inset-0 z-40 flex flex-col"
-      style={{ background: '#16130e', color: '#f7f3ec' }}
+      style={{ background: 'var(--color-ink)', color: 'var(--color-text)' }}
     >
       <div
         className="flex items-center gap-3 px-[18px]"
@@ -72,7 +73,7 @@ export function RestExpanded({
           onClick={onCollapse}
           aria-label={t('rest.collapse')}
           className="flex h-12 w-12 items-center justify-center rounded-full"
-          style={{ background: 'rgba(247, 243, 236, 0.08)' }}
+          style={{ background: 'rgba(236, 231, 220, 0.08)' }}
         >
           <svg
             viewBox="0 0 24 24"
@@ -96,7 +97,7 @@ export function RestExpanded({
             onCollapse()
           }}
           className="h-12 px-2 text-[13px] font-semibold"
-          style={{ color: '#9d968a' }}
+          style={{ color: 'var(--color-muted)' }}
         >
           {t('rest.skip_long')}
         </button>
@@ -115,7 +116,7 @@ export function RestExpanded({
               cy="48"
               r="41"
               fill="none"
-              stroke="rgba(247, 243, 236, 0.12)"
+              stroke="rgba(236, 231, 220, 0.12)"
               strokeWidth="9"
             />
             <circle
@@ -142,9 +143,8 @@ export function RestExpanded({
               {formatRest(timer.remaining)}
             </p>
             {/* The `kicker` utility, not the recipe by hand: it carries the
-                RTL reset that keeps Arabic letters joined. The colour is
-                overridden because this layer is ink-grounded in both themes. */}
-            <p className="kicker mt-1" style={{ color: '#9d968a' }}>
+                RTL reset that keeps Arabic letters joined. */}
+            <p className="kicker mt-1" style={{ color: 'var(--color-muted)' }}>
               {t('rest.of', { t: formatRest(timer.total) })}
             </p>
           </div>
@@ -156,7 +156,7 @@ export function RestExpanded({
             onClick={() => timer.adjust(-2 * REST_STEP_SECONDS)}
             className="min-h-12 px-6 text-sm font-semibold"
             style={{
-              background: 'rgba(247, 243, 236, 0.1)',
+              background: 'rgba(236, 231, 220, 0.1)',
               borderRadius: 'var(--radius-pill)',
             }}
           >
@@ -167,7 +167,7 @@ export function RestExpanded({
             onClick={() => timer.adjust(2 * REST_STEP_SECONDS)}
             className="min-h-12 px-6 text-sm font-semibold"
             style={{
-              background: 'rgba(247, 243, 236, 0.1)',
+              background: 'rgba(236, 231, 220, 0.1)',
               borderRadius: 'var(--radius-pill)',
             }}
           >
@@ -179,12 +179,15 @@ export function RestExpanded({
           <div
             className="flex max-w-[320px] items-start gap-3 px-[18px] py-4"
             style={{
-              background: 'rgba(247, 243, 236, 0.06)',
+              background: 'rgba(236, 231, 220, 0.06)',
               borderRadius: '18px',
             }}
           >
             <PlateDot size={24} />
-            <p className="text-sm leading-relaxed" style={{ color: '#d6d1c6' }}>
+            <p
+              className="text-sm leading-relaxed"
+              style={{ color: 'var(--color-text)' }}
+            >
               {card.kicker} · <span dir="ltr">{card.value}</span>
               {card.note ? ` — ${card.note}` : ''}
             </p>
@@ -202,20 +205,23 @@ export function RestExpanded({
             onClick={onCollapse}
             className="flex min-h-12 w-full items-center justify-between px-[18px] py-3.5"
             style={{
-              background: 'rgba(247, 243, 236, 0.06)',
+              background: 'rgba(236, 231, 220, 0.06)',
               borderRadius: '16px',
             }}
           >
-            <span className="meta-mono text-[13px]" style={{ color: '#9d968a' }}>
+            <span
+              className="meta-mono text-[13px]"
+              style={{ color: 'var(--color-muted)' }}
+            >
               {t('rest.next')}&nbsp;&nbsp;
-              <span style={{ color: '#f7f3ec' }}>{nextLabel}</span>
+              <span style={{ color: 'var(--color-text)' }}>{nextLabel}</span>
             </span>
             <svg
               viewBox="0 0 24 24"
               width={16}
               height={16}
               fill="none"
-              stroke="#9d968a"
+              stroke="var(--color-muted)"
               strokeWidth={2.4}
               strokeLinecap="round"
               strokeLinejoin="round"

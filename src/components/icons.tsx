@@ -209,7 +209,7 @@ export function PlateCheck({ size = 16, className }: PlateProps) {
       <path
         d="M30 50 l12 12 24 -26"
         fill="none"
-        stroke="#f7f3ec"
+        stroke="var(--color-text)"
         strokeWidth="10"
         strokeLinecap="round"
         strokeLinejoin="round"

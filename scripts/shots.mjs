@@ -89,7 +89,7 @@ function build() {
   if (out.status !== 0) process.exit(out.status ?? 1)
 }
 
-async function shoot(browser, origin, { width, empty, active, locale, theme }) {
+async function shoot(browser, origin, { width, empty, active, locale }) {
   const context = await browser.newContext({
     viewport: { width, height: 844 },
     deviceScaleFactor: 2,
@@ -104,12 +104,7 @@ async function shoot(browser, origin, { width, empty, active, locale, theme }) {
       window.localStorage.setItem('workout.locale', 'ar')
     })
   }
-  if (theme === 'dark') {
-    await context.addInitScript(() => {
-      window.localStorage.setItem('workout.theme', 'dark')
-    })
-  }
-  const pfx = (theme === 'dark' ? 'dark-' : '') + (locale === 'ar' ? 'ar-' : '')
+  const pfx = locale === 'ar' ? 'ar-' : ''
   const page = await context.newPage()
   const crashes = []
   page.on('pageerror', (error) => crashes.push(error.message))
@@ -695,23 +690,6 @@ async function main() {
         empty: false,
         active: true,
         locale: 'ar',
-      })),
-    )
-    // The dark theme, one width: paper is the default now, so dark is the
-    // pass that would otherwise ship unseen.
-    crashes.push(
-      ...(await shoot(browser, server.origin, {
-        width: 390,
-        empty: false,
-        theme: 'dark',
-      })),
-    )
-    crashes.push(
-      ...(await shoot(browser, server.origin, {
-        width: 390,
-        empty: false,
-        active: true,
-        theme: 'dark',
       })),
     )
   } finally {
