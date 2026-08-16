@@ -702,9 +702,18 @@ export function fixtures({ empty = false, active = false } = {}) {
             line: 'Hamstrings are at 4 working sets against a productive range of 10 to 20, and calves at 6. Everything else sits inside the band.',
             chip: 'hamstrings 4 · calves 6 · 10-20',
           },
+          // The LONGEST chip the contract allows, not a comfortable one.
+          //
+          // Every chip in this fixture used to be about 30 characters and the
+          // real function caps them at 60, so the harness could never
+          // photograph a chip that did not fit. A live Coach screen on
+          // 2026-08-15 showed this exact 59-character string painting past
+          // the card's right edge and clipping mid-word, because `chip-data`
+          // was `nowrap` with no width bound. A fixture that only ever holds
+          // easy values is a fixture that cannot fail.
           plateaus: {
-            line: 'Nothing has stalled. No lift has 6 sessions without the estimate moving.',
-            chip: '0 stalled · 6 session floor',
+            line: 'Bench Press, Lat Pulldown and Lateral Raise have stalled, with slopes of -0.4, -1.6 and -0.2 per session.',
+            chip: 'Bench Press -0.4/sess, Lat Pulldown -1.6/sess, Lateral Raise',
           },
           // Swapped for its pounds twin at route time — see `winsByUnit`
           // below. It is the one figure in the review that carries a unit, and

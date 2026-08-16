@@ -431,7 +431,7 @@ function CoachDebrief({ workoutId, unit }: { workoutId: string | null; unit: Uni
           {line}
         </p>
         {chip && (
-          <span dir="ltr" className="chip-data mt-2 inline-flex">
+          <span dir="ltr" className="chip-data mt-2">
             {chip}
           </span>
         )}

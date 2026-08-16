@@ -2947,12 +2947,18 @@ export function LogScreen({
         {/* The switcher's way back to the import if they skipped it during
             onboarding.
 
-            Only while there is no history, and that is a real limit rather
-            than a layout choice: importing the same export twice would
-            duplicate every workout in it, and nothing here de-duplicates.
-            Gating on an empty account makes that impossible instead of
-            merely unlikely. */}
-        {!hasHistory && !error && (
+            This used to be gated on `!hasHistory`, and the gate was honest
+            about why: "importing the same export twice would duplicate every
+            workout in it, and nothing here de-duplicates." Something does
+            now — `analyse()` is given the log's own start instants and the
+            preview offers a cutoff at the last logged session — so the reason
+            for the gate is gone, and with it the reason a returning lifter
+            could not bring across the four weeks they logged elsewhere.
+
+            Settings has carried an ungated link all along, which is how the
+            resume flow was reachable at all; this is the same door on the
+            screen where someone actually notices it. */}
+        {!error && (
           <button
             type="button"
             onClick={() => setView('import')}

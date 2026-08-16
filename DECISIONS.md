@@ -6511,3 +6511,75 @@ The swap sheet's thumbnail looked like a thin vertical sliver, and I nearly
 default 48px. Recorded because the near-miss is the point: a screenshot shows
 you everything, including things that are fine, and changing one of those is
 its own way to break a screen.
+
+## 2026-08-16 — The import Ameen could not reach, and a chip that painted outside its card
+
+Ameen asked "what happens when you click import from Hevy?" The honest answer
+was **nothing, because on his account there was no button to click.**
+
+### The importer was gated on the bug I had just fixed
+
+Two doors led to `HevyImport`, and both were gated on `!hasHistory`. The gate's
+own comment said why:
+
+> Only while there is no history… importing the same export twice would
+> duplicate every workout in it, **and nothing here de-duplicates**.
+
+That was true when it was written and false by the time he asked: the previous
+change gave `analyse()` the log's own start instants and put a cutoff on the
+preview. **I removed the reason for the gate and left the gate**, so the fix
+protected a door nobody with history could open — which is every returning
+lifter, and the only person who needs a second import.
+
+The home-screen door is ungated now. Settings had carried an ungated link all
+along (it is how the resume flow was reachable at all), so the flow was not
+strictly broken — but "it works if you know to look in Settings" is not the
+same as working, and the screen where a returning lifter notices it is the one
+they are standing on.
+
+Verified by looking: `full-390-log-feed.png` now shows
+"Coming from Hevy? Bring your history" on an account with 148 workouts in it.
+
+### A chip that painted outside its card
+
+`chip-data` was `white-space: nowrap` with no width bound. The weekly review's
+plateaus section can name three lifts, which fits the function's 60-character
+cap and does not fit 390px at 11px mono, so a live Coach screen showed
+
+```
+Bench Press -0.4/sess, Lat Pulldown -1.6/sess, Lateral Raise
+```
+
+running past the card's right edge and clipping mid-word.
+
+Bounded rather than wrapped, because the rule in that block is right — a chip
+wrapped over two lines "stops reading as a stamp and starts reading as a
+sentence", which is the one thing the grammar exists to prevent.
+
+Two things had to change for the ellipsis to actually appear, and the first one
+alone would have been a half-fix that looked whole:
+
+1. **`inline-flex` → `inline-block`.** `text-overflow` applies to a block
+   container; a flex container's text is an anonymous item it cannot reach. On
+   inline-flex the chip was bounded but sheared off mid-character, which reads
+   as a rendering fault rather than as "there is more". No chip has element
+   children, so the flex context bought nothing.
+2. **Five call sites were adding Tailwind's `inline-flex` on top of
+   `chip-data`** — redundant before, harmful now, and one of them was the
+   weekly-review chip itself. The utility would have won the cascade and the
+   CSS fix would have done nothing on the exact surface it was written for.
+   Caught by grepping the call sites rather than by trusting the utility.
+
+### And the fixture that could not have shown it
+
+Every chip in the harness was about 30 characters against a 60-character cap,
+so no screenshot run could ever have photographed a chip that did not fit. The
+plateaus fixture now carries the real 59-character string.
+
+**That is the fourth fixture of this kind in two days** — after
+`body_overview`, `strength_forecast` and `routine_exercises`, all stubbed as
+`[]` or as comfortable values. The general form is worth more than the four
+fixes: **a fixture that only ever holds easy values is a fixture that cannot
+fail.** `shots.mjs` also gains a `coach-review` frame, because the Coach shot
+stopped at the top of the card and the five sections and their chips were
+never in any frame.
