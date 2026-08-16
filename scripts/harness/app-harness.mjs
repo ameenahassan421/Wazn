@@ -549,6 +549,52 @@ export function fixtures({ empty = false, active = false } = {}) {
     ranDaysAgo: r.ranDaysAgo,
   }))
 
+  /*
+   * What each routine actually contains.
+   *
+   * `routine_exercises` and `routine_sets` were stubbed as literal `[]` in the
+   * table map below, so `loadRoutine` always returned a routine with no
+   * exercises and **the routine editor had never been photographed with a
+   * single row in it** — not the reorder arrows, not the remove control, not
+   * the sets and reps fields, and not the swap the design asks for. An editor
+   * that renders an empty list looks exactly like an editor whose fixture is
+   * empty, which is the third time today that sentence has been true (see
+   * `body_overview` and `strength_forecast` above).
+   *
+   * Five exercises each, spanning implements on purpose: the swap ranks
+   * same-movement-different-implement first, so a fixture of five barbell
+   * lifts would photograph a suggestion list that never exercises tier one.
+   */
+  const routineExercises = routines.flatMap((r, ri) =>
+    [
+      exercises[0], // Bench Press (Barbell)  → has dumbbell/cable siblings
+      exercises[6], // Lat Pulldown (Cable)
+      exercises[1], // Squat (Barbell)
+      exercises[9], // Triceps Pushdown (Cable)
+      exercises[10], // Lateral Raise (Dumbbell)
+    ].map((ex, i) => ({
+      id: uuid(800 + ri * 10 + i),
+      routine_id: r.id,
+      exercise_id: ex.id,
+      position: i,
+      superset_group: null,
+      notes: null,
+    })),
+  )
+
+  // Three sets each, with reps prescribed — the editor reads `sets[0].reps`
+  // into its Reps field, and a fixture without them would photograph an empty
+  // input that looks like a defect.
+  const routineSets = routineExercises.flatMap((re) =>
+    [8, 8, 8].map((reps, i) => ({
+      id: uuid(900 + Number(re.id.slice(-3))) + `-${i}`,
+      routine_exercise_id: re.id,
+      set_number: i + 1,
+      reps,
+      set_type: 'normal',
+    })),
+  )
+
   // A workout per routine that has been run, so the `workouts(started_at)`
   // embed `listRoutines` reads has something real to reduce.
   const routineRuns = routines
@@ -567,6 +613,8 @@ export function fixtures({ empty = false, active = false } = {}) {
   return {
     exercises,
     routines: routines.map(({ ranDaysAgo: _drop, ...row }) => row),
+    routineExercises,
+    routineSets,
     workouts: active
       ? [activeWorkout, ...workouts, ...routineRuns]
       : [...workouts, ...routineRuns],
@@ -1254,8 +1302,8 @@ export async function installSupabaseStub(
         follows: data.follows,
         workout_likes: [],
         routines: data.routines ?? [],
-        routine_exercises: [],
-        routine_sets: [],
+        routine_exercises: data.routineExercises ?? [],
+        routine_sets: data.routineSets ?? [],
         exercise_notes: data.exerciseNotes ?? [],
         exercise_rest: [],
         invites: [],

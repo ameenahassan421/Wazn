@@ -160,6 +160,50 @@ async function shoot(browser, origin, { width, empty, active, locale, theme }) {
     }
   }
 
+  /*
+   * The routine editor, with rows in it — which no run had ever produced,
+   * because `routine_exercises` was stubbed as a literal `[]`. An editor
+   * that renders an empty list looks exactly like an editor whose fixture is
+   * empty, so the reorder arrows, the remove control, the sets and reps
+   * fields and the swap sheet were all unphotographed.
+   *
+   * Reached the way a user reaches it: the routine's overflow menu, then
+   * Edit. The swap sheet is one more tap and is the frame worth having —
+   * adding a sixth control to the exercise row truncated the lift name to
+   * "Lat Pu…", which only a screenshot shows.
+   */
+  if (!empty && !active) {
+    await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight))
+    await page.waitForTimeout(500)
+    const actions = page.getByRole('button', { name: /^Actions for/ })
+    if (await actions.count()) {
+      await actions.first().click()
+      await page.waitForTimeout(500)
+      const edit = page.getByRole('button', { name: 'Edit', exact: true })
+      if (await edit.count()) {
+        await edit.first().click()
+        await page.waitForTimeout(1000)
+        await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight))
+        await page.waitForTimeout(400)
+        await page.screenshot({
+          path: `${OUT}/${pfx}full-${width}-routine-editor.png`,
+          fullPage: false,
+        })
+        const swap = page.getByRole('button', { name: /^Swap/ })
+        if (await swap.count()) {
+          await swap.first().click()
+          await page.waitForTimeout(600)
+          await page.screenshot({
+            path: `${OUT}/${pfx}full-${width}-routine-swap.png`,
+            fullPage: false,
+          })
+        }
+      }
+    }
+    await page.goto(`${origin}/`, { waitUntil: 'networkidle' })
+    await page.waitForTimeout(900)
+  }
+
   // The workout overview only exists while a workout is open, and every other
   // fixture workout is finished — so without this pass the screen v2.2 built
   // is never photographed and the §4 rule is met on paper only. Log tab alone:
