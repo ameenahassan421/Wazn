@@ -229,6 +229,11 @@
   --text-nano: 9px;
   --text-nano--line-height: 1.1;
   --text-nano--font-weight: 500;
+  /* 0.1em, against `kick`'s 0.14em. The handoff separates the two steps by
+     tracking as much as by size, and this one shipped with none: every tab
+     label, disclaimer and footnote in the app was set tighter than the
+     design draws them. Found by `check:tokens`, not by looking. */
+  --text-nano--letter-spacing: 0.1em;
 
   /* ── The top of the ramp ───────────────────────────────────────────────
      v5's README titles this section "the entire ramp; no other sizes exist".
@@ -368,10 +373,19 @@
   --tab-bar-height: 58px;
   --tab-space: calc(var(--tab-bar-height) + env(safe-area-inset-bottom, 0px));
 
-  /* The data chip's ground. 14%, and it is not a rounding of paper's 7%: a
-     7% ember tint on near-black is invisible, so the chip would lose the
-     thing that makes it read as a chip rather than as coloured text. */
-  --chip-tint: rgba(232, 73, 29, 0.14);
+  /* The data chip's ground. 15% — the handoff's `chipBg`, and not a rounding
+     of paper's 7%: a 7% ember tint on near-black is invisible, so the chip
+     would lose the thing that makes it read as a chip rather than as coloured
+     text. This shipped at 0.14 from PR 1 until `check:tokens` compared it
+     against `ui.jsx` and found the seven-percent shortfall nobody could see. */
+  --chip-tint: rgba(232, 73, 29, 0.15);
+
+  /* The brass chip's ground, and the counterpart to `--chip-tint` for the
+     four earned states brass is scoped to: rank, duel opponent, record pace,
+     target beaten. It had no token at all until `check:tokens` asked for one
+     — `--color-brass` and `--color-brass-soft` were declared and drawn
+     nowhere, so every brass surface in the app was still unbuilt. */
+  --brass-tint: rgba(176, 141, 62, 0.18);
 
   /* The dashed rule that separates a ghost row from a committed one. v2.2 drew
      this as an outline around the whole row; v3's board draws it as a divider
@@ -499,9 +513,15 @@ html[data-theme='paper'] {
   --header-tint: #efe9df;
   --top-light: inset 0 1px 0 rgba(255, 255, 255, 0.6);
 
-  /* Half the iron tint. A 14% ember wash on white is not a chip, it is a
+  /* Half the iron tint. A 15% ember wash on white is not a chip, it is a
      highlighter; 7% is what the design draws on paper. */
   --chip-tint: rgba(232, 73, 29, 0.07);
+
+  /* Brass on paper, by the same argument and the same ratio: the iron chip
+     is 18%, so this is 9%. `--color-brass-soft` above already takes the
+     darker measured value that clears AA on chalk, so the pair works as
+     text-on-tint here the way `d9bc7a` on 18% does on iron. */
+  --brass-tint: rgba(176, 141, 62, 0.09);
 }
 
 /* ─── Utilities ────────────────────────────────────────────────────────── */

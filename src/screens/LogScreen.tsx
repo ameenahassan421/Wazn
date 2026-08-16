@@ -2265,6 +2265,21 @@ export function LogScreen({
     if (outcome.restSeconds !== null) {
       timer.start(outcome.restSeconds)
       setRestEffort(effort)
+      // v5 screen 08 says rest is a full-screen takeover ON COMMIT. It is not
+      // wired, and the reason is a contradiction inside the handoff itself:
+      //
+      //   screen 08          "full-screen ground takeover on commit"
+      //   do-not-regress #3  "GATE U2: repeat-set commit stays 1 tap"
+      //
+      // Both cannot hold. Built and measured: the takeover intercepts every
+      // action after a commit, not just the next one — `e2e/offline.spec.ts`
+      // could not reach "Back to workout", and a 3x5's second set costs
+      // commit -> dismiss -> commit. The do-not-regress list is the harder
+      // constraint (the README calls those "shipped behaviors" of a live app),
+      // so the SURFACE is built to screen 08 and the auto-open is Ameen's call.
+      //
+      // To turn it on, this is the whole change:
+      //   if (restCanvasEnabled(browserStorage())) setRestExpanded(true)
       // The lift the canvas will talk about: the partner in a superset, this
       // exercise otherwise. Set alongside the timer rather than derived from
       // the board, because "whose rest is this" is a fact about the commit and

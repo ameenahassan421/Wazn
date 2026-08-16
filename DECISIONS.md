@@ -7214,3 +7214,198 @@ Two things worth keeping:
    were still in progress, so the branch never got to fail before main did.
    Nothing here can enforce waiting; it is worth knowing that the drafts are
    the last gate that runs before `main` auto-deploys.
+
+## 2026-08-16 (P0 #5) — Screen 08 is built; the takeover is not, and the handoff is why
+
+Ameen asked for all 23 build-order items. Item 5 is the rest canvas ring, and
+it splits cleanly into a surface and a behaviour. **The surface is built. The
+behaviour is not, because the handoff contradicts itself about it.**
+
+```
+screen 08          "full-screen ground takeover ON COMMIT"
+do-not-regress #3  "GATE U2: repeat-set commit stays 1 tap"
+```
+
+Both cannot hold. I wired the takeover, ran it, and measured: it intercepts
+**every** action after a commit, not just the next one. `e2e/offline.spec.ts`
+could not reach "Back to workout" and two GATE 4 airplane-mode tests timed out
+after 30s. A 3×5's second set costs commit → dismiss → commit.
+
+An independent audit run against that working tree found the same thing and
+**two consequences I had not articulated**:
+
+- `RestExpanded` is `role="dialog" aria-modal="true"` with a focus trap, so
+  auto-opening it puts a **modal on the logging path** — do-not-regress #5
+  forbids exactly that.
+- The takeover was gated on `restCanvasEnabled` only, never on coach volume,
+  so **Off would still take the screen** — do-not-regress #6 says Off must
+  render a coherent pure logger.
+
+Three of the seven do-not-regress items, from one line. It is reverted, and
+the line is left in a comment so turning it on is a copy-paste rather than a
+rediscovery. Which way this goes is Ameen's call, not a restyle's.
+
+**What did ship**, all of screen 08's visual spec: the kicker
+`REST — THE COACH IS THINKING` in `soft`, the ring at 250px (was 240), the
+countdown at `mega`, `TAP TO GO EARLY` in `faint`, and tap-anywhere dismissal
+on the layer — with `stopPropagation` on the header and the ±30s cluster,
+because without it "+30s" would add thirty seconds and then close the surface
+that shows them.
+
+### The measured completion number
+
+The same audit graded all 17 screens with file:line evidence. **Mean 25%.**
+Six of 23 build-order items are done — the four P0 restyles plus coach-volume
+wiring and week-review generation, which already existed and which my earlier
+estimate of 17% failed to credit. Nine screens are `tokens-only`: they inherit
+the v5 palette and ramp because those are global, and nothing else.
+
+## 2026-08-16 (Expo) — Two rendering stacks, one domain, one palette
+
+Ameen's call: Wazn ships to the App Store and Play as a compiled native app,
+not a Capacitor shell around the PWA. The reasoning is App Store Guideline
+4.2, native keyboard and haptic ergonomics for a one-handed logger, and a
+foundation for background rest timers and Live Activities. Expo Router +
+NativeWind.
+
+The question that actually needed deciding was not "Expo or not" — it was
+**what happens to the 10,000 lines of shipped web app while the native app is
+built**. Three options, and the third is what shipped.
+
+**Rejected: convert in place.** Delete `src/`, replace Tailwind v4 with
+NativeWind, one package. Clean end state, and it takes production down for the
+weeks in between. The PWA is live on Vercel off `main`.
+
+**Rejected: move the web app into a monorepo** (`apps/web`, `apps/mobile`,
+`packages/core`). The tidy answer, and it rewrites every path in CI, the
+Vercel root directory, `playwright.config.ts`, `shots.mjs`, the coverage-floor
+script and `vercel.json` — a very large diff whose failure mode is a
+production deploy that silently stops working. That is the exact shape of the
+`"//"`-comment-in-`vercel.json` incident.
+
+**Shipped: `mobile/` as a sibling package, web untouched.** Root
+`package.json`, `tsconfig.json` and `vercel.json` are not modified at all.
+`mobile/` has its own `package-lock.json` and its own `node_modules`, which is
+not tidiness — it is **forced**: NativeWind v4 requires a JavaScript
+`tailwind.config.js` on Tailwind 3.4, and the web app is Tailwind v4
+CSS-first. Two Tailwind majors cannot share one lockfile. npm workspaces were
+rejected for the same reason a monorepo was: adding a `workspaces` key to the
+root `package.json` changes how Vercel installs.
+
+### The domain is shared for real, not copied
+
+The sample structure this started from put `src/domain/` **inside** the mobile
+app. That forks Epley and the rounding rules, and ends with a lifter whose
+phone and browser disagree about their own e1RM.
+
+Instead `mobile/metro.config.js` reaches one directory up and resolves
+`@wazn/domain` to `src/lib`. Two settings make it safe: `watchFolders` for
+`src/lib` only (watching the repo root would pull 550 MB of the web app's
+`node_modules` into the watcher), and `disableHierarchicalLookup` so Metro
+cannot walk up and resolve `react` to the web app's React 18.
+
+`src/lib/portable.ts` is the only door, and `portable.test.ts` is the lock: it
+walks the **transitive** import graph of everything the barrel exports and
+fails on any browser global or `import.meta`. That guard is not theoretical —
+`offline-store` reads perfectly pure and imports `checkpoint`, which reads
+`localStorage` two hops down.
+
+Measured, after fixing a scanner that was reading prose: **33 of 62 modules
+are transitively clean**, including the whole v5 coach engine — `coach-mode`,
+`ghost-reason`, `readiness`, `forecast`, `rest-canvas`, `tell-coach`,
+`streak`, `summary`, `progress`, `plan`, `commit`, `write-queue`. The first
+version of that scanner reported 26 impure modules and 18 of them were the
+**word** "window" inside a comment — "the rep window", "the time window a
+Progress block is showing". A scan that reads prose is a scan that gets
+ignored.
+
+`supabase.ts` and the `use-*` hooks are deliberately NOT shared. One
+`import.meta.env` line blocks eight more modules and could be refactored, but
+the native client needs different session storage anyway. The rule is **domain
+shared, I/O adapted**.
+
+### One palette, two stacks, machine-checked
+
+`src/lib/tokens.ts` is now the source of truth for the v5 palette, ramp, radii
+and motion. `scripts/check_tokens.ts` compares it against `index.css`'s
+`@theme` block AND regenerates `mobile/tailwind.tokens.js`, and CI fails if
+any of the three disagree.
+
+**It found three real defects on its first run**, all invisible, all shipped:
+
+1. `--chip-tint` was `rgba(232,73,29,0.14)`; the handoff's `ui.jsx` says
+   `0.15`. Every data chip in the app was 7% under-tinted.
+2. `--text-nano--letter-spacing` **did not exist**. The step is specified at
+   0.1em and shipped with none — every tab label, disclaimer and footnote was
+   set tighter than the design draws them.
+3. There was no brass chip ground at all. `--color-brass` and
+   `--color-brass-soft` were declared and drawn **nowhere** in `src/`, so all
+   four earned states brass exists for were still unbuilt. `--brass-tint` is
+   added, per theme.
+
+### The ember rule was written down backwards, again
+
+`src/lib/tokens.test.ts` asserts the contrast facts instead of writing them in
+a comment, because this project has now re-derived them four times with a
+different number each time. Two corrections fell out immediately:
+
+- **ember-500 on iron is 4.99:1 — it CLEARS AA.** The "chrome and large text
+  only" rule is not a statement about this ground. It is a **cross-theme**
+  rule: the same component on the paper ground is 3.51:1, and since components
+  are shared, the stricter ground sets the limit. My own first version of the
+  test asserted `< 4.5` on iron and failed, correctly.
+- **`faint` (#615b4d) is 2.88:1 on the ground and 2.70:1 on a card — below
+  even the 3:1 large-text floor.** It is the handoff's own token for meta and
+  disabled, and it is what inactive tab labels, footnotes and ghost figures
+  are set in. It is **pinned, not fixed**: v5 deliberately widens the
+  active/inactive gap so the current tab reads from the corner of the eye, and
+  lifting `faint` to 3:1 closes that gap toward `muted`. **This is Ameen's
+  call and it is flagged, not decided.**
+
+The ramp also turned out not to be size-ordered — `kick` (10) precedes `meta`
+(11) because the handoff groups by voice — so the test asserts distinctness
+plus strict descent through the five display steps, which is the part that is
+actually a sequence.
+
+### Type is a component on native, a class on web
+
+RN does not select a font cut by weight: `fontWeight` on a custom family is
+ignored on iOS and faked by smearing glyphs on Android. The family name **is**
+the weight. So `text-hero` cannot be a NativeWind class — one carrying a
+`fontWeight` would silently render Saira Medium and look almost right, which
+is the worst kind of wrong for a ramp that is measured against a reference.
+
+`design/type.ts` resolves the ten steps into complete RN styles once, reached
+through `<Txt step="hero">`. NativeWind still owns layout, colour and spacing.
+The two lists — the cuts the ramp asks for and the faces `_layout` loads — are
+compared at startup in `__DEV__`, because a typo there produces the system
+sans at the right size.
+
+Fonts ship as TTFs from `@expo-google-fonts/*`, imported by per-weight
+subpath. The package roots re-export nine weights each; importing them would
+have put ~2 MB of unused Thin and Black in the bundle. Four cuts, 380 KB, and
+the Egyptian-mobile-data rule is satisfied by construction — there is no
+network involved at all.
+
+### What is proven, and what is not
+
+`npx expo export` for **both** platforms is the gate, and it is now a CI job.
+It runs the real Metro bundler through the real Babel pipeline — NativeWind's
+`jsxImportSource`, the Reanimated plugin, the React Compiler — and resolves
+the cross-package domain imports. It caught the iOS deployment target (SDK 57
+floors at 16.4) and it is what proves NativeWind 4.2.6 actually works with RN
+0.86.2, React 19.2.3 and the React Compiler, which was the single largest
+unknown in this plan.
+
+iOS bundles at 4.6 MB, Android at 4.8 MB, 1719 modules.
+
+**It is not a simulator.** No screen in this app has been looked at on a
+device or in a simulator in this session, and `expo export` proves the app
+builds, not that it renders. That is the honest boundary of the claim.
+
+Also not done, and not pretended: `session/[id]` is a placeholder route with
+the navigation contract settled and no board on it; five of the six tabs are
+their LAUNCH.md day-one empty states; auth is not wired on native at all. The
+duel card renders **nothing** rather than a placeholder, because it needs
+migration 0029 and a fake opponent on a screen whose whole job is being
+trusted with numbers is worse than an absence.

@@ -61,12 +61,14 @@ export function RestExpanded({
       aria-modal="true"
       tabIndex={-1}
       aria-label={t('rest.title')}
+      onClick={onCollapse}
       className="fixed inset-0 z-40 flex flex-col"
       style={{ background: 'var(--color-ink)', color: 'var(--color-text)' }}
     >
       <div
         className="flex items-center gap-3 px-[18px]"
         style={{ paddingTop: 'max(env(safe-area-inset-top), 14px)' }}
+        onClick={(e) => e.stopPropagation()}
       >
         <button
           type="button"
@@ -104,11 +106,16 @@ export function RestExpanded({
       </div>
 
       <div className="flex flex-1 flex-col items-center justify-center gap-8 px-[22px]">
-        <div className="relative flex h-[240px] w-[240px] items-center justify-center">
+        {/* v5 screen 08's opening line. `soft` because it is the coach's
+            voice, not a section label. */}
+        <p className="kicker" style={{ color: 'var(--color-accent-300)' }}>
+          {t('rest.thinking')}
+        </p>
+        <div className="relative flex h-[250px] w-[250px] items-center justify-center">
           <svg
             viewBox="0 0 96 96"
-            width={240}
-            height={240}
+            width={250}
+            height={250}
             className="absolute inset-0"
           >
             <circle
@@ -138,7 +145,7 @@ export function RestExpanded({
               dir="ltr"
               role="timer"
               aria-live="off"
-              className="tnum font-display text-hero font-extrabold tracking-[-0.03em]"
+              className="tnum font-display text-mega font-extrabold tracking-[-0.03em]"
             >
               {formatRest(timer.remaining)}
             </p>
@@ -150,7 +157,10 @@ export function RestExpanded({
           </div>
         </div>
 
-        <div className="flex gap-2.5">
+        {/* The layer dismisses on any tap, so the controls inside it have to
+            stop the event or "+30s" would add thirty seconds and then close
+            the surface that shows them. */}
+        <div className="flex gap-2.5" onClick={(e) => e.stopPropagation()}>
           <button
             type="button"
             onClick={() => timer.adjust(-2 * REST_STEP_SECONDS)}
@@ -180,7 +190,7 @@ export function RestExpanded({
             className="flex max-w-[320px] items-start gap-3 px-[18px] py-4"
             style={{
               background: 'rgba(236, 231, 220, 0.06)',
-              borderRadius: '18px',
+              borderRadius: 'var(--radius-panel)',
             }}
           >
             <PlateDot size={24} />
@@ -196,9 +206,12 @@ export function RestExpanded({
       </div>
 
       <div
-        className="px-[22px]"
+        className="flex flex-col gap-3 px-[22px]"
         style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 30px)' }}
       >
+        <p className="kicker text-center" style={{ color: 'var(--color-faint)' }}>
+          {t('rest.tap_early')}
+        </p>
         {nextLabel && (
           <button
             type="button"
@@ -206,7 +219,7 @@ export function RestExpanded({
             className="flex min-h-12 w-full items-center justify-between px-[18px] py-3.5"
             style={{
               background: 'rgba(236, 231, 220, 0.06)',
-              borderRadius: '16px',
+              borderRadius: 'var(--radius-lg)',
             }}
           >
             <span
