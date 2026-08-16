@@ -26,6 +26,27 @@
  * Also absent: the React contexts and the `use-*` hooks. They are small, they
  * are the adapter layer by definition, and `mobile/src/hooks` reimplements
  * each against native APIs.
+ *
+ * ── THE BARREL IS PURE TYPESCRIPT: ZERO EXTERNAL PACKAGES ───────────────────
+ * Not even `react`. `portable.test.ts` asserts it, and the reason is a real
+ * failure rather than a principle invented afterwards.
+ *
+ * `active-workout` was in this list. It exports `useActiveWorkout`, built on
+ * `useSyncExternalStore`, so it imports `react` — and that typechecked
+ * locally for the WRONG REASON: tsc resolves a bare import by walking up from
+ * the importing file, and `src/lib/../../node_modules` is the web app's,
+ * which has React 18 sitting right there. CI installs only `mobile/`, so the
+ * same file failed with TS2307 on the first run of the mobile job.
+ *
+ * The obvious patch — mapping `react` in `mobile/tsconfig.json` — is worse
+ * than the bug: Expo's Metro config reads tsconfig `paths` too, so pointing
+ * `react` at `@types/react` fixed tsc and broke the bundle outright.
+ *
+ * The actual fix was to apply the rule already written above. A module that
+ * exports a hook IS the adapter layer, so `active-workout` belongs with the
+ * others — and with it gone the shared closure needs nothing but TypeScript,
+ * which is a contract that cannot be broken by a resolution quirk on any
+ * platform.
  */
 
 /* ── The arithmetic ──────────────────────────────────────────────────────── */
@@ -58,7 +79,6 @@ export * from './body'
    counts as landed, what a discard drops. It is pure: the storage it runs
    against is injected, which is what lets the native app hand it SQLite
    where the web app hands it IndexedDB. */
-export * from './active-workout'
 export * from './commit'
 export * from './write-queue'
 export * from './history-edit'

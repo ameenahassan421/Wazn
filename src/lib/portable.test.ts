@@ -132,12 +132,59 @@ describe('portable.ts — the shared domain', () => {
     }
   })
 
+  it('depends on no external package at all — it is pure TypeScript', () => {
+    /**
+     * The failure this exists for actually happened, on the first CI run of
+     * the mobile job — and the answer was to REMOVE the offending module
+     * rather than teach the toolchain to find its dependency.
+     *
+     * `active-workout` imports `useSyncExternalStore` from `react`. The local
+     * typecheck passed — but for the WRONG REASON: tsc resolves a bare import
+     * by walking up from the importing file, and `src/lib/../../node_modules`
+     * is the web app's, which has React 18 sitting right there. In CI the
+     * mobile job installs only `mobile/`, that directory does not exist, and
+     * the same file failed with TS2307.
+     *
+     * Mapping `react` in `mobile/tsconfig.json` looked like the fix and was
+     * worse than the bug: Expo's Metro config reads tsconfig `paths` too, so
+     * pointing `react` at `@types/react` satisfied tsc and broke the bundle.
+     *
+     * `active-workout` exports a hook, which the barrel's own rule already
+     * calls the adapter layer, so it moved to that list. The closure now
+     * needs nothing but TypeScript — a contract no resolution quirk on any
+     * platform can break. An empty list, asserted, is what keeps it that
+     * way: the next module that brings a dependency fails here, at home,
+     * instead of in CI.
+     */
+    const seen = new Set<string>()
+    const packages = new Set<string>()
+
+    const walk = (mod: string) => {
+      if (seen.has(mod)) return
+      seen.add(mod)
+      const src = sourceOf(mod)
+      if (src === null) return
+      for (const [, spec] of src.matchAll(/from\s+['"]([^'"]+)['"]/g)) {
+        if (spec.startsWith('.')) walk(spec.replace(/^\.\//, ''))
+        // `node:` builtins would be a real problem on Hermes and there are
+        // none; if one appears it shows up here as a package and fails.
+        else packages.add(spec)
+      }
+    }
+    exported.forEach(walk)
+
+    expect([...packages].sort()).toEqual([])
+  })
+
   it('does not export the adapter layer', () => {
     // These have native counterparts by design (mobile/src/services and
     // mobile/src/hooks). Sharing one would mean pretending a keychain and
     // localStorage are the same thing.
     const adapters = [
       'supabase',
+      // Exports `useActiveWorkout`. A hook is an adapter by this file's own
+      // rule, and sharing it dragged `react` into the closure.
+      'active-workout',
       'use-auth',
       'checkpoint',
       'idb',
@@ -188,6 +235,8 @@ describe('portable.ts — the shared domain', () => {
       'these are pure and unshared — add them to portable.ts or leave them ' +
         'deliberately, but update this list either way',
     ).toEqual([
+      // Exports a hook — see the adapter list above.
+      'active-workout',
       // Service-worker cache names. A web-only concept — there is no
       // Cache API on native, and the offline story there is the queue.
       'cache-names',
