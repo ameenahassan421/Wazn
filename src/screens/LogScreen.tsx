@@ -105,6 +105,7 @@ import {
   clear as clearCheckpoint,
   isUsable,
   load as loadCheckpoint,
+  pendingQueue,
   save as saveCheckpoint,
   isAbandonedWorkout,
 } from '../lib/checkpoint'
@@ -219,6 +220,18 @@ function asSetRow(q: Extract<QueuedWrite, { kind: 'set' }>): WorkoutSet {
     pr_e1rm: false,
   }
 }
+
+/**
+ * The undelivered writes the synchronous checkpoint is holding.
+ *
+ * Called on EVERY load path, including the three that reach no open workout.
+ * That is the fix for GATE 4: this copy is written synchronously precisely
+ * because the async one may not survive the tab dying, so a path that reads
+ * only IndexedDB is reading the copy that is allowed to be missing. See
+ * `pendingQueue` for why no `isUsable` gate belongs here.
+ */
+const checkpointWrites = (): QueuedWrite[] =>
+  pendingQueue(loadCheckpoint(browserStorage()), Date.now())
 
 interface ExerciseBestRow {
   exercise_id: string
@@ -1115,11 +1128,10 @@ export function LogScreen({
       setExtraRows(new Map(usable ? checkpoint.extraRows : []))
       setRemoved(new Set(usable ? checkpoint.removed : []))
       const known = new Set((board?.value.sets ?? []).map((s) => s.id))
-      const unsent = await restoreQueue(
-        active.id,
-        usable ? checkpoint.queue : [],
-        known,
-      )
+      // The arrangement is gated on `usable`, the queue is not: a checkpoint
+      // that describes another workout still holds writes this device owes the
+      // server. See `pendingQueue`.
+      const unsent = await restoreQueue(active.id, checkpointWrites(), known)
       if (unsent.length > 0) setSets((prev) => [...prev, ...unsent.map(asSetRow)])
     } else {
       setOrder([])
@@ -1128,7 +1140,7 @@ export function LogScreen({
       // NOT cleared. A workout finished in a dead zone leaves its finish op
       // behind with no open workout to belong to, and throwing the queue away
       // because the board is empty would throw the session away with it.
-      await restoreQueue(null, [], new Set())
+      await restoreQueue(null, checkpointWrites(), new Set())
     }
 
     setCachedAt(catalogue.savedAt)
@@ -1201,7 +1213,7 @@ export function LogScreen({
       // stored queue into memory yet, and flipping the ref first would write
       // an EMPTY queue straight over somebody's unsent sets. That is a worse
       // bug than the one this line exists to fix.
-      await restoreQueue(null, [], new Set())
+      await restoreQueue(null, checkpointWrites(), new Set())
       // Now the ref, which means "the load path has finished reading the
       // device" — not that it succeeded. Left false, the effects it gates
       // never run again for the life of the screen and a set logged after a
@@ -1223,7 +1235,7 @@ export function LogScreen({
       setError(describeError(tRef.current('log.error.load_workout'), failure))
       // Same as the deadline path above, in the same order: merge the durable
       // queue in first, then declare the read over.
-      await restoreQueue(null, [], new Set())
+      await restoreQueue(null, checkpointWrites(), new Set())
       restoredRef.current = true
       setLoading(false)
       return
@@ -1335,9 +1347,13 @@ export function LogScreen({
       // screen as they were — the user did them — and back in the queue. The
       // client-generated id makes the retry idempotent even if one of them
       // actually landed before the tab died.
+      //
+      // The queue is read whether or not the checkpoint is `usable`: that gate
+      // is about the arrangement above, and a checkpoint describing a finished
+      // session still owes the server its writes. See `pendingQueue`.
       const unsent = await restoreQueue(
         active.id,
-        usable ? checkpoint.queue : [],
+        checkpointWrites(),
         new Set(restoredSets.map((row) => row.id)),
       )
       if (unsent.length > 0) {
@@ -1368,7 +1384,10 @@ export function LogScreen({
       setExtraRows(new Map())
       // Same reasoning as the offline path: undelivered writes outlive the
       // workout they belong to, so the queue is restored here, never cleared.
-      await restoreQueue(null, [], new Set())
+      // BOTH durable copies, not just IndexedDB's — a whole session logged in
+      // airplane mode arrives here, because the server has no open workout to
+      // hand back and never will. That is GATE 4.
+      await restoreQueue(null, checkpointWrites(), new Set())
       // Idle screen only. A failure here must not block the screen — like the
       // streak, it is context, not data you cannot log without.
       try {
