@@ -49,8 +49,9 @@ export default defineConfig({
         scope: '/',
         display: 'standalone',
         orientation: 'portrait',
-        background_color: '#f7f3ec',
-        theme_color: '#f7f3ec',
+        background_color: '#0f0d0a',
+        // v5's ground. One theme now, so the installed PWA's chrome is fixed.
+        theme_color: '#0f0d0a',
         // One tile, both purposes. Through v2 the mark was the وزن barbell
         // running the full width of the icon, so a maskable crop — up to 20%
         // off every edge — cut the sleeves off and needed a separate inset

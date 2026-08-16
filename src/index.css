@@ -21,6 +21,37 @@
   src: url('/fonts/sora-latin.woff2') format('woff2');
 }
 
+/* v5's display face. Three static cuts rather than a variable file, because
+   that is what Google serves for this family — 37 KB for all three latin
+   subsets, self-hosted for the same reason as everything above. Saira is
+   condensed, and the whole v5 ramp is sized against that: falling back to a
+   normal-width sans does not merely look wrong, it makes every measurement
+   taken against it wrong while looking entirely plausible. `swap` is kept so
+   a slow load never blocks the logging path. */
+@font-face {
+  font-family: 'Saira Semi Condensed';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('/fonts/saira-semi-condensed-500-latin.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Saira Semi Condensed';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('/fonts/saira-semi-condensed-600-latin.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Saira Semi Condensed';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('/fonts/saira-semi-condensed-700-latin.woff2') format('woff2');
+}
+
 @font-face {
   font-family: 'Hanken Grotesk';
   font-style: normal;
@@ -77,51 +108,82 @@
    ember is not, and a 500-on-ground body-copy use is a defect.
    ───────────────────────────────────────────────────────────────────── */
 @theme {
-  --color-ink: #f7f3ec;
-  --color-surface: #ffffff;
-  --color-raised: #efe9dd;
-  --color-line: #e6e0d4;
-  --color-text: #16130e;
-  --color-muted: #6b6559;
+  /* ── v5 "Momentum": the night-iron ground ──────────────────────────────
+     There is ONE theme now. Paper was the default from 2026-08-12 and the
+     v5 handoff replaces it outright (Ameen, 2026-08-16) — the light/dark
+     toggle and its `html[data-theme]` block are gone with it. The stored
+     `user_preferences.theme` column is deliberately left in the database:
+     dropping a column is a destructive migration bought for nothing, and an
+     unread value costs a lifter nothing.
+
+     The ember is untouched. `#e8491d`, `#1c0e08` and `#f4a68c` were already
+     byte-identical to v5's `em`, `emInk` and `soft` before this change,
+     which is the single biggest reason v5 is a restyle and not a rewrite. */
+  --color-ink: #0f0d0a;
+  --color-surface: #181510;
+  --color-raised: #211d15;
+  --color-line: rgba(236, 231, 220, 0.08);
+  --color-text: #ece7dc;
+  --color-muted: #9a927f;
   --color-accent: #e8491d;
   --color-accent-ink: #1c0e08;
 
-  --color-accent-100: #401407;
-  --color-accent-200: #6b210c;
-  --color-accent-300: #9a3012;
-  --color-accent-400: #c33d17;
+  /* v5's `line2`: the border that is DRAWN — inputs, outline buttons —
+     against `line`, which is only ever the hairline ring. Two different
+     jobs, and the handoff separates them, so the tokens do too. */
+  --color-line-2: rgba(236, 231, 220, 0.16);
+
+  /* v5's `faint`: meta and disabled. Below `muted`, above the ground. */
+  --color-faint: #615b4d;
+
+  /* ── Brass: earned metal, and the one scoped exception to a single hue ──
+     Rank, the duel opponent, record pace, target beaten. NOTHING else — the
+     handoff asks that any third use be flagged in review, so treat a brass
+     token appearing on ordinary chrome as a defect, not a preference. */
+  --color-brass: #b08d3e;
+  --color-brass-soft: #d9bc7a;
+
+  /* The accent ramp, collapsed to what the dark theme already held. With one
+     ground there is no role-mirroring left to do: 300 is the small-accent
+     text tier (v5's `soft`), 800-900 are tinted fills. */
+  --color-accent-100: #fdece5;
+  --color-accent-200: #f9cfc0;
+  --color-accent-300: #f4a68c;
+  --color-accent-400: #ee7a51;
   --color-accent-500: #e8491d;
-  --color-accent-600: #ee7a51;
-  --color-accent-700: #f4a68c;
-  --color-accent-800: #f9cfc0;
-  --color-accent-900: #fdece5;
+  --color-accent-600: #c33d17;
+  --color-accent-700: #9a3012;
+  --color-accent-800: #6b210c;
+  --color-accent-900: #401407;
 
-  --color-neutral-100: #292724;
-  --color-neutral-200: #3f3d38;
-  --color-neutral-300: #595650;
-  --color-neutral-400: #75716a;
+  --color-neutral-100: #f4f3f0;
+  --color-neutral-200: #e5e3de;
+  --color-neutral-300: #cfccc5;
+  --color-neutral-400: #b2aea6;
   --color-neutral-500: #938f88;
-  --color-neutral-600: #b2aea6;
-  --color-neutral-700: #cfccc5;
-  --color-neutral-800: #e5e3de;
-  --color-neutral-900: #f4f3f0;
+  --color-neutral-600: #75716a;
+  --color-neutral-700: #595650;
+  --color-neutral-800: #3f3d38;
+  --color-neutral-900: #292724;
 
-  /* Neutral steps for exercise tiles. No hue, so the single ember accent
-     stays the only colour in the app. Four steps are enough to tell
-     adjacent rows apart at a glance. */
-  --color-tile-1: #efe9df;
-  --color-tile-2: #eae3d6;
-  --color-tile-3: #e4ddcf;
-  --color-tile-4: #ded6c7;
+  /* Neutral steps for exercise tiles. No hue, so ember plus the scoped brass
+     stay the only colour in the app. Four steps are enough to tell adjacent
+     rows apart at a glance. */
+  --color-tile-1: #171614;
+  --color-tile-2: #1d1c19;
+  --color-tile-3: #23221e;
+  --color-tile-4: #2a2824;
 
   --font-sans:
     'Hanken Grotesk', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto,
     'Helvetica Neue', Arial, sans-serif;
 
-  /* The numerals voice. Sora carries display, input, figure and title:
-     everything a lifter reads at arm's length. Wired to those size tokens
-     by the unlayered rule after the utilities, so no component changes. */
-  --font-display: 'Sora', ui-sans-serif, system-ui, sans-serif;
+  /* The numerals voice. v5 replaces Sora with Saira Semi Condensed at display
+     level — a deliberate brand decision in the handoff, not a substitution.
+     Condensed is load-bearing: the ramp's mega step is 84px and only fits a
+     phone because the face is narrow. Sora stays declared above only until
+     the wordmark's baked outlines are regenerated (PR 1 note). */
+  --font-display: 'Saira Semi Condensed', ui-sans-serif, system-ui, sans-serif;
 
   /* Mono is not decoration: it is the meta voice — kickers, timestamps,
      section labels, the PR badge. Plex Mono's wider figures and squarer
@@ -144,12 +206,16 @@
   --text-figure--line-height: 1.15;
   --text-figure--font-weight: 500;
 
-  --text-title: 19px;
-  --text-title--line-height: 1.25;
+  /* v5: title is 17 uppercase +0.01em, down from v2's 19. */
+  --text-title: 17px;
+  --text-title--line-height: 1.2;
   --text-title--font-weight: 600;
+  --text-title--letter-spacing: 0.01em;
 
-  --text-body: 15px;
-  --text-body--line-height: 1.45;
+  /* v5: body is 14/1.5, down from v2's 15/1.45. 39 call sites still say 15px
+     and are PR 2's largest single group. */
+  --text-body: 14px;
+  --text-body--line-height: 1.5;
   --text-body--font-weight: 400;
 
   --text-label: 13px;
@@ -167,6 +233,50 @@
   --text-nano: 9px;
   --text-nano--line-height: 1.1;
   --text-nano--font-weight: 500;
+
+  /* ── v5's ramp: the whole thing, and "no other sizes exist" ─────────────
+     Ten steps. Only `label` (13) and `nano` (9) survive from the v2 scale
+     unchanged, which is why the steps above are kept for now rather than
+     deleted: 267 hardcoded `text-[Npx]` classes across 41 files still point
+     at sizes that are not in this ramp, and 81 of them use a size v5 does
+     not contain at all. PR 2 migrates those call sites and deletes
+     `--text-display`, `--text-input`, `--text-figure` and `--text-micro`.
+     Two ramps coexisting is the cost of a reviewable PR 1.
+
+     Weight and leading travel with each step, so a size cannot be used at
+     the wrong weight by accident — the same rule the v2 scale had. */
+  --text-mega: 84px;
+  --text-mega--line-height: 1;
+  --text-mega--font-weight: 700;
+  --text-mega--letter-spacing: -0.01em;
+
+  --text-hero: 50px;
+  --text-hero--line-height: 0.98;
+  --text-hero--font-weight: 700;
+  --text-hero--letter-spacing: -0.01em;
+
+  --text-fig: 30px;
+  --text-fig--line-height: 1.05;
+  --text-fig--font-weight: 700;
+
+  --text-num: 21px;
+  --text-num--line-height: 1.1;
+  --text-num--font-weight: 600;
+
+  /* v5's `kick`: the mono section label. Distinct from `nano` by tracking
+     and size — 10 at 0.14em against 9 at 0.1em — and the two are not
+     interchangeable, so both exist. */
+  --text-kick: 10px;
+  --text-kick--line-height: 1.2;
+  --text-kick--font-weight: 500;
+  --text-kick--letter-spacing: 0.14em;
+
+  /* v5's `meta`: data chips, timestamps, previous-set strings. Same 11px as
+     the v2 `micro` it will replace, kept under v5's name so PR 2's migration
+     reads as one ramp rather than two. */
+  --text-meta: 11px;
+  --text-meta--line-height: 1.2;
+  --text-meta--font-weight: 500;
 }
 
 /* Radii, dividers and elevation are plain custom properties — consumed by
@@ -176,6 +286,11 @@
    refines shipped --shadow-md/-lg with real 18px and 40px blurs; both are
    dropped. A card is separated from the ground by its edge and its fill. */
 :root {
+  /* v5 is the only theme, so the ground is dark unconditionally and form
+     controls, scrollbars and the caret follow it. This used to live in the
+     `[data-theme='dark']` block. */
+  color-scheme: dark;
+
   /* The top of a bar in a bar chart — the protein week, the week row. Just
      enough to take the die-cut edge off a 3px-wide column; anything larger
      rounds a short bar into a lozenge and it stops reading as a measurement.
@@ -283,153 +398,17 @@
   --motion-linear: linear;
 }
 
-/* ─── The dark theme ──────────────────────────────────────────────────────
-   Paper is the default (Ameen, 2026-08-12: the prototype IS the design).
-   Dark is the same system with the values the app shipped with: warm
-   near-black ground, and the accent ramp mirrored so each step keeps its
-   ROLE rather than its lightness — 300 is always "small accent text
-   readable on this ground", 800-900 always "tinted fills". */
-html[data-theme='dark'] {
-  color-scheme: dark;
+/* ─── One theme ────────────────────────────────────────────────────────────
+   There WAS an `html[data-theme='dark']` block here holding a second full
+   palette, because paper was the default from 2026-08-12 and dark was the
+   alternative. v5 replaces paper outright (Ameen, 2026-08-16), so the second
+   palette is gone and the values above ARE the theme. `color-scheme: dark` is
+   set on :root instead, so form controls and scrollbars follow.
 
-  --color-ink: #0c0b0a;
-  --color-surface: #161513;
-  --color-raised: #1f1d1a;
-  --color-line: #2a2825;
-  --color-text: #ecebe8;
-  --color-muted: #8d8983;
-
-  --color-accent-100: #fdece5;
-  --color-accent-200: #f9cfc0;
-  --color-accent-300: #f4a68c;
-  --color-accent-400: #ee7a51;
-  --color-accent-600: #c33d17;
-  --color-accent-700: #9a3012;
-  --color-accent-800: #6b210c;
-  --color-accent-900: #401407;
-
-  --color-neutral-100: #f4f3f0;
-  --color-neutral-200: #e5e3de;
-  --color-neutral-300: #cfccc5;
-  --color-neutral-400: #b2aea6;
-  --color-neutral-600: #75716a;
-  --color-neutral-700: #595650;
-  --color-neutral-800: #3f3d38;
-  --color-neutral-900: #292724;
-
-  --color-tile-1: #171614;
-  --color-tile-2: #1d1c19;
-  --color-tile-3: #23221e;
-  --color-tile-4: #2a2824;
-
-  --divider: rgba(236, 235, 232, 0.14);
-  --divider-solid: rgba(236, 235, 232, 0.08);
-  --top-light: inset 0 1px 0 rgba(236, 235, 232, 0.045);
-  --header-tint: #131210;
-  --surface-line: rgba(247, 243, 236, 0.08);
-
-  /* Twice the paper tint. A 7% ember wash on near-black is not a chip. */
-  --chip-tint: rgba(232, 73, 29, 0.14);
-  --ghost-divider: #2a2825;
-  --ghost-ink: #595650;
-}
-
-html {
-  color-scheme: light;
-  background-color: var(--color-ink);
-  -webkit-text-size-adjust: 100%;
-}
-
-body {
-  margin: 0;
-  background-color: var(--color-ink);
-  color: var(--color-text);
-  font-family: var(--font-sans);
-  overscroll-behavior-y: none;
-}
-
-/* Digits are the interface: keep them aligned everywhere. */
-.tnum {
-  font-variant-numeric: tabular-nums;
-  font-feature-settings: 'tnum' 1;
-}
-
-/* Rep-range bars: one hue, five steps, heaviest range brightest — plates
-   stepping down toward the sleeve (docs/design-philosophy.md).
-
-   These are classes rather than `var(--color-accent-${step})` composed in the
-   component, and that is not a style preference. Tailwind v4 drops any
-   `@theme` token nothing statically references, so a variable name built at
-   runtime resolves to NOTHING: accent-400 and accent-700 were absent from the
-   built CSS and two bars with 31 and 11 sets in them rendered as empty
-   tracks. Same failure as `inset-block-0` — a reference that emits no CSS,
-   fails no check, and is invisible until somebody looks at a screenshot. A
-   static class is what makes the token survive the build. */
-.rep-fill-1 {
-  background-color: var(--color-accent-400);
-}
-.rep-fill-2 {
-  background-color: var(--color-accent-500);
-}
-.rep-fill-3 {
-  background-color: var(--color-accent-600);
-}
-.rep-fill-4 {
-  background-color: var(--color-accent-700);
-}
-.rep-fill-5 {
-  background-color: var(--color-accent-800);
-}
-
-/* Native controls inherit the app's type rather than rendering in the
-   browser's default face at the browser's default size.
-
-   Deliberately NOT `font: inherit`. That shorthand also resets font-weight,
-   and this rule is unlayered — unlayered declarations outrank everything in
-   a cascade layer, so it beat every Tailwind utility and quietly pinned all
-   buttons to the body's 400. `btn-base`'s 500 and `btn-hero`'s 600 never
-   reached the screen. Listing the longhands keeps the inheritance and leaves
-   weight to the utility that asked for it. */
-@layer base {
-  input,
-  button,
-  select,
-  textarea {
-    font-family: inherit;
-    font-size: inherit;
-    line-height: inherit;
-    letter-spacing: inherit;
-    color: inherit;
-  }
-}
-
-input[type='number']::-webkit-outer-spin-button,
-input[type='number']::-webkit-inner-spin-button {
-  appearance: none;
-  margin: 0;
-}
-
-input[type='number'] {
-  appearance: textfield;
-}
-
-button {
-  touch-action: manipulation;
-}
-
-/* Never leave the browser default focus ring. */
-:focus {
-  outline: none;
-}
-
-:focus-visible {
-  outline: 2px solid var(--color-accent);
-  outline-offset: 2px;
-}
-
-::selection {
-  background: color-mix(in srgb, var(--color-accent) 30%, transparent);
-}
+   `user_preferences.theme` stays in the database. Dropping a column is a
+   destructive migration bought for nothing; an unread value costs nobody
+   anything, and if a light theme ever returns the preference is still there.
+   ───────────────────────────────────────────────────────────────────────── */
 
 /* ─── Utilities ────────────────────────────────────────────────────────── */
 

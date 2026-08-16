@@ -6583,3 +6583,73 @@ fixes: **a fixture that only ever holds easy values is a fixture that cannot
 fail.** `shots.mjs` also gains a `coach-review` frame, because the Coach shot
 stopped at the top of the card and the five sections and their chips were
 never in any frame.
+
+## 2026-08-16 — v5 P0 PR 1: one ground, one ramp, and three decisions taken
+
+Ameen answered the three questions the P0 plan held open:
+
+1. **v5 replaces the light theme.** Not "becomes the dark option" — paper and
+   its toggle are gone.
+2. **v3 is closed** at 11/13 acceptance and 4/5 GATE V3. Its two open items —
+   progress photos and the degraded-render review — are **superseded**, not
+   abandoned: v5 restyles every screen they live on and carries its own
+   acceptance list, so finishing them first would have been doing the work
+   twice.
+3. **I decide the 81 orphan type sizes** and log the calls. That happens in
+   PR 2; this is PR 1.
+
+### What shipped here
+
+The foundation, and deliberately nothing that looks finished on its own.
+
+**The palette inverted to the night-iron ground.** `--color-ink` is the ground
+token and it went from `#f7f3ec` to `#0f0d0a`; surface, raised, line, text and
+muted follow v5's values. Two new tokens the handoff separates and the repo
+did not: `--color-line-2` (the border that is _drawn_ — inputs, outline
+buttons) against `--color-line` (only ever the hairline ring), and
+`--color-faint` for meta and disabled.
+
+**Brass exists now**, scoped: `--color-brass` / `--color-brass-soft`. Rank,
+duel opponent, record pace, target beaten. The handoff asks that a third use
+be flagged in review — treat brass on ordinary chrome as a defect.
+
+**The ember did not move.** `#e8491d`, `#1c0e08` and `#f4a68c` were already
+byte-identical to v5's `em`, `emInk` and `soft`. That is the single biggest
+reason this is a restyle.
+
+**Saira Semi Condensed is the display face**, three self-hosted cuts. Condensed
+is load-bearing rather than cosmetic: the ramp's mega step is 84px and only
+fits a phone because the face is narrow.
+
+**The second palette is gone** — 148 lines of `html[data-theme='dark']`. With
+one ground there is no role-mirroring left, so the accent ramp collapsed to
+what dark already held. `color-scheme: dark` moved to `:root`, and the
+`theme-color` meta plus the PWA manifest's `theme_color`/`background_color`
+are static iron again, which is what they were before a second theme existed.
+
+**The ten-step ramp is added, and the v2 scale is deliberately still there.**
+Only `label` (13) and `nano` (9) survive unchanged; `title` and `body` are
+restated at v5's 17 and 14. `--text-display`, `--text-input`, `--text-figure`
+and `--text-micro` stay until PR 2 migrates the 267 call sites off them. Two
+ramps coexisting is the price of a PR 1 that builds and is reviewable.
+
+### `user_preferences.theme` stays in the database
+
+Deliberate. Dropping a column is a destructive migration bought for nothing;
+an unread value costs a lifter nothing, and if a light theme ever returns the
+preference is still sitting there. The provider that read it is deleted, so
+nothing writes it either.
+
+### Not done in PR 1, and named rather than implied
+
+**The wordmark is still Sora.** `wordmark-latin-paths.ts` holds Sora outlines
+baked as SVG paths, and v5 sets the wordmark in Saira 700. Regenerating those
+paths needs a font-to-path step this session does not have, so `Sora` stays
+declared in `@font-face` purely to keep the mark rendering correctly. Swapping
+the face without regenerating the outlines would change nothing visible and
+would quietly leave the wrong letterforms shipped — worse than leaving it
+obviously undone. This is the first item of PR 2 or its own small PR.
+
+**Every screen now renders on the iron ground with the old sizes**, which is
+what PR 1 was scoped to produce and is not what v5 looks like. PR 2 (the ramp
+migration) and PR 3 (tab bar + hunt card) are where it starts to.

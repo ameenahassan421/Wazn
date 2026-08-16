@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
 import { supabase } from '../lib/supabase'
 import { useLocale } from '../lib/locale-context'
-import { useTheme } from '../lib/theme-context'
 import { useCoach } from '../lib/coach-context'
 import { useUnit } from '../lib/unit-context'
 import { fetchMyProfile } from '../lib/social'
@@ -22,10 +21,12 @@ import { Avatar } from '../components/Avatar'
  * table, no nudge to switch off, and `lib/csv.ts` is a reader with no writer.
  * Drawing controls that do nothing would be worse than the header was.
  *
- * The theme control is the reverse case: it is not on the design's screen,
- * but it exists and the header is losing its home for it. The audit's own
- * "one conscious break" note keeps a dark mode on the roadmap, so it lands
- * here beside the other two set-once preferences rather than being dropped.
+ * The theme control USED to be the reverse case — not on the design's screen,
+ * but real, so it lived here. v5 replaces the paper theme outright (Ameen,
+ * 2026-08-16) and there is one ground now, so the control is gone: a
+ * segmented pair with one option is furniture. `user_preferences.theme` stays
+ * in the database, unread, because dropping a column is a destructive
+ * migration bought for nothing.
  */
 
 /** A grouped card of rows, hairline-separated, as the design draws them. */
@@ -144,7 +145,6 @@ export function SettingsScreen({
 }) {
   const { t, locale, setLocale } = useLocale()
   const { unit, setUnit } = useUnit()
-  const { theme, setTheme } = useTheme()
   const { mode, volume, setMode, setVolume } = useCoach()
   const [profile, setProfile] = useState<Profile | null>(null)
   const [confirmSignOut, setConfirmSignOut] = useState(false)
@@ -214,7 +214,7 @@ export function SettingsScreen({
             ]}
           />
         </Row>
-        <Row label={t('settings.language')}>
+        <Row label={t('settings.language')} last>
           <Segmented
             name={t('settings.language')}
             value={locale}
@@ -224,17 +224,6 @@ export function SettingsScreen({
               // The Arabic option is set in the Arabic UI face, not the
               // display font: it is a word in that script wherever it renders.
               { id: 'ar', label: t('settings.language.ar'), className: 'font-sans' },
-            ]}
-          />
-        </Row>
-        <Row label={t('settings.theme')} last>
-          <Segmented
-            name={t('settings.theme')}
-            value={theme}
-            onChange={setTheme}
-            options={[
-              { id: 'paper', label: t('settings.theme.paper') },
-              { id: 'dark', label: t('settings.theme.dark') },
             ]}
           />
         </Row>
