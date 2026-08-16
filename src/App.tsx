@@ -7,6 +7,7 @@ import { supabaseConfigError } from './lib/supabase'
 import { useAuth } from './lib/use-auth'
 import { useBackLayer } from './lib/use-back'
 import { LocaleProvider, useLocale } from './lib/locale-context'
+import { ThemeProvider } from './lib/theme-context'
 import { UnitProvider } from './lib/unit-context'
 import { CoachProvider } from './lib/coach-context'
 import { TabBar } from './components/TabBar'
@@ -206,9 +207,11 @@ export default function App() {
     // LocaleProvider wraps AuthScreen so the pre-auth surface can offer the
     // language toggle — a signed-out user has no Header to put it in.
     return (
-      <LocaleProvider>
-        <AuthScreen />
-      </LocaleProvider>
+      <ThemeProvider>
+        <LocaleProvider>
+          <AuthScreen />
+        </LocaleProvider>
+      </ThemeProvider>
     )
   }
 
@@ -240,100 +243,102 @@ export default function App() {
     // header and tab bar can throw too, and a boundary inside `main` cannot
     // catch its own chrome. See components/ErrorBoundary.tsx.
     <ErrorBoundary boundary="root">
-      <LocaleProvider userId={userId}>
-        <UnitProvider userId={userId}>
-          <CoachProvider userId={userId}>
-            <Header
-              titleKey={titleKey}
-              name={name}
-              onBack={
-                tab === 'log' || (tab === 'progress' && progressSubView)
-                  ? undefined
-                  : () => openLog()
-              }
-              onOpenSettings={() => setTab('settings')}
-            />
-            {/* The bottom padding matches the sticky clusters' `bottom` value
+      <ThemeProvider userId={userId}>
+        <LocaleProvider userId={userId}>
+          <UnitProvider userId={userId}>
+            <CoachProvider userId={userId}>
+              <Header
+                titleKey={titleKey}
+                name={name}
+                onBack={
+                  tab === 'log' || (tab === 'progress' && progressSubView)
+                    ? undefined
+                    : () => openLog()
+                }
+                onOpenSettings={() => setTab('settings')}
+              />
+              {/* The bottom padding matches the sticky clusters' `bottom` value
                 exactly. That is not a coincidence to preserve by accident: a
                 sticky element stops drifting at the end of a scroll precisely
                 when its natural resting place equals the offset it sticks at,
                 and the two hand-tuned negative margins this replaces existed
                 because the old `pb-28` was clearing a tab bar instead. */}
-            <main
-              className="mx-auto w-full max-w-[430px] px-[18px]"
-              // Clear the six-tab bar, plus the 10px every sticky cluster's
-              // correction is derived against. One expression, named once —
-              // see `--tab-space` in index.css.
-              style={{ paddingBottom: 'calc(var(--tab-space) + 10px)' }}
-            >
-              <ErrorBoundary boundary={tab} resetKey={tab}>
-                {tab === 'log' && (
-                  <LogScreen
-                    initialView={logView}
-                    inviter={inviter}
-                    userId={userId}
-                    onOpenCoach={() => setTab('coach')}
-                    onOpenHistory={() => setTab('history')}
-                    onOpenProgress={() => setTab('progress')}
-                  />
-                )}
-                {tab === 'history' && (
-                  <HistoryScreen onStart={() => openLog('picker')} />
-                )}
-                {tab === 'progress' && (
-                  <Suspense fallback={<ScreenFallback />}>
-                    <ProgressScreen
+              <main
+                className="mx-auto w-full max-w-[430px] px-[18px]"
+                // Clear the six-tab bar, plus the 10px every sticky cluster's
+                // correction is derived against. One expression, named once —
+                // see `--tab-space` in index.css.
+                style={{ paddingBottom: 'calc(var(--tab-space) + 10px)' }}
+              >
+                <ErrorBoundary boundary={tab} resetKey={tab}>
+                  {tab === 'log' && (
+                    <LogScreen
+                      initialView={logView}
+                      inviter={inviter}
+                      userId={userId}
                       onOpenCoach={() => setTab('coach')}
-                      onStart={() => openLog('picker')}
-                      onSubView={setProgressSubView}
+                      onOpenHistory={() => setTab('history')}
+                      onOpenProgress={() => setTab('progress')}
                     />
-                  </Suspense>
-                )}
-                {tab === 'coach' && (
-                  <Suspense fallback={<ScreenFallback />}>
-                    {/* Saving generated routines sends you to Log, where routines
+                  )}
+                  {tab === 'history' && (
+                    <HistoryScreen onStart={() => openLog('picker')} />
+                  )}
+                  {tab === 'progress' && (
+                    <Suspense fallback={<ScreenFallback />}>
+                      <ProgressScreen
+                        onOpenCoach={() => setTab('coach')}
+                        onStart={() => openLog('picker')}
+                        onSubView={setProgressSubView}
+                      />
+                    </Suspense>
+                  )}
+                  {tab === 'coach' && (
+                    <Suspense fallback={<ScreenFallback />}>
+                      {/* Saving generated routines sends you to Log, where routines
                     live — the thing you just made is one tap from being
                     started. */}
-                    <CoachScreen onRoutinesSaved={() => openLog()} />
-                  </Suspense>
-                )}
-                {tab === 'friends' && (
-                  <Suspense fallback={<ScreenFallback />}>
-                    <FriendsScreen userId={userId} />
-                  </Suspense>
-                )}
-                {tab === 'body' && (
-                  <Suspense fallback={<ScreenFallback />}>
-                    <BodyScreen />
-                  </Suspense>
-                )}
-                {tab === 'settings' && (
-                  <Suspense fallback={<ScreenFallback />}>
-                    <SettingsScreen
-                      userId={userId}
-                      email={session?.user.email ?? null}
-                      joinedAt={session?.user.created_at ?? null}
-                      onFriends={() => setTab('friends')}
-                      onImport={() => openLog('import')}
-                    />
-                  </Suspense>
-                )}
-              </ErrorBoundary>
-            </main>
-            {/* Settings has no tab — it is the avatar's screen — so the bar
+                      <CoachScreen onRoutinesSaved={() => openLog()} />
+                    </Suspense>
+                  )}
+                  {tab === 'friends' && (
+                    <Suspense fallback={<ScreenFallback />}>
+                      <FriendsScreen userId={userId} />
+                    </Suspense>
+                  )}
+                  {tab === 'body' && (
+                    <Suspense fallback={<ScreenFallback />}>
+                      <BodyScreen />
+                    </Suspense>
+                  )}
+                  {tab === 'settings' && (
+                    <Suspense fallback={<ScreenFallback />}>
+                      <SettingsScreen
+                        userId={userId}
+                        email={session?.user.email ?? null}
+                        joinedAt={session?.user.created_at ?? null}
+                        onFriends={() => setTab('friends')}
+                        onImport={() => openLog('import')}
+                      />
+                    </Suspense>
+                  )}
+                </ErrorBoundary>
+              </main>
+              {/* Settings has no tab — it is the avatar's screen — so the bar
                 shows nothing as current while it is open rather than
                 highlighting a place the reader is not. */}
-            <TabBar
-              active={tab === 'settings' ? null : (tab as TabKey)}
-              onSelect={(next) => {
-                if (next === 'log') openLog()
-                else setTab(next)
-              }}
-            />
-            <Analytics />
-          </CoachProvider>
-        </UnitProvider>
-      </LocaleProvider>
+              <TabBar
+                active={tab === 'settings' ? null : (tab as TabKey)}
+                onSelect={(next) => {
+                  if (next === 'log') openLog()
+                  else setTab(next)
+                }}
+              />
+              <Analytics />
+            </CoachProvider>
+          </UnitProvider>
+        </LocaleProvider>
+      </ThemeProvider>
     </ErrorBoundary>
   )
 }

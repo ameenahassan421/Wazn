@@ -151,9 +151,9 @@
   --color-brass: #b08d3e;
   --color-brass-soft: #d9bc7a;
 
-  /* The accent ramp, collapsed to what the dark theme already held. With one
-     ground there is no role-mirroring left to do: 300 is the small-accent
-     text tier (v5's `soft`), 800-900 are tinted fills. */
+  /* The accent ramp. 300 is the small-accent text tier (v5's `soft`), 800-900
+     are tinted fills — and those ROLES are what the paper theme mirrors, not
+     the lightness. See the `[data-theme='paper']` block below. */
   --color-accent-100: #fdece5;
   --color-accent-200: #f9cfc0;
   --color-accent-300: #f4a68c;
@@ -405,28 +405,104 @@
   --motion-linear: linear;
 }
 
-/* ─── One theme ────────────────────────────────────────────────────────────
-   There WAS an `html[data-theme='dark']` block here holding a second full
-   palette, because paper was the default from 2026-08-12 and dark was the
-   alternative. v5 replaces paper outright (Ameen, 2026-08-16), so the second
-   palette is gone and the values above ARE the theme. `color-scheme: dark` is
-   set on :root instead, so form controls and scrollbars follow.
+/* ─── The paper theme ──────────────────────────────────────────────────────
+   Iron is the default and paper is the choice. That polarity has now been
+   reversed twice — paper was the default from 2026-08-12, v5 deleted it on
+   2026-08-16, and Ameen asked for both back the same day — so the values
+   below are the ones that were deleted, recovered from the commit that
+   removed them rather than re-derived. The only ones that are new are the
+   four tokens invented after the deletion, and they are marked.
 
-   Deleting it cost something, and the cost is worth writing down. Inverting
-   the `@theme` colours was the visible half of the job; that block ALSO held
-   dark values for eight tokens defined outside `@theme` — `--divider`,
+   `user_preferences.theme` was never dropped when the toggle went away — a
+   column is a destructive migration bought for nothing — so every row that
+   already said `paper` still means it, and this cost no migration at all.
+   The stored names stay `paper` and `dark` for the same reason.
+
+   ── THE MIRRORED RAMP IS THE POINT ────────────────────────────────────────
+   Reversing a palette is not inverting hex values, and the accent is where
+   that bites. `accent-300` means "small accent text readable on THIS ground",
+   and measured: ember-500 is 4.99:1 on iron and **3.51:1 on chalk**, which
+   clears only the 3:1 large-text bar. So the ramp swaps ends and 300 resolves
+   to `#f4a68c` on iron (9.87:1) and `#9a3012` on chalk (6.77:1). Every
+   `text-accent-300` in the app then follows without a single component
+   change. Reach for a step by its job, never by its lightness.
+
+   ── AND THE EIGHT THAT ARE NOT IN @theme ──────────────────────────────────
+   The last time these two palettes were separated, `--divider`,
    `--divider-solid`, `--top-light`, `--header-tint`, `--surface-line`,
-   `--chip-tint`, `--ghost-divider`, `--ghost-ink` — and those silently kept
-   their paper values. A 60%-white inset light on every card, a `#efe9df`
-   header band across the top of every screen, and an ember chip tinted at 7%
-   on near-black where it needs 14%. Nothing failed: not lint, not the type
-   checker, not 1104 tests. A screenshot pass caught it. If a token is not in
-   `@theme`, grep for it before assuming a palette change reached it.
-
-   `user_preferences.theme` stays in the database. Dropping a column is a
-   destructive migration bought for nothing; an unread value costs nobody
-   anything, and if a light theme ever returns the preference is still there.
+   `--chip-tint`, `--ghost-divider` and `--ghost-ink` were left behind,
+   because they live outside `@theme` and inverting the ramp did not reach
+   them. Lint, tsc and 1104 tests all passed with a 60%-white inset on every
+   card and a `#efe9df` header band across an iron app. They are all here.
+   Two of them cost nothing now: `--ghost-divider` and `--ghost-ink` were
+   rewritten as `var(--color-line-2)` and `var(--color-faint)`, so they
+   follow the ramp on their own.
    ───────────────────────────────────────────────────────────────────────── */
+html[data-theme='paper'] {
+  color-scheme: light;
+
+  --color-ink: #f7f3ec;
+  --color-surface: #ffffff;
+  --color-raised: #efe9dd;
+  --color-line: #e6e0d4;
+  --color-text: #16130e;
+  --color-muted: #6b6559;
+
+  /* `line2` is the border that is DRAWN, against `line`, only ever the
+     hairline ring. #ded6c7 is the palette's own next step down. */
+  --color-line-2: #ded6c7;
+  /* `faint` is meta and disabled: quieter than muted, above the ground. On
+     chalk that is 2.44:1, which is the same ROLE iron's #615b4d plays at
+     2.88:1 — deliberately below body-text contrast, because nothing set in
+     it is body text. */
+  --color-faint: #a39d90;
+  /* Chrome that recedes below the content. On iron that meant a surface
+     DARKER than the ground; on paper it means one darker too, so this is
+     `raised` — the palette's menus-and-pressed tier — rather than an
+     inversion of `#0b0906`, which would have made the bar lighter than the
+     page and floated it. */
+  --color-tabbar: #efe9dd;
+
+  /* Brass is unused in src/ today — the rank and duel cards it exists for are
+     P2. The fill tier survives the ground change, but `brass-soft` is TEXT
+     and #d9bc7a is 1.66:1 on chalk, so it takes the measured value that
+     clears AA there (5.45:1) instead. */
+  --color-brass: #b08d3e;
+  --color-brass-soft: #7a5f1f;
+
+  --color-accent-100: #401407;
+  --color-accent-200: #6b210c;
+  --color-accent-300: #9a3012;
+  --color-accent-400: #c33d17;
+  --color-accent-600: #ee7a51;
+  --color-accent-700: #f4a68c;
+  --color-accent-800: #f9cfc0;
+  --color-accent-900: #fdece5;
+
+  --color-neutral-100: #292724;
+  --color-neutral-200: #3f3d38;
+  --color-neutral-300: #595650;
+  --color-neutral-400: #75716a;
+  --color-neutral-600: #b2aea6;
+  --color-neutral-700: #cfccc5;
+  --color-neutral-800: #e5e3de;
+  --color-neutral-900: #f4f3f0;
+
+  --color-tile-1: #efe9df;
+  --color-tile-2: #eae3d6;
+  --color-tile-3: #e4ddcf;
+  --color-tile-4: #ded6c7;
+
+  --divider: rgba(22, 19, 14, 0.14);
+  --divider-solid: rgba(22, 19, 14, 0.08);
+  --surface-line: rgba(22, 19, 14, 0.06);
+  --header-tint: #efe9df;
+  --top-light: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+
+  /* Half the iron tint. A 14% ember wash on white is not a chip, it is a
+     highlighter; 7% is what the design draws on paper. */
+  --chip-tint: rgba(232, 73, 29, 0.07);
+}
 
 /* ─── Utilities ────────────────────────────────────────────────────────── */
 

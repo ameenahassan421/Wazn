@@ -85,6 +85,9 @@ export const messages: Record<Locale, Record<string, string>> = {
     // a picker that renders both options in the reader's own script cannot be
     // read by the person looking for the one they want to switch to.
     'settings.language.ar': 'العربية',
+    'settings.theme': 'Theme',
+    'settings.theme.paper': 'Paper',
+    'settings.theme.dark': 'Dark',
     'settings.import': 'Import from Hevy',
     'settings.friends': 'Friends',
     'settings.signout': 'Sign out',
@@ -1013,6 +1016,9 @@ export const messages: Record<Locale, Record<string, string>> = {
     'settings.language': 'اللغة',
     'settings.language.en': 'EN',
     'settings.language.ar': 'العربية',
+    'settings.theme': 'المظهر',
+    'settings.theme.paper': 'فاتح',
+    'settings.theme.dark': 'داكن',
     'settings.import': 'استيراد من Hevy',
     'settings.friends': 'الأصدقاء',
     'settings.signout': 'تسجيل الخروج',

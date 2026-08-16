@@ -7085,3 +7085,90 @@ squeezes "Rest" when the reason chip ("top set at 80%") is also present. It is
 **pre-existing**: `RestTimer.tsx` is not in this PR's diff. Left alone because
 the fix is a design judgement about which of the two strings should yield, and
 the redundant word losing to the informative one may well be correct.
+
+## 2026-08-16 (later) — Both themes again, and the polarity flips
+
+Ameen asked for light and dark back. This reverses the answer he gave the same
+day to the P0 plan's first open question — _"does v5 replace the light theme,
+or become the dark theme?"_ — which was replacement, and which PR 1 acted on
+by deleting 148 lines of `html[data-theme='dark']`, `theme-context.tsx`, its
+test, the Settings row and the copy.
+
+**The reversal cost almost nothing, and that is not luck.** PR 1 explicitly
+refused to drop `user_preferences.theme`: _"dropping a column is a destructive
+migration bought for nothing… if a light theme ever returns the preference is
+still there."_ It returned nine hours later. No migration, and every row that
+already said `paper` still means it.
+
+### Iron is now the default and paper is the choice
+
+The reverse of the polarity this feature originally had. `DEFAULT_THEME` is a
+named constant with the history written next to it, and the default is pinned
+by a test rather than left to the component — it is a product decision that
+has now been reversed twice, and the next reversal should have to edit an
+assertion.
+
+The stored values keep the names `paper` and `dark`. Renaming them to `light`
+and `iron` would have read better and orphaned every stored preference.
+
+### The values were recovered, not re-derived
+
+Every light token comes out of `a87cecd`'s own diff — the commit that deleted
+them — rather than being re-invented from the palette. Four tokens did not
+exist then and had to be decided:
+
+- **`--color-line-2`** → `#ded6c7`, the palette's own next step below `line`.
+- **`--color-faint`** → `#a39d90`. Measured 2.44:1 on chalk against iron's
+  2.88:1 — the same ROLE, deliberately below body-text contrast, because
+  nothing set in `faint` is body text.
+- **`--color-tabbar`** → `#efe9dd` (`raised`). On iron this is the only
+  surface _darker_ than the ground, so chrome recedes below the content. The
+  naive mirror would make it _lighter_ than the page and float the bar; on
+  paper "recedes" still means darker, so it is the menus-and-pressed tier.
+- **`--color-brass-soft`** → `#7a5f1f`. `#d9bc7a` is 1.66:1 on chalk, and
+  brass-soft is TEXT. 5.45:1 clears AA. `--color-brass` is a fill and does not
+  move. Brass is still unused in `src/` — the rank and duel cards are P2 — so
+  this is measured but not yet exercised.
+
+### The mirrored ramp is the whole trick
+
+Reversing a palette is not inverting hex values, and the accent is where that
+bites. `accent-300` means _"small accent text readable on THIS ground"_, and
+measured, ember-500 is 4.99:1 on iron but **3.51:1 on chalk** — large-text
+only. So the ramp swaps ends: 300 is `#f4a68c` on iron (9.87:1) and `#9a3012`
+on chalk (6.77:1).
+
+`accent-300` is used **61 times** in `src/`. All 61 follow the ground without
+a single component change. Every step 100–900 is referenced somewhere and all
+are mirrored; 500 is the pivot and is the same value in both.
+
+The measurements were taken with a WCAG script, not by eye, and they reproduce
+DESIGN.md's published table. One number in that table is now slightly stale:
+it reports ember-500 at 5.06:1 on the iron ground, measured against v2's
+`#0c0b0a`; v5's ground is `#0f0d0a` and the figure is 4.99:1. Still AA.
+
+### The eight tokens outside `@theme`, again
+
+`--divider`, `--divider-solid`, `--top-light`, `--header-tint`,
+`--surface-line`, `--chip-tint`, `--ghost-divider`, `--ghost-ink`. These are
+what PR 1 missed and PR #92 fixed, and splitting the palettes again is exactly
+the situation that produced that defect. All eight are in the paper block —
+and two of them cost nothing now, because #92 rewrote `--ghost-divider` and
+`--ghost-ink` as `var(--color-line-2)` and `var(--color-faint)`, so they
+follow the ramp on their own.
+
+### The harness shoots paper again
+
+PR #92 deleted the `dark-` pass because nothing read `workout.theme` any more.
+With two themes there is a `light-` pass instead — **the prefix flipped with
+the default**, because the pass that matters is the one that would otherwise
+ship unseen, and that is now paper. Two runs at 390px, home and live board.
+
+### Verified by looking
+
+Paper renders correctly on Log, the live board, Settings, Progress, History
+and Coach; iron is unchanged. Two things the screenshots confirmed rather than
+assumed: the flip surfaces (rest chip, segmented controls) invert on their own
+because `--flip-bg` is defined from the ramp; and the Progress balance bars
+keep their meaning — the over-band group recedes to deep maroon on iron and to
+pale pink on paper, which is the mirrored ramp doing the job it exists for.
