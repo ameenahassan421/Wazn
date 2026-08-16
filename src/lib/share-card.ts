@@ -1,7 +1,7 @@
-import type { WorkoutSummary } from './summary'
-import type { Unit } from './units'
-import { formatWeight } from './units'
-import { formatCount, formatVolume } from './format'
+import type { WorkoutSummary } from '@wazn/core/summary'
+import type { Unit } from '@wazn/core/units'
+import { formatWeight } from '@wazn/core/units'
+import { formatCount, formatVolume } from '@wazn/core/format'
 import {
   LATIN_BAR_D,
   LATIN_H,

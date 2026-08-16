@@ -13,7 +13,7 @@ import {
   save,
 } from './checkpoint'
 import type { WorkoutCheckpoint } from './checkpoint'
-import type { QueuedSet } from './write-queue'
+import type { QueuedSet } from '@wazn/core/write-queue'
 
 const queued: QueuedSet = {
   kind: 'set',

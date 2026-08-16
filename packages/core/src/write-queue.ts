@@ -1,4 +1,4 @@
-import type { SetType } from './types'
+import type { SetType } from '@wazn/core/types'
 
 /**
  * The write queue behind optimistic commits — trust-ladder rungs 2 and 3.

@@ -1,5 +1,5 @@
-import { RANGES } from '../lib/range'
-import type { RangeKey } from '../lib/range'
+import { RANGES } from '@wazn/core/range'
+import type { RangeKey } from '@wazn/core/range'
 
 /**
  * The time window for one chart block. One row, four chips, same grammar as

@@ -1,10 +1,10 @@
 import { useRef, useState } from 'react'
 import { describeError, supabase } from '../lib/supabase'
-import { afterCutoff, analyse } from '../lib/hevy-import'
-import type { ImportPlan, PlannedWorkout } from '../lib/hevy-import'
-import { formatCount, formatWorkoutDate } from '../lib/format'
-import type { Exercise } from '../lib/types'
-import { deriveEquipment, deriveMuscleGroup } from '../lib/exercise-guess'
+import { afterCutoff, analyse } from '@wazn/core/hevy-import'
+import type { ImportPlan, PlannedWorkout } from '@wazn/core/hevy-import'
+import { formatCount, formatWorkoutDate } from '@wazn/core/format'
+import type { Exercise } from '@wazn/core/types'
+import { deriveEquipment, deriveMuscleGroup } from '@wazn/core/exercise-guess'
 import { useLocale } from '../lib/locale-context'
 
 /**

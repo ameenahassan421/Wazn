@@ -34,6 +34,22 @@ describe('weeksOfData is a span, not a count', () => {
     expect(weeksOfData(series(1))).toBe(0)
     expect(weeksOfData([{ started_at: '2026-01-01', kg: null }])).toBe(0)
   })
+
+  /**
+   * The span is built in UTC and short by exactly the hour a spring-forward
+   * costs, so this fails on a UTC runner as readily as on a laptop in CST.
+   * That distinction is the whole reason the bug survived: the helper above
+   * builds LOCAL times, so CI in UTC crossed no boundary and stayed green
+   * while the same suite failed in any DST-observing timezone.
+   */
+  it('does not lose a week to a daylight-saving hour', () => {
+    const eightWeeksLessAnHour = [
+      { started_at: '2026-01-05T18:00:00.000Z', kg: 100 },
+      { started_at: '2026-03-02T17:00:00.000Z', kg: 108 },
+    ]
+    expect(weeksOfData(eightWeeksLessAnHour)).toBe(8)
+    expect(forecastE1rm(eightWeeksLessAnHour)).not.toBeNull()
+  })
 })
 
 describe('the eight-week gate', () => {

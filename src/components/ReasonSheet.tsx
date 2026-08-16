@@ -1,8 +1,8 @@
 import { BottomSheet } from './BottomSheet'
 import { useLocale } from '../lib/locale-context'
 import { useUnit } from '../lib/unit-context'
-import { formatWeight } from '../lib/units'
-import type { GhostVerdict } from '../lib/ghost-reason'
+import { formatWeight } from '@wazn/core/units'
+import type { GhostVerdict } from '@wazn/core/ghost-reason'
 
 /**
  * "Trust is built by showing the work" — design v3.0 §02.

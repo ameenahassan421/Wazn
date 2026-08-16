@@ -11,7 +11,7 @@ import {
   putSnapshot,
   withDeadline,
 } from './offline-store'
-import type { QueuedSet, QueuedWrite } from './write-queue'
+import type { QueuedSet, QueuedWrite } from '@wazn/core/write-queue'
 
 const ME = 'user-a'
 const THEM = 'user-b'

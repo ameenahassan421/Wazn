@@ -1,13 +1,13 @@
 import { useMemo } from 'react'
-import { HEAT_RAMP, heatStep, trainingCalendar } from '../lib/progress'
-import type { SessionVolumeRow } from '../lib/progress'
+import { HEAT_RAMP, heatStep, trainingCalendar } from '@wazn/core/progress'
+import type { SessionVolumeRow } from '@wazn/core/progress'
 import {
   formatCount,
   formatDayLabel,
   formatMonthLabel,
   formatVolumeWithUnit,
-} from '../lib/format'
-import type { Unit } from '../lib/units'
+} from '@wazn/core/format'
+import type { Unit } from '@wazn/core/units'
 import { useLocale } from '../lib/locale-context'
 
 /**

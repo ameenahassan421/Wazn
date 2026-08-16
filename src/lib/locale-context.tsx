@@ -8,8 +8,8 @@ import {
 } from 'react'
 import type { ReactNode } from 'react'
 import { supabase } from './supabase'
-import type { Locale } from './i18n'
-import { resolveInitialLocale, t } from './i18n'
+import type { Locale } from '@wazn/core/i18n'
+import { resolveInitialLocale, t } from '@wazn/core/i18n'
 
 const STORAGE_KEY = 'workout.locale'
 

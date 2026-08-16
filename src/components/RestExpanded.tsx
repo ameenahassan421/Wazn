@@ -4,7 +4,7 @@ import { useBackLayer } from '../lib/use-back'
 import { useModalLayer } from '../lib/use-modal'
 import { formatRest, REST_STEP_SECONDS } from '../lib/use-rest-timer'
 import type { RestTimer } from '../lib/use-rest-timer'
-import type { RestCard } from '../lib/rest-canvas'
+import type { RestCard } from '@wazn/core/rest-canvas'
 import { PlateDot } from './icons'
 
 /**

@@ -1,13 +1,13 @@
 import { useMemo, useRef, useState } from 'react'
-import type { Exercise, ExerciseUsageRow } from '../lib/types'
+import type { Exercise, ExerciseUsageRow } from '@wazn/core/types'
 import {
   NO_FILTER,
   applyFilter,
   describeFilter,
   filterActive,
   filterOptions,
-} from '../lib/exercise-filter'
-import type { ExerciseFilter } from '../lib/exercise-filter'
+} from '@wazn/core/exercise-filter'
+import type { ExerciseFilter } from '@wazn/core/exercise-filter'
 import { ExerciseThumb } from './ExerciseThumb'
 import { IconBack } from './icons'
 import { NewExercise } from './NewExercise'

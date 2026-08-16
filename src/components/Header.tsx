@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useLocale } from '../lib/locale-context'
 import { useBackLayer } from '../lib/use-back'
-import { useActiveWorkout } from '../lib/active-workout'
+import { useActiveWorkout } from '@wazn/core/active-workout'
 import { Avatar } from './Avatar'
 import { Wordmark } from './Wordmark'
 import { IconBack, IconMore } from './icons'

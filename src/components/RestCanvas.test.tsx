@@ -2,7 +2,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { act, render, screen } from '@testing-library/react'
 import { RestCanvas } from './RestCanvas'
-import type { RestCard } from '../lib/rest-canvas'
+import type { RestCard } from '@wazn/core/rest-canvas'
 
 /**
  * The canvas is the one surface that deliberately sits inside the flow §2.1

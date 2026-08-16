@@ -1,6 +1,6 @@
 import { supabase } from './supabase'
-import type { Measurement, ProteinDay, WeighIn } from './body'
-import { asCheckIn, type CheckIn } from './readiness'
+import type { Measurement, ProteinDay, WeighIn } from '@wazn/core/body'
+import { asCheckIn, type CheckIn } from '@wazn/core/readiness'
 
 /**
  * Reads and writes for the second dataset — migration 0027's tables.

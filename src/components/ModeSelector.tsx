@@ -1,6 +1,11 @@
 import { useState } from 'react'
-import { COACH_MODES, MODE_BEHAVIOUR, isModeReady, weeksOut } from '../lib/coach-mode'
-import type { CoachMode } from '../lib/coach-mode'
+import {
+  COACH_MODES,
+  MODE_BEHAVIOUR,
+  isModeReady,
+  weeksOut,
+} from '@wazn/core/coach-mode'
+import type { CoachMode } from '@wazn/core/coach-mode'
 import { useLocale } from '../lib/locale-context'
 
 /**

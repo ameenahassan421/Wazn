@@ -8,7 +8,7 @@ import {
   asVolume,
   type CoachMode,
   type CoachVolume,
-} from './coach-mode'
+} from '@wazn/core/coach-mode'
 
 /**
  * The coach's dials, held where every screen can read them.

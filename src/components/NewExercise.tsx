@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { createCustomExercise } from '../lib/exercises'
-import type { Exercise, MuscleGroup } from '../lib/types'
+import type { Exercise, MuscleGroup } from '@wazn/core/types'
 import { IconBack } from './icons'
 import { ExerciseFields } from './ExerciseFields'
 import { useLocale } from '../lib/locale-context'

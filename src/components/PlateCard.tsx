@@ -1,5 +1,5 @@
-import { describeBarMath, platesFor } from '../lib/plates'
-import type { Unit } from '../lib/units'
+import { describeBarMath, platesFor } from '@wazn/core/plates'
+import type { Unit } from '@wazn/core/units'
 import { useLocale } from '../lib/locale-context'
 import { BarEndOn, IconChevronDown } from './icons'
 

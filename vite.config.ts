@@ -5,7 +5,7 @@ import tailwindcss from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa'
 // One constant, shared with the app so the worker and `device-reset.ts`
 // cannot disagree about which cache holds cross-account data.
-import { READ_CACHE } from './src/lib/cache-names'
+import { READ_CACHE } from '@wazn/core/cache-names'
 import pkg from './package.json' with { type: 'json' }
 
 const slim = (name: string) =>

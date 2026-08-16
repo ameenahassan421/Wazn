@@ -31,7 +31,18 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
-const LIB = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'src', 'lib')
+const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..')
+
+/**
+ * Both logic roots, since E1 split them.
+ *
+ * `packages/core/src` holds the platform-free calculation engine; `src/lib`
+ * holds what is left, which is the browser-bound layer plus the data access.
+ * Scanning only the first would have been the silent failure: modules keep
+ * their tests, the directory they live in shrinks, and the floor passes while
+ * covering 32 fewer modules than it did the day before.
+ */
+const LIB_DIRS = ['packages/core/src', 'src/lib'].map((d) => path.join(ROOT, d))
 
 /**
  * Modules that may ship without a test, each with the reason.
@@ -60,38 +71,53 @@ const EXEMPT = {
     'PostgREST query shapes with no client-side branching. The ordering caveat it documents is a database behaviour.',
   'cache-names.ts':
     'One string constant, shared between vite.config.ts and device-reset.ts so the two cannot disagree. There is no behaviour to assert.',
+  'exercise-taxonomy.ts':
+    'Two frozen vocabularies and nothing else. exercise-guess.test.ts asserts against them, which is the only claim they make.',
 }
 
-const files = fs
-  .readdirSync(LIB)
-  .filter((f) => /\.(ts|tsx)$/.test(f) && !/\.test\.(ts|tsx)$/.test(f))
-  .sort()
+const files = LIB_DIRS.flatMap((dir) =>
+  fs
+    .readdirSync(dir)
+    .filter((f) => /\.(ts|tsx)$/.test(f) && !/\.test\.(ts|tsx)$/.test(f))
+    .sort()
+    .map((f) => ({ file: f, dir, shown: `${path.relative(ROOT, dir)}/${f}` })),
+)
 
 const missing = []
 const unexplained = []
 const staleExemptions = []
+const seen = new Set()
 
-for (const file of files) {
+for (const { file, dir, shown } of files) {
+  // A module name must not exist under both roots: the import rewrite maps a
+  // bare name to exactly one of them, so a duplicate is an ambiguity, not a
+  // coverage question.
+  if (seen.has(file)) {
+    console.error(`\n${file} exists under both logic roots. Pick one.\n`)
+    process.exit(1)
+  }
+  seen.add(file)
+
   const base = file.replace(/\.(ts|tsx)$/, '')
   const hasTest =
-    fs.existsSync(path.join(LIB, `${base}.test.ts`)) ||
-    fs.existsSync(path.join(LIB, `${base}.test.tsx`))
+    fs.existsSync(path.join(dir, `${base}.test.ts`)) ||
+    fs.existsSync(path.join(dir, `${base}.test.tsx`))
 
   if (hasTest) {
-    if (EXEMPT[file]) staleExemptions.push(file)
+    if (EXEMPT[file]) staleExemptions.push(shown)
     continue
   }
   if (EXEMPT[file]) continue
   // No test, no exemption. Somebody has to choose.
-  ;(file in EXEMPT ? unexplained : missing).push(file)
+  ;(file in EXEMPT ? unexplained : missing).push(shown)
 }
 
 let failed = false
 
 if (missing.length > 0) {
   failed = true
-  console.error('\nModules in src/lib with no test file and no exemption:\n')
-  for (const file of missing) console.error(`  src/lib/${file}`)
+  console.error('\nLogic modules with no test file and no exemption:\n')
+  for (const file of missing) console.error(`  ${file}`)
   console.error(
     '\nWrite the test, or add the file to EXEMPT in scripts/check_coverage_floor.mjs',
   )
@@ -101,7 +127,7 @@ if (missing.length > 0) {
 if (unexplained.length > 0) {
   failed = true
   console.error('\nExempt with an empty reason:\n')
-  for (const file of unexplained) console.error(`  src/lib/${file}`)
+  for (const file of unexplained) console.error(`  ${file}`)
 }
 
 if (staleExemptions.length > 0) {

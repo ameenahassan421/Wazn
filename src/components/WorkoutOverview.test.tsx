@@ -5,8 +5,13 @@ import userEvent from '@testing-library/user-event'
 import '@testing-library/jest-dom/vitest'
 import { WorkoutOverview } from './WorkoutOverview'
 import type { OverviewBlock } from './WorkoutOverview'
-import { buildBlock } from '../lib/plan'
-import type { Exercise, PreviousSessionRow, SetType, WorkoutSet } from '../lib/types'
+import { buildBlock } from '@wazn/core/plan'
+import type {
+  Exercise,
+  PreviousSessionRow,
+  SetType,
+  WorkoutSet,
+} from '@wazn/core/types'
 
 /**
  * What this file is defending.

@@ -1,6 +1,6 @@
 import { decodeQueue } from './checkpoint'
 import type { KeyValueStore } from './idb'
-import type { QueuedWrite } from './write-queue'
+import type { QueuedWrite } from '@wazn/core/write-queue'
 
 /**
  * What Wazn keeps on the device — the durable half of trust-ladder rungs 3

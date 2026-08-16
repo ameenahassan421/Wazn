@@ -1,7 +1,7 @@
 import { supabase } from './supabase'
-import { rotationOrder } from './rotation'
-import type { RoutineWithRun } from './rotation'
-import type { Routine, RoutineExercise, RoutineSet, SetType } from './types'
+import { rotationOrder } from '@wazn/core/rotation'
+import type { RoutineWithRun } from '@wazn/core/rotation'
+import type { Routine, RoutineExercise, RoutineSet, SetType } from '@wazn/core/types'
 
 /**
  * Routine reads and writes.

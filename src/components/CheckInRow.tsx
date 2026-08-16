@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { CHECK_INS, type CheckIn } from '../lib/readiness'
+import { CHECK_INS, type CheckIn } from '@wazn/core/readiness'
 import { useLocale } from '../lib/locale-context'
 
 /**

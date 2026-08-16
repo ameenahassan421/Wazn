@@ -1,5 +1,5 @@
 import { EQUIPMENT, MUSCLE_GROUPS } from '../lib/exercises'
-import type { MuscleGroup } from '../lib/types'
+import type { MuscleGroup } from '@wazn/core/types'
 import { useLocale } from '../lib/locale-context'
 
 /**

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useUnit } from '../lib/unit-context'
-import type { Unit } from '../lib/units'
+import type { Unit } from '@wazn/core/units'
 import {
   briefChip,
   briefSkeleton,

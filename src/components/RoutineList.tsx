@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
-import type { Routine } from '../lib/types'
-import { dueRoutine } from '../lib/rotation'
-import type { RoutineWithRun } from '../lib/rotation'
+import type { Routine } from '@wazn/core/types'
+import { dueRoutine } from '@wazn/core/rotation'
+import type { RoutineWithRun } from '@wazn/core/rotation'
 import { IconMore } from './icons'
 import { useLocale } from '../lib/locale-context'
 

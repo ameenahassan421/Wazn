@@ -1,4 +1,4 @@
-import { READ_CACHE } from './cache-names'
+import { READ_CACHE } from '@wazn/core/cache-names'
 import { CHECKPOINT_KEY } from './checkpoint'
 import { indexedDbStore } from './idb'
 import { forget } from './offline-store'

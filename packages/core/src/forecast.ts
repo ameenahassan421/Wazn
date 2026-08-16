@@ -53,7 +53,23 @@ function clean(points: E1rmPoint[]): CleanPoint[] {
     .sort((a, b) => a.at - b.at)
 }
 
-const WEEK_MS = 7 * 86_400_000
+const DAY_MS = 86_400_000
+const WEEK_MS = 7 * DAY_MS
+
+/**
+ * Whole weeks between two instants, snapped to whole days first.
+ *
+ * The snap is the point. Lifters train at the same wall-clock hour, so a span
+ * that crosses a daylight-saving change is an hour short of a whole number of
+ * days, and dividing the raw milliseconds throws away a whole week at every
+ * boundary: eight weeks of Monday-6pm sessions across the March change is
+ * 55 days 23 hours, `floor(55.958 / 7)` is 7, and `FORECAST_MIN_WEEKS` then
+ * withholds a forecast the lifter has earned. Rounding to days first fixes it
+ * without changing the floor semantics the callers rely on.
+ */
+function weekSpan(fromAt: number, toAt: number): number {
+  return Math.floor(Math.round((toAt - fromAt) / DAY_MS) / 7)
+}
 
 /**
  * Weeks between the first and last session in the series.
@@ -65,7 +81,7 @@ const WEEK_MS = 7 * 86_400_000
 export function weeksOfData(points: E1rmPoint[]): number {
   const rows = clean(points)
   if (rows.length < 2) return 0
-  return Math.floor((rows[rows.length - 1].at - rows[0].at) / WEEK_MS)
+  return weekSpan(rows[0].at, rows[rows.length - 1].at)
 }
 
 /** Ordinary least squares on (weeks, kg). Null when there is nothing to fit. */
@@ -252,7 +268,7 @@ export function detectPlateau(
     first = i
   }
 
-  const weeks = Math.floor((last.at - rows[first].at) / WEEK_MS)
+  const weeks = weekSpan(rows[first].at, last.at)
   if (weeks < minWeeks) return null
 
   return {

@@ -1,0 +1,26 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "moduleDetection": "force",
+    "noEmit": true,
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "skipLibCheck": true,
+
+    /* The point of this file. `lib` deliberately omits DOM, so `document`,
+       `window`, `localStorage` and friends are COMPILE ERRORS inside this
+       package rather than something a grep has to police. Every module here
+       has to run unchanged under Metro on a phone, where none of them exist.
+       `types: node` is what puts `Intl`, `performance` and `fetch` back:
+       19 modules format through Intl, 2 read performance, 1 fetches. */
+    "lib": ["ES2022"],
+    "types": ["node"]
+  },
+  "include": ["src"]
+}

@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
 import { browserStorage } from '../lib/checkpoint'
 import { useIdle } from '../lib/use-idle'
-import { restCanvasEnabled, setRestCanvasEnabled } from '../lib/rest-canvas'
-import type { RestCard } from '../lib/rest-canvas'
+import { restCanvasEnabled, setRestCanvasEnabled } from '@wazn/core/rest-canvas'
+import type { RestCard } from '@wazn/core/rest-canvas'
 import { IconClose } from './icons'
 import { useLocale } from '../lib/locale-context'
 

@@ -8,7 +8,7 @@ import {
 } from 'react'
 import type { ReactNode } from 'react'
 import { supabase } from './supabase'
-import type { Unit } from './units'
+import type { Unit } from '@wazn/core/units'
 
 const STORAGE_KEY = 'workout.unit'
 

@@ -3,7 +3,7 @@ import type { FormEvent } from 'react'
 import { supabase } from '../lib/supabase'
 import { peekInviteCode } from '../lib/invite'
 import { nameOf, resolveInvite, type Inviter } from '../lib/social'
-import { classifyIdentifier, normalizeEmail } from '../lib/auth-identity'
+import { classifyIdentifier, normalizeEmail } from '@wazn/core/auth-identity'
 import {
   passwordSignInForUsername,
   requestCodeForUsername,

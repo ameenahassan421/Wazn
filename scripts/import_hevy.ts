@@ -16,7 +16,7 @@ import { fileURLToPath } from 'node:url'
 import { parse } from 'csv-parse/sync'
 import { createClient } from '@supabase/supabase-js'
 import { config as loadEnv } from 'dotenv'
-import type { MuscleGroup } from '../src/lib/types'
+import type { MuscleGroup } from '@wazn/core/types'
 import { deriveEquipment, EXTRA_EXERCISES, MUSCLE_GROUPS } from './muscle_groups'
 
 /*

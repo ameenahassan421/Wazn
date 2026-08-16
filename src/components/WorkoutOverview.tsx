@@ -1,16 +1,16 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import type { OverviewRow, WorkoutBlock } from '../lib/plan'
-import { dropIndex, moveItem, supersetRound } from '../lib/plan'
-import type { Exercise } from '../lib/types'
-import { SET_TYPE_LABEL, SET_TYPE_NAME, isRecord } from '../lib/types'
-import type { Unit } from '../lib/units'
-import { formatWeight } from '../lib/units'
+import type { OverviewRow, WorkoutBlock } from '@wazn/core/plan'
+import { dropIndex, moveItem, supersetRound } from '@wazn/core/plan'
+import type { Exercise } from '@wazn/core/types'
+import { SET_TYPE_LABEL, SET_TYPE_NAME, isRecord } from '@wazn/core/types'
+import type { Unit } from '@wazn/core/units'
+import { formatWeight } from '@wazn/core/units'
 import { describeRest, REST_MAX_SECONDS, stepRest } from '../lib/rest'
 import { REST_STEP_SECONDS } from '../lib/use-rest-timer'
 import { ExerciseThumb } from './ExerciseThumb'
 import { IconMore } from './icons'
 import { useLocale } from '../lib/locale-context'
-import type { GhostVerdict } from '../lib/ghost-reason'
+import type { GhostVerdict } from '@wazn/core/ghost-reason'
 
 /**
  * The workout overview — design v2.2, the spine of a session.

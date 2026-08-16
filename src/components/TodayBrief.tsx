@@ -1,6 +1,6 @@
 import { useLocale } from '../lib/locale-context'
 import { useUnit } from '../lib/unit-context'
-import { formatVolume, partOfDay } from '../lib/format'
+import { formatVolume, partOfDay } from '@wazn/core/format'
 
 const PART_OF_DAY_KEY: Record<ReturnType<typeof partOfDay>, string> = {
   morning: 'today.morning',

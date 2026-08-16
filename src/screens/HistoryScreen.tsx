@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { useLocale } from '../lib/locale-context'
 import { describeError, supabase } from '../lib/supabase'
 import { useUnit } from '../lib/unit-context'
-import { formatWeight } from '../lib/units'
+import { formatWeight } from '@wazn/core/units'
 import {
   formatCount,
   formatDuration,
@@ -10,12 +10,12 @@ import {
   formatTime,
   formatVolumeWithUnit,
   formatWorkoutDate,
-} from '../lib/format'
+} from '@wazn/core/format'
 import { PlateRing, PlateSilhouette } from '../components/icons'
-import type { Exercise, Workout, WorkoutSet } from '../lib/types'
-import { isRecord } from '../lib/types'
-import type { SessionVolumeRow } from '../lib/progress'
-import { nextSetNumber, prefillFor, routineFromWorkout } from '../lib/history-edit'
+import type { Exercise, Workout, WorkoutSet } from '@wazn/core/types'
+import { isRecord } from '@wazn/core/types'
+import type { SessionVolumeRow } from '@wazn/core/progress'
+import { nextSetNumber, prefillFor, routineFromWorkout } from '@wazn/core/history-edit'
 import { saveRoutine } from '../lib/routines'
 import { ExercisePicker } from '../components/ExercisePicker'
 import { EditSetDialog } from '../components/EditSetDialog'

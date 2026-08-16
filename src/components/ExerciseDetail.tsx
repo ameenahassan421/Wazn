@@ -2,12 +2,12 @@ import { useEffect, useMemo, useState, useRef } from 'react'
 import { describeError, supabase } from '../lib/supabase'
 import { useBackLayer } from '../lib/use-back'
 import { useUnit } from '../lib/unit-context'
-import { formatEstimate, formatWeight } from '../lib/units'
-import { formatRelativeDay, formatVolume } from '../lib/format'
-import type { Exercise, MuscleGroup, OneRepMaxPoint } from '../lib/types'
+import { formatEstimate, formatWeight } from '@wazn/core/units'
+import { formatRelativeDay, formatVolume } from '@wazn/core/format'
+import type { Exercise, MuscleGroup, OneRepMaxPoint } from '@wazn/core/types'
 import { describeRest, resolveRest, stepRest } from '../lib/rest'
 import { REST_STEP_SECONDS } from '../lib/use-rest-timer'
-import { e1rmProgress, ladderBands, repMaxLadder } from '../lib/progress'
+import { e1rmProgress, ladderBands, repMaxLadder } from '@wazn/core/progress'
 import {
   deleteCustomExercise,
   setExerciseArchived,
@@ -16,9 +16,9 @@ import {
 import { ExerciseFields } from './ExerciseFields'
 import { ExerciseThumb } from './ExerciseThumb'
 import { SeriesChart } from './SeriesChart'
-import { FORECAST_MIN_WEEKS, projectionSegment, weeksOfData } from '../lib/forecast'
+import { FORECAST_MIN_WEEKS, projectionSegment, weeksOfData } from '@wazn/core/forecast'
 import { useCoach } from '../lib/coach-context'
-import { showsCoachSurfaces } from '../lib/coach-mode'
+import { showsCoachSurfaces } from '@wazn/core/coach-mode'
 import { useLocale } from '../lib/locale-context'
 
 /** One session's worth of this exercise, newest first. */

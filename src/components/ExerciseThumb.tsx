@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import type { Exercise } from '../lib/types'
+import type { Exercise } from '@wazn/core/types'
 
 /**
  * A thumbnail that cannot fail. Three states, in order of preference:

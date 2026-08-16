@@ -15,7 +15,7 @@ vi.mock('../lib/social', () => ({
   saveProfile: vi.fn(),
 }))
 
-vi.mock('../lib/auth-identity', () => ({
+vi.mock('@wazn/core/auth-identity', () => ({
   USERNAME_RE: /^[a-zA-Z0-9_]{3,20}$/,
   normalizeUsername: vi.fn((v: string) => v.trim()),
 }))

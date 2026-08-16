@@ -16,8 +16,8 @@ import {
   retry,
   retryDelayMs,
   shouldSurface,
-} from './write-queue'
-import type { QueuedSet, QueuedWorkoutStart, QueuedWrite } from './write-queue'
+} from '@wazn/core/write-queue'
+import type { QueuedSet, QueuedWorkoutStart, QueuedWrite } from '@wazn/core/write-queue'
 
 const item = (id: string, workoutId = 'w1'): QueuedSet => ({
   kind: 'set',

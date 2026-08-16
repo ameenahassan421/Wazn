@@ -1,11 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
-import type { WorkoutSummary } from '../lib/summary'
-import type { Exercise, Workout, WorkoutSet } from '../lib/types'
-import { isRecord } from '../lib/types'
-import type { Unit } from '../lib/units'
-import { formatEstimate, formatWeight } from '../lib/units'
-import { formatCount, formatVolume } from '../lib/format'
-import { estimatedOneRepMax } from '../lib/epley'
+import type { WorkoutSummary } from '@wazn/core/summary'
+import type { Exercise, Workout, WorkoutSet } from '@wazn/core/types'
+import { isRecord } from '@wazn/core/types'
+import type { Unit } from '@wazn/core/units'
+import { formatEstimate, formatWeight } from '@wazn/core/units'
+import { formatCount, formatVolume } from '@wazn/core/format'
+import { estimatedOneRepMax } from '@wazn/core/epley'
 import { drawShareCard, shareCard } from '../lib/share-card'
 import {
   debriefChip,

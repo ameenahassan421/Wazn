@@ -2,19 +2,19 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import { describeError, supabase } from '../lib/supabase'
 import { useLocale } from '../lib/locale-context'
-import { muscleLabel } from '../lib/i18n'
+import { muscleLabel } from '@wazn/core/i18n'
 import { useBackLayer } from '../lib/use-back'
 import { useUnit } from '../lib/unit-context'
 import { PlateRing } from '../components/icons'
-import { formatWeight, toDisplayWeight } from '../lib/units'
-import type { Unit } from '../lib/units'
+import { formatWeight, toDisplayWeight } from '@wazn/core/units'
+import type { Unit } from '@wazn/core/units'
 import {
   formatCount,
   formatRelativeDay,
   formatVolume,
   formatVolumeWithUnit,
-} from '../lib/format'
-import type { Exercise } from '../lib/types'
+} from '@wazn/core/format'
+import type { Exercise } from '@wazn/core/types'
 import { ExerciseDetail } from '../components/ExerciseDetail'
 import { ExerciseThumb } from '../components/ExerciseThumb'
 import { RangeChips } from '../components/RangeChips'
@@ -28,7 +28,7 @@ import {
   sessionsPerWeek,
   underBand,
   weeklyVolume,
-} from '../lib/progress'
+} from '@wazn/core/progress'
 import type {
   BalanceRow as AnchorRow,
   ExerciseBest,
@@ -37,24 +37,24 @@ import type {
   RecordSetRow,
   SessionVolumeRow,
   WeekBucket,
-} from '../lib/progress'
+} from '@wazn/core/progress'
 import {
   DEFAULT_RANGE,
   describeRange,
   describeSpan,
   volumeSpan,
   withinRange,
-} from '../lib/range'
-import type { RangeKey, VolumeSpan } from '../lib/range'
+} from '@wazn/core/range'
+import type { RangeKey, VolumeSpan } from '@wazn/core/range'
 import {
   FORECAST_MAX_WEEKS,
   FORECAST_MIN_WEEKS,
   detectPlateau,
   nextMilestone,
   type Plateau,
-} from '../lib/forecast'
+} from '@wazn/core/forecast'
 import { useCoach } from '../lib/coach-context'
-import { showsCoachSurfaces } from '../lib/coach-mode'
+import { showsCoachSurfaces } from '@wazn/core/coach-mode'
 
 /** One row of `strength_forecast` (migration 0027). */
 interface ForecastRow {

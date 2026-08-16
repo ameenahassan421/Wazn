@@ -1,10 +1,14 @@
-import { HEAT_RAMP } from '../lib/progress'
-import type { RecordEntry, WeekDay } from '../lib/progress'
+import { HEAT_RAMP } from '@wazn/core/progress'
+import type { RecordEntry, WeekDay } from '@wazn/core/progress'
 import { useLocale } from '../lib/locale-context'
 import { useUnit } from '../lib/unit-context'
-import { formatDuration, formatRelativeDay, formatVolumeWithUnit } from '../lib/format'
-import { formatWeekdayNarrow } from '../lib/format'
-import { formatWeightWithUnit } from '../lib/units'
+import {
+  formatDuration,
+  formatRelativeDay,
+  formatVolumeWithUnit,
+} from '@wazn/core/format'
+import { formatWeekdayNarrow } from '@wazn/core/format'
+import { formatWeightWithUnit } from '@wazn/core/units'
 
 /**
  * The row of cards under the Up next block on the home screen — the design's

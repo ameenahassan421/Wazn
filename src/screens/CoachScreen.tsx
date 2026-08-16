@@ -13,11 +13,11 @@ import {
   recordCoachView,
   type CoachNotes,
 } from '../lib/coach'
-import { formatWorkoutDate } from '../lib/format'
+import { formatWorkoutDate } from '@wazn/core/format'
 import { useLocale } from '../lib/locale-context'
 import { useUnit } from '../lib/unit-context'
 import { useCoach } from '../lib/coach-context'
-import { showsCoachSurfaces } from '../lib/coach-mode'
+import { showsCoachSurfaces } from '@wazn/core/coach-mode'
 import { ModeSelector } from '../components/ModeSelector'
 
 /**

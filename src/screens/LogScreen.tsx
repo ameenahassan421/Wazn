@@ -1,9 +1,9 @@
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { describeError, supabase } from '../lib/supabase'
 import { useBackLayer } from '../lib/use-back'
-import { publishActiveWorkout } from '../lib/active-workout'
-import { dueRoutine } from '../lib/rotation'
-import type { RoutineWithRun } from '../lib/rotation'
+import { publishActiveWorkout } from '@wazn/core/active-workout'
+import { dueRoutine } from '@wazn/core/rotation'
+import type { RoutineWithRun } from '@wazn/core/rotation'
 import { lazyScreen } from '../lib/lazy-screen'
 import { useUnit } from '../lib/unit-context'
 import { useLocale } from '../lib/locale-context'
@@ -14,7 +14,7 @@ import {
   formatSyncedAt,
   formatWeekday,
   formatWorkoutDate,
-} from '../lib/format'
+} from '@wazn/core/format'
 import type {
   Exercise,
   ExerciseUsageRow,
@@ -24,32 +24,32 @@ import type {
   WeeklyStreakRow,
   Workout,
   WorkoutSet,
-} from '../lib/types'
+} from '@wazn/core/types'
 import { ExercisePicker } from '../components/ExercisePicker'
 import { IconBack, IconHistory, PlateRing } from '../components/icons'
 import { SetEntry } from '../components/SetEntry'
 import { SessionQueue } from '../components/SessionQueue'
 import { UpNextCard } from '../components/UpNextCard'
-import { recentRecords, sessionsPerWeek, thisWeek } from '../lib/progress'
+import { recentRecords, sessionsPerWeek, thisWeek } from '@wazn/core/progress'
 import { useCoach } from '../lib/coach-context'
 import {
   MODE_BEHAVIOUR,
   showsCoachSurfaces,
   usesGhostIntelligence,
-} from '../lib/coach-mode'
-import { computeReadiness, readinessChip, type CheckIn } from '../lib/readiness'
+} from '@wazn/core/coach-mode'
+import { computeReadiness, readinessChip, type CheckIn } from '@wazn/core/readiness'
 import { fetchCheckIn, logCheckIn } from '../lib/body-store'
-import { trimmedPlan, verdictFor } from '../lib/ghost-reason'
-import { streakState } from '../lib/streak'
+import { trimmedPlan, verdictFor } from '@wazn/core/ghost-reason'
+import { streakState } from '@wazn/core/streak'
 import { CheckInRow } from '../components/CheckInRow'
 import { TodayBrief } from '../components/TodayBrief'
 import { NextRoutineRow, StatTiles } from '../components/StatTiles'
 import { ReasonSheet } from '../components/ReasonSheet'
 import { TellCoachSheet } from '../components/TellCoachSheet'
-import type { ProposedEdit } from '../lib/tell-coach'
-import type { RecordSetRow, SessionVolumeRow } from '../lib/progress'
+import type { ProposedEdit } from '@wazn/core/tell-coach'
+import type { RecordSetRow, SessionVolumeRow } from '@wazn/core/progress'
 import { LastPrCard, RecentSessionCard, WeekCard } from '../components/HomeFeed'
-import { countsForRecords, totalVolumeKg } from '../lib/summary'
+import { countsForRecords, totalVolumeKg } from '@wazn/core/summary'
 import { DEFAULT_REST_SECONDS, useRestTimer } from '../lib/use-rest-timer'
 import { FinishSummary } from '../components/FinishSummary'
 import { RoutineList } from '../components/RoutineList'
@@ -69,21 +69,21 @@ import {
   deleteRoutine,
 } from '../lib/routines'
 import type { RoutineDetail, RoutineDraft } from '../lib/routines'
-import { groupOf, nextGroupId, ungroupIds } from '../lib/supersets'
-import { summarise } from '../lib/summary'
-import type { WorkoutSummary } from '../lib/summary'
+import { groupOf, nextGroupId, ungroupIds } from '@wazn/core/supersets'
+import { summarise } from '@wazn/core/summary'
+import type { WorkoutSummary } from '@wazn/core/summary'
 import { clampRest, earnedRest, effortPercent, resolveRest } from '../lib/rest'
-import { commitOutcome } from '../lib/commit'
-import type { CommitOutcome } from '../lib/commit'
-import { buildBlock, groupAdjacent, mergeOrder } from '../lib/plan'
-import type { OverviewRow, PlannedSet, WorkoutPlan } from '../lib/plan'
+import { commitOutcome } from '@wazn/core/commit'
+import type { CommitOutcome } from '@wazn/core/commit'
+import { buildBlock, groupAdjacent, mergeOrder } from '@wazn/core/plan'
+import type { OverviewRow, PlannedSet, WorkoutPlan } from '@wazn/core/plan'
 import { WorkoutOverview } from '../components/WorkoutOverview'
 import type { OverviewBlock } from '../components/WorkoutOverview'
 import { RestChip } from '../components/RestTimer'
 import { RestExpanded } from '../components/RestExpanded'
 import { RestCanvas } from '../components/RestCanvas'
-import { pickRestCard } from '../lib/rest-canvas'
-import type { CrewToday } from '../lib/rest-canvas'
+import { pickRestCard } from '@wazn/core/rest-canvas'
+import type { CrewToday } from '@wazn/core/rest-canvas'
 import { recordCoachView } from '../lib/coach'
 import { fetchFeed, nameOf } from '../lib/social'
 import {
@@ -98,8 +98,8 @@ import {
   retry,
   retryDelayMs,
   shouldSurface,
-} from '../lib/write-queue'
-import type { QueuedWrite } from '../lib/write-queue'
+} from '@wazn/core/write-queue'
+import type { QueuedWrite } from '@wazn/core/write-queue'
 import {
   browserStorage,
   clear as clearCheckpoint,

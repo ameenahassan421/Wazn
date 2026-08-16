@@ -1,4 +1,4 @@
-import type { MuscleGroup } from '../src/lib/types'
+import type { MuscleGroup } from '@wazn/core/types'
 
 /**
  * Hardcoded exercise -> muscle group table. Every name in the Hevy export is

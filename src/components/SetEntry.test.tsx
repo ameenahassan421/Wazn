@@ -3,8 +3,8 @@ import { describe, expect, it, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { SetEntry } from './SetEntry'
-import type { Exercise, PreviousSessionRow, WorkoutSet } from '../lib/types'
-import type { Unit } from '../lib/units'
+import type { Exercise, PreviousSessionRow, WorkoutSet } from '@wazn/core/types'
+import type { Unit } from '@wazn/core/units'
 
 const exercise: Exercise = {
   id: 'ex-1',

@@ -2,14 +2,14 @@ import { useState } from 'react'
 import { BottomSheet } from './BottomSheet'
 import { useLocale } from '../lib/locale-context'
 import { useUnit } from '../lib/unit-context'
-import { formatWeight } from '../lib/units'
+import { formatWeight } from '@wazn/core/units'
 import {
   TELL_COACH_CHIPS,
   proposeEdit,
   type ProposedEdit,
   type TellCoachChip,
   type TellCoachContext,
-} from '../lib/tell-coach'
+} from '@wazn/core/tell-coach'
 
 /**
  * "Tell the coach" — design v3.0 §07, the app's one conversational surface.

@@ -3,7 +3,7 @@ import {
   parseUnit,
   toDisplayBlock,
 } from '../../supabase/functions/_shared/display-units'
-import { formatEstimate, formatWeight } from './units'
+import { formatEstimate, formatWeight } from '@wazn/core/units'
 
 /**
  * The coach's unit conversion, and the one property that actually matters:

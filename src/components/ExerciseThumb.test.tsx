@@ -2,7 +2,7 @@
 import { describe, expect, it } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import { ExerciseThumb } from './ExerciseThumb'
-import type { Exercise } from '../lib/types'
+import type { Exercise } from '@wazn/core/types'
 
 /**
  * The leaf that took the Progress tab down.

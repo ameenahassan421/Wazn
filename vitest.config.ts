@@ -15,6 +15,11 @@ export default defineConfig({
     environment: 'node',
     environmentOptions: { jsdom: { url: 'http://localhost' } },
     setupFiles: ['./src/test/setup.ts'],
-    include: ['src/**/*.test.{ts,tsx}', 'scripts/**/*.test.ts', 'build/**/*.test.ts'],
+    include: [
+      'src/**/*.test.{ts,tsx}',
+      'packages/*/src/**/*.test.{ts,tsx}',
+      'scripts/**/*.test.ts',
+      'build/**/*.test.ts',
+    ],
   },
 })

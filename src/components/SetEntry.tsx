@@ -1,16 +1,26 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
-import type { Exercise, PreviousSessionRow, SetType, WorkoutSet } from '../lib/types'
-import { SET_TYPE_CYCLE, SET_TYPE_LABEL, SET_TYPE_NAME, isRecord } from '../lib/types'
-import { formatRelativeDay } from '../lib/format'
-import { formatWeight, fromDisplayWeight, toDisplayWeight } from '../lib/units'
-import type { Unit } from '../lib/units'
+import type {
+  Exercise,
+  PreviousSessionRow,
+  SetType,
+  WorkoutSet,
+} from '@wazn/core/types'
+import {
+  SET_TYPE_CYCLE,
+  SET_TYPE_LABEL,
+  SET_TYPE_NAME,
+  isRecord,
+} from '@wazn/core/types'
+import { formatRelativeDay } from '@wazn/core/format'
+import { formatWeight, fromDisplayWeight, toDisplayWeight } from '@wazn/core/units'
+import type { Unit } from '@wazn/core/units'
 import type { RestTimer } from '../lib/use-rest-timer'
 import { RestChip } from './RestTimer'
 import { LoadHelper } from './LoadHelper'
 import { ExerciseThumb } from './ExerciseThumb'
 import { PlateRing } from './icons'
-import { equipmentLabel, muscleLabel } from '../lib/i18n'
+import { equipmentLabel, muscleLabel } from '@wazn/core/i18n'
 import { useLocale } from '../lib/locale-context'
 
 /** Stepper increments, in the unit on screen. */

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { deriveEquipment, deriveMuscleGroup } from './exercise-guess'
-import { EQUIPMENT, MUSCLE_GROUPS } from './exercises'
+import { EQUIPMENT, MUSCLE_GROUPS } from './exercise-taxonomy'
 
 describe('deriveMuscleGroup', () => {
   it('reads the obvious lifts', () => {

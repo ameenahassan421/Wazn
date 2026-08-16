@@ -1,10 +1,10 @@
 import { useRef, useState } from 'react'
-import { formatWeight, fromDisplayWeight } from '../lib/units'
-import type { Unit } from '../lib/units'
+import { formatWeight, fromDisplayWeight } from '@wazn/core/units'
+import type { Unit } from '@wazn/core/units'
 import { useBackLayer } from '../lib/use-back'
 import { useModalLayer } from '../lib/use-modal'
-import { SET_TYPE_CYCLE, SET_TYPE_NAME } from '../lib/types'
-import type { SetType } from '../lib/types'
+import { SET_TYPE_CYCLE, SET_TYPE_NAME } from '@wazn/core/types'
+import type { SetType } from '@wazn/core/types'
 import { useLocale } from '../lib/locale-context'
 
 /**

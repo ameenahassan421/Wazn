@@ -1,13 +1,13 @@
 import { useCallback, useEffect, useState, useRef } from 'react'
 import { useLocale } from '../lib/locale-context'
 import { useUnit } from '../lib/unit-context'
-import { formatWeight } from '../lib/units'
+import { formatWeight } from '@wazn/core/units'
 import {
   formatCount,
   formatDuration,
   formatRelativeDay,
   formatVolume,
-} from '../lib/format'
+} from '@wazn/core/format'
 import {
   fetchFeed,
   fetchFollowing,

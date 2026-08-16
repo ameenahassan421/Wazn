@@ -1,5 +1,5 @@
-import type { RoutineWithRun } from '../lib/rotation'
-import { formatRelativeDay } from '../lib/format'
+import type { RoutineWithRun } from '@wazn/core/rotation'
+import { formatRelativeDay } from '@wazn/core/format'
 import { useLocale } from '../lib/locale-context'
 
 /**

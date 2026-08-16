@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { earnedRest, effortPercent } from './rest'
-import { MODE_BEHAVIOUR } from './coach-mode'
+import { MODE_BEHAVIOUR } from '@wazn/core/coach-mode'
 import {
   REST_MAX_SECONDS,
   clampRest,

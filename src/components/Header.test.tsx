@@ -17,7 +17,7 @@ vi.mock('../lib/supabase', () => ({
 // The overflow menu renders only while a workout is open, so the tests that
 // care about it need to say which world they are in.
 const active = vi.hoisted(() => ({ current: null as null | { discard: () => void } }))
-vi.mock('../lib/active-workout', () => ({
+vi.mock('@wazn/core/active-workout', () => ({
   useActiveWorkout: () => active.current,
 }))
 

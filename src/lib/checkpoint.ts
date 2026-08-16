@@ -1,6 +1,6 @@
-import { SET_TYPE_CYCLE } from './types'
-import type { SetType } from './types'
-import type { QueuedWrite } from './write-queue'
+import { SET_TYPE_CYCLE } from '@wazn/core/types'
+import type { SetType } from '@wazn/core/types'
+import type { QueuedWrite } from '@wazn/core/write-queue'
 
 const isSetType = (v: unknown): v is SetType =>
   typeof v === 'string' && (SET_TYPE_CYCLE as string[]).includes(v)

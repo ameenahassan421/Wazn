@@ -1,5 +1,5 @@
 import { describeError, supabase } from './supabase'
-import type { Exercise, MuscleGroup } from './types'
+import type { Exercise, MuscleGroup } from '@wazn/core/types'
 
 /**
  * Creating a custom exercise.
@@ -11,35 +11,12 @@ import type { Exercise, MuscleGroup } from './types'
  * way in — this function sets them, but nothing depends on it doing so.
  */
 
-export const MUSCLE_GROUPS: MuscleGroup[] = [
-  'chest',
-  'back',
-  'shoulders',
-  'biceps',
-  'triceps',
-  'quads',
-  'hamstrings',
-  'glutes',
-  'calves',
-  'core',
-  'cardio',
-]
-
 /**
- * The equipment values the seeded catalogue uses.
- *
- * A free-text field would be friendlier to type and worse for everything else:
- * the picker groups by equipment, the routine generator filters by it, and
- * "Dumbell" would quietly become its own category forever. Fixed list.
+ * Both vocabularies moved to `@wazn/core/exercise-taxonomy` in E1 and are
+ * re-exported here so every existing caller kept working. They are pure data;
+ * this module is not, because of the Supabase client above.
  */
-export const EQUIPMENT = [
-  'barbell',
-  'dumbbell',
-  'machine',
-  'cable',
-  'bodyweight',
-  'other',
-] as const
+export { EQUIPMENT, MUSCLE_GROUPS } from '@wazn/core/exercise-taxonomy'
 
 export async function createCustomExercise(input: {
   name: string

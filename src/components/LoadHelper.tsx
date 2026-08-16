@@ -1,7 +1,7 @@
 import { useId, useState } from 'react'
-import { platesFor, DEFAULT_BAR, BAR_WEIGHTS } from '../lib/plates'
-import { warmupRamp } from '../lib/warmup'
-import type { Unit } from '../lib/units'
+import { platesFor, DEFAULT_BAR, BAR_WEIGHTS } from '@wazn/core/plates'
+import { warmupRamp } from '@wazn/core/warmup'
+import type { Unit } from '@wazn/core/units'
 import { useLocale } from '../lib/locale-context'
 import { PlateCard } from './PlateCard'
 

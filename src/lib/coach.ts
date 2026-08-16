@@ -1,8 +1,8 @@
 import { supabase } from './supabase'
-import { formatEstimate, formatWeight } from './units'
-import type { Unit } from './units'
-import { muscleLabel, t } from './i18n'
-import type { Locale } from './i18n'
+import { formatEstimate, formatWeight } from '@wazn/core/units'
+import type { Unit } from '@wazn/core/units'
+import { muscleLabel, t } from '@wazn/core/i18n'
+import type { Locale } from '@wazn/core/i18n'
 
 /**
  * The proactive coach's client half — B1's two surfaces and B2's review.

@@ -2,8 +2,8 @@ import { useEffect, useState } from 'react'
 import { useLocale } from '../lib/locale-context'
 import { useUnit } from '../lib/unit-context'
 import { useCoach } from '../lib/coach-context'
-import { showsCoachSurfaces } from '../lib/coach-mode'
-import { formatWeight, formatWeightWithUnit, fromDisplayWeight } from '../lib/units'
+import { showsCoachSurfaces } from '@wazn/core/coach-mode'
+import { formatWeight, formatWeightWithUnit, fromDisplayWeight } from '@wazn/core/units'
 import { SeriesChart } from '../components/SeriesChart'
 import { CoachLine } from '../components/CoachLine'
 import {
@@ -12,7 +12,7 @@ import {
   measurementRows,
   proteinWeek,
   weightSeries,
-} from '../lib/body'
+} from '@wazn/core/body'
 import {
   fetchBodyOverview,
   logProtein,
