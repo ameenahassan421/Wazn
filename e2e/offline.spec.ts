@@ -67,7 +67,7 @@ async function logSet(page: Page, exercise: string, weight: string, reps: string
     .click()
   await page.locator('#weight').fill(weight)
   await page.locator('#reps').fill(reps)
-  await page.getByRole('button', { name: /^Log (set|warm-up)/ }).click()
+  await page.getByRole('button', { name: /^Bank (set|warm-up)/ }).click()
 }
 
 test.describe('GATE 4 — the airplane-mode workout', () => {

@@ -53,14 +53,23 @@ npm run build        # typecheck + production build
 npm run format       # prettier
 ```
 
-Before pushing: `npm run lint && npm run format:check && npm run typecheck && npm run check:vercel && npm run check:coverage && npm test && npm run build`.
+Before pushing: `npm run lint && npm run format:check && npm run typecheck && npm run check:vercel && npm run check:type && npm run check:coverage && npm test && npm run build && npm run test:smoke`.
 
 **That list is not the whole wall, and this line used to claim it was.** CI's
 `check` job also runs `check:migrations`, `check:sql` and `deno check` on the
-Edge Functions, and a second `smoke` job runs Playwright. E1 was pushed green on
-the old list and failed on `check:coverage` — every module in `src/lib` needs a
-test file or a written exemption, and a new one with neither fails. Read
+Edge Functions. E1 was pushed green on the old list and failed on
+`check:coverage` — every module in `src/lib` needs a test file or a written
+exemption, and a new one with neither fails. Read
 `.github/workflows/ci.yml` rather than this paragraph when it matters.
+
+**`npm run test:smoke` is now IN the list, and it was not on 2026-08-16.**
+`npm test` is vitest; Playwright is a separate job and a separate command.
+v5 PR 4 renamed the commit bar from "Log set N" to "Bank set N"; the vitest
+queries were updated, `grep -rn "Log set" src` came back with only comments,
+and `e2e/` is not `src/`. Three GATE 4 airplane-mode tests timed out waiting
+for a button that no longer had that name, on main, after the PR was merged
+before its own CI finished. **A copy change is an API change to every selector
+in `e2e/` and `scripts/` — grep the repo, not the source tree.**
 
 **Touching `vercel.json`?** `npm run check:vercel` is the only thing in the repo
 that reads it. A `"//"` comment key in a rewrite once made Vercel reject every

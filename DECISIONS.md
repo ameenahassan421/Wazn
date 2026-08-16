@@ -7172,3 +7172,45 @@ assumed: the flip surfaces (rest chip, segmented controls) invert on their own
 because `--flip-bg` is defined from the ramp; and the Progress balance bars
 keep their meaning — the over-band group recedes to deep maroon on iron and to
 pale pink on paper, which is the mirrored ramp doing the job it exists for.
+
+## 2026-08-16 (later still) — A copy change broke three e2e tests on main
+
+`main` went red on `c25f4cd`, the PR #95 merge. Three GATE 4 airplane-mode
+Playwright tests timed out:
+
+```
+waiting for getByRole('button', { name: /^Log (set|warm-up)/ })
+```
+
+PR 4 renamed the commit bar from `Log set N` to `Bank set N`. I updated the
+vitest queries in `SetEntry.test.tsx`, then ran
+`grep -rn "Log set\|Log warm" src --include=*.tsx --include=*.ts` and got back
+only comments — and concluded I was done. **`e2e/` is not `src/`.**
+
+Two selectors were stale, both pointing at the commit bar:
+`e2e/offline.spec.ts:70` and `scripts/perf.mjs`'s `LOG_BUTTON`. Two others
+that look identical were fine and were left alone: `shots.mjs`'s `logRe` and
+`perf.mjs`'s `CHECK_BUTTON` match `overview.log_row` — _"Log {name} set
+{label}: {values}"_ — which is the board's row check, a different string that
+PR 4 did not touch. Renaming those too would have broken a passing harness.
+
+**The wall did not catch it because the wall does not run Playwright.**
+`npm test` is vitest; the smoke job is a separate command, `npm run
+test:smoke`, and CLAUDE.md's pre-push list did not include it — despite the
+same file warning, two paragraphs down, that "a second `smoke` job runs
+Playwright". The list is now correct, and it also gained `check:type`, which
+PR 2 added to CI and never added here.
+
+The app was never broken. The button works; only its accessible name moved,
+so the failure is a stale test and production served a working build the whole
+time. That is the least dangerous version of this and it is still a red main.
+
+Two things worth keeping:
+
+1. **A copy change is an API change to every selector in the repo.** i18n
+   strings are queried by `getByRole({ name })` in three places outside `src/`,
+   and none of them are typed. Grep the repository, not the source tree.
+2. **The merge outran its own CI.** #95 was merged while `check` and `smoke`
+   were still in progress, so the branch never got to fail before main did.
+   Nothing here can enforce waiting; it is worth knowing that the drafts are
+   the last gate that runs before `main` auto-deploys.
