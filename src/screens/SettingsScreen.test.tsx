@@ -5,7 +5,6 @@ import userEvent from '@testing-library/user-event'
 import '@testing-library/jest-dom/vitest'
 import type { ReactNode } from 'react'
 import { LocaleProvider } from '../lib/locale-context'
-import { ThemeProvider } from '../lib/theme-context'
 import { UnitProvider } from '../lib/unit-context'
 import { SettingsScreen } from './SettingsScreen'
 
@@ -22,11 +21,9 @@ vi.mock('../lib/social', () => ({
 
 function Wrapper({ children }: { children: ReactNode }) {
   return (
-    <ThemeProvider>
-      <LocaleProvider>
-        <UnitProvider>{children}</UnitProvider>
-      </LocaleProvider>
-    </ThemeProvider>
+    <LocaleProvider>
+      <UnitProvider>{children}</UnitProvider>
+    </LocaleProvider>
   )
 }
 
