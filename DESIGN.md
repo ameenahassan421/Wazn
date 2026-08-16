@@ -178,6 +178,27 @@ components:
 
 # Design System: Wazn
 
+> ## ⚠ THIS FILE IS STALE AS OF 2026-08-16. READ `src/index.css` INSTEAD.
+>
+> It was generated from the code before the v5 "Momentum" work, and three of
+> its load-bearing claims are now false:
+>
+> | this file says                                                             | the code says                                                                                                                                                                                                                                            |
+> | -------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+> | paper is the default, iron is the dark theme, both ship from one token set | **there is one theme.** The `html[data-theme='dark']` block is gone, the palette is the iron ground, and the light/dark toggle was removed with it                                                                                                       |
+> | Sora carries display and figures                                           | **Saira Semi Condensed** does. Sora is still declared only until the wordmark's baked outlines are regenerated                                                                                                                                           |
+> | the scale is display 44 / input 30 / figure 24 / title 19 / micro 11       | **the v5 ramp**: mega 84 · hero 50 · fig 30 · num 21 · title 17 · body 14 · label 13 · meta 11 · kick 10 · nano 9, plus three named idioms (`row-title` 15, `btn-text` 16, `field-text` 16). `display`, `input`, `figure` and `micro` are deleted tokens |
+>
+> The front-matter colours and typography blocks above are wrong in the same
+> way; treat the whole file as a record of what the system used to be.
+>
+> The truth lives in `src/index.css` (the tokens, each with its reasoning),
+> `DECISIONS.md` (2026-08-16, three entries) and
+> `docs/design/v5-momentum/` (the handoff). Regenerating this file is
+> `/impeccable document`, and it is deliberately NOT done inside a feature
+> PR — a design-system rewrite should be its own reviewable diff rather than
+> a paragraph buried in a card restyle.
+
 ## Overview
 
 **Creative North Star: "Loaded Ink"**

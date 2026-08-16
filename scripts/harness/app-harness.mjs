@@ -535,10 +535,16 @@ export function fixtures({ empty = false, active = false } = {}) {
    * against that order so a list still sorted by `position` looks obviously
    * wrong rather than accidentally right.
    */
+  // The due routine's name is deliberately LONG. v5's hunt card moves the
+  // routine name off the headline and into the kicker beside the time of day,
+  // so "TONIGHT · <name>" is now the only place the plan is named and it is
+  // the line that runs out of room first — at 390px it reaches the card edge
+  // at 39 characters. A fixture holding "Push Day" would prove the card works
+  // and prove nothing about the card people actually have.
   const routines = [
     { name: 'Upper A', position: 0, ranDaysAgo: 1 },
     { name: 'Lower A', position: 1, ranDaysAgo: 9 },
-    { name: 'Core & Conditioning', position: 2, ranDaysAgo: null },
+    { name: 'Upper Body Push — Heavy Day A', position: 2, ranDaysAgo: null },
   ].map((r, i) => ({
     id: uuid(700 + i),
     user_id: USER_ID,
@@ -751,7 +757,7 @@ export function fixtures({ empty = false, active = false } = {}) {
       kg: {
         briefing: {
           surface: 'briefing',
-          line: 'Core & Conditioning is up. Bench Press was 102.5 kg × 5 last time, so 105 × 5 takes the estimate past 119.6.',
+          line: 'Upper Body Push — Heavy Day A is up. Bench Press was 102.5 kg × 5 last time, so 105 × 5 takes the estimate past 119.6.',
           chip: '105 kg × 5 · beats 119.6 e1RM',
         },
         debrief: {
@@ -763,7 +769,7 @@ export function fixtures({ empty = false, active = false } = {}) {
       lbs: {
         briefing: {
           surface: 'briefing',
-          line: 'Core & Conditioning is up. Bench Press was 226 lbs × 5 last time, so 231.5 × 5 takes the estimate past 263.7.',
+          line: 'Upper Body Push — Heavy Day A is up. Bench Press was 226 lbs × 5 last time, so 231.5 × 5 takes the estimate past 263.7.',
           chip: '231.5 lbs × 5 · beats 263.7 e1RM',
         },
         debrief: {
@@ -838,13 +844,17 @@ export function fixtures({ empty = false, active = false } = {}) {
       total_sets_90d: 604,
       /*
        * Must agree with the routine fixtures below, and it did not: this said
-       * "Upper A" while the never-run "Core & Conditioning" is what both the
+       * "Upper A" while the never-run "Upper Body Push — Heavy Day A" is what both the
        * SQL rule and the list's rotation pick. A screenshot showed the briefing
        * card naming one routine above a list headed by another, which is
        * exactly the L9 defect the list ordering was built to fix, staged by the
        * harness. `days_since_run` is null because it has never been run.
        */
-      due_routine: { name: 'Core & Conditioning', exercises: 5, days_since_run: null },
+      due_routine: {
+        name: 'Upper Body Push — Heavy Day A',
+        exercises: 5,
+        days_since_run: null,
+      },
       target: {
         exercise: 'Bench Press (Barbell)',
         last_weight_kg: 102.5,

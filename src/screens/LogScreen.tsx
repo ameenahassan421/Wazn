@@ -2825,6 +2825,11 @@ export function LogScreen({
             title={upNext.name}
             line={briefLine}
             chip={briefChipText}
+            // The number the card exists to beat. Already computed here for
+            // the recent-session card, and already filtered by
+            // `countsForRecords`, so a warm-up-only session cannot set a
+            // target the lifter is then asked to clear.
+            targetKg={lastVolumeKg}
             busy={routineBusy === upNext.id}
             onStart={() => void startFromRoutine(upNext)}
             onStartEmpty={() => void startWorkout()}

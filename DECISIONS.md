@@ -6882,3 +6882,106 @@ AND asserts that every surviving step is still defined in `index.css`.
 
 1104 passed before and after. **No test in the repo asserts a font size
 class**, so nothing here could have failed. The gate was 104 screenshots.
+
+## 2026-08-16 (PR 3) — The hunt card is a rebuild, not a restyle
+
+`P0-PLAN.md` files PR 3 as "tab bar + Home hunt card", tab bar being "a
+restyle only". The hunt card is not a restyle, and pretending otherwise would
+have produced a recoloured v3 card.
+
+**v3's Today brief made the ROUTINE NAME the headline. v5 makes the headline
+the thing you came to do:** `BEAT {last session's volume}`, with the routine
+name demoted to the kicker beside the time of day. You do not open the app to
+read what today is called. So the card was rebuilt around the new hierarchy:
+
+|          | v3                                 | v5                                            |
+| -------- | ---------------------------------- | --------------------------------------------- |
+| ground   | `--flip-bg` (the theme's opposite) | `surface` + hairline ring                     |
+| kicker   | `TODAY`                            | `TONIGHT · <routine>` in accent-300           |
+| headline | routine name at `fig` (30)         | `BEAT` / volume at `hero` (50), unit at `num` |
+| CTA      | `Start {name}`, 52px               | `START THE HUNT`, 56px                        |
+
+### The flip surface had to go, and PR 2 explained why
+
+`--flip-bg` draws "the theme's opposite". Under paper that was a dark card on
+a light screen — restrained. After PR 1 inverted the palette the same token
+drew a **cream slab on iron**, making the quietest card in the reference the
+loudest object in the app. PR 2 deliberately left it, because v5 replaces the
+surface outright rather than recolouring it and doing both would mean styling
+it twice. This is that replacement.
+
+### Three things the reference does not answer, decided here
+
+**1. The target is the last session, whatever routine it was.** That is what
+v5's own `C2.lastVolume()` returns, and it is what shipped. It is also
+arguably the wrong number: if the last session was Legs and today is Push,
+the card asks you to beat an unrelated total. Scoping it to the same routine
+needs a query this card does not have. Logged rather than hidden behind a
+confident headline — a follow-up, not a defect to discover later.
+
+**When there is no previous session the headline falls back to the routine
+name**, because "BEAT 0" is not a goal. The reference has no first-run state.
+
+**2. `partOfDay` is real, not the literal string `TONIGHT`.** The reference
+hardcodes it. Three buckets — morning / afternoon / evening — off the local
+clock, because a UTC bucket would greet an Egyptian evening session as
+afternoon. It lives in `src/lib/format.ts` with a test rather than in the
+component: the boundaries are a judgement and should fail loudly if moved.
+
+**3. "Start the hunt" is not translated literally.** The Arabic for a hunt
+reads as an animal chase. `today.start_hunt` is `ابدأ التمرين` — the app's own
+terse register. An idiom that carries the brief's voice in English and
+embarrasses it in Arabic is a bad translation, not a faithful one.
+
+### The tab bar, and the one number that had no name
+
+`#0b0906` is the only surface in the app **darker than the ground** — chrome
+that recedes below the content instead of lifting off it, which is why it
+cannot be `--color-surface`. v5 gives it no name; it is `--color-tabbar` here.
+The `friends` glyph's overlap disc was filled with `--color-surface` to punch
+a notch out of the disc behind it, so it had to move too or it would have
+glowed on the new ground.
+
+Active/inactive moved from accent-500/muted to **accent-300/faint** — a wider
+gap, so the current tab reads from the corner of the eye. Ember 500 is spent
+on the rail alone, which now runs 20%–80% of the tab's width (43px at six
+tabs) along the bar's top edge, absolutely positioned so it costs the row no
+height and the glyphs cannot shift by 2px on navigation.
+
+### `--radius-ctl: 12px` is v5's control radius, and it is used ONCE
+
+v5 rounds controls at 12; `btn-base` rounds at 8. Migrating every button
+changes the shape of the whole app and belongs with the screens that own
+them. The token is named rather than inlined so the follow-up is a one-line
+change instead of a search — and so `check_type_ramp.mjs`'s sibling rule (no
+anonymous numbers) holds for radii too, by habit if not yet by enforcement.
+
+### StatTiles needed nothing
+
+The plan lists it as a PR 3 file. It was already `kicker` + `text-num`, which
+is exactly v5's `RowStat` (`Kick` + `T.num`). Left alone rather than churned.
+
+### The fixture now holds a name that can fail
+
+The screenshot harness's due routine was `Core & Conditioning`. v5 moves the
+routine name into the kicker, making `TONIGHT · <name>` the line that runs out
+of room first, so the fixture is now **`Upper Body Push — Heavy Day A`** — 39
+characters, which reaches the card edge at 390px. It wraps beyond that rather
+than clipping. A fixture holding "Push Day" would have proved the card works
+and proved nothing about the card people actually have. This is the fourth
+instance of the same lesson in this project.
+
+### Two things found while looking, not fixed here
+
+**`--font-display` has no Arabic.** Saira Semi Condensed is Latin-only, so
+every display figure in Arabic falls back to the system sans at sizes tuned
+for a condensed face. Visible in `shots/ar-full-390-log.png`: the streak tile
+reads `26` on one line and `أسبوع` on the next. It predates PR 3 (PR 1
+adopted the face) and it needs either an Arabic display face or shorter
+Arabic strings — a decision, not a patch.
+
+**`DESIGN.md` is stale and now says so.** It was generated before v5 and still
+claims paper is the default, Sora carries display, and the scale is
+44/30/24/19/11. A banner at the top now points at `src/index.css` and this
+file. It is deliberately not regenerated inside a card restyle: `/impeccable
+document` rewrites the whole system doc, and that deserves its own diff.
