@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Wazn — Onboarding & Day One</title>
+<link rel="stylesheet" href="../fonts/fonts.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Saira+Semi+Condensed:wght@500;600;700&display=swap">
+<style>body{margin:0;background:#0f0d0a}a{color:#f4a68c}a:hover{color:#e8491d}button{-webkit-tap-highlight-color:transparent}input::placeholder{color:#615b4d}@keyframes wzflash{0%{opacity:0}100%{opacity:1}}@keyframes wzslide{0%{transform:translateY(16px);opacity:0}100%{transform:translateY(0);opacity:1}}.press:active{transform:scale(0.985)}</style>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<template id="__bundler_thumbnail"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="#0f0d0a"></rect><rect x="30" y="46" width="40" height="8" fill="#e8491d"></rect><rect x="22" y="36" width="8" height="28" fill="#e8491d"></rect><rect x="70" y="36" width="8" height="28" fill="#e8491d"></rect></svg></template>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel" src="ui.jsx"></script>
+<script type="text/babel">
+const {useState, useEffect, useRef} = React;
+const inputS = {height:48, borderRadius:R.ctl, border:`1px solid ${K.line2}`, background:K.bg, color:K.text, padding:'0 14px', ...T.label, fontSize:15, outline:'none', width:'100%', boxSizing:'border-box'};
+function Word({size}){ return <span style={{fontFamily:F.d, fontWeight:700, fontSize:size||21}} dir="ltr">w<span style={{color:K.em}}>a</span>zn</span>; }
+function AuthScreen({go}){
+  const [mode, setMode] = useState('signin'); // signin | signup
+  return <main style={{padding:'40px 22px 40px', display:'flex', flexDirection:'column', gap:18, minHeight:'100dvh', boxSizing:'border-box', justifyContent:'center'}}>
+    <div style={{marginBottom:6}}>
+      <Word size={34}/>
+      <p style={{...T.title, fontSize:22, textTransform:'none', margin:'12px 0 0', color:K.text}}>Your training, on record.</p>
+      <p style={{...T.label, color:K.mut, margin:'6px 0 0'}}>Log a set in under thirty seconds, one hand, mid-workout.</p>
+    </div>
+    <Btn kind="hero" onClick={()=>go('welcome')} style={{width:'100%', height:56}}>
+      <span style={{fontFamily:F.d, fontWeight:700, fontSize:15, width:24, height:24, borderRadius:12, background:K.emInk, color:K.em, display:'inline-grid', placeItems:'center'}}>G</span>
+      CONTINUE WITH GOOGLE
+    </Btn>
+    <div style={{display:'flex', alignItems:'center', gap:12}}>
+      <span style={{flex:1, height:1, background:K.line}}></span><Kick>OR</Kick><span style={{flex:1, height:1, background:K.line}}></span>
+    </div>
+    <div style={{display:'flex', flexDirection:'column', gap:10}}>
+      <input placeholder="email or username" style={inputS}/>
+      <input type="password" placeholder={mode==='signup'?'password — 8+ characters':'password'} style={inputS}/>
+      <Btn kind="ink" onClick={()=>go(mode==='signup'?'code':'welcome')} style={{width:'100%', height:52}}>{mode==='signup'?'CREATE ACCOUNT':'SIGN IN'}</Btn>
+    </div>
+    <div style={{display:'flex', gap:8, justifyContent:'center', flexWrap:'wrap'}}>
+      <button onClick={()=>setMode(mode==='signup'?'signin':'signup')} style={{...T.label, color:K.soft, background:'none', border:'none', cursor:'pointer', padding:'6px 4px'}}>{mode==='signup'?'I have an account — sign in':'Create an account'}</button>
+      <span style={{...T.label, color:K.faint}}>·</span>
+      <button onClick={()=>go('code')} style={{...T.label, color:K.soft, background:'none', border:'none', cursor:'pointer', padding:'6px 4px'}}>Email me a code instead</button>
+      <span style={{...T.label, color:K.faint}}>·</span>
+      <button style={{...T.label, color:K.mut, background:'none', border:'none', cursor:'pointer', padding:'6px 4px'}}>Forgot password?</button>
+    </div>
+    <Card onClick={()=>go('import')} style={{cursor:'pointer', display:'flex', alignItems:'center', gap:12, padding:'14px 16px'}}>
+      <div style={{flex:1}}>
+        <p style={{...T.label, fontWeight:600, color:K.text, margin:0}}>Coming from Hevy?</p>
+        <p style={{...T.meta, color:K.faint, margin:'3px 0 0', fontSize:10}}>BRING YOUR WHOLE HISTORY — EVERY SET, EVERY PR</p>
+      </div>
+      <span style={{...T.title, color:K.soft}}>→</span>
+    </Card>
+    <p style={{...T.nano, color:K.faint, textAlign:'center', margin:0}}><a href="#" style={{color:K.faint}}>WHAT WAZN STORES</a> · 6-DIGIT CODES, NEVER MAGIC LINKS · APPLE SIGN-IN ARRIVES WITH THE APP STORE BUILD</p>
+  </main>;
+}
+function CodeScreen({go}){
+  const [d, setD] = useState(['','','','','','']);
+  const [t, setT] = useState(42);
+  const refs = useRef([]);
+  useEffect(()=>{ const id=setInterval(()=>setT(x=>x>0?x-1:0),1000); return ()=>clearInterval(id); },[]);
+  const full = d.every(x=>x!=='');
+  const set = (i,val)=>{
+    const v = val.replace(/\D/g,'').slice(-1);
+    const nx=[...d]; nx[i]=v; setD(nx);
+    if(v && i<5) refs.current[i+1]?.focus();
+  };
+  return <main style={{padding:'40px 22px', display:'flex', flexDirection:'column', gap:18, minHeight:'100dvh', boxSizing:'border-box', justifyContent:'center'}}>
+    <div>
+      <Word size={26}/>
+      <p style={{...T.title, fontSize:20, textTransform:'none', margin:'14px 0 0'}}>Check your email.</p>
+      <p style={{...T.label, color:K.mut, margin:'6px 0 0'}} dir="ltr">A 6-digit code is on its way to a•••@gmail.com.</p>
+    </div>
+    <div dir="ltr" style={{display:'flex', gap:8}}>
+      {d.map((x,i)=><input key={i} ref={el=>refs.current[i]=el} value={x} onChange={e=>set(i,e.target.value)} inputMode="numeric"
+        style={{flex:1, height:58, minWidth:0, textAlign:'center', borderRadius:R.ctl, background:K.bg, color:K.text, ...T.fig, fontSize:24, outline:'none',
+        border: x!==''?`1.5px solid ${K.em}`:`1px solid ${K.line2}`}}/>)}
+    </div>
+    <Btn kind={full?'hero':'ink'} onClick={()=>full&&go('welcome')} style={{width:'100%', height:54, opacity:full?1:0.45}}>VERIFY</Btn>
+    <div style={{display:'flex', justifyContent:'center', gap:8}}>
+      <span style={{...T.meta, color:K.faint}} dir="ltr">RESEND CODE · 0:{String(t).padStart(2,'0')}</span>
+      <span style={{...T.meta, color:K.faint}}>·</span>
+      <button onClick={()=>go('auth')} style={{...T.meta, color:K.soft, background:'none', border:'none', cursor:'pointer', padding:0}}>BACK</button>
+    </div>
+    <p style={{...T.nano, color:K.faint, textAlign:'center', margin:0}}>SAME RESPONSE WHETHER THE ACCOUNT EXISTS OR NOT — NO ORACLE</p>
+  </main>;
+}
+function WelcomeScreen({go}){
+  const [u, setU] = useState('');
+  return <main style={{padding:'40px 22px', display:'flex', flexDirection:'column', gap:18, minHeight:'100dvh', boxSizing:'border-box', justifyContent:'center'}}>
+    <div>
+      <Kick c={K.soft}>WELCOME TO WAZN</Kick>
+      <p style={{...T.hero, fontSize:38, margin:'10px 0 0', textTransform:'none'}}>Log a set in under thirty seconds.</p>
+      <p style={{...T.label, color:K.mut, margin:'10px 0 0'}}>That is the whole job. Everything else serves it.</p>
+    </div>
+    <Card>
+      <Kick>CLAIM A USERNAME — OPTIONAL</Kick>
+      <div style={{display:'flex', gap:8, marginTop:10}}>
+        <div style={{flex:1, position:'relative'}}>
+          <span style={{position:'absolute', insetInlineStart:14, top:13, ...T.label, color:K.faint}}>@</span>
+          <input value={u} onChange={e=>setU(e.target.value.replace(/[^a-z0-9_]/gi,'').toLowerCase())} placeholder="ameen" style={{...inputS, paddingInlineStart:32}}/>
+        </div>
+        <Btn kind="ink" small style={{height:48}}>CLAIM</Btn>
+      </div>
+      <p style={{...T.nano, color:K.faint, margin:'8px 0 0'}}>FRIENDS FIND YOU BY IT · YOU CAN SIGN IN WITH IT · CHANGE IT ANYTIME</p>
+    </Card>
+    <div style={{display:'flex', flexDirection:'column', gap:10}}>
+      <Btn kind="hero" onClick={()=>go('app')} style={{width:'100%', height:56}}>I'LL JUST START LOGGING</Btn>
+      <Btn kind="line" onClick={()=>go('app-coach')} style={{width:'100%', height:52}}>DRAFT ME A ROUTINE</Btn>
+      <Btn kind="ghost" onClick={()=>go('import')} style={{width:'100%', height:44}}>IMPORT FROM HEVY</Btn>
+    </div>
+  </main>;
+}
+function ImportScreen({go}){
+  const [pct, setPct] = useState(0);
+  useEffect(()=>{ const id=setInterval(()=>setPct(x=> x>=100? 100 : x+4),120); return ()=>clearInterval(id); },[]);
+  const done = pct>=100;
+  const row = (label, state)=>(
+    <div style={{display:'flex', alignItems:'center', gap:10, padding:'10px 0', borderTop:`1px solid ${K.line}`}}>
+      <span style={{...T.label, color:K.text, flex:1}}>{label}</span>
+      {state==='done' ? <span style={{...T.meta, color:K.soft}}>✓</span> : <span style={{...T.meta, color:K.mut}} dir="ltr">{Math.min(100,pct)}%</span>}
+    </div>);
+  return <main style={{padding:'40px 22px', display:'flex', flexDirection:'column', gap:18, minHeight:'100dvh', boxSizing:'border-box', justifyContent:'center'}}>
+    <div>
+      <Kick c={K.soft}>SWITCHING FROM HEVY</Kick>
+      <p style={{...T.hero, fontSize:40, margin:'10px 0 0', textTransform:'none'}}>Bring your history.</p>
+    </div>
+    <Card style={{display:'flex', alignItems:'center', gap:12}}>
+      <div style={{width:42, height:42, borderRadius:10, background:K.sur2, display:'grid', placeItems:'center', ...T.meta, color:K.mut}}>CSV</div>
+      <div style={{flex:1}}>
+        <p style={{...T.label, fontWeight:600, color:K.text, margin:0}} dir="ltr">workouts.csv</p>
+        <p style={{...T.meta, color:K.faint, margin:'3px 0 0', fontSize:10}} dir="ltr">HEVY EXPORT · 412 KB</p>
+      </div>
+      <button style={{...T.kick, color:K.soft, background:'none', border:'none', cursor:'pointer'}}>CHANGE</button>
+    </Card>
+    <Card style={{paddingTop:8, paddingBottom:8}}>
+      {row('149 workouts', 'done')}
+      {row('134 exercises matched', pct>40?'done':'run')}
+      {row('3,197 sets', done?'done':'run')}
+      <div style={{padding:'12px 0 6px'}}><Fill pct={pct}/></div>
+    </Card>
+    <div style={{display:'flex', flexDirection:'column', gap:8}}>
+      <p style={{...T.body, color:K.mut, margin:0}}>Your first session opens with your own previous numbers on every row — day one, not week three.</p>
+      <Chip>9 months of history · every PR kept</Chip>
+    </div>
+    <Btn kind="hero" onClick={()=>done&&go('app')} style={{width:'100%', height:56, opacity:done?1:0.45}}>{done?'FINISH IMPORT':'IMPORTING…'}</Btn>
+    <button onClick={()=>go('welcome')} style={{...T.meta, color:K.faint, background:'none', border:'none', cursor:'pointer'}}>BACK</button>
+  </main>;
+}
+/* Day one — every tab at zero data, copy per LAUNCH.md */
+function Empty({kick, line, action, onAction}){
+  return <main style={{padding:'40px 18px 90px', display:'flex', flexDirection:'column', gap:16, alignItems:'center', textAlign:'center', minHeight:'55dvh', justifyContent:'center'}}>
+    <div style={{width:64, height:64, borderRadius:32, background:K.sur, boxShadow:ring, display:'grid', placeItems:'center'}}>
+      <div style={{width:26, height:7, background:K.em, borderRadius:2}}></div>
+    </div>
+    {kick && <Kick c={K.soft}>{kick}</Kick>}
+    <p style={{...T.body, color:K.mut, margin:0, maxWidth:'30ch'}}>{line}</p>
+    {action && <Btn kind={action.hero?'hero':'line'} onClick={onAction} style={action.hero?{minWidth:260, height:56}:{}}>{action.label}</Btn>}
+  </main>;
+}
+function DayOneApp({startTab}){
+  const [tab, setTab] = useState(startTab||'log');
+  return <React.Fragment>
+    <div style={{margin:'0 18px 14px', display:'flex', alignItems:'center', gap:10, background:K.sur, borderRadius:R.ctl, boxShadow:ring, padding:'10px 12px'}}>
+      <span style={{...T.nano, color:K.brassSoft}}>DAY ONE — WHAT A NEW TESTER SEES</span>
+      <span style={{flex:1}}></span>
+      <a href="Wazn v5.html" style={{...T.nano, color:K.soft, textDecoration:'none'}}>FULL APP →</a>
+    </div>
+    {tab==='log' && <Empty line="No streaks yet, no numbers yet — they arrive on their own." action={{label:'START YOUR FIRST WORKOUT', hero:true}}/>}
+    {tab==='history' && <Empty kick="HISTORY" line="No workouts yet. Log one on the Log tab and it will appear here."/>}
+    {tab==='progress' && <Empty kick="PROGRESS" line="Log a workout to load the bar. Charts draw only real points — never a fake one."/>}
+    {tab==='body' && <Empty kick="BODY" line="Log a weigh-in to start the second chart."/>}
+    {tab==='coach' && <Empty kick="COACH" line="Log 3 workouts and the coach will have something to say. The routine builder works from day one." action={{label:'BUILD A ROUTINE'}}/>}
+    {tab==='friends' && <Empty kick="FRIENDS" line="A leaderboard of one. Invite someone to chase." action={{label:'INVITE', hero:true}}/>}
+    <TabBar tab={tab} onTab={setTab}/>
+  </React.Fragment>;
+}
+function App(){
+  const [step, setStep] = useState('auth'); // auth | code | welcome | import | app | app-coach
+  const inApp = step==='app'||step==='app-coach';
+  return <div style={{maxWidth:430, margin:'0 auto', minHeight:'100dvh', background:K.bg, color:K.text, fontFamily:F.b}}>
+    {inApp && <Header onAvatar={()=>{}} right={<span style={{...T.nano, color:K.faint}}>NEW ACCOUNT</span>}/>}
+    {step==='auth' && <AuthScreen go={setStep}/>}
+    {step==='code' && <CodeScreen go={setStep}/>}
+    {step==='welcome' && <WelcomeScreen go={setStep}/>}
+    {step==='import' && <ImportScreen go={setStep}/>}
+    {inApp && <DayOneApp startTab={step==='app-coach'?'coach':'log'}/>}
+    {!inApp && <div style={{position:'fixed', top:10, insetInlineEnd:10}}>
+      <span style={{...T.nano, color:K.faint}}>{({auth:'01 AUTH', code:'02 CODE', welcome:'03 WELCOME', import:'04 IMPORT'})[step]} / 05 DAY ONE</span>
+    </div>}
+  </div>;
+}
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>

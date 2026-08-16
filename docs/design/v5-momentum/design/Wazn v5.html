@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Wazn — Complete App Prototype</title>
+<link rel="stylesheet" href="../fonts/fonts.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Saira+Semi+Condensed:wght@500;600;700&display=swap">
+<style>body{margin:0;background:#0f0d0a}a{color:#f4a68c}a:hover{color:#e8491d}button{-webkit-tap-highlight-color:transparent}input::placeholder{color:#615b4d}@keyframes wzflash{0%{opacity:0}100%{opacity:1}}@keyframes wzslide{0%{transform:translateY(16px);opacity:0}100%{transform:translateY(0);opacity:1}}.press:active{transform:scale(0.985)}</style>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="data.js"></script>
+<script src="coach2.js"></script>
+<template id="__bundler_thumbnail"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="#0f0d0a"></rect><rect x="30" y="46" width="40" height="8" fill="#e8491d"></rect><rect x="22" y="36" width="8" height="28" fill="#e8491d"></rect><rect x="70" y="36" width="8" height="28" fill="#e8491d"></rect></svg></template>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel" src="ui.jsx"></script>
+<script type="text/babel" src="screens_core.jsx"></script>
+<script type="text/babel" src="screens_tabs.jsx"></script>
+<script type="text/babel">
+const {useState:us} = React;
+function App(){
+  const [tab, setTab] = us('log');
+  const [vol, setVol] = us(()=>store.get('coachvol','full'));
+  const pickVol = v=>{ setVol(v); store.set('coachvol', v); };
+  const wk = useWorkout5(vol);
+  const live = wk.wo.status==='live';
+  return <div style={{maxWidth:430, margin:'0 auto', minHeight:'100dvh', background:K.bg, color:K.text, fontFamily:F.b}}>
+    <Header onAvatar={()=>setTab('settings')} right={ tab!=='log' || !live ? <span style={{...T.nano, color:K.faint}}>{({log:'', history:'HISTORY', progress:'PROGRESS', body:'BODY', coach:'COACH', friends:'FRIENDS', settings:'SETTINGS'})[tab]}</span> : <span style={{...T.nano, color:K.soft}}>LIVE</span>}/>
+    {tab==='log' && wk.wo.status==='idle' && <HomeScreen wk={wk} vol={vol} onTab={setTab}/>}
+    {tab==='log' && wk.wo.status==='live' && <LiveScreen wk={wk} vol={vol}/>}
+    {tab==='log' && wk.wo.status==='done' && <FinishScreen wk={wk} vol={vol}/>}
+    {tab==='history' && <HistoryScreen vol={vol}/>}
+    {tab==='progress' && <ProgressScreen vol={vol}/>}
+    {tab==='body' && <BodyScreen vol={vol}/>}
+    {tab==='coach' && <CoachScreen vol={vol}/>}
+    {tab==='friends' && <FriendsScreen/>}
+    {tab==='settings' && <SettingsScreen vol={vol} setVol={pickVol} onBack={()=>setTab('log')}/>}
+    {tab!=='settings' && <TabBar tab={tab} onTab={setTab}/>}
+    <ToastOverlay wk={wk}/>
+    <RestOverlay wk={wk} vol={vol}/>
+    <PROverlay wk={wk}/>
+  </div>;
+}
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>
