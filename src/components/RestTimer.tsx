@@ -121,11 +121,11 @@ export function RestChip({
             dir="ltr"
             role="timer"
             aria-live="off"
-            className="tnum font-display min-w-[52px] text-[17px] font-bold"
+            className="tnum font-display min-w-[52px] text-title font-bold"
           >
             {formatRest(timer.remaining)}
           </span>
-          <span className="min-w-0 truncate text-[12px] opacity-70">
+          <span className="min-w-0 truncate text-label opacity-70">
             {done ? t('rest.done') : t('rest.title')}
           </span>
           {/* The reason, at the far end of the bar, exactly as v3 draws it.
@@ -135,7 +135,7 @@ export function RestChip({
           {effort !== null && effort !== undefined && (
             <span
               dir="ltr"
-              className="meta-mono tnum ms-auto hidden shrink-0 text-[11px] opacity-55 min-[360px]:inline"
+              className="meta-mono tnum ms-auto hidden shrink-0 text-meta opacity-55 min-[360px]:inline"
             >
               {t('rest.effort', { n: String(effort) })}
             </span>
@@ -146,7 +146,7 @@ export function RestChip({
           type="button"
           onClick={() => timer.adjust(2 * REST_STEP_SECONDS)}
           aria-label={`Add ${2 * REST_STEP_SECONDS} seconds`}
-          className="min-h-12 shrink-0 px-3 text-[13px] font-semibold"
+          className="min-h-12 shrink-0 px-3 text-label font-semibold"
           style={{
             background: 'color-mix(in srgb, currentColor 14%, transparent)',
             borderRadius: 'var(--radius-pill)',
@@ -157,7 +157,7 @@ export function RestChip({
         <button
           type="button"
           onClick={timer.stop}
-          className="min-h-12 shrink-0 px-3 text-[13px] font-semibold"
+          className="min-h-12 shrink-0 px-3 text-label font-semibold"
           style={{
             background: 'color-mix(in srgb, currentColor 14%, transparent)',
             borderRadius: 'var(--radius-pill)',
@@ -177,7 +177,7 @@ export function RestChip({
           <button
             type="button"
             onClick={() => onSaveDefault(timer.total as number)}
-            className="flex h-12 w-full items-center px-3.5 text-start text-[13px] opacity-80"
+            className="flex h-12 w-full items-center px-3.5 text-start text-label opacity-80"
           >
             {t('rest.keep_default', {
               duration: describeRest(timer.total as number),

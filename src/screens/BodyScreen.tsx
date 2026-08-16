@@ -130,7 +130,7 @@ export function BodyScreen() {
   return (
     <div className="flex flex-col gap-3 py-3">
       <div className="flex items-center justify-between gap-3">
-        <h1 className="font-display text-[19px] font-extrabold tracking-[-0.02em]">
+        <h1 className="font-display text-title font-extrabold tracking-[-0.02em]">
           {t('nav.body')}
         </h1>
         <button
@@ -139,7 +139,7 @@ export function BodyScreen() {
             setLogging((open) => (open === 'weight' ? null : 'weight'))
             setDraft('')
           }}
-          className="meta-mono h-12 px-2.5 text-[11px] text-accent-300"
+          className="meta-mono h-12 px-2.5 text-label text-accent-300"
         >
           <span
             className="grid h-[30px] place-items-center px-2.5"
@@ -173,12 +173,12 @@ export function BodyScreen() {
             value={draft}
             onChange={(event) => setDraft(event.target.value)}
             placeholder={logging === 'weight' ? unit : 'g'}
-            className="tnum h-12 min-w-0 flex-1 border border-line bg-surface px-3 text-[15px] outline-none focus:border-accent"
+            className="tnum h-12 min-w-0 flex-1 border border-line bg-surface px-3 field-text outline-none focus:border-accent"
             style={{ borderRadius: 'var(--radius-md)' }}
           />
           <button
             type="submit"
-            className="btn-base btn-hero h-12 shrink-0 px-4 text-[14px]"
+            className="btn-base btn-hero h-12 shrink-0 px-4 text-body"
           >
             {t('body.save')}
           </button>
@@ -218,7 +218,7 @@ export function BodyScreen() {
             boxShadow: 'var(--shadow-card)',
           }}
         >
-          <p className="text-[14px] leading-[1.5] text-muted">{t('body.empty')}</p>
+          <p className="text-body leading-[1.5] text-muted">{t('body.empty')}</p>
         </section>
       ) : (
         <section
@@ -231,7 +231,7 @@ export function BodyScreen() {
         >
           <div className="flex items-baseline justify-between gap-2">
             <h2 className="kicker">{t('body.weight')}</h2>
-            <span dir="ltr" className="font-display tnum text-[20px] font-medium">
+            <span dir="ltr" className="font-display tnum text-num font-medium">
               {formatWeightWithUnit(latest, unit)}
             </span>
           </div>
@@ -261,7 +261,7 @@ export function BodyScreen() {
               setLogging((open) => (open === 'protein' ? null : 'protein'))
               setDraft('')
             }}
-            className="meta-mono h-12 text-[11px] text-accent-300"
+            className="meta-mono h-12 text-label text-accent-300"
           >
             {proteinTargetG === null
               ? t('body.protein.set_target')
@@ -274,7 +274,7 @@ export function BodyScreen() {
             an all-empty one is a different state and drawing the chart anyway
             reads as a rendering fault rather than as an empty week. */}
         {bars.every((bar) => bar.state === 'empty') ? (
-          <p className="text-[14px] leading-[1.5] text-muted">
+          <p className="text-body leading-[1.5] text-muted">
             {t('body.protein.empty')}
           </p>
         ) : (
@@ -333,10 +333,10 @@ export function BodyScreen() {
                 i === 0 ? undefined : { borderTop: '1px solid var(--divider-solid)' }
               }
             >
-              <span className="text-[14px] font-semibold">
+              <span className="row-title font-semibold">
                 {t(`body.site.${row.site}`)}
               </span>
-              <span dir="ltr" className="meta-mono tnum text-[12px]">
+              <span dir="ltr" className="meta-mono tnum text-meta">
                 {row.cm} cm{' '}
                 {row.deltaCm === null || row.deltaCm === 0 ? (
                   <span className="text-muted">→</span>

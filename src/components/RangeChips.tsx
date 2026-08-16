@@ -31,7 +31,7 @@ export function RangeChips({
             type="button"
             aria-pressed={on}
             onClick={() => onChange(range.key)}
-            className={`press btn-base h-12 flex-1 font-mono text-[12px] tracking-[0.08em] ${
+            className={`press btn-base h-12 flex-1 font-mono text-label tracking-[0.08em] ${
               on ? 'btn-primary' : 'btn-secondary'
             }`}
           >

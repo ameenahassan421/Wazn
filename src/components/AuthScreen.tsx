@@ -37,10 +37,10 @@ type View =
 const MIN_PASSWORD = 8
 
 const inputClass =
-  'h-14 w-full rounded-lg border border-line bg-surface px-4 text-start text-lg outline-none placeholder:text-muted focus:border-accent'
+  'h-14 w-full rounded-lg border border-line bg-surface px-4 text-start field-text outline-none placeholder:text-muted focus:border-accent'
 
 const codeClass =
-  'tnum h-16 w-full rounded-lg border border-line bg-surface px-4 text-start text-3xl tracking-[0.35em] outline-none placeholder:text-muted focus:border-accent'
+  'tnum h-16 w-full rounded-lg border border-line bg-surface px-4 text-start text-fig tracking-[0.35em] outline-none placeholder:text-muted focus:border-accent'
 
 /** Google's four-colour G — required branding, and the one exception to the
     single-accent rule (a trademark is not a palette choice). */
@@ -317,7 +317,7 @@ export function AuthScreen() {
     })
   }
 
-  const linkClass = 'h-12 text-sm text-muted underline underline-offset-4'
+  const linkClass = 'h-12 text-body text-muted underline underline-offset-4'
 
   return (
     <main className="relative mx-auto flex min-h-dvh w-full max-w-[430px] flex-col justify-center px-5 py-10">
@@ -345,10 +345,10 @@ export function AuthScreen() {
           a reader's chosen theme on the first screen they see would be the
           app disagreeing with itself before they are even signed in. */}
       <p className="kicker mt-6 text-accent-300">{t('auth.hero.kicker')}</p>
-      <h2 className="font-display mt-3 text-[30px] leading-[1.1] font-semibold tracking-[-0.015em] text-balance">
+      <h2 className="font-display mt-3 text-fig leading-[1.1] font-semibold tracking-[-0.015em] text-balance">
         {t('auth.hero.headline')}
       </h2>
-      <p className="mt-3 text-[15px] leading-[1.6] text-muted">{t('auth.hero.body')}</p>
+      <p className="mt-3 text-body leading-[1.6] text-muted">{t('auth.hero.body')}</p>
 
       <AuthDemo />
 
@@ -356,7 +356,7 @@ export function AuthScreen() {
         {['seeded', 'rest', 'forecasts'].map((key) => (
           <li
             key={key}
-            className="meta-mono flex items-center gap-2 text-[11px] tracking-[0.1em] text-muted uppercase"
+            className="meta-mono flex items-center gap-2 text-kick tracking-[0.1em] text-muted uppercase"
           >
             <span
               aria-hidden="true"
@@ -368,11 +368,11 @@ export function AuthScreen() {
         ))}
       </ul>
 
-      <p className="mt-8 text-sm text-muted">{t('auth.subhead')}</p>
+      <p className="mt-8 text-body text-muted">{t('auth.subhead')}</p>
       {/* On the one screen where somebody hands over an email, and nowhere
           else. A privacy link buried in a settings menu is a link written for
           an app store rather than for a reader. */}
-      <p className="mt-2 text-[11px] text-muted">
+      <p className="mt-2 text-body text-muted">
         {t('auth.privacy.body')}{' '}
         <a href="/privacy" className="text-accent-300 underline underline-offset-2">
           {t('auth.privacy.link')}
@@ -383,7 +383,7 @@ export function AuthScreen() {
           you are already looking at — and the thing worth saying before
           somebody signs up is that switching does not cost them their
           history. */}
-      <p className="mt-1 text-[11px] text-muted">{t('auth.hevy.hint')}</p>
+      <p className="mt-1 text-body text-muted">{t('auth.hevy.hint')}</p>
 
       {view === 'signin' && (
         <div className="mt-8 flex flex-col gap-3">
@@ -391,7 +391,7 @@ export function AuthScreen() {
             type="button"
             onClick={signInWithGoogle}
             disabled={busy}
-            className="ring-edge press flex h-14 w-full items-center justify-center gap-3 rounded-lg bg-surface text-[16px] font-medium disabled:opacity-45"
+            className="ring-edge press flex h-14 w-full items-center justify-center gap-3 rounded-lg bg-surface btn-text font-medium disabled:opacity-45"
           >
             <GoogleMark />
             {t('auth.google')}
@@ -399,7 +399,7 @@ export function AuthScreen() {
 
           <div className="mt-2 flex items-center gap-3" aria-hidden="true">
             <span className="h-px flex-1 bg-line" />
-            <span className="text-[11px] uppercase tracking-widest text-muted">
+            <span className="text-kick uppercase tracking-widest text-muted">
               {t('auth.or')}
             </span>
             <span className="h-px flex-1 bg-line" />
@@ -436,7 +436,7 @@ export function AuthScreen() {
             <button
               type="submit"
               disabled={busy}
-              className="btn-base btn-hero press h-14 w-full text-[18px] disabled:opacity-45"
+              className="btn-base btn-hero press h-14 w-full btn-text disabled:opacity-45"
             >
               {busy ? t('auth.signin.busy') : t('auth.signin')}
             </button>
@@ -496,7 +496,7 @@ export function AuthScreen() {
           <button
             type="submit"
             disabled={busy}
-            className="btn-base btn-hero press h-14 w-full text-[18px] disabled:opacity-45"
+            className="btn-base btn-hero press h-14 w-full btn-text disabled:opacity-45"
           >
             {busy ? t('auth.signup.busy') : t('auth.signup')}
           </button>
@@ -525,7 +525,7 @@ export function AuthScreen() {
           <button
             type="submit"
             disabled={busy}
-            className="btn-base btn-hero press h-14 w-full text-[18px] disabled:opacity-45"
+            className="btn-base btn-hero press h-14 w-full btn-text disabled:opacity-45"
           >
             {busy ? t('auth.confirm.busy') : t('auth.confirm')}
           </button>
@@ -555,7 +555,7 @@ export function AuthScreen() {
           <button
             type="submit"
             disabled={busy}
-            className="btn-base btn-hero press h-14 w-full text-[18px] disabled:opacity-45"
+            className="btn-base btn-hero press h-14 w-full btn-text disabled:opacity-45"
           >
             {busy ? t('auth.code.send.busy') : t('auth.code.send')}
           </button>
@@ -584,7 +584,7 @@ export function AuthScreen() {
           <button
             type="submit"
             disabled={busy}
-            className="btn-base btn-hero press h-14 w-full text-[18px] disabled:opacity-45"
+            className="btn-base btn-hero press h-14 w-full btn-text disabled:opacity-45"
           >
             {busy ? t('auth.code.verify.busy') : t('auth.code.verify')}
           </button>
@@ -618,7 +618,7 @@ export function AuthScreen() {
           <button
             type="submit"
             disabled={busy}
-            className="btn-base btn-hero press h-14 w-full text-[18px] disabled:opacity-45"
+            className="btn-base btn-hero press h-14 w-full btn-text disabled:opacity-45"
           >
             {busy ? t('auth.reset.send.busy') : t('auth.reset.send')}
           </button>
@@ -659,7 +659,7 @@ export function AuthScreen() {
           <button
             type="submit"
             disabled={busy}
-            className="btn-base btn-hero press h-14 w-full text-[18px] disabled:opacity-45"
+            className="btn-base btn-hero press h-14 w-full btn-text disabled:opacity-45"
           >
             {busy ? t('auth.reset.apply.busy') : t('auth.reset.apply')}
           </button>
@@ -673,9 +673,9 @@ export function AuthScreen() {
         </form>
       )}
 
-      {notice && !error && <p className="mt-4 text-sm text-muted">{notice}</p>}
+      {notice && !error && <p className="mt-4 text-body text-muted">{notice}</p>}
       {error && (
-        <p role="alert" className="mt-4 text-sm text-accent-300">
+        <p role="alert" className="mt-4 text-body text-accent-300">
           {error}
         </p>
       )}
@@ -692,7 +692,7 @@ export function AuthScreen() {
           aria-label={t('toggle.locale.name')}
           className="flex h-12 items-center px-1"
         >
-          <span className="btn-base btn-secondary tnum h-[34px] min-w-[52px] px-3 text-sm">
+          <span className="btn-base btn-secondary tnum h-[34px] min-w-[52px] px-3 text-body">
             {t('toggle.locale.label')}
           </span>
         </button>
@@ -747,11 +747,11 @@ function AuthDemo() {
       }}
     >
       <div className="flex flex-col gap-[3px] px-[18px] pt-4 pb-2.5">
-        <p className="font-display text-[17px] font-semibold">
+        <p className="font-display text-title font-semibold">
           {t('auth.hero.demo.exercise')}
         </p>
         <p
-          className="meta-mono text-[11px]"
+          className="meta-mono text-meta"
           style={{ color: 'color-mix(in srgb, var(--flip-text) 55%, transparent)' }}
         >
           2 / 4 · {t('overview.coach_adjusted')}
@@ -775,7 +775,7 @@ function AuthDemo() {
           >
             <span
               dir="ltr"
-              className="tnum font-mono text-[11px]"
+              className="tnum font-mono text-meta"
               style={{
                 color:
                   row.state === 'ghost'
@@ -787,7 +787,7 @@ function AuthDemo() {
             </span>
             <span
               dir="ltr"
-              className={`font-display tnum truncate text-[20px] font-medium ${
+              className={`font-display tnum truncate text-num font-medium ${
                 row.state === 'live' ? 'auth-demo-value' : ''
               }`}
               style={
@@ -800,7 +800,7 @@ function AuthDemo() {
             </span>
             <span
               dir="ltr"
-              className="tnum truncate font-mono text-[11px]"
+              className="tnum truncate font-mono text-meta"
               style={{
                 color: row.accent
                   ? 'var(--color-accent-700)'
@@ -812,7 +812,7 @@ function AuthDemo() {
             {row.state === 'done' ? (
               <span
                 aria-hidden="true"
-                className="justify-self-end text-[14px] font-bold text-accent-ink"
+                className="justify-self-end text-body font-bold text-accent-ink"
                 style={{
                   width: 24,
                   height: 24,
@@ -841,7 +841,7 @@ function AuthDemo() {
                 }}
               >
                 {row.state === 'live' && (
-                  <span className="auth-demo-glyph text-[14px] font-bold text-accent-ink">
+                  <span className="auth-demo-glyph text-body font-bold text-accent-ink">
                     ✓
                   </span>
                 )}
@@ -857,7 +857,7 @@ function AuthDemo() {
           borderTop: '1px solid color-mix(in srgb, var(--flip-text) 9%, transparent)',
         }}
       >
-        <span className="text-[13px]">{t('auth.hero.forecast')}</span>
+        <span className="text-label">{t('auth.hero.forecast')}</span>
         <span
           dir="ltr"
           className="chip-data tnum"

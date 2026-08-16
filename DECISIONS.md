@@ -6736,3 +6736,149 @@ Two pre-existing findings in `RestExpanded.tsx` are also left alone: the
 `text-[54px]` timer is one of the 81 type orphans PR 2 decides (the plan's
 table lists 54px explicitly, one use), and the `16px` radius on the next-up
 button is a shape value this change does not touch.
+
+## 2026-08-16 (later still) — v5 P0 PR 2: every size gets a name, and the rule the handoff states is false
+
+PR 2 was scoped by `P0-PLAN.md` as "267 `text-[Npx]` classes across 41 files,
+81 of which use a size v5 does not have". Both halves were wrong, and finding
+that out is most of what this PR is.
+
+### The count was 480, in 44 files
+
+| what                                                                                                             | sites | how the plan missed it                                                               |
+| ---------------------------------------------------------------------------------------------------------------- | ----- | ------------------------------------------------------------------------------------ |
+| `text-[Npx]`                                                                                                     | 267   | counted                                                                              |
+| Tailwind defaults — `text-sm` ×128, `text-xs` ×37, `text-base` ×22, `text-lg`, `text-xl`, `text-2xl`, `text-3xl` | 203   | the gate was a grep for `text-[`; `text-sm` is 14px just as much as `text-[14px]` is |
+| fractional — `text-[14.5px]`, `text-[12.5px]`, `text-[11.5px]`                                                   | 7     | `[0-9]+` does not match `14.5`                                                       |
+| retired-token classes — `text-figure`                                                                            | 3     | not a raw size at all                                                                |
+
+The named ramp was used **8 times** in the entire codebase before this.
+
+### The rule "the entire ramp; no other sizes exist" is not true of v5
+
+Before deciding anything, a pass read the reference bundle end to end and
+mapped every `fontSize:` it sets. `README.md:31` titles the type section _"the
+entire ramp; no other sizes exist"_. The reference **renders 26 distinct font
+sizes** — 9, 10, 11, 12, 13, 14, 15, 16, 17, 20, 21, 22, 23, 24, 26, 28, 30,
+34, 38, 40, 50, 56, 64, 66, 84, 130 — against a ramp that declares 10. There
+are 48 inline `fontSize` overrides plus 2 passed as props. All ten declared
+steps do render raw somewhere, so **the ramp is a floor, not a ceiling**.
+
+Two of the README's own parentheticals are also wrong: "next-set 38–42" only
+ever renders 38, and "exercise headers 24–26" renders 24 — the 26 is the
+onboarding wordmark, a different thing.
+
+Implementing the sentence literally would have meant inventing decisions the
+design never made. So the app enforces the rule the reference actually obeys:
+**no anonymous sizes.** Every size is a named step, or one of three named
+idioms the reference itself establishes and repeats:
+
+- **`row-title` (15px)** — `{...T.title, fontSize:15, textTransform:'none'}`,
+  the reference's single most reused override (4 sites: home plan list,
+  History session title, Progress lift name, Settings profile name). `title`
+  at 17 is the wrong answer for these: they are the longest strings in the app
+  and already truncate at 15 on a 390px screen.
+- **`btn-text` (16px)** — v5's `Btn` is `{...T.title, fontSize: small?13:16}`.
+  `title`'s own 17 never renders on a button anywhere in the reference.
+- **`field-text` (16px)** — see the iOS note below. Not a look, a behaviour.
+
+`scripts/check_type_ramp.mjs` fails the build on anything else, and CI runs it.
+
+### How 480 sites were decided
+
+Not by size. `text-[15px]` alone turned out to be five different jobs — button
+labels, list-row names, body prose, inline figures and text inputs — so a
+find-and-replace keyed on the number would have been wrong 39 times over.
+
+Instead: nine parallel passes assigned every site a **role** from a closed list
+of 14 (`row-title`, `meta`, `figure-hero`, `unit-suffix`, `icon-glyph`…) by
+opening the file and reading what the element is. The role → step mapping then
+lives in ONE table, so 480 sites cannot drift apart. Where a role admits more
+than one step, the nearest step to the site's current size wins.
+
+That last rule was added after the first pass: giving each role exactly one
+step forced a 12px list ordinal and a 17px countdown both onto `num` (21),
+growing a gutter index by 9px, and forced a 34px finish headline and a 17px
+sheet heading both onto `title`, halving the headline. **The role says which
+family of steps is legitimate; the current size says which member.**
+
+Result: **233 sites keep their exact size and only gain a name.** 247 change,
+of which 202 move by 1–2px. Ten move more than 3px, and every one was read
+individually — five 26px headlines up to `fig` 30, two 34px headlines down to
+`fig` 30, the rest countdown 54 → `hero` 50.
+
+### An adversarial audit, and the 11 findings that did not apply
+
+Three audit passes (consistency, legibility, role confusion) reported 31
+problems. **Seven were real** — all but one of them the same element
+classified two different ways in two files: a set-ledger string that was
+`meta` in two screens and a figure in History; a step ordinal that was `meta`
+in four places and a number in the fifth; forecast sub-lines heading for 11px
+in one file and 9px in its twin. Those are fixed, with the reasoning recorded
+next to each in the mapping table.
+
+Eleven findings, all marked high, said that mapping a headline to `title` or
+`hero` would render it in ALL CAPS — `auth.hero.headline`, `finish.title`
+("In the books."), the LLM-generated `review.headline`, a person's display
+name, user-typed routine names. **They do not apply here, and it is worth
+writing down why:** in v5's reference `hero`, `title`, `kick` and `nano` carry
+`textTransform: uppercase`, but Tailwind's `@theme` text tokens can only carry
+size, weight, leading and tracking. The steps in this repo have no case at
+all — verified in the built CSS, not assumed.
+
+So the audit was reasoning about v5's ramp rather than this one. What it
+produced is better than a bug report: **a verified list of the exact sites
+that must never gain uppercase when PR 3 and PR 4 style the screens.** Nine
+words of model-written prose set in caps is a defect nobody would catch by
+reading a diff.
+
+### The iOS zoom floor, found by accident
+
+Checking which sites sit on real `<input>`/`<textarea>` elements — by walking
+back to the opening tag, not by reading one line — found 19, and **7 were
+already under 16px**. iOS Safari zooms the viewport when a focused input is
+below 16px and does not zoom back out. That bug predates this PR on the
+routine editor's set/rep fields, the friend-search box, Body's weight entry,
+the coach's ask box and Welcome's username field. `field-text` is a floor, and
+those seven are fixed as a side effect of naming them.
+
+The 16px shared `inputClass` in `AuthScreen` needed a hand-written override:
+it is a `const` string, so no tag-walk can see it.
+
+### Two things that read as design changes and are not
+
+**`.kicker` moved 11px → 10px**, which is v5's `kick`. One line, 125 call
+sites. And `kick` is NOT `nano` resized: kick tracks 0.14em at 10, nano tracks
+0.1em at 9, so at the one size they nearly share they are still different
+type. The reference depends on that difference at five sites.
+
+**`--text-display` (44), `--text-input` (30), `--text-figure` (24) and
+`--text-micro` (11) are deleted.** The first, second and fourth had zero call
+sites. `text-figure` had three — and this is the dangerous shape: **a class
+naming a deleted `@theme` token does not error, it emits no declaration at
+all.** Three figures would have rendered at inherited body size with lint,
+tsc, 1104 tests and the build all green. The repo has been bitten by this
+exact failure before (`--color-accent-400` composed at runtime, two chart bars
+rendering as empty tracks). So the checker bans the four retired names by name
+AND asserts that every surviving step is still defined in `index.css`.
+
+### What PR 2 deliberately did NOT do
+
+- **Case.** Four v5 steps are uppercase; none of ours are. Applying that is a
+  per-screen decision with a live list of exceptions (above), so it goes with
+  the screens in PR 3 and PR 4.
+- **The mono family on `meta`/`kick`/`nano`.** v5 sets all three in IBM Plex
+  Mono. Here the family comes from `.kicker` and `.meta-mono` at the call
+  site, which already covers the sites that need it; changing the token would
+  restyle every 11px string in the app.
+- **`row-title`'s face.** v5 builds it from the title face; switching 39 row
+  names from Hanken to a condensed face is a look change, not a size change.
+  It is not in the display-face list, and the sites that already ask for
+  `font-display` still get it.
+- **The big v5 moves** — an 84px stepper, a 50px hunt figure, the rest clock
+  at 64. Those are PR 3 and PR 4, designed as whole screens.
+
+### The tests proved nothing, again
+
+1104 passed before and after. **No test in the repo asserts a font size
+class**, so nothing here could have failed. The gate was 104 screenshots.

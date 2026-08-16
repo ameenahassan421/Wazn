@@ -97,17 +97,31 @@ fidelity rule 7.
 **Gate:** the app still builds and every screen renders; no screen is *correct*
 yet. This PR is deliberately not beautiful on its own.
 
-### PR 2 — The ramp migration *(81 judgement calls, 267 sites, 41 files)*
+### PR 2 — The ramp migration ✅ *shipped 2026-08-16*
 
-**Files:** the 41 files carrying `text-[Npx]`.
+**Estimated here as 267 sites / 41 files / 81 orphans. It was 480 sites in 44
+files.** The extra 213: 203 Tailwind default classes (`text-sm` is 14px just
+as much as `text-[14px]` is), 7 fractional sizes that `[0-9]+` does not match,
+and 3 classes naming a `@theme` token this PR deletes. The named ramp was in
+use 8 times in the whole codebase.
 
-Mechanical where the size maps 1:1 (11 → `meta`, 13 → `label`, 14 → `body`,
-17 → `title`, 10 → `kick`, 9 → `nano`). The 81 orphans get decided per site
-against the reference HTML, and the decisions get recorded in `DECISIONS.md`
-rather than buried in a diff.
+Decided by **role**, not by size — `text-[15px]` alone was five different jobs
+(button labels, row names, body prose, inline figures, text inputs), so a
+find-and-replace on the number would have been wrong 39 times. 233 sites kept
+their exact size and gained a name; 10 moved more than 3px and each was read
+individually.
 
-**Gate:** `grep -rE "text-\[[0-9]+px\]" src/` returns nothing, and a
-screenshot pass shows no screen has silently changed weight or rhythm.
+Also: the handoff's "the entire ramp; no other sizes exist" is **false of the
+reference itself** — it renders 26 sizes against a ramp declaring 10. The app
+enforces "no anonymous sizes" instead, with three named idioms the reference
+establishes (`row-title` 15, `btn-text` 16, `field-text` 16). Full reasoning
+in `DECISIONS.md`.
+
+**Gate as written here was not enough:** `grep -rE "text-\[[0-9]+px\]" src/`
+would have returned nothing with 203 unnamed Tailwind sizes still in place.
+Replaced by `npm run check:type` (`scripts/check_type_ramp.mjs`), which also
+asserts the vocabulary still exists — a class naming a deleted token emits no
+CSS and fails nothing else. Wired into CI.
 
 ### PR 3 — Tab bar + Home hunt card
 

@@ -87,7 +87,7 @@ export type View =
  */
 function ScreenFallback() {
   const { t } = useLocale()
-  return <p className="py-10 text-sm text-muted">{t('chrome.loading')}</p>
+  return <p className="py-10 text-body text-muted">{t('chrome.loading')}</p>
 }
 
 export default function App() {
@@ -191,7 +191,7 @@ export default function App() {
   if (supabaseConfigError) {
     return (
       <main className="mx-auto flex min-h-dvh w-full max-w-[430px] flex-col justify-center px-5">
-        <p role="alert" className="text-sm text-accent-300">
+        <p role="alert" className="text-body text-accent-300">
           {supabaseConfigError}
         </p>
       </main>

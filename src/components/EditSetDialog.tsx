@@ -95,11 +95,11 @@ export function EditSetDialog({
       }}
     >
       <div className="w-full max-w-[430px] rounded-lg border border-line bg-surface p-4">
-        <p className="text-sm font-semibold">{exerciseName}</p>
+        <p className="text-title font-semibold">{exerciseName}</p>
 
         <div className="mt-3 flex items-center gap-2">
           <div className="flex-1">
-            <label htmlFor="edit-weight" className="text-xs text-muted">
+            <label htmlFor="edit-weight" className="text-label text-muted">
               Weight ({unit})
             </label>
             <input
@@ -111,11 +111,11 @@ export function EditSetDialog({
               value={weight}
               onChange={(e) => setWeight(e.target.value)}
               placeholder="BW"
-              className="tnum font-display h-14 w-full rounded-lg border border-line bg-ink px-3 text-start text-2xl font-semibold outline-none placeholder:text-muted focus:border-accent"
+              className="tnum font-display h-14 w-full rounded-lg border border-line bg-ink px-3 text-start text-num font-semibold outline-none placeholder:text-muted focus:border-accent"
             />
           </div>
           <div className="flex-1">
-            <label htmlFor="edit-reps" className="text-xs text-muted">
+            <label htmlFor="edit-reps" className="text-label text-muted">
               {t('set.edit.reps')}
             </label>
             <input
@@ -125,13 +125,13 @@ export function EditSetDialog({
               min="0"
               value={repsText}
               onChange={(e) => setRepsText(e.target.value)}
-              className="tnum font-display h-14 w-full rounded-lg border border-line bg-ink px-3 text-start text-2xl font-semibold outline-none focus:border-accent"
+              className="tnum font-display h-14 w-full rounded-lg border border-line bg-ink px-3 text-start text-num font-semibold outline-none focus:border-accent"
             />
           </div>
         </div>
 
         <fieldset className="mt-3">
-          <legend className="text-xs text-muted">{t('set.edit.type')}</legend>
+          <legend className="text-label text-muted">{t('set.edit.type')}</legend>
           <div className="mt-1 flex gap-2">
             {SET_TYPE_CYCLE.map((option) => (
               <button
@@ -140,7 +140,7 @@ export function EditSetDialog({
                 aria-pressed={kind === option}
                 aria-label={SET_TYPE_NAME[option]}
                 onClick={() => setKind(option)}
-                className={`btn-base h-12 flex-1 text-sm capitalize ${
+                className={`btn-base h-12 flex-1 text-body capitalize ${
                   kind === option ? 'btn-primary' : 'btn-secondary'
                 }`}
               >
@@ -149,12 +149,12 @@ export function EditSetDialog({
             ))}
           </div>
           {kind === 'warmup' && (
-            <p className="mt-1 text-[11px] text-muted">{t('set.edit.warmup_note')}</p>
+            <p className="mt-1 text-label text-muted">{t('set.edit.warmup_note')}</p>
           )}
         </fieldset>
 
         <fieldset className="mt-3">
-          <legend className="text-xs text-muted">{t('set.edit.rpe')}</legend>
+          <legend className="text-label text-muted">{t('set.edit.rpe')}</legend>
           <div className="mt-1 flex flex-wrap gap-2">
             {/* Tapping the selected value clears it, so "I should not have
                 recorded an RPE here" is reachable without a separate control. */}
@@ -162,7 +162,7 @@ export function EditSetDialog({
               type="button"
               aria-pressed={rpeValue === null}
               onClick={() => setRpeValue(null)}
-              className={`btn-base h-12 px-3.5 text-sm ${
+              className={`btn-base h-12 px-3.5 text-body ${
                 rpeValue === null ? 'btn-primary' : 'btn-secondary'
               }`}
             >
@@ -174,7 +174,7 @@ export function EditSetDialog({
                 type="button"
                 aria-pressed={rpeValue === value}
                 onClick={() => setRpeValue(rpeValue === value ? null : value)}
-                className={`btn-base tnum h-12 w-12 text-sm ${
+                className={`btn-base tnum h-12 w-12 text-body ${
                   rpeValue === value ? 'btn-primary' : 'btn-secondary'
                 }`}
               >
@@ -188,7 +188,7 @@ export function EditSetDialog({
           <button
             type="button"
             onClick={onCancel}
-            className="h-12 flex-1 rounded-lg border border-line text-base font-semibold"
+            className="h-12 flex-1 rounded-lg border border-line btn-text font-semibold"
           >
             {t('set.edit.cancel')}
           </button>
@@ -196,7 +196,7 @@ export function EditSetDialog({
             type="button"
             onClick={submit}
             disabled={busy}
-            className="h-12 flex-1 rounded-lg bg-accent text-base font-bold text-accent-ink disabled:opacity-60"
+            className="h-12 flex-1 rounded-lg bg-accent btn-text font-bold text-accent-ink disabled:opacity-60"
           >
             {busy ? t('set.edit.saving') : t('set.edit.save')}
           </button>

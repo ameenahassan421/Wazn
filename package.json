@@ -10,6 +10,7 @@
     "check:deploy": "node scripts/deploy-check.mjs",
     "check:migrations": "python3 scripts/check_migrations.py",
     "check:sql": "bash scripts/check_sql.sh",
+    "check:type": "node scripts/check_type_ramp.mjs",
     "check:vercel": "node scripts/check_vercel_config.mjs",
     "dev": "vite",
     "eval:live": "tsx scripts/eval_live.ts",

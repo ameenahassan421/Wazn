@@ -51,7 +51,7 @@ function Row({
       className="flex min-h-12 items-center justify-between gap-3 py-3"
       style={last ? undefined : { borderBottom: '1px solid var(--divider-solid)' }}
     >
-      <p className="text-sm font-semibold">{label}</p>
+      <p className="text-label font-semibold">{label}</p>
       {children}
     </div>
   )
@@ -89,7 +89,7 @@ function Segmented<T extends string>({
             role="radio"
             aria-checked={live}
             onClick={() => onChange(id)}
-            className={`font-display px-3.5 py-2 text-xs font-bold ${
+            className={`font-display px-3.5 py-2 text-label font-bold ${
               live ? '' : 'text-muted'
             } ${className ?? ''}`}
             style={{
@@ -123,7 +123,7 @@ function LinkRow({
       className="flex min-h-12 w-full items-center justify-between gap-3 py-3 text-start"
       style={last ? undefined : { borderBottom: '1px solid var(--divider-solid)' }}
     >
-      <span className="text-sm font-semibold">{label}</span>
+      <span className="text-label font-semibold">{label}</span>
       <IconBack size={16} className="text-muted rotate-180" />
     </button>
   )
@@ -177,7 +177,7 @@ export function SettingsScreen({
           suppresses the header TITLE on Settings so the word is not said
           twice; the chevron half of that was missed. */}
       <div className="flex items-center gap-1">
-        <h1 className="font-display text-[19px] font-extrabold tracking-[-0.02em]">
+        <h1 className="font-display text-title font-extrabold tracking-[-0.02em]">
           {t('settings.title')}
         </h1>
       </div>
@@ -188,12 +188,12 @@ export function SettingsScreen({
           {name && (
             <p
               dir="auto"
-              className="font-display truncate text-[19px] font-extrabold tracking-[-0.02em]"
+              className="font-display truncate text-title font-extrabold tracking-[-0.02em]"
             >
               {name}
             </p>
           )}
-          <p className="meta-mono truncate text-xs text-muted">
+          <p className="meta-mono truncate text-meta text-muted">
             {/* One line, both facts, and each of them may be missing. */}
             {[email, joined && t('settings.since', { when: joined })]
               .filter(Boolean)
@@ -268,7 +268,7 @@ export function SettingsScreen({
             before it means anything, and the place to give it one is the mode
             selector on the Coach tab, which asks. A third chip here would set
             a mode that could not seed a single ghost. */}
-        <p className="mt-2 px-[18px] text-[12px] leading-[1.5] text-muted">
+        <p className="mt-2 px-[18px] text-body leading-[1.5] text-muted">
           {t('settings.coach.note')}
         </p>
       </div>
@@ -308,14 +308,14 @@ export function SettingsScreen({
         // tap minutes later signed you out. The queue survives that; the
         // session does not.
         onBlur={() => setConfirmSignOut(false)}
-        className={`flex min-h-12 items-center px-[18px] text-start text-sm font-semibold ${
+        className={`flex min-h-12 items-center px-[18px] text-start text-body font-semibold ${
           confirmSignOut ? 'text-accent' : 'text-muted'
         }`}
       >
         {confirmSignOut ? t('settings.signout.confirm') : t('settings.signout')}
       </button>
 
-      <p className="meta-mono mt-2 text-center text-[11px] text-muted">
+      <p className="meta-mono mt-2 text-center text-meta text-muted">
         <span dir="ltr">wazn {__APP_VERSION__}</span> · وزن
       </p>
     </div>

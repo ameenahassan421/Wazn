@@ -60,21 +60,21 @@ export function RoutineList({
         <button
           type="button"
           onClick={onGenerate}
-          className="btn-base btn-secondary h-12 px-4 text-sm"
+          className="btn-base btn-secondary h-12 px-4 text-body"
         >
           {t('routines.generate')}
         </button>
         <button
           type="button"
           onClick={onNew}
-          className="btn-base btn-secondary h-12 px-4 text-sm"
+          className="btn-base btn-secondary h-12 px-4 text-body"
         >
           {t('routines.new')}
         </button>
       </div>
 
       {routines.length === 0 ? (
-        <p className="text-sm text-muted">{t('routines.empty')}</p>
+        <p className="text-body text-muted">{t('routines.empty')}</p>
       ) : (
         <ul className="flex flex-col gap-2">
           {routines.map((routine) => {
@@ -91,7 +91,7 @@ export function RoutineList({
                     type="button"
                     onClick={() => onStart(routine)}
                     disabled={busyId !== null}
-                    className={`flex h-14 flex-1 items-center gap-2 overflow-hidden text-start text-[15px] font-medium ${
+                    className={`flex h-14 flex-1 items-center gap-2 overflow-hidden text-start row-title font-medium ${
                       busy ? 'text-accent-300' : ''
                     }`}
                   >
@@ -131,7 +131,7 @@ export function RoutineList({
                         onEdit(routine)
                       }}
                       disabled={busyId !== null}
-                      className="btn-base btn-quiet h-12 flex-1 text-sm"
+                      className="btn-base btn-quiet h-12 flex-1 text-body"
                     >
                       {t('routines.edit')}
                     </button>
@@ -142,7 +142,7 @@ export function RoutineList({
                         onDuplicate(routine)
                       }}
                       disabled={busyId !== null}
-                      className="btn-base btn-quiet h-12 flex-1 text-sm"
+                      className="btn-base btn-quiet h-12 flex-1 text-body"
                     >
                       {t('routines.duplicate')}
                     </button>
@@ -158,7 +158,7 @@ export function RoutineList({
                         }
                       }}
                       disabled={busyId !== null}
-                      className={`btn-base h-12 flex-1 text-sm ${
+                      className={`btn-base h-12 flex-1 text-body ${
                         confirmDelete === routine.id ? 'btn-primary' : 'btn-quiet'
                       }`}
                     >

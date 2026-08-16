@@ -2608,7 +2608,7 @@ export function LogScreen({
   )
 
   if (loading) {
-    return <p className="py-10 text-sm text-muted">{t('log.loading')}</p>
+    return <p className="py-10 text-body text-muted">{t('log.loading')}</p>
   }
 
   // Ahead of the empty state and the welcome screen, because both of them are
@@ -2616,7 +2616,7 @@ export function LogScreen({
   if (view === 'import') {
     return (
       <Suspense
-        fallback={<p className="py-10 text-sm text-muted">{t('log.loading')}</p>}
+        fallback={<p className="py-10 text-body text-muted">{t('log.loading')}</p>}
       >
         <HevyImport
           userId={userId}
@@ -2770,7 +2770,7 @@ export function LogScreen({
           />
         ) : (
           <div>
-            <p className="flex items-center gap-2 text-[13px] text-muted">
+            <p className="flex items-center gap-2 text-meta text-muted">
               {streak && streak.weeks > 0 && <StreakPlates weeks={streak.weeks} />}
               <span className="min-w-0 truncate">
                 {streak && streak.weeks > 0 ? (
@@ -2794,7 +2794,7 @@ export function LogScreen({
                 )}
               </span>
             </p>
-            <h1 className="font-display mt-2 text-[34px] leading-[1.12] font-extrabold tracking-[-0.03em]">
+            <h1 className="font-display mt-2 text-fig leading-[1.12] font-extrabold tracking-[-0.03em]">
               {formatWeekday(new Date(), locale)}.
             </h1>
           </div>
@@ -2962,7 +2962,7 @@ export function LogScreen({
           <button
             type="button"
             onClick={() => setView('import')}
-            className="btn-base btn-secondary h-12 w-full text-sm"
+            className="btn-base btn-secondary h-12 w-full text-body"
           >
             {t('log.import')}
           </button>
@@ -2999,7 +2999,7 @@ export function LogScreen({
             type="button"
             onClick={() => void startWorkout()}
             disabled={saving}
-            className="btn-base btn-hero press flex h-[58px] flex-1 items-center justify-center gap-2.5 text-[16px] font-bold disabled:opacity-45"
+            className="btn-base btn-hero press flex h-[58px] flex-1 items-center justify-center gap-2.5 btn-text font-bold disabled:opacity-45"
             style={{
               borderRadius: 'var(--radius-pill)',
               boxShadow: 'var(--shadow-cta)',
@@ -3049,7 +3049,7 @@ export function LogScreen({
           </button>
         )}
         <div className="min-w-0 flex-1">
-          <p className="flex items-center gap-2 text-[15px] font-medium">
+          <p className="flex items-center gap-2 text-title font-medium">
             <span
               aria-hidden="true"
               className="inline-block h-[7px] w-[7px] shrink-0 rounded-full bg-accent"
@@ -3060,7 +3060,7 @@ export function LogScreen({
               })}
             </span>
           </p>
-          <p className="tnum text-xs text-muted" dir="auto">
+          <p className="tnum text-meta text-muted" dir="auto">
             {formatDuration(workout.started_at, new Date().toISOString())} ·{' '}
             {sets.length} {sets.length === 1 ? t('log.set') : t('log.sets')}
           </p>
@@ -3085,7 +3085,7 @@ export function LogScreen({
             else setConfirmFinish(true)
           }}
           disabled={saving}
-          className={`btn-base h-12 px-4 text-sm disabled:opacity-45 ${
+          className={`btn-base h-12 px-4 text-body disabled:opacity-45 ${
             confirmFinish ? 'btn-primary' : 'btn-secondary'
           }`}
         >
@@ -3098,7 +3098,7 @@ export function LogScreen({
           to shoulder in the header is how a mis-tap deletes a session. */}
       {confirmFinish && (
         <div className="flex items-center gap-2">
-          <p className="min-w-0 flex-1 text-[11px] text-muted">
+          <p className="min-w-0 flex-1 text-label text-muted">
             {sets.length === 0 ? t('log.finish_hint_empty') : t('log.finish_hint')}
           </p>
           <button
@@ -3108,7 +3108,7 @@ export function LogScreen({
               else setConfirmDiscard(true)
             }}
             disabled={saving}
-            className={`btn-base h-12 shrink-0 px-3 text-[13px] disabled:opacity-45 ${
+            className={`btn-base h-12 shrink-0 px-3 text-label disabled:opacity-45 ${
               confirmDiscard ? 'btn-primary' : 'btn-quiet'
             }`}
           >
@@ -3210,7 +3210,7 @@ export function LogScreen({
       {view === 'overview' && (
         <>
           {blocks.length === 0 ? (
-            <p className="text-sm text-muted">{t('log.empty')}</p>
+            <p className="text-body text-muted">{t('log.empty')}</p>
           ) : (
             <WorkoutOverview
               blocks={blocks}
@@ -3300,7 +3300,7 @@ export function LogScreen({
           <button
             type="button"
             onClick={() => setView('picker')}
-            className="btn-base btn-secondary h-[54px] w-full text-[15px]"
+            className="btn-base btn-secondary h-[54px] w-full btn-text"
           >
             {t('log.add_exercise')}
           </button>
@@ -3429,7 +3429,7 @@ function SyncNote({
         ? t('log.sync.offline')
         : t('log.sync.cached')
   return (
-    <p className="tnum text-xs text-muted" aria-live="polite" data-testid="sync-note">
+    <p className="tnum text-meta text-muted" aria-live="polite" data-testid="sync-note">
       {label}
     </p>
   )
@@ -3444,7 +3444,7 @@ function SyncNote({
 function CachedNote({ savedAt }: { savedAt: number }) {
   const { t } = useLocale()
   return (
-    <p className="text-xs text-muted" aria-live="polite" data-testid="cached-note">
+    <p className="text-meta text-muted" aria-live="polite" data-testid="cached-note">
       {t('log.cache.prefix')} <span className="tnum">{formatSyncedAt(savedAt)}</span>
     </p>
   )
@@ -3454,7 +3454,7 @@ function ErrorNote({ message }: { message: string }) {
   return (
     <p
       role="alert"
-      className="ring-edge border border-accent px-3 py-2 text-sm text-accent-300"
+      className="ring-edge border border-accent px-3 py-2 text-body text-accent-300"
       style={{ borderRadius: 'var(--radius-md)' }}
     >
       {message}

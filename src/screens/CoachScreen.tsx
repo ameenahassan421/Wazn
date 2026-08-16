@@ -238,7 +238,7 @@ function NotesCard({
               setForce(true)
               setReload((n) => n + 1)
             }}
-            className="btn-base btn-quiet h-9 px-2 text-[13px] disabled:opacity-45"
+            className="btn-base btn-quiet h-9 px-2 text-label disabled:opacity-45"
           >
             {t('coach.regenerate')}
           </button>
@@ -246,7 +246,7 @@ function NotesCard({
       </div>
 
       {state === 'loading' && (
-        <p className="text-sm text-muted">{t('coach.loading.body')}</p>
+        <p className="text-body text-muted">{t('coach.loading.body')}</p>
       )}
 
       {/* A failure gets a way out, not just a sentence. The Regenerate
@@ -257,14 +257,14 @@ function NotesCard({
           produced nothing, so re-asking must not spend a regeneration. */}
       {state === 'failed' && (
         <div className="flex flex-col items-start gap-3">
-          <p className="text-sm text-muted">{message}</p>
+          <p className="text-body text-muted">{message}</p>
           <button
             type="button"
             onClick={() => {
               setState('loading')
               setReload((n) => n + 1)
             }}
-            className="btn-base btn-secondary h-12 px-4 text-sm"
+            className="btn-base btn-secondary h-12 px-4 text-body"
           >
             {t('coach.retry')}
           </button>
@@ -272,7 +272,7 @@ function NotesCard({
       )}
 
       {state === 'ready' && notes && !notes.review && !notes.insights?.length && (
-        <p className="text-sm text-muted">
+        <p className="text-body text-muted">
           {notes.degraded ? t('coach.quiet') : t('coach.empty')}
         </p>
       )}
@@ -304,14 +304,14 @@ function NotesCard({
                   />
                 )}
                 <div className="flex gap-2.5">
-                  <span className="tnum shrink-0 font-mono text-xs text-accent-300">
+                  <span className="tnum shrink-0 font-mono text-meta text-accent-300">
                     {i + 1}
                   </span>
                   <div className="min-w-0 flex-1">
-                    <p className="text-[15px] font-semibold leading-snug">
+                    <p className="row-title font-semibold leading-snug">
                       {insight.title}
                     </p>
-                    <p className="mt-1 text-[13px] text-muted">{insight.body}</p>
+                    <p className="mt-1 text-body text-muted">{insight.body}</p>
                     {insight.chip && (
                       <span className="chip-data mt-2">{insight.chip}</span>
                     )}
@@ -324,7 +324,7 @@ function NotesCard({
       )}
 
       {state === 'ready' && (
-        <p className="mt-3 text-[11px] text-muted">
+        <p className="mt-3 text-meta text-muted">
           {notes?.generatedAt &&
             t('coach.as_of', { date: formatWorkoutDate(notes.generatedAt) })}
           {/* Only once the count is a thing the reader is actually managing.
@@ -408,7 +408,7 @@ function Review({
     return (
       <div>
         {review.headline && (
-          <p className="text-[17px] font-semibold leading-snug">{review.headline}</p>
+          <p className="text-title font-semibold leading-snug">{review.headline}</p>
         )}
         <ol className="mt-3 flex flex-col">
           {REVIEW_SECTIONS.map((key, i) => {
@@ -429,8 +429,8 @@ function Review({
                   <p
                     className={`mt-1 leading-snug ${
                       isRecommendation
-                        ? 'text-[15px] font-medium'
-                        : 'text-[13px] text-muted'
+                        ? 'text-body font-medium'
+                        : 'text-body text-muted'
                     }`}
                   >
                     {section.line}
@@ -450,7 +450,7 @@ function Review({
   return (
     <div className="flex flex-col gap-3">
       {review.headline && (
-        <p className="text-[17px] leading-snug font-semibold">{review.headline}</p>
+        <p className="text-title leading-snug font-semibold">{review.headline}</p>
       )}
 
       {recommendation?.line && (
@@ -482,12 +482,12 @@ function Review({
             >
               <span
                 dir="ltr"
-                className="tnum shrink-0 font-mono text-[11px] text-accent-300"
+                className="tnum shrink-0 font-mono text-meta text-accent-300"
               >
                 {String(i + 1).padStart(2, '0')}
               </span>
               <div className="flex min-w-0 flex-col items-start gap-1.5">
-                <p className="text-[15px] leading-snug font-semibold">{section.line}</p>
+                <p className="text-body leading-snug font-semibold">{section.line}</p>
                 {section.chip && (
                   <span dir="ltr" className="chip-data tnum">
                     {section.chip}
@@ -547,7 +547,7 @@ function WeekReviewCard({
       <h3 id="week-review-kicker" className="kicker">
         {t('coach.week_review')}
       </h3>
-      <p className="text-[14px] leading-[1.5]">{line}</p>
+      <p className="text-body leading-[1.5]">{line}</p>
       {chip && (
         <span dir="ltr" className="chip-data tnum">
           {chip}
@@ -558,7 +558,7 @@ function WeekReviewCard({
         <button
           type="button"
           onClick={onApply}
-          className="btn-base btn-hero press h-11 flex-1 text-[15px]"
+          className="btn-base btn-hero press h-11 flex-1 btn-text"
           style={{ borderRadius: 10 }}
         >
           {t('coach.apply_week')}
@@ -567,7 +567,7 @@ function WeekReviewCard({
           type="button"
           onClick={() => setAdjusting((open) => !open)}
           aria-expanded={adjusting}
-          className="btn-base btn-secondary press h-11 flex-1 text-[15px]"
+          className="btn-base btn-secondary press h-11 flex-1 btn-text"
           style={{ borderRadius: 10 }}
         >
           {t('coach.adjust')}
@@ -576,18 +576,18 @@ function WeekReviewCard({
 
       {adjusting && (
         <div className="flex w-full items-center gap-2">
-          <span className="flex-1 text-[13px] text-muted">{t('coach.target')}</span>
+          <span className="flex-1 text-label text-muted">{t('coach.target')}</span>
           <button
             type="button"
             aria-label={t('coach.target.fewer')}
             onClick={() => onWeeklyTarget(weeklyTarget - 1)}
-            className="btn-base btn-secondary h-12 w-12 text-lg"
+            className="btn-base btn-secondary h-12 w-12 text-num"
           >
             −
           </button>
           <span
             dir="ltr"
-            className="font-display tnum w-8 text-center text-[15px] font-medium"
+            className="font-display tnum w-8 text-center text-body font-medium"
           >
             {weeklyTarget}
           </span>
@@ -595,7 +595,7 @@ function WeekReviewCard({
             type="button"
             aria-label={t('coach.target.more')}
             onClick={() => onWeeklyTarget(weeklyTarget + 1)}
-            className="btn-base btn-secondary h-12 w-12 text-lg"
+            className="btn-base btn-secondary h-12 w-12 text-num"
           >
             +
           </button>
@@ -684,7 +684,7 @@ function RoutineBuilder({ onSaved }: { onSaved: () => void }) {
       {error && (
         <p
           role="alert"
-          className="mb-2.5 border border-accent px-3 py-2 text-sm text-accent-300"
+          className="mb-2.5 border border-accent px-3 py-2 text-body text-accent-300"
           style={{ borderRadius: 'var(--radius-md)' }}
         >
           {error}
@@ -729,7 +729,7 @@ function RoutineBuilder({ onSaved }: { onSaved: () => void }) {
         type="button"
         onClick={() => void generate()}
         disabled={busy}
-        className="btn-base btn-hero mt-1 h-[60px] w-full text-[17px] disabled:opacity-45"
+        className="btn-base btn-hero mt-1 h-[60px] w-full btn-text disabled:opacity-45"
       >
         {busy ? t('coach.building') : t('coach.generate')}
       </button>
@@ -756,7 +756,7 @@ function ChipRow({
             type="button"
             aria-pressed={on}
             onClick={() => onChange(o.id)}
-            className={`btn-base h-12 px-4 text-sm ${on ? 'btn-primary' : 'btn-secondary'}`}
+            className={`btn-base h-12 px-4 text-body ${on ? 'btn-primary' : 'btn-secondary'}`}
           >
             {o.label}
           </button>
@@ -787,7 +787,7 @@ function RoutinePreviewScreen({
       {error && (
         <p
           role="alert"
-          className="border border-accent px-3 py-2 text-sm text-accent-300"
+          className="border border-accent px-3 py-2 text-body text-accent-300"
           style={{ borderRadius: 'var(--radius-md)' }}
         >
           {error}
@@ -800,14 +800,14 @@ function RoutinePreviewScreen({
           className="ring-edge bg-surface px-3 py-2.5"
           style={{ borderRadius: 'var(--radius-md)' }}
         >
-          <p className="text-[15px] font-medium">{day.name}</p>
+          <p className="text-title font-medium">{day.name}</p>
           <ul className="mt-1.5 flex flex-col">
             {day.exercises.map((e, i) => (
               <li key={e.id}>
                 {i > 0 && <div className="rule-solid" />}
                 <div className="flex items-center gap-3 py-1.5">
-                  <span className="min-w-0 flex-1 truncate text-sm">{e.name}</span>
-                  <span className="tnum shrink-0 font-mono text-[13px] text-muted">
+                  <span className="min-w-0 flex-1 truncate row-title">{e.name}</span>
+                  <span className="tnum shrink-0 font-mono text-meta text-muted">
                     {e.sets} × {e.reps}
                   </span>
                 </div>
@@ -818,7 +818,7 @@ function RoutinePreviewScreen({
       ))}
 
       {plan.droppedExercises.length > 0 && (
-        <p className="text-[11px] text-muted">
+        <p className="text-label text-muted">
           {t(
             plan.droppedExercises.length === 1
               ? 'coach.dropped.one'
@@ -832,7 +832,7 @@ function RoutinePreviewScreen({
         type="button"
         onClick={onSave}
         disabled={busy}
-        className="btn-base btn-hero h-[60px] w-full text-[17px] disabled:opacity-45"
+        className="btn-base btn-hero h-[60px] w-full btn-text disabled:opacity-45"
       >
         {busy
           ? t('coach.preview.saving')
@@ -842,11 +842,11 @@ function RoutinePreviewScreen({
         type="button"
         onClick={onAdjust}
         disabled={busy}
-        className="btn-base btn-secondary h-12 w-full text-sm disabled:opacity-45"
+        className="btn-base btn-secondary h-12 w-full text-body disabled:opacity-45"
       >
         {t('coach.preview.adjust')}
       </button>
-      <p className="text-[11px] text-muted">{t('coach.preview.helper')}</p>
+      <p className="text-label text-muted">{t('coach.preview.helper')}</p>
     </section>
   )
 }

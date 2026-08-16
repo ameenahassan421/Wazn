@@ -69,7 +69,7 @@ export function TellCoachSheet({
             existing string rather than anything composed here — the coach
             never diagnoses, so it never phrases. */}
         {edit.kind === 'ease-load' && edit.nonMedical && (
-          <p className="mt-3 text-[12px] text-muted">{t('tell.non_medical')}</p>
+          <p className="mt-3 text-label text-muted">{t('tell.non_medical')}</p>
         )}
 
         <div className="mt-4 flex gap-2">
@@ -79,7 +79,7 @@ export function TellCoachSheet({
               onAccept(edit)
               onClose()
             }}
-            className="btn-base btn-hero press h-12 flex-1 text-[15px]"
+            className="btn-base btn-hero press h-12 flex-1 btn-text"
             style={{ borderRadius: 10 }}
           >
             {t('tell.accept')}
@@ -87,7 +87,7 @@ export function TellCoachSheet({
           <button
             type="button"
             onClick={onClose}
-            className="btn-base btn-secondary press h-12 flex-1 text-[15px]"
+            className="btn-base btn-secondary press h-12 flex-1 btn-text"
             style={{ borderRadius: 10 }}
           >
             {t('tell.keep')}
@@ -114,7 +114,7 @@ export function TellCoachSheet({
             className="press flex h-12 items-center"
           >
             <span
-              className="grid h-8 place-items-center px-3 text-[13px]"
+              className="grid h-8 place-items-center px-3 text-label"
               style={{ borderRadius: 16, border: '1px solid var(--color-line)' }}
             >
               {t(CHIP_KEY[chip])}
@@ -138,12 +138,12 @@ export function TellCoachSheet({
           value={text}
           onChange={(event) => setText(event.target.value)}
           placeholder={t('tell.placeholder')}
-          className="h-12 min-w-0 flex-1 border border-line bg-ink px-3 text-[13px] outline-none placeholder:text-muted focus:border-accent"
+          className="h-12 min-w-0 flex-1 border border-line bg-ink px-3 field-text outline-none placeholder:text-muted focus:border-accent"
           style={{ borderRadius: 'var(--radius-md)' }}
         />
         <button
           type="submit"
-          className="btn-base btn-secondary h-12 shrink-0 px-4 text-[13px]"
+          className="btn-base btn-secondary h-12 shrink-0 px-4 text-label"
         >
           {t('tell.send')}
         </button>
@@ -170,10 +170,10 @@ function Proposal({
     case 'ease-load':
       return (
         <>
-          <p dir="auto" className="mt-2 text-[15px] font-semibold">
+          <p dir="auto" className="mt-2 text-title font-semibold">
             {exerciseName}
           </p>
-          <p className="mt-1 text-[14px] leading-[1.5] text-muted">
+          <p className="mt-1 text-body leading-[1.5] text-muted">
             {t('tell.ease.body')}
           </p>
           <span dir="ltr" className="chip-data tnum mt-2.5">
@@ -184,10 +184,10 @@ function Proposal({
     case 'trim':
       return (
         <>
-          <p dir="auto" className="mt-2 text-[15px] font-semibold">
+          <p dir="auto" className="mt-2 text-title font-semibold">
             {exerciseName}
           </p>
-          <p className="mt-1 text-[14px] leading-[1.5] text-muted">
+          <p className="mt-1 text-body leading-[1.5] text-muted">
             {t('tell.trim.body')}
           </p>
           <span dir="ltr" className="chip-data tnum mt-2.5">
@@ -201,10 +201,10 @@ function Proposal({
     case 'swap':
       return (
         <>
-          <p dir="auto" className="mt-2 text-[15px] font-semibold">
+          <p dir="auto" className="mt-2 text-title font-semibold">
             {exerciseName}
           </p>
-          <p className="mt-1 text-[14px] leading-[1.5] text-muted">
+          <p className="mt-1 text-body leading-[1.5] text-muted">
             {t('tell.swap.body')}
           </p>
         </>
@@ -212,16 +212,16 @@ function Proposal({
     case 'note':
       return (
         <>
-          <p dir="auto" className="mt-2 text-[15px] font-semibold">
+          <p dir="auto" className="mt-2 text-title font-semibold">
             {exerciseName}
           </p>
-          <p className="mt-1 text-[14px] leading-[1.5] text-muted">
+          <p className="mt-1 text-body leading-[1.5] text-muted">
             {t('tell.note.body')}
           </p>
           {/* The lifter's own words, echoed. The one string on this surface
               that is not from the catalogue — and it is theirs, not ours. */}
           {edit.text && (
-            <p dir="auto" className="mt-2 text-[14px] italic">
+            <p dir="auto" className="mt-2 text-body italic">
               “{edit.text}”
             </p>
           )}

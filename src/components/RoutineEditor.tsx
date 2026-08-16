@@ -158,7 +158,7 @@ export function RoutineEditor({
           >
             <IconBack />
           </button>
-          <h2 className="flex-1 truncate text-base font-semibold">
+          <h2 className="flex-1 truncate text-title font-semibold">
             {t('editor.swap.title', { name: current?.name ?? '' })}
           </h2>
         </div>
@@ -175,11 +175,11 @@ export function RoutineEditor({
                 >
                   <ExerciseThumb exercise={exercise} />
                   <span className="flex flex-1 flex-col gap-0.5 overflow-hidden">
-                    <span className="truncate text-base">{exercise.name}</span>
+                    <span className="truncate row-title">{exercise.name}</span>
                     {/* The reason travels with the suggestion. No claim
                         without the figure beside it — doctrine 1, applied to
                         a ranking rather than a sentence. */}
-                    <span className="chip-tint w-fit px-1.5 py-0.5 font-mono text-[11px] text-accent-300">
+                    <span className="chip-tint w-fit px-1.5 py-0.5 font-mono text-meta text-accent-300">
                       {reason}
                     </span>
                   </span>
@@ -188,7 +188,7 @@ export function RoutineEditor({
             ))}
           </ul>
         ) : (
-          <p className="text-sm text-muted">{t('editor.swap.none')}</p>
+          <p className="text-body text-muted">{t('editor.swap.none')}</p>
         )}
 
         <button
@@ -196,7 +196,7 @@ export function RoutineEditor({
           onClick={() => {
             setPicking(true)
           }}
-          className="btn-base btn-secondary h-12 w-full text-sm"
+          className="btn-base btn-secondary h-12 w-full text-body"
         >
           {t('editor.swap.search')}
         </button>
@@ -230,13 +230,13 @@ export function RoutineEditor({
         >
           <IconBack />
         </button>
-        <h2 className="flex-1 text-base font-semibold">
+        <h2 className="flex-1 text-title font-semibold">
           {routine ? t('editor.title.edit') : t('editor.title.new')}
         </h2>
       </div>
 
       <div>
-        <label htmlFor="routine-name" className="text-xs text-muted">
+        <label htmlFor="routine-name" className="text-label text-muted">
           {t('editor.name')}
         </label>
         <input
@@ -244,12 +244,12 @@ export function RoutineEditor({
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder={t('editor.name.placeholder')}
-          className="h-12 w-full rounded-lg border border-line bg-surface px-3 text-start text-base outline-none placeholder:text-muted focus:border-accent"
+          className="h-12 w-full rounded-lg border border-line bg-surface px-3 text-start field-text outline-none placeholder:text-muted focus:border-accent"
         />
       </div>
 
       {items.length > 0 && (
-        <p className="text-[11px] text-muted">{t('editor.weight_hint')}</p>
+        <p className="text-label text-muted">{t('editor.weight_hint')}</p>
       )}
 
       {items.length > 0 && (
@@ -263,14 +263,14 @@ export function RoutineEditor({
               >
                 <div className="flex items-center gap-3">
                   {exercise && <ExerciseThumb exercise={exercise} />}
-                  <span className="flex-1 truncate text-base">
+                  <span className="flex-1 truncate row-title">
                     {exercise?.name ?? t('editor.exercise_fallback')}
                   </span>
                   <button
                     type="button"
                     onClick={() => move(index, -1)}
                     aria-label={t('editor.move_up')}
-                    className="h-12 w-10 rounded-md border border-line text-sm"
+                    className="h-12 w-10 rounded-md border border-line text-body"
                   >
                     ↑
                   </button>
@@ -278,7 +278,7 @@ export function RoutineEditor({
                     type="button"
                     onClick={() => move(index, 1)}
                     aria-label={t('editor.move_down')}
-                    className="h-12 w-10 rounded-md border border-line text-sm"
+                    className="h-12 w-10 rounded-md border border-line text-body"
                   >
                     ↓
                   </button>
@@ -288,14 +288,14 @@ export function RoutineEditor({
                     aria-label={t('editor.remove', {
                       name: exercise?.name ?? t('editor.exercise_fallback'),
                     })}
-                    className="h-12 w-10 rounded-md px-1 text-sm text-muted"
+                    className="h-12 w-10 rounded-md px-1 text-body text-muted"
                   >
                     ×
                   </button>
                 </div>
 
                 <div className="mt-2 flex items-center gap-2">
-                  <label className="text-xs text-muted" htmlFor={`sets-${index}`}>
+                  <label className="text-label text-muted" htmlFor={`sets-${index}`}>
                     Sets
                   </label>
                   <input
@@ -307,9 +307,9 @@ export function RoutineEditor({
                     onChange={(e) =>
                       setSetCount(index, Number.parseInt(e.target.value, 10))
                     }
-                    className="tnum h-12 w-16 rounded-md border border-line bg-ink px-2 text-start text-base outline-none focus:border-accent"
+                    className="tnum h-12 w-16 rounded-md border border-line bg-ink px-2 text-start field-text outline-none focus:border-accent"
                   />
-                  <label className="text-xs text-muted" htmlFor={`reps-${index}`}>
+                  <label className="text-label text-muted" htmlFor={`reps-${index}`}>
                     Reps
                   </label>
                   <input
@@ -320,7 +320,7 @@ export function RoutineEditor({
                     value={item.sets[0]?.reps ?? ''}
                     onChange={(e) => setReps(index, e.target.value)}
                     placeholder="—"
-                    className="tnum h-12 w-16 rounded-md border border-line bg-ink px-2 text-start text-base outline-none placeholder:text-muted focus:border-accent"
+                    className="tnum h-12 w-16 rounded-md border border-line bg-ink px-2 text-start field-text outline-none placeholder:text-muted focus:border-accent"
                   />
                   {/* Row two, not row one. Adding a sixth control beside the
                       name truncated it to "Lat Pu…" and "Trice…" on a 390px
@@ -334,7 +334,7 @@ export function RoutineEditor({
                     aria-label={t('editor.swap.title', {
                       name: exercise?.name ?? t('editor.exercise_fallback'),
                     })}
-                    className="btn-base btn-secondary press ms-auto h-12 px-3 text-[13px]"
+                    className="btn-base btn-secondary press ms-auto h-12 px-3 text-label"
                   >
                     {t('editor.swap')}
                   </button>
@@ -348,13 +348,13 @@ export function RoutineEditor({
       <button
         type="button"
         onClick={() => setPicking(true)}
-        className="h-12 w-full rounded-lg border border-line text-base font-semibold"
+        className="h-12 w-full rounded-lg border border-line btn-text font-semibold"
       >
         {t('editor.add_exercise')}
       </button>
 
       {error && (
-        <p role="alert" className="text-sm text-accent-300">
+        <p role="alert" className="text-body text-accent-300">
           {error}
         </p>
       )}
@@ -363,7 +363,7 @@ export function RoutineEditor({
         type="button"
         onClick={submit}
         disabled={saving}
-        className="h-12 w-full rounded-lg bg-accent text-base font-bold text-accent-ink disabled:opacity-60"
+        className="h-12 w-full rounded-lg bg-accent btn-text font-bold text-accent-ink disabled:opacity-60"
       >
         {saving ? t('editor.saving') : t('editor.save')}
       </button>

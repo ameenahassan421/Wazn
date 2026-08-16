@@ -110,14 +110,15 @@ export function FriendsScreen({ userId }: { userId: string }) {
     }
   }, [userId, reloadToken])
 
-  if (loading) return <p className="py-10 text-sm text-muted">{t('friends.loading')}</p>
+  if (loading)
+    return <p className="py-10 text-body text-muted">{t('friends.loading')}</p>
 
   return (
     <div className="flex flex-col gap-4 py-3">
       {error && (
         <p
           role="alert"
-          className="ring-edge border border-accent px-3 py-2 text-sm text-accent-300"
+          className="ring-edge border border-accent px-3 py-2 text-body text-accent-300"
           style={{ borderRadius: 'var(--radius-md)' }}
         >
           {error}
@@ -135,7 +136,7 @@ export function FriendsScreen({ userId }: { userId: string }) {
             >
               <IconBack size={20} />
             </button>
-            <h2 className="flex-1 text-base font-medium">{t('friends.you')}</h2>
+            <h2 className="flex-1 text-title font-medium">{t('friends.you')}</h2>
           </div>
           <You
             userId={userId}
@@ -152,7 +153,7 @@ export function FriendsScreen({ userId }: { userId: string }) {
             <button
               type="button"
               onClick={() => setPanel('you')}
-              className="btn-base btn-quiet h-10 px-3 text-[13px]"
+              className="btn-base btn-quiet h-10 px-3 text-label"
             >
               You
             </button>
@@ -241,7 +242,7 @@ function Feed({
     return (
       <section>
         <h2 className="kicker mb-2">{t('friends.feed')}</h2>
-        <p className="text-sm text-muted">
+        <p className="text-body text-muted">
           {following === 0
             ? t('friends.feed.empty.nobody')
             : t('friends.feed.empty.pending')}
@@ -250,7 +251,7 @@ function Feed({
           <button
             type="button"
             onClick={onInvite}
-            className="btn-base btn-hero mt-3 h-[60px] w-full text-[17px]"
+            className="btn-base btn-hero mt-3 h-[60px] w-full btn-text"
           >
             {t('friends.feed.invite')}
           </button>
@@ -276,11 +277,11 @@ function Feed({
             <div className="flex items-center gap-2.5">
               <InitialTile name={nameOf(row)} />
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-semibold">
+                <p className="truncate row-title font-semibold">
                   {nameOf(row)}
                   {row.name?.trim() ? ` · ${row.name.trim()}` : ''}
                 </p>
-                <p className="text-[11px] text-muted">
+                <p className="text-meta text-muted">
                   {formatRelativeDay(row.started_at, locale)}
                 </p>
               </div>
@@ -317,7 +318,7 @@ function Feed({
             {/* The fact line quotes the session's best moment — computed in
                 SQL, never phrased by a model, and never per-set data. */}
             {row.best_record_name && row.best_record_e1rm_kg !== null && (
-              <p className="mt-2.5 text-[13px] text-accent-300">
+              <p className="mt-2.5 text-body text-accent-300">
                 {t('friends.feed.new_e1rm', {
                   name: row.best_record_name,
                   weight: formatWeight(row.best_record_e1rm_kg, unit),
@@ -338,7 +339,7 @@ function Feed({
             >
               <IconHeart size={20} filled={like.liked} />
               {like.count > 0 && (
-                <span className="tnum font-mono text-[13px]">{like.count}</span>
+                <span className="tnum font-mono text-meta">{like.count}</span>
               )}
             </button>
           </article>
@@ -351,10 +352,10 @@ function Feed({
 function FeedStat({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex min-w-0 flex-1 flex-col items-center gap-0.5 px-1">
-      <span className="tnum font-display truncate text-[17px] font-medium leading-none">
+      <span className="tnum font-display truncate text-num font-medium leading-none">
         {value}
       </span>
-      <span className="text-[11px] text-muted">{label}</span>
+      <span className="text-label text-muted">{label}</span>
     </div>
   )
 }
@@ -372,7 +373,7 @@ function Leaderboard({ rows, unit }: { rows: LeaderRow[]; unit: 'lbs' | 'kg' }) 
       <span aria-hidden="true" className="knurl block h-[6px] w-full" />
       <div className="px-3 py-2.5">
         {rows.length <= 1 ? (
-          <p className="text-sm text-muted">{t('friends.leaderboard.empty')}</p>
+          <p className="text-body text-muted">{t('friends.leaderboard.empty')}</p>
         ) : (
           <ol>
             {rows.map((row, i) => (
@@ -386,19 +387,19 @@ function Leaderboard({ rows, unit }: { rows: LeaderRow[]; unit: 'lbs' | 'kg' }) 
                   }`}
                 >
                   <span
-                    className={`tnum w-4 shrink-0 font-mono text-xs ${
+                    className={`tnum w-4 shrink-0 font-mono text-meta ${
                       row.is_me ? 'text-accent-300' : 'text-muted'
                     }`}
                   >
                     {i + 1}
                   </span>
-                  <span className="min-w-0 flex-1 truncate text-sm font-medium">
+                  <span className="min-w-0 flex-1 truncate row-title font-medium">
                     {row.is_me ? t('friends.leaderboard.you') : nameOf(row)}
                   </span>
-                  <span className="tnum font-display shrink-0 text-[15px] font-medium">
+                  <span className="tnum font-display shrink-0 text-body font-medium">
                     {formatVolume(row.volume_kg, unit)}
                   </span>
-                  <span className="tnum w-16 shrink-0 text-end text-[11px] text-muted">
+                  <span className="tnum w-16 shrink-0 text-end text-meta text-muted">
                     {t(
                       row.session_count === 1
                         ? 'friends.leaderboard.sessions.one'
@@ -549,12 +550,12 @@ function You({
                     : undefined,
               }}
             >
-              <span className="text-sm font-medium">{t(v.labelKey)}</span>
-              <span className="mt-0.5 text-[13px] text-muted">{t(v.blurbKey)}</span>
+              <span className="text-title font-medium">{t(v.labelKey)}</span>
+              <span className="mt-0.5 text-label text-muted">{t(v.blurbKey)}</span>
             </button>
           ))}
         </div>
-        <p className="mt-2 text-[11px] text-muted">{t('friends.visibility.note')}</p>
+        <p className="mt-2 text-label text-muted">{t('friends.visibility.note')}</p>
       </section>
 
       <section>
@@ -575,19 +576,19 @@ function You({
             autoCapitalize="none"
             autoCorrect="off"
             spellCheck={false}
-            className="ring-edge h-12 min-w-0 flex-1 bg-surface px-3 text-base"
+            className="ring-edge h-12 min-w-0 flex-1 bg-surface px-3 field-text"
             style={{ borderRadius: 'var(--radius-md)' }}
           />
           <button
             type="button"
             onClick={() => void saveUsername()}
             disabled={busy || !username.trim()}
-            className="btn-base btn-secondary h-12 px-4 text-sm disabled:opacity-45"
+            className="btn-base btn-secondary h-12 px-4 text-body disabled:opacity-45"
           >
             {saved ? t('friends.username.saved') : t('friends.username.save')}
           </button>
         </div>
-        <p className="mt-1 text-[11px] text-muted">{t('friends.username.hint')}</p>
+        <p className="mt-1 text-label text-muted">{t('friends.username.hint')}</p>
       </section>
 
       <section>
@@ -603,14 +604,14 @@ function You({
             autoCapitalize="none"
             autoCorrect="off"
             spellCheck={false}
-            className="ring-edge h-12 min-w-0 flex-1 bg-surface px-3 text-base"
+            className="ring-edge h-12 min-w-0 flex-1 bg-surface px-3 field-text"
             style={{ borderRadius: 'var(--radius-md)' }}
           />
           <button
             type="button"
             onClick={() => void doFollow()}
             disabled={busy || !followName.trim()}
-            className="btn-base btn-secondary h-12 px-4 text-sm disabled:opacity-45"
+            className="btn-base btn-secondary h-12 px-4 text-body disabled:opacity-45"
           >
             {t('friends.follow.button')}
           </button>
@@ -620,20 +621,20 @@ function You({
       <section>
         <h2 className="kicker mb-2">{t('friends.invite.title')}</h2>
         {!shareable ? (
-          <p className="text-sm text-muted">{t('friends.invite.not_shareable')}</p>
+          <p className="text-body text-muted">{t('friends.invite.not_shareable')}</p>
         ) : !invite ? (
           <button
             type="button"
             onClick={() => void makeInvite()}
             disabled={busy}
-            className="btn-base btn-secondary h-12 px-4 text-sm disabled:opacity-45"
+            className="btn-base btn-secondary h-12 px-4 text-body disabled:opacity-45"
           >
             {t('friends.invite.get_link')}
           </button>
         ) : (
           <>
             <p
-              className="ring-edge break-all bg-surface px-3 py-2 font-mono text-[13px]"
+              className="ring-edge break-all bg-surface px-3 py-2 font-mono text-meta"
               style={{ borderRadius: 'var(--radius-md)' }}
             >
               {invite}
@@ -641,7 +642,7 @@ function You({
             <button
               type="button"
               onClick={() => void copyInvite()}
-              className="btn-base btn-secondary mt-2 h-12 px-4 text-sm"
+              className="btn-base btn-secondary mt-2 h-12 px-4 text-body"
             >
               {copied ? t('friends.invite.copied') : t('friends.invite.share')}
             </button>
@@ -660,7 +661,7 @@ function You({
               <li key={p.id}>
                 {i > 0 && <div className="rule-fade" />}
                 <div className="flex items-center gap-3 py-2">
-                  <span className="min-w-0 flex-1 truncate text-sm">{nameOf(p)}</span>
+                  <span className="min-w-0 flex-1 truncate row-title">{nameOf(p)}</span>
                   <button
                     type="button"
                     disabled={busy}
@@ -675,7 +676,7 @@ function You({
                           ),
                         )
                     }
-                    className="btn-base btn-quiet h-12 px-3 text-[13px]"
+                    className="btn-base btn-quiet h-12 px-3 text-label"
                   >
                     {t('friends.unfollow')}
                   </button>
@@ -723,7 +724,7 @@ function SignOut() {
           if (armed) void supabase.auth.signOut()
           else setArmed(true)
         }}
-        className={`btn-base h-12 w-full px-4 text-sm ${
+        className={`btn-base h-12 w-full px-4 text-body ${
           armed ? 'btn-primary' : 'btn-secondary'
         }`}
       >

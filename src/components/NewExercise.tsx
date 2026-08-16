@@ -57,13 +57,13 @@ export function NewExercise({
         >
           <IconBack size={20} />
         </button>
-        <h2 className="flex-1 text-base font-medium">{t('exercise.new.title')}</h2>
+        <h2 className="flex-1 text-title font-medium">{t('exercise.new.title')}</h2>
       </div>
 
       {error && (
         <p
           role="alert"
-          className="ring-edge border border-accent px-3 py-2 text-sm text-accent-300"
+          className="ring-edge border border-accent px-3 py-2 text-body text-accent-300"
           style={{ borderRadius: 'var(--radius-md)' }}
         >
           {error}
@@ -86,7 +86,7 @@ export function NewExercise({
         type="button"
         onClick={() => void submit()}
         disabled={busy || name.trim().length < 2}
-        className="btn-base btn-hero h-[60px] w-full text-[17px] disabled:opacity-45"
+        className="btn-base btn-hero h-[60px] w-full btn-text disabled:opacity-45"
       >
         {busy ? t('exercise.new.adding') : t('exercise.new.add')}
       </button>

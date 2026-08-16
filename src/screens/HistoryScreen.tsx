@@ -417,14 +417,15 @@ export function HistoryScreen({ onStart }: { onStart: () => void }) {
     }))
   }
 
-  if (loading) return <p className="py-10 text-sm text-muted">{t('chrome.loading')}</p>
+  if (loading)
+    return <p className="py-10 text-body text-muted">{t('chrome.loading')}</p>
 
   return (
     <div className="flex flex-col gap-3 py-3">
       {error && (
         <p
           role="alert"
-          className="border border-accent px-3 py-2 text-sm text-accent-300"
+          className="border border-accent px-3 py-2 text-body text-accent-300"
           style={{ borderRadius: 'var(--radius-md)' }}
         >
           {error}
@@ -441,16 +442,16 @@ export function HistoryScreen({ onStart }: { onStart: () => void }) {
            way to get it is the emptiest kind. */
         <div className="flex flex-col items-center px-4 py-14 text-center">
           <PlateSilhouette size={120} className="text-text opacity-[0.14]" />
-          <h2 className="font-display mt-7 text-[26px] font-extrabold tracking-[-0.03em]">
+          <h2 className="font-display mt-7 text-fig font-extrabold tracking-[-0.03em]">
             {t('history.empty')}
           </h2>
-          <p className="mt-2.5 max-w-[280px] text-sm leading-relaxed text-muted">
+          <p className="mt-2.5 max-w-[280px] text-body leading-relaxed text-muted">
             {t('history.empty.body')}
           </p>
           <button
             type="button"
             onClick={onStart}
-            className="btn-base btn-hero press mt-7 flex h-[52px] items-center justify-center gap-2.5 px-7 text-[15px] font-bold"
+            className="btn-base btn-hero press mt-7 flex h-[52px] items-center justify-center gap-2.5 px-7 btn-text font-bold"
             style={{
               borderRadius: 'var(--radius-pill)',
               boxShadow: 'var(--shadow-cta)',
@@ -485,7 +486,7 @@ export function HistoryScreen({ onStart }: { onStart: () => void }) {
                       {formatTime(workout.started_at)}
                     </span>
                     <span className="mt-1 flex items-center gap-2">
-                      <span className="min-w-0 flex-1 truncate text-base font-medium">
+                      <span className="min-w-0 flex-1 truncate row-title font-medium">
                         {workout.name?.trim() || t('history.workout_fallback')}
                       </span>
                       {totals[workout.id]?.recordCount ? (
@@ -510,7 +511,7 @@ export function HistoryScreen({ onStart }: { onStart: () => void }) {
                     {/* Volume is the number that makes one session comparable
                         to another, and it was the thing History could not tell
                         you without expanding every row. */}
-                    <span className="tnum mt-0.5 block text-[13px] text-muted">
+                    <span className="tnum mt-0.5 block text-meta text-muted">
                       {formatDuration(workout.started_at, workout.ended_at)}
                       {totals[workout.id] && (
                         <>
@@ -540,7 +541,7 @@ export function HistoryScreen({ onStart }: { onStart: () => void }) {
                         rewritten under the same toggle the set corrections
                         live behind. */}
                     {workout.notes && correcting !== workout.id && (
-                      <p className="mb-3 whitespace-pre-line border-s-2 border-[color:var(--color-accent-800)] ps-3 text-[13px] leading-relaxed text-text/85">
+                      <p className="mb-3 whitespace-pre-line border-s-2 border-[color:var(--color-accent-800)] ps-3 text-body leading-relaxed text-text/85">
                         {workout.notes}
                       </p>
                     )}
@@ -549,14 +550,16 @@ export function HistoryScreen({ onStart }: { onStart: () => void }) {
                       <button
                         type="button"
                         onClick={() => void loadSets(workout.id)}
-                        className="btn-base btn-secondary h-12 px-4 text-sm"
+                        className="btn-base btn-secondary h-12 px-4 text-body"
                       >
                         {t('history.sets_retry')}
                       </button>
                     ) : !sets ? (
-                      <p className="text-sm text-muted">{t('history.loading_sets')}</p>
+                      <p className="text-body text-muted">
+                        {t('history.loading_sets')}
+                      </p>
                     ) : sets.length === 0 ? (
-                      <p className="text-sm text-muted">{t('history.no_sets')}</p>
+                      <p className="text-body text-muted">{t('history.no_sets')}</p>
                     ) : (
                       <ExerciseBreakdown
                         sets={sets}
@@ -619,7 +622,7 @@ export function HistoryScreen({ onStart }: { onStart: () => void }) {
                               .finally(() => setBusy(false))
                           }}
                           disabled={busy}
-                          className="btn-base btn-secondary h-11 px-4 text-sm"
+                          className="btn-base btn-secondary h-11 px-4 text-body"
                         >
                           {t('history.add_exercise')}
                         </button>
@@ -627,7 +630,7 @@ export function HistoryScreen({ onStart }: { onStart: () => void }) {
                           type="button"
                           onClick={() => void saveAsRoutine(workout, t)}
                           disabled={busy}
-                          className="btn-base btn-secondary h-11 px-4 text-sm"
+                          className="btn-base btn-secondary h-11 px-4 text-body"
                         >
                           {t('history.save_routine')}
                         </button>
@@ -641,7 +644,7 @@ export function HistoryScreen({ onStart }: { onStart: () => void }) {
                             void removeWorkout(workout.id)
                           }}
                           disabled={busy}
-                          className={`btn-base h-11 px-4 text-sm ${
+                          className={`btn-base h-11 px-4 text-body ${
                             confirmDeleteWorkout === workout.id
                               ? 'btn-primary'
                               : 'btn-quiet'
@@ -655,7 +658,7 @@ export function HistoryScreen({ onStart }: { onStart: () => void }) {
                     )}
 
                     {savedRoutine && correcting === workout.id && (
-                      <p role="status" className="mt-2 text-[13px] text-accent-300">
+                      <p role="status" className="mt-2 text-body text-accent-300">
                         {t('history.routine_saved', { name: savedRoutine })}
                       </p>
                     )}
@@ -676,7 +679,7 @@ export function HistoryScreen({ onStart }: { onStart: () => void }) {
                         setConfirmDeleteWorkout(null)
                         setSavedRoutine(null)
                       }}
-                      className="btn-base btn-secondary mt-3 h-11 px-4 text-sm"
+                      className="btn-base btn-secondary mt-3 h-11 px-4 text-body"
                     >
                       {correcting === workout.id
                         ? t('history.edit_done')
@@ -695,7 +698,7 @@ export function HistoryScreen({ onStart }: { onStart: () => void }) {
           type="button"
           onClick={() => void loadMore()}
           disabled={loadingMore}
-          className="btn-base btn-secondary mt-2 h-[46px] w-full text-sm disabled:opacity-45"
+          className="btn-base btn-secondary mt-2 h-[46px] w-full text-body disabled:opacity-45"
         >
           {loadingMore ? t('chrome.loading') : t('history.load_more')}
         </button>
@@ -790,16 +793,16 @@ function ExerciseBreakdown({
           <div key={exerciseId} className="flex gap-3">
             {exercise && <ExerciseThumb exercise={thumbExercise(exercise)} size={48} />}
             <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-medium">{name}</p>
+              <p className="truncate row-title font-medium">{name}</p>
               <ul className="mt-1 flex flex-col">
                 {rows.map((set, index) => (
                   <li
                     key={set.id}
-                    className={`tnum flex items-center gap-3 text-sm ${
+                    className={`tnum flex items-center gap-3 text-meta ${
                       isRecord(set) ? 'record-row -mx-1.5 rounded-[6px] px-1.5' : ''
                     }`}
                   >
-                    <span className="w-4 shrink-0 text-[11px] text-muted">
+                    <span className="w-4 shrink-0 text-meta text-muted">
                       {index + 1}
                     </span>
                     <span className="flex-1">{describeSet(set, unit, t)}</span>
@@ -814,7 +817,7 @@ function ExerciseBreakdown({
                       </span>
                     )}
                     {set.set_type !== 'normal' && (
-                      <span className="shrink-0 text-[11px] text-muted">
+                      <span className="shrink-0 text-meta text-muted">
                         {set.set_type}
                       </span>
                     )}
@@ -827,7 +830,7 @@ function ExerciseBreakdown({
                             number: String(index + 1),
                             name,
                           })}
-                          className="btn-base btn-quiet h-11 w-11 text-xs"
+                          className="btn-base btn-quiet h-11 w-11 text-label"
                         >
                           {t('history.edit_button')}
                         </button>
@@ -838,7 +841,7 @@ function ExerciseBreakdown({
                             number: String(index + 1),
                             name,
                           })}
-                          className="btn-base btn-quiet h-11 w-9 text-xs"
+                          className="btn-base btn-quiet h-11 w-9 text-body"
                         >
                           ×
                         </button>
@@ -855,7 +858,7 @@ function ExerciseBreakdown({
                   type="button"
                   onClick={() => onAddSet(exercise.id)}
                   disabled={busy}
-                  className="btn-base btn-quiet mt-1 h-11 px-3 text-xs"
+                  className="btn-base btn-quiet mt-1 h-11 px-3 text-label"
                 >
                   {t('history.add_set')}
                 </button>

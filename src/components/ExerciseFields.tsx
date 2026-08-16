@@ -47,10 +47,10 @@ export function ExerciseFields({
           placeholder={t('exercise.new.name.placeholder')}
           autoComplete="off"
           autoCorrect="off"
-          className="ring-edge h-14 w-full bg-surface px-3 text-base outline-none focus:border-accent"
+          className="ring-edge h-14 w-full bg-surface px-3 field-text outline-none focus:border-accent"
           style={{ borderRadius: 'var(--radius-md)' }}
         />
-        {nameHint && <p className="mt-1 text-[11px] text-muted">{nameHint}</p>}
+        {nameHint && <p className="mt-1 text-label text-muted">{nameHint}</p>}
       </div>
 
       <fieldset>
@@ -62,7 +62,7 @@ export function ExerciseFields({
               type="button"
               aria-pressed={muscleGroup === g}
               onClick={() => onMuscleGroup(g)}
-              className={`btn-base h-12 px-3.5 text-sm capitalize ${
+              className={`btn-base h-12 px-3.5 text-body capitalize ${
                 muscleGroup === g ? 'btn-primary' : 'btn-secondary'
               }`}
             >
@@ -70,7 +70,7 @@ export function ExerciseFields({
             </button>
           ))}
         </div>
-        <p className="mt-1 text-[11px] text-muted">{t('exercise.muscle_hint')}</p>
+        <p className="mt-1 text-label text-muted">{t('exercise.muscle_hint')}</p>
       </fieldset>
 
       <fieldset>
@@ -82,7 +82,7 @@ export function ExerciseFields({
               type="button"
               aria-pressed={equipment === e}
               onClick={() => onEquipment(e)}
-              className={`btn-base h-12 px-3.5 text-sm capitalize ${
+              className={`btn-base h-12 px-3.5 text-body capitalize ${
                 equipment === e ? 'btn-primary' : 'btn-secondary'
               }`}
             >

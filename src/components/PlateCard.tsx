@@ -55,7 +55,7 @@ export function PlateCard({
         {/* The `kicker` utility, not the recipe by hand: it carries the RTL
             reset, and tracking out a connected script breaks its joins. */}
         <span className="kicker block">{t('load.on_bar')}</span>
-        <span className="tnum font-display mt-[3px] block text-[15px] font-bold tracking-[-0.01em]">
+        <span className="tnum font-display mt-[3px] block text-body font-bold tracking-[-0.01em]">
           {empty && `${t('load.empty_bar')} `}
           {/* The figure is the one latin run in an otherwise translated
               line: isolated so bidi cannot reorder "20 + 1.25 = 62.5"

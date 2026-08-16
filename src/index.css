@@ -190,30 +190,22 @@
      terminals mark those as machine-set rather than spoken. */
   --font-mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
 
-  /* The v2 scale. Every step carries its own weight and leading so a size
-     cannot be used at the wrong weight by accident. Figures never go below
-     `figure` — the one logged exception is the multi-set previous-session
-     string at 20px, argued in DECISIONS.md. */
-  --text-display: 44px;
-  --text-display--line-height: 1.05;
-  --text-display--font-weight: 600;
+  /* v5's ramp, and the only sizes in the app. Every step carries its own
+     weight and leading so a size cannot be used at the wrong weight by
+     accident — and Tailwind resolves those through `--tw-font-weight` and
+     `--tw-leading`, so an explicit `font-semibold` at a call site still wins.
 
-  --text-input: 30px;
-  --text-input--line-height: 1.1;
-  --text-input--font-weight: 500;
+     The v2 scale's `display` (44), `input` (30), `figure` (24) and `micro`
+     (11) are gone: PR 2 moved their call sites onto these steps. `label` (13)
+     and `nano` (9) came through both systems unchanged. */
 
-  --text-figure: 24px;
-  --text-figure--line-height: 1.15;
-  --text-figure--font-weight: 500;
-
-  /* v5: title is 17 uppercase +0.01em, down from v2's 19. */
+  /* v5: title is 17, down from v2's 19. */
   --text-title: 17px;
   --text-title--line-height: 1.2;
   --text-title--font-weight: 600;
   --text-title--letter-spacing: 0.01em;
 
-  /* v5: body is 14/1.5, down from v2's 15/1.45. 39 call sites still say 15px
-     and are PR 2's largest single group. */
+  /* v5: body is 14/1.5, down from v2's 15/1.45. */
   --text-body: 14px;
   --text-body--line-height: 1.5;
   --text-body--font-weight: 400;
@@ -221,10 +213,6 @@
   --text-label: 13px;
   --text-label--line-height: 1.4;
   --text-label--font-weight: 400;
-
-  --text-micro: 11px;
-  --text-micro--line-height: 1.2;
-  --text-micro--font-weight: 500;
 
   /* v3's one step below micro, and the only one. A stamped machine label the
      reader GLANCES at — a tab-bar name, the Coach footer's disclaimer — never
@@ -234,14 +222,18 @@
   --text-nano--line-height: 1.1;
   --text-nano--font-weight: 500;
 
-  /* ── v5's ramp: the whole thing, and "no other sizes exist" ─────────────
-     Ten steps. Only `label` (13) and `nano` (9) survive from the v2 scale
-     unchanged, which is why the steps above are kept for now rather than
-     deleted: 267 hardcoded `text-[Npx]` classes across 41 files still point
-     at sizes that are not in this ramp, and 81 of them use a size v5 does
-     not contain at all. PR 2 migrates those call sites and deletes
-     `--text-display`, `--text-input`, `--text-figure` and `--text-micro`.
-     Two ramps coexisting is the cost of a reviewable PR 1.
+  /* ── The top of the ramp ───────────────────────────────────────────────
+     v5's README titles this section "the entire ramp; no other sizes exist".
+     That sentence is not true of v5's own reference, and PR 2 checked rather
+     than assumed: the bundle renders 26 distinct font sizes and declares 10.
+     Every declared step does render raw somewhere, so the ramp is a real
+     FLOOR — it is just not a ceiling, and reimplementing it as a ceiling
+     would have meant inventing decisions the design never made.
+
+     What the app enforces instead is the rule the reference actually obeys:
+     no ANONYMOUS sizes. Every size is a named step, or one of the three
+     named idioms below that the reference itself establishes and repeats.
+     `scripts/check_type_ramp.mjs` fails the build on anything else.
 
      Weight and leading travel with each step, so a size cannot be used at
      the wrong weight by accident — the same rule the v2 scale had. */
@@ -496,7 +488,11 @@
    the rule belongs with the thing it governs. */
 @utility kicker {
   font-family: var(--font-mono);
-  font-size: 11px;
+  /* v5's `kick`, and the size moved 11 -> 10 with it. Note that this is NOT
+     `nano` resized: kick@10 tracks 0.14em and nano@9 tracks 0.1em, so at the
+     one size they nearly share they are still different type. The reference
+     depends on that difference at five sites. */
+  font-size: var(--text-kick);
   font-weight: 500;
   line-height: 1.2;
   letter-spacing: 0.14em;
@@ -508,6 +504,46 @@
   font-family: var(--font-sans);
   letter-spacing: 0;
   text-transform: none;
+}
+
+/* ─── The three named idioms ──────────────────────────────────────────────
+   Sizes the ramp does not have, that v5's own reference establishes and
+   reuses. They are utilities rather than ramp steps because they are not
+   general-purpose steps — each answers one question — and because naming
+   them is what lets `check_type_ramp.mjs` ban every OTHER loose number.
+
+   Each sets font-size and nothing else. The temptation is to fold in the
+   family, weight and case the reference pairs them with; the reason not to
+   is that `btn-base` sets `font-weight` as a plain declaration, so a utility
+   that also set weight would win or lose by source order rather than by
+   intent. Tailwind's own text-* steps are safe from this — they resolve
+   weight through `--tw-font-weight`, so a call site's `font-semibold` always
+   wins — but a hand-written `@utility` has no such protection. */
+
+/* The list-row name: an exercise, a friend, a routine, a session. v5 writes
+   it `{...T.title, fontSize:15, textTransform:'none'}` — the title face,
+   two steps down, with title's shout cancelled — at four sites, which makes
+   it the reference's single most reused override. `title` at 17 is the wrong
+   answer here: these strings are the longest in the app and already truncate
+   at 15 on a 390px screen. */
+@utility row-title {
+  font-size: 15px;
+}
+
+/* Button labels. v5's `Btn` is `{...T.title, fontSize: small?13:16}`, so
+   title's own 17 NEVER renders on a button in the entire reference. Small
+   controls take `text-label` (13) instead of a second utility, since 13 is
+   already a step. */
+@utility btn-text {
+  font-size: 16px;
+}
+
+/* Text inputs. 16px is not a look, it is a behaviour: iOS Safari zooms the
+   viewport when a focused input's font-size is below 16, and it does not
+   zoom back out. v5's reference resizes every input off the ramp too (17,
+   15, 13, 24) but has no phone to be wrong on. This one is a floor. */
+@utility field-text {
+  font-size: 16px;
 }
 
 /* The meta voice at body scale: mono for a line of figures and stamped
@@ -907,14 +943,23 @@
 }
 
 /* ─── The numerals voice ──────────────────────────────────────────────────
-   Sora carries every size a lifter reads at arm's length; Hanken Grotesk
-   (the body default) carries prose. Unlayered on purpose: author CSS
-   outside a layer outranks the utilities layer, so this rides along with
-   every text-display/input/figure/title utility without touching a single
-   component. Mono opts out where it is composed on the same element. */
-.text-display,
-.text-input,
-.text-figure,
+   Saira Semi Condensed carries every size a lifter reads at arm's length;
+   Hanken Grotesk (the body default) carries prose. Unlayered on purpose:
+   author CSS outside a layer outranks the utilities layer, so this rides
+   along with the display steps without touching a single component. Mono
+   opts out where it is composed on the same element.
+
+   This is v5's own division: `T.mega/hero/fig/num/title` are `F.d`, and
+   `body`/`label` are `F.b`. `row-title` is deliberately NOT in this list —
+   v5 builds it from the title face, but switching 39 row names from Hanken
+   to a condensed face is a change to how those screens LOOK, and it belongs
+   with the screens in PR 3 and PR 4 rather than inside a size migration.
+   The sites that already ask for the display face still get it: they carry
+   `font-display` themselves. */
+.text-mega,
+.text-hero,
+.text-fig,
+.text-num,
 .text-title {
   font-family: var(--font-display);
 }

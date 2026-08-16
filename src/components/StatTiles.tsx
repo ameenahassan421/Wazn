@@ -38,7 +38,7 @@ export function StatTiles({ tiles }: { tiles: Tile[] }) {
           <span className="kicker">{t(tile.labelKey)}</span>
           <span
             dir="ltr"
-            className="font-display tnum text-[22px] leading-tight font-semibold"
+            className="font-display tnum text-num leading-tight font-semibold"
           >
             {tile.value}
           </span>
@@ -71,15 +71,15 @@ export function NextRoutineRow({
   const content = (
     <>
       <span className="flex min-w-0 flex-col gap-0.5">
-        <span dir="auto" className="truncate text-[15px] font-semibold">
+        <span dir="auto" className="truncate row-title font-semibold">
           {name}
         </span>
-        <span dir="ltr" className="meta-mono tnum truncate text-[11px] text-muted">
+        <span dir="ltr" className="meta-mono tnum truncate text-meta text-muted">
           {meta}
         </span>
       </span>
       {when && (
-        <span dir="ltr" className="meta-mono shrink-0 text-[11px] text-muted">
+        <span dir="ltr" className="meta-mono shrink-0 text-meta text-muted">
           {when}
         </span>
       )}

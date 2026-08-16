@@ -48,13 +48,13 @@ export function InviteCard({ inviter }: { inviter: Inviter }) {
       style={{ borderRadius: 'var(--radius-md)' }}
     >
       <p className="kicker mb-1">{t('welcome.invited.heading')}</p>
-      <p className="text-[15px] font-medium">{nameOf(inviter)}</p>
-      <p className="mt-0.5 text-sm text-muted">{t('welcome.invited.body')}</p>
+      <p className="text-title font-medium">{nameOf(inviter)}</p>
+      <p className="mt-0.5 text-body text-muted">{t('welcome.invited.body')}</p>
       <button
         type="button"
         onClick={() => void accept()}
         disabled={busy || followed}
-        className={`btn-base mt-2.5 h-12 w-full px-4 text-sm disabled:opacity-45 ${
+        className={`btn-base mt-2.5 h-12 w-full px-4 text-body disabled:opacity-45 ${
           followed ? 'btn-secondary' : 'btn-primary'
         }`}
       >
@@ -65,7 +65,7 @@ export function InviteCard({ inviter }: { inviter: Inviter }) {
             : t('welcome.follow', { name: nameOf(inviter) })}
       </button>
       {error && (
-        <p role="alert" className="mt-2 text-sm text-accent-300">
+        <p role="alert" className="mt-2 text-body text-accent-300">
           {error}
         </p>
       )}

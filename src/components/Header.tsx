@@ -74,7 +74,7 @@ export function Header({
             <IconBack size={20} />
           </button>
         )}
-        <h1 className="flex items-center text-[17px] font-medium tracking-tight">
+        <h1 className="flex items-center text-title font-medium tracking-tight">
           {titleKey ? t(titleKey) : <Wordmark height={15.5} className="text-text" />}
         </h1>
 
@@ -125,7 +125,7 @@ export function Header({
                         setMenuOpen(false)
                         active.discard()
                       }}
-                      className={`flex h-12 w-full items-center px-4 text-start text-sm ${
+                      className={`flex h-12 w-full items-center px-4 text-start text-body ${
                         confirmDiscard ? 'text-accent' : ''
                       }`}
                     >

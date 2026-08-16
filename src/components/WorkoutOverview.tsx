@@ -370,7 +370,7 @@ export function WorkoutOverview({
                       {block.committed === 0 &&
                         block.rows.length === 1 &&
                         block.rows[0].reps === null && (
-                          <p className="px-1 pt-0.5 text-[11px] text-muted">
+                          <p className="px-1 pt-0.5 text-body text-muted">
                             {t('overview.first_set')}
                           </p>
                         )}
@@ -379,7 +379,7 @@ export function WorkoutOverview({
                         <button
                           type="button"
                           onClick={() => onAddGhost(block.exerciseId)}
-                          className="btn-base btn-quiet h-12 w-full justify-start px-2 text-[13px]"
+                          className="btn-base btn-quiet h-12 w-full justify-start px-2 text-label"
                         >
                           {t('overview.add_set')}
                         </button>
@@ -473,7 +473,7 @@ function BlockHeader({
       <p className="mb-1 ms-[88px] flex min-w-0 items-baseline gap-1.5 pe-2">
         <span
           dir="ltr"
-          className={`tnum shrink-0 font-mono text-[11px] ${
+          className={`tnum shrink-0 font-mono text-meta ${
             complete ? 'text-accent-300' : 'text-muted'
           }`}
         >
@@ -484,20 +484,20 @@ function BlockHeader({
             long user note would otherwise truncate it away. */}
         {block.adjusted && (
           <>
-            <span aria-hidden="true" className="shrink-0 text-[11px] text-muted">
+            <span aria-hidden="true" className="shrink-0 text-meta text-muted">
               ·
             </span>
-            <span className="shrink-0 font-mono text-[11px] text-muted">
+            <span className="shrink-0 font-mono text-meta text-muted">
               {t('overview.coach_adjusted')}
             </span>
           </>
         )}
         {block.note && (
           <>
-            <span aria-hidden="true" className="shrink-0 text-[11px] text-muted">
+            <span aria-hidden="true" className="shrink-0 text-meta text-muted">
               ·
             </span>
-            <span className="truncate text-[13px] text-muted">{block.note}</span>
+            <span className="truncate text-label text-muted">{block.note}</span>
           </>
         )}
       </p>
@@ -551,13 +551,13 @@ function BlockMenu({
         <button
           type="button"
           onClick={onTellCoach}
-          className="btn-base btn-secondary h-12 w-full justify-start px-3 text-[13px]"
+          className="btn-base btn-secondary h-12 w-full justify-start px-3 text-label"
         >
           {t('tell.open')}
         </button>
       )}
       <div>
-        <label htmlFor={noteId} className="mb-1 block text-[11px] text-muted">
+        <label htmlFor={noteId} className="mb-1 block text-label text-muted">
           {t('overview.note_label')}
         </label>
         <div className="flex items-center gap-2">
@@ -566,14 +566,14 @@ function BlockMenu({
             value={note}
             onChange={(e) => setNote(e.target.value)}
             placeholder={t('overview.note.placeholder')}
-            className="h-12 min-w-0 flex-1 border border-line bg-ink px-3 text-[13px] outline-none placeholder:text-muted focus:border-accent"
+            className="h-12 min-w-0 flex-1 border border-line bg-ink px-3 field-text outline-none placeholder:text-muted focus:border-accent"
             style={{ borderRadius: 'var(--radius-md)' }}
           />
           <button
             type="button"
             onClick={() => onSaveNote(note.trim())}
             disabled={note.trim() === (block.note ?? '')}
-            className="btn-base btn-secondary h-12 shrink-0 px-3 text-[13px] disabled:opacity-45"
+            className="btn-base btn-secondary h-12 shrink-0 px-3 text-label disabled:opacity-45"
           >
             Save
           </button>
@@ -581,16 +581,16 @@ function BlockMenu({
       </div>
 
       <div className="flex items-center gap-2">
-        <span className="text-[11px] text-muted">{t('overview.rest')}</span>
+        <span className="text-label text-muted">{t('overview.rest')}</span>
         <button
           type="button"
           aria-label={t('overview.rest.shorter')}
           onClick={() => onSaveRest(stepRest(block.restSeconds, -1, REST_STEP_SECONDS))}
-          className="btn-base btn-secondary h-12 w-12 text-lg"
+          className="btn-base btn-secondary h-12 w-12 text-num"
         >
           −
         </button>
-        <span className="tnum font-display w-12 text-center text-[15px] font-medium">
+        <span className="tnum font-display w-12 text-center text-body font-medium">
           {describeRest(block.restSeconds)}
         </span>
         <button
@@ -598,7 +598,7 @@ function BlockMenu({
           aria-label={t('overview.rest.longer')}
           disabled={block.restSeconds >= REST_MAX_SECONDS}
           onClick={() => onSaveRest(stepRest(block.restSeconds, 1, REST_STEP_SECONDS))}
-          className="btn-base btn-secondary h-12 w-12 text-lg disabled:opacity-45"
+          className="btn-base btn-secondary h-12 w-12 text-num disabled:opacity-45"
         >
           +
         </button>
@@ -612,7 +612,7 @@ function BlockMenu({
           type="button"
           disabled={!canMoveUp}
           onClick={() => onMove(-1)}
-          className="btn-base btn-secondary h-12 px-3 text-[13px] disabled:opacity-45"
+          className="btn-base btn-secondary h-12 px-3 text-label disabled:opacity-45"
         >
           {t('overview.move_up')}
         </button>
@@ -620,7 +620,7 @@ function BlockMenu({
           type="button"
           disabled={!canMoveDown}
           onClick={() => onMove(1)}
-          className="btn-base btn-secondary h-12 px-3 text-[13px] disabled:opacity-45"
+          className="btn-base btn-secondary h-12 px-3 text-label disabled:opacity-45"
         >
           {t('overview.move_down')}
         </button>
@@ -628,7 +628,7 @@ function BlockMenu({
           <button
             type="button"
             onClick={onUngroup}
-            className="btn-base btn-secondary h-12 px-3 text-[13px]"
+            className="btn-base btn-secondary h-12 px-3 text-label"
           >
             {t('overview.unsuperset')}
           </button>
@@ -639,7 +639,7 @@ function BlockMenu({
             if (confirmRemove) onRemove()
             else setConfirmRemove(true)
           }}
-          className={`btn-base ms-auto h-12 px-3 text-[13px] ${
+          className={`btn-base ms-auto h-12 px-3 text-label ${
             confirmRemove ? 'btn-primary' : 'btn-quiet'
           }`}
         >
@@ -741,7 +741,7 @@ function SetRow({
       }}
     >
       <span
-        className={`tnum flex items-center justify-center font-mono text-[11px] ${
+        className={`tnum flex items-center justify-center font-mono text-meta ${
           row.setType === 'warmup' ? 'text-accent-600' : committed ? 'text-muted' : ''
         }`}
         style={committed ? undefined : { color: 'var(--ghost-ink)' }}
@@ -767,7 +767,7 @@ function SetRow({
       >
         <span
           dir="ltr"
-          className="font-display tnum min-w-0 truncate text-[22px] font-medium"
+          className="font-display tnum min-w-0 truncate text-num font-medium"
           // `nowrap` is the design's own rule for this span. The chip is what
           // yields when the row runs out of room, never the figure.
           style={{
@@ -820,7 +820,7 @@ function SetRow({
         >
           <span
             aria-hidden="true"
-            className="flex h-[26px] w-[26px] items-center justify-center bg-accent text-[14px] font-bold text-accent-ink"
+            className="flex h-[26px] w-[26px] items-center justify-center bg-accent text-body font-bold text-accent-ink"
             style={{ borderRadius: 7 }}
           >
             ✓
@@ -934,7 +934,7 @@ function Previous({ row, unit }: { row: OverviewRow; unit: Unit }) {
       row.setType !== 'warmup'
     ) {
       return (
-        <span dir="ltr" className="tnum shrink-0 font-mono text-[11px] text-muted">
+        <span dir="ltr" className="tnum shrink-0 font-mono text-meta text-muted">
           {t('overview.under_plan', { reps: String(row.plannedReps) })}
         </span>
       )
@@ -943,7 +943,7 @@ function Previous({ row, unit }: { row: OverviewRow; unit: Unit }) {
     if (row.delta === 0) {
       return (
         <span
-          className="shrink-0 font-mono text-[11px] text-muted"
+          className="shrink-0 font-mono text-meta text-muted"
           aria-label={t('overview.matched')}
         >
           →
@@ -954,7 +954,7 @@ function Previous({ row, unit }: { row: OverviewRow; unit: Unit }) {
     return (
       <span
         dir="ltr"
-        className={`tnum shrink-0 font-mono text-[11px] ${
+        className={`tnum shrink-0 font-mono text-meta ${
           up ? 'text-accent-300' : 'text-muted'
         }`}
         aria-label={`${up ? 'Up' : 'Down'} ${formatWeight(Math.abs(row.delta), unit)} ${unit} on last session`}
@@ -971,7 +971,7 @@ function Previous({ row, unit }: { row: OverviewRow; unit: Unit }) {
   return (
     <span
       dir="ltr"
-      className="tnum shrink-0 font-mono text-[11px]"
+      className="tnum shrink-0 font-mono text-meta"
       style={{ color: 'var(--ghost-ink)' }}
       aria-label={t('overview.last_session', {
         values: values(row.previous.weightKg, row.previous.reps, unit),

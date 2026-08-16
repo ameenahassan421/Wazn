@@ -58,7 +58,7 @@ export function CoachLine({
   return (
     <div className={`flex flex-col items-start gap-2 ${className}`}>
       <p
-        className="text-[13px] leading-[1.55]"
+        className="text-body leading-[1.55]"
         style={
           tone === 'flip'
             ? { color: 'color-mix(in srgb, var(--flip-text) 66%, transparent)' }
