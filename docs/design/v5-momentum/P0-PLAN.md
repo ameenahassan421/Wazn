@@ -139,7 +139,20 @@ are P2 in the README's build order and are explicitly *not* in this PR.
 **Gate:** home at 430px matches `Wazn v5.html` screen 06, minus the rank and
 duel cards.
 
-### PR 4 — Live zones, BANK IT, rest canvas ring
+### PR 4 — Live zones, BANK IT ✅ *shipped 2026-08-16 (rest overlay deferred)*
+
+The zones and the commit bar shipped; `mega` 84 did not — built that way, the
+weight scrolled off the top while the commit bar was still on screen, because
+v5's live screen carries four things and this one carries eight. They run at
+`hero`/`fig`. GATE U2 has an explicit test that counts interactions.
+
+**The rest overlay is deliberately not auto-appearing.** v5 covers the screen
+the moment rest starts; this app opens it on a tap, and `RestCanvas` documents
+why — the surface may only ever appear while the hand is off the phone. That
+is a change to the flow §2.1 calls sacred and needs Ameen, not a restyle.
+Full reasoning in `DECISIONS.md`.
+
+### PR 4 as originally planned
 
 **Files:** `src/components/SetEntry.tsx` (702 lines) ·
 `src/components/RestCanvas.tsx` · `src/lib/rest-canvas.ts` ·

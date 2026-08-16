@@ -122,7 +122,7 @@ describe('SetEntry validation', () => {
     const user = userEvent.setup()
     const { onAddSet } = setup()
 
-    await user.click(screen.getByRole('button', { name: /Log set/ }))
+    await user.click(screen.getByRole('button', { name: /Bank set/ }))
 
     expect(screen.getByRole('alert')).toHaveTextContent(
       'Enter the reps you did. Weight can stay empty for bodyweight sets.',
@@ -135,7 +135,7 @@ describe('SetEntry validation', () => {
     const { onAddSet, reps } = setup()
 
     await user.type(reps(), '9')
-    await user.click(screen.getByRole('button', { name: /Log set/ }))
+    await user.click(screen.getByRole('button', { name: /Bank set/ }))
 
     expect(onAddSet).toHaveBeenCalledWith({
       weightKg: null,
@@ -151,7 +151,7 @@ describe('SetEntry validation', () => {
 
     await user.type(weight(), '135')
     await user.type(reps(), '5')
-    await user.click(screen.getByRole('button', { name: /Log set/ }))
+    await user.click(screen.getByRole('button', { name: /Bank set/ }))
 
     expect(onAddSet).toHaveBeenCalledWith({
       weightKg: 61.23,
@@ -167,7 +167,7 @@ describe('SetEntry validation', () => {
 
     await user.type(weight(), '135')
     await user.type(reps(), '5')
-    await user.click(screen.getByRole('button', { name: /Log set/ }))
+    await user.click(screen.getByRole('button', { name: /Bank set/ }))
 
     expect(weight().value).toBe('135')
     expect(reps().value).toBe('5')
@@ -221,7 +221,7 @@ describe('SetEntry set type and RPE', () => {
 
     await user.click(screen.getByRole('button', { name: /Tap to change/ }))
     await user.type(reps(), '10')
-    await user.click(screen.getByRole('button', { name: /^Log / }))
+    await user.click(screen.getByRole('button', { name: /^Bank / }))
 
     expect(onAddSet).toHaveBeenCalledWith(
       expect.objectContaining({ setType: 'warmup', reps: 10 }),
@@ -237,11 +237,11 @@ describe('SetEntry set type and RPE', () => {
 
     await user.click(type()) // warmup
     await user.type(reps(), '10')
-    await user.click(screen.getByRole('button', { name: /^Log / }))
+    await user.click(screen.getByRole('button', { name: /^Bank / }))
     expect(type()).toHaveTextContent('W')
 
     await user.click(type()) // failure
-    await user.click(screen.getByRole('button', { name: /^Log / }))
+    await user.click(screen.getByRole('button', { name: /^Bank / }))
     expect(type()).toHaveTextContent('Set')
   })
 
@@ -253,11 +253,13 @@ describe('SetEntry set type and RPE', () => {
     const user = userEvent.setup()
     setup()
 
-    expect(screen.getByRole('button', { name: /^Log / })).toHaveTextContent('Log set 1')
+    expect(screen.getByRole('button', { name: /^Bank / })).toHaveTextContent(
+      'Bank set 1',
+    )
 
     await user.click(screen.getByRole('button', { name: /Tap to change/ }))
-    expect(screen.getByRole('button', { name: /^Log / })).toHaveTextContent(
-      'Log warm-up 1',
+    expect(screen.getByRole('button', { name: /^Bank / })).toHaveTextContent(
+      'Bank warm-up 1',
     )
   })
 
@@ -279,7 +281,9 @@ describe('SetEntry set type and RPE', () => {
     }))
     setup({ setsThisWorkout: warmups })
 
-    expect(screen.getByRole('button', { name: /^Log / })).toHaveTextContent('Log set 1')
+    expect(screen.getByRole('button', { name: /^Bank / })).toHaveTextContent(
+      'Bank set 1',
+    )
   })
 
   it('drops the set type when the exercise changes', async () => {
@@ -316,10 +320,10 @@ describe('SetEntry set type and RPE', () => {
 
     await user.click(screen.getByRole('button', { name: /RPE/ }))
     await user.type(reps(), '5')
-    await user.click(screen.getByRole('button', { name: /Log set/ }))
+    await user.click(screen.getByRole('button', { name: /Bank set/ }))
     expect(onAddSet).toHaveBeenCalledWith(expect.objectContaining({ rpe: 8 }))
 
-    await user.click(screen.getByRole('button', { name: /Log set/ }))
+    await user.click(screen.getByRole('button', { name: /Bank set/ }))
     expect(onAddSet).toHaveBeenLastCalledWith(expect.objectContaining({ rpe: null }))
   })
 })
@@ -377,5 +381,71 @@ describe('SetEntry records', () => {
     })
     expect(container.querySelectorAll('.record-flash')).toHaveLength(0)
     expect(container.querySelectorAll('.record-row')).toHaveLength(1)
+  })
+})
+
+/**
+ * GATE U2 — "repeat-set commit stays 1 tap".
+ *
+ * The P0 plan calls this non-negotiable and says it "gets an explicit test,
+ * not an eyeball", because PR 4 rebuilds the two things it depends on: the
+ * steppers became full-bleed zones and the commit button became a bar. The
+ * property is not that the values persist — that is tested above — it is that
+ * a lifter doing 3×5 at the same load pays ONE interaction for sets 2 and 3.
+ *
+ * Asserted by counting interactions, not by reading the DOM: `user.click` once
+ * per set, and the recorded payloads must be identical. If a future change
+ * clears a field on submit, requires a re-focus, or adds a confirm step, the
+ * second click stops producing a second identical set and this fails.
+ */
+describe('GATE U2 — a repeat set is one tap', () => {
+  it('logs three identical sets with one interaction each after the first', async () => {
+    const user = userEvent.setup()
+    const { onAddSet, weight, reps } = setup()
+
+    // Set 1: the lifter types the load once.
+    await user.type(weight(), '135')
+    await user.type(reps(), '5')
+    const bank = () => screen.getByRole('button', { name: /Bank set/ })
+    await user.click(bank())
+
+    // Sets 2 and 3: one tap each, nothing else touched.
+    await user.click(bank())
+    await user.click(bank())
+
+    expect(onAddSet).toHaveBeenCalledTimes(3)
+    // Every call, not just the last: a bug that logs set 2 correctly and set 3
+    // with a stale or cleared value is exactly what this gate is guarding.
+    const expected = { weightKg: 61.23, reps: 5, setType: 'normal', rpe: null }
+    for (const n of [1, 2, 3]) {
+      expect(onAddSet).toHaveBeenNthCalledWith(n, expected)
+    }
+    // And the button still offers the fourth, pre-filled.
+    expect(weight().value).toBe('135')
+    expect(reps().value).toBe('5')
+  })
+
+  it('counts the set up on the bar so tap three is not tap one again', async () => {
+    const user = userEvent.setup()
+    setup({
+      setsThisWorkout: [
+        {
+          id: 's-1',
+          workout_id: 'w-1',
+          exercise_id: 'ex-1',
+          set_number: 1,
+          weight_kg: 61.23,
+          reps: 5,
+          set_type: 'normal',
+          rpe: null,
+        } as WorkoutSet,
+      ],
+    })
+    // The label is the only feedback that a tap landed when the values do not
+    // change — which is exactly the repeat-set case.
+    expect(screen.getByRole('button', { name: /Bank set/ })).toHaveTextContent(
+      'Bank set 2',
+    )
+    await user.click(screen.getByRole('button', { name: /Bank set/ }))
   })
 })

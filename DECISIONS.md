@@ -6985,3 +6985,103 @@ claims paper is the default, Sora carries display, and the scale is
 44/30/24/19/11. A banner at the top now points at `src/index.css` and this
 file. It is deliberately not regenerated inside a card restyle: `/impeccable
 document` rewrites the whole system doc, and that deserves its own diff.
+
+## 2026-08-16 (PR 4) — The live zones, and where v5's 84px does not fit
+
+PR 4 is the plan's highest-risk PR because it is the core loop. What shipped
+is v5's structure at a scale this app's live screen can hold, plus the gate
+test the plan asks for by name.
+
+### The full-bleed zones, and why the old objection does not apply
+
+The two side-by-side stepper panels are gone. Each of weight and reps is now a
+full-bleed row: an 82px minus column, the figure, an 82px plus column.
+
+**This layout was tried before and rejected**, and the reason it works now is
+worth stating so nobody re-rejects it from the old comment. The rejected
+version put BOTH zones in ONE row, so a stepper pair and a figure shared half
+the screen: measured at the shipped size, `102.5` needs 83.1px and had 62px,
+`12` needs 38.8px and had 21px, and both fields clipped their own value. v5
+gives each zone its **own** full-width row, so at 390px the figure gets
+390 − 82 − 82 = **226px** — more than the 166px the stacked panels bought —
+while the touch targets go from 48px to 82px rather than down to v5's own
+44-46px squares, which the repo's 48px floor would have refused.
+
+The side columns carry no fill on purpose. They are regions, not buttons: a
+thumb aiming at "the left edge of the phone" hits a target the width of a
+thumb, where a thumb aiming at a 48px pill has to find it first.
+
+### `mega` 84 did not survive contact with this screen
+
+v5 sets the weight zone at `mega` (84) and drops reps to a resized 56. Built
+that way and screenshotted, **the weight scrolled off the top of the screen
+while the commit bar was still visible** — the figure you are deciding,
+invisible, above the button that commits it.
+
+The reason is that v5's live screen carries a volume bar, a meta row, the
+exercise name and the two zones, and nothing else. This one also carries the
+plate rail, the set-type/RPE/superset row and the session board. So the zones
+run at `hero` (50) and `fig` (30), which keeps v5's hierarchy and its
+structure at a scale that fits, and both are ramp steps rather than the
+anonymous 56 the reference uses. A bodyweight set has no weight to read, so
+reps take `hero` in that case — v5 does the same.
+
+Nothing here was measured by reasoning. The 84 version passed lint, types and
+1108 tests; it was a screenshot that showed the weight was gone.
+
+### The commit bar
+
+70px (was 60), square and full-bleed rather than a pill — a pill under two
+edge-to-edge zones reads as a control from a different screen — uppercase,
+`text-num`, and the separator moves from an em dash to `·` as v5 draws it.
+
+**The copy keeps its information.** v5's label is `BANK IT · 125 × 8`; this
+one is `BANK SET 3 · 171 × 12`, and the warm-up variant still says
+`BANK WARM-UP 2`. The set number and the warm-up word are not decoration: the
+warm-up mode sticks between sets by design, and the recorded cost of that was
+a working set logged as a warm-up and silently excluded from every PR and
+chart. The button is what names the mode. Adopting v5's verb while dropping
+its own safety label would have been fidelity to the mock rather than to the
+design.
+
+The Arabic keeps `سجّل` (log) rather than reaching for a word for "bank" —
+same call as PR 3's `START THE HUNT`, and for the same reason.
+
+### GATE U2 now has a test that can fail
+
+The plan calls it non-negotiable and asks for "an explicit test, not an
+eyeball". There was already a test that the values persist after a commit;
+that is necessary and not sufficient. The gate is that a lifter doing 3×5 at
+one load pays **one interaction** for sets 2 and 3.
+
+`GATE U2 — a repeat set is one tap` asserts it by counting interactions: type
+once, then `click` once per set, and all three recorded payloads must be
+identical. A change that clears a field on submit, requires a re-focus, or
+adds a confirm step stops producing a third identical set and fails here. A
+second test pins the bar's label counting up, which is the only feedback a
+repeat set gets when the numbers do not change.
+
+### Not done, and each for a reason
+
+- **The rest overlay does not auto-appear.** v5's `RestOverlay` covers the
+  screen the moment rest starts. This app opens the full-screen rest only when
+  the chip is tapped, and `RestCanvas` documents why at length: the surface may
+  only ever appear while the hand is off the phone, so it can never grow under
+  a thumb already travelling toward a commit. Making rest interrupt the loop
+  is a change to the flow §2.1 calls sacred, and that is Ameen's call, not a
+  side effect of a restyle.
+- **The session-volume / momentum bar** at the top of v5's live screen is P1
+  in the README, not P0.
+- **`position: fixed` for the commit bar.** v5 fixes it at `bottom: 58`, which
+  is exactly `--tab-space`. The sticky cluster already puts it there while
+  keeping it in flow, and moving it out would break the `--tab-space`
+  arithmetic three clusters share — the arithmetic that was wrong in one of
+  three components for a whole release the last time it was hand-tuned.
+
+### Found while looking, not fixed
+
+At 390px the collapsed rest bar truncates its own label to `R.` — the flex row
+squeezes "Rest" when the reason chip ("top set at 80%") is also present. It is
+**pre-existing**: `RestTimer.tsx` is not in this PR's diff. Left alone because
+the fix is a design judgement about which of the two strings should yield, and
+the redundant word losing to the informative one may well be correct.

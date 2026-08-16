@@ -31,28 +31,83 @@ function draftFromWeight(kg: number | null, reps: number | null, unit: Unit): Dr
   }
 }
 
-function StepperButton({
+/**
+ * One live zone: a full-bleed row of minus / figure / plus.
+ *
+ * The two side columns are 82px and carry no fill — they are regions, not
+ * buttons, which is the point. A thumb aiming at "the left edge of the phone"
+ * hits a target the width of a thumb; a thumb aiming at a 48px pill has to
+ * find it first. The hairlines are the only thing drawn.
+ */
+function Zone({
+  id,
   label,
-  sign,
-  onPress,
-  disabled,
+  value,
+  onChange,
+  onDown,
+  onUp,
+  downLabel,
+  upLabel,
+  placeholder,
+  inputMode,
+  step,
+  size,
 }: {
+  id: string
   label: string
-  onPress: () => void
-  sign: 'up' | 'down'
-  disabled?: boolean
+  value: string
+  onChange: (value: string) => void
+  onDown: () => void
+  onUp: () => void
+  downLabel: string
+  upLabel: string
+  placeholder: string
+  inputMode: 'decimal' | 'numeric'
+  step: string
+  /** A ramp step, never a literal — `text-mega` or `text-hero`. */
+  size: string
 }) {
   return (
-    <button
-      type="button"
-      onClick={onPress}
-      disabled={disabled}
-      aria-label={label}
-      className="btn-base press bg-ink h-12 w-12 shrink-0 text-num font-semibold disabled:opacity-45"
-      style={{ borderRadius: '12px' }}
+    <div
+      className="flex items-stretch"
+      style={{ borderBlockStart: '1px solid var(--color-line)' }}
     >
-      {sign === 'down' ? '−' : '+'}
-    </button>
+      <button
+        type="button"
+        onClick={onDown}
+        aria-label={downLabel}
+        className="press text-fig w-[82px] shrink-0 text-muted"
+        style={{ borderInlineEnd: '1px solid var(--color-line)' }}
+      >
+        −
+      </button>
+      <div className="min-w-0 flex-1 px-1 pt-1.5 pb-2 text-center">
+        <label htmlFor={id} className="kicker block">
+          {label}
+        </label>
+        <input
+          id={id}
+          type="number"
+          inputMode={inputMode}
+          step={step}
+          min="0"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder={placeholder}
+          dir="ltr"
+          className={`tnum font-display w-full bg-transparent text-center ${size} outline-none placeholder:text-muted`}
+        />
+      </div>
+      <button
+        type="button"
+        onClick={onUp}
+        aria-label={upLabel}
+        className="press text-fig w-[82px] shrink-0 text-muted"
+        style={{ borderInlineStart: '1px solid var(--color-line)' }}
+      >
+        +
+      </button>
+    </div>
   )
 }
 
@@ -421,84 +476,64 @@ export function SetEntry({
         )}
       </div>
 
-      <div className="flex gap-2.5">
-        <div className="surface-panel min-w-0 flex-[1.3] px-3.5 py-3">
-          {/* "WEIGHT · LBS", and nothing else. The "· optional" this carried
-              wrapped the label onto a second line and made the weight panel
-              taller than the reps panel beside it; the BW placeholder in the
-              field says the same thing without costing a line, and nobody
-              reads the word "optional" mid-set. */}
-          <label htmlFor="weight" className="kicker mb-1.5 block">
-            {t('entry.weight.panel', { unit })}
-          </label>
-          {/* Value above, steppers below.
-              
-              They used to flank the value in one row, which is what the design
-              draws — but the design's steppers are 44-46px squares and this
-              app's touch floor is 48px (a recorded deliberate yield), and at
-              390px that difference is decisive. Measured in the browser at the
-              shipped size: `102.5` is 83.1px wide and had 62px; `12` is 38.8px
-              and had 21px. Both fields clipped their own value, on the screen
-              whose entire job is logging a set in under thirty seconds.
+      {/* The live zones — v5 screen 07. Two full-bleed rows, each a 82px minus
+          zone, the figure, and a 82px plus zone.
 
-              Stacking gives the figure the panel's full inner width — 166px
-              and 125px — so it fits with room to spare, keeps the steppers at
-              48px, keeps the figures large and tabular, and puts the two
-              buttons further apart, which is easier to hit one-handed than a
-              pair squeezed either side of a number. */}
-          <input
-            id="weight"
-            type="number"
-            inputMode="decimal"
-            step="any"
-            min="0"
-            value={draft.weight}
-            onChange={(e) => setDraft((d) => ({ ...d, weight: e.target.value }))}
-            placeholder="BW"
-            className="tnum font-display h-11 w-full bg-transparent text-center text-fig font-bold tracking-[-0.02em] outline-none placeholder:text-muted"
-          />
-          <div className="mt-1.5 flex items-center justify-between">
-            <StepperButton
-              label={t('entry.weight.decrease')}
-              sign="down"
-              onPress={() => stepWeight(-1)}
-            />
-            <StepperButton
-              label={t('entry.weight.increase')}
-              sign="up"
-              onPress={() => stepWeight(1)}
-            />
-          </div>
-        </div>
+          This layout was tried once before and rejected, and the reason it
+          works now is worth stating so it is not re-rejected. The rejected
+          version put BOTH zones in ONE row, so a stepper pair and a figure
+          shared half the screen: measured at the shipped size, `102.5` needs
+          83.1px and had 62px, `12` needs 38.8px and had 21px, and both fields
+          clipped their own value on the one screen whose whole job is logging
+          a set. v5 gives each zone its own full-width row instead, so at 390px
+          the figure gets 390 − 82 − 82 = 226px — more than the 166px the
+          stacked panels bought, with the touch targets going from 48px to 82px
+          rather than down to the design's 44px.
 
-        <div className="surface-panel min-w-0 flex-1 px-3.5 py-3">
-          <label htmlFor="reps" className="kicker mb-1.5 block">
-            {t('entry.reps.panel')}
-          </label>
-          <input
-            id="reps"
-            type="number"
-            inputMode="numeric"
-            step="1"
-            min="0"
-            value={draft.reps}
-            onChange={(e) => setDraft((d) => ({ ...d, reps: e.target.value }))}
-            placeholder="0"
-            className="tnum font-display h-11 w-full bg-transparent text-center text-fig font-bold tracking-[-0.02em] outline-none placeholder:text-muted"
-          />
-          <div className="mt-1.5 flex items-center justify-between">
-            <StepperButton
-              label={t('entry.reps.decrease')}
-              sign="down"
-              onPress={() => stepReps(-1)}
-            />
-            <StepperButton
-              label={t('entry.reps.increase')}
-              sign="up"
-              onPress={() => stepReps(1)}
-            />
-          </div>
-        </div>
+          `-mx-[18px]` escapes the app's gutter, the same way the two sticky
+          clusters on this screen already do. A tap anywhere in an 82px column
+          steps: at arm's length, with one thumb, the target is the side of the
+          screen rather than a button you have to find. */}
+      <div className="-mx-[18px]">
+        <Zone
+          id="weight"
+          label={t('entry.weight.panel', { unit })}
+          value={draft.weight}
+          onChange={(v) => setDraft((d) => ({ ...d, weight: v }))}
+          onDown={() => stepWeight(-1)}
+          onUp={() => stepWeight(1)}
+          downLabel={t('entry.weight.decrease')}
+          upLabel={t('entry.weight.increase')}
+          placeholder="BW"
+          inputMode="decimal"
+          step="any"
+          /* The weight is the number the lifter is deciding, so it takes the
+             larger step — but NOT v5's `mega` 84. v5's live screen carries a
+             volume bar, a meta row, the exercise name and the two zones, and
+             nothing else. This one also carries the plate rail, the set-type
+             row and the session board, and at 84/56 the weight scrolled off
+             the top while the commit bar was still on screen: the figure you
+             are deciding, invisible, above the button that commits it.
+             `hero`/`fig` keeps v5's hierarchy and its full-bleed structure at
+             a scale this screen can actually hold. */
+          size="text-hero"
+        />
+        <Zone
+          id="reps"
+          label={t('entry.reps.panel')}
+          value={draft.reps}
+          onChange={(v) => setDraft((d) => ({ ...d, reps: v }))}
+          onDown={() => stepReps(-1)}
+          onUp={() => stepReps(1)}
+          downLabel={t('entry.reps.decrease')}
+          upLabel={t('entry.reps.increase')}
+          placeholder="0"
+          inputMode="numeric"
+          step="1"
+          /* A bodyweight set has no weight to read, so reps become the number
+             the screen is about and take the top step. v5 does the same. */
+          size={draft.weight.trim() === '' ? 'text-hero' : 'text-fig'}
+        />
       </div>
 
       <LoadHelper
@@ -655,11 +690,14 @@ export function SetEntry({
           type="button"
           onClick={() => void submit()}
           disabled={saving}
-          className={`btn-base press flex h-[60px] w-full items-center justify-center gap-2.5 btn-text font-bold disabled:opacity-45 ${
+          className={`btn-base press -mx-[18px] flex h-[70px] items-center justify-center gap-2.5 text-num font-bold uppercase disabled:opacity-45 ${
             setType === 'warmup' ? 'btn-primary' : 'btn-hero'
           }`}
           style={{
-            borderRadius: 'var(--radius-pill)',
+            // Square and full-bleed, like v5's bar and like the two zones
+            // above it. A pill under two edge-to-edge zones reads as a
+            // different screen's control.
+            borderRadius: 0,
             boxShadow: setType === 'warmup' ? undefined : 'var(--shadow-cta)',
           }}
         >
@@ -672,7 +710,7 @@ export function SetEntry({
                 : t('entry.log.set', { number: String(workingCount + 1) })}
             {!saving && figure !== null && (
               <>
-                {' — '}
+                {' · '}
                 <span dir="ltr" className="tnum">
                   {figure}
                 </span>
