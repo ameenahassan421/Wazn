@@ -45,6 +45,33 @@ function makeServer(): StubServer {
   return { captured: [], rows: {}, offline: false }
 }
 
+/**
+ * How many writes IndexedDB is holding, or -1 when it holds nothing.
+ *
+ * The app keeps two durable copies of the queue and this reads one of them
+ * directly, which no other test does. It is here because the difference
+ * between the copies is the whole subject of the test below: one is written
+ * synchronously and one is not, and a test that cannot see which is which
+ * cannot tell whether it is asserting durability or luck.
+ */
+const queueLength = (page: Page): Promise<number> =>
+  page.evaluate(
+    () =>
+      new Promise<number>((resolve) => {
+        const open = indexedDB.open('wazn', 1)
+        open.onerror = () => resolve(-1)
+        open.onsuccess = () => {
+          const tx = open.result.transaction('kv', 'readonly')
+          const read = tx.objectStore('kv').get('queue')
+          tx.oncomplete = () => {
+            const record = read.result as { value?: unknown[] } | undefined
+            resolve(record?.value?.length ?? -1)
+          }
+          tx.onerror = () => resolve(-1)
+        }
+      }),
+  )
+
 async function signedIn(page: Page, server: StubServer) {
   await stubSupabase(page, server)
   await page.goto('/')
@@ -159,6 +186,111 @@ test.describe('GATE 4 — the airplane-mode workout', () => {
     // And exactly once. The client-generated id is the primary key, so the
     // stub answers a replay with 23505 exactly as Postgres would; a queue that
     // read that as a failure would show two sets here.
+    expect(server.rows.workouts ?? []).toHaveLength(1)
+  })
+
+  /**
+   * The same kill, with nothing but the synchronous copy left — and the reason
+   * the test above passed in CI for two weeks while failing on a laptop.
+   *
+   * Everything IndexedDB holds is written through a fire-and-forget
+   * transaction; the checkpoint is a `setItem`. checkpoint.ts is explicit
+   * about why both exist: "a transaction opened five milliseconds before the
+   * OS kills a backgrounded tab may never commit; a `setItem` that returned
+   * has already happened." A hard kill is therefore ALLOWED to lose the
+   * IndexedDB side. That is not an edge case, it is the case the synchronous
+   * copy was written for.
+   *
+   * The test above never says which copy it is relying on, so it asserts
+   * whichever one happens to survive on the machine it runs on. There were two
+   * ways for it to be rescued and neither is a promise the app makes: the
+   * IndexedDB queue committing before `reload()`, or the board snapshot
+   * surviving so the app restores an "open" workout and reads the checkpoint
+   * on that branch. CI got one of them, a faster laptop got neither, and the
+   * green runs were the lucky ones — the load path had no route from the
+   * checkpoint to the queue at all when the server knew of no open workout.
+   *
+   * Clearing the store is the honest worst case and it makes the assertion
+   * deterministic: the checkpoint alone has to carry the session.
+   */
+  test('loses nothing when only the synchronous checkpoint survived', async ({
+    page,
+    context,
+  }) => {
+    const server = makeServer()
+    await signedIn(page, server)
+
+    server.offline = true
+    await context.setOffline(true)
+    await logSet(page, 'Bench Press', '100', '8')
+    await expect(page.getByTestId('sync-note')).toContainText('1 set')
+
+    // Wait for the app's own writes to land BEFORE taking them away, or this
+    // races the thing it is trying to simulate: the first version of this test
+    // cleared the store while the fire-and-forget `put` was still in flight,
+    // the write landed on top of the delete, and the test passed against the
+    // bug it was written to catch.
+    await expect.poll(() => queueLength(page), { timeout: 10_000 }).toBe(2)
+    await page.evaluate(
+      () =>
+        new Promise<void>((resolve, reject) => {
+          const open = indexedDB.open('wazn', 1)
+          open.onerror = () => reject(new Error('indexeddb did not open'))
+          open.onsuccess = () => {
+            const tx = open.result.transaction('kv', 'readwrite')
+            tx.objectStore('kv').clear()
+            tx.oncomplete = () => resolve()
+            tx.onerror = () => reject(new Error('the clear did not commit'))
+          }
+        }),
+    )
+    // Gone, and proven gone. The queue, the board and the catalogue all went
+    // through the same kind of transaction, so a kill that loses one can lose
+    // all three. What is left is the `setItem` that had already returned.
+    expect(await queueLength(page)).toBe(-1)
+    expect(
+      await page.evaluate(() => localStorage.getItem('wazn.workout.v1') !== null),
+    ).toBe(true)
+
+    /*
+     * The radio comes back while the PROJECT is still unreachable, and the
+     * order of those two matters more than it looks.
+     *
+     * `setOffline(false)` fires an `online` event, and the page that is about
+     * to be reloaded is still running: it wakes its own in-memory queue and
+     * starts draining. Do that with the project reachable and the dying tab
+     * delivers the whole session by itself, which is a real thing browsers do
+     * and a useless thing to assert — nothing durable was read, so the test
+     * would pass on a build that had lost the restore entirely. That is what
+     * the first draft of this test did.
+     *
+     * Keeping `server.offline` true through the reload closes it: the old
+     * tab's drain classifies as offline, counts nothing, sends nothing, and
+     * the assertion below proves it.
+     */
+    await context.setOffline(false)
+    expect(server.rows.workouts ?? []).toHaveLength(0)
+    expect(server.rows.workout_sets ?? []).toHaveLength(0)
+
+    // The shell still loads: the browser has signal, the project does not.
+    await page.reload()
+    await expect(appReady(page)).toBeVisible({ timeout: 15_000 })
+    // Still nothing, now from a page that has already read the device.
+    expect(server.rows.workout_sets ?? []).toHaveLength(0)
+
+    // Signal reaches the project, and the phone comes out of a pocket — one of
+    // the three wakes the queue listens for, and the one iOS actually delivers.
+    server.offline = false
+    await page.evaluate(() => document.dispatchEvent(new Event('visibilitychange')))
+
+    // Both writes replay from the checkpoint: the workout that exists nowhere
+    // but this device, and the set queued behind it. Head-first, so the
+    // foreign key is satisfied without the server ever having seen either.
+    await expect
+      .poll(() => (server.rows.workout_sets ?? []).length, { timeout: 20_000 })
+      .toBe(1)
+    expect(server.rows.workout_sets?.[0]).toMatchObject({ reps: 8 })
+    expect(server.rows.workout_sets?.[0].weight_kg).toBeCloseTo(45.36, 2)
     expect(server.rows.workouts ?? []).toHaveLength(1)
   })
 

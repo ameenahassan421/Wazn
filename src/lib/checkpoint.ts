@@ -237,6 +237,39 @@ export function isUsable(
   return !isStale(checkpoint, nowMs)
 }
 
+/**
+ * The writes a checkpoint is still carrying, if it is recent enough to replay.
+ *
+ * Deliberately NOT gated on `isUsable`, and that is the whole point of this
+ * function existing rather than the call sites reading `.queue` themselves.
+ * `isUsable` asks "does this checkpoint describe the workout the server just
+ * handed us", which is the right question for the board's arrangement — order,
+ * extra rows, removals are meaningless against a different session — and the
+ * wrong question for the queue.
+ *
+ * A queue is "writes this device has not delivered", full stop. Two cases the
+ * `isUsable` gate got wrong, both of them losing a set that was performed:
+ *
+ *  - **Airplane mode.** A workout logged with no signal exists nowhere but this
+ *    device, so the server can never hand back an active id to match — the
+ *    answer is permanently no. That is precisely the case the synchronous
+ *    checkpoint exists for (see the header above), and gating its queue on a
+ *    server round trip made it unreadable there. GATE 4 failed on this.
+ *  - **A newer session.** Finish one workout in a dead zone, start another; the
+ *    first one's undelivered writes are not stale, they are just behind.
+ *
+ * Staleness still applies, on the checkpoint's own bound, which is the same
+ * twelve hours `offline-store.ts` uses for the durable copy.
+ */
+export function pendingQueue(
+  checkpoint: WorkoutCheckpoint | null,
+  nowMs: number,
+  maxAgeMs = MAX_AGE_MS,
+): QueuedWrite[] {
+  if (!checkpoint) return []
+  return isStale(checkpoint, nowMs, maxAgeMs) ? [] : checkpoint.queue
+}
+
 /* ── Storage, guarded ──────────────────────────────────────────────────────
    Safari in private mode throws on `setItem` once the quota is reached, and a
    throw on the commit path would take down the set the checkpoint exists to

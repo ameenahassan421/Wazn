@@ -7409,3 +7409,117 @@ their LAUNCH.md day-one empty states; auth is not wired on native at all. The
 duel card renders **nothing** rather than a placeholder, because it needs
 migration 0029 and a fake opponent on a screen whose whole job is being
 trusted with numbers is worse than an absence.
+
+## 2026-08-16 (GATE 4): the checkpoint had no route back into the write queue
+
+`e2e/offline.spec.ts` "killing the tab mid-workout loses nothing" fails on a
+laptop and passes in CI, on the same commit. It is not a regression and not a
+Node-version realm split. **The app is wrong and CI has been lucky.**
+
+### What the queue restore actually did
+
+Two durable copies of the write queue exist, deliberately, and `checkpoint.ts`
+is explicit about why. IndexedDB holds the volume; the localStorage checkpoint
+is the synchronous last-gasp copy, because "a transaction opened five
+milliseconds before the OS kills a backgrounded tab may never commit; a
+`setItem` that returned has already happened."
+
+`LogScreen`'s load path read the checkpoint's queue in exactly one place: the
+branch where the server hands back an open workout. Every other path passed a
+literal `[]`.
+
+```ts
+await restoreQueue(null, [], new Set()) // x4: cache-idle, deadline, failure, net-idle
+```
+
+A workout logged in airplane mode has never reached the server, so that branch
+can never be taken for it. **The one case the synchronous copy exists for was
+the one case it could not be read in.** Kill the tab before the fire-and-forget
+IndexedDB write commits and the set is in localStorage, unreachable, forever.
+Rung 1 was a no-op again, in a new place. The CI comment records the last time
+this spec caught exactly that.
+
+### Why CI stayed green
+
+Three things can deliver the session, and only one of them is a promise.
+
+1. The IndexedDB queue committing before `reload()`, which is a race with the
+   tab.
+2. The board snapshot surviving, so the app restores an "open" workout from
+   cache and takes the branch that does read the checkpoint.
+3. The dying page draining from memory. `context.setOffline(false)` fires an
+   `online` event and the not-yet-reloaded page wakes its own queue.
+
+CI wins one of these; a faster machine wins none. Hence pass, fail, fail on
+three consecutive local runs, and two weeks of green on main.
+
+### The fix
+
+`pendingQueue(checkpoint, nowMs)` in `checkpoint.ts`, called at all six sites.
+It is deliberately **not** gated on `isUsable`. That gate asks "does this
+checkpoint describe the workout the server just handed us", which is right for
+the arrangement (order, extra rows and removals are meaningless against another
+session) and wrong for the queue. A queue is "writes this device has not
+delivered", full stop. `restoreQueue`'s own comment said so while the call
+sites did the opposite. Staleness still applies, on the same twelve hours the
+IndexedDB copy uses.
+
+### The test that would not have caught it
+
+A new case, `loses nothing when only the synchronous checkpoint survived`,
+clears the whole IndexedDB store and asserts the checkpoint alone carries the
+session. Two earlier drafts of it passed against the unfixed app, and both were
+worth more than the fix as a lesson.
+
+- The first deleted the `queue` key while the app's own `put` was still in
+  flight. The write landed on top of the delete.
+- The second cleared the store correctly and was rescued by cause 3 above. The
+  dying tab delivered everything, so nothing durable was ever read.
+
+The shipped version keeps `server.offline` true across the reload so the old
+page provably cannot deliver (asserted, not assumed), and only then lets the
+project answer. It fails 3 of 3 without the fix and passes 3 of 3 with it.
+
+**A test that guards a data-loss promise has to be told which copy it is
+reading.** This one asserted "the set arrives" and accepted three different
+reasons, one of which was the app working. Verifying a fix by watching a red
+test go green is not enough when the test was never deterministic. The
+counter-check, meaning revert the fix, confirm the test fails, and confirm it
+fails on the assertion you expect, is what caught both bad drafts.
+
+### One more environment trap, for whoever hits it next
+
+Two working trees of this repo on one machine both run `vite preview` on port
+4173, and `playwright.config.ts` sets `reuseExistingServer: !process.env.CI`.
+If either has a server up, the other's run silently skips `npm run build` and
+tests the first tree's bundle. That produced a clean 6-of-6 false failure here,
+against source that had already been fixed. Check
+`lsof -nP -iTCP:4173 -sTCP:LISTEN` before believing a smoke result that
+contradicts the code in front of you.
+
+### Unrelated, found on the way
+
+`src/lib/forecast.test.ts:28` fails on clean main in any timezone with a
+spring-forward between 2026-01-05 and 2026-03-23. Its `series()` fixture parses
+`2026-01-05T10:00:00` with no zone, so it is local time, and 77 days later the
+span is an hour short of eleven weeks. `Math.floor` returns 10. CI's runner is
+UTC. Same class as the above: green because of where it runs.
+
+**Already fixed on `claude/e1-core-extraction` in `a133ed6`**, arrived at
+independently when that branch's suite went red. Verified rather than taken on
+report: a shared `weekSpan(from, to)` snaps to whole days before dividing,
+`floor(round(delta / DAY_MS) / 7)`, which absorbs the missing hour while
+keeping the floor semantics the `everyDays: 3` assertion depends on, and it is
+called from both `weeksOfData` and the plateau detector, which carried the same
+expression. The test gained a case built in UTC (`2026-01-05T18:00:00.000Z` to
+`2026-03-02T17:00:00.000Z`, 55 days 23 hours) that returns 7 under the old
+formula and 8 under the new one, so it fails on a UTC runner too. That is the
+half that matters: without it CI could never have seen this, in either
+direction. `forecast.ts` moved to `packages/core/src/` with the other 40
+modules, so the fix travels with E1.
+
+Worth recording because it was never only a test bug. `FORECAST_MIN_WEEKS` is
+8 and `forecastE1rm` returns null below it, so a lifter who trains the same
+weekday and hour across the March change was counted at 7 weeks and had the
+forecast withheld. Silently, and only in DST timezones, which is every user
+this app has.

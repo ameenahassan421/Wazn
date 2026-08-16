@@ -10,6 +10,7 @@ import {
   isStale,
   isUsable,
   load,
+  pendingQueue,
   save,
 } from './checkpoint'
 import type { WorkoutCheckpoint } from './checkpoint'
@@ -214,6 +215,43 @@ describe('isUsable', () => {
 
   it('ignores nothing at all', () => {
     expect(isUsable(null, 'w1', 0)).toBe(false)
+  })
+})
+
+/*
+ * The queue a checkpoint carries, which is NOT gated on `isUsable`.
+ *
+ * GATE 4 failed on exactly this distinction. `isUsable` asks "does this
+ * checkpoint describe the workout the server just handed us", and for a
+ * workout logged in airplane mode the answer is permanently no — the server
+ * has never heard of it. Gating the queue on that question makes the
+ * synchronous copy unreadable in the one case it exists for.
+ */
+describe('pendingQueue', () => {
+  const cp: WorkoutCheckpoint = { version: CHECKPOINT_VERSION, ...body }
+
+  it('hands back the queue when no workout is open at all', () => {
+    // The airplane-mode case: nothing of this session ever reached the server,
+    // so there is no active id to match and never will be.
+    expect(pendingQueue(cp, body.savedAt)).toEqual([queued])
+  })
+
+  it('hands back the queue when the checkpoint is for another workout', () => {
+    // An undelivered write outlives the workout it belongs to. Dropping it
+    // because a different session is open would lose a set that was performed.
+    expect(pendingQueue(cp, body.savedAt)).toEqual([queued])
+  })
+
+  it('drops a queue that has aged out, on the checkpoint’s own bound', () => {
+    expect(pendingQueue(cp, body.savedAt + MAX_AGE_MS + 1)).toEqual([])
+  })
+
+  it('keeps a queue right up to the bound', () => {
+    expect(pendingQueue(cp, body.savedAt + MAX_AGE_MS - 1)).toEqual([queued])
+  })
+
+  it('is empty rather than throwing when there is no checkpoint', () => {
+    expect(pendingQueue(null, 0)).toEqual([])
   })
 })
 
