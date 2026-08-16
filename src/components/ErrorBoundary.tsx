@@ -78,7 +78,7 @@ export class ErrorBoundary extends Component<Props, State> {
       >
         {/* Amber and outlined, never red — §2.4. A crash is the app's fault,
             and shouting at the user in red does not make it less so. */}
-        <p className="font-mono text-[12px] tracking-[0.08em] text-accent uppercase">
+        <p className="font-mono text-[12px] tracking-[0.08em] text-soft uppercase">
           Something broke
         </p>
         <p className="mt-3 text-[15px] text-text">

@@ -380,7 +380,7 @@ export function HistoryScreen() {
       {error && (
         <p
           role="alert"
-          className="border border-accent px-3 py-2 text-sm text-accent"
+          className="border border-accent px-3 py-2 text-sm text-soft"
           style={{ borderRadius: 'var(--radius-md)' }}
         >
           {error}
@@ -562,7 +562,7 @@ export function HistoryScreen() {
                     )}
 
                     {savedRoutine && correcting === workout.id && (
-                      <p role="status" className="mt-2 text-[13px] text-accent">
+                      <p role="status" className="mt-2 text-[13px] text-soft">
                         {t('history.routine_saved', { name: savedRoutine })}
                       </p>
                     )}

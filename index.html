@@ -6,12 +6,41 @@
       name="viewport"
       content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1"
     />
-    <meta name="theme-color" content="#0c0b0a" />
+    <!-- The v5 ground. Was #0c0b0a, the amber system's cooler near-black. -->
+    <meta name="theme-color" content="#0f0d0a" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="Wazn" />
     <link rel="icon" type="image/svg+xml" href="/icon.svg" />
     <link rel="apple-touch-icon" href="/icon-192.png" />
+
+    <!-- Two faces, and only two, preloaded.
+
+         Saira 700 sets every figure the first screen shows, and Hanken sets
+         every sentence, so both are needed for the first paint of any screen.
+         The other four cuts are not: Saira 500 and 600 appear inside the
+         workout, Mono 500 and 600 on kickers and chips that arrive with
+         content. Preloading all six would compete with the JS bundle for the
+         same connection on Egyptian mobile data and delay the thing the app
+         exists for.
+
+         `crossorigin` is required even for a same-origin font: without it the
+         preload is fetched in a different mode than the CSS request that
+         follows, and the file is downloaded twice. -->
+    <link
+      rel="preload"
+      href="/fonts/saira-semicondensed-700-latin.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+    <link
+      rel="preload"
+      href="/fonts/hanken-grotesk-latin.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
     <title>Wazn</title>
   </head>
   <body>

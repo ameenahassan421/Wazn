@@ -2543,7 +2543,7 @@ function ErrorNote({ message }: { message: string }) {
   return (
     <p
       role="alert"
-      className="ring-edge border border-accent px-3 py-2 text-sm text-accent"
+      className="ring-edge border border-accent px-3 py-2 text-sm text-soft"
       style={{ borderRadius: 'var(--radius-md)' }}
     >
       {message}

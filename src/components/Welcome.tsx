@@ -149,7 +149,7 @@ export function Welcome({
                 : t('welcome.follow', { name: nameOf(inviter) })}
           </button>
           {followError && (
-            <p role="alert" className="mt-2 text-sm text-accent">
+            <p role="alert" className="mt-2 text-sm text-soft">
               {followError}
             </p>
           )}
@@ -200,7 +200,7 @@ export function Welcome({
           </div>
         )}
         {usernameError && (
-          <p role="alert" className="mt-2 text-sm text-accent">
+          <p role="alert" className="mt-2 text-sm text-soft">
             {usernameError}
           </p>
         )}

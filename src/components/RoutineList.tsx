@@ -92,7 +92,7 @@ export function RoutineList({
                     onClick={() => onStart(routine)}
                     disabled={busyId !== null}
                     className={`flex h-14 flex-1 items-center gap-2 overflow-hidden text-start text-[15px] font-medium ${
-                      busy ? 'text-accent' : ''
+                      busy ? 'text-soft' : ''
                     }`}
                   >
                     <span className="truncate">
@@ -102,7 +102,7 @@ export function RoutineList({
                         the meaning and "Start workout" below stays the only
                         filled control on the screen (§2.4). */}
                     {due?.id === routine.id && !busy && (
-                      <span className="kicker shrink-0 text-accent">
+                      <span className="kicker shrink-0 text-soft">
                         {t('routines.up_next')}
                       </span>
                     )}

@@ -4629,3 +4629,135 @@ through and corrected in place, keeping the record that they were believed:
    cohort and say nothing about retention. I repeated this inference myself in
    a status report before he corrected it, which is exactly why the wrong
    premise is preserved rather than quietly removed.
+
+## 2026-08-15: v5 "Momentum" adopted; the paper-first direction abandoned
+
+The design handoff in `docs/design/v5-momentum/` is now the app's direction,
+approved by Ameen. It replaces amber `#f0b429` with ember `#e8491d`, adds a
+scoped second hue (brass, earned states only), swaps IBM Plex Sans for Hanken
+Grotesk, introduces Saira Semi Condensed for display and every figure, and
+replaces the seven-step v2 type scale with a ten-step ramp.
+
+`claude/r4-paper-first` (18 commits, `55b5568`) and `claude/r5-exact-workout`
+(17 commits, `40802e7`) are **closed unmerged**, recorded here by SHA so the
+work is recoverable without the branch names. They built a paper-default theme
+with dark as the toggle. v5 is dark-first, `main` was never anything but dark,
+so that reversal never landed and is now dead. Ameen confirmed on 2026-08-15.
+
+Three things in the handoff are wrong about this repo, and
+`docs/design/v5-momentum/P0-PLAN.md` records all three. It says the codebase
+already has six tabs; it has five, and Body and Settings are net-new. It says
+v5 replaces a "paper-default"; there is none on `main`. And it contradicts
+itself on the rest canvas, below.
+
+### The rest canvas covers the commit bar, and GATE U2 says it must not
+
+README sections 07 and 08 put the full-screen rest takeover at `z-index: 57`,
+over the BANK IT bar at 31. Verified in the running prototype: it covers the
+commit control, so set 2 onward costs a dismiss tap plus a commit tap. README
+section Do-not-regress #3 says repeat-set commit stays 1 tap. Both cannot be
+true.
+
+**Ameen chose: canvas at `z-index: 29`, below the bar.** Tapping the canvas
+dismisses it; tapping BANK IT dismisses and commits in the same tap. Reference
+pixels are identical and the gate holds. A future session reading 29 against a
+prototype that says 57 should stop here rather than "fix" it.
+
+### The wordmark: two marks now, deliberately
+
+Ameen chose the v5 Latin wordmark, lowercase `wazn` in Saira 700 with the `a`
+in ember, for the **interface**. It reverses the standing decision that the وزن
+"Loaded Ink" mark is canonical everywhere.
+
+It is not retired from the share card, the app icon or the favicon, all of
+which draw from `src/components/wordmark-paths.ts` and `scripts/build_logo.py`.
+So two marks circulate. That is the decision, not an oversight.
+
+### The ember tonal ramp, and why its dark end is desaturated
+
+v5 has no tonal ramp; the repo needs one, because `rep-fill-1..5`, `tag-accent`
+and `tag-pr` reference nine accent steps statically and Tailwind v4 prunes any
+`@theme` token nothing references. Derived in Oklab with 500 pinned to `em` and
+300 pinned to `soft`, so the ramp is continuous with the handoff's palette
+rather than a parallel invention.
+
+The dark end sheds chroma steeply, and a screenshot is why. The first pass held
+amber's chroma envelope, which put accent-800 at `#752916`. Amber's 800 was a
+dark olive gold that read as **unlit**; ember's, at the same relative chroma, is
+brick red. `BalanceRow` in `ProgressScreen` uses accent-800 to mean "over the
+target band", deliberately the darkest step of one hue rather than a second
+colour, so the hue change silently turned "you did plenty of chest" into what
+reads as an error. 600 through 900 now sit at 27 to 40% of the sRGB gamut edge
+instead of 80 to 95%, and read as iron in shadow. The semantic survives the
+palette.
+
+### The knurl keeps its geometry and loses the accent
+
+v5 never mentions the knurl, but `docs/design-philosophy.md` owns it, so it
+survives. Its ink is now warm neutral rather than the accent: an ember
+crosshatch across the whole target band on Progress read as a red hazard
+stripe, next to the bar that had just been fixed for the same reason.
+Knurling is machined iron, so it takes the text colour at low alpha. `tag-pr`
+still overrides to ember, because a record IS the accent. Reversible.
+
+### Small accent text moved to the `soft` tier, app-wide
+
+Amber on ink was about 9:1 and safe for body copy. Ember on ink is **4.99:1**,
+which is fine for chrome and figures and not fine for an 11px delta. All 39
+`text-accent` sites became `text-soft` (`#f4a68c`, 9.87:1), with two
+exceptions, each commented at the call site: the 20px filled heart in
+`FriendsScreen`, which is a fill rather than text, and the 23px rest countdown,
+which is a figure.
+
+This is not a preference. The handoff does the same thing everywhere: `soft`
+for the active tab label, `soft` for accent kickers, `soft` for chip text, and
+`a { color: #f4a68c }` in both prototype stylesheets. Ember is the fill, rail
+and border tier; soft is the small-text tier.
+
+### The ramp is utilities, not `@theme --text-*`
+
+Tailwind v4's text tokens carry only `--line-height`, `--letter-spacing` and
+`--font-weight`, verified against the installed Tailwind rather than assumed. A
+v5 step also binds the face, the transform and tabular numerals, so the ten
+steps are `@utility type-*` classes, the same shape `kicker` has always had.
+`kicker` IS the kick step and keeps its name, being the incumbent on some thirty
+call sites and already owning the RTL override.
+
+Removing `--text-title`, `--text-body` and `--text-label` needed care rather
+than deletion: a removed `--text-*` token makes its utility emit no CSS and
+raise no error, which is the `inset-block-0` failure again. Each was counted
+first. `text-body` and `text-label` had zero callers; `text-title` had one, in
+`WorkoutOverview`, converted in the same commit.
+
+### `scripts/shots.mjs` now renders Arabic, and wipes `shots/` first
+
+The script that exists because "lint sees syntax and none of them can see a
+screen" had never once rendered RTL, while section 7.0 records three defects
+that came out of one Arabic screenshot Ameen took, with every automated gate
+green for all three. It now shoots an Arabic pass at 390px for both states,
+selecting tabs by position because an English accessible name matches nothing
+under Arabic.
+
+It found a real one on its first run. `{block.committed} / {block.planned}` in
+`WorkoutOverview` had no `dir="ltr"`, so RTL reversed it and "2 / 3" rendered
+as **"3 / 2"**: two of three sets done reading as three of two. Fixed here. A
+second finding, the hardcoded English "Superset, round N of M", is left for its
+own change because it needs new catalogue keys in both locales.
+
+`shots/` is also wiped at the start of every run. It is git-ignored, so it had
+frames from every branch that ever ran the script, and three-day-old `ar-*`
+frames from the abandoned paper-first branch were read as current output during
+this very session. Arabic appeared to render on a cream background, which would
+have been a serious regression had it been real. A directory that mixes runs is
+a directory that lies.
+
+### Fonts: 43 KB more, deliberately
+
+74 KB of faces becomes 117 KB. Three faces where there were two, all latin-only
+and self-hosted per the handoff's own section Assets and this file's standing
+Egyptian-mobile-data argument. Saira ships as three static cuts because Google
+Fonts has no variable file for the family, and **500 is not dead weight**: the
+stepper's minus and plus glyphs set the display face with no weight
+(`design/screens_core.jsx:177`), inherit 400, and resolve to the nearest loaded
+cut. Only Saira 700 and Hanken are preloaded; the other four arrive with
+content rather than competing with the JS bundle for the first paint.

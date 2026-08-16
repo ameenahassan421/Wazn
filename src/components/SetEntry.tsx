@@ -515,7 +515,7 @@ export function SetEntry({
       </div>
 
       {error && (
-        <p role="alert" className="text-sm text-accent">
+        <p role="alert" className="text-sm text-soft">
           {error}
         </p>
       )}

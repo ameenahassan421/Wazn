@@ -87,6 +87,9 @@ export function RestTimerBar({
       <div className="relative flex min-h-[50px] items-center gap-2 px-3 py-1">
         <span className="kicker">{done ? t('rest.done') : t('rest.title')}</span>
         <span
+          // `text-accent` survives the small-text sweep: 23px is a figure, not
+          // small text, and ember on ground is 4.99:1 — safe at this size. The
+          // rest surface is restyled in its own PR; this is the countdown.
           className={`tnum text-[23px] font-medium ${done ? 'text-accent' : 'text-text'}`}
           role="timer"
           aria-live="off"

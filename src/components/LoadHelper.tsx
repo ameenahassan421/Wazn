@@ -78,7 +78,7 @@ export function LoadHelper({
                 onClick={() => setBar(b)}
                 aria-pressed={bar === b}
                 className={`tnum h-12 min-w-14 rounded-md border px-3 text-sm font-semibold ${
-                  bar === b ? 'border-accent text-accent' : 'border-line text-muted'
+                  bar === b ? 'border-accent text-soft' : 'border-line text-muted'
                 }`}
               >
                 {b}
@@ -138,7 +138,7 @@ export function LoadHelper({
                           className="flex h-12 w-full items-center gap-3 disabled:opacity-45"
                         >
                           {figures}
-                          <span className="w-12 shrink-0 text-end text-[11px] font-medium text-accent">
+                          <span className="w-12 shrink-0 text-end text-[11px] font-medium text-soft">
                             {logged ? 'logged' : 'Log'}
                           </span>
                         </button>

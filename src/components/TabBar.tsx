@@ -51,7 +51,7 @@ export function TabBar({
               aria-current={selected ? 'page' : undefined}
               onClick={() => onChange(id)}
               className={`flex h-[60px] flex-1 flex-col items-center justify-center gap-1 ${
-                selected ? 'text-accent' : 'text-muted'
+                selected ? 'text-soft' : 'text-muted'
               }`}
               style={
                 selected

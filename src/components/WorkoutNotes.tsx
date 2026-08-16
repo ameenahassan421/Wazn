@@ -98,10 +98,7 @@ export function WorkoutNotes({
         />
       </div>
 
-      <p
-        className={`text-[11px] ${status ? 'text-accent' : 'text-muted'}`}
-        role="status"
-      >
+      <p className={`text-[11px] ${status ? 'text-soft' : 'text-muted'}`} role="status">
         {status ?? (saving ? t('notes.saving') : t('notes.saved'))}
       </p>
     </div>

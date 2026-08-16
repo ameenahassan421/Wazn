@@ -411,7 +411,13 @@ function BlockHeader({
             the line, "Bench Press (Barbell)" and "Lat Pulldown (Cable)" — the
             two most common lifts in this app — both truncated. Identity does
             not share a line. */}
-        <h3 className="min-w-0 flex-1 truncate text-title">{name}</h3>
+        {/* `type-title` is the v5 ramp's title step. `normal-case` cancels the
+            step's uppercase, deliberately: an exercise name is a proper noun,
+            and the handoff cancels it the same way wherever a name is set in
+            this step (design/screens_tabs.jsx uses `textTransform:'none'` on
+            every one). The live screen's own header, which DOES uppercase, is
+            a different surface and lands in the live PR. */}
+        <h3 className="min-w-0 flex-1 truncate type-title normal-case">{name}</h3>
 
         <button
           type="button"
@@ -427,9 +433,16 @@ function BlockHeader({
       {/* The meta line always exists, because progress always exists — so a
           block with a note and a block without are the same height. */}
       <p className="mb-1 ms-[88px] flex min-w-0 items-baseline gap-1.5 pe-2">
+        {/* `dir="ltr"` because this is a data string, not a sentence. Without
+            it, RTL reverses the fraction and "2 / 3" renders as "3 / 2" — two
+            of three sets done reads as three of two. Found by the Arabic pass
+            added to `scripts/shots.mjs`, which is the same failure class as
+            `icon-start` mirroring "↺ 100 × 8" (WAZN_PLAN §7.0): a number that
+            lies, invisible to lint, typecheck, the tests and the smoke run. */}
         <span
+          dir="ltr"
           className={`tnum shrink-0 font-mono text-[11px] ${
-            complete ? 'text-accent' : 'text-muted'
+            complete ? 'text-soft' : 'text-muted'
           }`}
         >
           {block.committed} / {block.planned}
@@ -755,7 +768,7 @@ function Previous({ row, unit }: { row: OverviewRow; unit: Unit }) {
       <span
         dir="ltr"
         className={`tnum shrink-0 font-mono text-[11px] ${
-          up ? 'text-accent' : 'text-muted'
+          up ? 'text-soft' : 'text-muted'
         }`}
         aria-label={`${up ? 'Up' : 'Down'} ${formatWeight(Math.abs(row.delta), unit)} ${unit} on last session`}
       >

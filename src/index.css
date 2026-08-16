@@ -1,24 +1,62 @@
 @import 'tailwindcss';
 
 /* ─── Type ─────────────────────────────────────────────────────────────────
-   IBM Plex, self-hosted. The v2 handoff specifies Google Fonts; it is served
-   from here instead, deliberately (see DECISIONS.md). This is an installed
-   PWA whose next stage is offline logging, used on Egyptian mobile data — a
-   render-blocking stylesheet on a third-party origin costs a DNS lookup, a
-   TLS handshake and a round trip before first paint, and fails outright with
-   no signal. Self-hosted files are precached by the service worker with
+   Three faces, self-hosted, latin only. v5 "Momentum".
+
+   Saira Semi Condensed carries display and EVERY figure. Hanken Grotesk
+   carries body and UI. IBM Plex Mono carries the meta voice: kickers,
+   timestamps, data chips, tab labels.
+
+   Self-hosted rather than pulled from Google Fonts, which is what the v5
+   handoff's own §Assets asks for and what this file has argued since v2: this
+   is an installed PWA with offline logging, used on Egyptian mobile data. A
+   render-blocking stylesheet on a third-party origin costs a DNS lookup, a TLS
+   handshake and a round trip before first paint, and fails outright with no
+   signal. Self-hosted files are precached by the service worker with
    everything else, so the app looks like itself offline.
 
-   Plex Sans ships as one variable file covering 400/500/600 (46 KB); Mono is
-   two static cuts (15 KB each). Latin only — Plex Sans Arabic arrives with
-   the rest of Stage 5 rather than sitting unused in every download until
-   then. 76 KB total, versus 175 KB of static cuts. */
+   Saira ships as three static cuts because Google Fonts has no variable file
+   for this family. 500 is NOT dead weight: the stepper's − and + glyphs set
+   the display face without a weight (design/screens_core.jsx:177), inherit
+   400, and resolve to the nearest loaded cut. Those are the two biggest touch
+   targets on the hot path, so the cut they land on ships deliberately rather
+   than by accident, and LiveScreen names 500 explicitly.
+
+   IBM Plex Sans is GONE, replaced by Hanken. 74 KB of faces becomes 117 KB,
+   a deliberate +43 KB for a three-face system where there was a two-face one.
+   Latin only, as before — neither Saira nor Hanken covers Arabic, and Arabic
+   already falls back to the system face, so this is unchanged rather than a
+   new gap. */
 @font-face {
-  font-family: 'IBM Plex Sans';
+  font-family: 'Saira Semi Condensed';
   font-style: normal;
-  font-weight: 400 600;
+  font-weight: 500;
   font-display: swap;
-  src: url('/fonts/ibm-plex-sans-latin.woff2') format('woff2');
+  src: url('/fonts/saira-semicondensed-500-latin.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Saira Semi Condensed';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('/fonts/saira-semicondensed-600-latin.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Saira Semi Condensed';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('/fonts/saira-semicondensed-700-latin.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Hanken Grotesk';
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url('/fonts/hanken-grotesk-latin.woff2') format('woff2');
 }
 
 @font-face {
@@ -38,43 +76,94 @@
 }
 
 /* ─────────────────────────────────────────────────────────────────────────
-   Wazn — the token system.
+   Wazn — the token system, v5 "Momentum".
 
-   Dark only. Near-black so the screen is readable under gym lighting
-   without flashing white. One accent: amber.
+   Dark only, and warmer than before: night iron rather than near-black. The
+   ground and the neutrals carry a warm cast because a cool ground fights a
+   warm accent, and warm near-black under ember reads as unlit iron, which is
+   what the app is about.
 
-   The ground and the neutrals carry a slight warm cast (hue ~60-70) rather
-   than the blue-grey that dark interfaces default to. Two reasons: a cool
-   ground fights a warm accent, and warm near-black under amber reads as
-   unlit iron, which is what the app is about. It is still near-black —
-   WAZN_PLAN §2.4 holds.
+   ONE accent, and it changed: amber #f0b429 becomes ember #e8491d. Ember on
+   ground is 4.99:1 — safe for chrome and figures, NOT for small body copy,
+   which is what `soft` #f4a68c exists for at 9.87:1. That split is the reason
+   the handoff names two ember tiers instead of one.
 
-   Amber gains the tonal ramp it never had: nine steps on one perceptual
-   lightness scale, so a chart can show depth without introducing a second
-   hue. 100 is lightest, 900 darkest. On this ground: 700-900 for tinted
-   fills and rails, 500 as the base, 100-300 for text sitting on those
-   tints. Accent-on-ground is ~9:1 — unlike the blue-grey system this
-   refines, it is safe for body copy, not only for chrome.
-   ───────────────────────────────────────────────────────────────────── */
+   ONE scoped second hue: brass. It marks earned metal only — rank, duel
+   opponent, record pace, target beaten — and never UI chrome. A third hue is
+   a review failure, not a preference.
+
+   Token NAMES are unchanged from the amber system on purpose. Thirty thousand
+   lines already say `text-muted`, `bg-surface`, `text-accent`; re-pointing the
+   values keeps every one of them correct and keeps this diff readable as a
+   palette swap rather than a rename.
+   ───────────────────────────────────────────────────────────────────────── */
 @theme {
-  --color-ink: #0c0b0a;
-  --color-surface: #161513;
-  --color-raised: #1f1d1a;
-  --color-line: #2a2825;
-  --color-text: #ecebe8;
-  --color-muted: #8d8983;
-  --color-accent: #f0b429;
-  --color-accent-ink: #1a1200;
+  /* Ground and surfaces. */
+  --color-ink: #0f0d0a; /* app ground: warm near-black iron */
+  --color-surface: #181510; /* cards */
+  --color-raised: #211d15; /* raised / pressed / track fills */
 
-  --color-accent-100: #fdf7e8;
-  --color-accent-200: #fbecc7;
-  --color-accent-300: #f8dc9b;
-  --color-accent-400: #f4ca62;
-  --color-accent-500: #f0b429;
-  --color-accent-600: #c9931f;
-  --color-accent-700: #977018;
-  --color-accent-800: #664c11;
-  --color-accent-900: #3d2f0c;
+  /* Two line weights, which the amber system did not distinguish. `line` is
+     the hairline ring on every card; `line-2` is a DRAWN border, for inputs
+     and outline buttons, where the edge is the control's own boundary rather
+     than an elevation cue. */
+  --color-line: rgba(236, 231, 220, 0.08);
+  --color-line-2: rgba(236, 231, 220, 0.16);
+
+  /* Text, three tiers plus the ember text tier. */
+  --color-text: #ece7dc; /* primary, 15.74:1 */
+  --color-muted: #9a927f; /* secondary, 6.28:1 */
+  --color-faint: #615b4d; /* meta / disabled, 2.88:1 — never body copy */
+
+  --color-accent: #e8491d; /* THE accent: the one action, live, PR, momentum */
+  --color-accent-ink: #1c0e08; /* text on ember fills, 4.84:1 on accent */
+  --color-soft: #f4a68c; /* small accent text on dark, 9.87:1 */
+  --color-chip-bg: rgba(232, 73, 29, 0.15); /* data-chip tint */
+
+  /* Brass. Earned metal, scoped. */
+  --color-brass: #b08d3e;
+  --color-brass-soft: #d9bc7a;
+  --color-brass-bg: rgba(176, 141, 62, 0.18);
+
+  /* The ember tonal ramp: nine steps on one perceptual lightness scale, so a
+     chart or a stack of fills can show depth without introducing a hue.
+
+     NOT from the handoff — v5 has no tonal ramp, because its screens never
+     need one. The repo does: `rep-fill-1..5`, `tag-accent` and `tag-pr` all
+     reference these steps statically, and Tailwind v4 DROPS any @theme token
+     nothing statically references, so a missing step renders as an empty
+     track and fails no check (see the rep-fill comment below, which is that
+     scar). Removing the ramp would mean rewriting four surfaces inside a
+     token PR.
+
+     Derived in Oklab, not picked by eye: lightness is monotonic, and two steps
+     are PINNED to values the handoff gives — 500 is `em` exactly and 300 is
+     `soft` exactly. So the ramp is continuous with the palette rather than a
+     parallel invention. accent-100 on accent-800, which is the tag-pr and
+     tag-accent pairing, is 8.96:1.
+
+     THE DARK END IS DELIBERATELY DESATURATED, and that was found by looking at
+     a screenshot rather than by reasoning. A first pass held amber's chroma
+     envelope, which put accent-800 at #752916. Amber's 800 was a dark olive
+     gold that read as UNLIT; ember's, at the same relative chroma, is brick
+     red. That matters because `BalanceRow` in ProgressScreen uses accent-800
+     to mean "over the target band" — deliberately the darkest step of one hue
+     rather than a second colour — and a brick-red bar reads as an error, which
+     the app forbids outright. Same for the two steps either side of it.
+
+     So 600 through 900 shed chroma steeply: from 80-95% of the sRGB gamut edge
+     at their own lightness down to 27-40%. They read as warm iron in shadow,
+     which is the meaning the chart needs, and the semantic survives the hue
+     change instead of quietly inverting. */
+  --color-accent-100: #fff3ef;
+  --color-accent-200: #ffcbba;
+  --color-accent-300: #f4a68c; /* = --color-soft */
+  --color-accent-400: #fc714e;
+  --color-accent-500: #e8491d; /* = --color-accent */
+  --color-accent-600: #b64a2f;
+  --color-accent-700: #874635;
+  --color-accent-800: #5f3b31;
+  --color-accent-900: #402b26;
 
   --color-neutral-100: #f4f3f0;
   --color-neutral-200: #e5e3de;
@@ -86,27 +175,45 @@
   --color-neutral-800: #3f3d38;
   --color-neutral-900: #292724;
 
-  /* Neutral steps for exercise tiles. No hue, so the single amber accent
-     stays the only colour in the app. Four steps are enough to tell
-     adjacent rows apart at a glance. */
-  --color-tile-1: #171614;
-  --color-tile-2: #1d1c19;
-  --color-tile-3: #23221e;
-  --color-tile-4: #2a2824;
+  /* Neutral steps for exercise tiles. No hue, so the single ember accent
+     stays the only colour in the app. Four steps are enough to tell adjacent
+     rows apart at a glance. Re-warmed to sit on the new ground. */
+  --color-tile-1: #1a1712;
+  --color-tile-2: #201c16;
+  --color-tile-3: #26221a;
+  --color-tile-4: #2d281e;
+
+  /* Saira carries display and every figure. `--font-display` is new; it is
+     what makes a figure a figure. */
+  --font-display: 'Saira Semi Condensed', ui-sans-serif, system-ui, sans-serif;
 
   --font-sans:
-    'IBM Plex Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto,
+    'Hanken Grotesk', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto,
     'Helvetica Neue', Arial, sans-serif;
 
   /* Mono is not decoration: it is the meta voice — kickers, timestamps,
-     section labels, the PR badge. Plex Mono's wider figures and squarer
-     terminals mark those as machine-set rather than spoken. */
+     section labels, data chips, tab labels. Plex Mono's wider figures and
+     squarer terminals mark those as machine-set rather than spoken. */
   --font-mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
 
-  /* The v2 scale. Every step carries its own weight and leading so a size
-     cannot be used at the wrong weight by accident. Figures never go below
-     `figure` — the one logged exception is the multi-set previous-session
-     string at 20px, argued in DECISIONS.md. */
+  /* ── The legacy v2 scale. RETIRING, not kept. ────────────────────────────
+     The v5 ramp lives below as `type-*` utilities, because a ramp step binds
+     font-family, text-transform and font-variant-numeric and Tailwind v4's
+     `--text-*` tokens carry only line-height, letter-spacing and font-weight.
+     Verified against the installed Tailwind, not assumed.
+
+     These four survive only until the screens still calling them are ported
+     (P1). `title`, `body` and `label` are gone from here, and that needed care
+     rather than deletion: removing a `--text-*` token makes its utility emit
+     NO CSS and raise NO error, which is the exact failure this file already
+     records twice (`inset-block-0`, the rep-fill ramp). So each was counted
+     first. `text-body` and `text-label` had zero call sites. `text-title` had
+     one, in WorkoutOverview, and it was converted to `type-title` in this same
+     commit. Nothing is left pointing at a name that no longer resolves.
+
+     Deleting the remaining four is an acceptance item on the last P1 PR, so
+     the handoff's "only the ramp's steps exist" ends up verified rather than
+     assumed. */
   --text-display: 44px;
   --text-display--line-height: 1.05;
   --text-display--font-weight: 600;
@@ -119,57 +226,73 @@
   --text-figure--line-height: 1.15;
   --text-figure--font-weight: 500;
 
-  --text-title: 19px;
-  --text-title--line-height: 1.25;
-  --text-title--font-weight: 600;
-
-  --text-body: 15px;
-  --text-body--line-height: 1.45;
-  --text-body--font-weight: 400;
-
-  --text-label: 13px;
-  --text-label--line-height: 1.4;
-  --text-label--font-weight: 400;
-
   --text-micro: 11px;
   --text-micro--line-height: 1.2;
   --text-micro--font-weight: 500;
 }
 
-/* Radii, dividers and elevation are plain custom properties — consumed by
-   the utilities below rather than by generated Tailwind classes.
+/* Radii, dividers and elevation are plain custom properties — consumed by the
+   utilities below rather than by generated Tailwind classes.
 
-   Elevation is a hairline ring, never a drop shadow (§2.4). The system this
-   refines shipped --shadow-md/-lg with real 18px and 40px blurs; both are
-   dropped. A card is separated from the ground by its edge and its fill. */
+   Elevation is the hairline ring, and in v5 it is ONLY the hairline ring. The
+   amber system paired it with a 1px inset top-light to read as a milled
+   surface catching room light; that light is a second shadow, and the handoff
+   §Shape says no drop shadows anywhere. So it is gone, from the ring and from
+   `btn-hero`. A card is separated from the ground by its edge and its fill. */
 :root {
+  /* v5 shape: card 16, control 12, chip 6, pill 999. */
+  --radius-card: 16px;
+  --radius-ctl: 12px;
+  --radius-chip: 6px;
+  --radius-pill: 999px;
+
+  /* The amber system's three radii, retiring alongside the legacy type steps.
+     Roughly forty inline `var(--radius-md)` sites still read them, and an
+     undefined custom property resolves to nothing rather than to an error, so
+     they are deleted only when the last caller goes (P1), not now. */
   --radius-sm: 4px;
   --radius-md: 8px;
   --radius-lg: 14px;
 
-  --divider: rgba(236, 235, 232, 0.14);
-  --divider-solid: rgba(236, 235, 232, 0.08);
+  --divider: var(--color-line-2);
+  --divider-solid: var(--color-line);
 
-  /* Elevation, v2: the hairline ring plus a 1px inset light along the top
-     edge. It reads as a milled surface catching the room light rather than
-     as an object floating over the page, which is what a drop shadow says
-     and what §2.4 forbids. */
-  --top-light: inset 0 1px 0 rgba(236, 235, 232, 0.045);
-  --ring-hairline: 0 0 0 1px var(--color-line), var(--top-light);
+  --ring-hairline: 0 0 0 1px var(--color-line);
 
-  /* Motion, U7. Four durations and two easings — the whole vocabulary.
-     Every animated thing in the app names one of these; a raw millisecond
-     value in a component is the smell that something is being invented.
-     Each tier exists because it answers a question the user is asking. The
-     tiers and where they are spent are documented at the motion section
-     near the end of this file. */
-  --motion-instant: 90ms; /* "did my set save?" */
-  --motion-press: 80ms; /* "did my finger land?" */
-  --motion-transition: 160ms; /* "where did I come from?" */
-  --motion-celebration: 1140ms; /* "did I beat it?" */
+  /* Motion. Two curves and, now, six durations — the whole vocabulary. Every
+     animated thing in the app names one of these; a raw millisecond value in
+     a component is the smell that something is being invented. Each tier
+     exists because it answers a question the user is actually asking.
+
+       --motion-press        80ms   the press dim         "did my finger land?"
+       --motion-instant      90ms   a set row arriving    "did my set save?"
+       --motion-transition  160ms   a layer sliding in    "where did I come from?"
+       --motion-overlay     220ms   a sheet or takeover   "what just happened?"
+       --motion-bar         500ms   a fill moving         "how far along am I?"
+       --motion-celebration 1140ms  the record flash      "did I beat it?"
+
+     Nothing decorative gets a token, and nothing on the hot path exceeds
+     200ms — which is why the celebration and overlay tiers are reachable only
+     after a set is already logged, never between one set and the next.
+
+     `--motion-bar` and `--motion-ring` are the two new tiers, both from the
+     handoff §Shape: bar fills at `.5s cubic-bezier(.2,.8,.2,1)`, and the rest
+     ring's arc at `1s linear`. The ring, like the timer bar, is a readout of
+     elapsed time rather than a response to a tap, so its duration is the tick
+     interval and its easing is linear. */
+  --motion-press: 80ms;
+  --motion-instant: 90ms;
+  --motion-transition: 160ms;
+  --motion-overlay: 220ms;
+  --motion-bar: 500ms;
+  --motion-ring: 1000ms;
+  --motion-celebration: 1140ms;
 
   --motion-ease: ease-out;
   --motion-linear: linear;
+  /* The fill curve: fast out, settle in. Named because three surfaces use it
+     (momentum bar, rank bar, import progress) and a fourth will. */
+  --motion-ease-fill: cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
 html {
@@ -186,10 +309,150 @@ body {
   overscroll-behavior-y: none;
 }
 
-/* Digits are the interface: keep them aligned everywhere. */
+/* Digits are the interface: keep them aligned everywhere. The ramp's figure
+   steps carry this themselves; the class stays for the numerals that sit in a
+   step which does not, and for spans that are not ramp steps at all. */
 .tnum {
   font-variant-numeric: tabular-nums;
   font-feature-settings: 'tnum' 1;
+}
+
+/* ─── The ramp ─────────────────────────────────────────────────────────────
+   Ten steps, and no other sizes exist. Values are the handoff's `ui.jsx` `T`
+   object verbatim, measured against the running prototype at 430px.
+
+   Utilities rather than `@theme --text-*` because a step binds four things
+   Tailwind's text tokens cannot carry: the face, the transform, tabular
+   numerals, and in two cases a negative tracking that must not survive an RTL
+   flip. Same shape as `kicker`, which has always been a utility for the same
+   reason.
+
+   The kick step is `kicker`, not `type-kick`. It is the incumbent name, it is
+   already on some thirty call sites, and it already owns the RTL override
+   below. One step, one name; this is the one where the name predates the ramp.
+
+     mega   Saira 700 / 84 / 1.0     live weight zone (reps zone 56)
+     hero   Saira 700 / 50 / 0.98    BEAT figure, finish total (66)
+     fig    Saira 700 / 30 / 1.05    weigh-in figure, rest "next set" (38-42)
+     num    Saira 600 / 21 / 1.1     stat tiles, e1RM list, session volume
+     title  Saira 600 / 17 / 1.2     card titles, buttons (ex. headers 24-26)
+     body   Hanken 400 / 14 / 1.5    coach sentences, prose
+     label  Hanken 400 / 13 / 1.4    rows, inputs, chips-as-buttons
+     kicker Mono   500 / 10 / .14em  section labels, zone labels (9 in tight spots)
+     meta   Mono   500 / 11          data chips, timestamps, prev-set strings
+     nano   Mono   500 / 9  / .1em   tab labels, disclaimers, footnotes
+
+   Sizes the ramp names in parentheses above (56, 66, 38, 24) are the same
+   step at a caller-set size, never a new step: they are set with an inline
+   `font-size` on top of the utility, which is what the prototype does. */
+
+@utility type-mega {
+  font-family: var(--font-display);
+  font-size: 84px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
+}
+
+@utility type-hero {
+  font-family: var(--font-display);
+  font-size: 50px;
+  font-weight: 700;
+  line-height: 0.98;
+  letter-spacing: -0.01em;
+  text-transform: uppercase;
+  font-variant-numeric: tabular-nums;
+}
+
+@utility type-fig {
+  font-family: var(--font-display);
+  font-size: 30px;
+  font-weight: 700;
+  line-height: 1.05;
+  font-variant-numeric: tabular-nums;
+}
+
+@utility type-num {
+  font-family: var(--font-display);
+  font-size: 21px;
+  font-weight: 600;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+
+@utility type-title {
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+}
+
+@utility type-body {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.5;
+}
+
+@utility type-label {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.4;
+}
+
+@utility type-meta {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+@utility type-nano {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+/* Section kicker: the meta voice, and the ramp's kick step. Mono,
+   wide-tracked, uppercase, quiet — a stamped label under the object rather
+   than a spoken heading. 11px in the amber system, 10px in v5. */
+@utility kicker {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  line-height: 1.2;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+}
+
+/* ── The ramp in Arabic ──────────────────────────────────────────────────
+   Arabic has no case, and tracking out a connected script breaks the joins.
+   Every step that carries a transform or a letter-spacing resets both, and
+   drops to the body face, since Saira and Mono are latin-only.
+
+   The figure steps — mega, fig, num, meta — are deliberately NOT reset. They
+   render digits, and `i18n.ts` keeps digits Latin under Arabic on purpose
+   (no Intl.NumberFormat, no toLocaleString), so Saira and Mono are still the
+   correct faces for them. Where Arabic text does land in one, the browser
+   falls back per glyph, exactly as it already does today.
+
+   `type-hero` also loses its negative tracking, which is the failure this
+   block exists to prevent: −0.01em on a connected script is not a style, it
+   is a broken word. */
+[dir='rtl'] .type-hero,
+[dir='rtl'] .type-title,
+[dir='rtl'] .type-nano,
+[dir='rtl'] .kicker {
+  font-family: var(--font-sans);
+  letter-spacing: 0;
+  text-transform: none;
 }
 
 /* Rep-range bars: one hue, five steps, heaviest range brightest — plates
@@ -293,8 +556,8 @@ button {
    a control stay solid — see rule-solid.
 
    CSS gradients have no logical directions, so this is `to right`. It is
-   safe for the Stage 5 RTL flip regardless: the ramp is symmetric, so the
-   rule renders identically in either direction. */
+   safe for the RTL flip regardless: the ramp is symmetric, so the rule
+   renders identically in either direction. */
 @utility rule-fade {
   height: 1px;
   border: 0;
@@ -315,52 +578,45 @@ button {
   background: var(--divider-solid);
 }
 
-/* Section kicker: the meta voice. Mono, wide-tracked, uppercase, quiet —
-   a stamped label under the object rather than a spoken heading.
+/* The knurl. Cross-hatched at ±45°, 1px line on a 5px period — the grip cut
+   into a bar, the one texture in the system.
 
-   Arabic has no case, and tracking out a connected script breaks the joins,
-   so Stage 5 resets both. Kept here rather than in a Stage 5 diff because
-   the rule belongs with the thing it governs. */
-@utility kicker {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: 500;
-  line-height: 1.2;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--color-muted);
-}
+   Kept through the v5 swap, which is a judgement call rather than the
+   handoff's instruction: v5 never mentions the knurl, but
+   `docs/design-philosophy.md` owns it and it is the only texture the app has.
+   Flagged in DECISIONS.md as reversible.
 
-[dir='rtl'] .kicker {
-  font-family: var(--font-sans);
-  letter-spacing: 0;
-  text-transform: none;
-}
+   The ink is now WARM NEUTRAL, not the accent, and that is the second thing a
+   screenshot caught. Amber worked as the knurl's colour because amber already
+   read as metal. Ember does not: a 5px ember crosshatch across the whole
+   target band on Progress read as a red hazard stripe, next to a bar that had
+   just been fixed for the same reason. Knurling is machined iron, so the
+   texture takes the text colour at low alpha and reads as cut metal.
 
-/* The knurl. Cross-hatched amber at ±45°, 1px line on a 5px period — the
-   grip cut into a bar, the one texture in the system.
+   `tag-pr` still overrides this to ember, because a record IS the accent and a
+   22px badge is small enough that the texture stays texture.
 
    It is confined to thin bands and the PR badge on purpose. Knurling exists
    where a hand grips; spread across a surface it stops being a reference to
    anything and becomes wallpaper. Opacity is a variable so a 4px rule and a
    22px badge can each sit at the right weight. */
 @utility knurl {
-  --knurl-ink: rgba(240, 180, 41, 0.7);
+  --knurl-ink: rgba(236, 231, 220, 0.26);
   background-image:
     repeating-linear-gradient(45deg, var(--knurl-ink) 0 1px, transparent 1px 5px),
     repeating-linear-gradient(-45deg, var(--knurl-ink) 0 1px, transparent 1px 5px);
 }
 
-/* Buttons. Primary is outlined on a 10% tint rather than a solid fill: in a
-   column of controls a solid amber slab shouts over everything near it, and
-   on the hot path the only thing that should shout is the number. Height is
-   set by the caller; §2.4's 48px floor applies. */
+/* Buttons. Four tiers, matching the handoff's `Btn` kinds: hero (solid
+   ember), line (outlined on `line-2`), ghost (bare, muted), ink (solid text
+   colour on ground — the second-strongest action, used for SIGN IN, SEND,
+   ASK). Height is set by the caller; the 48px floor applies. */
 @utility btn-base {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  border-radius: var(--radius-md);
+  gap: 8px;
+  border-radius: var(--radius-ctl);
   border: 1px solid transparent;
   font-weight: 500;
   line-height: 1.2;
@@ -369,41 +625,44 @@ button {
   color: var(--color-text);
 }
 
-/* The hero tier, new in v2. Solid amber, and the only solid amber allowed:
-   one per screen, on the single action that screen exists for — "Log set 3",
-   "Start workout".
+/* The hero tier: solid ember, and the only solid ember allowed — one per
+   screen, on the single action that screen exists for ("START THE HUNT",
+   "BANK IT").
 
-   This reverses an earlier call. Outlined-on-tint was chosen because a solid
-   amber slab shouts over a column of controls, and that reasoning still
-   holds — which is exactly why the rule is one per screen. When nothing else
-   is filled, the fill is not noise competing with the number; it is the
-   thumb's destination, findable without reading. Everything else stays
-   outlined. See DECISIONS.md. */
+   The inset top-light the amber version carried is gone: §Shape allows the
+   hairline ring and nothing else, and an inset light is a shadow. */
 @utility btn-hero {
   border-color: transparent;
   background: var(--color-accent);
   color: var(--color-accent-ink);
   font-weight: 600;
-  /* A light along the top edge only — the same milled-surface cue as
-     --top-light, warmer because it sits on amber rather than on ink. */
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25);
+}
+
+/* The second-strongest action: the text colour as a fill, ground as the ink.
+   New in v5 — the handoff's `ink` kind. */
+@utility btn-ink {
+  border-color: transparent;
+  background: var(--color-text);
+  color: var(--color-ink);
+  font-weight: 600;
 }
 
 @utility btn-primary {
   border-width: 1.5px;
   border-color: var(--color-accent);
-  color: var(--color-accent);
-  background: color-mix(in srgb, var(--color-accent) 10%, transparent);
+  color: var(--color-soft);
+  background: var(--color-chip-bg);
 }
 
+/* The handoff's `line` kind: a drawn edge on `line-2`, not an elevation ring. */
 @utility btn-secondary {
-  border-color: var(--divider);
+  border-color: var(--color-line-2);
   color: var(--color-text);
 }
 
 @utility btn-ghost {
   border-color: transparent;
-  color: var(--color-accent);
+  color: var(--color-muted);
 }
 
 @utility btn-quiet {
@@ -416,7 +675,7 @@ button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: 6px;
+  border-radius: var(--radius-chip);
   background: var(--color-neutral-800);
   color: var(--color-neutral-100);
   font-size: 11px;
@@ -427,41 +686,64 @@ button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: 6px;
+  border-radius: var(--radius-chip);
   background: var(--color-accent-800);
   color: var(--color-accent-100);
   font-size: 11px;
   letter-spacing: 0.02em;
 }
 
-/* The data chip. Design v2.1: mono 11 in amber-300 on a 7% amber tint, and
-   it carries the exact figures a coach's note came from. It is what makes the
-   AI feel like it read the log — and, less obviously, it is the cheapest
-   honesty check the feature has: a chip that disagrees with the charts is a
-   claim the reader can catch without trusting anything. */
+/* The data chip, and the app-wide grammar around it.
+
+   Every AI sentence renders with exactly ONE of these, and an AI line without
+   its number must not render at all. Mono 11 in `soft` on the 15% ember tint,
+   radius 6, 3px/8px, never wrapping. It is what makes the coach feel like it
+   read the log — and, less obviously, it is the cheapest honesty check the
+   feature has: a chip that disagrees with the charts is a claim the reader
+   can catch without trusting anything.
+
+   `dir="ltr"` belongs on the element, not here: a chip is a data string and
+   must not reorder under Arabic. */
 @utility chip-data {
-  display: inline-flex;
-  align-items: center;
-  border-radius: 5px;
-  padding: 3px 7px;
-  background-color: rgba(240, 180, 41, 0.07);
-  color: var(--color-accent-300);
+  display: inline-block;
+  border-radius: var(--radius-chip);
+  padding: 3px 8px;
+  background-color: var(--color-chip-bg);
+  color: var(--color-soft);
   font-family: var(--font-mono);
   font-size: 11px;
+  font-weight: 500;
   line-height: 1.2;
+  white-space: nowrap;
   font-variant-numeric: tabular-nums;
 }
 
-/* The PR badge. Amber-800 fill with the knurl laid over it at low opacity —
+/* The brass chip. Earned states only: rank, duel opponent, record pace,
+   target beaten. Anything else wearing brass is a review failure. */
+@utility chip-brass {
+  display: inline-block;
+  border-radius: var(--radius-chip);
+  padding: 3px 8px;
+  background-color: var(--color-brass-bg);
+  color: var(--color-brass-soft);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.2;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+/* The PR badge. accent-800 fill with the knurl laid over it at low opacity —
    the only place the texture appears outside a rule, because a record is the
    one thing in the app worth marking as machined. Mono, because it is a
-   stamp, not a word. */
+   stamp, not a word. accent-100 on accent-800 is 9.26:1. */
 @utility tag-pr {
-  --knurl-ink: rgba(240, 180, 41, 0.28);
+  --knurl-ink: rgba(232, 73, 29, 0.28);
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: 5px;
+  border-radius: var(--radius-chip);
   padding-inline: 6px;
   background-color: var(--color-accent-800);
   background-image:
@@ -484,43 +766,41 @@ button {
 }
 
 /* Directional icons point to the inline start; flip when the layout does.
-   Stage 5's RTL locale gets this for free. */
+   NEVER put this on a span containing a data string: it sat on "↺ 100 × 8"
+   once and mirrored the weights and reps on every ghost row of the Arabic
+   board. Icons only. */
 [dir='rtl'] .icon-start {
   transform: scaleX(-1);
 }
 
-/* The header band. The one gradient in the app, and it earns its place: it
-   separates chrome from content without a border, which would otherwise cut
-   a hard line across the screen directly above the hot path. */
+/* The header band. The amber system's one gradient, justified because it
+   separated chrome from content without a border cutting a hard line above
+   the hot path.
+
+   RETIRING: the v5 header sits on the ground with no band at all, and §Shape
+   allows no gradients. It stays defined for exactly one PR, until the header
+   itself is restyled and stops calling it. */
 @utility header-band {
   background: linear-gradient(180deg, #131210, var(--color-ink));
 }
 
 /* ─── Motion ───────────────────────────────────────────────────────────────
-   Two curves in the whole app: ease-out and linear. No springs, no shimmer,
+   Two curves plus the fill curve, and nothing else. No springs, no shimmer,
    no scroll effects. A plate landing, not a page turning.
 
-   U7 turns that restraint into a system. Four durations, declared with the
-   other tokens at the top of this file, spent only where motion answers a
-   question the user is actually asking:
+   The durations and where they are spent are declared with the other tokens
+   at the top of this file. Nothing decorative gets a token, and nothing on
+   the hot path exceeds 200ms — which is why the celebration and overlay tiers
+   are reachable only after the set is already logged.
 
-     --motion-instant      90ms   a set row arriving      "did my set save?"
-     --motion-press        80ms   the press dim           "did my finger land?"
-     --motion-transition  160ms   a layer sliding in      "where did I come from?"
-     --motion-celebration 1140ms  the record flash        "did I beat it?"
+   The rest timer's drain and the rest ring's fill are the deliberate
+   exceptions and the only uses of `linear`: both are readouts of elapsed time
+   rather than responses to a tap, so their duration is the tick interval, not
+   a feel-scale value.
 
-   Nothing decorative gets a token, and nothing on the hot path exceeds
-   200ms — which is why the celebration tier is reachable only after the set
-   is already logged, never between one set and the next.
-
-   The rest timer's drain is the deliberate exception and the only use of
-   `linear`: it is a readout of elapsed time rather than a response to a
-   tap, so its duration is the tick interval, not a feel-scale value. See
-   the bar in RestTimer.tsx.
-
-   `prefers-reduced-motion` collapses all four at the bottom of this file —
-   both the tokens themselves (so an inline style follows) and every
-   animation and transition globally. */
+   `prefers-reduced-motion` collapses every tier at the bottom of this file —
+   both the tokens themselves (so an inline style follows) and every animation
+   and transition globally. */
 
 /* The only press effect. Dim and settle a pixel down — the give of a loaded
    bar, not a bounce. */
@@ -535,9 +815,14 @@ button {
   transform: translateY(1px);
 }
 
+/* A bar fill moving: momentum, rank, import progress. */
+@utility fill-move {
+  transition: width var(--motion-bar) var(--motion-ease-fill);
+}
+
 /* Entering a layer — picker, set entry, exercise detail. Slides in from the
    inline end, so it reads as arriving from where the tap sent you. Uses a
-   logical translate so Stage 5's flip reverses it for free. */
+   logical translate so the RTL flip reverses it for free. */
 @keyframes layer-in {
   from {
     opacity: 0;
@@ -578,6 +863,38 @@ button {
   --layer-dir: -1;
 }
 
+/* A full-ground takeover arriving: the rest canvas, the PR screen. Opacity
+   only. Nothing moves, because nothing has travelled — the screen has become
+   a different screen. */
+@keyframes takeover-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@utility takeover-in {
+  animation: takeover-in var(--motion-overlay) var(--motion-ease) both;
+}
+
+/* A sheet rising from the bottom edge: "Tell the coach". */
+@keyframes sheet-in {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@utility sheet-in {
+  animation: sheet-in var(--motion-overlay) var(--motion-ease) both;
+}
+
 /* The rest timer's drain scales from the inline start, so the bar empties
    toward the end the same way in both directions. `transform-origin` has no
    logical keyword, so the flip is explicit — same shape as `--layer-dir`
@@ -597,7 +914,7 @@ button {
    the one case in the app where content changes under a reader's eye without
    them having done anything. A plain swap reads as a glitch. Opacity only, no
    movement: nothing has arrived or been logged, the same sentence has simply
-   got better, and 200ms is slow enough to be noticed without being waited on.
+   got better, and 160ms is slow enough to be noticed without being waited on.
 
    `both`-filled like the rest, so reduced motion lands the end state and the
    line is simply there. */
@@ -614,20 +931,21 @@ button {
   animation: coach-in var(--motion-transition) var(--motion-ease) both;
 }
 
-/* A personal record. The row fills to 28% amber, then settles to the 7%
-   tint it keeps. Amber, never confetti — §2.1 forbids a celebration, and a
-   record is a fact about the row, so it stays on the row. */
+/* A personal record. The row fills to 28% ember, then settles to the 15%
+   tint it keeps. Ember, never confetti — a celebration is forbidden, and a
+   record is a fact about the row, so it stays on the row. The full-screen PR
+   moment is a separate surface, reachable only after a commit. */
 @keyframes record-flash {
   0% {
-    background-color: rgba(240, 180, 41, 0.28);
+    background-color: rgba(232, 73, 29, 0.28);
   }
   100% {
-    background-color: rgba(240, 180, 41, 0.07);
+    background-color: var(--color-chip-bg);
   }
 }
 
 @utility record-row {
-  background-color: rgba(240, 180, 41, 0.07);
+  background-color: var(--color-chip-bg);
 }
 
 /* 240ms to fill and 900ms to settle, expressed as one 1140ms ease-out that
@@ -642,9 +960,12 @@ button {
   /* Collapse the vocabulary itself, so anything reading a token — including
      an inline style the blanket rule below cannot reach — is already still. */
   :root {
-    --motion-instant: 0.01ms;
     --motion-press: 0.01ms;
+    --motion-instant: 0.01ms;
     --motion-transition: 0.01ms;
+    --motion-overlay: 0.01ms;
+    --motion-bar: 0.01ms;
+    --motion-ring: 0.01ms;
     --motion-celebration: 0.01ms;
   }
 

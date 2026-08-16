@@ -112,7 +112,7 @@ export function Header({ titleKey }: { titleKey?: string | null }) {
                         active.discard()
                       }}
                       className={`flex h-12 w-full items-center px-4 text-start text-sm ${
-                        confirmDiscard ? 'text-accent' : ''
+                        confirmDiscard ? 'text-soft' : ''
                       }`}
                     >
                       {confirmDiscard

@@ -166,7 +166,7 @@ export function HevyImport({
       {error && (
         <p
           role="alert"
-          className="ring-edge border border-accent px-3 py-2 text-sm text-accent"
+          className="ring-edge border border-accent px-3 py-2 text-sm text-soft"
           style={{ borderRadius: 'var(--radius-md)' }}
         >
           {error}
@@ -250,7 +250,7 @@ export function HevyImport({
             className="ring-edge border border-accent bg-surface px-3 py-3"
             style={{ borderRadius: 'var(--radius-md)' }}
           >
-            <p className="text-sm font-medium text-accent">Your history is in.</p>
+            <p className="text-sm font-medium text-soft">Your history is in.</p>
             <p className="tnum mt-1 text-[13px] text-muted">
               {formatCount(plan.workouts.length)} workouts ·{' '}
               {formatCount(plan.setCount)} sets
@@ -300,7 +300,7 @@ function Preview({
           className="ring-edge border border-accent bg-surface px-3 py-3"
           style={{ borderRadius: 'var(--radius-md)' }}
         >
-          <p className="text-sm text-accent">{plan.fatal}</p>
+          <p className="text-sm text-soft">{plan.fatal}</p>
           {fileName && <p className="mt-1 text-[11px] text-muted">{fileName}</p>}
         </div>
         <button

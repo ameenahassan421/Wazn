@@ -7,7 +7,10 @@
  * signature muscle-balance chart drew nothing for weeks; and a duplicated
  * empty-state sentence. Both were found by looking at pixels.
  *
- * Coverage: five tabs x 390/430px x populated/empty.
+ * Coverage: five tabs x 390/430px x populated/empty, an open workout at both
+ * widths, and an Arabic pass at 390 for both states. `shots/` is wiped at the
+ * start of every run, because frames left over from another branch get read as
+ * current output — see the note on `rmSync` in `main`.
  *
  * Two rules, learned by getting them wrong on the first run (DECISIONS.md,
  * 2026-08-07):
@@ -24,7 +27,7 @@
  * are for looking at during a session, not for review in a diff.
  */
 import { spawnSync } from 'node:child_process'
-import { mkdirSync } from 'node:fs'
+import { mkdirSync, readdirSync, rmSync } from 'node:fs'
 import { chromium } from '@playwright/test'
 import {
   SUPABASE_ANON_KEY,
@@ -53,7 +56,7 @@ function build() {
   if (out.status !== 0) process.exit(out.status ?? 1)
 }
 
-async function shoot(browser, origin, { width, empty, active }) {
+async function shoot(browser, origin, { width, empty, active, locale }) {
   const context = await browser.newContext({
     viewport: { width, height: 844 },
     deviceScaleFactor: 2,
@@ -61,9 +64,21 @@ async function shoot(browser, origin, { width, empty, active }) {
     hasTouch: true,
   })
   await seedSession(context)
+  // Arabic, before the first paint. `LocaleProvider` reads this key as its
+  // optimistic cache, so seeding it is what makes the cold start render RTL —
+  // toggling in the UI after load would photograph a flipped layout that had
+  // already been laid out once in LTR.
+  if (locale === 'ar') {
+    await context.addInitScript(() => {
+      window.localStorage.setItem('workout.locale', 'ar')
+    })
+  }
   const page = await context.newPage()
   const crashes = []
   page.on('pageerror', (error) => crashes.push(error.message))
+  // Arabic frames are prefixed so an EN and an AR run of the same state never
+  // overwrite each other.
+  const prefix = locale === 'ar' ? 'ar-' : ''
   const network = offlineSwitch()
   await installSupabaseStub(page, fixtures({ empty, active }), { network })
 
@@ -76,7 +91,7 @@ async function shoot(browser, origin, { width, empty, active }) {
   // the other four are unchanged by an open workout.
   if (active) {
     await page.screenshot({
-      path: `${OUT}/active-${width}-overview.png`,
+      path: `${OUT}/${prefix}active-${width}-overview.png`,
       fullPage: false,
     })
     // Down the board, because the states that are easiest to get wrong live
@@ -85,7 +100,7 @@ async function shoot(browser, origin, { width, empty, active }) {
     await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight))
     await page.waitForTimeout(400)
     await page.screenshot({
-      path: `${OUT}/active-${width}-overview-end.png`,
+      path: `${OUT}/${prefix}active-${width}-overview-end.png`,
       fullPage: false,
     })
     // Commit a ghost for real, against the real build. This is the single most
@@ -97,7 +112,7 @@ async function shoot(browser, origin, { width, empty, active }) {
       await checks.last().click()
       await page.waitForTimeout(700)
       await page.screenshot({
-        path: `${OUT}/active-${width}-committed.png`,
+        path: `${OUT}/${prefix}active-${width}-committed.png`,
         fullPage: false,
       })
 
@@ -114,13 +129,13 @@ async function shoot(browser, origin, { width, empty, active }) {
        */
       await page.waitForTimeout(2800)
       await page.screenshot({
-        path: `${OUT}/active-${width}-restcanvas.png`,
+        path: `${OUT}/${prefix}active-${width}-restcanvas.png`,
         fullPage: false,
       })
       await page.evaluate(() => window.scrollBy(0, 24))
       await page.waitForTimeout(200)
       await page.screenshot({
-        path: `${OUT}/active-${width}-restcanvas-gone.png`,
+        path: `${OUT}/${prefix}active-${width}-restcanvas-gone.png`,
         fullPage: false,
       })
     }
@@ -152,7 +167,7 @@ async function shoot(browser, origin, { width, empty, active }) {
     await page.evaluate(() => window.scrollTo(0, 0))
     await page.waitForTimeout(300)
     await page.screenshot({
-      path: `${OUT}/active-${width}-offline.png`,
+      path: `${OUT}/${prefix}active-${width}-offline.png`,
       fullPage: false,
     })
     // And the reopen: same phone, same basement, page reloaded. Everything on
@@ -160,7 +175,7 @@ async function shoot(browser, origin, { width, empty, active }) {
     await page.reload({ waitUntil: 'domcontentloaded' })
     await page.waitForTimeout(8000)
     await page.screenshot({
-      path: `${OUT}/active-${width}-offline-reopen.png`,
+      path: `${OUT}/${prefix}active-${width}-offline-reopen.png`,
       fullPage: false,
     })
     network.offline = false
@@ -172,7 +187,7 @@ async function shoot(browser, origin, { width, empty, active }) {
       await menu.first().click()
       await page.waitForTimeout(300)
       await page.screenshot({
-        path: `${OUT}/active-${width}-blockmenu.png`,
+        path: `${OUT}/${prefix}active-${width}-blockmenu.png`,
         fullPage: false,
       })
       await menu.first().click()
@@ -191,7 +206,7 @@ async function shoot(browser, origin, { width, empty, active }) {
       await bring.first().click()
       await page.waitForTimeout(900)
       await page.screenshot({
-        path: `${OUT}/empty-${width}-import.png`,
+        path: `${OUT}/${prefix}empty-${width}-import.png`,
         fullPage: false,
       })
       await page.reload({ waitUntil: 'networkidle' })
@@ -200,15 +215,22 @@ async function shoot(browser, origin, { width, empty, active }) {
   }
 
   const state = empty ? 'empty' : 'full'
-  for (const tab of TABS) {
-    const button = page.getByRole('button', { name: tab, exact: true })
+  for (const [i, tab] of TABS.entries()) {
+    // Under Arabic every accessible name is Arabic, so an English name matches
+    // nothing and the guard below silently photographs the Log tab five times
+    // under five different filenames. Position in the nav is the locale-proof
+    // selector, and TABS is in the tab bar's own order.
+    const button =
+      locale === 'ar'
+        ? page.locator('nav button').nth(i)
+        : page.getByRole('button', { name: tab, exact: true })
     if (await button.count()) {
       await button.first().click()
       // Lazy chunks plus the screens' own fetches.
       await page.waitForTimeout(1400)
     }
     await page.screenshot({
-      path: `${OUT}/${state}-${width}-${tab.toLowerCase()}.png`,
+      path: `${OUT}/${prefix}${state}-${width}-${tab.toLowerCase()}.png`,
       // Viewport, not fullPage — see the header comment. This is the rule.
       fullPage: false,
     })
@@ -242,7 +264,7 @@ async function shoot(browser, origin, { width, empty, active }) {
           await edit.first().click()
           await page.waitForTimeout(600)
           await page.screenshot({
-            path: `${OUT}/${state}-${width}-history-editing.png`,
+            path: `${OUT}/${prefix}${state}-${width}-history-editing.png`,
             fullPage: false,
           })
           /*
@@ -256,7 +278,7 @@ async function shoot(browser, origin, { width, empty, active }) {
           if (await actions.count()) await actions.first().scrollIntoViewIfNeeded()
           await page.waitForTimeout(400)
           await page.screenshot({
-            path: `${OUT}/${state}-${width}-history-editing-actions.png`,
+            path: `${OUT}/${prefix}${state}-${width}-history-editing-actions.png`,
             fullPage: false,
           })
         }
@@ -281,7 +303,7 @@ async function shoot(browser, origin, { width, empty, active }) {
           if (await save.count()) await save.first().scrollIntoViewIfNeeded()
           await page.waitForTimeout(300)
           await page.screenshot({
-            path: `${OUT}/${state}-${width}-custom-exercise.png`,
+            path: `${OUT}/${prefix}${state}-${width}-custom-exercise.png`,
             fullPage: false,
           })
         }
@@ -296,13 +318,13 @@ async function shoot(browser, origin, { width, empty, active }) {
         await lift.first().click()
         await page.waitForTimeout(1200)
         await page.screenshot({
-          path: `${OUT}/${state}-${width}-exercise.png`,
+          path: `${OUT}/${prefix}${state}-${width}-exercise.png`,
           fullPage: false,
         })
         await page.mouse.wheel(0, 520)
         await page.waitForTimeout(400)
         await page.screenshot({
-          path: `${OUT}/${state}-${width}-exercise-scrolled.png`,
+          path: `${OUT}/${prefix}${state}-${width}-exercise-scrolled.png`,
           fullPage: false,
         })
       }
@@ -315,6 +337,18 @@ async function shoot(browser, origin, { width, empty, active }) {
 
 async function main() {
   build()
+  /**
+   * Wipe first, and this is not tidiness.
+   *
+   * `shots/` is git-ignored, so it accumulates frames from every branch that
+   * ever ran this script. During the v5 token swap, three-day-old `ar-*` frames
+   * from the abandoned paper-first branch were still sitting here, and they were
+   * read as current output — the app appeared to render Arabic on a cream
+   * background, which would have been a serious regression if it had been real.
+   * A directory that mixes runs is a directory that lies. Every frame in here is
+   * now from the run that just finished, or it is not in here.
+   */
+  rmSync(OUT, { recursive: true, force: true })
   mkdirSync(OUT, { recursive: true })
   const server = await serveDist('dist')
   const browser = await chromium.launch({
@@ -333,13 +367,41 @@ async function main() {
         ...(await shoot(browser, server.origin, { width, empty: false, active: true })),
       )
     }
+    /**
+     * Arabic, and it is not optional.
+     *
+     * Three defects came out of ONE Arabic screenshot Ameen took (WAZN_PLAN
+     * §7.0): `icon-start` mirrored a data string so weights and reps rendered
+     * backwards on every ghost row, `ExerciseThumb` was missing from the board,
+     * and exercise names were still English. Lint, typecheck, 818 tests, a
+     * production build and a Playwright smoke run were all green for all three.
+     * This script existed at the time and never once rendered RTL, which is why
+     * a person with a phone was the only thing that could catch them.
+     *
+     * One width, both the populated tabs and an open workout: the board is where
+     * the mirroring failures live, and 390 is the tighter of the two so a
+     * layout that survives it survives 430.
+     */
+    for (const active of [false, true]) {
+      crashes.push(
+        ...(await shoot(browser, server.origin, {
+          width: 390,
+          empty: false,
+          active,
+          locale: 'ar',
+        })),
+      )
+    }
   } finally {
     await browser.close()
     await server.close()
   }
 
   console.log(
-    `\n${TABS.length * WIDTHS.length * 2 + WIDTHS.length * 9} screenshots in ${OUT}/`,
+    // Counted off disk, not predicted from the loop bounds. The arithmetic
+    // version stayed at "38 screenshots" while the Arabic pass added fourteen
+    // more, which is the kind of quiet wrongness this script exists to expose.
+    `\n${readdirSync(OUT).length} screenshots in ${OUT}/`,
   )
   if (crashes.length) {
     // An uncaught error no longer blanks a tab — U1c's boundaries catch it —

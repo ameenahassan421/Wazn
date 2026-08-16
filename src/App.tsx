@@ -73,7 +73,7 @@ export default function App() {
   if (supabaseConfigError) {
     return (
       <main className="mx-auto flex min-h-dvh w-full max-w-[430px] flex-col justify-center px-5">
-        <p role="alert" className="text-sm text-accent">
+        <p role="alert" className="text-sm text-soft">
           {supabaseConfigError}
         </p>
       </main>

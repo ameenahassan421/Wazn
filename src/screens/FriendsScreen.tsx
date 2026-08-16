@@ -117,7 +117,7 @@ export function FriendsScreen({ userId }: { userId: string }) {
       {error && (
         <p
           role="alert"
-          className="ring-edge border border-accent px-3 py-2 text-sm text-accent"
+          className="ring-edge border border-accent px-3 py-2 text-sm text-soft"
           style={{ borderRadius: 'var(--radius-md)' }}
         >
           {error}
@@ -333,6 +333,9 @@ function Feed({
                 like.liked ? t('friends.feed.unlike') : t('friends.feed.like')
               }
               className={`mt-1 flex h-12 items-center gap-2 ${
+                // `text-accent`, not `text-soft`, and it is the exception to the
+                // sweep: this colours a 20px FILLED icon, not text. Ember is
+                // the fill tier; soft is the small-text tier.
                 like.liked ? 'text-accent' : 'text-muted'
               }`}
             >
@@ -387,7 +390,7 @@ function Leaderboard({ rows, unit }: { rows: LeaderRow[]; unit: 'lbs' | 'kg' }) 
                 >
                   <span
                     className={`tnum w-4 shrink-0 font-mono text-xs ${
-                      row.is_me ? 'text-accent' : 'text-muted'
+                      row.is_me ? 'text-soft' : 'text-muted'
                     }`}
                   >
                     {i + 1}
@@ -539,7 +542,7 @@ function You({
               disabled={busy}
               onClick={() => void setVisibility(v.id)}
               className={`ring-edge flex min-h-[60px] flex-col justify-center px-3 py-2 text-start ${
-                visibility === v.id ? 'bg-surface text-accent' : 'text-text'
+                visibility === v.id ? 'bg-surface text-soft' : 'text-text'
               }`}
               style={{
                 borderRadius: 'var(--radius-md)',
