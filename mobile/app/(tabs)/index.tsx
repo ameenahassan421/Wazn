@@ -6,7 +6,7 @@ import { formatVolume, partOfDay, palette, radius, space } from '@wazn/domain'
 
 import { Txt, Kick } from '@/design/Txt'
 import { Card, Rule } from '@/components/ui/Surface'
-import { Chip, CoachLine } from '@/components/ui/Chip'
+import { CoachLine } from '@/components/ui/Chip'
 import { ChipBtn, ChipRow, HeroBtn } from '@/components/ui/Btn'
 import { Fill } from '@/components/ui/Fill'
 import { Header } from '@/components/ui/Header'

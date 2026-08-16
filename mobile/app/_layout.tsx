@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { View } from 'react-native'
+import { Text, View } from 'react-native'
 import { Stack } from 'expo-router'
 import { StatusBar } from 'expo-status-bar'
 import { useFonts } from 'expo-font'
@@ -15,7 +15,9 @@ import { SairaSemiCondensed_700Bold } from '@expo-google-fonts/saira-semi-conden
 import { palette } from '@wazn/domain'
 
 import { REQUIRED_FONTS } from '@/design/type'
+import { useAuth } from '@/hooks/use-auth'
 import { UnitProvider } from '@/hooks/use-unit'
+import { supabaseConfigError } from '@/services/supabase'
 import '../global.css'
 
 /**
@@ -65,14 +67,53 @@ if (__DEV__) {
 
 export default function RootLayout() {
   const [ready, error] = useFonts(FACES)
+  const { loading, userId } = useAuth()
+
+  /**
+   * Nothing is shown until BOTH the faces are registered and the keychain has
+   * answered. Two reasons, and neither is cosmetic:
+   *
+   * Fonts, because v5 is sized against a condensed face and a frame measured
+   * against the system sans is wrong in a way that looks plausible.
+   *
+   * Auth, because "not signed in yet" and "not signed in" are different
+   * answers. Treating the first as the second bounces every returning lifter
+   * to the sign-in screen and straight back, which reads as being logged out.
+   */
+  const held = (!ready && !error) || loading
 
   useEffect(() => {
-    // Hide on failure too. A missing font is a degraded app; a splash screen
-    // that never goes away is a broken one, and the fallback still logs sets.
-    if (ready || error) void SplashScreen.hideAsync()
-  }, [ready, error])
+    // Hide on font failure too. A missing font is a degraded app; a splash
+    // screen that never goes away is a broken one, and the fallback still
+    // logs sets. The auth read is bounded by the keychain, not the network,
+    // so it cannot hang the way a fetch could.
+    if (!held) void SplashScreen.hideAsync()
+  }, [held])
 
-  if (!ready && !error) return null
+  if (held) return null
+
+  /**
+   * A build with no Supabase configuration says so, rather than showing a
+   * sign-in screen where every attempt fails for a reason the user cannot
+   * see. Same posture as the web app's `supabaseConfigError`.
+   */
+  if (supabaseConfigError !== null) {
+    return (
+      <View
+        style={{
+          flex: 1,
+          backgroundColor: palette.ink,
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: 24,
+        }}
+      >
+        <Text style={{ color: palette.accentSoft, textAlign: 'center' }}>
+          {supabaseConfigError}
+        </Text>
+      </View>
+    )
+  }
 
   return (
     <GestureHandlerRootView style={{ flex: 1, backgroundColor: palette.ink }}>
@@ -90,21 +131,40 @@ export default function RootLayout() {
                 animationDuration: 160,
               }}
             >
-              <Stack.Screen name="(tabs)" />
-              <Stack.Screen
-                name="session/[id]"
-                options={{
-                  // Slides up over the tab bar and covers it. A live workout
-                  // is not a tab — leaving it is a decision, not a swipe.
-                  presentation: 'fullScreenModal',
-                  animation: 'slide_from_bottom',
-                  gestureEnabled: false,
-                }}
-              />
-              <Stack.Screen
-                name="settings"
-                options={{ animation: 'slide_from_right' }}
-              />
+              {/* Declarative, not an effect that redirects after render.
+                  The effect-based guard every tutorial shows has a real race:
+                  the protected screen mounts, its data hooks fire against a
+                  session that is not there, and the redirect lands a frame
+                  later — so a signed-out launch flashes an empty Log screen
+                  and fires a doomed Supabase read on the way past. */}
+              <Stack.Protected guard={userId !== null}>
+                <Stack.Screen name="(tabs)" />
+                <Stack.Screen
+                  name="session/[id]"
+                  options={{
+                    // Slides up over the tab bar and covers it. A live
+                    // workout is not a tab — leaving it is a decision, not a
+                    // swipe.
+                    presentation: 'fullScreenModal',
+                    animation: 'slide_from_bottom',
+                    gestureEnabled: false,
+                  }}
+                />
+                <Stack.Screen
+                  name="settings"
+                  options={{ animation: 'slide_from_right' }}
+                />
+              </Stack.Protected>
+
+              {/* Signed out. `join/[code]` is deliberately OUTSIDE the guard:
+                  an invite link is how somebody arrives before they have an
+                  account, and bouncing them to a bare sign-in screen loses
+                  the code and the reason they tapped. */}
+              <Stack.Protected guard={userId === null}>
+                <Stack.Screen name="sign-in" />
+              </Stack.Protected>
+
+              <Stack.Screen name="join/[code]" />
             </Stack>
           </View>
         </UnitProvider>

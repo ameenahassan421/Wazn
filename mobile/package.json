@@ -45,6 +45,8 @@
   },
   "devDependencies": {
     "@types/react": "~19.2.2",
+    "eslint": "^9.39.5",
+    "eslint-config-expo": "^57.0.1",
     "tailwindcss": "^3.4.19",
     "typescript": "~6.0.3"
   },
@@ -55,7 +57,8 @@
     "lint": "expo lint",
     "typecheck": "tsc --noEmit",
     "bundle:ios": "expo export --platform ios --output-dir .expo-export --clear",
-    "bundle:android": "expo export --platform android --output-dir .expo-export --clear"
+    "bundle:android": "expo export --platform android --output-dir .expo-export --clear",
+    "check:routes": "node scripts/check_routes.mjs"
   },
   "private": true
 }

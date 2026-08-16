@@ -55,13 +55,18 @@ const DAY_ONE: HomeData = {
 }
 
 export function useHome(): HomeData {
-  const [data, setData] = useState<HomeData>({ ...DAY_ONE, loading: true })
+  /**
+   * Seeded, not corrected. With no Supabase configuration there is nothing to
+   * load, so the day-one shape IS the answer on the first render — and the
+   * effect that would otherwise set it synchronously is what `react-hooks` v7
+   * forbids. `supabaseConfigError` is a module constant.
+   */
+  const [data, setData] = useState<HomeData>(
+    supabaseConfigError === null ? { ...DAY_ONE, loading: true } : DAY_ONE,
+  )
 
   useEffect(() => {
-    if (supabaseConfigError !== null) {
-      setData(DAY_ONE)
-      return
-    }
+    if (supabaseConfigError !== null) return
 
     let live = true
 

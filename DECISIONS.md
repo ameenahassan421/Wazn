@@ -7523,3 +7523,91 @@ Worth recording because it was never only a test bug. `FORECAST_MIN_WEEKS` is
 weekday and hour across the March change was counted at 7 weeks and had the
 forecast withheld. Silently, and only in DST timezones, which is every user
 this app has.
+
+## 2026-08-16 (native, later) — The routes, the guard, and the way in
+
+Three gaps found by reading the router rather than trusting it, plus the two
+defects the first mobile CI run should have caught and could not.
+
+### The deep link that went nowhere — mine, and actively harmful
+
+`app.config.ts` shipped claiming `applinks:wazn.app` and an Android intent
+filter for `https://wazn.app/join`, and there was no `app/join/[code].tsx`.
+
+Claiming a domain means the OS **stops** opening those URLs in a browser and
+hands them to the app. So a real invite link landed on `+not-found` — strictly
+worse than not claiming the domain, because without the claim it would have
+opened the working web page. The claim shipped first; the route is the other
+half and should never have been separated from it.
+
+The route sits **outside** the auth guard on purpose: an invite is how somebody
+arrives before they have an account. The code is written to AsyncStorage
+_before_ it is resolved, so a dead radio at the moment of the tap does not lose
+it.
+
+### `typedRoutes: true` was enforcing nothing
+
+`experiments.typedRoutes` is on and useful in the editor. It enforces nothing in
+CI: the dev server writes `.expo/types/router.d.ts`, `.expo/` is gitignored, and
+`expo export` does not run the typegen — so on a fresh checkout the
+`.expo/types/**` entry in `tsconfig.json` matches zero files and
+`router.push('/sesion/new')` typechecks clean.
+
+Rather than commit a generated artefact or drop the flag, `check_routes.mjs`
+asserts the invariant straight off the filesystem: every `router.push`/`Link
+href` string must match a route file, treating `[param]` as a wildcard. Cruder —
+it cannot check params — but honest about what it does and it runs everywhere.
+Verified by breaking it deliberately before trusting it.
+
+### The guard is declarative
+
+`Stack.Protected guard={userId !== null}` rather than the effect-and-redirect
+every tutorial shows. The effect version has a real race: the protected screen
+mounts, its data hooks fire against a session that is not there, and the
+redirect lands a frame later — so a signed-out launch flashes an empty Log
+screen and fires a doomed Supabase read on the way past.
+
+`useAuth` has THREE states, not two. "Not signed in yet" and "not signed in" are
+different answers, and treating the first as the second bounces every returning
+lifter to sign-in and straight back, which reads as being logged out.
+
+### Two ways in, and two deliberately absent
+
+Email-or-username + password, and the 6-digit code — the same server calls
+`AuthScreen.tsx` makes, in the same order. Usernames still resolve **only**
+server-side through the `auth-alias` Edge Function; the address never reaches
+the device until the session does.
+
+Google and Apple are **absent rather than stubbed**. Google needs an OAuth
+client that does not exist and Apple needs the developer account. A dead
+"Continue with Google" on the first screen teaches a new user the app is broken.
+
+The OTP field is one hidden input behind six drawn cells, not six inputs: six
+real fields need focus-juggling per keystroke, fight the OS one-time-code
+autofill (which pastes six characters into one field), and have no correct
+backspace behaviour at a cell boundary.
+
+### The mobile CI job had no linter, and it cost immediately
+
+The first version ran `tsc` and `expo export`. An unused import reached `main`
+within the hour — `tsc` does not flag unused imports without `noUnusedLocals`
+and Metro happily bundles dead code.
+
+`mobile/eslint.config.js` closes it, and on its first run found **three**
+`setState`-synchronously-in-an-effect violations — the exact rule CLAUDE.md has
+warned about since U7, in code I had just written. All three were the same
+shape: an early return for missing Supabase config. Fixed by seeding the state
+from the module constant instead of correcting it in an effect.
+
+The config also carries the RTL rule, because `marginLeft` does not flip in
+Arabic any more than Tailwind's `ml-` does. **My first version of that rule was
+wrong**: the selector matched any `Property` named `right`, so it flagged
+`{ name, right }` in a component's own props destructuring. Scoping it to
+`ObjectExpression > Property` limits it to object literals, which is what a
+style is.
+
+### State
+
+Both platforms bundle (iOS 1724 modules, Android 1805). Web wall green: 1178
+vitest, 9 Playwright. Still not on a simulator, and the live board is still a
+placeholder — that is the next piece and it is the one the app exists for.

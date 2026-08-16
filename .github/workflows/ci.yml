@@ -155,6 +155,28 @@ jobs:
         run: npm run typecheck
         working-directory: mobile
 
+      - name: Lint
+        # The first version of this job ran tsc and expo export and no linter,
+        # and an unused import reached main inside the hour. tsc does not flag
+        # unused imports without `noUnusedLocals` and Metro happily bundles
+        # dead code. The config also carries the RTL rule — React Native's
+        # `marginLeft` does not flip in Arabic any more than Tailwind's `ml-`
+        # does — and on its first run it caught three `setState`-in-effect
+        # violations of the rule CLAUDE.md has warned about since U7.
+        run: npx expo lint
+        working-directory: mobile
+
+      - name: Check every navigation target is a real route
+        # `experiments.typedRoutes` is on and enforces NOTHING here: the dev
+        # server writes `.expo/types`, `.expo/` is gitignored, and `expo
+        # export` does not generate it — so on a fresh checkout the
+        # `.expo/types/**` entry in tsconfig matches zero files and a typo'd
+        # `router.push('/sesion/new')` typechecks clean. This checks the same
+        # invariant straight off the filesystem, with nothing generated to go
+        # stale.
+        run: npm run check:routes
+        working-directory: mobile
+
       - name: Bundle for iOS
         # THE gate for this app, and the reason it is worth a CI job.
         #
