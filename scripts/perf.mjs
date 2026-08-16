@@ -66,8 +66,11 @@ const DEVICE = {
 }
 
 const START_BUTTON = /^Start (workout|your first workout)$/
-const LOG_BUTTON = /^Log (set|warm-up) \d+$/
-/** The overview's row check — the core loop since design v2.2. */
+/** The focused view's commit bar. `Log set N` until v5 renamed it. */
+const LOG_BUTTON = /^Bank (set|warm-up) \d+$/
+/** The overview's row check — the core loop since design v2.2. Still "Log":
+    `overview.log_row` is a different string from the commit bar's, and only
+    the bar was renamed. */
 const CHECK_BUTTON = /^Log .+ set \d+:/
 
 function build() {
