@@ -7341,3 +7341,31 @@ that spec on this branch: **pass, fail, fail.** It is intermittent at roughly a
 two-in-three failure rate, which is also why CI has been green on it. A
 timing-dependent test guarding a data-loss promise is worse than a failing one,
 because the green runs read as evidence.
+
+### What the import sweep cannot see, for whoever moves the next module
+
+E1 and E1b moved 41 modules with a script that rewrites two things: import
+specifiers and `vi.mock` paths. That is all it understands. It found 165 and 20
+of them respectively and it was right every time, which is exactly what makes
+it dangerous to trust further than that.
+
+It is blind to behaviour carried in **argument lists**. A call that reads
+`restoreQueue(null, [], new Set())` is a literal to the sweep and a decision to
+the program. Moving the module those arguments belong to will not disturb them,
+the wall stays green, and the meaning is gone.
+
+Three concrete traps it did NOT catch on its own, all found by running things:
+
+1. `core-list.txt` had no trailing newline, so `while read` dropped the last
+   entry and `write-queue` silently stayed behind while every import to it had
+   already been rewritten.
+2. `vi.mock('../lib/active-workout')` kept pointing at a path that no longer
+   existed. Vitest did not complain; the mock just stopped applying and two
+   Header tests failed on a missing button.
+3. A mock factory rewritten from `supabase: {...}` to `db: () => {...}` became
+   a function with a block body returning nothing. It typechecked as a syntax
+   error, which was lucky. A subtler shape would not have.
+
+So: when `checkpoint.ts` eventually moves, read its call sites rather than its
+imports. The same applies to anything whose contract lives in what gets passed
+rather than in what gets imported.
