@@ -42,7 +42,11 @@ const LABEL_KEY: Record<TabKey, string> = {
 export const TAB_BAR_HEIGHT = 58
 
 function Glyph({ tab, on }: { tab: TabKey; on: boolean }) {
-  const ink = on ? 'var(--color-accent)' : 'var(--color-muted)'
+  // v5 colours the whole active tab `soft` (accent-300) and everything else
+  // `faint` — a wider gap than v3's accent/muted, so the current place reads
+  // from the corner of the eye rather than being found by reading. The ember
+  // 500 is spent on the rail alone, which is the one piece of chrome here.
+  const ink = on ? 'var(--color-accent-300)' : 'var(--color-faint)'
 
   switch (tab) {
     // A loaded plate, seen face on — the mark's own part.
@@ -109,7 +113,11 @@ function Glyph({ tab, on }: { tab: TabKey; on: boolean }) {
           />
           <span
             className="-ms-[4px] block h-[12px] w-[12px] rounded-full"
-            style={{ border: `2px solid ${ink}`, background: 'var(--color-surface)' }}
+            // The bar's own ground, not `surface`: the overlap is a cut-out
+            // in the disc behind it, so it has to match whatever it sits on.
+            // It sat on `surface` until the bar got its own darker ground,
+            // at which point the notch would have glowed.
+            style={{ border: `2px solid ${ink}`, background: 'var(--color-tabbar)' }}
           />
         </span>
       )
@@ -128,8 +136,9 @@ export function TabBar({
   return (
     <nav
       aria-label={t('nav.label')}
-      className="fixed inset-x-0 bottom-0 z-20 bg-surface"
+      className="fixed inset-x-0 bottom-0 z-20"
       style={{
+        background: 'var(--color-tabbar)',
         borderTop: '1px solid var(--color-line)',
         // The bar is 58px of chrome plus whatever the phone reserves below it.
         // Without this the home indicator sits on top of the labels.
@@ -145,16 +154,18 @@ export function TabBar({
                 type="button"
                 onClick={() => onSelect(tab)}
                 aria-current={on ? 'page' : undefined}
-                className="press flex w-full flex-col items-center justify-center gap-[3px]"
+                className="press relative flex w-full flex-col items-center justify-center gap-[3px]"
                 style={{ height: TAB_BAR_HEIGHT }}
               >
-                {/* The live rail. Always in the layout so the glyphs sit on
-                    one line whether or not their tab is the current one — a
-                    rail that only exists when active would shunt the whole
-                    row up by two pixels on every navigation. */}
+                {/* The live rail, sitting ON the bar's top border rather than
+                    inside the column. v5 runs it 20%–80% of the tab's width,
+                    which at six tabs on a 430px screen is 43px — wide enough
+                    to read as a lit segment of the edge rather than as a dash
+                    under nothing. Absolute, so it costs the row no height and
+                    the glyphs cannot shift by two pixels on navigation. */}
                 <span
                   aria-hidden="true"
-                  className="block h-[2px] w-[24px]"
+                  className="absolute start-[20%] end-[20%] top-0 block h-[2px]"
                   style={{ background: on ? 'var(--color-accent)' : 'transparent' }}
                 />
                 <span
@@ -165,7 +176,9 @@ export function TabBar({
                 </span>
                 <span
                   className="meta-mono text-nano"
-                  style={{ color: on ? 'var(--color-accent)' : 'var(--color-muted)' }}
+                  style={{
+                    color: on ? 'var(--color-accent-300)' : 'var(--color-faint)',
+                  }}
                 >
                   {t(LABEL_KEY[tab])}
                 </span>

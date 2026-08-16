@@ -1,17 +1,18 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   formatCount,
+  formatDayLabel,
   formatDuration,
+  formatMonthLabel,
   formatRelativeDay,
   formatSeconds,
-  formatDayLabel,
-  formatMonthLabel,
   formatShortDate,
   formatSyncedAt,
   formatTime,
   formatVolume,
   formatVolumeWithUnit,
   formatWorkoutDate,
+  partOfDay,
 } from './format'
 
 /**
@@ -267,5 +268,26 @@ describe('unrenderable dates', () => {
   it('guards the calendar labels, which take a Date and not a string', () => {
     expect(formatDayLabel(new Date('nope'))).toBe('—')
     expect(formatMonthLabel(new Date('nope'))).toBe('—')
+  })
+})
+
+describe('partOfDay', () => {
+  // Constructed with local-time components on purpose: the function reads the
+  // lifter's own clock, and an ISO-Z literal would test the runner's offset.
+  const at = (hour: number) => new Date(2026, 7, 16, hour, 30)
+
+  it('splits the day where the kicker needs it', () => {
+    expect(partOfDay(at(0))).toBe('morning')
+    expect(partOfDay(at(11))).toBe('morning')
+    expect(partOfDay(at(12))).toBe('afternoon')
+    expect(partOfDay(at(16))).toBe('afternoon')
+    expect(partOfDay(at(17))).toBe('evening')
+    expect(partOfDay(at(23))).toBe('evening')
+  })
+
+  it('greets an invalid clock rather than throwing at it', () => {
+    // Every other formatter here returns an em dash on a bad Date; this one
+    // has no dash to return, so it picks the bucket that reads as neutral.
+    expect(partOfDay(new Date('nope'))).toBe('evening')
   })
 })

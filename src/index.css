@@ -136,6 +136,14 @@
   /* v5's `faint`: meta and disabled. Below `muted`, above the ground. */
   --color-faint: #615b4d;
 
+  /* The tab bar's own ground, and the only surface in the app DARKER than
+     `ink`. v5 gives the bar `#0b0906` against a `#0f0d0a` page: the chrome
+     recedes below the content rather than lifting off it, which is the
+     opposite of what a raised surface does and is why it cannot be
+     `--color-surface`. It has no name in the handoff; it has one here so the
+     number lives in one place. */
+  --color-tabbar: #0b0906;
+
   /* ── Brass: earned metal, and the one scoped exception to a single hue ──
      Rank, the duel opponent, record pace, target beaten. NOTHING else — the
      handoff asks that any third use be flagged in review, so treat a brass
@@ -307,6 +315,12 @@
   --radius-xl: 20px;
   --radius-panel: 18px;
   --radius-thumb: 12px;
+  /* v5's control radius (`R.ctl`). `btn-base` still rounds at `md` (8px), so
+     for now this is the hunt CTA only — migrating every button to 12 changes
+     the shape of the whole app and belongs with the screens that own them,
+     not inside the home card. Named rather than inlined so the follow-up is
+     a one-line change instead of a search. */
+  --radius-ctl: 12px;
   --radius-pill: 999px;
   --surface-line: rgba(236, 231, 220, 0.05);
 

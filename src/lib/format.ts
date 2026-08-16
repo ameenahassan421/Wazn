@@ -230,3 +230,28 @@ export function formatVolumeWithUnit(
   if (kg === null) return '—'
   return `${formatVolume(kg, unit, locale)} ${unit}`
 }
+
+export type PartOfDay = 'morning' | 'afternoon' | 'evening'
+
+/**
+ * Which part of the lifter's day it is, in the three buckets the home
+ * screen's kicker needs.
+ *
+ * v5's hunt card reads `TONIGHT · PUSH DAY`, not `TODAY · PUSH DAY`, and the
+ * difference is the point: the card is addressed to the session you are about
+ * to do, at the hour you are about to do it. Three buckets is all the
+ * resolution that carries — someone training at 06:00 and someone at 11:00
+ * are both training in the morning.
+ *
+ * Local time on purpose. This is the only clock the lifter is standing in,
+ * and a UTC bucket would greet an Egyptian evening session as afternoon.
+ * The boundaries are a judgement rather than a fact, which is why they are
+ * pinned by a test instead of left inline in a component.
+ */
+export function partOfDay(now: Date): PartOfDay {
+  const hour = now.getHours()
+  if (Number.isNaN(hour)) return 'evening'
+  if (hour < 12) return 'morning'
+  if (hour < 17) return 'afternoon'
+  return 'evening'
+}
