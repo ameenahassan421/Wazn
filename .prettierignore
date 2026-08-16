@@ -12,6 +12,10 @@ workouts_corrected.csv
 # delivered them, and `npm run format` rewrites all five — which would edit the
 # thing the app is being measured against. They are read, never authored here.
 docs/design/v3-plate
+# The v5 bundle is a NORMATIVE reference — every value in it is a
+# requirement. Reformatting it would edit the source of truth we are
+# meant to measure against. Same reason v3-plate is here.
+docs/design/v5-momentum
 .github/skills
 .github/agents
 .github/hooks
