@@ -7215,7 +7215,7 @@ Two things worth keeping:
    Nothing here can enforce waiting; it is worth knowing that the drafts are
    the last gate that runs before `main` auto-deploys.
 
-## 2026-08-16 (E1) — Expo supersedes Capacitor, and the calculation core moves out of `src/`
+## 2026-08-16 (E1): Expo supersedes Capacitor, and the calculation core moves out of `src/`
 
 Ameen's call this session: Wazn goes native on **Expo Router + NativeWind**,
 not the Capacitor wrap that `WAZN_PLAN.md` §4 Stage 4B specifies. Recorded here
@@ -7294,7 +7294,7 @@ not cause it. It is GATE 4's checkpoint rung and the CI comment calls this spec
 the only thing that can answer GATE 4. CI was green on #97. Unexplained, and it
 needs its own session.
 
-## 2026-08-16 (E1b) — the Supabase client becomes an injected dependency
+## 2026-08-16 (E1b): the Supabase client becomes an injected dependency
 
 `supabase.ts` was the one module in the calculation set that could not move: it
 read `import.meta.env` at module scope, which is a Vite construct Metro does
@@ -7313,8 +7313,8 @@ An exported `const supabase` is exactly what forced the env read to happen at
 module scope, so `db()` is deliberately a function. It throws by name if the
 app never called `initSupabase`.
 
-That moved **7 more modules** into the core — `ai`, `auth-alias`, `body-store`,
-`coach`, `exercises`, `routines`, `use-auth` — for **41 in core against 22 left
+That moved **7 more modules** into the core (`ai`, `auth-alias`, `body-store`,
+`coach`, `exercises`, `routines`, `use-auth`), for **41 in core against 22 left
 in `src/lib`**. Only 17 call sites had to change, all inside those 7.
 
 ### Two guards fired, and both were right
@@ -7333,7 +7333,7 @@ empty client instead: no rows, no error, which is what those tests already
 assumed. A throwing default was tried first and it fails tests that are only
 rendering an empty state.
 
-### The GATE 4 e2e is FLAKY, not broken — correcting the E1 entry
+### The GATE 4 e2e is FLAKY, not broken. Correcting the E1 entry
 
 The E1 entry above says `e2e/offline.spec.ts:153` fails on clean `main`. That
 is true but incomplete and the framing was wrong. Three consecutive runs of

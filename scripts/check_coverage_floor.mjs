@@ -100,7 +100,7 @@ for (const { file, dir, shown } of files) {
   // `supabase.ts` deliberately exists under both roots after E1b: the core
   // holds the client seam, `src/lib` holds the web adapter that feeds it
   // `import.meta.env`. They are different modules that happen to share a
-  // basename, which is fine — what is NOT fine is EXEMPT being keyed by
+  // basename, which is fine. What is NOT fine is EXEMPT being keyed by
   // basename, because one entry would then silently excuse both. So the key
   // is the path, and a duplicate basename is merely a note.
   if (seen.has(file)) duplicates.push(shown)

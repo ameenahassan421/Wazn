@@ -5,7 +5,7 @@ import type { MuscleGroup } from './types'
  *
  * These lived in `exercises.ts` until E1, which is where `createCustomExercise`
  * and the PostgREST queries live too. That module imports the Supabase client,
- * so it cannot cross into `@wazn/core` — and these two arrays have no reason to
+ * so it cannot cross into `@wazn/core`, and these two arrays have no reason to
  * be stuck behind that. They are taxonomy: `exercise-guess.ts` derives against
  * them, the picker groups by them, the routine generator filters by them, and
  * every one of those is platform-free.
