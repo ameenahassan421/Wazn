@@ -316,7 +316,7 @@
   --radius-panel: 18px;
   --radius-thumb: 12px;
   --radius-pill: 999px;
-  --surface-line: rgba(22, 19, 14, 0.06);
+  --surface-line: rgba(236, 231, 220, 0.05);
 
   /* The flip ground: the theme's opposite, for the surfaces that want to be
      the darkest thing on a paper screen and the lightest on an ink one —
@@ -334,9 +334,11 @@
   --shadow-card: 0 1px 2px var(--surface-line), 0 0 0 1px var(--surface-line);
   --shadow-cta: 0 10px 26px rgba(232, 73, 29, 0.35);
 
-  --divider: rgba(22, 19, 14, 0.14);
-  --header-tint: #efe9df;
-  --divider-solid: rgba(22, 19, 14, 0.08);
+  --divider: rgba(236, 231, 220, 0.14);
+  /* The header band's top stop. `--color-surface`, so the gradient reads as
+     chrome lifting a step off the ground and settling back into it. */
+  --header-tint: #181510;
+  --divider-solid: rgba(236, 231, 220, 0.08);
 
   /* ── The tab bar's footprint, in ONE place ─────────────────────────────
      v3 brings the tab bar back (six tabs now — see components/TabBar.tsx),
@@ -360,27 +362,26 @@
   --tab-bar-height: 58px;
   --tab-space: calc(var(--tab-bar-height) + env(safe-area-inset-bottom, 0px));
 
-  /* The data chip's ground, v3. 7% on paper, 14% on the dark theme — the
-     design specifies both, and it is not a rounding: a 7% ember tint on
-     near-black is invisible, so the chip would lose the thing that makes it
-     read as a chip rather than as coloured text. */
-  --chip-tint: rgba(232, 73, 29, 0.07);
+  /* The data chip's ground. 14%, and it is not a rounding of paper's 7%: a
+     7% ember tint on near-black is invisible, so the chip would lose the
+     thing that makes it read as a chip rather than as coloured text. */
+  --chip-tint: rgba(232, 73, 29, 0.14);
 
   /* The dashed rule that separates a ghost row from a committed one. v2.2 drew
      this as an outline around the whole row; v3's board draws it as a divider
      ABOVE the row, so a block reads as one column with the plan hanging off
      the bottom of it rather than as a stack of boxes. */
-  --ghost-divider: #ded6c7;
-  /* Ghost figures and indices: the design's `#a39d90` tier — quieter than
-     muted, still legible at arm's length. Between tile-4 and muted on the
-     warm ramp, which is where it has to be: a ghost is not disabled. */
-  --ghost-ink: #a39d90;
+  --ghost-divider: var(--color-line-2);
+  /* Ghost figures and indices: quieter than muted, still legible at arm's
+     length. v5's `faint` sits exactly there — below `mut`, above the ground —
+     which is the same relationship the paper theme drew with `#a39d90`. */
+  --ghost-ink: var(--color-faint);
 
   /* Elevation, v2: the hairline ring plus a 1px inset light along the top
      edge. It reads as a milled surface catching the room light rather than
      as an object floating over the page, which is what a drop shadow says
      and what §2.4 forbids. */
-  --top-light: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  --top-light: inset 0 1px 0 rgba(236, 231, 220, 0.045);
   --ring-hairline: 0 0 0 1px var(--color-line), var(--top-light);
 
   /* Motion, U7. Four durations and two easings — the whole vocabulary.
@@ -404,6 +405,17 @@
    alternative. v5 replaces paper outright (Ameen, 2026-08-16), so the second
    palette is gone and the values above ARE the theme. `color-scheme: dark` is
    set on :root instead, so form controls and scrollbars follow.
+
+   Deleting it cost something, and the cost is worth writing down. Inverting
+   the `@theme` colours was the visible half of the job; that block ALSO held
+   dark values for eight tokens defined outside `@theme` — `--divider`,
+   `--divider-solid`, `--top-light`, `--header-tint`, `--surface-line`,
+   `--chip-tint`, `--ghost-divider`, `--ghost-ink` — and those silently kept
+   their paper values. A 60%-white inset light on every card, a `#efe9df`
+   header band across the top of every screen, and an ember chip tinted at 7%
+   on near-black where it needs 14%. Nothing failed: not lint, not the type
+   checker, not 1104 tests. A screenshot pass caught it. If a token is not in
+   `@theme`, grep for it before assuming a palette change reached it.
 
    `user_preferences.theme` stays in the database. Dropping a column is a
    destructive migration bought for nothing; an unread value costs nobody

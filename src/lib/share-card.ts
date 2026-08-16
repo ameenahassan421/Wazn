@@ -31,12 +31,12 @@ const H = 1350
 // somebody else's feed, and the dark plate is what makes it read as ours
 // rather than as a screenshot — but ink, bone and the muted greys are the
 // redesign's, not v2's cool-grey set.
-const INK = '#16130e'
-const TEXT = '#f7f3ec'
-const MUTED = '#9d968a'
+const INK = '#0f0d0a'
+const TEXT = '#ece7dc'
+const MUTED = '#9a927f'
 const ACCENT = '#e8491d'
 const ACCENT_700 = '#9a3012'
-const LINE = 'rgba(247, 243, 236, 0.1)'
+const LINE = 'rgba(236, 231, 220, 0.1)'
 const FONT = "'Hanken Grotesk', system-ui, sans-serif"
 const DISPLAY = "'Sora', system-ui, sans-serif"
 const MONO = "'IBM Plex Mono', ui-monospace, monospace"
