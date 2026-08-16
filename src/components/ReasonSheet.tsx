@@ -94,7 +94,7 @@ export function ReasonSheet({
 
       {/* The numbers, in the app's own chip. The sheet is an audit trail, so
           the figures it argues from are shown rather than described. */}
-      <span dir="ltr" className="chip-data tnum mt-3 inline-flex">
+      <span dir="ltr" className="chip-data tnum mt-3">
         {t('reason.chip', {
           from: w(verdict.facts.previousKg),
           to: w(verdict.weightKg),

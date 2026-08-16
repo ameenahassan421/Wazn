@@ -313,7 +313,7 @@ function NotesCard({
                     </p>
                     <p className="mt-1 text-[13px] text-muted">{insight.body}</p>
                     {insight.chip && (
-                      <span className="chip-data mt-2 inline-flex">{insight.chip}</span>
+                      <span className="chip-data mt-2">{insight.chip}</span>
                     )}
                   </div>
                 </div>
@@ -436,7 +436,7 @@ function Review({
                     {section.line}
                   </p>
                   {section.chip && (
-                    <span className="chip-data mt-2 inline-flex">{section.chip}</span>
+                    <span className="chip-data mt-2">{section.chip}</span>
                   )}
                 </div>
               </li>

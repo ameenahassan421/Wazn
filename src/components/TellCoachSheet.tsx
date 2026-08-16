@@ -176,7 +176,7 @@ function Proposal({
           <p className="mt-1 text-[14px] leading-[1.5] text-muted">
             {t('tell.ease.body')}
           </p>
-          <span dir="ltr" className="chip-data tnum mt-2.5 inline-flex">
+          <span dir="ltr" className="chip-data tnum mt-2.5">
             {formatWeight(edit.fromKg, unit)} → {formatWeight(edit.toKg, unit)} {unit}
           </span>
         </>
@@ -190,7 +190,7 @@ function Proposal({
           <p className="mt-1 text-[14px] leading-[1.5] text-muted">
             {t('tell.trim.body')}
           </p>
-          <span dir="ltr" className="chip-data tnum mt-2.5 inline-flex">
+          <span dir="ltr" className="chip-data tnum mt-2.5">
             {t('tell.trim.chip', {
               from: String(edit.fromSets),
               to: String(edit.toSets),

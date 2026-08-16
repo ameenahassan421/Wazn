@@ -549,6 +549,26 @@ async function shoot(browser, origin, { width, empty, active, locale, theme }) {
     }
 
     /*
+     * Down the weekly review, where the chips are.
+     *
+     * The Coach frame stops at the top of the card, so the five sections and
+     * their chips were never in a shot. The plateaus chip is the one that can
+     * name three lifts — it fits the function's 60-character cap and does not
+     * fit 390px, and on 2026-08-15 a live screen showed it painting past the
+     * card edge. `chip-data` was `nowrap` with no width bound.
+     */
+    if (screen.key === 'coach' && !empty) {
+      await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight))
+      await page.waitForTimeout(500)
+      await page.screenshot({
+        path: `${OUT}/${pfx}${state}-${width}-coach-review.png`,
+        fullPage: false,
+      })
+      await page.evaluate(() => window.scrollTo(0, 0))
+      await page.waitForTimeout(300)
+    }
+
+    /*
      * The strength list, which is where v3's forecast line and plateau card
      * live — and which no shot reached, because Progress is photographed at
      * the top of the page and both surfaces sit below the fold.

@@ -639,8 +639,14 @@ button {
    honesty check the feature has: a chip that disagrees with the charts is a
    claim the reader can catch without trusting anything. */
 @utility chip-data {
-  display: inline-flex;
-  align-items: center;
+  /* `inline-block`, not `inline-flex`, and the reason is the ellipsis below:
+     `text-overflow` applies to a block container, and a flex container's text
+     is an anonymous item it cannot reach. On inline-flex the over-long chip
+     was bounded but sheared off mid-character, which reads as a rendering
+     fault rather than as "there is more". Nothing here has element children —
+     every chip is a single text node — so the flex context bought nothing. */
+  display: inline-block;
+  vertical-align: middle;
   border-radius: 6px;
   padding: 3px 8px;
   background-color: var(--chip-tint);
@@ -654,6 +660,18 @@ button {
      grammar exists to prevent. On the board the FIGURE never yields and the
      chip does — see the set row's grid. */
   white-space: nowrap;
+  /* …and `nowrap` alone let it paint straight out of its card. The weekly
+     review's plateaus section names up to three lifts, which fits the
+     function's 60-character cap and does NOT fit 390px at 11px mono: on
+     2026-08-15 a live Coach screen showed
+     `Bench Press -0.4/sess, Lat Pulldown -1.6/sess, Lateral Raise` running
+     past the card edge and clipping mid-word.
+     Bounded and ellipsised rather than wrapped, because the rule above is
+     right — and an ellipsis tells the reader something was cut, where
+     painting outside the card just looks broken. */
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* The chip carries translated words beside its figures, so it takes the
