@@ -7214,3 +7214,48 @@ Two things worth keeping:
    were still in progress, so the branch never got to fail before main did.
    Nothing here can enforce waiting; it is worth knowing that the drafts are
    the last gate that runs before `main` auto-deploys.
+
+## 2026-08-16 (P0 #5) — Screen 08 is built; the takeover is not, and the handoff is why
+
+Ameen asked for all 23 build-order items. Item 5 is the rest canvas ring, and
+it splits cleanly into a surface and a behaviour. **The surface is built. The
+behaviour is not, because the handoff contradicts itself about it.**
+
+```
+screen 08          "full-screen ground takeover ON COMMIT"
+do-not-regress #3  "GATE U2: repeat-set commit stays 1 tap"
+```
+
+Both cannot hold. I wired the takeover, ran it, and measured: it intercepts
+**every** action after a commit, not just the next one. `e2e/offline.spec.ts`
+could not reach "Back to workout" and two GATE 4 airplane-mode tests timed out
+after 30s. A 3×5's second set costs commit → dismiss → commit.
+
+An independent audit run against that working tree found the same thing and
+**two consequences I had not articulated**:
+
+- `RestExpanded` is `role="dialog" aria-modal="true"` with a focus trap, so
+  auto-opening it puts a **modal on the logging path** — do-not-regress #5
+  forbids exactly that.
+- The takeover was gated on `restCanvasEnabled` only, never on coach volume,
+  so **Off would still take the screen** — do-not-regress #6 says Off must
+  render a coherent pure logger.
+
+Three of the seven do-not-regress items, from one line. It is reverted, and
+the line is left in a comment so turning it on is a copy-paste rather than a
+rediscovery. Which way this goes is Ameen's call, not a restyle's.
+
+**What did ship**, all of screen 08's visual spec: the kicker
+`REST — THE COACH IS THINKING` in `soft`, the ring at 250px (was 240), the
+countdown at `mega`, `TAP TO GO EARLY` in `faint`, and tap-anywhere dismissal
+on the layer — with `stopPropagation` on the header and the ±30s cluster,
+because without it "+30s" would add thirty seconds and then close the surface
+that shows them.
+
+### The measured completion number
+
+The same audit graded all 17 screens with file:line evidence. **Mean 25%.**
+Six of 23 build-order items are done — the four P0 restyles plus coach-volume
+wiring and week-review generation, which already existed and which my earlier
+estimate of 17% failed to credit. Nine screens are `tokens-only`: they inherit
+the v5 palette and ramp because those are global, and nothing else.
