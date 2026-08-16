@@ -89,7 +89,7 @@ function build() {
   if (out.status !== 0) process.exit(out.status ?? 1)
 }
 
-async function shoot(browser, origin, { width, empty, active, locale }) {
+async function shoot(browser, origin, { width, empty, active, locale, theme }) {
   const context = await browser.newContext({
     viewport: { width, height: 844 },
     deviceScaleFactor: 2,
@@ -104,7 +104,14 @@ async function shoot(browser, origin, { width, empty, active, locale }) {
       window.localStorage.setItem('workout.locale', 'ar')
     })
   }
-  const pfx = locale === 'ar' ? 'ar-' : ''
+  if (theme === 'paper') {
+    // Same key theme-context.tsx reads, set before any script runs so the
+    // first paint is already paper rather than a flash of iron.
+    await context.addInitScript(() => {
+      window.localStorage.setItem('workout.theme', 'paper')
+    })
+  }
+  const pfx = (theme === 'paper' ? 'light-' : '') + (locale === 'ar' ? 'ar-' : '')
   const page = await context.newPage()
   const crashes = []
   page.on('pageerror', (error) => crashes.push(error.message))
@@ -690,6 +697,24 @@ async function main() {
         empty: false,
         active: true,
         locale: 'ar',
+      })),
+    )
+    // The paper theme, one width. Iron is the default now, so paper is the
+    // pass that would otherwise ship unseen — which is exactly what happened
+    // to the eight non-@theme tokens the last time two palettes were split.
+    crashes.push(
+      ...(await shoot(browser, server.origin, {
+        width: 390,
+        empty: false,
+        theme: 'paper',
+      })),
+    )
+    crashes.push(
+      ...(await shoot(browser, server.origin, {
+        width: 390,
+        empty: false,
+        active: true,
+        theme: 'paper',
       })),
     )
   } finally {

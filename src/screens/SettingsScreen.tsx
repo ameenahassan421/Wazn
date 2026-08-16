@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
 import { supabase } from '../lib/supabase'
 import { useLocale } from '../lib/locale-context'
+import { useTheme } from '../lib/theme-context'
 import { useCoach } from '../lib/coach-context'
 import { useUnit } from '../lib/unit-context'
 import { fetchMyProfile } from '../lib/social'
@@ -144,6 +145,7 @@ export function SettingsScreen({
   onImport: () => void
 }) {
   const { t, locale, setLocale } = useLocale()
+  const { theme, setTheme } = useTheme()
   const { unit, setUnit } = useUnit()
   const { mode, volume, setMode, setVolume } = useCoach()
   const [profile, setProfile] = useState<Profile | null>(null)
@@ -214,7 +216,7 @@ export function SettingsScreen({
             ]}
           />
         </Row>
-        <Row label={t('settings.language')} last>
+        <Row label={t('settings.language')}>
           <Segmented
             name={t('settings.language')}
             value={locale}
@@ -224,6 +226,19 @@ export function SettingsScreen({
               // The Arabic option is set in the Arabic UI face, not the
               // display font: it is a word in that script wherever it renders.
               { id: 'ar', label: t('settings.language.ar'), className: 'font-sans' },
+            ]}
+          />
+        </Row>
+        {/* Iron is the default and paper is the choice, which is the reverse
+            of how this row read before v5 — so `dark` is listed first. */}
+        <Row label={t('settings.theme')} last>
+          <Segmented
+            name={t('settings.theme')}
+            value={theme}
+            onChange={setTheme}
+            options={[
+              { id: 'dark', label: t('settings.theme.dark') },
+              { id: 'paper', label: t('settings.theme.paper') },
             ]}
           />
         </Row>
