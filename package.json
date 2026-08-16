@@ -26,7 +26,8 @@
     "test:smoke": "playwright test",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
-    "typecheck:functions": "deno check supabase/functions/**/*.ts"
+    "typecheck:functions": "deno check supabase/functions/**/*.ts",
+    "v5:render": "node scripts/render_v5.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.45.4",

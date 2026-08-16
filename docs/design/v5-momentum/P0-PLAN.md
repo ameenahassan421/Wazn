@@ -187,8 +187,43 @@ Function · SQL forecasts · week review generation · Arabic RTL.
 Saira's fetchability and byte size; that all four handoff fonts are identical
 to `public/fonts/`; that all seven P0 target files exist.
 
-**Not verified:** I have not opened `Wazn v5.html` or `Onboarding.html` in a
-browser at 430px. The measuring pass that fidelity rule 3 requires has not
-happened, so every claim here about *layout* comes from the README's prose and
-`ui.jsx`'s token values, not from pixels. That pass is the first thing PR 1
-should do, and it may change the per-PR split.
+**Now verified, after this plan was first written:** both references render at
+430px and have been looked at. See below — getting there was not free.
+
+---
+
+## The references could not render, and now can (`npm run v5:render`)
+
+Fidelity rule 3 is *"open them in a browser at 430px and measure against
+them"*. As shipped, that is impossible in this environment and would be
+impossible in CI:
+
+1. **`unpkg.com` is blocked by the egress policy** (`CONNECT tunnel failed,
+   response 403`). The bundle loads React, ReactDOM and Babel Standalone from
+   it. The page rendered as a blank iron ground with **no page error** — a
+   missing entry point looks exactly like a working app with nothing in it.
+2. **The entry component is an inline `<script type="text/babel">` block** at
+   the end of each HTML file. Transforming only the external `.jsx` files left
+   React loaded and nothing mounted — still blank, still no error.
+3. **Saira was falling back to a generic sans.** The whole face is condensed,
+   so every type measurement taken against that render would have been wrong
+   while looking perfectly plausible.
+
+`scripts/render_v5.mjs` (`npm run v5:render`) assembles a rewritten copy in a
+temp directory: React UMD from `node_modules`, JSX pre-transformed by esbuild
+(already a vite dependency — no new install), and Saira self-hosted. **The
+bundle itself is never modified** — it is normative, and `.prettierignore`
+keeps the formatter off it too.
+
+Saira is now self-hosted at `public/fonts/saira-semi-condensed-{500,600,700}-latin.woff2`
+— 37 KB for all three weights, which the Egyptian-mobile-data rule requires
+anyway and which P0's PR 1 needs regardless.
+
+**What the render confirms:** the layout claims in this plan hold, brass reads
+correctly as earned metal (rank name, rank bar, the opponent's duel bar), and
+the six-tab bar and hunt card match the README's description. The per-PR split
+above stands.
+
+**What it does not do:** I have looked, not measured pixel-by-pixel against
+each implemented screen. That comparison belongs in each PR, which is what
+rule 3 actually asks for.
