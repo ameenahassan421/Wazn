@@ -7611,3 +7611,49 @@ style is.
 Both platforms bundle (iOS 1724 modules, Android 1805). Web wall green: 1178
 vitest, 9 Playwright. Still not on a simulator, and the live board is still a
 placeholder — that is the next piece and it is the one the app exists for.
+
+## 2026-08-17: a competing shared-domain design was built, and abandoned
+
+Worth recording so nobody rebuilds it. In a parallel session I built a
+different answer to the same question and it lost on the merits.
+
+**What I built.** An npm workspace at `packages/core`, with 41 modules moved
+out of `src/lib` and 185 imports rewritten to `@wazn/core/*`. Purity was
+enforced by giving that package a tsconfig with no `DOM` in `lib`, so
+`document`, `window` and `localStorage` became compile errors inside it. A
+second stage made the Supabase client an injected dependency so both platforms
+could share one client.
+
+**Why `portable.ts` is better, on two counts.**
+
+1. `portable.test.ts` walks the TRANSITIVE import graph and fails if a barrel
+   module reaches a browser global however indirectly. A no-DOM tsconfig only
+   catches what a module names directly, so `offline-store` would have passed
+   it while importing `checkpoint`, which reads `localStorage`. The stronger
+   guard also cost zero file moves; mine rewrote 185 imports to get less.
+2. Sharing the Supabase client was the wrong goal. The web keeps its session in
+   `localStorage` and native keeps it in the keychain, and one client has to
+   pretend those are the same thing. "Domain shared, I/O adapted" is the right
+   rule and my design broke it.
+
+**Salvaged: one real bug, fixed below.** The branch is abandoned unpushed.
+
+## 2026-08-17: `weeksOfData` lost a week to every daylight-saving change
+
+`weeksOfData` and the plateau detector both floored a millisecond span into
+weeks. Lifters train at the same wall-clock hour, so a span crossing a DST
+change is an hour short of whole days: eight weeks of Monday-6pm sessions
+across the March change is 55 days 23 hours, `floor(55.958 / 7)` is 7,
+`FORECAST_MIN_WEEKS` is 8, and `forecastE1rm` returned null. The lifter was
+told nothing about a trend they had earned. Both sites now call a shared
+`weekSpan` that rounds to whole days before dividing, which absorbs the hour
+and keeps the floor semantics a 33-day span depends on.
+
+**`forecast` is exported through `portable.ts`, so the native app had it too.**
+
+**CI could not have caught this and neither could a local run alone.** The
+`series()` fixture in the test builds LOCAL times, so a UTC runner crosses no
+boundary and every CI run was green, while the same suite failed on any laptop
+in a DST-observing timezone. The new case builds its span in UTC instead, so it
+fails in both places. Verified failing against the old formula, and passing
+under `TZ=UTC` and `TZ=America/Chicago`.
