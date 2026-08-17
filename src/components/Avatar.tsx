@@ -28,19 +28,26 @@ export function Avatar({
   const initial = name?.trim() ? firstGrapheme(name.trim()).toUpperCase() : null
 
   return (
-    // The flip pair, not `bg-ink`/`text-text`. In this app `ink` names the
-    // app's ground and `text` its foreground, so under the paper theme
-    // `bg-ink` is bone — the disc came out bone-on-bone and all but vanished.
-    // `--flip-bg`/`--flip-text` are the inverted pair, and they invert again
-    // under the dark theme so the disc stays a disc in both.
+    // Surface plus a hairline ring, NOT the inverted flip pair.
+    //
+    // The flip pair solved a real problem: under the old paper default,
+    // `bg-ink` was bone and the disc vanished bone-on-bone. It solved it by
+    // inverting, which on the iron ground produces a solid cream puck with a
+    // dark letter — loud, and the P0 gate caught it as the one element on
+    // Home that reads brighter than the hero CTA.
+    //
+    // v5 draws it as a dark disc, a light initial and a hairline edge, and
+    // `surface` + `ring-edge` is that in both themes without inverting
+    // anything: surface is a raised card on either ground, so the disc reads
+    // as chrome sitting on the page rather than as a light source on it.
     <span
       aria-hidden="true"
-      className={`flex shrink-0 items-center justify-center rounded-full ${className ?? ''}`}
+      className={`ring-edge flex shrink-0 items-center justify-center rounded-full ${className ?? ''}`}
       style={{
         width: size,
         height: size,
-        background: 'var(--flip-bg)',
-        color: 'var(--flip-text)',
+        background: 'var(--color-surface)',
+        color: 'var(--color-text)',
       }}
     >
       {initial ? (

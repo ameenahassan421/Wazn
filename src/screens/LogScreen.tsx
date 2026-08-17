@@ -2893,21 +2893,32 @@ export function LogScreen({
           </>
         )}
 
-        {/* WEEK · STREAK · FREEZE. The freeze count is visible BEFORE it is
-            needed rather than announced after it is spent: a streak with
-            hidden protection is still a streak that threatens you. */}
+        {/* STREAK · THIS WEEK · FREEZE.
+
+            The P0 gate found this row rendering `WEEK · STREAK · FREEZE`
+            against a reference that names `STREAK · THIS WEEK · SESSIONS`, and
+            PR 3 had recorded "StatTiles needed nothing" after checking the
+            component's typography and not its payload.
+
+            Order and labels now follow v5. The third tile does NOT, and that
+            is a logged deviation under rule 6 rather than an oversight:
+            `SESSIONS 149` is a lifetime total, which is a vanity figure that
+            cannot change what a lifter does tonight. FREEZE can. A streak with
+            hidden protection is still a streak that threatens you, so the
+            count is visible BEFORE it is needed rather than announced after it
+            is spent. See DECISIONS.md 2026-08-17. */}
         {coachSpeaks && (
           <StatTiles
             tiles={[
               {
-                key: 'week',
-                labelKey: 'home.tile.week',
-                value: `${weekStreak.thisWeek} / ${weekStreak.target}`,
-              },
-              {
                 key: 'streak',
                 labelKey: 'home.tile.streak',
                 value: t('home.tile.weeks', { n: String(weekStreak.weeks) }),
+              },
+              {
+                key: 'week',
+                labelKey: 'home.tile.week',
+                value: `${weekStreak.thisWeek} / ${weekStreak.target}`,
               },
               {
                 key: 'freeze',
