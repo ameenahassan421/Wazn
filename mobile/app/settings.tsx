@@ -9,6 +9,7 @@ import { Btn, ChipBtn, ChipRow } from '@/components/ui/Btn'
 import { Card, Rule } from '@/components/ui/Surface'
 import { Screen } from '@/components/ui/Screen'
 import { useUnit } from '@/hooks/use-unit'
+import { signOut } from '@/services/auth'
 
 /**
  * Screen 17 — Settings. Reached from the header avatar, and from nowhere
@@ -61,6 +62,22 @@ export default function Settings() {
           </Txt>
         </View>
       </Card>
+
+      {/* No confirmation dialog. Signing out is reversible in ten seconds and
+          the offline queue survives it — `reconcileDeviceUser` is what clears
+          a device, and it runs on a DIFFERENT user signing in, not on sign-out.
+          A modal here would be theatre. */}
+      <Btn
+        kind="line"
+        full
+        label="SIGN OUT"
+        style={{ marginTop: 18 }}
+        onPress={() => {
+          // The root guard swaps the stack the moment the session clears, so
+          // there is nothing to navigate to by hand.
+          void signOut()
+        }}
+      />
     </Screen>
   )
 }
