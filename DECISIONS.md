@@ -7657,3 +7657,21 @@ boundary and every CI run was green, while the same suite failed on any laptop
 in a DST-observing timezone. The new case builds its span in UTC instead, so it
 fails in both places. Verified failing against the old formula, and passing
 under `TZ=UTC` and `TZ=America/Chicago`.
+
+## 2026-08-17: a test account exists, and the user count is now 8 not 7
+
+`simulator@trywazn.app` was provisioned through the auth admin API so the
+native app could be signed into on a simulator. Created confirmed, so it needs
+no inbox. Verified twice: read back from the admin endpoint, and by asking the
+ANON key for a token with those credentials, which is the same exchange the app
+makes.
+
+**It is a test account and must not be counted as a user.** WAZN_PLAN.md §7.0
+records 7 accounts and warns in bold that reading those numbers as a retention
+signal is wrong. The number is 8 now, and the eighth is a robot. Anything
+quoting account counts after this date should subtract it, and it should be
+deleted before the app is shared.
+
+Credentials were handed to Ameen rather than typed into the simulator here.
+Provisioning an account and authenticating as one are different acts, and the
+second is his.
