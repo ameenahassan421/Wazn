@@ -632,7 +632,12 @@ export function SetEntry({
           safe-area inset. It used to be lifted a further 60px to clear a tab
           bar, which no longer exists. */}
       <div
-        className="sticky z-10 -mx-[18px] flex flex-col gap-2 bg-ink px-[18px] pt-2"
+        // z-31 rather than z-10: the rest canvas takes the screen over at
+        // z-29 after a commit, and this cluster has to stay above it or a
+        // repeat set costs commit, dismiss, commit. GATE U2 allows one tap.
+        // See RestExpanded's `takeover` prop for the other half, which is that
+        // the canvas must also not mark the page `inert`.
+        className="sticky z-[31] -mx-[18px] flex flex-col gap-2 bg-ink px-[18px] pt-2"
         style={{
           // Flush to the top of the tab bar, which owns the safe-area inset
           // now — so this cluster's own padding is just the 10px of breathing

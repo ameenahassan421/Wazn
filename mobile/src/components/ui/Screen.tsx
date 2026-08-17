@@ -24,6 +24,7 @@ export function Screen({
   scroll = true,
   gutter = space.gutter,
   style,
+  onTouchStart,
 }: {
   /** Optional so a screen can render the ground alone while it waits on the
    *  stored unit or a first read — a blank frame on the right colour, rather
@@ -32,6 +33,17 @@ export function Screen({
   scroll?: boolean
   gutter?: number
   style?: ViewStyle
+  /**
+   * Fires on the first touch anywhere in the screen, BEFORE and independently
+   * of whatever the touch actually hit. RN bubbles touches up from the real
+   * target, so this observes without intercepting.
+   *
+   * It exists for the rest canvas: screen 08 vanishes on interaction, and the
+   * interaction has to still land where the lifter aimed it. A dismissal
+   * driven by the canvas itself would have to swallow the touch to see it,
+   * which is the two-tap regression this design exists to avoid.
+   */
+  onTouchStart?: () => void
 }) {
   const insets = useSafeAreaInsets()
 
@@ -45,7 +57,10 @@ export function Screen({
 
   if (!scroll) {
     return (
-      <View style={[{ flex: 1, backgroundColor: palette.ink }, padding, style ?? null]}>
+      <View
+        onTouchStart={onTouchStart}
+        style={[{ flex: 1, backgroundColor: palette.ink }, padding, style ?? null]}
+      >
         {children}
       </View>
     )
@@ -53,6 +68,7 @@ export function Screen({
 
   return (
     <ScrollView
+      onTouchStart={onTouchStart}
       style={{ flex: 1, backgroundColor: palette.ink }}
       contentContainerStyle={[padding, style ?? null]}
       keyboardShouldPersistTaps="handled"
