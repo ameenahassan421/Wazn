@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Pressable, View } from 'react-native'
+import { View } from 'react-native'
 
 import { palette, space } from '@wazn/domain'
 
@@ -23,27 +23,25 @@ import { restEnded } from '@/services/haptics'
  *
  * ── IT NEVER BLOCKS AND NEVER ASKS ──────────────────────────────────────────
  * A tap anywhere dismisses it, and it is a plain overlay rather than a modal:
- * no focus trap, no dialog role, nothing that has to be answered. That
- * distinction is what kept the web version off the do-not-regress list, and
- * it is the reason the takeover-on-commit question is still open rather than
- * quietly implemented here.
+ * no focus trap, no dialog role, nothing that has to be answered.
  *
- * The ±30s controls stop the tap from propagating, or "+30s" would add thirty
- * seconds and then close the surface showing them.
+ * ── IT APPEARS ON ITS OWN, SINCE 2026-08-17 ─────────────────────────────────
+ * Ameen turned the takeover on. Warm-ups are excluded for free, because the
+ * commit rule already starts no rest for them.
+ *
+ * It takes no props for dismissing or adjusting, and that is deliberate: this
+ * surface has no inputs and no touches. The session screen dismisses it on the
+ * first touch anywhere, and the rest bar on the board owns the timer.
  */
 export function RestCanvas({
   endsAt,
   total,
   nextLabel,
-  onDismiss,
-  onAdjust,
 }: {
   endsAt: number
   total: number
   /** The set waiting on the other side, already formatted and unit-aware. */
   nextLabel: string | null
-  onDismiss: () => void
-  onAdjust: (deltaSeconds: number) => void
 }) {
   const [now, setNow] = useState(() => Date.now())
 
@@ -72,17 +70,36 @@ export function RestCanvas({
   const seconds = String(remaining % 60).padStart(2, '0')
 
   return (
-    <Pressable
-      onPress={onDismiss}
-      accessibilityRole="button"
-      accessibilityLabel="Rest. Tap to go early."
+    /*
+     * `pointerEvents="none"`, and it is the whole design rather than a detail.
+     *
+     * v5 screen 08 is "passive, silent, no inputs; vanishes on interaction".
+     * Built as a full-screen Pressable, this swallowed every touch on the
+     * board, so the next set cost dismiss-then-commit and GATE U2's one tap
+     * became two. A zIndex cannot fix that: whatever is on top of a Pressable
+     * still has a Pressable under it eating the rest of the screen.
+     *
+     * Taking no touches at all means the first tap lands wherever the lifter
+     * aimed it, and the screen's own `onTouchStart` clears the canvas on the
+     * way past. One tap, everywhere. The web half is `RestExpanded`'s
+     * `takeover` prop, where the same defect wore `inert` instead.
+     *
+     * `progressbar` rather than `button`: it announces the rest, and there is
+     * nothing here to press.
+     */
+    <View
+      pointerEvents="none"
+      accessibilityRole="progressbar"
+      accessibilityLabel="Rest. Tap anywhere to go early."
       style={{
         position: 'absolute',
         top: 0,
         bottom: 0,
         start: 0,
         end: 0,
-        zIndex: 50,
+        // Paint order only, now that nothing here takes a touch: 29 keeps the
+        // BANK IT bar at 31 reading as ON the canvas rather than behind it.
+        zIndex: 29,
         backgroundColor: palette.ink,
         alignItems: 'center',
         justifyContent: 'center',
@@ -110,37 +127,13 @@ export function RestCanvas({
         </View>
       )}
 
-      <View
-        style={{ flexDirection: 'row', gap: 10 }}
-        onStartShouldSetResponder={() => true}
-      >
-        <Adjust label="−30s" onPress={() => onAdjust(-30)} />
-        <Adjust label="+30s" onPress={() => onAdjust(30)} />
-      </View>
+      {/* The ±30s pair is GONE, and that is the spec rather than a casualty.
+          Screen 08 says this surface has no inputs; a layer taking no touches
+          could not have driven them anyway. Changing the timer is the rest
+          bar's job on the board underneath, which is one tap away because
+          this canvas no longer stands between the finger and the screen. */}
 
       <Kick ink="faint">TAP TO GO EARLY</Kick>
-    </Pressable>
-  )
-}
-
-function Adjust({ label, onPress }: { label: string; onPress: () => void }) {
-  return (
-    <Pressable
-      onPress={onPress}
-      hitSlop={10}
-      style={{
-        height: 48,
-        paddingHorizontal: 20,
-        borderRadius: 999,
-        borderWidth: 1,
-        borderColor: palette.line,
-        alignItems: 'center',
-        justifyContent: 'center',
-      }}
-    >
-      <Txt step="label" ink="muted" ltr>
-        {label}
-      </Txt>
-    </Pressable>
+    </View>
   )
 }

@@ -82,7 +82,7 @@ import type { OverviewBlock } from '../components/WorkoutOverview'
 import { RestChip } from '../components/RestTimer'
 import { RestExpanded } from '../components/RestExpanded'
 import { RestCanvas } from '../components/RestCanvas'
-import { pickRestCard } from '../lib/rest-canvas'
+import { pickRestCard, restCanvasEnabled } from '../lib/rest-canvas'
 import type { CrewToday } from '../lib/rest-canvas'
 import { recordCoachView } from '../lib/coach'
 import { fetchFeed, nameOf } from '../lib/social'
@@ -303,9 +303,15 @@ export function LogScreen({
    * that (`advanceTo`), and this is the same answer kept for the canvas.
    */
   const [restingExerciseId, setRestingExerciseId] = useState<string | null>(null)
-  const [restExpanded, setRestExpanded] = useState(false)
+  /**
+   * `null` closed, otherwise HOW it opened. The distinction is not cosmetic:
+   * a canvas the lifter opened is a dialog and takes focus, one that appeared
+   * on its own must not, or `inert` makes the commit bar untappable and GATE
+   * U2 fails. See `RestExpanded`'s `takeover` prop.
+   */
+  const [restExpanded, setRestExpanded] = useState<'auto' | 'tap' | null>(null)
   // The layer never outlives the rest itself.
-  if (restExpanded && timer.remaining === null) setRestExpanded(false)
+  if (restExpanded !== null && timer.remaining === null) setRestExpanded(null)
   /**
    * What the crew did today, fetched at most once per open workout and never on
    * the load path — see the effect below.
@@ -2284,21 +2290,27 @@ export function LogScreen({
     if (outcome.restSeconds !== null) {
       timer.start(outcome.restSeconds)
       setRestEffort(effort)
-      // v5 screen 08 says rest is a full-screen takeover ON COMMIT. It is not
-      // wired, and the reason is a contradiction inside the handoff itself:
+      // v5 screen 08: rest is a full-screen takeover ON COMMIT. Ameen turned
+      // it on 2026-08-17, and the handoff's apparent contradiction turned out
+      // not to be one:
       //
       //   screen 08          "full-screen ground takeover on commit"
       //   do-not-regress #3  "GATE U2: repeat-set commit stays 1 tap"
       //
-      // Both cannot hold. Built and measured: the takeover intercepts every
-      // action after a commit, not just the next one — `e2e/offline.spec.ts`
-      // could not reach "Back to workout", and a 3x5's second set costs
-      // commit -> dismiss -> commit. The do-not-regress list is the harder
-      // constraint (the README calls those "shipped behaviors" of a live app),
-      // so the SURFACE is built to screen 08 and the auto-open is Ameen's call.
+      // P0 #5 built it, measured a 3x5's second set at commit -> dismiss ->
+      // commit, and concluded both could not hold. The measurement was right
+      // and the conclusion was wrong: the cost came from the canvas being a
+      // DIALOG (focus trap, `aria-modal`, siblings marked `inert`) rather than
+      // from it being on top. `inert` takes pointer events with it, so the
+      // commit bar behind was dead no matter what painted where. A canvas that
+      // claims none of that, at z-29 under the commit cluster's z-31, leaves
+      // BANK IT live: one tap dismisses it AND logs the row, which is the one
+      // tap the gate counts. See `RestExpanded`'s `takeover` prop.
       //
-      // To turn it on, this is the whole change:
-      //   if (restCanvasEnabled(browserStorage())) setRestExpanded(true)
+      // Warm-ups are already excluded and always were: `commitOutcome` returns
+      // no rest for `setType === 'warmup'`, so "working sets only" costs
+      // nothing here and is a property of the rest rule, not of this line.
+      if (restCanvasEnabled(browserStorage())) setRestExpanded('auto')
       // The lift the canvas will talk about: the partner in a superset, this
       // exercise otherwise. Set alongside the timer rather than derived from
       // the board, because "whose rest is this" is a fact about the commit and
@@ -3187,10 +3199,11 @@ export function LogScreen({
         />
       )}
 
-      {restExpanded && timer.remaining !== null && (
+      {restExpanded !== null && timer.remaining !== null && (
         <RestExpanded
           timer={timer}
-          onCollapse={() => setRestExpanded(false)}
+          takeover={restExpanded === 'auto'}
+          onCollapse={() => setRestExpanded(null)}
           card={restCard}
           nextLabel={(() => {
             const ex = exercises.find((e) => e.id === restingExerciseId)
@@ -3232,7 +3245,7 @@ export function LogScreen({
           saving={saving}
           onAddSet={async (values) => (await addSet(values)) !== null}
           timer={timer}
-          onExpandRest={() => setRestExpanded(true)}
+          onExpandRest={() => setRestExpanded('tap')}
           restSeconds={restFor(current, restEffort)}
           restEffort={coachSpeaks ? restEffort : null}
           onSaveRest={(seconds) => void saveRestDefault(current.id, seconds)}
@@ -3400,7 +3413,7 @@ export function LogScreen({
               />
               <RestChip
                 timer={timer}
-                onExpand={() => setRestExpanded(true)}
+                onExpand={() => setRestExpanded('tap')}
                 effort={coachSpeaks ? restEffort : null}
               />
             </div>

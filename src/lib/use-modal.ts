@@ -19,12 +19,32 @@ import type { RefObject } from 'react'
  *
  * `aria-modal` is the caller's job — it belongs on the same element as the
  * role, and putting it here would mean this hook owning the markup.
+ *
+ * ── `active` EXISTS BECAUSE ONE LAYER IS NOT A DIALOG ───────────────────────
+ * v5's rest canvas appears on its own after a commit, and a surface nobody
+ * opened must not take focus, must not make the page `inert`, and must not
+ * claim the rest of the app is unavailable — the commit bar behind it is the
+ * next thing the lifter touches, and GATE U2 says reaching it costs zero taps.
+ * `inert` is what makes that impossible: it removes the background from the
+ * tab order, the accessibility tree AND pointer events, so painting the
+ * commit bar above the canvas is not enough on its own.
+ *
+ * Passing `active: false` gives a layer that renders and dismisses without any
+ * of the dialog contract. The same component keeps the full contract when a
+ * user deliberately opened it, because then focus SHOULD move.
  */
 export function useModalLayer(
   ref: RefObject<HTMLElement | null>,
   onClose: () => void,
+  active = true,
 ): void {
   useEffect(() => {
+    // Read inside the effect and keep the mount-only deps below. `active` is a
+    // fact about how this layer was opened, so it is constant for the layer's
+    // lifetime; putting it in the dependency array would buy nothing and would
+    // re-run the focus steal.
+    if (!active) return
+
     const opener = document.activeElement
     const node = ref.current
 

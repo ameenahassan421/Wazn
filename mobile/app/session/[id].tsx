@@ -20,7 +20,6 @@ import { Txt, Kick } from '@/design/Txt'
 import { useUnit } from '@/hooks/use-unit'
 import { banked as hapticBanked, tick } from '@/services/haptics'
 import {
-  adjustRest,
   bankCurrentSet,
   endRest,
   finishWorkout,
@@ -168,7 +167,14 @@ export default function LiveWorkout() {
       : `+${dialled.reps ?? 0} REPS`
 
   return (
-    <Screen scroll={false} gutter={0} style={{ paddingTop: insets.top }}>
+    <Screen
+      scroll={false}
+      gutter={0}
+      style={{ paddingTop: insets.top }}
+      // Screen 08 vanishes on interaction, and the interaction still lands.
+      // See the RestCanvas block below.
+      onTouchStart={live.restEndsAt === null ? undefined : endRest}
+    >
       {/* The momentum bar. Absent on day one rather than empty: an empty
           track is a claim that you have done nothing, and on a first session
           that is not true, it is just unmeasured. */}
@@ -271,6 +277,9 @@ export default function LiveWorkout() {
           justifyContent: 'center',
           flexDirection: 'row',
           gap: 8,
+          // 31, over the rest canvas's 29. Without this the canvas covers the
+          // commit control and GATE U2's one-tap repeat set becomes two.
+          zIndex: 31,
         }}
       >
         <Txt step="title" ink="accentInk" style={{ fontSize: 23, letterSpacing: 0.46 }}>
@@ -284,7 +293,14 @@ export default function LiveWorkout() {
       </Pressable>
 
       {/* Screen 08. An overlay on the board rather than a route, so dismissing
-          it costs no navigation and the board underneath never unmounts. */}
+          it costs no navigation and the board underneath never unmounts.
+
+          It takes no touches (see RestCanvas). Dismissal is the screen's job,
+          on `onTouchStart` at the root: RN bubbles touches up from whatever
+          was actually pressed, so the tap that clears this canvas is the same
+          tap that banks the set, opens the menu or finishes the workout. One
+          tap, wherever it lands, which is what GATE U2 counts and what every
+          other control needs too. */}
       {live.restEndsAt !== null && (
         <RestCanvas
           endsAt={live.restEndsAt}
@@ -296,8 +312,6 @@ export default function LiveWorkout() {
                 ? `${view.set.reps ?? 0} reps`
                 : `${toDisplayWeight(view.set.weightKg, unit)} × ${view.set.reps ?? 0}`
           }
-          onDismiss={endRest}
-          onAdjust={adjustRest}
         />
       )}
     </Screen>

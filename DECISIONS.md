@@ -7804,3 +7804,76 @@ the logging path. Decide it with the takeover, not after.
 The rest canvas takeover, which is decided and specified above. Then P1, with
 its shared pieces landing behind `portable.ts` before either stack renders
 them.
+
+## 2026-08-17: the rest canvas takes no touches, and that is what made the takeover shippable
+
+Built. It is not the change the decision described, and Ameen gave the call
+back rather than hold me to a premise that turned out false.
+
+### Two things were wrong with the plan before a line was written
+
+**"Working sets only" was already true.** `commitOutcome` has read
+`restSeconds > 0 && setType !== 'warmup'` since Stage 1, under a comment that
+says "A warm-up starts nothing. Nobody rests two minutes after an empty bar."
+Warm-ups start no rest, so a takeover that fires when rest starts could never
+have fired on one. The clause cost nothing and bought nothing.
+
+**The blocker was never z-order.** P0 #5 measured the takeover breaking GATE
+U2 and concluded screen 08 and do-not-regress #3 could not both hold. The
+measurement was right and the diagnosis was wrong. `RestExpanded` is a real
+modal: `role="dialog"`, `aria-modal`, and `useModalLayer` marking every
+sibling `inert`. **`inert` takes pointer events with it**, so the commit bar
+behind the canvas was dead no matter what painted on top. On native the same
+defect wore different clothes: the canvas is a full-screen `Pressable`, which
+swallows every touch on the board by construction.
+
+I fixed the z-order first, and it fixed exactly one control. GATE U2 passed
+and two GATE 4 airplane-mode tests still timed out reaching "Back to workout",
+which is not in the commit cluster. That failure is the useful one: it proves
+a z-index answer only ever rescues the button you thought to rescue.
+
+### The surface takes no pointer events at all
+
+Web: `pointer-events: none` on the layer, and a document `pointerdown`
+listener that dismisses. Native: `pointerEvents="none"` on the canvas, and the
+session screen's `onTouchStart` dismisses, because RN bubbles touches up from
+whatever was actually pressed.
+
+The browser and RN both hit-test straight through, so **the first tap lands
+where the lifter aimed it and clears the canvas on the way past.** One tap,
+everywhere. Not one tap on BANK IT and two everywhere else.
+
+This is what screen 08 says, read literally: "Passive, silent, no inputs;
+vanishes on interaction." The first implementation read "tap anywhere
+dismisses" as "the layer eats the tap", and that one word is the whole defect.
+A layer that must swallow a touch to notice it is a modal, whatever its ARIA
+role says, and §2.1 does not allow one here.
+
+**All four GATE 4 airplane-mode tests pass with the takeover live and no spec
+changes.** That was the acceptance test: if any control had cost an extra tap,
+those specs would say so.
+
+### What went, and what that settles
+
+The four controls the P0 gate report flagged. `−30s`, `+30s`, `skip rest` and
+the collapse chevron are gone from the takeover, along with the next-up row's
+button role. They could not work on a surface taking no pointer events, and
+screen 08 says it has no inputs, so this closes the open question rather than
+deferring it: **the answer was no, and the reason is mechanical rather than
+aesthetic.**
+
+The tap-opened path keeps everything. `RestExpanded` takes a `takeover` prop
+and is two surfaces wearing the same pixels: a layer somebody opened is a
+dialog and should take focus, one that appears unbidden must not.
+
+`useModalLayer` grew an `active` flag for the same reason, with three tests
+that were verified by breaking the guard and watching them fail.
+
+### One regression, recorded rather than hidden
+
+**Native loses rest adjustment.** The ±30s pair was the only place to change a
+running timer on native, and the web keeps its equivalent on the board's rest
+bar, which native does not have yet. Rest is effort-aware and computed, so
+this is a manual override rather than the mechanism, and native is not shipped
+to anybody. It comes back with P1's live-screen work. `adjustRest` stays
+exported and tested; nothing calls it today.
