@@ -7675,3 +7675,132 @@ deleted before the app is shared.
 Credentials were handed to Ameen rather than typed into the simulator here.
 Provisioning an account and authenticating as one are different acts, and the
 second is his.
+
+## 2026-08-17: the rest canvas takes over after working sets, not warm-ups
+
+Ameen's call, and it closes the question P0 #5 shipped without answering.
+
+**What was asked.** v5's screen 08 covers the screen the moment rest starts.
+The app opens it on a tap. P0 #5 built the surface and left the trigger alone,
+because §2.1 calls the logging flow sacred and a change to when the screen
+covers itself is a change to that flow, not a restyle.
+
+**What was decided.** Auto-takeover **after working sets only**. Warm-up sets
+keep tap-to-open. Neither the handoff's answer (always) nor the shipped one
+(never).
+
+**Why this is the better answer, not a split of the difference.** The takeover
+is only safe when the phone is out of the hand. That is true after a working
+set and false during a warm-up ramp, where rests run 30 to 60 seconds, the
+lifter is still loading the bar, and the next input is seconds away. Covering
+the screen there costs a tap to get back to the thing they were already
+looking at, which is the one cost §2.1 exists to prevent. The reference bundle
+does not model warm-ups at all: `design/data.js` is a working-set dataset, so
+"the moment rest starts" was written about a session that has no warm-ups in
+it. Implementing it literally would apply a rule to a case its author never
+saw.
+
+**What this does NOT change.** GATE U2 stands: repeat-set commit is one tap,
+and the canvas appearing after that tap must not add a second. The surface
+still dismisses on any tap, still never blocks, and still never asks. If rest
+is already running when the takeover would fire, it does not re-fire.
+
+### The build, when it happens
+
+Not built in this pass. Today's work was the P0 gate report
+(`docs/design/v5-momentum/P0-GATE.md`) and Ameen chose that over new features.
+Specified here so the next session does not re-derive it:
+
+- The trigger belongs in the commit path, not in the canvas. `RestExpanded` is
+  already a pure presentation of `rest-canvas.ts`; giving it an opinion about
+  when to mount would put a policy in a component that four callers share.
+- "Working set" has an existing definition to reuse: `src/lib/warmup.ts`. Do
+  not invent a second one, and do not infer it from load, which breaks for
+  anybody whose warm-up is their working weight.
+- Both stacks. `mobile/src/components/RestCanvas.tsx` and
+  `mobile/src/state/live-workout.ts` carry the native half, and the trigger is
+  domain, so it goes behind `portable.ts` and is written once.
+- The re-tests are not optional: GATE U2's interaction count, and the
+  airplane-mode session in LAUNCH.md §4. A takeover that mounts during an
+  offline commit is exactly the shape of the defect PR #99 fixed.
+
+### Two things the gate report found on this surface, unresolved
+
+Screen 08 as shipped **carries inputs** (minus 30s, plus 30s, skip rest, a
+collapse chevron) where the spec says passive, silent, no inputs. Auto-takeover
+makes that worse, not better: a surface that appears on its own and offers four
+controls is a modal, which the logging path forbids. Worth deciding with the
+build rather than after it.
+
+And the **momentum chip is absent**, because it depends on P1's momentum bar.
+The canvas will be one line short of the reference until that lands, and that
+is expected rather than a defect.
+
+## 2026-08-17: v5 P0 is CLOSED at 4/11 acceptance
+
+Ameen's call, taken after reading the gate report rather than before it.
+
+**The verdict.** Four of the eleven items in `STARTING_PROMPT.md` pass, three
+are partial, three fail, one is blocked on hardware and one was not assessed.
+P0 is closed at that state. It is **not** signed off as matching the reference,
+because it does not match the reference, and a phase recorded as passing when
+it did not is worse than an unfinished one: the next person trusts it.
+
+**Why closed rather than reopened.** The corrective option was on the table
+(one PR for the stat tiles, the plan list and the duplicate start control,
+then sign off at 5/11). Closing at 4/11 wins because those three items live on
+Home, P1's first work is Home, and doing them in a corrective PR now means
+opening the same file twice in two days. Nothing is skipped by closing; it is
+carried.
+
+**Everything unmet is classified, nothing is dropped.** This is the form v3 was
+closed in on 2026-08-16, and it is the only part of a phase close that actually
+matters. Full table in `docs/design/v5-momentum/P0-GATE.md`. The shape:
+
+- **Four items carried into P1 that were always P1's** (momentum bar, PR
+  moment, coach-volume wiring, forecast rendering). The acceptance list spans
+  the whole design, not one phase, so these were never P0 failures in any
+  useful sense.
+- **One carried into P2** (onboarding, screens 01 to 05).
+- **One blocked** (LAUNCH.md on a real phone with a second account).
+- **One not assessed** (Tell the coach), recorded as neither pass nor fail,
+  because "nobody looked" is its own state and pretending otherwise is how a
+  surface rots.
+- **Eleven findings carried into P1 that were on NO list before today.**
+
+### The eleven are the reason this close was worth doing
+
+Six on Home, three on the live screen, two on the rest canvas. Every one was
+found by putting `shots/v5-430-app.png` next to `shots/full-430-log.png` and
+looking. Lint, typecheck, `check:type`, `check:tokens`, `check:coverage` and
+1196 tests were green through all of it, and none of them can see a screen.
+That is the fourth or fifth instance of this lesson in this project and the
+first time the finding was a whole phase rather than one defect.
+
+The worst of them is not a pixel. **The Home stat tiles render `WEEK ·
+STREAK · FREEZE` where the reference names `STREAK · THIS WEEK · SESSIONS`.**
+PR 3 examined `StatTiles.tsx`, found it was already `kicker` + `text-num`
+exactly as v5's `RowStat` is, and recorded "StatTiles needed nothing". That was
+true of its typography and silent about its payload. A component can be
+correct in every property the reviewer thought to check and still be showing
+the wrong three numbers.
+
+### Two carried items need a decision, not a build
+
+**The tab bar's glyphs.** The reference draws six text labels. The app draws
+glyphs above them, carried from v3 through PR 3's restyle without anyone
+deciding they should survive. PR 3's own notes discuss the rail geometry, the
+`#0b0906` ground and the active/inactive colours in detail and never mention
+the glyphs at all, which is what an unexamined inheritance looks like.
+
+**Screen 08's four inputs.** It carries minus 30s, plus 30s, skip rest and a
+collapse chevron; the spec says passive, silent, no inputs. This was tolerable
+while the surface only appeared on a tap. Once the takeover ships it appears on
+its own, and a surface that appears unbidden with four controls is a modal on
+the logging path. Decide it with the takeover, not after.
+
+### What happens next
+
+The rest canvas takeover, which is decided and specified above. Then P1, with
+its shared pieces landing behind `portable.ts` before either stack renders
+them.
