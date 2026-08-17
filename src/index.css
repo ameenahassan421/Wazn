@@ -885,7 +885,19 @@ html[data-theme='paper'] {
    separates chrome from content without a border, which would otherwise cut
    a hard line across the screen directly above the hot path. */
 @utility header-band {
-  background: linear-gradient(180deg, var(--header-tint), var(--color-ink));
+  /* Solid ground, no band.
+
+     This was a gradient from `--header-tint` down to the ground, and the P0
+     gate caught the result: a visibly separate darker slab across the top of
+     Home with an edge under it, where v5 floats the wordmark on the page with
+     no bar at all.
+
+     Solid `--color-ink` is that. The header still has to be OPAQUE, because it
+     is `sticky top-0` and content scrolling under a transparent one is
+     unreadable, but painting it the page's own colour makes it invisible
+     rather than absent. `--header-tint` stays defined in both themes; nothing
+     else uses it, and deleting a token is a wider change than this. */
+  background: var(--color-ink);
 }
 
 /* ─── Motion ───────────────────────────────────────────────────────────────

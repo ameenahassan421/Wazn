@@ -1,19 +1,28 @@
 import { useLocale } from '../lib/locale-context'
 
 /**
- * WEEK · STREAK · FREEZE — design v3.0 §01's three tiles.
+ * STREAK · THIS WEEK · FREEZE — v5 screen 06's three tiles, with one swap.
  *
  * Three facts, one glance, no navigation. They replace the two-up
  * week/record row that carried the doors to History and Progress before the
  * tab bar came back; those doors now live in the bar, and these tiles say
  * something the bar cannot.
  *
- * ── WHY FREEZE IS ON THE HOME SCREEN ────────────────────────────────────────
+ * This component takes whatever three it is handed; the choice is the caller's
+ * and lives in `LogScreen`. Reviewing it here in PR 3 and concluding it
+ * "needed nothing" is how the wrong three survived a restyle: the typography
+ * was already right, and the typography was never the question.
+ *
+ * ── WHY FREEZE IS ON THE HOME SCREEN, AND SESSIONS IS NOT ───────────────────
  * A streak with hidden protection is still a streak that threatens you. The
  * research finding the spec cites is that streaks without protection create
  * anxiety and churn — so the protection is visible before it is needed, not
  * announced after it is spent. `2` is not a reward to spend; it is the app
  * saying "two bad weeks this month are already covered".
+ *
+ * v5's third tile is `SESSIONS 149`, a lifetime total. It cannot change what
+ * anybody does tonight, and it is the one number on the screen that only ever
+ * grows. Deviation logged in DECISIONS.md 2026-08-17.
  */
 
 export interface Tile {
