@@ -7877,3 +7877,66 @@ bar, which native does not have yet. Rest is effort-aware and computed, so
 this is a manual override rather than the mechanism, and native is not shipped
 to anybody. It comes back with P1's live-screen work. `adjustRest` stays
 exported and tested; nothing calls it today.
+
+## 2026-08-17: the tab bar keeps its glyphs, and the second start control hides
+
+Two of the six Home findings from the P0 gate. One is a build, one is a call I
+was asked to make, and the call goes against the reference.
+
+### The glyphs stay. The reference is thin here, not decisive
+
+`design/ui.jsx`'s `TabBar` is **seven lines of inline style** and renders a
+label and nothing else. The app draws a 14px mark above each nano label. The
+gate flagged the difference because PR 3 restyled the bar's ground, rail and
+label colours and carried the glyphs across without deciding them.
+
+Deciding them now: they stay, and this is a rule 6 deviation rather than an
+oversight left standing.
+
+1. **Icon plus label is the convention for bottom navigation because of
+   targeting, not decoration.** A 14px mark is a far bigger visual anchor than
+   9px mono text, and six tabs across 390px is exactly the density where that
+   matters. Label-only asks the lifter to read six words to find one place.
+2. **These are not borrowed icons.** Each is built from the wordmark's own
+   parts — a plate ring, a bar, a disc — as `<span>` stacks rather than SVG, so
+   they inherit the accent with no fill plumbing and they carry the brand
+   rather than a generic set's house style. The `friends` pair even punches its
+   overlap in `--color-tabbar` so the notch reads as a cut-out on the bar's own
+   darker ground.
+3. **Nothing in v5 is weakened by keeping them.** The rail still carries ember
+   500 alone, the labels still carry nano, the bar still recedes on `#0b0906`,
+   the order is unchanged. The parts of the bar the handoff is specific about
+   are all still exactly what it says.
+4. **The absence reads as "not drawn" rather than "decided against".** Every
+   other screen in the bundle is specified to the pixel — screen 08 names a
+   250px ring and a 38px figure — and this one is a flex row with a label in
+   it. Rule 2 says to follow the bundle where it is specific and match the
+   nearest sibling where it is not. This is the second case.
+
+Recorded so the finding is closed rather than re-raised every time somebody
+re-reads the gate report.
+
+### The second start control hides, and is not deleted
+
+v5 screen 06 has one start control. The app had two: the hunt card's `START
+THE HUNT` (which also carries `or start empty`, so it covers both jobs) and
+the sticky `Start workout` row below the fold. Two heroes on one screen is
+what §2.4 forbids.
+
+**Hidden on exactly the hunt card's own condition, `coachSpeaks && upNext`,
+rather than removed.** The sticky button is the ONLY start control when that
+card is absent, which is every empty account and every account running the
+coach on Quiet or Off — and do-not-regress #6 requires a coherent pure logger
+in that state. Deleting the button would have taken the start button off the
+pure logger's home screen.
+
+The History circle beside it stays in both states. It is the only door to
+History apart from the tab bar, for the reason its own comment gives: "what
+did I do before" has no card of its own.
+
+**`e2e/smoke.spec.ts` keys the entire home screen off
+`getByRole('button', { name: 'Start workout' })`**, so this looked like the
+change that breaks nine tests. It does not: the smoke fixture has no due
+routine with the coach speaking, so the button is still there for it. All nine
+pass. That was checked before the edit rather than after, because CLAUDE.md
+has the receipt from the last time somebody did it the other way round.

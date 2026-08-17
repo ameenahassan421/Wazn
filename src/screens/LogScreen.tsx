@@ -3057,19 +3057,34 @@ export function LogScreen({
             background: 'linear-gradient(180deg, transparent, var(--color-ink) 45%)',
           }}
         >
-          <button
-            type="button"
-            onClick={() => void startWorkout()}
-            disabled={saving}
-            className="btn-base btn-hero press flex h-[58px] flex-1 items-center justify-center gap-2.5 btn-text font-bold disabled:opacity-45"
-            style={{
-              borderRadius: 'var(--radius-pill)',
-              boxShadow: 'var(--shadow-cta)',
-            }}
-          >
-            <PlateRing size={20} className="shrink-0" />
-            <span>{hasHistory ? t('log.start') : t('log.start_first')}</span>
-          </button>
+          {/* Hidden when the hunt card is up, and NOT deleted.
+
+              v5 screen 06 has one start control and the P0 gate found two:
+              this row plus the card's own START THE HUNT, which also carries
+              "or start empty" for the same job. Two heroes on one screen is
+              what §2.4 forbids, and the card is the one that says what it
+              starts.
+
+              But this button is the ONLY start when the card is absent, which
+              is every empty account and every account with the coach on Quiet
+              or Off — where do-not-regress #6 requires a coherent pure logger.
+              So the condition is exactly the card's, and the fallback is
+              restored the moment the card is not there. */}
+          {!(coachSpeaks && upNext) && (
+            <button
+              type="button"
+              onClick={() => void startWorkout()}
+              disabled={saving}
+              className="btn-base btn-hero press flex h-[58px] flex-1 items-center justify-center gap-2.5 btn-text font-bold disabled:opacity-45"
+              style={{
+                borderRadius: 'var(--radius-pill)',
+                boxShadow: 'var(--shadow-cta)',
+              }}
+            >
+              <PlateRing size={20} className="shrink-0" />
+              <span>{hasHistory ? t('log.start') : t('log.start_first')}</span>
+            </button>
+          )}
           {/* The one piece of navigation the design keeps as furniture. Every
               other screen is reached through something that says what it
               holds — a record, a week, a coach line — but "what did I do
@@ -3079,8 +3094,20 @@ export function LogScreen({
             type="button"
             onClick={onOpenHistory}
             aria-label={t('nav.history')}
-            className="press flex h-[58px] w-[58px] shrink-0 items-center justify-center rounded-full"
-            style={{ background: 'var(--flip-bg)', color: 'var(--flip-text)' }}
+            // `ms-auto` when it is alone. With the start button hidden behind
+            // the hunt card, this was the only thing left in the row and it
+            // sat at the inline start, floating over the Last PR card as a
+            // bright disc with nothing beside it. Pushed to the trailing edge
+            // it reads as a corner affordance, which is what it is.
+            //
+            // Surface rather than the inverted flip pair, for the reason the
+            // avatar changed: on the iron ground `--flip-bg` is bone, and a
+            // 58px bone disc was the brightest thing on Home once the sticky
+            // hero stopped sitting next to it and balancing it.
+            className={`press flex h-[58px] w-[58px] shrink-0 items-center justify-center rounded-full ring-edge ${
+              coachSpeaks && upNext ? 'ms-auto' : ''
+            }`}
+            style={{ background: 'var(--color-surface)', color: 'var(--color-text)' }}
           >
             <IconHistory size={22} />
           </button>
