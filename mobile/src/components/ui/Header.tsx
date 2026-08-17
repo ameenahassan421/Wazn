@@ -53,7 +53,7 @@ export function Header({
       {right}
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel="You — settings"
+        accessibilityLabel="You, settings"
         hitSlop={7}
         onPress={() => router.push('/settings')}
         style={({ pressed }) => ({
