@@ -52,7 +52,7 @@ export default function Settings() {
             ))}
           </ChipRow>
           <Txt step="meta" ink="faint">
-            Display only — every weight is stored in kilograms.
+            Display only. Every weight is stored in kilograms.
           </Txt>
         </View>
         <Rule />

@@ -200,7 +200,7 @@ export default function SignIn() {
             <Card style={{ gap: 6 }}>
               <Kick>COMING FROM HEVY?</Kick>
               <Txt step="body" ink="muted">
-                Sign in first — you can bring your whole history across in one step
+                Sign in first. You can bring your whole history across in one step
                 afterwards.
               </Txt>
             </Card>
