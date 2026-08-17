@@ -12,6 +12,7 @@ import {
   toDisplayWeight,
 } from '@wazn/domain'
 
+import { RestCanvas } from '@/components/RestCanvas'
 import { Chip } from '@/components/ui/Chip'
 import { Fill } from '@/components/ui/Fill'
 import { Screen } from '@/components/ui/Screen'
@@ -19,7 +20,9 @@ import { Txt, Kick } from '@/design/Txt'
 import { useUnit } from '@/hooks/use-unit'
 import { banked as hapticBanked, tick } from '@/services/haptics'
 import {
+  adjustRest,
   bankCurrentSet,
+  endRest,
   finishWorkout,
   resetWorkout,
   selectBoardView,
@@ -279,6 +282,24 @@ export default function LiveWorkout() {
             : `· ${shownWeight ?? 0} × ${dialled.reps ?? 0}`}
         </Txt>
       </Pressable>
+
+      {/* Screen 08. An overlay on the board rather than a route, so dismissing
+          it costs no navigation and the board underneath never unmounts. */}
+      {live.restEndsAt !== null && (
+        <RestCanvas
+          endsAt={live.restEndsAt}
+          total={live.restTotal}
+          nextLabel={
+            view.set === null
+              ? null
+              : view.set.weightKg === null
+                ? `${view.set.reps ?? 0} reps`
+                : `${toDisplayWeight(view.set.weightKg, unit)} × ${view.set.reps ?? 0}`
+          }
+          onDismiss={endRest}
+          onAdjust={adjustRest}
+        />
+      )}
     </Screen>
   )
 }

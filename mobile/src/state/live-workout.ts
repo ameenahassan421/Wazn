@@ -53,6 +53,17 @@ export interface LiveState {
   targetKg: number | null
   /** Sets banked on the board that no insert has confirmed. */
   unsynced: number
+  /**
+   * Rest, as two numbers rather than a ticking one.
+   *
+   * `restEndsAt` is a wall-clock instant and `restTotal` the length it was
+   * started with, so the remaining time is derived at render. A stored
+   * countdown would drift the moment the app is backgrounded, which on a phone
+   * is most of a rest period: the lifter puts it in their pocket. This way the
+   * clock is the system's and coming back is just another render.
+   */
+  restEndsAt: number | null
+  restTotal: number
 }
 
 const EMPTY: LiveState = {
@@ -63,7 +74,19 @@ const EMPTY: LiveState = {
   board: [],
   targetKg: null,
   unsynced: 0,
+  restEndsAt: null,
+  restTotal: 0,
 }
+
+/**
+ * One rest length for every lift, until per-exercise rest is wired.
+ *
+ * The web app resolves this from the exercise and the user's preference via
+ * `resolveRest`. Neither is read on native yet, and inventing a per-lift
+ * number here would be a guess dressed as a setting. 120s is the app's own
+ * default and it is honest about being one.
+ */
+const DEFAULT_REST_SECONDS = 120
 
 let state: LiveState = EMPTY
 const listeners = new Set<() => void>()
@@ -185,8 +208,30 @@ export function bankCurrentSet(weightKg: number | null, reps: number | null): vo
   const board = bankSet(state.board, position, weightKg, reps)
   if (board === state.board) return
 
-  set({ board })
+  /**
+   * A warm-up starts nothing. Nobody rests two minutes after an empty bar,
+   * and `commitOutcome` encodes the same rule for the web app.
+   */
+  const rests = setRow.type !== 'warmup' && DEFAULT_REST_SECONDS > 0
+
+  set({
+    board,
+    restEndsAt: rests ? Date.now() + DEFAULT_REST_SECONDS * 1000 : null,
+    restTotal: rests ? DEFAULT_REST_SECONDS : 0,
+  })
   void persistSet(position, exercise.exerciseId, setRow.setNumber, weightKg, reps)
+}
+
+/** Dismissed by a tap, or by the lifter deciding they are ready. */
+export function endRest(): void {
+  set({ restEndsAt: null, restTotal: 0 })
+}
+
+/** Add or remove time without leaving the canvas. */
+export function adjustRest(deltaSeconds: number): void {
+  if (state.restEndsAt === null) return
+  const next = Math.max(Date.now() + 1000, state.restEndsAt + deltaSeconds * 1000)
+  set({ restEndsAt: next })
 }
 
 async function persistSet(
