@@ -80,6 +80,7 @@ export * from './body'
    against is injected, which is what lets the native app hand it SQLite
    where the web app hands it IndexedDB. */
 export * from './commit'
+export * from './live-board'
 export * from './write-queue'
 export * from './history-edit'
 
