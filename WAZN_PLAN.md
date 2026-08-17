@@ -416,31 +416,43 @@ verbatim, so they survive even if this file isn't read.**
 > down the log; the log is history, not state. Verify against the database
 > before trusting either.
 
-### 7.0 CURRENT STATE — verified 2026-08-15 against production
+### 7.0 CURRENT STATE: verified 2026-08-17 against production
 
 Read live via the Management API, not recited. Re-verify before relying on it.
-**This block was stale for six days and said so nowhere** — on 2026-08-15 it
-still claimed 0024, 12 routines and 17 generations. If you are reading it on a
-later date, re-run the counts before quoting them.
+**This block was stale for six days once and said so nowhere.** If you are
+reading it on a later date, re-run the counts before quoting them. The
+Management API was reachable from the session on 2026-08-17 through the
+Supabase MCP server, which CLAUDE.md says to check rather than assume: it is
+per-session, and it was NOT reachable on 2026-08-14.
 
-|                         |                                      |
-| ----------------------- | ------------------------------------ |
-| Accounts / profiles     | 7 / 7 (2 with usernames)             |
-| Workouts                | 151, of which 1 is unfinished        |
-| Workout sets            | 3199                                 |
-| Routines                | 9                                    |
-| Exercises               | 134 (0 custom)                       |
-| AI generations          | 71 (see the Coach health note below) |
-| `client_errors`         | 0                                    |
-| `user_preferences` rows | 3                                    |
-| Last workout, any user  | 2026-08-14                           |
+|                         |                                          |
+| ----------------------- | ---------------------------------------- |
+| Accounts / profiles     | 8 / 8 (2 with usernames), one is a robot |
+| Workouts                | 152, of which 2 are unfinished           |
+| Workout sets            | 3199                                     |
+| Routines                | 18                                       |
+| Exercises               | 134 (0 custom)                           |
+| AI generations          | 82 (see the Coach health note below)     |
+| `client_errors`         | 0                                        |
+| `user_preferences` rows | 4                                        |
+| Last workout, any user  | 2026-08-16                               |
 
-**Only three of the seven accounts have ever logged anything, and two of those
-logged one set each.** Ameen has 149 workouts and 3197 sets — and **his last
-real session was 2026-07-20**. The 149 are the Hevy import; the app has had
-essentially no new training data for four weeks. Any reading of the Coach's
-output as "wrong" should check this first: `weekly_review()` currently reports
-`sessions_this_week: 0` and `sessions_last_28: 1` because that is true.
+**Only three of the eight accounts have ever logged anything, and two of those
+logged one set each.** Ameen (`amin`) has 149 workouts and 3197 sets, and
+**his last real session was 2026-07-20**. The 149 are the Hevy import; the app
+has had essentially no new training data for four weeks. The 2026-08-16
+activity is `mi1898932`, two workouts and one set, which is testing rather than
+training. Any reading of the Coach's output as "wrong" should check this
+first: the weekly review reports near-zero sessions because that is true.
+
+**The eighth account is `simulator@trywazn.app` and it is not a user.** It was
+provisioned on 2026-08-17 so the native app could be signed into on a
+simulator. Subtract it from any count quoted after that date, and delete it
+before the app is shared. See DECISIONS.md 2026-08-17.
+
+**Routines doubled, 9 to 18, and `generate-routine` logged 18 successes with
+zero failures.** The two numbers matching exactly is suggestive, not proven;
+nobody has checked whether every generation produced a row.
 
 **The second dataset is empty.** `body_weights` 0, `body_measurements` 0,
 `protein_days` 1, `daily_checkins` 1. v3 built the Body tab, the readiness
@@ -449,11 +461,21 @@ of those surfaces is running its degraded render in production today. Nothing
 supplies `sleepMinutes` or `hrv` at all — `readiness.ts` accepts them and no
 caller passes them, so readiness is the check-in alone.
 
-**Coach health, 2026-08-15.** The weekly review succeeded twice ever, on
-2026-08-05, then failed **28 consecutive times** — 22 on `unknown-exercise`
-(a grounding false positive) and 6 on `parse` (a token ceiling spent on a
-reasoning model's thinking). Both fixed the same day; see DECISIONS.md
-2026-08-15, three entries. `generate-routine` never broke.
+**Coach health, verified 2026-08-17 by feature and error code:**
+
+| feature       | ok  | failed                                | last success |
+| ------------- | --- | ------------------------------------- | ------------ |
+| `routine`     | 18  | 0                                     | 2026-08-16   |
+| `briefing`    | 25  | 7 (6 `parse`, 1 `no_content`)         | 2026-08-17   |
+| `coach_notes` | 3   | 29 (22 `unknown-exercise`, 7 `parse`) | 2026-08-15   |
+
+**The 2026-08-15 fixes hold.** `briefing` has succeeded as recently as
+2026-08-17 and its last `parse` failure was 2026-08-15, before the fix.
+`coach_notes` carries the ugly historical ratio (22 `unknown-exercise` was one
+grounding false positive firing repeatedly, last seen 2026-08-14) and **has
+not run at all since 2026-08-15**, so the fix is unproven rather than failing.
+Do not read 3-of-32 as a current success rate. `generate-routine` has never
+failed. See DECISIONS.md 2026-08-15, three entries.
 
 **Migrations, the only reliable account.** Production has **0001 through 0028
 applied**, confirmed against `information_schema`.
@@ -469,8 +491,9 @@ holds it, tapping EN returns. GATE 5's native-speaker review was **waived by
 Ameen**. Arabic is machine-drafted. `ErrorBoundary` stays English (class
 component, no hook) and chart axes are not mirrored, both deliberate.
 
-**THE APP HAS NOT BEEN SHARED YET (Ameen, 2026-08-09).** The 7 accounts are
-Ameen and people he already knows, not a beta cohort. **Any reading of these
+**THE APP HAS NOT BEEN SHARED YET (Ameen, 2026-08-09; still true 2026-08-17).**
+The 8 accounts are Ameen, people he already knows, and one test robot, not a
+beta cohort. **Any reading of these
 numbers as a retention signal is wrong**, including the one further down this
 file that calls the beta started and retention thin. GATE 3 cannot be
 evaluated until the app is actually distributed, and no session should treat
@@ -568,18 +591,73 @@ The ledger now has entries for 0027 and 0028 (applied through the Management
 API's migration path). It still does not know about 0019–0026; §7.0's older
 note stands — the ledger is not a record of what is applied.
 
-**Blocked on Ameen:** enable Supabase's leaked-password protection (the one
-security advisor warning that is a real setting rather than an intentional
-grant — Auth → Passwords → HaveIBeenPwned; it is a config change, and auth
-config is Ameen's per §2.8);
-run `LAUNCH.md` on a real phone with a second account
-(also GATE U7's last item, not reachable from a sandboxed session); rotate the
-OpenRouter key, which was shared in a chat session and is compromised by
-construction; raise `rate_limit_email_sent` from 2 before any invite wave.
+**v5 "Momentum" P0 is CLOSED at 4/11 acceptance (Ameen, 2026-08-17).** It is
+closed, not passed, and the distinction is the point. Eight PRs (#90 to #97
+plus P0 #5) landed the ember ground, the named type ramp app-wide, the tab
+bar, the Home hunt card, the live zones with the ember commit bar, and the
+rest canvas, with no stop between them. The acceptance list was first read
+against the running app on 2026-08-17: four pass, three partial, three fail,
+one blocked on hardware, one not assessed.
 
-**Next action:** nothing in the build queue is load-bearing until the app is
-shared. Stage 4B (store publishing) is the sequenced next stage and needs
-Ameen's Mac plus the $25 Play and $99 Apple accounts.
+**Eleven findings came out of that read and were on no list before it** (six
+on Home, three on the live screen, two on the rest canvas), including Home's
+stat tiles rendering `WEEK · STREAK · FREEZE` where the reference names
+`STREAK · THIS WEEK · SESSIONS`. Every automated check was green throughout.
+**Every unmet item is classified and carried, none dropped**: the full table
+is the last section of `docs/design/v5-momentum/P0-GATE.md` and the reasoning
+is in DECISIONS.md 2026-08-17. Two of the carried items are decisions rather
+than builds: whether the tab bar keeps the glyphs the reference draws as text,
+and whether screen 08 keeps its four inputs once it appears unbidden.
+
+**P1 has not started.** Its list is the momentum bar, the PR moment, toasts,
+the finish verdict, the six remaining screen restyles, the coach-volume wiring,
+and the eleven carried findings above.
+
+**Rest canvas takeover DECIDED 2026-08-17, not built.** Auto-takeover after
+working sets only; warm-ups keep tap-to-open. Build spec in DECISIONS.md
+2026-08-17. It is the first build after the gate and it touches both stacks.
+
+**THERE ARE TWO APPS. `mobile/` bundles and is not on a store.** Expo Router
+with a declarative `Stack.Protected` guard, email-or-username plus password
+and the 6-digit code, the `join/[code]` deep link, the live board with zones,
+momentum bar and BANK IT, and the rest canvas. CI runs typecheck, lint, a
+route check and a real `expo export` for both platforms. **Five of the six
+tabs are 21-line empty-state stubs**: History, Progress, Body, Coach, Friends.
+Google and Apple sign-in are deliberately absent rather than stubbed, because
+neither credential exists yet. Every P1 restyle is now two builds unless the
+shared-domain route through `src/lib/portable.ts` is used, which is what
+`live-board.ts` did and it worked.
+
+**Blocked on Ameen:**
+
+1. **Enable leaked-password protection.** Still disabled, re-confirmed by the
+   security advisor on 2026-08-17, and the only advisor warning that is a real
+   setting rather than an intentional grant. Auth, then Passwords, then
+   HaveIBeenPwned. It is a config change and auth config is Ameen's per §2.8.
+   The other four warnings are `resolve_invite`, `social_feed`,
+   `upsert_user_preference` and `weekly_leaderboard` being SECURITY DEFINER,
+   which is by design. Grants were re-asserted on 2026-08-17 via
+   `has_function_privilege`, not read off a success flag: 0028 holds, and the
+   18 functions still executable by `anon` are all SECURITY INVOKER behind RLS
+   plus `resolve_invite`, which migration 0011 grants deliberately.
+2. **Run `LAUNCH.md` on a real phone with a second account**, including the
+   airplane-mode section. GATE U7's last item and v5's acceptance item 11.
+   Not reachable from a sandboxed session.
+3. **Rotate the OpenRouter key.** Shared in a chat session, compromised by
+   construction.
+4. **Raise `rate_limit_email_sent` from 2** before any invite wave.
+5. **Google OAuth client and the Apple developer account.** These now block
+   the native app's hero auth path, not just the web one, and Apple sign-in is
+   a store requirement the moment Google exists there.
+
+**Next action:** the rest canvas takeover, which is decided and specified and
+touches both stacks. P1 begins after it, starting on Home, where six of the
+eleven carried findings live. P1's shared-domain pieces (notable-set trigger,
+in-session PR baseline, finish verdict) should land behind `portable.ts`
+before either stack renders them, following the `live-board.ts` precedent, or
+every P1 restyle is built twice. Stage 4B
+(store publishing) still needs Ameen's Mac plus the $25 Play and $99 Apple
+accounts.
 
 ### 7.1 Log (chronological, newest last)
 
