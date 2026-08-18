@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   NO_FILTER,
   applyFilter,
+  searchByName,
   describeFilter,
   filterActive,
   filterOptions,
@@ -104,5 +105,46 @@ describe('filterActive / describeFilter', () => {
       'cable · shoulders',
     )
     expect(describeFilter({ muscleGroup: 'back', equipment: null })).toBe('back')
+  })
+})
+
+describe('searchByName', () => {
+  const rows = [
+    { name: 'Incline Bench Press' },
+    { name: 'Bench Press' },
+    { name: 'Squat' },
+  ]
+
+  it('returns everything for an empty query', () => {
+    expect(searchByName(rows, '   ')).toHaveLength(3)
+  })
+
+  it('ranks a prefix match above a mere containment', () => {
+    // The behaviour that is easy to lose in a rewrite, and the reason this is
+    // shared rather than retyped per platform: typing "bench" must offer
+    // Bench Press before Incline Bench Press.
+    expect(searchByName(rows, 'bench').map((r) => r.name)).toEqual([
+      'Bench Press',
+      'Incline Bench Press',
+    ])
+  })
+
+  it('falls back to the caller order on a tie', () => {
+    // The web picker hands in usage order, so a lift you actually train wins.
+    const usageOrder = [{ name: 'Front Squat' }, { name: 'Back Squat' }]
+    expect(searchByName(usageOrder, 'squat').map((r) => r.name)).toEqual([
+      'Front Squat',
+      'Back Squat',
+    ])
+  })
+
+  it('is case-insensitive and ignores surrounding space', () => {
+    expect(searchByName(rows, '  SQUAT ')).toHaveLength(1)
+  })
+
+  it('does not mutate the input', () => {
+    const original = [...rows]
+    searchByName(rows, 'bench')
+    expect(rows).toEqual(original)
   })
 })
