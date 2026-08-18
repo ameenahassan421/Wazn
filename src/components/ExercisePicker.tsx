@@ -3,6 +3,7 @@ import type { Exercise, ExerciseUsageRow } from '../lib/types'
 import {
   NO_FILTER,
   applyFilter,
+  searchByName,
   describeFilter,
   filterActive,
   filterOptions,
@@ -131,15 +132,7 @@ export function ExercisePicker({
     // Filter first, then search. The other order would rank a name match the
     // filter is about to throw away.
     const pool = applyFilter(ordered, filter)
-    const q = query.trim().toLowerCase()
-    if (!q) return pool
-    const matches = pool.filter((e) => e.name.toLowerCase().includes(q))
-    return matches.sort((a, b) => {
-      const aStarts = a.name.toLowerCase().startsWith(q) ? 0 : 1
-      const bStarts = b.name.toLowerCase().startsWith(q) ? 0 : 1
-      if (aStarts !== bStarts) return aStarts - bStarts
-      return ordered.indexOf(a) - ordered.indexOf(b)
-    })
+    return searchByName(pool, query)
   }, [ordered, filter, query])
 
   const filtered = filterActive(filter)

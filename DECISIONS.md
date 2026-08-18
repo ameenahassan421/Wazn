@@ -7611,3 +7611,71 @@ style is.
 Both platforms bundle (iOS 1724 modules, Android 1805). Web wall green: 1178
 vitest, 9 Playwright. Still not on a simulator, and the live board is still a
 placeholder — that is the next piece and it is the one the app exists for.
+
+## 2026-08-17 (native) — The live board
+
+The screen the app exists for. Screen 07's stepper zones, BANK IT, the
+momentum bar and screen 08's rest canvas, on native.
+
+### GATE U2 shaped every decision on this screen
+
+`commit()` takes no arguments — it banks whatever the stepper is showing, and
+the stepper KEEPS those values afterwards. Logging 125×8 three times is press,
+press, press. That is why there is no confirmation dialog, no sheet and no
+navigation on the commit path: a set logged wrong costs one undo, and a dialog
+costs every set thereafter.
+
+**The rest canvas therefore does NOT take the screen on commit.** It is built,
+it is reachable from the REST control, and the takeover is one commented line
+in `session/[id].tsx`. Same reasoning and same open decision as the web app: an
+automatic full-screen takeover means the next set costs dismiss-then-bank, which
+is exactly the gate. Consistency with the web matters here — deciding it
+differently per platform would make the answer harder to change later, not
+easier.
+
+### The ghost is `verdictFor`, not a reimplementation
+
+The stepper is seeded by the shared `ghost-reason` module: double progression
+off the last session, eased once when a set came in under plan, held otherwise.
+None of that logic is rewritten in `mobile/` — it is imported. That module is
+the single best argument for the shared-domain architecture: it is subtle, it
+is tested, and two copies of it would drift within a week.
+
+The chip says WHICH — ▲ / → / ↓ plus the reason — and renders nothing when the
+cause is `none`. An unexplained seeded number is worse than no seed.
+
+### The rest timer is a deadline, not a counter
+
+A decrementing counter is wrong the moment the app is backgrounded, and
+backgrounding is the NORMAL case here — a lifter puts the phone down for two
+minutes. Storing the end time and deriving the remainder is correct however
+long the process was frozen, with no background-execution entitlement. The
+screen is kept awake while resting and released the instant it ends.
+
+Silent, per do-not-regress §5. One haptic marks the end. A gym is loud and a
+chime is either unheard or embarrassing.
+
+### `searchByName` — a copy caught before it happened
+
+The native picker needed the web picker's search. I wrote it with a comment
+claiming it used "the same matcher the web picker uses" — and there was no such
+matcher: the web does it inline, four lines inside `ExercisePicker.tsx`.
+
+Copying those four lines is precisely how "ohp" starts finding Overhead Press
+on one platform and not the other, which is the divergence `portable.ts` exists
+to prevent for the arithmetic. So it moved to `exercise-filter.ts`, the web
+picker now calls it, and it has five tests — including the ranking that is easy
+to lose in a rewrite: a name that STARTS with the query outranks one that
+merely contains it, and ties fall back to caller order, which is usage order in
+the web picker.
+
+### What the board does not do yet
+
+Warm-up sets, supersets, per-set editing, `exercise_usage` ordering in the
+picker (alphabetical for now — the RPC exists and wiring it is a follow-up, not
+a rewrite), and the PR moment. The finish path upserts by client-generated id,
+so a failed sync keeps the workout on the device and the next attempt replays
+it idempotently — but it is not yet the full offline queue the web app has.
+
+Both platforms bundle (iOS 1855 modules, Android 1936). Web wall green: 1183
+vitest, 9 Playwright. Still nothing on a simulator.
