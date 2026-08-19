@@ -1,4 +1,32 @@
 {
+  "permissions": {
+    "allow": [
+      "Bash(npm run lint)",
+      "Bash(npm run lint:*)",
+      "Bash(npm run typecheck)",
+      "Bash(npm run build)",
+      "Bash(npm run format:check)",
+      "Bash(npm test)",
+      "Bash(npm test:*)",
+      "Bash(npm run test:*)",
+      "Bash(npm install)",
+      "Bash(npm install:*)",
+      "Bash(npm ci)",
+      "Bash(npx tsc:*)",
+      "Bash(npx vitest:*)",
+      "Bash(npx eslint:*)",
+      "Bash(npx prettier:*)",
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(git branch:*)",
+      "Bash(git show:*)",
+      "Bash(git fetch:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git checkout:*)"
+    ]
+  },
   "hooks": {
     "SessionStart": [
       {
@@ -28,40 +56,40 @@
         "hooks": [
           {
             "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/status-guard.sh",
+            "timeout": 15,
+            "statusMessage": "Checking STATUS is reconciled"
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
             "command": "node \"${CLAUDE_PROJECT_DIR}/.claude/skills/impeccable/scripts/hook.mjs\"",
             "timeout": 30,
             "statusMessage": "Design deep pass"
           }
         ]
       }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/git-safety.sh",
+            "timeout": 10,
+            "statusMessage": "Snapshotting before destructive git"
+          }
+        ]
+      }
     ]
   },
-  "permissions": {
-    "allow": [
-      "Bash(npm run lint)",
-      "Bash(npm run lint:*)",
-      "Bash(npm run typecheck)",
-      "Bash(npm run build)",
-      "Bash(npm run format:check)",
-      "Bash(npm test)",
-      "Bash(npm test:*)",
-      "Bash(npm run test:*)",
-      "Bash(npm install)",
-      "Bash(npm install:*)",
-      "Bash(npm ci)",
-      "Bash(npx tsc:*)",
-      "Bash(npx vitest:*)",
-      "Bash(npx eslint:*)",
-      "Bash(npx prettier:*)",
-      "Bash(git status:*)",
-      "Bash(git diff:*)",
-      "Bash(git log:*)",
-      "Bash(git branch:*)",
-      "Bash(git show:*)",
-      "Bash(git fetch:*)",
-      "Bash(git add:*)",
-      "Bash(git commit:*)",
-      "Bash(git checkout:*)"
-    ]
+  "enabledPlugins": {
+    "code-review@claude-plugins-official": true,
+    "pr-review-toolkit@claude-plugins-official": true,
+    "expo@claude-plugins-official": true
   }
 }
