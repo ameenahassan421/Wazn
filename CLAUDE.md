@@ -10,6 +10,70 @@
 Mobile-first strength-training PWA. The job it does: log a set in under 30
 seconds, one hand, mid-workout. Every decision serves that.
 
+## Read the banner, not the file (2026-08-19)
+
+**§7.0 has lied before and it will lie again.** On 2026-08-19 it was nine
+commits stale: PRs #103, #104, #105 and #106 merged code to `main` and not one
+of them touched `WAZN_PLAN.md`, so the authoritative state block still said
+"rest canvas takeover DECIDED 2026-08-17, not built" after #103 had shipped it,
+and still named that takeover as the "next action" after it was done. Local
+`main` was meanwhile eight commits behind `origin/main` with no sign of it.
+Nothing was broken. The _record_ was broken, which is worse, because every
+session after that one starts by reading it.
+
+Two hooks now close that loop. Both are in `.claude/settings.json` and both are
+checked in, so every session and every machine gets them.
+
+- **`.claude/hooks/session-start.sh`** fetches, then prints computed state
+  before you read anything: where HEAD sits against `origin/main`, how many
+  commits have landed since `WAZN_PLAN.md` was last edited, which remote
+  branches hold unmerged work, and any open PR (another session may be
+  mid-flight; do not rebuild its work). **When the banner says section 7.0 is
+  stale by N commits, reconcile it against the code and the database before you
+  build anything.** The banner is derived, so it cannot go stale; the file can.
+- **`.claude/hooks/status-guard.sh`** runs on Stop. If the session has
+  committed changes under `src/`, `mobile/`, `supabase/migrations/` or
+  `supabase/functions/` and never touched `WAZN_PLAN.md`, it exits 2 and blocks
+  the stop. Uncommitted scratch work gets a one-line reminder instead of a
+  wall. **This is not a formality to route around.** §6 already required the
+  update and four consecutive sessions skipped it anyway; the hook exists
+  because the written rule did not hold.
+
+Corollary that supersedes the blockquote above: read `WAZN_PLAN.md` §7.0, but
+treat it as a _claim_ to verify, not a fact to recite. The database beats the
+file, and `git log` beats both.
+
+**Subagents do not reliably honour "read-only".** On 2026-08-19 an audit
+subagent that had been told, in its prompt, not to edit anything ran
+`git checkout -- CLAUDE.md` and destroyed the parent session's uncommitted
+work. Commit before you fan out, or accept that you will lose the diff.
+
+## Code review (2026-08-19)
+
+Three review paths, in ascending cost. Project-scoped in
+`.claude/settings.json`, so they arrive with the repo.
+
+- `/code-review`, the built-in. Reviews the working diff, a PR number, or a
+  branch, at a chosen effort level. This is the default before opening a PR.
+- `/review-pr` and the six `pr-review-toolkit` agents (`code-reviewer`,
+  `silent-failure-hunter`, `code-simplifier`, `comment-analyzer`,
+  `pr-test-analyzer`, `type-design-analyzer`). Reach for a single agent when
+  the concern is specific; `silent-failure-hunter` is the one this repo has
+  historically needed, since 0027's `revoke` and the invented-lift guard both
+  succeeded loudly and did nothing.
+- `/code-review ultra`, a multi-agent cloud review of the branch. Ameen has to
+  trigger it; Claude cannot.
+
+**A green wall is not a review, and this repo has the receipts.** Lint,
+typecheck, 818 tests, a production build and Playwright were all green while
+Arabic rendered its numbers backwards, while `revoke all ... from public` did
+nothing, and while every one of the eleven v5 P0 findings sat unnoticed. Run a
+review on anything a user will see.
+
+The `expo` plugin is installed for `mobile/` work: `api.expo.dev` is 403 from
+this org's egress proxy, so its offline skills are the way to answer SDK and
+build questions without the network.
+
 ## Skills first (Ameen, 2026-08-04)
 
 Before starting any task, search the session's available skills and load the
