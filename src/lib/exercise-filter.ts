@@ -99,3 +99,33 @@ export function applyFilter(exercises: Exercise[], filter: ExerciseFilter): Exer
 export function describeFilter(filter: ExerciseFilter): string {
   return [filter.equipment, filter.muscleGroup].filter(Boolean).join(' · ')
 }
+
+/**
+ * Name search, with the ranking the picker has always used.
+ *
+ * ── WHY THIS IS A FUNCTION AND NOT FOUR LINES AT THE CALL SITE ──────────────
+ * It was four lines at the call site, inside `ExercisePicker.tsx`, and when
+ * the native picker needed the same behaviour the only options were to copy it
+ * or to share it. Copying is how "ohp" starts finding Overhead Press on one
+ * platform and not the other — the same class of divergence `portable.ts`
+ * exists to prevent for the arithmetic.
+ *
+ * The ranking matters and is easy to lose in a rewrite: a name that STARTS
+ * with the query sorts above one that merely contains it, and ties fall back
+ * to the order the caller handed in — which is usage order in the web picker,
+ * so a lift you actually train wins a tie against one you have never touched.
+ */
+export function searchByName<T extends { name: string }>(
+  items: readonly T[],
+  query: string,
+): T[] {
+  const q = query.trim().toLowerCase()
+  if (q === '') return [...items]
+  const matches = items.filter((e) => e.name.toLowerCase().includes(q))
+  return matches.sort((a, b) => {
+    const aStarts = a.name.toLowerCase().startsWith(q) ? 0 : 1
+    const bStarts = b.name.toLowerCase().startsWith(q) ? 0 : 1
+    if (aStarts !== bStarts) return aStarts - bStarts
+    return items.indexOf(a) - items.indexOf(b)
+  })
+}
