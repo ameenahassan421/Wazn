@@ -23,9 +23,9 @@ One hue only, and it must be earned. Ember (#e8491d), the color of iron at
 forging heat and of sodium light on a platform, appears as the material of the
 iron itself, never as decoration. Where a second tone exists it is only the
 off-white of chalk, and it belongs to the human element: the written word,
-the hand's trace. Chalk and iron. Nothing else is permitted on the ground, and the
-discipline of that refusal is what makes the two materials read as physical
-substances rather than screen colors.
+the hand's trace. Chalk and iron. Nothing else is permitted on the ground,
+and the discipline of that refusal is what makes the two materials read as
+physical substances rather than screen colors.
 
 Craft in this movement means the mark must look inevitable — as if the
 calligrapher and the machinist were the same person, laboring over a single

@@ -1,3 +1,37 @@
+> **SUPERSEDED 2026-08-19 for every screen. Still canonical for the logo.**
+> The screen specs below are superseded by `docs/design/v5-momentum`; its
+> `P0-PLAN.md` and `P0-GATE.md` are the live build order. What this bundle got
+> right is the brand: the gripped plate, the vermilion accent `#E8491D`, and the
+> plate geometry are still the source of truth, and `scripts/build_logo.py`
+> (lines 61 and 238) reads `Wazn Brand - Logo.dc.html` for exactly that.
+> **The bundle therefore cannot be moved, renamed, or deleted.**
+>
+> **Do not build screens from this file.** Specifically wrong now:
+>
+> - **Overview:** "replaces the current 5-tab layout with a single home feed."
+>   The five-tab bar was retired 2026-08-13 and a **six-tab bar came back
+>   2026-08-14**, confirmed by Ameen: Log, History, Progress, Body, Coach,
+>   Friends. The doors behind the cards were kept alongside it.
+> - **About the Design Files:** the target is not a "React + TypeScript PWA,
+>   Supabase, **Capacitor** wrapper." Capacitor was **rejected 2026-08-16**
+>   (`DECISIONS.md`, entry "2026-08-16 (Expo)") on App Store Guideline 4.2,
+>   keyboard and haptic ergonomics for a one-handed logger, and background rest
+>   timers. The target is **one Expo Router + NativeWind codebase** shipping
+>   iOS, Android and web, `WAZN_PLAN.md` Stage 4A.
+> - **Fidelity:** "recreate pixel-perfectly" no longer holds. v5 "Momentum" is
+>   the current visual direction, and it is implemented inside the Stage 4A
+>   port rather than layered on afterwards.
+> - **Typography:** **Sora** is not the display face. It is **Saira Semi
+>   Condensed** (`src/index.css:194`, `src/lib/tokens.ts:90`). Condensed is
+>   load-bearing: the mega figure is 84px and only fits a phone because the
+>   face is narrow.
+> - **Suggested build order:** the P0 to P3 roadmap in
+>   `Wazn UX Audit and Roadmap.dc.html` is replaced by
+>   `docs/design/v5-momentum/P0-PLAN.md` and `P0-GATE.md`.
+>
+> Current state: `WAZN_PLAN.md` section 7.0. Current plan: `WAZN_PLAN.md`
+> Stage 4A.
+
 # Handoff: Wazn App Redesign — "The Plate"
 
 ## Overview
