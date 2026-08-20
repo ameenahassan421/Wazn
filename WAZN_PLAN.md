@@ -731,6 +731,39 @@ none started: momentum bar and its brass flip, the PR moment, toasts, the finish
 remaining screen restyles, coach-volume wiring. Item 6 (Tell the coach) was **never
 assessed**; `TellCoachSheet.tsx` is v3-era.
 
+#### Stage 4A phase A0, in progress (started 2026-08-19)
+
+**The web target exists and runs.** `mobile/` now declares
+`web: { bundler: 'metro', output: 'single' }` and depends on
+`@expo/metro-runtime`. `npx expo export --platform web` produces a working
+build, and it was **verified by running it, not by building it**: served and
+loaded in a clean browser tab, the sign-in screen renders with NativeWind
+styling, the wordmark and the type ramp intact, and **zero console errors**.
+This is the load-bearing claim of the whole migration, now demonstrated.
+
+`output: 'single'` and not `'static'` on purpose. Static prerendering runs
+every route's render in Node at build time, so any module-scope browser access
+anywhere in the tree becomes a build failure. Production is already an SPA
+behind a rewrite. Revisit at A4.
+
+**A green export hid a crash, which is why GATE A0 says run it.**
+`expo-secure-store` has no web implementation at all: every method is undefined
+there, so the first Supabase session read threw
+`getValueWithKeyAsync is not a function` before anything rendered.
+`mobile/src/services/supabase.ts` now picks storage by platform, `localStorage`
+on web (which is what the Vite app has always used, so a session written by one
+and read by the other agrees) and the chunked SecureStore adapter on native.
+`detectSessionInUrl` follows the same split. **Assume nothing about the web
+target that has not been loaded in a browser.**
+
+`mobile/` has `vitest` and a `test` script for the first time. It had 3,768
+lines and no suite while `src/` enforces a per-module coverage floor.
+
+Still open in A0, being built now: `rest.ts` through `portable.ts`, the native
+locale adapter, the unit round-trip to the server, the `Readiness` to `CheckIn`
+rename, and the first `mobile/` tests. GATE A0 is not claimed until all of them
+land and the wall is green on both packages.
+
 #### Blocked on Ameen
 
 1. **DONE, reported not verified. `rate_limit_email_sent` raised to 30** by Ameen,
@@ -769,9 +802,11 @@ Replace the token from the Supabase dashboard (Account, then Access Tokens) into
 
 #### Next action
 
-**Stage 4A phase A0.** Foundations: the Expo web target, the native locale adapter, the unit
-round-trip, the `set_type` fix, `rest.ts` into `portable.ts`, and a test suite for `mobile/`.
-None of it is user-visible and all of it is load-bearing for everything after.
+**Finish Stage 4A phase A0.** The Expo web target is done and verified in a browser (see
+the A0 block above). What remains: `rest.ts` through `portable.ts`, the native locale adapter,
+the unit round-trip, the `Readiness` to `CheckIn` rename, and the first `mobile/` tests. The
+`set_type` write bug was fixed on 2026-08-19. None of A0 is user-visible and all of it is
+load-bearing for everything after.
 
 In parallel, and independently, **Ameen runs `LAUNCH.md` on his phone against the installed
 PWA**. It costs a day, needs no migration work, and is the only source of information this
