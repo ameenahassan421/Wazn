@@ -986,7 +986,7 @@ spec.
 
 ## 2026-08-04 — What in the 2A runbook went stale
 
-`docs/stage2a-domain-setup.md` was written when this environment could reach
+`docs/archive/stage2a-domain-setup.md` was written when this environment could reach
 nothing. Three of its statements are now false, and one of them would have cost
 Ameen time while he is running the runbook:
 
@@ -1938,7 +1938,7 @@ where the knowledge lives:
    is in `evals/evals.json`; the interactive skill-creator eval loop
    awaits Ameen.
 
-2. **`docs/HEVY_PARITY_UPGRADE_PLAN.md`** — a PROPOSAL, explicitly
+2. **`docs/archive/HEVY_PARITY_UPGRADE_PLAN.md`** — a PROPOSAL, explicitly
    subordinate to `WAZN_PLAN.md` and the beta-first sequencing. Its load-
    bearing findings, from reading every screen as built rather than
    trusting the comparison doc: the real structural gap is the
@@ -1989,7 +1989,7 @@ the constraints that survive it:
 - **Google sign-in becomes the primary path** as soon as its OAuth
   client exists. The only blocking work is Ameen's (~15 min in Google
   Cloud) — `docs/auth-social-setup.md` Part 1 has the exact steps; the
-  implementation prompt is in `docs/IMPLEMENTATION_PROMPTS.md`.
+  implementation prompt is in `docs/archive/IMPLEMENTATION_PROMPTS.md`.
 - **Apple sign-in is deferred to Stage 4B**, where the $99 developer
   account gets bought anyway — and where it stops being optional:
   App Store Guideline 4.8 makes Sign in with Apple mandatory in the
@@ -2082,7 +2082,7 @@ before invites.
 
 ## 2026-08-07 — U1a: the dead charts got rendered, and a class that never existed
 
-Phase U1 items 1–2 of `docs/HEVY_PARITY_UPGRADE_PLAN.md`, approved by Ameen
+Phase U1 items 1–2 of `docs/archive/HEVY_PARITY_UPGRADE_PLAN.md`, approved by Ameen
 and built. Four deviations and one bug worth not re-deriving.
 
 **1. `inset-block-0` is not a Tailwind utility, and never was.** Tailwind v4
@@ -2218,7 +2218,7 @@ stay unapproved.
 ## 2026-08-07 — The Hevy comparison was never looked at, so it got looked at
 
 Ameen asked whether the comparison work had actually viewed the app. It
-had not: `docs/HEVY_PARITY_UPGRADE_PLAN.md` and
+had not: `docs/archive/HEVY_PARITY_UPGRADE_PLAN.md` and
 `docs/BEATING_HEVY_PLAN.md` were written from source, the plan files and
 the comparison docx. So a visual pass was run — the real build against a
 Supabase stubbed at the network layer, driven by Playwright, five tabs ×
@@ -3919,7 +3919,7 @@ across ~290 providers with fallback — the useful deliverable turned out not to
 be an install. It has to run on the machine the agent runs on, and a web session
 runs in a container that is reclaimed when the session ends; nothing on a laptop
 can reach its `localhost`. So it was installed and exercised here as a _test_,
-and what got committed is `docs/omniroute-setup.md`, written from what that run
+and what got committed is `docs/archive/omniroute-setup.md`, written from what that run
 actually showed rather than from the README's claims.
 
 What the run established: 3.8.49 installs on Node 22.22.2 without build tools
@@ -4858,7 +4858,7 @@ coach functions, not an i18n question, and is out of this stage's scope.
    (deadline-based timing, composited drain, the write path, the canvas
    rules) UNDER the prototype's presentation (chip above the commit
    cluster, tap-to-expand rest view, plate card, warm-up surfacing, coach
-   line in flow). R5 and R6 in docs/REBUILD_PLAN.md carry the itemized
+   line in flow). R5 and R6 in docs/archive/REBUILD_PLAN.md carry the itemized
    scope.
 
 The lesson for the log: a delegated decision is still the owner's decision.
@@ -4894,7 +4894,7 @@ consequences:
    than being sprinkled ad hoc.
 2. The engines do not move: the deadline rest timer, the write queue and
    offline ladder, commitOutcome, the RPCs. The refactor is presentation.
-3. The itemized pixel spec lives in docs/REBUILD_PLAN.md under the
+3. The itemized pixel spec lives in docs/archive/REBUILD_PLAN.md under the
    exact-match mandate, so it survives session boundaries.
 
 ## 2026-08-13: R5c, and the four calls inside it

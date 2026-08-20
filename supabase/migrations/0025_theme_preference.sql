@@ -1,7 +1,12 @@
 -- 0025: theme preference.
 --
--- R4 makes the paper look the default and dark the toggle (Ameen,
--- 2026-08-12; docs/REBUILD_PLAN.md). The client is localStorage-first, the
+-- R4 made the paper look the default and dark the toggle (Ameen, 2026-08-12;
+-- docs/archive/REBUILD_PLAN.md, archived 2026-08-19). SUPERSEDED: v5
+-- "Momentum" removed the paper theme and the toggle outright on 2026-08-16,
+-- so this column is written by nothing and read by nothing. It is left in
+-- place because dropping a column is a destructive migration bought for
+-- nothing. The rest of this comment is the 2026-08-12 rationale, kept as
+-- history. The client is localStorage-first, the
 -- same shape as locale: this column is the cross-device memory, and until
 -- this migration is applied in production the RPC quietly no-ops the
 -- unknown column and localStorage stays authoritative. Nothing breaks

@@ -1,4 +1,13 @@
 ---
+# =====================================================================
+# STOP. THIS FRONT MATTER IS ARCHIVED AND WRONG. (stamped 2026-08-19)
+# The colours and the type scale below are the pre-v5 system: they name
+# two themes where there is one, Sora where the display face is Saira
+# Semi Condensed, and a 44/30/24/19/11 scale that was deleted.
+# Do not build from this block. Read the STALE banner further down,
+# under "# Design System: Wazn", before you read anything else here,
+# then read `src/index.css`, which is the live token source.
+# =====================================================================
 name: Wazn
 description: A strength log with the weight of iron — chalk on paper, ember on ink.
 colors:
@@ -178,15 +187,16 @@ components:
 
 # Design System: Wazn
 
-> ## ⚠ THIS FILE IS STALE AS OF 2026-08-16. READ `src/index.css` INSTEAD.
+> ## THIS FILE IS STALE AS OF 2026-08-16. READ `src/index.css` INSTEAD.
 >
-> It was generated from the code before the v5 "Momentum" work, and three of
+> It was generated from the code before the v5 "Momentum" work, and four of
 > its load-bearing claims are now false:
 >
 > | this file says                                                             | the code says                                                                                                                                                                                                                                            |
 > | -------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 > | paper is the default, iron is the dark theme, both ship from one token set | **there is one theme.** The `html[data-theme='dark']` block is gone, the palette is the iron ground, and the light/dark toggle was removed with it                                                                                                       |
 > | Sora carries display and figures                                           | **Saira Semi Condensed** does. Sora is still declared only until the wordmark's baked outlines are regenerated                                                                                                                                           |
+> | there is no tab bar; doors replaced it                                     | **there are six tabs**: `Log · History · Progress · Body · Coach · Friends` (`src/components/TabBar.tsx`, `TABS`). The card doors were kept alongside the bar                                                                                             |
 > | the scale is display 44 / input 30 / figure 24 / title 19 / micro 11       | **the v5 ramp**: mega 84 · hero 50 · fig 30 · num 21 · title 17 · body 14 · label 13 · meta 11 · kick 10 · nano 9, plus three named idioms (`row-title` 15, `btn-text` 16, `field-text` 16). `display`, `input`, `figure` and `micro` are deleted tokens |
 >
 > The front-matter colours and typography blocks above are wrong in the same
@@ -198,6 +208,27 @@ components:
 > `/impeccable document`, and it is deliberately NOT done inside a feature
 > PR — a design-system rewrite should be its own reviewable diff rather than
 > a paragraph buried in a card restyle.
+>
+> ### Which half to trust (added 2026-08-19)
+>
+> **This file contradicted itself, and that is worse than being stale.** The
+> Overview said the six-tab bar came back on 2026-08-13 and was confirmed on
+> 2026-08-14; the Layout section, in the same file, said flatly "there is no
+> tab bar". Layout was corrected on 2026-08-19 against
+> `src/components/TabBar.tsx`. Six tabs: Log, History, Progress, Body, Coach,
+> Friends. The card doors were kept alongside the bar, so every screen has two
+> routes rather than one.
+>
+> The split is: **prose written after 2026-08-13 is broadly reliable, every
+> token value in this file is not.** The YAML front matter, the colour ramps
+> and the type scale are the pre-v5 system and were never regenerated. When a
+> paragraph and a token disagree, believe neither and read `src/index.css`.
+>
+> **Regeneration is scheduled AFTER the Expo port, not before.** The one
+> codebase decided 2026-08-19 (`WAZN_PLAN.md` Stage 4A) rebuilds every screen
+> in Expo Router plus NativeWind in its v5 form, so running
+> `/impeccable document` now would document a component tree that is about to
+> stop existing. Run it once Stage 4A closes, against the ported app.
 
 ## Overview
 
@@ -477,12 +508,28 @@ A single-column mobile app, capped at a **430px container** and centred, with
 an **18px gutter** that every screen and every card edge honours. Vertical
 rhythm runs on 12px between stacked blocks and 6px inside a control.
 
-There is **no tab bar**. Five equal tabs for five unequal jobs was retired in
-the v3 redesign. The home screen carries one Start action with a History
-circle beside it; Progress and Coach are reached through the cards that hold
-their content; Settings is behind the header avatar; Friends lives inside
-Settings. A new screen needs a door on the home screen or it is unreachable —
-`npm run shots` prints `no door to <screen>` when one is missing.
+There **is** a tab bar, and it carries **six tabs**: Log, History, Progress,
+Body, Coach, Friends (`src/components/TabBar.tsx`, the exported `TABS`). This
+paragraph said the opposite until 2026-08-19, contradicting the Overview four
+hundred lines above it. What actually happened: the five-tab bar was retired
+by the v3 audit on 2026-08-13 ("five equal tabs for five unequal jobs"),
+design v3.0 brought a six-tab bar back, and Ameen confirmed the handoff wins
+on 2026-08-14.
+
+**The card doors were kept alongside the bar.** Nothing that used to open a
+screen stopped opening it. The home screen still carries one Start action with
+a History circle beside it; Progress is still behind the Last PR card and
+Coach behind the coach brief; Settings is behind the header avatar; Friends is
+also reachable from inside Settings. Body is the one screen with no card, so
+the bar is its only route. A new screen still needs a door or it is
+unreachable: `npm run shots` prints `no door to <screen>` when one is missing,
+and both harnesses navigate by pressing the cards rather than the bar on
+purpose, because a run that used the bar would pass on a build where every
+door had silently stopped working.
+
+The bar is 58px tall (`TAB_BAR_HEIGHT`), six targets of about 65px at 390px
+wide, and its footprint is named in exactly one place: `--tab-space` in
+`index.css`. Three sticky clusters read it. Do not inline the number.
 
 The header is a sticky band carrying a gradient. It is the app's **primary**
 gradient but not its only one — the sticky Start cluster on the Log screen

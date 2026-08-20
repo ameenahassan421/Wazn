@@ -1,7 +1,7 @@
 # Beating Hevy: the AI + social offense
 
 **Status: PROPOSAL — awaiting Ameen's review.** Companion to
-`docs/HEVY_PARITY_UPGRADE_PLAN.md`. That document closes the gap; this
+`docs/archive/HEVY_PARITY_UPGRADE_PLAN.md`. That document closes the gap; this
 one opens a lead Hevy cannot close. Same rules apply: subordinate to
 `WAZN_PLAN.md`, beta first, phases activate only on approval, every
 phase gated.
@@ -118,7 +118,7 @@ When the user opens Wazn on a training day, above the Start button: a
 two-line card. Deterministic layer picks the facts — which routine day
 is due, last session's top set, one target ("Bench: 60×8 last time —
 62.5×8 beats your e1RM"), a rest-gap note if it's been >5 days. Model
-phrases it in ≤2 sentences, voice = terse gym partner. One amber
+phrases it in ≤2 sentences, voice = terse gym partner. One ember
 kicker, no hero button competition, dismissible, never blocks Start.
 
 _Core-loop adjacency warning:_ this card lives on the idle screen only.
@@ -473,17 +473,24 @@ table promises. E1 shipped, then U4 shipped, so both sentences a tester would sa
 are now true. **The habit worth keeping: a phase ID in a commit message is not a
 release, and this table is the only thing that says which is which.**
 
-**On R4's stated dependencies: one closed, one still open.** The beta IS live as
-of 2026-08-09 (six accounts, though only one person logging weekly). The
-OpenRouter hard cap §10 asks to be set _before B1_ is **still unset**, three
-releases later. Real spend is zero only because every generation so far has used
-the free model.
+**On R4's stated dependencies: BOTH ARE STILL OPEN, and the line above this one
+said otherwise for ten days.** The beta is **not live and never has been**. The
+app has never been shared with a single person. Production holds 8 accounts;
+none of them is an invited user, so there is no cohort, no week-6 curve, and no
+retention signal of any kind. **Account counts and logging frequency from those
+8 are not evidence.** They are Ameen using his own app, which is exactly what
+R0 is for and exactly why R0 still reads NOT DONE in the table above: an author
+logging his own sets cannot tell you whether anyone else would. Any document
+that reports those numbers as beta usage, this file included until 2026-08-19,
+is describing a cohort that does not exist. The OpenRouter hard cap §10 asks to
+be set _before B1_ is **still unset**, three releases later. Real spend is zero
+only because every generation so far has used the free model.
 
 **Remaining releases: R6, R7, R8, R9, R10.** R8 is hard-blocked on GATE 3
 retention data by design, and §4 pre-declares that gate as the stop-building
 line, so it is deliberately last rather than merely later. R6 needs Ameen to
 reverse the no-chat rule. The ordered sequence with paste-ready prompts is at the
-top of `docs/IMPLEMENTATION_PROMPTS.md`.
+top of `docs/archive/IMPLEMENTATION_PROMPTS.md`.
 
 **Where the lead actually opens: R4.** R1–R3 are Wazn becoming as good
 as Hevy. R4 is the first release Hevy has no answer to, because nothing

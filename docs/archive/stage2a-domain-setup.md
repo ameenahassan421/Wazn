@@ -1,3 +1,27 @@
+> **ARCHIVED 2026-08-19. Historical record, not current state.**
+> Superseded by the domain itself: this runbook was executed, and
+> `https://www.trywazn.app` has answered 200 since. It got the ordering right,
+> which is why it worked. DNS first, verify, then Supabase.
+> **Do not build from this file.** Specifically wrong now:
+>
+> - The line under the correction block says nobody except the owner address
+>   can sign in until this is done. It is done. Auth offers four ways in
+>   (Google, Apple at Stage 4B, email plus password, and the 6-digit email
+>   code), never a magic link.
+> - Step 2 and step 4 keep `workout-theta-plum.vercel.app` as a co-equal live URL.
+>   It is an alias. The canonical production web address is
+>   `https://www.trywazn.app`, and step 4's "re-run with only it" note has long
+>   since come due.
+> - Step 4's "Live config as of 2026-08-04" paragraph records a `site_url` and
+>   `uri_allow_list` that have since changed, and reads as though current.
+>   Read the project's live auth config, not this paragraph.
+>
+> Kept rather than deleted for the Resend and Porkbun record set below, which is
+> the only written copy of what was entered where. That matters again the day the
+> domain moves, the mail sender changes, or a record has to be reconstructed.
+>
+> Current state: `WAZN_PLAN.md` section 7.0. Current plan: `WAZN_PLAN.md` Stage 4A.
+
 # Stage 2A — trywazn.app
 
 **This is Ameen's to execute.** Everything below is the exact sequence, in

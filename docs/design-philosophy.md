@@ -19,11 +19,11 @@ sliding to the sleeve. The ratio matters more than the size. A Loaded Ink
 mark holds a long horizontal breath — wider than tall, always — because
 weight travels horizontally through a bar before it travels anywhere else.
 
-One hue only, and it must be earned. Amber — the color of brass knurling,
-of sodium light on a platform — appears as the material of the iron itself,
-never as decoration. Where a second tone exists it is only the off-white of
-chalk, and it belongs to the human element: the written word, the hand's
-trace. Chalk and iron. Nothing else is permitted on the ground, and the
+One hue only, and it must be earned. Ember (#e8491d), the color of iron at
+forging heat and of sodium light on a platform, appears as the material of the
+iron itself, never as decoration. Where a second tone exists it is only the
+off-white of chalk, and it belongs to the human element: the written word,
+the hand's trace. Chalk and iron. Nothing else is permitted on the ground, and the
 discipline of that refusal is what makes the two materials read as physical
 substances rather than screen colors.
 

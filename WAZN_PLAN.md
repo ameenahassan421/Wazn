@@ -114,6 +114,19 @@ App-store publishing happens AFTER beta testing — see Stage 4B.
 Each stage = one or more Claude Code work sessions. The **gate** must
 pass before the next stage begins. Gates are evidence, not vibes.
 
+**The active stage is 4A, One App** (decided 2026-08-19): one Expo codebase
+for iOS, Android and web, with v5 "Momentum" implemented inside the migration
+rather than before it. Stages 0 through 4 shipped. Stage 4B (store publishing)
+is blocked on GATE A4 and on accounts Ameen has not bought.
+
+**Nine gates have produced zero evidence-based stops.** GATE 0 and 1 were
+opened by decision rather than evidence (DECISIONS.md:690), GATE 5 was waived,
+GATE 2 and 3 need users the app has never had, GATE 4 has only an automated
+answer, and v5's P0 was read against the running app only after all eight of
+its PRs had merged. "Gates are evidence, not vibes" is the rule; the record
+says it has not been kept. **GATE A2 exists to break that pattern**: it is the
+first gate in this file that measures §1's own sentence.
+
 ### Stage 0 — Foundation fix (SHIPPED 2026-08-01)
 
 The app exists (repo `ameenahassan421/workout`, deployed on Vercel,
@@ -897,7 +910,7 @@ and `git log` beats both.**
   `supabase:admin -- set-templates` for the recovery template. LAUNCH.md
   §1 now checks all four paths and remains the pre-invite gate.
 - **Two strategy PROPOSALS exist** (2026-08-07):
-  `docs/HEVY_PARITY_UPGRADE_PLAN.md` (close the gap, phases U1–U6) and
+  `docs/archive/HEVY_PARITY_UPGRADE_PLAN.md` (close the gap, phases U1–U6) and
   `docs/BEATING_HEVY_PLAN.md` (open a lead via AI + social, phases
   B1–B6 — note B3 requires Ameen to explicitly reverse the no-chat
   rule), plus a reusable `wellness-app-design` skill in
@@ -943,7 +956,7 @@ and `git log` beats both.**
   comparison never did, and it falsified a claim in that comparison: the
   muscle-balance chart the parity plan listed as a differentiator to protect
   had never drawn. Two findings remain open and are now **U1c** in
-  `docs/IMPLEMENTATION_PROMPTS.md`: no number anywhere in the app is
+  `docs/archive/IMPLEMENTATION_PROMPTS.md`: no number anywhere in the app is
   thousands-grouped (no `toLocaleString`/`Intl.NumberFormat` in `src/` at all),
   and there is no error boundary, so one leaf crash blanks an entire tab.
   Screenshotting the built app is now a cross-cutting requirement of every UI
@@ -951,7 +964,7 @@ and `git log` beats both.**
   got it wrong.
 - **An infrastructure audit was run (2026-08-08)** — `docs/INFRASTRUCTURE_AUDIT.md`,
   covering retrieval, evals, harnesses and tooling, with H0–H3 prompts added to
-  `docs/IMPLEMENTATION_PROMPTS.md`. Three results worth carrying here.
+  `docs/archive/IMPLEMENTATION_PROMPTS.md`. Three results worth carrying here.
   **RAG is now a recorded non-goal** (DECISIONS.md): Wazn has a schema, not a
   corpus, and embeddings would break the one-file privacy boundary that
   `coach_stats()` currently is. What the coach lacks is a tool layer, not a
@@ -1412,7 +1425,7 @@ coach_surfaces.sql` asserts what the three functions RETURN against a seeded
   either way — the tick is still 30s. **O15** stands, with a clarification:
   `routine_exercises.position` IS written; it is the routine list's own order
   that has no writer, which pairs it with L9.
-- **U4 is NEXT, and it is marked so in `docs/IMPLEMENTATION_PROMPTS.md`.**
+- **U4 is NEXT, and it is marked so in `docs/archive/IMPLEMENTATION_PROMPTS.md`.**
   Three reasons: it is the half of R5 that never shipped; it closes the last
   block of P-class parity gaps in one phase (O3, O5, O8, O12 — after it the
   only P-items left are native-gated or post-retention); and **it is the only
@@ -1594,7 +1607,7 @@ coach_surfaces.sql` asserts what the three functions RETURN against a seeded
   tonight's 0024 was applied through the dashboard SQL editor, which writes no
   ledger row. `supabase db push` or `db reset` still behaves as though the
   database began at 0016. Backfilling 0001 to 0024 is the first item in the
-  housekeeping prompt in `docs/IMPLEMENTATION_PROMPTS.md`.
+  housekeeping prompt in `docs/archive/IMPLEMENTATION_PROMPTS.md`.
 - **Migration 0024 is APPLIED and verified (2026-08-09).** `exercises.archived_at`
   exists as a nullable `timestamptz` with no default and its comment matches the
   repo file, checked by reading `information_schema` and `col_description` rather

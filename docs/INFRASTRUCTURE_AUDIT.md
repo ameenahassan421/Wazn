@@ -1,7 +1,7 @@
 # Infrastructure audit — RAG, harnesses, evals, tools
 
 **Date:** 2026-08-08 · **Scope:** the machinery under Wazn, not its screens ·
-**Companion to:** `HEVY_PARITY_UPGRADE_PLAN.md` (what to build),
+**Companion to:** `docs/archive/HEVY_PARITY_UPGRADE_PLAN.md` (what to build),
 `BEATING_HEVY_PLAN.md` (why we win), this file (what makes either survive
 contact with production).
 
@@ -9,8 +9,11 @@ contact with production).
 
 Everything below was read or run, not inferred:
 
-- Ran the suite: **227 tests, 20 files, 5.9s, all green.** No network needed.
-  That is a genuinely good number and the audit does not dispute it.
+- Ran the suite: **227 tests, 20 files, 5.9s, all green** on the audit date.
+  That was a genuinely good number and the audit does not dispute it.
+  **Re-run 2026-08-19: 1,204 tests, 85 files, 7.6s, all green.** No network
+  needed either time. Where this file quotes 227/20, read it as the 2026-08-08
+  reading, not as current state.
 - Ran `tsc --noEmit --listFiles` and grepped the program for
   `supabase/functions` — **3 files of 8**.
 - Ran `eslint supabase/functions/` directly, and with `--debug`, to confirm
@@ -280,8 +283,10 @@ its entirety. That is exactly what this catches, and it is six lines of YAML
 plus `pip install pglast`.
 
 The same paragraph in `CLAUDE.md` makes the deeper point and it should be
-repeated here: **a parse check is the floor.** 0015 and 0016 are both
-parse-checked and neither has ever been executed.
+repeated here: **a parse check is the floor.** 0015 and 0016 were both
+parse-checked and neither had ever been executed on the audit date. Both have
+since been applied; production is at **0028** as of 2026-08-15. The point about
+parse checks stands, the example has aged out.
 
 ### I3 — The RLS tests name a runner that does not exist
 
@@ -345,11 +350,16 @@ insert-own RLS policy. No third-party service, no PII, no new monthly cost.
 
 ### I6 — No coverage signal
 
-227 tests across 20 files is real. But nothing reports which of the ~50
-modules in `src/` have none — and `src/lib/social.ts` had none, which is
-exactly where the production bug lived. `vitest --coverage` with a floor
-(not a percentage target — a **list of modules that must have a test file**)
-turns "we test a lot" into "we test these".
+227 tests across 20 files was real (**1,204 across 85 files** as of
+2026-08-19). But on the audit date nothing reported which of the modules in
+`src/` had none, and `src/lib/social.ts` had none, which is exactly where the
+production bug lived. `vitest --coverage` with a floor (not a percentage
+target, a **list of modules that must have a test file**) turns "we test a lot"
+into "we test these".
+
+**Closed.** `npm run check:coverage` (`scripts/check_coverage_floor.mjs`) is
+that floor, it runs in CI's `check` job, and every module in `src/lib` now
+needs a test file or a written exemption. `src/lib/social.test.ts` exists.
 
 ## 6. Tools to install — the literal list
 
@@ -436,7 +446,7 @@ its cost visible.
   H3 are what that dependency actually costs: about four days.
 - `HEVY_PARITY_UPGRADE_PLAN` §4's visual-verification rule gets its
   enforcement in I4 — the rule stops depending on memory.
-- `IMPLEMENTATION_PROMPTS.md` should gain H0–H3 as prompts. U1c already
+- `docs/archive/IMPLEMENTATION_PROMPTS.md` should gain H0–H3 as prompts. U1c already
   carries the error boundary; H1 folds in beside it.
 
 ---
@@ -501,9 +511,11 @@ height check names all three offending elements by class.
 
 ### What is still owed
 
-- **Migrations 0016–0019 are parse-checked and not applied.** 0017 is the one
-  with a deadline: the compatibility shims exist so nothing breaks before it,
-  and they should be deleted after.
+- ~~**Migrations 0016–0019 are parse-checked and not applied.**~~ **Applied.**
+  Production is at **0028** as of 2026-08-15, so 0016 through 0019 and every
+  migration after them are live. 0017's compatibility shims have therefore
+  served their purpose and are now deletable; check the code before claiming
+  they are gone, because nothing in this file tracked that.
 - **`eval:live` has never run.** It needs `OPENROUTER_API_KEY` and this
   session has no route to the provider. Until it does, every file in
   `evals/responses/` is hand-authored — the shape a good answer takes, not a

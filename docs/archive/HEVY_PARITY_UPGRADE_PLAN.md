@@ -1,3 +1,18 @@
+> **ARCHIVED 2026-08-19. Historical record, not current state.**
+> Superseded by the Stage 4A Expo consolidation in `WAZN_PLAN.md`. Its gap
+> analysis was the real thing: it read every screen as built rather than
+> trusting the comparison doc, and the U-series it produced shipped.
+> **Do not build from this file.** Specifically wrong now: the status line below
+> still reads PROPOSAL awaiting review, which stopped being true once the
+> U-series was approved and built. Section U6 is the Capacitor wrap, and
+> Capacitor was rejected on 2026-08-16 (App Store Guideline 4.2, keyboard and
+> haptic ergonomics, background rest timers). Section U7 argues that a precached
+> PWA can beat a React Native app on cold start. That argument is preserved here
+> because it is the strongest case against the current decision and a future
+> reader should weigh it, not because it won: the decision went the other way,
+> to one codebase on Expo Router plus NativeWind shipping iOS, Android and web.
+> Current state: `WAZN_PLAN.md` section 7.0. Current plan: `WAZN_PLAN.md` Stage 4A.
+
 # Wazn → Hevy-class: the upgrade plan
 
 **Status: PROPOSAL — awaiting Ameen's review.** Nothing in this document

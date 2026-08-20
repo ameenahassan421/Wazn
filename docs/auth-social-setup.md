@@ -47,8 +47,11 @@ joining at Stage 4B.
    existing pattern; the secret is config, not code, and must never
    land in the repo or a `VITE_*` var.)
 
-That's everything Claude is blocked on. Once done, run the auth prompt
-in `docs/IMPLEMENTATION_PROMPTS.md`.
+That's everything Claude is blocked on, and it is done: Part 3 below
+verified `external_google_enabled` true against the live config, which is
+only possible with a real client ID and secret in place. The app work it
+unblocked is Part 2; the current plan for the app is `WAZN_PLAN.md`
+Stage 4A.
 
 ## Part 2 — the app work: BUILT 2026-08-07
 
@@ -68,27 +71,30 @@ masked-email hint on code request — a hint that appears only for real
 usernames is itself the existence oracle, so every response is the
 same hedged sentence.
 
-## Part 3 — Ameen: apply the config (5 min, after merging)
+## Part 3 (Ameen: apply the config). DONE 2026-08-08
 
-- [ ] Supabase → Auth → Sign In / Providers → **Google → toggle
-      "Enable Sign in with Google" ON → Save** (the panel can hold a
-      client ID with the toggle still off — the provider list must say
-      _Enabled_).
-- [ ] Same page → **"Confirm email" ON** under User Signups.
-- [ ] Auth → Sign In / Providers → **Email** panel → minimum password
-      length **8**; enable leaked-password protection if the tier
-      offers it.
-- [ ] Push the reset-code template (needs `SUPABASE_ACCESS_TOKEN` in
-      `.env`):
-      `npm run supabase:admin -- set-templates`
-      — or paste `supabase/email_templates/recovery.html` into Auth →
-      Emails → "Reset password" in the dashboard. **Until this is
-      done, reset emails carry Supabase's default link, which the app
-      cannot use.**
-- [ ] Merge to `main` — the deploy workflow ships the `auth-alias`
-      function automatically.
-- [ ] Run the LAUNCH.md §1 auth checks (now four paths) with a second
-      account.
+Verified against the live Supabase config rather than the dashboard, and
+recorded in `WAZN_PLAN.md:1043` and `DECISIONS.md` ("What the live auth config
+says about the Yahoo blocker"). Nothing in this part is outstanding.
+
+- [x] Google provider **Enabled** (`external_google_enabled` true). The panel
+      can hold a client ID with the toggle still off, so the provider list has
+      to read _Enabled_, not just populated. It does.
+- [x] **"Confirm email" ON** (`mailer_autoconfirm` false).
+- [x] Minimum password length **8** (`password_min_length`), set and read back
+      by `npm run supabase:admin -- set-password-policy`.
+- [x] **Leaked-password protection is OFF and stays off.** It is a Supabase
+      **Pro** feature: the PATCH was attempted and the API answered **402**
+      (2026-08-08). See the password floor section below.
+- [x] Reset-code template pushed. Confirmation, magic link, recovery and
+      reauthentication all carry `{{ .Token }}`. Re-run
+      `npm run supabase:admin -- set-templates` (needs `SUPABASE_ACCESS_TOKEN`
+      in `.env`) after any template edit, or the reset mail reverts to
+      Supabase's default link, which the app cannot use.
+- [x] `auth-alias` is deployed. Merging to `main` ships every Edge Function
+      (`.github/workflows/deploy-functions.yml`).
+- [ ] Re-run the LAUNCH.md section 1 auth checks (four paths, second account)
+      whenever the auth screens change. A standing check, not a setup step.
 
 ## Email + password (2026-08-07, explicit owner reversal)
 
@@ -98,10 +104,14 @@ to OTP and OAuth — no migration, existing accounts unaffected (an OTP
 user can add a password later via the recovery flow). The guardrails
 that come with the reversal:
 
-- **Password floor:** minimum length 8 in Supabase Auth settings, and
-  enable leaked-password protection if our tier offers it. No
-  composition theater (mandatory symbols etc.) — length + leak check
-  beats complexity rules.
+- **Password floor:** minimum length 8 in Supabase Auth settings (set and
+  verified 2026-08-08). No composition theater (mandatory symbols etc.).
+  **Leaked-password protection is Supabase Pro only. Do not try again.** The
+  PATCH was made and returned 402 (`DECISIONS.md`, and `setPasswordPolicy` in
+  `scripts/supabase_admin.ts`, which is why that command writes the two
+  settings in two separate requests: bundled, the 402 rejects the length too).
+  It is not a config toggle anyone missed, it is a purchase decision. The
+  8-character floor stands alone until the project is on Pro.
 - **Recovery is code-based, not link-based.** "Never a magic link"
   survives the reversal: password reset sends a 6-digit code
   (`resetPasswordForEmail` + `verifyOtp type:'recovery'` +
@@ -162,11 +172,38 @@ carry into 4B:
    implementation needs an explicit linking story (Supabase identity
    linking) before launch, not after.
 
-## Capacitor note (also 4B)
+## OAuth in the native build (Stage 4B)
 
-Inside the store builds, OAuth cannot round-trip through the system
-browser and land back in the app without deep-link handling
-(`@capacitor/browser` + a custom scheme or universal links +
-`skipBrowserRedirect` and `exchangeCodeForSession`). This is known,
-bounded work — it rides U6a, and the OTP fallback keeps sign-in
-working in the wrapped app even before it's wired.
+**Capacitor is not the wrapper and this section used to say it was.** It was
+rejected 2026-08-16 (App Store Guideline 4.2, keyboard and haptic ergonomics,
+background rest timers), and 2026-08-19 settled the successor: one Expo Router
+codebase shipping iOS, Android and web. Any advice anywhere about
+`@capacitor/browser` or a Capacitor custom scheme is wrong.
+
+The problem is unchanged: in a native build, OAuth cannot round-trip through
+the system browser and back into the app without deep-link handling. The Expo
+path, with both packages already in `mobile/package.json`:
+
+- **`expo-web-browser`** opens Supabase's authorize URL with
+  `openAuthSessionAsync`, so iOS uses `ASWebAuthenticationSession` and shares
+  Safari's session cookie.
+- **`expo-auth-session`** supplies the redirect URL and carries the PKCE code
+  back. Call Supabase with `skipBrowserRedirect: true` so it hands over the URL
+  instead of navigating, then finish with `exchangeCodeForSession`.
+- The redirect lands on **`scheme: 'wazn'`**, already declared in
+  `mobile/app.config.ts`. That is the custom-scheme door and it needs nothing
+  served from any domain.
+
+**Universal Links and App Links are the better door and are not wired.** The
+deep-link host was corrected from `wazn.app` to **`www.trywazn.app`** on
+2026-08-19: `wazn.app` is registered and parked, serves nothing, and every real
+invite link is `https://www.trywazn.app/join/<code>`. Claiming those links also
+needs `.well-known/apple-app-site-association` and `.well-known/assetlinks.json`
+served from `www.trywazn.app`, and each names an identifier that does not exist
+yet: an Apple Team ID (it arrives with the $99 developer account at 4B) and the
+Android signing certificate's SHA-256. Until those files are served, the
+`app.config.ts` entries are correct and inert, the link opens the website, and
+`expo-router` routes `join/[code]` from the custom scheme meanwhile.
+
+The 6-digit code path keeps sign-in working in the native app throughout, which
+is what makes this bounded rather than blocking.
