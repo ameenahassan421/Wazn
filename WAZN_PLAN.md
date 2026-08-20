@@ -952,15 +952,39 @@ Replace the token from the Supabase dashboard (Account, then Access Tokens) into
 
 #### Next action
 
-**Finish Stage 4A phase A0.** The Expo web target is done and verified in a browser (see
-the A0 block above). What remains: `rest.ts` through `portable.ts`, the native locale adapter,
-the unit round-trip, the `Readiness` to `CheckIn` rename, and the first `mobile/` tests. The
-`set_type` write bug was fixed on 2026-08-19. None of A0 is user-visible and all of it is
-load-bearing for everything after.
+**Stage 4A phase A0 is DONE and its gate was read, 2026-08-19** (PR #110). All four clauses
+pass: the Expo web target serves, a set on native and on web agree on `set_type` and units,
+`portable.test.ts` and `check:tokens` still pass, and `mobile/` has a test suite CI now
+actually runs. **Caveat recorded rather than buried:** the set-agreement clause was verified by
+comparing the two insert payloads and by the test that locks it, not by logging two live sets.
+
+**A1 is next and needs Ameen's approval first**, per §2.7. It does not start unprompted.
+
+**A1, when it starts:** the five stub tabs built native, in v5, **no DOM components** (the
+reasoning is in the phase itself and in DECISIONS.md 2026-08-19). Order and why:
+**History** (only door to "what did I do before" besides the bar, least coach machinery, sets
+the pattern), **Body** (smallest, no card door, and its production data is empty so it must be
+built against its degraded render), **Coach** (read-only surfaces first; "Tell the coach" was
+never assessed in v5 P0), **Friends** (least load-bearing mid-session), **Progress** last
+(most work even hand-drawn, and it is lazy-loaded on web for a reason native must preserve:
+the Log tab must never wait for it).
+
+**Two things carried into A2, both already found and neither smuggled into A0:**
+
+1. **The wordmark still renders `WAZN`.** It borrows `<Txt step="hero">` and that ramp entry
+   is `uppercase: true` at size 50 (`src/lib/tokens.ts:128`). The v5 reference sets the mark
+   as its own treatment, not a ramp step. See the wordmark block above.
+2. **GATE 4 is false on native.** No write queue, no client-generated id. See the GATE 4 block
+   above.
+
+**Before building any screen, run the reference.** `docs/design/v5-momentum/design/Wazn v5.html`
+is a working React app of every v5 screen and it has been run essentially once, at the P0
+gate, where it produced eleven findings in a single sitting. See "How a screen is verified"
+in §6.
 
 In parallel, and independently, **Ameen runs `LAUNCH.md` on his phone against the installed
-PWA**. It costs a day, needs no migration work, and is the only source of information this
-project does not have. Nine gates have produced zero evidence-based stops.
+PWA**. It costs a day, needs no migration work, and is still the only source of information
+this project does not have. Nine gates have produced zero evidence-based stops.
 
 #### How this block stays true
 
