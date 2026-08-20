@@ -177,6 +177,14 @@ jobs:
         run: npm run check:routes
         working-directory: mobile
 
+      # Runs BEFORE the two bundle builds on purpose: a broken reducer should
+      # fail in seconds rather than behind four minutes of Metro. Stage 4A
+      # phase A0 requires this step by name; mobile/ carried a passing suite
+      # that nothing executed until 2026-08-19.
+      - name: Test
+        working-directory: mobile
+        run: npm test
+
       - name: Bundle for iOS
         # THE gate for this app, and the reason it is worth a CI job.
         #

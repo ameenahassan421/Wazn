@@ -1,6 +1,12 @@
 import { useEffect, useState } from 'react'
 
-import { estimatedOneRepMax } from '@wazn/domain'
+import {
+  asCheckIn,
+  computeReadiness,
+  estimatedOneRepMax,
+  type CheckIn,
+  type Readiness,
+} from '@wazn/domain'
 
 import { supabase, supabaseConfigError } from '@/services/supabase'
 
@@ -21,6 +27,18 @@ import { supabase, supabaseConfigError } from '@/services/supabase'
  * Flagged rather than silently "fixed" into something the design did not ask
  * for.
  *
+ * ── THE CHECK-IN IS AN INPUT, NOT A DISPLAY ─────────────────────────────────
+ * The tap is stored in `daily_checkins` (migration 0027) and fed to the shared
+ * `computeReadiness`, exactly as `LogScreen` does on the web. What comes back
+ * is one of three internal states that are never rendered as a word: readiness
+ * shows up only as changed behaviour, which on this screen means the plan's set
+ * counts and, once a session starts, the ghosts.
+ *
+ * The web gates that on Coach volume (`usesGhostIntelligence`). Native has no
+ * volume preference to read yet, and the default is `full`, so an ungated
+ * computation is the same answer for every account that has not changed a
+ * setting this app does not expose. When the preference lands, gate it here.
+ *
  * ── WHAT IS NOT WIRED, AND WHY IT RETURNS NULL RATHER THAN A PLACEHOLDER ────
  * `rank` and the duel need migration 0029 (the rank ladder and duel tables),
  * which is written but NOT applied — this build session has no Supabase
@@ -29,25 +47,90 @@ import { supabase, supabaseConfigError } from '@/services/supabase'
  * whose whole job is to be trusted with numbers is worse than an absence.
  */
 
-export type Readiness = 'fresh' | 'normal' | 'drained'
+/** `YYYY-MM-DD` for the LOCAL day. `toISOString()` here would be UTC, and a
+ *  9pm check-in in Cairo would be filed under tomorrow. Mirrors `localDay` in
+ *  the web's `body-store`, which is not shareable: it lives in a module that
+ *  imports the browser's Supabase client. */
+function localDay(date = new Date()): string {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(
+    date.getDate(),
+  ).padStart(2, '0')}`
+}
 
-export type HomeData = {
+/**
+ * Whole days since a timestamp, or null when there is none.
+ *
+ * The one readiness input the app always has, because it comes from the log
+ * rather than from a wearable grant nobody has given. Same arithmetic as
+ * `LogScreen`'s `daysRested`, against the same row: the last finished session.
+ */
+function daysSince(iso: string | null): number | null {
+  if (iso === null) return null
+  const then = new Date(iso).getTime()
+  if (Number.isNaN(then)) return null
+  return Math.floor((Date.now() - then) / 86_400_000)
+}
+
+/** Today's tap, or null. Null is "not asked yet", which reads as Normal. */
+async function fetchCheckIn(day = localDay()): Promise<CheckIn | null> {
+  try {
+    const { data, error } = await supabase
+      .from('daily_checkins')
+      .select('state')
+      .eq('day', day)
+      .maybeSingle()
+    if (error || !data) return null
+    return asCheckIn((data as { state?: unknown }).state)
+  } catch {
+    return null
+  }
+}
+
+/**
+ * One tap, and it may be changed. Failure is swallowed on purpose: a check-in
+ * that did not save is not worth an error mid-warm-up, and the readiness it
+ * feeds degrades to Normal on the next load, silently, which is the same
+ * thing a skipped check-in means. `user_id` is left to the column default
+ * (`auth.uid()`, 0027), which is why the row carries only day and state.
+ */
+async function logCheckIn(state: CheckIn, day = localDay()): Promise<void> {
+  try {
+    await supabase
+      .from('daily_checkins')
+      .upsert({ day, state }, { onConflict: 'user_id,day' })
+  } catch {
+    // Intentionally silent. See above.
+  }
+}
+
+/** What one read of the account produces. */
+type Fetched = {
   loading: boolean
   username: string | null
   /** Total kg of the last finished session's working sets. Null on day one. */
   target: number | null
   routineName: string
+  /** Whole days since the last finished session. Null on day one. */
+  daysRested: number | null
   brief: { line: string; chip: string } | null
   rank: { name: string; pct: number; detail: string } | null
   stats: { streak: string; thisWeek: string; sessions: string }
   plan: { name: string; sets: number }[]
 }
 
-const DAY_ONE: HomeData = {
+export type HomeData = Fetched & {
+  checkIn: CheckIn | null
+  /** Computed, never displayed as a gauge. Drives behaviour, not copy. */
+  readiness: Readiness
+  setCheckIn: (state: CheckIn) => void
+}
+
+const DAY_ONE: Fetched = {
   loading: false,
   username: null,
   target: null,
   routineName: '',
+  daysRested: null,
   brief: null,
   rank: null,
   stats: { streak: '—', thisWeek: '—', sessions: '—' },
@@ -61,9 +144,17 @@ export function useHome(): HomeData {
    * effect that would otherwise set it synchronously is what `react-hooks` v7
    * forbids. `supabaseConfigError` is a module constant.
    */
-  const [data, setData] = useState<HomeData>(
+  const [data, setData] = useState<Fetched>(
     supabaseConfigError === null ? { ...DAY_ONE, loading: true } : DAY_ONE,
   )
+
+  /**
+   * Its own state, and its own read. Kept out of `data` so that a tap during
+   * the session read wins rather than being overwritten by the object that
+   * read returns. The check-in is the one value on this screen the lifter
+   * authored, and losing it to a race would be the app arguing with them.
+   */
+  const [checkIn, setCheckInState] = useState<CheckIn | null>(null)
 
   useEffect(() => {
     if (supabaseConfigError !== null) return
@@ -115,6 +206,7 @@ export function useHome(): HomeData {
         username,
         target: target > 0 ? target : null,
         routineName: (last.name as string | null) ?? 'Last session',
+        daysRested: daysSince(last.started_at as string | null),
       }
     }
 
@@ -134,5 +226,31 @@ export function useHome(): HomeData {
     }
   }, [])
 
-  return data
+  useEffect(() => {
+    if (supabaseConfigError !== null) return
+
+    let live = true
+
+    // A null answer never clears state: it means "nothing stored today", and a
+    // tap that landed while this was in flight is worth more than that.
+    void fetchCheckIn().then((state) => {
+      if (live && state !== null) setCheckInState(state)
+    })
+
+    return () => {
+      live = false
+    }
+  }, [])
+
+  return {
+    ...data,
+    checkIn,
+    readiness: computeReadiness({ checkIn, daysRested: data.daysRested }),
+    setCheckIn: (state) => {
+      // Optimistic, and deliberately not awaited. The row is already painted
+      // by the time the write leaves the phone.
+      setCheckInState(state)
+      void logCheckIn(state)
+    },
+  }
 }

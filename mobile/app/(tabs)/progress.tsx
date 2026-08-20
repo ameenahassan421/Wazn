@@ -1,6 +1,7 @@
 import { Kick } from '@/design/Txt'
 import { Empty, Screen } from '@/components/ui/Screen'
 import { Header } from '@/components/ui/Header'
+import { useLocale } from '@/hooks/use-locale'
 
 /**
  * Screen 13 — Progress. Strength rows with forecasts, the e1RM chart.
@@ -11,10 +12,12 @@ import { Header } from '@/components/ui/Header'
  * deliberately, rather than per screen by whoever built it.
  */
 export default function ProgressScreen() {
+  const { t } = useLocale()
+
   return (
     <Screen>
       <Header />
-      <Kick style={{ marginBottom: 14 }}>PROGRESS</Kick>
+      <Kick style={{ marginBottom: 14 }}>{t('nav.progress')}</Kick>
       <Empty line="Log a workout to load the bar." />
     </Screen>
   )

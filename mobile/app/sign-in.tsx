@@ -9,6 +9,7 @@ import { Txt, Kick } from '@/design/Txt'
 import { Btn } from '@/components/ui/Btn'
 import { CodeInput, Field } from '@/components/ui/Field'
 import { Card } from '@/components/ui/Surface'
+import { useLocale } from '@/hooks/use-locale'
 import {
   requestCode,
   signInWithPassword,
@@ -47,6 +48,7 @@ const RESEND_SECONDS = 42
 
 export default function SignIn() {
   const insets = useSafeAreaInsets()
+  const { t } = useLocale()
   const passwordRef = useRef<TextInput>(null)
 
   const [stage, setStage] = useState<Stage>({ name: 'credentials' })
@@ -64,8 +66,8 @@ export default function SignIn() {
    */
   useEffect(() => {
     if (resendIn <= 0) return
-    const t = setInterval(() => setResendIn((n) => Math.max(0, n - 1)), 1000)
-    return () => clearInterval(t)
+    const id = setInterval(() => setResendIn((n) => Math.max(0, n - 1)), 1000)
+    return () => clearInterval(id)
   }, [resendIn])
 
   /** Every action funnels through here so no path can forget to clear the
@@ -78,7 +80,7 @@ export default function SignIn() {
       await action()
       after?.()
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Something went wrong.')
+      setError(e instanceof Error ? e.message : t('auth.error.fallback'))
     } finally {
       setBusy(false)
     }
@@ -130,7 +132,7 @@ export default function SignIn() {
             </Txt>
 
             <Field
-              label="Email or username"
+              label={t('auth.email_or_username')}
               value={identifier}
               onChangeText={setIdentifier}
               autoCapitalize="none"
@@ -140,12 +142,12 @@ export default function SignIn() {
               autoComplete="username"
               returnKeyType="next"
               onSubmitEditing={() => passwordRef.current?.focus()}
-              placeholder="you@example.com"
+              placeholder={t('auth.placeholder.email')}
             />
 
             <Field
               ref={passwordRef}
-              label="Password"
+              label={t('auth.password')}
               value={password}
               onChangeText={setPassword}
               secureTextEntry
@@ -167,7 +169,7 @@ export default function SignIn() {
             <Btn
               kind="ink"
               full
-              label={busy ? 'SIGNING IN…' : 'SIGN IN'}
+              label={t(busy ? 'auth.signin.busy' : 'auth.signin')}
               disabled={busy || identifier === '' || password === ''}
               onPress={() => void run(() => signInWithPassword(identifier, password))}
             />
@@ -183,7 +185,7 @@ export default function SignIn() {
               <Btn
                 kind="ghost"
                 small
-                label="Create an account"
+                label={t('auth.signup.link')}
                 disabled={busy || identifier === '' || password === ''}
                 onPress={() =>
                   void run(
@@ -216,8 +218,8 @@ export default function SignIn() {
                 here is exactly what the Edge Function exists to prevent. */}
             <Txt step="label" ink="muted">
               {stage.sentTo.includes('@')
-                ? `Sent to ${maskEmail(stage.sentTo)}`
-                : 'Sent to the address on that account.'}
+                ? t('auth.code.notice.sent', { address: maskEmail(stage.sentTo) })
+                : t('auth.code.notice.username', { username: stage.sentTo })}
             </Txt>
 
             <CodeInput value={code} onChange={setCode} autoFocus />
@@ -231,7 +233,7 @@ export default function SignIn() {
             <Btn
               kind="ink"
               full
-              label={busy ? 'CHECKING…' : 'VERIFY'}
+              label={t(busy ? 'auth.code.verify.busy' : 'auth.code.verify')}
               disabled={busy || code.length < 6}
               onPress={() => void run(() => verifyCode(stage.sentTo, code))}
             />

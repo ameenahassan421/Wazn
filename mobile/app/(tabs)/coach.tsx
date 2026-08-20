@@ -1,6 +1,7 @@
 import { Kick } from '@/design/Txt'
 import { Empty, Screen } from '@/components/ui/Screen'
 import { Header } from '@/components/ui/Header'
+import { useLocale } from '@/hooks/use-locale'
 
 /**
  * Screen 15 — Coach. Mode selector, week review, notes, bounded Q&A.
@@ -11,11 +12,13 @@ import { Header } from '@/components/ui/Header'
  * deliberately, rather than per screen by whoever built it.
  */
 export default function CoachScreen() {
+  const { t } = useLocale()
+
   return (
     <Screen>
       <Header />
-      <Kick style={{ marginBottom: 14 }}>COACH</Kick>
-      <Empty line="Log 3 workouts and the coach will have something to say." />
+      <Kick style={{ marginBottom: 14 }}>{t('nav.coach')}</Kick>
+      <Empty line={t('coach.empty')} />
     </Screen>
   )
 }

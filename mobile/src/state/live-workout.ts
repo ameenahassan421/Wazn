@@ -2,6 +2,7 @@ import { useSyncExternalStore } from 'react'
 
 import {
   type BoardExercise,
+  DEFAULT_REST_SECONDS,
   bankSet,
   bankedVolumeKg,
   currentPosition,
@@ -83,16 +84,6 @@ const EMPTY: LiveState = {
   restEndsAt: null,
   restTotal: 0,
 }
-
-/**
- * One rest length for every lift, until per-exercise rest is wired.
- *
- * The web app resolves this from the exercise and the user's preference via
- * `resolveRest`. Neither is read on native yet, and inventing a per-lift
- * number here would be a guess dressed as a setting. 120s is the app's own
- * default and it is honest about being one.
- */
-const DEFAULT_REST_SECONDS = 120
 
 let state: LiveState = EMPTY
 const listeners = new Set<() => void>()
@@ -215,6 +206,13 @@ export function bankCurrentSet(weightKg: number | null, reps: number | null): vo
   if (board === state.board) return
 
   /**
+   * One rest length for every lift, until per-exercise rest is wired.
+   *
+   * `resolveRest` in the shared domain answers this properly, from the
+   * catalogue and the lifter's own override, and neither is read on native
+   * yet. Until they are, the app default is the honest answer, and it comes
+   * from `@wazn/domain` so the two apps cannot drift to different minutes.
+   *
    * A warm-up starts nothing. Nobody rests two minutes after an empty bar,
    * and `commitOutcome` encodes the same rule for the web app.
    */

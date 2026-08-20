@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { Text, View } from 'react-native'
+import { View } from 'react-native'
 import { Stack } from 'expo-router'
 import { StatusBar } from 'expo-status-bar'
 import { useFonts } from 'expo-font'
@@ -15,7 +15,9 @@ import { SairaSemiCondensed_700Bold } from '@expo-google-fonts/saira-semi-conden
 import { palette } from '@wazn/domain'
 
 import { REQUIRED_FONTS } from '@/design/type'
+import { Txt } from '@/design/Txt'
 import { useAuth } from '@/hooks/use-auth'
+import { LocaleProvider } from '@/hooks/use-locale'
 import { UnitProvider } from '@/hooks/use-unit'
 import { supabaseConfigError } from '@/services/supabase'
 import '../global.css'
@@ -108,9 +110,9 @@ export default function RootLayout() {
           padding: 24,
         }}
       >
-        <Text style={{ color: palette.accentSoft, textAlign: 'center' }}>
+        <Txt step="body" ink="accentSoft" style={{ textAlign: 'center' }}>
           {supabaseConfigError}
-        </Text>
+        </Txt>
       </View>
     )
   }
@@ -118,56 +120,61 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1, backgroundColor: palette.ink }}>
       <SafeAreaProvider>
-        <UnitProvider>
-          {/* The ground is painted here as well as on every screen. A route
-              transition briefly shows whatever is behind the stack, and the
-              platform default behind it is white. */}
-          <View style={{ flex: 1, backgroundColor: palette.ink }}>
-            <Stack
-              screenOptions={{
-                headerShown: false,
-                contentStyle: { backgroundColor: palette.ink },
-                animation: 'fade',
-                animationDuration: 160,
-              }}
-            >
-              {/* Declarative, not an effect that redirects after render.
-                  The effect-based guard every tutorial shows has a real race:
-                  the protected screen mounts, its data hooks fire against a
-                  session that is not there, and the redirect lands a frame
-                  later — so a signed-out launch flashes an empty Log screen
-                  and fires a doomed Supabase read on the way past. */}
-              <Stack.Protected guard={userId !== null}>
-                <Stack.Screen name="(tabs)" />
-                <Stack.Screen
-                  name="session/[id]"
-                  options={{
-                    // Slides up over the tab bar and covers it. A live
-                    // workout is not a tab — leaving it is a decision, not a
-                    // swipe.
-                    presentation: 'fullScreenModal',
-                    animation: 'slide_from_bottom',
-                    gestureEnabled: false,
-                  }}
-                />
-                <Stack.Screen
-                  name="settings"
-                  options={{ animation: 'slide_from_right' }}
-                />
-              </Stack.Protected>
+        {/* Locale outside unit: `t` is chrome for every screen including the
+            ones that never render a weight, and the unit provider has no
+            opinion about language. */}
+        <LocaleProvider>
+          <UnitProvider>
+            {/* The ground is painted here as well as on every screen. A route
+                transition briefly shows whatever is behind the stack, and the
+                platform default behind it is white. */}
+            <View style={{ flex: 1, backgroundColor: palette.ink }}>
+              <Stack
+                screenOptions={{
+                  headerShown: false,
+                  contentStyle: { backgroundColor: palette.ink },
+                  animation: 'fade',
+                  animationDuration: 160,
+                }}
+              >
+                {/* Declarative, not an effect that redirects after render.
+                    The effect-based guard every tutorial shows has a real race:
+                    the protected screen mounts, its data hooks fire against a
+                    session that is not there, and the redirect lands a frame
+                    later — so a signed-out launch flashes an empty Log screen
+                    and fires a doomed Supabase read on the way past. */}
+                <Stack.Protected guard={userId !== null}>
+                  <Stack.Screen name="(tabs)" />
+                  <Stack.Screen
+                    name="session/[id]"
+                    options={{
+                      // Slides up over the tab bar and covers it. A live
+                      // workout is not a tab — leaving it is a decision, not a
+                      // swipe.
+                      presentation: 'fullScreenModal',
+                      animation: 'slide_from_bottom',
+                      gestureEnabled: false,
+                    }}
+                  />
+                  <Stack.Screen
+                    name="settings"
+                    options={{ animation: 'slide_from_right' }}
+                  />
+                </Stack.Protected>
 
-              {/* Signed out. `join/[code]` is deliberately OUTSIDE the guard:
-                  an invite link is how somebody arrives before they have an
-                  account, and bouncing them to a bare sign-in screen loses
-                  the code and the reason they tapped. */}
-              <Stack.Protected guard={userId === null}>
-                <Stack.Screen name="sign-in" />
-              </Stack.Protected>
+                {/* Signed out. `join/[code]` is deliberately OUTSIDE the guard:
+                    an invite link is how somebody arrives before they have an
+                    account, and bouncing them to a bare sign-in screen loses
+                    the code and the reason they tapped. */}
+                <Stack.Protected guard={userId === null}>
+                  <Stack.Screen name="sign-in" />
+                </Stack.Protected>
 
-              <Stack.Screen name="join/[code]" />
-            </Stack>
-          </View>
-        </UnitProvider>
+                <Stack.Screen name="join/[code]" />
+              </Stack>
+            </View>
+          </UnitProvider>
+        </LocaleProvider>
       </SafeAreaProvider>
       <StatusBar style="light" />
     </GestureHandlerRootView>

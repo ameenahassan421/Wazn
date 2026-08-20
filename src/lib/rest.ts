@@ -1,5 +1,3 @@
-import { DEFAULT_REST_SECONDS } from './use-rest-timer'
-
 /**
  * How long to rest after a set of one exercise, and where that number comes
  * from.
@@ -12,6 +10,18 @@ import { DEFAULT_REST_SECONDS } from './use-rest-timer'
  * same two minutes, and the catalogue knows which is which before the user
  * has logged anything.
  */
+
+/**
+ * Two minutes, the third and last source above.
+ *
+ * It lives here rather than beside the countdown hook because it is the
+ * answer `resolveRest` gives when nothing more specific is known, and every
+ * caller that needs it needs the arithmetic too. Keeping it next to a hook
+ * that reads `document` was what kept this whole file out of the shared
+ * barrel: one import made 109 lines of pure arithmetic browser-only, and the
+ * native app hardcoded its own 120 rather than reach for them.
+ */
+export const DEFAULT_REST_SECONDS = 120
 
 /** Zero is "no timer for this lift", not "unset" — see 0015. */
 export const REST_MIN_SECONDS = 0

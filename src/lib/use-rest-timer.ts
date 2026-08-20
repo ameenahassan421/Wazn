@@ -1,17 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 
-/**
- * Rest timer.
- *
- * Counts down from a deadline, not by decrementing a number. A phone locks the
- * screen and throttles timers the moment it goes in a pocket, which is exactly
- * where it lives between sets — a tick-based countdown would drift or freeze
- * and come back wrong. Storing `endsAt` means the remaining time is always
- * derived from the clock, so the display is correct the instant the screen
- * wakes, however long it slept.
- */
-export const DEFAULT_REST_SECONDS = 120
-
 /** Steps the adjust buttons move by. */
 export const REST_STEP_SECONDS = 15
 
@@ -41,6 +29,16 @@ function vibrate(pattern: number | number[]) {
 // haptic. A gym is somebody else's room, and a phone that chirps between sets
 // is a reason to leave the timer off — which costs the whole feature.
 
+/**
+ * Rest timer.
+ *
+ * Counts down from a deadline, not by decrementing a number. A phone locks the
+ * screen and throttles timers the moment it goes in a pocket, which is exactly
+ * where it lives between sets — a tick-based countdown would drift or freeze
+ * and come back wrong. Storing `endsAt` means the remaining time is always
+ * derived from the clock, so the display is correct the instant the screen
+ * wakes, however long it slept.
+ */
 export function useRestTimer(): RestTimer {
   const [endsAt, setEndsAt] = useState<number | null>(null)
   const [total, setTotal] = useState<number | null>(null)
