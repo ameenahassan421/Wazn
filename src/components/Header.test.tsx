@@ -50,14 +50,14 @@ describe('the settings door', () => {
       wrapper: Wrapper,
     })
 
-    await user.click(screen.getByRole('button', { name: 'You — settings' }))
+    await user.click(screen.getByRole('button', { name: 'You: settings' }))
     expect(onOpenSettings).toHaveBeenCalledOnce()
   })
 
   it('names the door in the locale the reader is in', () => {
     localStorage.setItem('workout.locale', 'ar')
     render(<Header onOpenSettings={vi.fn()} />, { wrapper: Wrapper })
-    expect(screen.getByRole('button', { name: 'أنت — الإعدادات' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'أنت: الإعدادات' })).toBeInTheDocument()
   })
 })
 

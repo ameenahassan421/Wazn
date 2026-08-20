@@ -7,8 +7,23 @@ import type { ExpoConfig } from 'expo/config'
  * bundle identifier are the kind of value that ends up typed twice — once
  * here and once in the splash plugin — and drifts. Here they are constants.
  *
- * `wazn.app` is the domain the web PWA and the invite links already use, so
- * the scheme and the associated-domain entry both point at it.
+ * The domain is `www.trywazn.app`, and it was `wazn.app` here until
+ * 2026-08-19. `wazn.app` is registered and parked: its nameservers are
+ * Namecheap's, nothing is served, and HTTPS to it fails to connect. Production
+ * web and every real invite link are `https://www.trywazn.app/join/<code>`
+ * (`src/lib/invite.ts`), so a universal link claimed on `wazn.app` could never
+ * fire from a link a lifter actually receives. Claim what is served.
+ *
+ * `scheme: 'wazn'` is the custom scheme and is unrelated to either domain; it
+ * is the fallback door and stays as it is.
+ *
+ * Neither entry below is sufficient on its own. iOS verifies
+ * `https://www.trywazn.app/.well-known/apple-app-site-association` and Android
+ * verifies `/.well-known/assetlinks.json`, and both files name an identifier
+ * this project does not have yet (an Apple Team ID, and the Android signing
+ * cert's SHA-256). Until they are served, these entries are correct and inert:
+ * the link opens the website. `expo-router` still routes `join/[code]` from
+ * the custom scheme meanwhile.
  */
 
 /** The iron ground, from `src/lib/tokens.ts`. Native config is JSON by the
@@ -46,7 +61,7 @@ const config: ExpoConfig = {
       UIBackgroundModes: ['audio'],
       ITSAppUsesNonExemptEncryption: false,
     },
-    associatedDomains: ['applinks:wazn.app'],
+    associatedDomains: ['applinks:www.trywazn.app'],
   },
 
   android: {
@@ -63,7 +78,7 @@ const config: ExpoConfig = {
       {
         action: 'VIEW',
         autoVerify: true,
-        data: [{ scheme: 'https', host: 'wazn.app', pathPrefix: '/join' }],
+        data: [{ scheme: 'https', host: 'www.trywazn.app', pathPrefix: '/join' }],
         category: ['BROWSABLE', 'DEFAULT'],
       },
     ],

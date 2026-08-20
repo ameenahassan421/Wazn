@@ -30,7 +30,10 @@ changed=$( { git diff --name-only HEAD 2>/dev/null
 
 [ -n "$changed" ] || exit 0
 
-code=$(printf '%s\n' "$changed" | grep -E '^(src/|mobile/|supabase/migrations/|supabase/functions/)' | head -8)
+# Same trigger set as the plan-state CI job, .md exclusion included: a README
+# under mobile/ changes no state a future session needs. The two rules must
+# stay identical or a PR passes one and fails the other.
+code=$(printf '%s\n' "$changed" | grep -E '^(src/|mobile/|supabase/migrations/|supabase/functions/)' | grep -v '\.md$' | head -8)
 [ -n "$code" ] || exit 0
 
 printf '%s\n' "$changed" | grep -qx 'WAZN_PLAN.md' && exit 0

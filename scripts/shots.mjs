@@ -69,10 +69,10 @@ const SCREENS = [
   { key: 'body', en: ['Body'], ar: ['الجسم'] },
   {
     key: 'friends',
-    en: ['You — settings', 'Friends'],
-    ar: ['أنت — الإعدادات', 'الأصدقاء'],
+    en: ['You: settings', 'Friends'],
+    ar: ['أنت: الإعدادات', 'الأصدقاء'],
   },
-  { key: 'settings', en: ['You — settings'], ar: ['أنت — الإعدادات'] },
+  { key: 'settings', en: ['You: settings'], ar: ['أنت: الإعدادات'] },
 ]
 const OUT = 'shots'
 
@@ -143,7 +143,7 @@ async function shoot(browser, origin, { width, empty, active, locale, theme }) {
   // header being pressed by accident.
   if (!active) {
     const door = page.getByRole('button', {
-      name: locale === 'ar' ? 'أنت — الإعدادات' : 'You — settings',
+      name: locale === 'ar' ? 'أنت: الإعدادات' : 'You: settings',
     })
     if (await door.count()) {
       await door.first().click()

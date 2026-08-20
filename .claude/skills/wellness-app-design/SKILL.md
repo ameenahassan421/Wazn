@@ -53,8 +53,10 @@ When two options tie on aesthetics, the one that is faster under load wins.
 1. **Read the product's own design system first.** A wellness app with an
    established visual language (tokens, type scale, accent discipline) is
    improved _within_ that language, not replaced by genre defaults. In this
-   repo that means `WAZN_PLAN.md` §2.4, `docs/design-philosophy.md`, and
-   `docs/design/` — dark ink, single amber, IBM Plex, no shadows, logical
+   repo that means `WAZN_PLAN.md` §2.4 (rewritten 2026-08-19; the values live in
+   `src/lib/tokens.ts`, not in prose), `docs/design-philosophy.md`, and
+   `docs/design/v5-momentum/` (v5 "Momentum", current): one accent, ember
+   `#e8491d`, Saira Semi Condensed, a named type ramp, no shadows, logical
    properties only. Competitor parity never means copying competitor
    styling.
 2. **Pick the right reference file** from `references/` (below) for the

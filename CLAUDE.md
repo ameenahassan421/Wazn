@@ -110,7 +110,7 @@ These are reproduced verbatim so they survive even if the plan is not read.
 
 ```bash
 npm run dev          # vite dev server
-npm test             # vitest, 113 tests, no network needed
+npm test             # vitest, 1204 tests in 85 files, no network needed
 npm run lint         # eslint (includes the RTL guard below)
 npm run typecheck    # tsc --noEmit
 npm run build        # typecheck + production build
@@ -200,16 +200,34 @@ and does nothing. Assert the privilege.**
   for the email on any non-social path: resolved server-side, address
   rendered only masked, identical response whether the username exists
   or not. The email templates in `supabase/email_templates/` must
-  contain `{{ .Token }}` or code flows are impossible.
+  contain `{{ .Token }}` or code flows are impossible. **`magic_link.html` is not a
+  magic link and the filename alarms people.** `magic_link` is Supabase's
+  fixed template slot for `signInWithOtp`; the file contains only
+  `{{ .Token }}` and its subject is "{{ .Token }} is your Wazn sign-in code"
+  (`scripts/supabase_admin.ts:83`). It sends the 6-digit code. Verified
+  2026-08-19. Do not "fix" it.
 - **The service-role / secret key is script-only.** Never in a `VITE_*` var,
   never in the client, never in Vercel.
 
-## Scope — do not build without being asked
+## Scope
 
-Routines/templates, leaderboards, invites, social, rest timers,
-custom exercise creation, Arabic strings, payments, a settings screen, per-set
-correction tooling, body-composition analysis. (Offline sync was on this list
-until U3b built it on 2026-08-08 as Stage 4's planned fast-follow.)
+**Scope is `WAZN_PLAN.md` section 4. Anything not in a stage needs a `DECISIONS.md`
+entry naming who asked.**
+
+This heading used to carry a "do not build without being asked" list. By 2026-08-19
+eleven of its twelve items had been built, every one of them authorised by a later
+stage and logged, so the list was dead text that a session could read as governance.
+A list that is 92% wrong is worse than no list.
+
+**The active stage is 4A, One App.** One Expo codebase for iOS, Android and web; the
+Vite PWA retired at the end; v5 implemented in full inside the migration because the
+port and the restyle are the same edit. The filter that decides what is worth building
+on any given day:
+
+> **`src/lib` survives the migration. `src/components` and `src/screens` do not.**
+
+Work in `src/lib` is banked. Work in the screens and components is rented, and every
+v5 P1 item built on the web is built twice.
 
 **Anything AI/LLM.** Stage 8 in the plan describes what would get built and
 how, but it is conditional on the Gate 1 backlog actually asking for it — an
@@ -304,7 +322,10 @@ effects run before the parent's, which silently broke the set auto-fill once.
 ## Environment facts
 
 - Supabase project ref: `ttasiwxeqerhsztxjxip`
-- Production: https://workout-theta-plum.vercel.app (Vercel, auto-deploys `main`)
+- Production: **https://www.trywazn.app** (Vercel, auto-deploys `main`).
+  `workout-theta-plum.vercel.app` is an alias, NOT canonical. All 222 SEO pages
+  currently canonicalise to the alias because `WAZN_SITE_URL` is unset in Vercel;
+  that is a live defect, see WAZN_PLAN.md section 7.0.
 - **Whether a session can reach Supabase is PER-SESSION. Check, do not
   assume.** When `SUPABASE_ACCESS_TOKEN` and `SUPABASE_PROJECT_REF` are in the
   environment, `https://api.supabase.com/v1/projects/$REF/database/query`

@@ -44,8 +44,8 @@ const ROUTES = {
   // passed on a coincidence.
   Coach: ['Coach'],
   Body: ['Body'],
-  Friends: ['You — settings', 'Friends'],
-  Settings: ['You — settings'],
+  Friends: ['You: settings', 'Friends'],
+  Settings: ['You: settings'],
 } as const
 
 const home = (page: Page) => page.getByRole('button', { name: 'Start workout' })

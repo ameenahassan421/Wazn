@@ -1,3 +1,31 @@
+> **ARCHIVED 2026-08-19. Historical record, not current state.**
+> Superseded by `docs/design/v3-plate`, then by `docs/design/v5-momentum`, and
+> finally by the one-codebase decision of 2026-08-19: Expo Router plus NativeWind
+> shipping iOS, Android and web from a single tree. R1 through R6 all shipped, on
+> 2026-08-12 and 2026-08-13, and this file is the reason the app has an ember
+> accent, a plate-glyph language and a logging screen that survives one-handed
+> use. What it got right was the world; what it specified was pixels.
+> **Do not build from this file.** Specifically wrong now:
+>
+> - **R4 declares the paper theme the DEFAULT. There is no paper theme.** `src/index.css:114` records that v5 "Momentum" replaced it outright
+>   on 2026-08-16 and that the light/dark toggle and its `html[data-theme]` block
+>   are gone. The `user_preferences.theme` column is deliberately left in the
+>   database and deliberately unread.
+> - The display face is **Saira Semi Condensed**, not the Sora this file names
+>   (`src/index.css:194`, `src/lib/tokens.ts:90`).
+> - Every phase here is an itemized spec for `src/components` and `src/screens`,
+>   roughly 19,600 lines that the Expo port replaces rather than restyles. `src/lib`
+>   is portable domain and survives; those two directories do not. v5 "Momentum"
+>   ships inside the migration, screen by screen, because the port and the restyle
+>   are the same edit.
+> - The prototype at `public/prototype.html` is no longer the pixel spec.
+>
+> Readers arriving from `DECISIONS.md` (the 2026-08-12 entries citing R5 and R6)
+> and from `supabase/migrations/0025_theme_preference.sql`: this file is where
+> that history is kept, and `docs/design/v5-momentum` is what replaced it.
+>
+> Current state: `WAZN_PLAN.md` section 7.0. Current plan: `WAZN_PLAN.md` Stage 4A.
+
 # Rebuild stage: adopting the prototype's world
 
 Authorized by Ameen 2026-08-12 ("GO"), with loop-through execution: each

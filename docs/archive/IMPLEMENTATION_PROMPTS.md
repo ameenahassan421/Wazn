@@ -1,7 +1,26 @@
+> **ARCHIVED 2026-08-19. Historical record, not current state.**
+> Superseded by the Stage 4A Expo consolidation in `WAZN_PLAN.md`. The run-book
+> format worked: one session, one prompt, one gate, and the U-series it drove
+> shipped.
+> **Do not build from this file.** Specifically wrong now: the "U6a" prompt and
+> the WHAT IS NEXT row that schedules it both prescribe a Capacitor wrap, and
+> Capacitor was rejected on 2026-08-16 (App Store Guideline 4.2, keyboard and
+> haptic ergonomics, background rest timers). That prompt's instruction to wrap
+> the existing React codebase with `@capacitor/core`, "one codebase, no fork",
+> is false twice over: the fork already exists at `mobile/`, and the
+> one-codebase answer is now Expo Router plus NativeWind, shipping iOS, Android
+> and web from a single tree. The B6 push prompt inherits the same dead
+> assumption. Two prompts specify an amber accent; the accent has been ember
+> `#e8491d` since 2026-08-12. The WHAT IS NEXT table is frozen at 2026-08-09 and
+> reads six accounts with one workout in seven days as if a beta were running:
+> the app has never been shared, the 8 accounts include no invited user, and no
+> retention data exists.
+> Current state: `WAZN_PLAN.md` section 7.0. Current plan: `WAZN_PLAN.md` Stage 4A.
+
 # Implementation prompts — the run-book
 
 Copy-paste prompts for Claude Code sessions, one per work session, that
-implement `docs/HEVY_PARITY_UPGRADE_PLAN.md` (U-series) and
+implement `docs/archive/HEVY_PARITY_UPGRADE_PLAN.md` (U-series) and
 `docs/BEATING_HEVY_PLAN.md` (B-series).
 
 ---
@@ -170,7 +189,7 @@ sentence, are already fixed in U1a/U1b.)
 
 ```
 Fix the two open findings from the visual pass, per
-docs/HEVY_PARITY_UPGRADE_PLAN.md §2.3 L6 and L7. Load
+docs/archive/HEVY_PARITY_UPGRADE_PLAN.md §2.3 L6 and L7. Load
 wellness-app-design and impeccable first.
 
 L6 — no number in the app is grouped. There is no toLocaleString or
@@ -234,7 +253,7 @@ column the real RPC returns). CI wall, push, report, stop.
 Depends on: nothing. Pairs with U1c to make one release.
 
 ```
-Build phase U7 of docs/HEVY_PARITY_UPGRADE_PLAN.md. Load
+Build phase U7 of docs/archive/HEVY_PARITY_UPGRADE_PLAN.md. Load
 wellness-app-design and impeccable first.
 
 (1) Latency budgets, measured not asserted. Establish the numbers on a
@@ -439,7 +458,7 @@ Depends on: beta live. Zero core-loop risk.
 ### U1a — Render the charts that already exist
 
 ```
-Start phase U1 of docs/HEVY_PARITY_UPGRADE_PLAN.md — items 1 and 2 only.
+Start phase U1 of docs/archive/HEVY_PARITY_UPGRADE_PLAN.md — items 1 and 2 only.
 Load the wellness-app-design, impeccable, and dataviz skills first.
 
 Render the written-and-tested-but-unused functions in src/lib/progress.ts:
@@ -458,7 +477,7 @@ chart items, and stop.
 ### U1b — Flow fixes and small parity items
 
 ```
-Continue phase U1 of docs/HEVY_PARITY_UPGRADE_PLAN.md — items 3 through 7.
+Continue phase U1 of docs/archive/HEVY_PARITY_UPGRADE_PLAN.md — items 3 through 7.
 Load the wellness-app-design and impeccable skills first.
 
 Build: (1) picker filter chips for muscle group and equipment;
@@ -539,7 +558,7 @@ The structural one. Two sessions minimum.
 ### U2a — Design addendum first
 
 ```
-Phase U2 of docs/HEVY_PARITY_UPGRADE_PLAN.md, design pass only — no app
+Phase U2 of docs/archive/HEVY_PARITY_UPGRADE_PLAN.md, design pass only — no app
 code. Load wellness-app-design and impeccable, and read the v2/v2.1
 design docs in docs/design/ plus WAZN_PLAN.md §2.4.
 
@@ -568,7 +587,7 @@ rest timer bar coexists. Commit the addendum, report, stop.
 Build phase U2b — the workout overview — from the v2.2 addendum.
 
 Read first: docs/design/v2.2-workout-overview.md and its .html (open the
-HTML and look at it), plus docs/HEVY_PARITY_UPGRADE_PLAN.md §3-U2 and §1's
+HTML and look at it), plus docs/archive/HEVY_PARITY_UPGRADE_PLAN.md §3-U2 and §1's
 protect list. Load the wellness-app-design and impeccable skills before
 writing any UI.
 
@@ -635,7 +654,7 @@ overview state), but can precede it if beta reports data loss.
 ### U3a — Checkpoint and optimistic writes
 
 ```
-Start phase U3 of docs/HEVY_PARITY_UPGRADE_PLAN.md, trust-ladder rungs
+Start phase U3 of docs/archive/HEVY_PARITY_UPGRADE_PLAN.md, trust-ladder rungs
 1 and 2. Load wellness-app-design (reread the trust ladder in
 references/workout-ux-heuristics.md §4) before designing.
 
@@ -790,7 +809,7 @@ evidence:
 Can run any time after U1; pairs well while B4's wear-test runs.
 
 ```
-Start phase U4 of docs/HEVY_PARITY_UPGRADE_PLAN.md. Load
+Start phase U4 of docs/archive/HEVY_PARITY_UPGRADE_PLAN.md. Load
 wellness-app-design, impeccable, and dataviz first.
 
 Build: per-exercise e1RM and session-volume line charts in
@@ -818,7 +837,7 @@ one.
 
 ```
 GATE 3 has been reviewed and social investment is approved. Start phase
-U5 of docs/HEVY_PARITY_UPGRADE_PLAN.md. Load wellness-app-design,
+U5 of docs/archive/HEVY_PARITY_UPGRADE_PLAN.md. Load wellness-app-design,
 impeccable, and supabase-postgres-best-practices first.
 
 Profile pages (stats, heatmap, PR highlights) gated by the existing
@@ -857,7 +876,7 @@ $99/year Apple accounts, and store assets.
 ### U6a — The Capacitor wrap
 
 ```
-Start phase U6 of docs/HEVY_PARITY_UPGRADE_PLAN.md — Stage 4B's
+Start phase U6 of docs/archive/HEVY_PARITY_UPGRADE_PLAN.md — Stage 4B's
 Capacitor build for BOTH platforms (not TWA; Stage 6 AdMob needs native
 slots). Load wellness-app-design first and reread WAZN_PLAN.md Stage 4B.
 
@@ -912,5 +931,5 @@ from my feedback.
 Here are this week's tester friction reports: <paste>. Classify each
 against the U-series and B-series phases (or new), update the plans'
 priority read if the evidence warrants it, and propose which prompt
-from docs/IMPLEMENTATION_PROMPTS.md I should send next. Build nothing.
+from docs/archive/IMPLEMENTATION_PROMPTS.md I should send next. Build nothing.
 ```

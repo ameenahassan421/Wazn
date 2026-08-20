@@ -1,3 +1,35 @@
+> **ARCHIVED 2026-08-19. NEVER ADOPTED. Historical record, not current state.**
+> Nothing here was ever superseded, because nothing here was ever used. OmniRoute
+> was exercised once, on 2026-08-08, inside a throwaway container, purely as a
+> test; `DECISIONS.md` records that it cannot live in a Claude Code session at all
+> (the gateway must run on the machine the agent runs on, and a session's
+> `localhost` dies with the session) and that this document was the only thing the
+> exercise produced. It got the install and daemon mechanics right for a laptop.
+> Wazn consumes none of it.
+> **Do not build from this file.** Specifically:
+>
+> - **It carries a live hazard, and that is the reason it is stamped rather than
+>   just aged out.** Routing sessions through this gateway sends whatever the
+>   session is holding to whichever upstream wins the route: this repo's source,
+>   and any Supabase identifiers a session has touched. The gateway is local; the
+>   request is not.
+> - **OmniRoute's own documentation flags 15 of its providers on terms-of-service
+>   grounds.** Free-tier stacking is not uniformly permitted by the vendors
+>   involved. That flag is theirs, not a guess made here.
+> - It does not give you more Claude. It substitutes a different model when the
+>   Anthropic limit is hit, which is a different thing from what people reach for
+>   it hoping to get.
+> - `.claude/settings.omniroute.example.json` existed only to point back at this
+>   file and was deleted 2026-08-19 along with this archival. No live path
+>   references OmniRoute any more. `DECISIONS.md` (2026-08-08) still describes
+>   both the tool and that deleted settings file, deliberately: it is the
+>   historical record of why this was tried and why it was dropped, and history
+>   is not rewritten to match the tree.
+> - Version-pinned throughout to omniroute 3.8.49 on Node 22.22.2. Treat every
+>   command below as a 2026-08-08 snapshot, not as current CLI surface.
+>
+> Current state: `WAZN_PLAN.md` section 7.0. Current plan: `WAZN_PLAN.md` Stage 4A.
+
 # OmniRoute setup
 
 Dev tooling, not Wazn product. OmniRoute (<https://github.com/diegosouzapw/OmniRoute>,

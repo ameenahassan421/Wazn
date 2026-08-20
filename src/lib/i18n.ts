@@ -6,7 +6,7 @@
  * added in Slice 3 of Stage 5.
  *
  * CRITICAL: no Intl.NumberFormat, no toLocaleString. Digits stay Latin even
- * under Arabic — weights and reps are always machine-readable.
+ * under Arabic. Weights and reps are always machine-readable.
  */
 
 export type Locale = 'en' | 'ar'
@@ -67,14 +67,14 @@ export const messages: Record<Locale, Record<string, string>> = {
     // The home feed's three cards (design screen 01).
     'brief.ask': 'Ask the coach',
     'brief.first':
-      'Nothing logged yet. Ask me anything — or I can draft your first week.',
+      'Nothing logged yet. Ask me anything, or I can draft your first week.',
     'home.week': 'This week',
     'home.last_pr': 'Last PR',
     'home.pr': 'PR',
     'home.lifted': '{v} lifted',
     'home.no_pr': 'None yet',
     'home.week.aria': 'Training this week',
-    'settings.open': 'You — settings',
+    'settings.open': 'You: settings',
     'settings.back': 'Back',
     'settings.title': 'You',
     'settings.since': 'since {when}',
@@ -97,7 +97,7 @@ export const messages: Record<Locale, Record<string, string>> = {
     // Suspense loading fallback
     'chrome.loading': 'Loading…',
 
-    // Welcome screen — post-signup onboarding
+    // Welcome screen: post-signup onboarding
     'welcome.heading': 'Welcome',
     'welcome.subhead': 'Log a set in under thirty seconds.',
     'welcome.body':
@@ -110,7 +110,7 @@ export const messages: Record<Locale, Record<string, string>> = {
     'welcome.follow.busy': 'Following…',
     'welcome.follow.error':
       'That did not go through. You can follow them from Settings.',
-    'welcome.username.label': 'Pick a username — optional',
+    'welcome.username.label': 'Pick a username (optional)',
     'welcome.username.body':
       'Sign in with it instead of your email, and let friends find you.',
     'welcome.username.placeholder': 'your_name',
@@ -121,19 +121,19 @@ export const messages: Record<Locale, Record<string, string>> = {
     'welcome.username.error.save': 'Could not save that username.',
     'welcome.start.heading': 'Where to start',
     'welcome.start.body':
-      'You can start logging right now — pick an exercise and go, no setup. Or have a week of routines drafted for you and edit whatever you disagree with.',
+      'You can start logging right now: pick an exercise and go, no setup. Or have a week of routines drafted for you and edit whatever you disagree with.',
     'welcome.generate': 'Draft me a routine',
     'welcome.skip': 'I will just start logging',
     'welcome.import': 'Coming from Hevy? Bring your history',
 
-    // Auth screen — sign-in / sign-up / codes / reset
+    // Auth screen: sign-in / sign-up / codes / reset
     'auth.subhead': 'Log a set in under thirty seconds.',
     'auth.privacy.body': 'Your training is private by default.',
     'auth.privacy.link': 'What Wazn stores',
     'auth.hevy.hint': 'Coming from Hevy? You can bring every workout with you.',
     'auth.or': 'or',
     'auth.google': 'Continue with Google',
-    'auth.google.error': 'Google sign-in did not start — {message}',
+    'auth.google.error': 'Google sign-in did not start: {message}',
     'auth.email_or_username': 'Email or username',
     'auth.password': 'Password',
     'auth.placeholder.email': 'you@example.com',
@@ -151,7 +151,7 @@ export const messages: Record<Locale, Record<string, string>> = {
     'auth.signup.link': 'Create an account',
     'auth.signup.has_account': 'I already have an account',
     'auth.signup.email': 'Email',
-    'auth.signup.password.label': 'Password — at least {min} characters',
+    'auth.signup.password.label': 'Password (at least {min} characters)',
     'auth.signup.error.email': 'Enter a full email address, like you@example.com.',
     'auth.signup.error.password.length':
       'The password needs at least {min} characters.',
@@ -166,12 +166,12 @@ export const messages: Record<Locale, Record<string, string>> = {
     'auth.confirm.error.invalid':
       'That code is not valid. Re-enter the 6 digits from the newest email. If you already have an account with this address, sign in instead.',
     'auth.forgot': 'Forgot password?',
-    'auth.code.path': 'Email me a code instead — no password needed',
+    'auth.code.path': 'Email me a code instead, no password needed',
     'auth.code.send': 'Send code',
     'auth.code.send.busy': 'Sending…',
     'auth.code.back': 'Back to sign in',
     'auth.code.error.rate': 'Too many codes requested. Wait 60 seconds and try again.',
-    'auth.code.send.error': 'Could not send the code — {message}',
+    'auth.code.send.error': 'Could not send the code: {message}',
     'auth.code.notice.sent': 'Code sent to {address}. It expires in 1 hour.',
     'auth.code.notice.username':
       'If @{username} has an account, a code is on its way to its email.',
@@ -182,7 +182,7 @@ export const messages: Record<Locale, Record<string, string>> = {
     'auth.code.verify.error.invalid':
       'That code is not valid. Re-enter the 6 digits from the newest email.',
     'auth.code.verify.error.start_over':
-      'Start over — enter your email or username first.',
+      'Start over. Enter your email or username first.',
     'auth.reset.email_label': 'Email on the account',
     'auth.reset.send': 'Send reset code',
     'auth.reset.send.busy': 'Sending…',
@@ -190,7 +190,7 @@ export const messages: Record<Locale, Record<string, string>> = {
       'If {address} has an account, a reset code is on its way.',
     'auth.reset.error.email': 'Enter the email address on the account.',
     'auth.reset.code_label': '6-digit reset code',
-    'auth.reset.password.label': 'New password — at least {min} characters',
+    'auth.reset.password.label': 'New password (at least {min} characters)',
     'auth.reset.apply': 'Set password and sign in',
     'auth.reset.apply.busy': 'Resetting…',
     'auth.reset.different_email': 'Use a different email',
@@ -205,7 +205,7 @@ export const messages: Record<Locale, Record<string, string>> = {
     // ── History screen (Slice 4) ─────────────────────────────────
     'history.loading_sets': 'Loading sets…',
     'history.empty.body':
-      'Every set you log lands here — the calendar above fills in as you go.',
+      'Every set you log lands here. The calendar above fills in as you go.',
     'history.empty.cta': 'Start a workout',
     'history.empty': 'Your log starts today.',
     'history.no_sets': 'This workout has no sets recorded.',
@@ -241,7 +241,7 @@ export const messages: Record<Locale, Record<string, string>> = {
     'coach.retry': 'Try again',
     'progress.strength.show_all': 'Show all {n}',
     'progress.strength.show_fewer': 'Show fewer',
-    'history.edit_set': 'Edit set — {name}',
+    'history.edit_set': 'Edit set: {name}',
     'home.last_session.aria': 'Opens History',
     'home.last_pr.aria': 'Opens Progress',
     'history.error.delete_workout': 'Deleting the workout',
@@ -292,9 +292,9 @@ export const messages: Record<Locale, Record<string, string>> = {
     'progress.anchor.no_predict':
       'The tick is what your deadlift predicts each lift should be. Log a deadlift and the ticks appear.',
     'progress.anchor.behind':
-      'Ticks are predicted off your deadlift — squat 0.85, bench 0.75, overhead 0.45. {names} {verb} behind {possessive} tick. A guide, not a target.',
+      'Ticks are predicted off your deadlift: squat 0.85, bench 0.75, overhead 0.45. {names} {verb} behind {possessive} tick. A guide, not a target.',
     'progress.anchor.on_track':
-      'Ticks are predicted off your deadlift — squat 0.85, bench 0.75, overhead 0.45. A guide, not a target.',
+      'Ticks are predicted off your deadlift: squat 0.85, bench 0.75, overhead 0.45. A guide, not a target.',
     'progress.anchor.verb.sits': 'sits',
     'progress.anchor.verb.sit': 'sit',
     'progress.anchor.its': 'its',
@@ -312,7 +312,7 @@ export const messages: Record<Locale, Record<string, string>> = {
     'progress.strength.lift': 'lift',
     'progress.strength.lifts': 'lifts',
     'progress.empty_notice':
-      'Every chart here is built from your own sets — nothing on this screen is a sample.',
+      'Every chart here is built from your own sets. Nothing on this screen is a sample.',
 
     // ── Log screen (Slice 5) ──────────────────────────────────────
     'log.loading': 'Loading…',
@@ -332,20 +332,20 @@ export const messages: Record<Locale, Record<string, string>> = {
     'log.sets': 'sets',
     'log.finish': 'Finish',
     'log.finish_confirm': 'Finish?',
-    'log.finish_hint_empty': 'Nothing logged yet — finishing throws this one away.',
+    'log.finish_hint_empty': 'Nothing logged yet. Finishing throws this one away.',
     'log.finish_hint': 'Finish saves it. Discard deletes it and its sets.',
     'log.discard': 'Discard workout',
     'log.discard_confirm': 'Discard?',
     'log.empty': 'No exercises yet. Add one to put it on the board.',
     'log.add_exercise': 'Add exercise',
     'log.import': 'Coming from Hevy? Bring your history',
-    // SyncNote — inline status, not a banner (§2.1).
+    // SyncNote: inline status, not a banner (§2.1).
     // {count} already includes the number; log.set/log.sets handle plural.
     'log.sync.saving': 'Saving {count}…',
     'log.sync.offline_pending': 'Offline · {count} saved on this device',
     'log.sync.offline': 'Offline · logging as normal',
     'log.sync.cached': 'Offline · showing saved data',
-    // CachedNote — the timestamp stays in a tnum span, so it is a prefix.
+    // CachedNote: the timestamp stays in a tnum span, so it is a prefix.
     'log.cache.prefix': 'Offline · showing what this device last synced',
     // Error context strings passed to describeError().
     'log.error.load_workout': 'Loading your workout',
@@ -371,9 +371,9 @@ export const messages: Record<Locale, Record<string, string>> = {
     // Separate keys because English plural marks the verb ("set is" vs
     // "sets are") and Arabic cannot mirror that with one template.
     'log.finish_still_saving.set':
-      '{count} set is still saving. They are safe — stay on this screen a moment and press Finish again.',
+      '{count} set is still saving. They are safe. Stay on this screen a moment and press Finish again.',
     'log.finish_still_saving.sets':
-      '{count} sets are still saving. They are safe — stay on this screen a moment and press Finish again.',
+      '{count} sets are still saving. They are safe. Stay on this screen a moment and press Finish again.',
 
     // ── Coach screen (Slice 6) ─────────────────────────────────
     'coach.loading': 'Reading your log…',
@@ -409,7 +409,7 @@ export const messages: Record<Locale, Record<string, string>> = {
     'coach.preview.save': 'Save {count} routines',
     'coach.preview.adjust': 'Adjust',
     'coach.preview.helper':
-      'Saved routines are ordinary routines — edit or delete them like any other. Nothing starts until you start it.',
+      'Saved routines are ordinary routines: edit or delete them like any other. Nothing starts until you start it.',
     // Separate keys because English plural marks the noun ("1 suggested
     // exercise was" vs "3 suggested exercises were") and Arabic cannot mirror
     // that with one template.
@@ -417,18 +417,18 @@ export const messages: Record<Locale, Record<string, string>> = {
       '{count} suggested exercise was left out because it is not in the exercise list.',
     'coach.dropped.other':
       '{count} suggested exercises were left out because they are not in the exercise list.',
-    'coach.disclaimer': 'AI-generated — not medical advice.',
+    'coach.disclaimer': 'AI-generated, not medical advice.',
     // ── Design v3.0, "the coach everywhere" ───────────────────────────
     // Copy from the handoff is final and used verbatim; the Arabic side is
     // machine-drafted like the rest of the catalogue and carries the same
-    // caveat. Figures never live in these strings — they arrive as
+    // caveat. Figures never live in these strings. They arrive as
     // parameters and stay Latin and tabular in both locales (§RTL).
     'nav.body': 'Body',
-    'detail.projection': '— projection',
+    'detail.projection': 'projection',
     'auth.hero.kicker': 'Strength log · AI coach',
     'auth.hero.headline': 'The log that loads your next set.',
     'auth.hero.body':
-      'Wazn reads every set you commit and writes the next one — weight, reps and rest, with a forecast you can put a date on. One thumb. Thirty seconds.',
+      'Wazn reads every set you commit and writes the next one: weight, reps and rest, with a forecast you can put a date on. One thumb. Thirty seconds.',
     'auth.hero.seeded': 'AI-seeded sets',
     'auth.hero.rest': 'Rest that adapts',
     'auth.hero.forecasts': 'Forecasts with dates',
@@ -487,9 +487,9 @@ export const messages: Record<Locale, Record<string, string>> = {
     'reason.keep': "Keep coach's plan",
     'reason.use_last': 'Use last session',
     'reason.chip': '{from} → {to} {unit} × {reps}',
-    'reason.chip.eased': '↓ {weight} — set {label}',
-    'reason.chip.raised': '↑ {weight} — {run} last time',
-    'reason.chip.hold': 'HOLD — lighter today',
+    'reason.chip.eased': '↓ {weight} · set {label}',
+    'reason.chip.raised': '↑ {weight} · {run} last time',
+    'reason.chip.hold': 'HOLD · lighter today',
     'reason.chip.reps': '↑ {reps} reps',
     'reason.under_plan.what': 'Set {label} came in at {actual} against {planned}.',
     'reason.under_plan.why':
@@ -500,7 +500,7 @@ export const messages: Record<Locale, Record<string, string>> = {
     'reason.readiness.why': 'Same lifts, one notch off the bar and one fewer set.',
     'reason.rep_band.what': '{from} reps is inside the band, so it climbs to {to}.',
     'reason.rep_band.why': 'The bar moves once the top of the band holds.',
-    'reason.none': 'Nothing to add — this is last session, repeated.',
+    'reason.none': 'Nothing to add. This is last session, repeated.',
     'tell.open': 'Tell the coach',
     'tell.kicker': 'Tell the coach',
     'tell.proposed': 'Proposed change',
@@ -519,7 +519,7 @@ export const messages: Record<Locale, Record<string, string>> = {
     'tell.trim.body': 'Same lifts, one fewer working set.',
     'tell.trim.chip': '{from} → {to} sets',
     'tell.swap.body':
-      'Pick what the room has — the picker ranks the closest to your plan.',
+      'Pick what the room has. The picker ranks the closest to your plan.',
     'tell.note.body': 'Attached to this lift, in your words.',
     'sheet.close': 'Close',
     'rest.effort': 'top set at {n}%',
@@ -543,7 +543,7 @@ export const messages: Record<Locale, Record<string, string>> = {
     'body.protein.empty': 'Nothing logged this week.',
     'body.footer': 'Readiness feeds the ghosts',
     'body.signal.recomposition':
-      'Weight steady {weeks} weeks while your lifts climbed — recomposition is working.',
+      'Weight steady {weeks} weeks while your lifts climbed. Recomposition is working.',
     'body.signal.gaining': 'Weight moved {weeks} weeks and your lifts moved with it.',
     'body.signal.cutting-holding':
       'Weight came down over {weeks} weeks and the bar held.',
@@ -561,7 +561,7 @@ export const messages: Record<Locale, Record<string, string>> = {
     'settings.coach.mode': 'Mode',
     'settings.coach.note':
       'Quiet keeps the adaptive sets and silences every card. Off is the app before the coach existed. Turning a source off never deletes what it recorded.',
-    // Fixed section labels of the weekly review — UI chrome, not model text.
+    // Fixed section labels of the weekly review: UI chrome, not model text.
     'coach.review.section.adherence': 'Turning up',
     'coach.review.section.bands': 'Volume',
     'coach.review.section.plateaus': 'Stalled',
@@ -586,7 +586,7 @@ export const messages: Record<Locale, Record<string, string>> = {
     'friends.feed.like': 'Like this workout',
     'friends.feed.unlike': 'Remove your like',
     'friends.feed.error.save': 'Could not save that.',
-    'friends.feed.new_e1rm': '{name} — new e1RM {weight}',
+    'friends.feed.new_e1rm': '{name}: new e1RM {weight}',
     'friends.load_error': 'Could not load this.',
     'friends.leaderboard.empty': 'A leaderboard of one. Invite someone to chase.',
     'friends.leaderboard.you': 'You',
@@ -641,7 +641,7 @@ export const messages: Record<Locale, Record<string, string>> = {
     'routines.generate': 'Generate',
     'routines.new': 'New',
     'routines.empty':
-      'No routines yet. Build one and your usual session is two taps away — or let Generate draft a week for you.',
+      'No routines yet. Build one and your usual session is two taps away, or let Generate draft a week for you.',
     'routines.starting': 'Starting…',
     'routines.up_next': 'Up next',
     'routines.edit': 'Edit',
@@ -664,12 +664,12 @@ export const messages: Record<Locale, Record<string, string>> = {
     'rest.keep_default': 'Keep {duration} as the rest for this lift',
     'rest.expand': 'Open the rest timer',
     'rest.collapse': 'Back to the board',
-    'rest.thinking': 'Rest — the coach is thinking',
+    'rest.thinking': 'Rest · the coach is thinking',
     'rest.tap_early': 'Tap to go early',
     'rest.skip_long': 'skip rest',
     'rest.of': 'Rest · of {t}',
     'rest.next': 'next',
-    'rest.next_set': '{name} — set {n}',
+    'rest.next_set': '{name} · set {n}',
     // Exercise picker
     'picker.back': 'Back',
     'picker.search': 'Search exercises',
@@ -712,7 +712,7 @@ export const messages: Record<Locale, Record<string, string>> = {
     'load.empty_bar': 'empty bar',
     'load.bar': 'Bar',
     'load.under_bar': 'under the {bar} {unit} bar',
-    'load.closest': 'Closest loadable is {weight} {unit} — off by {off}.',
+    'load.closest': 'Closest loadable is {weight} {unit}, off by {off}.',
     'load.warmup': 'Warm-up',
     'load.warmup_hint': 'Warm-up · tap a row to log it',
     'load.logged': 'logged',
@@ -768,7 +768,7 @@ export const messages: Record<Locale, Record<string, string>> = {
     'import.workouts': 'Workouts',
     'import.sets': 'Sets',
     'import.exercises': 'Exercises',
-    'import.resume': 'Carry on — {count} to go',
+    'import.resume': 'Carry on, {count} to go',
     'import.start': 'Bring in {count} workouts',
     // Workout overview
     'overview.exercise_fallback': 'Exercise',
@@ -791,8 +791,7 @@ export const messages: Record<Locale, Record<string, string>> = {
     'overview.matched': 'Matched last session',
     'overview.last_session': 'Last session: {values}',
     // Routine editor
-    'editor.error.name':
-      'Give the routine a name — you will be picking it from a list.',
+    'editor.error.name': 'Give the routine a name. You will be picking it from a list.',
     'editor.error.empty': 'Add at least one exercise.',
     'editor.back': 'Back',
     'editor.title.edit': 'Edit routine',
@@ -843,7 +842,7 @@ export const messages: Record<Locale, Record<string, string>> = {
     'queue.scheme': '{sets} × {reps}',
     'queue.jump': 'Go to {name}',
     // Finish summary
-    'finish.share.saved': 'Saved the image — this browser has no share sheet.',
+    'finish.share.saved': 'Saved the image. This browser has no share sheet.',
     'finish.share.error': 'Could not build the image.',
     'finish.duration': 'Duration',
     'finish.volume': 'Volume',
@@ -905,11 +904,11 @@ export const messages: Record<Locale, Record<string, string>> = {
     'ranges.title': 'How much am I lifting lately',
     // Rest canvas
     'canvas.undo': 'Rest canvas off · Bring it back',
-    // The coach's own sentences — composed from SQL, never from a model. Every
+    // The coach's own sentences: composed from SQL, never from a model. Every
     // one of these was a template literal in coach.ts or rest-canvas.ts and
     // rendered English inside the Arabic build.
     'coach.line.up': '{name} is up',
-    'coach.line.target': '{exercise} — {weight} {unit} × {reps} last time',
+    'coach.line.target': '{exercise}: {weight} {unit} × {reps} last time',
     'coach.line.low_band': '{muscle} is at {n} sets this week',
     'coach.line.low_band_one': '{muscle} is at {n} set this week',
     'coach.line.days_since': '{n} days since your last session',
@@ -1003,14 +1002,14 @@ export const messages: Record<Locale, Record<string, string>> = {
     // Settings ("You"), design screen 14.
     // The home feed's three cards (design screen 01).
     'brief.ask': 'اسأل المدرب',
-    'brief.first': 'لا يوجد سجل بعد. اسألني ما شئت — أو أستطيع صياغة أسبوعك الأول.',
+    'brief.first': 'لا يوجد سجل بعد. اسألني ما شئت، أو أستطيع صياغة أسبوعك الأول.',
     'home.week': 'هذا الأسبوع',
     'home.last_pr': 'آخر رقم قياسي',
     'home.pr': 'رقم قياسي',
     'home.lifted': 'رُفع {v}',
     'home.no_pr': 'لا شيء بعد',
     'home.week.aria': 'تدريب هذا الأسبوع',
-    'settings.open': 'أنت — الإعدادات',
+    'settings.open': 'أنت: الإعدادات',
     'settings.back': 'رجوع',
     'settings.title': 'أنت',
     'settings.since': 'منذ {when}',
@@ -1042,7 +1041,7 @@ export const messages: Record<Locale, Record<string, string>> = {
     'welcome.following': 'متابَع {name}',
     'welcome.follow.busy': 'جارٍ المتابعة…',
     'welcome.follow.error': 'لم يتم الإرسال. يمكنك متابعتهم من الإعدادات.',
-    'welcome.username.label': 'اختر اسماً مستعاراً — اختياري',
+    'welcome.username.label': 'اختر اسماً مستعاراً (اختياري)',
     'welcome.username.body':
       'سجّل الدخول به بدلاً من بريدك الإلكتروني، ودع الأصدقاء يجدونك.',
     'welcome.username.placeholder': 'your_name',
@@ -1053,7 +1052,7 @@ export const messages: Record<Locale, Record<string, string>> = {
     'welcome.username.error.save': 'تعذّر حفظ اسم المستخدم هذا.',
     'welcome.start.heading': 'من أين تبدأ',
     'welcome.start.body':
-      'يمكنك البدء في التسجيل الآن — اختر تمريناً وابدأ، بدون إعداد. أو احصل على أسبوع من الروتينات المسودة وعدّل ما لا توافق عليه.',
+      'يمكنك البدء في التسجيل الآن: اختر تمريناً وابدأ، بدون إعداد. أو احصل على أسبوع من الروتينات المسودة وعدّل ما لا توافق عليه.',
     'welcome.generate': 'أعطني روتيناً مسوداً',
     'welcome.skip': 'سأبدأ التسجيل مباشرة',
     'welcome.import': 'جاءت من Hevy؟ أحضر سجلك التدريبي',
@@ -1065,7 +1064,7 @@ export const messages: Record<Locale, Record<string, string>> = {
     'auth.hevy.hint': 'جاءت من Hevy؟ يمكنك إحضار كل تمارينك.',
     'auth.or': 'أو',
     'auth.google': 'المتابعة مع Google',
-    'auth.google.error': 'لم تبدأ جلسة تسجيل الدخول عبر Google — {message}',
+    'auth.google.error': 'لم تبدأ جلسة تسجيل الدخول عبر Google: {message}',
     'auth.email_or_username': 'البريد الإلكتروني أو اسم المستخدم',
     'auth.password': 'كلمة المرور',
     'auth.placeholder.email': 'you@example.com',
@@ -1083,7 +1082,7 @@ export const messages: Record<Locale, Record<string, string>> = {
     'auth.signup.link': 'إنشاء حساب',
     'auth.signup.has_account': 'لديّ حساب بالفعل',
     'auth.signup.email': 'البريد الإلكتروني',
-    'auth.signup.password.label': 'كلمة المرور — على الأقل {min} أحرف',
+    'auth.signup.password.label': 'كلمة المرور (على الأقل {min} أحرف)',
     'auth.signup.error.email': 'أدخل عنوان بريد إلكتروني كامل، مثل you@example.com.',
     'auth.signup.error.password.length': 'تحتاج كلمة المرور إلى {min} أحرف على الأقل.',
     'auth.signup.notice.code_sent':
@@ -1097,12 +1096,12 @@ export const messages: Record<Locale, Record<string, string>> = {
     'auth.confirm.error.invalid':
       'هذا الرمز غير صالح. أدخل الأرقام الستة من أحدث بريد. إذا كان لديك حساب بهذا العنوان، سجّل الدخول بدلاً من ذلك.',
     'auth.forgot': 'نسيت كلمة المرور؟',
-    'auth.code.path': 'أرسل لي رمزاً بدلاً من ذلك — لا حاجة لكلمة مرور',
+    'auth.code.path': 'أرسل لي رمزاً بدلاً من ذلك، لا حاجة لكلمة مرور',
     'auth.code.send': 'إرسال الرمز',
     'auth.code.send.busy': 'جارٍ الإرسال…',
     'auth.code.back': 'العودة لتسجيل الدخول',
     'auth.code.error.rate': 'تم طلب أكواد كثيرة. انتظر 60 ثانية ثم حاول مرة أخرى.',
-    'auth.code.send.error': 'تعذّر إرسال الرمز — {message}',
+    'auth.code.send.error': 'تعذّر إرسال الرمز: {message}',
     'auth.code.notice.sent': 'تم إرسال الرمز إلى {address}. ينتهي صلاحيته خلال ساعة.',
     'auth.code.notice.username':
       'إذا كان @{username} لديه حساب، فهناك رمز في طريقه إلى بريده الإلكتروني.',
@@ -1113,7 +1112,7 @@ export const messages: Record<Locale, Record<string, string>> = {
     'auth.code.verify.error.invalid':
       'هذا الرمز غير صالح. أدخل الأرقام الستة من أحدث بريد.',
     'auth.code.verify.error.start_over':
-      'ابدأ من جديد — أدخل بريدك الإلكتروني أو اسم المستخدم أولاً.',
+      'ابدأ من جديد. أدخل بريدك الإلكتروني أو اسم المستخدم أولاً.',
     'auth.reset.email_label': 'البريد الإلكتروني على الحساب',
     'auth.reset.send': 'إرسال رمز إعادة التعيين',
     'auth.reset.send.busy': 'جارٍ الإرسال…',
@@ -1121,7 +1120,7 @@ export const messages: Record<Locale, Record<string, string>> = {
       'إذا كان {address} لديه حساب، فهناك رمز إعادة تعيين في طريقه.',
     'auth.reset.error.email': 'أدخل عنوان البريد الإلكتروني على الحساب.',
     'auth.reset.code_label': 'رمز إعادة تعيين من 6 أرقام',
-    'auth.reset.password.label': 'كلمة مرور جديدة — على الأقل {min} أحرف',
+    'auth.reset.password.label': 'كلمة مرور جديدة (على الأقل {min} أحرف)',
     'auth.reset.apply': 'تعيين كلمة المرور وتسجيل الدخول',
     'auth.reset.apply.busy': 'جارٍ إعادة التعيين…',
     'auth.reset.different_email': 'استخدم بريداً إلكترونياً آخر',
@@ -1135,7 +1134,7 @@ export const messages: Record<Locale, Record<string, string>> = {
     // ── History screen (Slice 4) ─────────────────────────────────
     'history.loading_sets': 'جارٍ تحميل المجموعات…',
     'history.empty.body':
-      'كل مجموعة تسجّلها تصل إلى هنا — والتقويم أعلاه يمتلئ مع تقدمك.',
+      'كل مجموعة تسجّلها تصل إلى هنا، والتقويم أعلاه يمتلئ مع تقدمك.',
     'history.empty.cta': 'ابدأ تمريناً',
     'history.empty': 'سجلك يبدأ اليوم.',
     'history.no_sets': 'هذا التمرين ليس له مجموعات مسجلة.',
@@ -1170,7 +1169,7 @@ export const messages: Record<Locale, Record<string, string>> = {
     'coach.retry': 'حاول مرة أخرى',
     'progress.strength.show_all': 'اعرض الكل ({n})',
     'progress.strength.show_fewer': 'اعرض أقل',
-    'history.edit_set': 'تعديل المجموعة — {name}',
+    'history.edit_set': 'تعديل المجموعة: {name}',
     'home.last_session.aria': 'يفتح السجل',
     'home.last_pr.aria': 'يفتح التقدم',
     'history.error.delete_workout': 'جارٍ حذف التمرين',
@@ -1221,9 +1220,9 @@ export const messages: Record<Locale, Record<string, string>> = {
     'progress.anchor.no_predict':
       'العلامة هي ما تتوقعه رفعتك الميتة لكل تمرين. سجّل رفعة ميتة وتظهر العلامات.',
     'progress.anchor.behind':
-      'العلامات مبنية على رفعتك الميتة — قرفص 0.85، ضغط 0.75، ضغط علوي 0.45. {names} {verb} خلف علامتها. دليل وليس هدفًا.',
+      'العلامات مبنية على رفعتك الميتة: قرفص 0.85، ضغط 0.75، ضغط علوي 0.45. {names} {verb} خلف علامتها. دليل وليس هدفًا.',
     'progress.anchor.on_track':
-      'العلامات مبنية على رفعتك الميتة — قرفص 0.85، ضغط 0.75، ضغط علوي 0.45. دليل وليس هدفًا.',
+      'العلامات مبنية على رفعتك الميتة: قرفص 0.85، ضغط 0.75، ضغط علوي 0.45. دليل وليس هدفًا.',
     'progress.anchor.verb.sits': 'يقع',
     'progress.anchor.verb.sit': 'يقع',
     'progress.anchor.its': 'علامته',
@@ -1240,7 +1239,7 @@ export const messages: Record<Locale, Record<string, string>> = {
     'progress.strength.lift': 'تمرين',
     'progress.strength.lifts': 'تمارين',
     'progress.empty_notice':
-      'كل رسم بياني هنا مبني من مجموعاتك الخاصة — لا شيء على هذه الشاشة عينة.',
+      'كل رسم بياني هنا مبني من مجموعاتك الخاصة. لا شيء على هذه الشاشة عينة.',
 
     // ── Log screen (Slice 5) ──────────────────────────────────────
     'log.loading': 'جارٍ التحميل…',
@@ -1260,20 +1259,20 @@ export const messages: Record<Locale, Record<string, string>> = {
     'log.sets': 'مجموعات',
     'log.finish': 'إنهاء',
     'log.finish_confirm': 'إنهاء؟',
-    'log.finish_hint_empty': 'لم تُسجَّل أي مجموعة بعد — الإنهاء يلغي هذا التمرين.',
+    'log.finish_hint_empty': 'لم تُسجَّل أي مجموعة بعد. الإنهاء يلغي هذا التمرين.',
     'log.finish_hint': 'الإنهاء يحفظه. التجاهل يحذفه ومجموعاته.',
     'log.discard': 'تجاهل التمرين',
     'log.discard_confirm': 'تجاهل؟',
     'log.empty': 'لا توجد تمارين بعد. أضف تمرينًا لوضعه على اللوحة.',
     'log.add_exercise': 'إضافة تمرين',
     'log.import': 'جاءت من Hevy؟ أحضر سجلك التدريبي',
-    // SyncNote — inline status, not a banner (§2.1).
+    // SyncNote: inline status, not a banner (§2.1).
     // {count} already includes the number; log.set/log.sets handle plural.
     'log.sync.saving': 'جارٍ حفظ {count}…',
     'log.sync.offline_pending': 'غير متصل · تم حفظ {count} على هذا الجهاز',
     'log.sync.offline': 'غير متصل · التسجيل كالمعتاد',
     'log.sync.cached': 'غير متصل · عرض البيانات المحفوظة',
-    // CachedNote — the timestamp stays in a tnum span, so it is a prefix.
+    // CachedNote: the timestamp stays in a tnum span, so it is a prefix.
     'log.cache.prefix': 'غير متصل · عرض آخر ما مزامنه هذا الجهاز',
     // Error context strings passed to describeError().
     'log.error.load_workout': 'جارٍ تحميل تمرينك',
@@ -1299,11 +1298,11 @@ export const messages: Record<Locale, Record<string, string>> = {
     // Separate keys because English plural marks the verb ("set is" vs
     // "sets are") and Arabic cannot mirror that with one template.
     'log.finish_still_saving.set':
-      '{count} مجموعة لا تزال تُحفظ. إنها آمنة — ابقَ على هذه الشاشة لحظة واضغط إنهاء مرة أخرى.',
+      '{count} مجموعة لا تزال تُحفظ. إنها آمنة. ابقَ على هذه الشاشة لحظة واضغط إنهاء مرة أخرى.',
     'log.finish_still_saving.sets':
-      '{count} مجموعات لا تزال تُحفظ. إنها آمنة — ابقَ على هذه الشاشة لحظة واضغط إنهاء مرة أخرى.',
+      '{count} مجموعات لا تزال تُحفظ. إنها آمنة. ابقَ على هذه الشاشة لحظة واضغط إنهاء مرة أخرى.',
 
-    // ── Coach screen (Slice 6) — DRAFT, requires native-speaker review ──
+    // ── Coach screen (Slice 6): DRAFT, requires native-speaker review ──
     'coach.loading': 'جارٍ قراءة سجلك…',
     'coach.loading.body': 'جارٍ قراءة الأسابيع القليلة الماضية من سجلك.',
     'coach.this_week': 'هذا الأسبوع',
@@ -1335,18 +1334,18 @@ export const messages: Record<Locale, Record<string, string>> = {
     'coach.preview.save': 'حفظ {count} روتينات',
     'coach.preview.adjust': 'تعديل',
     'coach.preview.helper':
-      'الروتينات المحفوظة روتينات عادية — عدّلها أو احذفها مثل أي روتين آخر. لا يبدأ شيء حتى تبدأه أنت.',
+      'الروتينات المحفوظة روتينات عادية: عدّلها أو احذفها مثل أي روتين آخر. لا يبدأ شيء حتى تبدأه أنت.',
     // Separate keys: English plural marks the noun, Arabic cannot mirror it.
     'coach.dropped.one': '{count} تمرين مقترح استُبعد لأنه ليس في قائمة التمارين.',
     'coach.dropped.other':
       '{count} تمارين مقترحة استُبعدت لأنها ليست في قائمة التمارين.',
-    'coach.disclaimer': 'مُنشأ بالذكاء الاصطناعي — ليس نصيحة طبية.',
+    'coach.disclaimer': 'مُنشأ بالذكاء الاصطناعي، ليس نصيحة طبية.',
     'nav.body': 'الجسم',
-    'detail.projection': '— توقّع',
+    'detail.projection': 'توقّع',
     'auth.hero.kicker': 'سجل قوة · مدرب ذكي',
     'auth.hero.headline': 'السجل الذي يجهّز مجموعتك التالية.',
     'auth.hero.body':
-      'يقرأ وزن كل مجموعة تسجّلها ويكتب التالية — الثقل والتكرار والراحة، مع توقّع له تاريخ. إبهام واحد. ثلاثون ثانية.',
+      'يقرأ وزن كل مجموعة تسجّلها ويكتب التالية: الثقل والتكرار والراحة، مع توقّع له تاريخ. إبهام واحد. ثلاثون ثانية.',
     'auth.hero.seeded': 'مجموعات يقترحها الذكاء',
     'auth.hero.rest': 'راحة تتكيّف',
     'auth.hero.forecasts': 'توقّعات بتواريخ',
@@ -1407,9 +1406,9 @@ export const messages: Record<Locale, Record<string, string>> = {
     'reason.keep': 'أبقِ خطة المدرب',
     'reason.use_last': 'استخدم الجلسة السابقة',
     'reason.chip': '{from} → {to} {unit} × {reps}',
-    'reason.chip.eased': '↓ {weight} — مجموعة {label}',
-    'reason.chip.raised': '↑ {weight} — {run} آخر مرة',
-    'reason.chip.hold': 'ثبات — أخف اليوم',
+    'reason.chip.eased': '↓ {weight} · مجموعة {label}',
+    'reason.chip.raised': '↑ {weight} · {run} آخر مرة',
+    'reason.chip.hold': 'ثبات · أخف اليوم',
     'reason.chip.reps': '↑ {reps} تكرار',
     'reason.under_plan.what': 'المجموعة {label} جاءت بـ{actual} بدل {planned}.',
     'reason.under_plan.why': 'باقي المجموعات على {weight} {unit} حتى تكتمل التكرارات.',
@@ -1419,7 +1418,7 @@ export const messages: Record<Locale, Record<string, string>> = {
     'reason.readiness.why': 'نفس التمارين، درجة أقل على البار ومجموعة أقل.',
     'reason.rep_band.what': '{from} تكرار داخل النطاق، فيرتفع إلى {to}.',
     'reason.rep_band.why': 'البار يتحرك بعد أن يثبت أعلى النطاق.',
-    'reason.none': 'لا جديد — هذه الجلسة السابقة كما هي.',
+    'reason.none': 'لا جديد. هذه الجلسة السابقة كما هي.',
     'tell.open': 'كلّم المدرب',
     'tell.kicker': 'كلّم المدرب',
     'tell.proposed': 'تعديل مقترح',
@@ -1436,7 +1435,7 @@ export const messages: Record<Locale, Record<string, string>> = {
     'tell.ease.body': 'باقي المجموعات تنزل ثقلًا واحدًا.',
     'tell.trim.body': 'نفس التمارين، مجموعة عمل أقل.',
     'tell.trim.chip': '{from} → {to} مجموعات',
-    'tell.swap.body': 'اختر ما يتوفّر — القائمة ترتّب الأقرب لخطتك.',
+    'tell.swap.body': 'اختر ما يتوفّر. القائمة ترتّب الأقرب لخطتك.',
     'tell.note.body': 'مرفقة بهذا التمرين، بكلماتك.',
     'sheet.close': 'إغلاق',
     'rest.effort': 'أعلى مجموعة عند {n}%',
@@ -1460,7 +1459,7 @@ export const messages: Record<Locale, Record<string, string>> = {
     'body.protein.empty': 'لا شيء مسجّل هذا الأسبوع.',
     'body.footer': 'الجاهزية تغذّي المجموعات المقترحة',
     'body.signal.recomposition':
-      'الوزن ثابت {weeks} أسابيع بينما ارتفعت أثقالك — إعادة التركيب تعمل.',
+      'الوزن ثابت {weeks} أسابيع بينما ارتفعت أثقالك. إعادة التركيب تعمل.',
     'body.signal.gaining': 'الوزن تحرّك {weeks} أسابيع وتحرّكت أثقالك معه.',
     'body.signal.cutting-holding': 'الوزن نزل خلال {weeks} أسابيع والبار ثبت.',
     'body.signal.chip': 'وزن {bw} {unit} متوسط · أقصى تكرار {arrow} {gain} {unit}',
@@ -1483,7 +1482,7 @@ export const messages: Record<Locale, Record<string, string>> = {
     'coach.review.section.wins': 'تقدّم',
     'coach.review.section.recommendation': 'الأسبوع القادم',
 
-    // ── Friends screen (Slice 6) — DRAFT, requires native-speaker review ──
+    // ── Friends screen (Slice 6): DRAFT, requires native-speaker review ──
     'friends.loading': 'جارٍ التحميل…',
     'friends.main_title': 'هذا الأسبوع · الحجم',
     'friends.you': 'أنت',
@@ -1501,7 +1500,7 @@ export const messages: Record<Locale, Record<string, string>> = {
     'friends.feed.like': 'أعجبني هذا التمرين',
     'friends.feed.unlike': 'إزالة الإعجاب',
     'friends.feed.error.save': 'تعذّر الحفظ.',
-    'friends.feed.new_e1rm': '{name} — رقم تقديري جديد {weight}',
+    'friends.feed.new_e1rm': '{name}: رقم تقديري جديد {weight}',
     'friends.load_error': 'تعذّر التحميل.',
     'friends.leaderboard.empty': 'لوحة صدارة من شخص واحد. ادعُ شخصاً لتطارده.',
     'friends.leaderboard.you': 'أنت',
@@ -1577,12 +1576,12 @@ export const messages: Record<Locale, Record<string, string>> = {
     'rest.keep_default': 'اجعل {duration} زمن الراحة لهذا التمرين',
     'rest.expand': 'افتح مؤقت الراحة',
     'rest.collapse': 'عودة إلى اللوحة',
-    'rest.thinking': 'راحة — المدرب يفكّر',
+    'rest.thinking': 'راحة · المدرب يفكّر',
     'rest.tap_early': 'اضغط للمتابعة مبكرًا',
     'rest.skip_long': 'تخطَّ الراحة',
     'rest.of': 'راحة · من {t}',
     'rest.next': 'التالي',
-    'rest.next_set': '{name} — المجموعة {n}',
+    'rest.next_set': '{name} · المجموعة {n}',
     // Exercise picker
     'picker.back': 'رجوع',
     'picker.search': 'ابحث عن تمرين',
@@ -1625,7 +1624,7 @@ export const messages: Record<Locale, Record<string, string>> = {
     'load.empty_bar': 'بار فارغ',
     'load.bar': 'البار',
     'load.under_bar': 'أقل من بار {bar} {unit}',
-    'load.closest': 'أقرب حمل ممكن {weight} {unit} — بفارق {off}.',
+    'load.closest': 'أقرب حمل ممكن {weight} {unit}، بفارق {off}.',
     'load.warmup': 'الإحماء',
     'load.warmup_hint': 'الإحماء · اضغط صفاً لتسجيله',
     'load.logged': 'مسجَّل',
@@ -1679,7 +1678,7 @@ export const messages: Record<Locale, Record<string, string>> = {
     'import.workouts': 'تمارين',
     'import.sets': 'مجموعات',
     'import.exercises': 'تمارين مختلفة',
-    'import.resume': 'تابع — بقي {count}',
+    'import.resume': 'تابع، بقي {count}',
     'import.start': 'استورد {count} تمريناً',
     // Workout overview
     'overview.exercise_fallback': 'تمرين',
@@ -1889,7 +1888,7 @@ export function muscleLabel(locale: Locale, group: string): string {
  * Equipment display name, same contract as `muscleLabel`.
  *
  * The column is free-form text seeded from a fuzzy import, so an unknown
- * value renders as itself — a lift labelled "smith machine" is better read
+ * value renders as itself. A lift labelled "smith machine" is better read
  * back verbatim than swallowed by a fallback.
  */
 export function equipmentLabel(locale: Locale, equipment: string): string {

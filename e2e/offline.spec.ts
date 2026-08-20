@@ -35,7 +35,7 @@ import { stubSupabase, USER_ID, type StubServer } from './stub'
  * two tests that reload with a workout open.
  */
 const appReady = (page: Page) =>
-  page.getByRole('button', { name: 'You — settings' }).first()
+  page.getByRole('button', { name: 'You: settings' }).first()
 
 /** The idle home, specifically: the Start row is only ever on that screen. */
 const signedInHome = (page: Page) =>

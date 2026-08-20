@@ -1,5 +1,34 @@
 # LAUNCH.md — the checks to run before invites go out
 
+## PREREQUISITES (do these first, or the list stalls on itself)
+
+**Raise the auth email rate limit before check one.** Supabase ships
+`rate_limit_email_sent` at **2 per hour**. Section 1 below needs at least five
+auth emails in one sitting (the sign-in code, the sign-up confirmation, the
+password reset, the username sign-in, the dotted-Gmail check), so at 2/hour you
+stall on its third checkbox and then wait an hour between the rest.
+
+```
+npm run supabase:admin -- set-email-rate-limit 30
+```
+
+It writes the value, reads it back, and prints `rate_limit_email_sent set to 30
+per hour (verified)`. If it fails, read the error: a read-back mismatch means the write did not
+land (most often custom SMTP is not configured), while an auth or network error means the call
+never got that far. Without custom SMTP, Supabase will
+not raise this above 2 without it. Note the ceiling above it is Resend's own
+free plan, 100 a day, so 30 an hour is not 720 a day. Put it back to 2 when you
+are done.
+
+**Install the PWA to your home screen and run the rest of the list from
+there.** The manifest is `display: standalone`, so the installed app opens full
+screen with no browser bar, and that is how the first cohort will actually use
+it. Section 6 checks that the app offers the install itself; you do not have to
+wait for that offer to test from an installed app. On iOS, Share, then "Add to
+Home Screen", works from the first visit.
+
+---
+
 Ameen: this is the list. Run it **with a second account**, on a **real phone**,
 before you send a link to anybody. Most of it takes one session in the gym plus
 about twenty minutes at a table.
@@ -65,15 +94,20 @@ checked — a path nobody tested is a path that fails a stranger.
 
 ### Every screen with zero data
 
-Go through all **five** tabs on this empty account (Log · History · Progress ·
-Coach · Friends). None of them may look broken, and none may show a number
-that is not there.
+Go through all **six** tabs on this empty account (Log · History · Progress ·
+Body · Coach · Friends). None of them may look broken, and none may show a
+number that is not there. **Body is only reachable from the tab bar**: every
+other screen also has a card door, Body does not, so it is the one that gets
+skipped and the one nobody has seen empty.
 
 - [ ] **Log** — one button. No streak line, no routines list clutter.
-- [ ] **History** — "No workouts yet. Log one on the Log tab…"
+- [ ] **History** shows "Your log starts today.", the line under it, and a
+      **Start a workout** button. The calendar above it draws empty, not blank.
 - [ ] **Progress** — the week card at zeros, the balance chart showing the
       knurl target band with **no fills**, and "Log a workout to load the bar."
       Never a fake data point.
+- [ ] **Body** shows "Log a weigh-in to start the second chart.", the weight
+      chart empty, and the protein card saying "Nothing logged this week."
 - [ ] **Coach** — "Log 3 workouts and the coach will have something to say."
       The routine builder still works from day one.
 - [ ] The sign-in screen links to **"What Wazn stores"**, and `/privacy` loads
@@ -100,14 +134,14 @@ Send it to the second account. On that device:
       you"** above the form — _before_ signing in.
 - [ ] The address bar shows `/`, not `/join/…`.
 - [ ] Sign in. The welcome screen offers **"Follow &lt;your name&gt;"**.
-- [ ] Tap it. It changes to "Following".
+- [ ] Tap it. It changes to "Following &lt;your name&gt;".
 - [ ] Friends now shows your finished workouts as stat cards: name and routine,
       duration / volume / sets, a **PR** badge only when a record fell, and a
       fact line quoting the best moment.
 - [ ] Tap the heart to like one. The count goes up and **survives a
       reload**.
 - [ ] The leaderboard (knurl crown, top of Friends) shows both of you, with
-      your own row tinted and an amber rank.
+      your own row tinted and an ember rank.
 
 ---
 
@@ -143,15 +177,15 @@ This is the one that cannot be done at a table.
       appears in the picker afterwards. A second account must never see it.
 - [ ] The previous session's numbers appear inline while entering.
 - [ ] The rest timer counts down in-flow and **is silent** when it finishes —
-      amber ring and "Rest done", no beep. (If it beeps, something regressed.)
-- [ ] Set a personal record. The row **flashes amber once** and keeps a faint
+      ember ring and "Rest done", no beep. (If it beeps, something regressed.)
+- [ ] Set a personal record. The row **flashes ember once** and keeps a faint
       tint. No confetti, no modal.
 - [ ] Leave the app mid-workout and come back. Your workout is still open and
       the timer is still honest.
 - [ ] Press the Android back gesture (or the iOS swipe) from inside the
       picker. It returns to the workout, **it does not close the app**.
 - [ ] Finish. The receipt card shows duration, volume and sets rule-split, with
-      PR rows on amber tint.
+      PR rows on ember tint.
 - [ ] **Share card** produces a 4:5 image: wordmark, one giant figure (the PR
       if one fell, otherwise volume), knurl divider, three stats, and
       TRYWAZN.APP in the footer. No emoji, no photo.
@@ -165,8 +199,10 @@ that is offline from its first tap to its last.
 
 - [ ] Start a workout with airplane mode on. It opens immediately — no spinner,
       no error.
-- [ ] Log four or five sets. Each one appears the instant you press the check,
-      exactly as it does with signal. **Nothing red, nothing amber, no banner.**
+- [ ] Log four or five sets. Each one appears the instant you press **Bank
+      set N** (the commit button carries the number of the set it is about to
+      bank), exactly as it does with signal. **Nothing red, nothing ember, no
+      banner.**
 - [ ] Under the duration it says **"Offline · N sets saved on this device"**,
       and N goes up as you log. That line is the only difference you should see.
 - [ ] Kill the app entirely — swipe it out of the app switcher — and reopen it,
@@ -189,8 +225,10 @@ that is the single failure this whole phase exists to prevent.
 
 - [ ] **Coach** shows 3–5 notes that reference your actual lifts, each with a
       **data chip** quoting the exact figures. Note #1 carries the knurl band.
-      Footer says **"AI-generated — not medical advice"** and how many
-      regenerates are left.
+      Footer reads **"AI-GENERATED · NOT MEDICAL ADVICE"**, uppercased by CSS at a
+      small size with letter-spacing (`text-nano ... uppercase`). The
+      regenerates count joins it only once 3 or fewer are left, so on a fresh
+      week its absence is correct.
 - [ ] Reopen Coach. It does **not** regenerate — same text, instantly. It
       should only change after you log something new.
 - [ ] Coach → **Generate routine**. Pick a goal, days and equipment.
