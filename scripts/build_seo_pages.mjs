@@ -23,7 +23,12 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
-const DEFAULT_SITE_URL = 'https://workout-theta-plum.vercel.app'
+// The domain Ameen bought and the one production serves. It is the DEFAULT,
+// not an override, because the override was never set: WAZN_SITE_URL was unset
+// in Vercel for the whole life of the SEO pages, so all 222 shipped telling
+// Google that the free vercel.app alias was the canonical home of the site.
+// A default nobody has to remember beats an env var everybody forgets.
+const DEFAULT_SITE_URL = 'https://www.trywazn.app'
 
 const MUSCLE_ORDER = [
   'chest',
