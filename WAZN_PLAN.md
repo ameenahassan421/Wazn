@@ -666,12 +666,16 @@ untouched.
 
 #### Live defects, all verified, none fixed by a document
 
-1. **All 222 SEO pages canonicalise to the wrong domain.** Production serves
-   `rel="canonical" href="https://workout-theta-plum.vercel.app/..."` and `robots.txt` points
-   the sitemap at the same alias. Cause: `scripts/build_seo_pages.mjs:429` reads
-   `process.env.WAZN_SITE_URL || DEFAULT_SITE_URL`, and `WAZN_SITE_URL` is unset in Vercel.
-   Google will consolidate the branded domain onto the unbranded alias. **Fix is one Vercel
-   environment variable and a redeploy. Ameen's, and it is the cheapest item on this page.**
+1. **FIXED 2026-08-19, ships on the next deploy.** All 222 SEO pages canonicalised to
+   `https://workout-theta-plum.vercel.app`, the free Vercel alias, and `robots.txt` pointed
+   the sitemap there too, so every page told Google the unbranded alias was the canonical
+   home of the domain Ameen actually bought. The cause was not a missing Vercel variable, it
+   was the **default**: `scripts/build_seo_pages.mjs` read
+   `process.env.WAZN_SITE_URL || DEFAULT_SITE_URL` and `DEFAULT_SITE_URL` was the alias.
+   `WAZN_SITE_URL` was never set in Vercel for the whole life of the SEO pages. The default
+   is now `https://www.trywazn.app`, so nothing has to be remembered. Verified by
+   regenerating: canonical and sitemap both name the bought domain. **A default nobody has
+   to set beats an environment variable everybody forgets.**
 2. **Native writes every set as a working set.** `mobile/src/state/live-workout.ts:255`
    hardcodes `set_type: 'normal'` while the same file correctly reads `set_type` at `:148`.
    Every warm-up logged on the phone poisons e1RM, records and volume. Fixed in Stage 4A
@@ -729,26 +733,39 @@ assessed**; `TellCoachSheet.tsx` is v3-era.
 
 #### Blocked on Ameen
 
-1. **`WAZN_SITE_URL` in Vercel Production.** One field. Stops the SEO bleed. See defect 1.
-2. **Raise `rate_limit_email_sent` from 2.** `LAUNCH.md` needs at least five auth emails in
-   one sitting, so at 2/hour the checklist stalls on its own third checkbox.
-   `npm run supabase:admin -- set-email-rate-limit 30`.
-3. **Run `LAUNCH.md` on a real phone with a second account**, airplane mode included. The
+1. **DONE, reported not verified. `rate_limit_email_sent` raised to 30** by Ameen,
+   2026-08-19. `LAUNCH.md` needs at least five auth emails in one sitting, so at 2/hour the
+   checklist stalled on its own third checkbox. **This session could not confirm it against
+   live config**: `npm run supabase:admin -- show` answers
+   `401, JWT could not be decoded`, so the `SUPABASE_ACCESS_TOKEN` in `.env.local` is expired
+   or revoked. Re-verify with that command once the token is replaced, and do not record it
+   as verified until something reads it back.
+2. **Run `LAUNCH.md` on a real phone with a second account**, airplane mode included. The
    PWA installs to the home screen today (`display: standalone`), so this needs no store and
    no spend. GATE U7's last item and v5 acceptance item 11.
-4. **Leaked-password protection is NOT a config click.** It is Supabase **Pro only**; it was
+3. **Leaked-password protection is NOT a config click.** It is Supabase **Pro only**; it was
    attempted and returned 402 (DECISIONS.md:2468, `scripts/supabase_admin.ts:398-421`). It is
    a purchase decision. This block said "it is a config change" for days and that was wrong.
-5. **Google OAuth client and the Apple developer account** ($99/yr, plus $25 Play). These
+4. **Google OAuth client and the Apple developer account** ($99/yr, plus $25 Play). These
    block the hero auth path on both targets, and Apple sign-in becomes mandatory the moment
    Google exists on iOS.
-6. **Branch protection is unavailable.** `gh api .../branches/main/protection` returns 403:
+5. **Branch protection is unavailable.** `gh api .../branches/main/protection` returns 403:
    the repo is PRIVATE on the GitHub free plan. Required status checks cannot be turned on
    until it goes public or onto Pro. Four of the last twelve PRs merged before their own CI
    reported and two turned `main` red.
 
 The other four security-advisor warnings (`resolve_invite`, `social_feed`,
 `upsert_user_preference`, `weekly_leaderboard` being SECURITY DEFINER) are by design.
+
+#### One tool this session lost
+
+**`SUPABASE_ACCESS_TOKEN` in `.env.local` is dead.** `npm run supabase:admin -- show`
+answers `401, JWT could not be decoded`, so every command in `scripts/supabase_admin.ts`
+(site URL, SMTP, templates, OTP length, password policy, email rate limit) is unavailable
+until it is replaced, and so is any read-back verification of auth config. The Supabase
+**MCP server** still works for SQL and advisors, which is how the counts above were read.
+Replace the token from the Supabase dashboard (Account, then Access Tokens) into
+`.env.local`. Until then, treat every auth-config claim as reported rather than verified.
 
 #### Next action
 

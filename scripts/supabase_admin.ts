@@ -2,7 +2,7 @@
  * Supabase project configuration from the command line, via the Management API.
  *
  *   npm run supabase:admin -- show
- *   npm run supabase:admin -- set-site-url https://workout-theta-plum.vercel.app
+ *   npm run supabase:admin -- set-site-url https://www.trywazn.app
  *   npm run supabase:admin -- set-otp-length 6
  *   npm run supabase:admin -- set-smtp
  *   npm run supabase:admin -- set-templates
