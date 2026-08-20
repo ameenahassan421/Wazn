@@ -265,29 +265,155 @@ gym dead zones reported by testers.
 
 **GATE 4:** an airplane-mode workout syncs clean on reconnect.
 
-### Stage 4B — App Store + Google Play publishing (ACTIVE — the sequenced next stage)
+### Stage 4A: One App (ACTIVE, decided 2026-08-19)
 
-The PWA at trywazn.app stays canonical; stores add discoverability
-and native capabilities. Wrap the same React codebase with Capacitor
-(NOT TWA — AdMob at Stage 6 needs native slots) for BOTH platforms:
+**One codebase: Expo Router plus NativeWind, shipping iOS, Android and web.** The separate
+Vite PWA in `src/` is retired at the end of this stage. The web is not lost; it becomes an
+Expo Router web target through `react-native-web`, which `mobile/` already depends on.
 
-- **Google Play:** $25 one-time developer account. Internal testing
-  track first (beta cohort installs from it), then production.
-- **Apple App Store:** $99/year developer account; build/sign in
-  Xcode on Ameen's Mac; TestFlight for the cohort, then App Review.
-  Expect review friction; the PWA is the fallback that keeps users
-  unblocked regardless.
-- **Store prerequisites both platforms:** a public privacy policy URL
-  (hosted at trywazn.app/privacy — must cover Supabase storage,
-  Resend email, and AI processing via OpenRouter), store listing
-  assets (icon, screenshots, descriptions — Arabic + English at
-  Stage 5), data-safety / privacy-nutrition forms.
-- Native-only additions ride these builds later: AdMob (Stage 6),
-  push notifications, health integrations if ever un-parked.
+**v5 "Momentum" is implemented in full here, not in a separate stage.** The port and the
+restyle are the same edit. Every screen moves to Expo already in its v5 form, once. Building
+v5 on the web first would mean building all fourteen P1 items twice, in a codebase that is
+being deleted.
 
-**GATE 4B:** beta cohort retention looks healthy AND LAUNCH.md checks
-pass on a store-installed build on both a real Android device and an
-iPhone.
+This is a strangler-fig migration, not a rewrite. The app stays shippable at every step.
+
+#### Phase A0: Foundations (nothing user-visible)
+
+- `@expo/metro-runtime`, and prove `npx expo export --platform web` produces a working build.
+- **The native locale adapter.** `expo-localization` plus `resolveInitialLocale` and `t` from
+  `portable.ts`. Without it Stage 5's Arabic does not exist on the phone, and roughly half of
+  native's user-visible strings already have EN and AR keys in the shared catalogue. This is
+  a wiring gap, not a translation gap, and it goes before any screen work.
+- **Fix `set_type`** (`mobile/src/state/live-workout.ts:255`). Data corruption, one line.
+- **Unit preference round-trip.** Native never calls `get_user_preferences` or
+  `upsert_user_preference`, so kg in the browser leaves the phone on lbs.
+- **Deep-link domain** to `www.trywazn.app` (`mobile/app.config.ts`).
+- Move `DEFAULT_REST_SECONDS` out of `use-rest-timer.ts` into `rest.ts`, then
+  `export * from './rest'` in `portable.ts`. 109 lines of pure arithmetic are quarantined by
+  one browser import.
+- Rename native `Readiness` to `CheckIn` and import it from `@wazn/domain`; the two stacks
+  currently use one name for two different types.
+- **Vitest in `mobile/`**, and CI runs it. First tests on `live-workout.ts`'s reducers, which
+  are pure over injected state.
+
+**GATE A0:** `expo export --platform web` serves the app. A set logged on native and a set
+logged on web agree on `set_type` and on units. `portable.test.ts` and `npm run check:tokens`
+still pass. `mobile/` has a test suite that runs in CI.
+
+#### Phase A1: Ship day one, no tab is a stub
+
+The five 21-line stubs (History, Progress, Body, Coach, Friends) come over as DOM components
+(`'use dom'`) wrapping the existing web screens, rendered by their native routes. The whole
+app runs on a phone before anything is nativized.
+
+Two things this buys that a native rewrite would not:
+
+- **recharts survives.** It is DOM-only, so `ProgressScreen` (1,449 lines) ships intact
+  inside a webview and is nativized last, or never.
+- Nothing is a stub while the cohort is testing.
+
+Known cost, accepted deliberately: each DOM screen carries roughly 2 MB of web runtime. That
+is an interim state, not the end state, which is why A3 exists.
+
+**GATE A1:** all six tabs render real content on a device. No 21-line stub remains.
+
+#### Phase A2: Strangle the core loop, in v5 form
+
+Home (screen 06), Live (screen 07) and the rest canvas (screen 08) become native, already in
+v5. This phase carries **all five open P0 findings** and P1's momentum bar, PR moment,
+toasts and finish verdict. Shared triggers (notable-set, in-session PR baseline, finish
+verdict) go behind `portable.ts` before either target renders them, following the
+`live-board.ts` precedent.
+
+**The background rest timer ships here** (`expo-notifications`), because a lifter locks their
+phone between sets and a web timer dies when they do. It is the single capability that
+justifies this whole stage, and it does not exist yet.
+
+Nativize means redesign, not reskin. Reach for `@expo/ui` before styled primitives.
+
+**GATE A2, and it is the one this project has never had:** an instrument for §1's sentence.
+A test that counts taps and elapsed time from opening the Log screen to committing the first
+set, run on a device, that fails the build if it regresses. §1 has said "log a set in under
+30 seconds, one hand, mid-workout" for 206 commits and nothing in the repo has ever measured
+it.
+
+#### Phase A3: Strangle the insight screens, by value
+
+Whichever of the five the cohort actually opens, in the order they open them. Progress last:
+its charts need a native library, and until then the DOM component is correct.
+
+**GATE A3:** no DOM component remains on a screen the cohort opens weekly.
+
+#### Phase A4: Retire the PWA
+
+- Rebuild what `vite-plugin-pwa` gives today: installability, the service worker, offline
+  caching. **Expo web does not provide these for free, and losing them is a real regression**
+  for a cohort member training in a basement.
+- Vercel serves the Expo web build.
+- Delete `src/components` and `src/screens`. **`src/lib` stays**; it is the domain.
+- The 222 SEO pages are untouched throughout. `scripts/build_seo_pages.mjs` imports nothing
+  from `src/`.
+
+**GATE A4:** `trywazn.app` serves the Expo web build, installs to the home screen, and an
+airplane-mode workout still syncs clean on reconnect. GATE 4 re-proved on the new stack.
+
+#### What Stage 4A is NOT doing
+
+- **Not rewriting `src/lib`.** 11,184 lines of domain that already crosses. It survives.
+- **Not touching the 222 SEO pages.** They are independent and they are the only organic
+  acquisition channel.
+- **Not a monorepo, and not npm workspaces.** Adding a `workspaces` key to the root
+  `package.json` changes how Vercel installs. Rejected 2026-08-16 for that reason and the
+  reasoning has not changed.
+- **Not Capacitor.** Rejected 2026-08-16 (DECISIONS.md:7266): App Store Guideline 4.2,
+  keyboard and haptic ergonomics, and the background timer foundation.
+- **Not P2 onboarding** (screens 01 to 05) until GATE A2 passes.
+- **Not store submission.** That is Stage 4B and it gates on retention that does not exist.
+- **No new visual system.** v5 is the fourth in fifteen days and it is the last one until
+  there are users.
+
+#### Hazards, named in advance
+
+- Two Tailwind majors cannot share one lockfile (NativeWind v4 needs Tailwind 3.4, the web
+  app is Tailwind v4). This is why `mobile/` has its own lockfile and why this stage ends by
+  deleting the web app rather than merging the two.
+- The 16 component and screen test files (2,430 lines) need React Native Testing Library. The
+  58 `src/lib` test files (9,825 lines) do not move at all.
+- A green `expo export` proves a screen bundles, not that it renders. Verify by running.
+
+### Stage 4B: App Store and Google Play publishing (blocked on GATE A4 and on accounts)
+
+**Superseded 2026-08-16: this stage said "wrap the same React codebase with Capacitor" and
+that was rejected.** Compiled native via Expo shipped instead, for App Store Guideline 4.2,
+for keyboard and haptic ergonomics on a one-handed logger, and as the foundation for
+background rest timers. Stage 4A builds the app this stage publishes. See DECISIONS.md
+2026-08-16.
+
+Store builds come from **EAS Build** off the single Expo codebase. The Expo web target at
+trywazn.app stays the fallback that keeps users unblocked through review friction.
+
+- **Google Play:** $25 one-time developer account. Internal testing track first (the cohort
+  installs from it), then production.
+- **Apple App Store:** $99/year developer account, TestFlight for the cohort, then App
+  Review. Apple sign-in becomes **mandatory** the moment Google sign-in exists in the iOS
+  build.
+- **Store prerequisites, both platforms:** a public privacy policy URL at
+  trywazn.app/privacy covering Supabase storage, Resend email and AI processing via
+  OpenRouter; store listing assets (icon, screenshots, descriptions, Arabic and English per
+  Stage 5); data-safety and privacy-nutrition forms.
+- **Universal Links and App Links** need `.well-known/apple-app-site-association` and
+  `.well-known/assetlinks.json` served from `www.trywazn.app`. Both need an Apple Team ID,
+  which does not exist yet.
+- Native-only additions ride these builds later: AdMob (Stage 6), push notifications, health
+  integrations if ever un-parked.
+
+**GATE 4B:** beta cohort retention looks healthy AND LAUNCH.md checks pass on a
+store-installed build on both a real Android device and an iPhone.
+
+**This gate cannot be evaluated today and no amount of building changes that.** It requires a
+cohort. The app has never been shared. GATE 2 comes first, and GATE 2 needs nothing but
+Ameen's phone and `LAUNCH.md`.
 
 ### Stage 5 — Egypt-ready
 
@@ -334,9 +460,9 @@ wallets). Free =
 unlimited logging + basic 1RM chart + 4 routines. Pro = unlimited
 routines, advanced analytics, body measurements, no ads. Ads on free
 tier per §2.3 only. Rewarded video unlocks premium analytics for 24h.
-**Capacitor Android build** (not TWA — AdMob requires native slots)
-wrapping the same React code; Play Store listing. Web PWA stays
-ad-free by architecture.
+AdMob needs real native slots, which the Expo build from Stage 4A
+already provides; there is no separate wrapper to build here. The Expo
+web target stays ad-free by architecture.
 
 **GATE 6:** first 10 organic (non-friend) payers, AND free-tier
 retention does not drop vs the Stage 3 baseline after ads switch on.
@@ -385,13 +511,23 @@ is no longer parked — it is Stage 4B.)
 
 **Starting any new session:**
 
-1. Read `WAZN_PLAN.md` (this file), `DECISIONS.md`, and `CLAUDE.md`.
-2. Read **§7.0**, the authoritative current-state block. §7.1 below it is a
-   chronological log that contradicts itself; §7.0 wins. The active stage and its next
-   unchecked item is where work resumes.
-3. Verify reality matches STATUS before building (e.g. query row
-   counts, check deploy state). If they disagree, trust reality,
-   fix STATUS, note it in `DECISIONS.md`.
+1. **Read the banner before you read any file.** `.claude/hooks/session-start.sh`
+   prints computed state: position against `origin/main`, how many commits have
+   landed since this file was last edited, unmerged branches, open PRs. It is
+   derived from git, so it cannot go stale. This file can.
+2. **If the banner says §7.0 is stale by N commits, it is lying to you.** Reconcile
+   it against the code and the database before building anything. On 2026-08-19 it
+   was nine commits stale, said the rest canvas takeover was "not built" after it
+   had shipped, and named that finished work as the next action.
+3. Read `WAZN_PLAN.md` (this file), `DECISIONS.md`, and `CLAUDE.md`.
+4. Read **§7.0** as a **claim to verify, not a fact to recite**. §7.1 below it is a
+   chronological log that contradicts itself; §7.0 wins over §7.1, and the database
+   wins over both. The active stage and its next unchecked item is where work resumes.
+5. Verify reality matches STATUS before building (query row counts, check deploy
+   state, read `information_schema` rather than the migration ledger). If they
+   disagree, trust reality, fix STATUS, note it in `DECISIONS.md`.
+6. **If an open PR exists, another session may be mid-flight. Do not rebuild its
+   work.** The banner lists them.
 
 **Ending any work session:**
 
@@ -405,8 +541,27 @@ is no longer parked — it is Stage 4B.)
 4. If a gate was reached: post the acceptance checklist results and
    STOP. Do not begin the next stage.
 
-**`CLAUDE.md` must contain a pointer to this file and rules §2.6–2.8
+**`CLAUDE.md` must contain a pointer to this file and rules §2.6-2.8
 verbatim, so they survive even if this file isn't read.**
+
+**Step 1 of "ending a session" is enforced now, because it was skipped four
+consecutive times.** PRs #103, #104, #105 and #106 merged code and left §7.0
+untouched. Three hooks and one CI job close that loop:
+
+- `.claude/hooks/status-guard.sh` (Stop) blocks a session ending with committed
+  changes under `src/`, `mobile/` or `supabase/` that never touched this file.
+  Uncommitted scratch work gets a reminder instead of a wall.
+- `.claude/hooks/git-safety.sh` (PreToolUse on Bash) snapshots uncommitted work to
+  `refs/wazn-safety/<stamp>` before any destructive git command, then allows it.
+  Written after a subagent told read-only in its own prompt ran
+  `git checkout -- CLAUDE.md` and destroyed a session's work. **Instructions do not
+  bind subagents. Commit before you fan out.**
+- CI fails a pull request that changes `src/`, `mobile/` or `supabase/` without
+  changing `WAZN_PLAN.md`. Hooks are local; CI is universal. It cannot yet block a
+  merge (branch protection needs a public repo or GitHub Pro), but it fails loudly.
+
+**Routing around these is not a shortcut, it is the exact behaviour that made the
+source of truth untrustworthy.**
 
 ## 7. STATUS
 
@@ -416,248 +571,192 @@ verbatim, so they survive even if this file isn't read.**
 > down the log; the log is history, not state. Verify against the database
 > before trusting either.
 
-### 7.0 CURRENT STATE: verified 2026-08-17 against production
+### 7.0 CURRENT STATE: verified 2026-08-19 against production and the database
 
-Read live via the Management API, not recited. Re-verify before relying on it.
-**This block was stale for six days once and said so nowhere.** If you are
-reading it on a later date, re-run the counts before quoting them. The
-Management API was reachable from the session on 2026-08-17 through the
-Supabase MCP server, which CLAUDE.md says to check rather than assume: it is
-per-session, and it was NOT reachable on 2026-08-14.
+Every number below was read live, not recited. **Re-verify before quoting it.** This block
+was nine commits stale on 2026-08-19 and said so nowhere; PRs #103 through #106 all merged
+code and none of them touched this file. Three hooks now make that visible and expensive
+(see "How this block stays true", last in this section).
 
-|                         |                                          |
-| ----------------------- | ---------------------------------------- |
-| Accounts / profiles     | 8 / 8 (2 with usernames), one is a robot |
-| Workouts                | 152, of which 2 are unfinished           |
-| Workout sets            | 3199                                     |
-| Routines                | 18                                       |
-| Exercises               | 134 (0 custom)                           |
-| AI generations          | 82 (see the Coach health note below)     |
-| `client_errors`         | 0                                        |
-| `user_preferences` rows | 4                                        |
-| Last workout, any user  | 2026-08-16                               |
+#### The decision that governs everything below
 
-**Only three of the eight accounts have ever logged anything, and two of those
-logged one set each.** Ameen (`amin`) has 149 workouts and 3197 sets, and
-**his last real session was 2026-07-20**. The 149 are the Hevy import; the app
-has had essentially no new training data for four weeks. The 2026-08-16
-activity is `mi1898932`, two workouts and one set, which is testing rather than
-training. Any reading of the Coach's output as "wrong" should check this
-first: the weekly review reports near-zero sessions because that is true.
+**ONE CODEBASE. Expo, shipping iOS, Android and web.** Decided by Ameen 2026-08-19. The
+separate Vite PWA in `src/` is retired at the end of the migration; the web survives as an
+Expo Router web target via `react-native-web`, not as a second app. **v5 "Momentum" is
+implemented in full, and the port and the restyle are the same edit**: each screen moves to
+Expo already in its v5 form, once. Stage 4A below is the whole plan. See DECISIONS.md
+2026-08-19.
 
-**The eighth account is `simulator@trywazn.app` and it is not a user.** It was
-provisioned on 2026-08-17 so the native app could be signed into on a
-simulator. Subtract it from any count quoted after that date, and delete it
-before the app is shared. See DECISIONS.md 2026-08-17.
+Corollary that decides what is worth building this week:
 
-**Routines doubled, 9 to 18, and `generate-routine` logged 18 successes with
-zero failures.** The two numbers matching exactly is suggestive, not proven;
-nobody has checked whether every generation produced a row.
+> **`src/lib` survives the migration. `src/components` and `src/screens` do not.**
 
-**The second dataset is empty.** `body_weights` 0, `body_measurements` 0,
-`protein_days` 1, `daily_checkins` 1. v3 built the Body tab, the readiness
-score and the cross-signal against data that does not exist yet, so every one
-of those surfaces is running its degraded render in production today. Nothing
-supplies `sleepMinutes` or `hrv` at all — `readiness.ts` accepts them and no
-caller passes them, so readiness is the check-in alone.
+`src/lib` is 11,184 lines of portable domain that already crosses to native through
+`src/lib/portable.ts`. The screens and components, roughly 19,600 lines, are the port. Work
+in the first is banked. Work in the second is rented.
 
-**Coach health, verified 2026-08-17 by feature and error code:**
+#### Database, read 2026-08-19
 
-| feature       | ok  | failed                                | last success |
-| ------------- | --- | ------------------------------------- | ------------ |
-| `routine`     | 18  | 0                                     | 2026-08-16   |
-| `briefing`    | 25  | 7 (6 `parse`, 1 `no_content`)         | 2026-08-17   |
-| `coach_notes` | 3   | 29 (22 `unknown-exercise`, 7 `parse`) | 2026-08-15   |
+|                          |                                              |
+| ------------------------ | -------------------------------------------- |
+| Accounts / profiles      | 8 / 8, one is a robot, one is the simulator  |
+| Workouts                 | 152, of which 2 are unfinished               |
+| Workout sets             | 3198                                         |
+| Routines                 | 18                                           |
+| Exercises                | 134 (0 custom)                               |
+| AI generations           | 83                                           |
+| `client_errors`          | 0                                            |
+| `user_preferences` rows  | 4                                            |
+| Body tables              | `body_weights` 0, `body_measurements` 0, `protein_days` 1, `daily_checkins` 1 |
+| Last workout, any user   | 2026-08-17                                   |
+| Migrations applied       | **0001 through 0028**                        |
 
-**The 2026-08-15 fixes hold.** `briefing` has succeeded as recently as
-2026-08-17 and its last `parse` failure was 2026-08-15, before the fix.
-`coach_notes` carries the ugly historical ratio (22 `unknown-exercise` was one
-grounding false positive firing repeatedly, last seen 2026-08-14) and **has
-not run at all since 2026-08-15**, so the fix is unproven rather than failing.
-Do not read 3-of-32 as a current success rate. `generate-routine` has never
-failed. See DECISIONS.md 2026-08-15, three entries.
+**THE APP HAS STILL NEVER BEEN SHARED.** The 8 accounts are Ameen, people he already knows,
+one test robot and `simulator@trywazn.app`. **No reading of these numbers is a retention
+signal.** GATE 2 and GATE 3 cannot be evaluated until the app is distributed. Ameen's last
+real training session was 2026-07-20, so the Coach reporting near-zero sessions is correct,
+not broken.
 
-**Migrations, the only reliable account.** Production has **0001 through 0028
-applied**, confirmed against `information_schema`.
-`supabase_migrations.schema_migrations` holds 7 entries and has never known
-about 0020, 0021, 0023's predecessors or 0024, so **the ledger is not a record
-of what is applied and must never be treated as one**. `0019` is the one
-deliberate hold: its five stat-tool functions have no caller until B3 exists.
+**The second dataset is still empty.** The Body tab, the readiness score and the cross-signal
+all run their degraded render in production. Nothing supplies `sleepMinutes` or `hrv` at all.
 
-**Stage 5 shipped 2026-08-09.** Per-user locale, 520-key catalogue, EN/AR
-toggle in the header and on the pre-auth surface, root `dir`/`lang` flip.
-Verified on the deployed build: tap AR gives `dir=rtl` and Arabic, a reload
-holds it, tapping EN returns. GATE 5's native-speaker review was **waived by
-Ameen**. Arabic is machine-drafted. `ErrorBoundary` stays English (class
-component, no hook) and chart axes are not mirrored, both deliberate.
+`supabase_migrations.schema_migrations` holds 10 entries and has never known about
+0019 to 0026. **The ledger is not a record of what is applied and must never be treated as
+one.** `information_schema` is.
 
-**THE APP HAS NOT BEEN SHARED YET (Ameen, 2026-08-09; still true 2026-08-17).**
-The 8 accounts are Ameen, people he already knows, and one test robot, not a
-beta cohort. **Any reading of these
-numbers as a retention signal is wrong**, including the one further down this
-file that calls the beta started and retention thin. GATE 3 cannot be
-evaluated until the app is actually distributed, and no session should treat
-low usage as evidence about the product.
+#### Code, verified 2026-08-19
 
-**F2 Arabic SEO SHIPPED 2026-08-09** and is verified on production: 110
-English and 110 Arabic exercise pages, 222 sitemap URLs linked from
-`robots.txt`, clean extensionless URLs, `dir="rtl"` and real translated steps
-on the Arabic side. `exercises.instructions` was filled for 110 of 134 rows
-from free-exercise-db (24 unmatched are machine variants and non-lifts, and
-they get NO page rather than a stub). Arabic instructions live in
-`scripts/arabic_instructions.ts`, Arabic names in `scripts/arabic_exercises.ts`;
-both are SEO-only and the database stays the app's source of truth.
-`npx tsx scripts/build_seo_data.ts --offline` re-applies the Arabic layer with
-no network, so a copy edit never needs credentials. **Ameen reviewed the Arabic
-and approved it**, which is the review GATE 5 asked for.
+|                                    |                                                        |
+| ---------------------------------- | ------------------------------------------------------ |
+| Tests                              | **1,204 in 85 files, all passing** at HEAD             |
+| of which `src/lib` (survive)       | 58 files, 9,825 lines                                  |
+| of which component/screen (do not) | 16 files, 2,430 lines                                  |
+| `mobile/` tests                    | **zero.** No test script, no test file                 |
+| Production web                     | **https://www.trywazn.app**, 200 OK                    |
+| Web-only runtime dependencies      | four: `react`, `react-dom`, `@supabase/supabase-js`, `@vercel/analytics` |
 
-**QUEUED, not started: Arabic exercise names in the app.** In Arabic the whole
-interface is Arabic and every exercise name still renders English. Stage 5 asked
-for "Arabic exercise names alongside English" and it was never built. The 134
-names already exist and are approved; they only feed the SEO pages. The work is
-a nullable `name_ar` column, a manual seeding script, and ONE `displayName`
-helper threaded through the nine surfaces that render a name. A custom exercise
-has no `name_ar` and must render the user's own text in either locale. Not
-urgent: it is an omission, not a breakage, and nobody is using the app yet.
+`mobile/` already carries `react-native-web ~0.21.0` and `react-dom 19.2.3`. **Expo web is
+one dependency away** (`@expo/metro-runtime`). This is why the migration keeps a web target
+rather than losing one.
 
-**Three defects came out of ONE screenshot Ameen took (2026-08-09), and every
-automated gate was green for all three.** `icon-start` mirrors with
-`scaleX(-1)` and sat on the span holding "↺ 100 × 8", so weights and reps
-rendered backwards on every ghost row of the Arabic logging board.
-`ExerciseThumb` was used on nine surfaces but not the workout board. Exercise
-names were English in Arabic mode. Lint, typecheck, 818 tests, a production
-build and a Playwright smoke run all passed throughout. **Screenshot the app
-after any locale or layout work; the wall cannot see this class of defect.**
+The 222 static SEO exercise pages are generated by `scripts/build_seo_pages.mjs`, which
+imports **zero** things from `src/`. They are independent of any app migration and survive
+untouched.
 
-**The OmniRoute gateway failed 7 times on 2026-08-09** across three causes:
-`502 ERR_HTTP2_INVALID_SESSION` on three different upstreams, a stall partway
-through a long run, a `402` (Kimi membership inactive), and a mid-response
-connection close on a pinned, known-good model. Two runs did complete useful
-work. Pin a concrete model rather than an `auto/` route, batch long jobs so a
-drop costs one batch, and expect to finish the tail by hand.
+#### Live defects, all verified, none fixed by a document
 
-**Design prototype live at `/prototype` (2026-08-12).** The Claude Design
-handoff (`Wazn Prototype.dc.html`: light paper world, ember accent, coach
-voice, rest timer) is implemented as a quarantined static page,
-`public/prototype.html`, with one `vercel.json` rewrite. No `src/` changes and
-nothing in the app bundle. Same day, on Ameen's order, it grew a v2 elevation
-pass: six live exercises with warm-up ramps, rest as an inline chip instead of
-a forced full screen, tap-to-type inputs, set editing, inline PR tags, an
-Arabic/RTL toggle (IBM Plex Sans Arabic), and a dark variant. It is a design
-artifact for evaluation, not a product decision. **Direction DECIDED
-2026-08-12: Ameen delegated the call and the prototype's world is adopted,
-dark-first, ember replacing amber, وزن mark canonical with the Latin lockup
-as the interface face.** The rebuild is its own future stage and has NOT
-started; it begins on Ameen's word. See DECISIONS.md 2026-08-12 (three
-entries). While verifying it, one pre-existing test failure surfaced on
-clean `main` (`lazy-screen.test.tsx`, sessionStorage case); tracked as its own
-task.
+1. **All 222 SEO pages canonicalise to the wrong domain.** Production serves
+   `rel="canonical" href="https://workout-theta-plum.vercel.app/..."` and `robots.txt` points
+   the sitemap at the same alias. Cause: `scripts/build_seo_pages.mjs:429` reads
+   `process.env.WAZN_SITE_URL || DEFAULT_SITE_URL`, and `WAZN_SITE_URL` is unset in Vercel.
+   Google will consolidate the branded domain onto the unbranded alias. **Fix is one Vercel
+   environment variable and a redeploy. Ameen's, and it is the cheapest item on this page.**
+2. **Native writes every set as a working set.** `mobile/src/state/live-workout.ts:255`
+   hardcodes `set_type: 'normal'` while the same file correctly reads `set_type` at `:148`.
+   Every warm-up logged on the phone poisons e1RM, records and volume. Fixed in Stage 4A
+   phase A0.
+3. **Native deep links point at a dead domain.** `mobile/app.config.ts:49` and `:66` claim
+   `wazn.app`: DNS resolves to registrar parking, HTTPS returns a connection failure, nothing
+   is served. Real invites go to `www.trywazn.app` (`src/lib/invite.ts:2`), so `join/[code]`
+   can never fire from a real link.
+4. **`src/lib/i18n.ts` holds 83 em-dashes**, most inside sentences a user reads, against
+   Ameen's standing rule. `277a65f` swept three `mobile/` files and not this one.
+5. **`mobile/` has no locale layer at all.** Stage 5's Arabic does not exist on the phone.
 
-**Design v3.0 "the coach everywhere" BUILT 2026-08-14, NOT APPLIED.** The
-`design_handoff_v3_ai_coach` bundle is implemented: the six-tab bar (Ameen's
-call — the handoff reverses the 2026-08-13 retirement, and the card doors are
-kept alongside it), the check-in row and Today brief, the adaptive ghost rows
-with reasoning chips and once-per-cause auto-regulation, the explainer sheet,
-"Tell the coach", the mode selector and week review, forecasts and the plateau
-card, the Body tab, the AI dial in Settings, and the AuthHero front page.
-114 new message keys in both locales. Full detail and the four deliberately
-unbuilt items are in DECISIONS.md 2026-08-14.
+#### The native app, measured
 
-**Migrations 0027 and 0028 APPLIED to production 2026-08-15, verified against
-`information_schema` rather than a success flag.** What actually landed:
+`mobile/` bundles for both platforms in CI and is not on a store. What is real: Expo Router
+with a declarative `Stack.Protected` guard, email-or-username plus password and the 6-digit
+code, the `join/[code]` deep link, the live board with zones, momentum bar and BANK IT, and
+the rest canvas.
 
-|                    |                                                                                                                                 |
-| ------------------ | ------------------------------------------------------------------------------------------------------------------------------- |
-| Tables             | `daily_checkins`, `body_weights`, `protein_days`, `body_measurements` — all four, RLS **enabled**, policies 3/4/3/4             |
-| Owner default      | `auth.uid()` on all four `user_id` columns (0016's lesson)                                                                      |
-| `user_preferences` | +`coach_mode`, `coach_volume`, `meet_date`, `weekly_target`, `protein_target_g`; existing rows backfilled `strength / full / 3` |
-| Functions          | `body_overview()` returns the correct empty shape; `strength_forecast()` answers **107 lifts, 72 past the 8-week gate**         |
-| Grants             | anon **cannot** execute the three new/rewritten functions; authenticated can                                                    |
+**Five of the six tabs are still exactly 21-line stubs**: History, Progress, Body, Coach,
+Friends. Against 4,292 lines of the equivalent web screens.
 
-**0027 shipped a security defect and 0028 fixes it — the sequence is worth
-keeping.** 0027 ended each function with `revoke all … from public`, which is a
-no-op: Supabase grants EXECUTE to `anon` **directly**, via `alter default
-privileges`, not through PUBLIC. So all three functions were callable by a
-signed-out request for the minutes between the two migrations. Nothing was
-exposed — `upsert_user_preference` is the only SECURITY DEFINER one and its
-first statement inserts a NULL `auth.uid()` into a NOT NULL key, so an anon
-call raises before touching a row; the other two are SECURITY INVOKER and match
-no rows under anon. **Supabase's own security advisor caught it; the repo's SQL
-suite did not**, because the suite asserted the functions WORK and never
-asserted who may call them. It does now, via `has_function_privilege`, and the
-assertion was confirmed to fail with 0028 removed.
+**The native app does not yet do one thing the PWA cannot.** The reasoning for going native
+(DECISIONS.md:7266) names App Store Guideline 4.2, keyboard and haptic ergonomics, and
+**background rest timers**. `mobile/package.json` declares `expo-keep-awake` and **no
+`expo-notifications`, no `expo-task-manager`**. The native rest timer is a `setInterval` in a
+React component (`mobile/src/components/RestCanvas.tsx:49`) and dies on backgrounding exactly
+like the web one. The background timer is the capability that justifies the migration and it
+is scheduled in phase A2, not assumed.
 
-The ledger now has entries for 0027 and 0028 (applied through the Management
-API's migration path). It still does not know about 0019–0026; §7.0's older
-note stands — the ledger is not a record of what is applied.
+#### v5 "Momentum"
 
-**v5 "Momentum" P0 is CLOSED at 4/11 acceptance (Ameen, 2026-08-17).** It is
-closed, not passed, and the distinction is the point. Eight PRs (#90 to #97
-plus P0 #5) landed the ember ground, the named type ramp app-wide, the tab
-bar, the Home hunt card, the live zones with the ember commit bar, and the
-rest canvas, with no stop between them. The acceptance list was first read
-against the running app on 2026-08-17: four pass, three partial, three fail,
-one blocked on hardware, one not assessed.
+**P0 CLOSED at 4/11 acceptance (Ameen, 2026-08-17), not passed.** Eight PRs merged with no
+stop between them and the acceptance list was read against the running app afterwards.
 
-**Eleven findings came out of that read and were on no list before it** (six
-on Home, three on the live screen, two on the rest canvas), including Home's
-stat tiles rendering `WEEK · STREAK · FREEZE` where the reference names
-`STREAK · THIS WEEK · SESSIONS`. Every automated check was green throughout.
-**Every unmet item is classified and carried, none dropped**: the full table
-is the last section of `docs/design/v5-momentum/P0-GATE.md` and the reasoning
-is in DECISIONS.md 2026-08-17. Two of the carried items are decisions rather
-than builds: whether the tab bar keeps the glyphs the reference draws as text,
-and whether screen 08 keeps its four inputs once it appears unbidden.
+Of the eleven carried findings, **six are closed and five are open**, verified at HEAD:
 
-**P1 has not started.** Its list is the momentum bar, the PR moment, toasts,
-the finish verdict, the six remaining screen restyles, the coach-volume wiring,
-and the eleven carried findings above.
+| closed | by |
+| --- | --- |
+| stat tile order (FREEZE deliberately kept over SESSIONS, a rule-6 deviation) | #104 `8be4205` |
+| avatar polarity | #104 `8be4205` |
+| header band | #104 `8be4205` |
+| two competing start controls | #105 `6046b08` |
+| tab bar glyphs (DECIDED: glyphs stay) | #105 `6046b08` |
+| screen 08's four inputs (DECIDED by construction: `pointerEvents: 'none'` under takeover) | #103 `74f7d9d` |
 
-**Rest canvas takeover DECIDED 2026-08-17, not built.** Auto-takeover after
-working sets only; warm-ups keep tap-to-open. Build spec in DECISIONS.md
-2026-08-17. It is the first build after the gate and it touches both stacks.
+Open: numbered plan list rows (06); status strip (07); exercise header (07); cream rest bar
+(07); next-set block (08). **The full table, with status, is
+`docs/design/v5-momentum/P0-GATE.md`, which is maintained again as of 2026-08-19.**
 
-**THERE ARE TWO APPS. `mobile/` bundles and is not on a store.** Expo Router
-with a declarative `Stack.Protected` guard, email-or-username plus password
-and the 6-digit code, the `join/[code]` deep link, the live board with zones,
-momentum bar and BANK IT, and the rest canvas. CI runs typecheck, lint, a
-route check and a real `expo export` for both platforms. **Five of the six
-tabs are 21-line empty-state stubs**: History, Progress, Body, Coach, Friends.
-Google and Apple sign-in are deliberately absent rather than stubbed, because
-neither credential exists yet. Every P1 restyle is now two builds unless the
-shared-domain route through `src/lib/portable.ts` is used, which is what
-`live-board.ts` did and it worked.
+**All five open findings and all of P1 land in Expo, not in `src/`.** P1's other buckets,
+none started: momentum bar and its brass flip, the PR moment, toasts, the finish verdict, the
+remaining screen restyles, coach-volume wiring. Item 6 (Tell the coach) was **never
+assessed**; `TellCoachSheet.tsx` is v3-era.
 
-**Blocked on Ameen:**
+#### Blocked on Ameen
 
-1. **Enable leaked-password protection.** Still disabled, re-confirmed by the
-   security advisor on 2026-08-17, and the only advisor warning that is a real
-   setting rather than an intentional grant. Auth, then Passwords, then
-   HaveIBeenPwned. It is a config change and auth config is Ameen's per §2.8.
-   The other four warnings are `resolve_invite`, `social_feed`,
-   `upsert_user_preference` and `weekly_leaderboard` being SECURITY DEFINER,
-   which is by design. Grants were re-asserted on 2026-08-17 via
-   `has_function_privilege`, not read off a success flag: 0028 holds, and the
-   18 functions still executable by `anon` are all SECURITY INVOKER behind RLS
-   plus `resolve_invite`, which migration 0011 grants deliberately.
-2. **Run `LAUNCH.md` on a real phone with a second account**, including the
-   airplane-mode section. GATE U7's last item and v5's acceptance item 11.
-   Not reachable from a sandboxed session.
-3. **Rotate the OpenRouter key.** Shared in a chat session, compromised by
-   construction.
-4. **Raise `rate_limit_email_sent` from 2** before any invite wave.
-5. **Google OAuth client and the Apple developer account.** These now block
-   the native app's hero auth path, not just the web one, and Apple sign-in is
-   a store requirement the moment Google exists there.
+1. **`WAZN_SITE_URL` in Vercel Production.** One field. Stops the SEO bleed. See defect 1.
+2. **Raise `rate_limit_email_sent` from 2.** `LAUNCH.md` needs at least five auth emails in
+   one sitting, so at 2/hour the checklist stalls on its own third checkbox.
+   `npm run supabase:admin -- set-email-rate-limit 30`.
+3. **Run `LAUNCH.md` on a real phone with a second account**, airplane mode included. The
+   PWA installs to the home screen today (`display: standalone`), so this needs no store and
+   no spend. GATE U7's last item and v5 acceptance item 11.
+4. **Leaked-password protection is NOT a config click.** It is Supabase **Pro only**; it was
+   attempted and returned 402 (DECISIONS.md:2468, `scripts/supabase_admin.ts:398-421`). It is
+   a purchase decision. This block said "it is a config change" for days and that was wrong.
+5. **Google OAuth client and the Apple developer account** ($99/yr, plus $25 Play). These
+   block the hero auth path on both targets, and Apple sign-in becomes mandatory the moment
+   Google exists on iOS.
+6. **Branch protection is unavailable.** `gh api .../branches/main/protection` returns 403:
+   the repo is PRIVATE on the GitHub free plan. Required status checks cannot be turned on
+   until it goes public or onto Pro. Four of the last twelve PRs merged before their own CI
+   reported and two turned `main` red.
 
-**Next action:** the rest canvas takeover, which is decided and specified and
-touches both stacks. P1 begins after it, starting on Home, where six of the
-eleven carried findings live. P1's shared-domain pieces (notable-set trigger,
-in-session PR baseline, finish verdict) should land behind `portable.ts`
-before either stack renders them, following the `live-board.ts` precedent, or
-every P1 restyle is built twice. Stage 4B
-(store publishing) still needs Ameen's Mac plus the $25 Play and $99 Apple
-accounts.
+The other four security-advisor warnings (`resolve_invite`, `social_feed`,
+`upsert_user_preference`, `weekly_leaderboard` being SECURITY DEFINER) are by design.
+
+#### Next action
+
+**Stage 4A phase A0.** Foundations: the Expo web target, the native locale adapter, the unit
+round-trip, the `set_type` fix, `rest.ts` into `portable.ts`, and a test suite for `mobile/`.
+None of it is user-visible and all of it is load-bearing for everything after.
+
+In parallel, and independently, **Ameen runs `LAUNCH.md` on his phone against the installed
+PWA**. It costs a day, needs no migration work, and is the only source of information this
+project does not have. Nine gates have produced zero evidence-based stops.
+
+#### How this block stays true
+
+Four mechanisms, because the written rule in §6 was skipped four consecutive times.
+
+- `.claude/hooks/session-start.sh` prints computed state at every session start, including
+  **how many commits have landed since this file was last edited**. Derived, so it cannot go
+  stale.
+- `.claude/hooks/status-guard.sh` blocks a session from ending with committed changes under
+  `src/`, `mobile/` or `supabase/` that never touched `WAZN_PLAN.md`.
+- `.claude/hooks/git-safety.sh` snapshots uncommitted work to `refs/wazn-safety/<stamp>`
+  before any destructive git command. Written after a subagent that had been told read-only
+  ran `git checkout -- CLAUDE.md` and destroyed a session's work.
+- CI fails a pull request that changes `src/`, `mobile/` or `supabase/` without changing
+  `WAZN_PLAN.md`. Hooks are local; CI is universal. It cannot block a merge until branch
+  protection exists (see blocked item 6), but it fails loudly.
+
+**Read this block as a claim to verify, not a fact to recite. The database beats the file,
+and `git log` beats both.**
 
 ### 7.1 Log (chronological, newest last)
 

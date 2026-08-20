@@ -1,7 +1,34 @@
 # v5 "Momentum" P0 gate report
 
-**Date:** 2026-08-17. **Commit:** `1b7859f`.
-**Verdict: CLOSED at 4/11 acceptance.** P0 does not pass as written. Eight of
+**Gate run:** 2026-08-17. **Last reconciled against HEAD:** 2026-08-19.
+
+This document is maintained, not pinned. It used to name a commit here, which
+made it read as a snapshot; it is the authoritative table of the eleven carried
+findings, so it gets reconciled against the code instead. The carried-findings
+table now carries a status column, and that column is the part to keep true.
+
+## 2026-08-19: v5 ships in full, in Expo
+
+Ameen's call. Wazn moves to ONE codebase, Expo Router plus NativeWind, shipping
+iOS, Android and web through react-native-web. **v5 "Momentum" is implemented in
+full as part of that migration, because the port and the restyle are the same
+edit.** Each screen is moved to Expo already in its v5 form, once.
+
+What that changes for this report:
+
+- The five findings still open below, and all of P1, land in **Expo**. Not in
+  `src/`. Nothing here is a reason to restyle a file that is being retired.
+- `src/components` and `src/screens` do not survive the migration. `src/lib`
+  does: it is portable domain and already crosses via `src/lib/portable.ts`, so
+  domain fixes still belong there.
+- The six rows already closed below were closed in `src/` before this call.
+  They are not wasted. They are decisions the Expo build inherits rather than
+  re-argues: which three tiles, avatar polarity, header ground, one start
+  control, glyphs stay, rest takes no touches.
+
+---
+
+**Verdict at the gate run: CLOSED at 4/11 acceptance.** P0 does not pass as written. Eight of
 its PRs merged with no stop between them, and this is the first time the
 acceptance list has been read against the running app. The full close, with
 every unmet item classified, is the last section of this document.
@@ -114,7 +141,8 @@ sentences a user reads, and screen 08's own kicker sets the word REST, an
 em-dash, then THE COACH IS THINKING. Ameen's standing rule is that em-dashes
 never ship.
 
-This is deliberately not fixed here. CLAUDE.md's own warning applies: a copy
+**In progress as of 2026-08-19**, in another session. It was deliberately not
+fixed here. CLAUDE.md's own warning applies: a copy
 change is an API change to every selector in `e2e/` and `scripts/`, and that
 exact mistake cost three GATE 4 tests on `main` the day before yesterday. It
 needs its own PR with the greps done first.
@@ -159,19 +187,44 @@ the whole design, not one phase. No new work is created by carrying them.
 screenshot on 2026-08-17 and appears in no plan, no PR description and no
 backlog. Carried explicitly so they cannot be lost.
 
-| finding | screen | lands with |
+**Six of the eleven are now closed. Five are open.** The status column is the
+current state at HEAD, verified against the source on 2026-08-19, not against
+this document's own memory of what merged. Two of the six closed rows closed as
+rule 6 deviations rather than as plain passes; both are written out under the
+table.
+
+| finding | screen | status at 2026-08-19 |
 | --- | --- | --- |
-| stat tiles are `WEEK · STREAK · FREEZE`, reference is `STREAK · THIS WEEK · SESSIONS` | 06 | P1, Home |
-| numbered plan list rows missing | 06 | P1, Home |
-| two competing start controls (card CTA and the sticky pill) | 06 | P1, Home |
-| tab bar draws glyphs; reference is text only | 06 | P1, needs a call first |
-| avatar polarity inverted | 06 | P1, Home |
-| header is a banded surface; reference has no bar | 06 | P1, Home |
-| status strip missing (elapsed, TELL THE COACH, FINISH) | 07 | P1, live screen |
-| exercise header missing (`title 26` + `SET n / m · LAST …`) | 07 | P1, live screen |
-| cream rest bar is the only light surface on a dark screen | 07 | P1, resolves with the takeover |
-| next-set block is one sentence, not `NEXT` + figure 38 + chip | 08 | P1, rest canvas |
-| screen 08 carries four inputs where the spec says none | 08 | **decide with the takeover build** |
+| stat tiles are `WEEK · STREAK · FREEZE`, reference is `STREAK · THIS WEEK · SESSIONS` | 06 | **CLOSED as a deviation. PR #104 (`8be4205`).** Order corrected to `STREAK · THIS WEEK · FREEZE`. The third tile deliberately does not become SESSIONS. See "deviation 1" below |
+| numbered plan list rows missing | 06 | **OPEN.** The last of the six Home findings, and the one that is a build rather than a call: it needs a fetch Home does not currently make. Lands in Expo |
+| two competing start controls (card CTA and the sticky pill) | 06 | **CLOSED. PR #105 (`6046b08`).** The sticky `Start workout` row hides on exactly the hunt card's own condition, so one start shows. Hidden rather than deleted: it is the only start when the card is absent, which is every empty account and every account with the coach on Quiet or Off |
+| tab bar draws glyphs; reference is text only | 06 | **DECIDED as a deviation. PR #105 (`6046b08`).** The glyphs stay. See "deviation 2" below |
+| avatar polarity inverted | 06 | **CLOSED. PR #104 (`8be4205`)**, `src/components/Avatar.tsx`. Surface plus a hairline ring now, not the inverted flip pair. The flip pair was correct under the old paper default and inverts into a cream puck on the iron ground |
+| header is a banded surface; reference has no bar | 06 | **CLOSED. PR #104 (`8be4205`)**, `src/index.css`, the `header-band` utility. Solid `--color-ink`. It stays opaque because it is sticky, so it reads as invisible rather than as absent |
+| status strip missing (elapsed, TELL THE COACH, FINISH) | 07 | **OPEN.** All three exist somewhere on the screen. The strip that gathers them does not. Lands in Expo |
+| exercise header missing (`title 26` + `SET n / m · LAST …`) | 07 | **OPEN.** Still v3's plate card: thumb, `text-title` name, `set n of m · equipment`, ghost line below (`src/components/SetEntry.tsx:380`). Lands in Expo |
+| cream rest bar is the only light surface on a dark screen | 07 | **OPEN, and the takeover did NOT resolve it.** Verified at HEAD: `RestChip` paints `background: var(--color-text)` (`src/components/RestTimer.tsx:72`) and renders inside the commit cluster, which sits at `z-[31]` (`src/components/SetEntry.tsx:640`) deliberately ABOVE the takeover canvas at `z-[29]`. The cream bar floats on top of the dark canvas rather than being covered by it. Lands in Expo |
+| next-set block is one sentence, not `NEXT` + figure 38 + chip | 08 | **OPEN.** `src/components/RestExpanded.tsx:310` still renders `rest.next` plus the lift name as one line. No figure 38, no separate reasoning chip. Lands in Expo |
+| screen 08 carries four inputs where the spec says none | 08 | **DECIDED by construction. PR #103 (`74f7d9d`).** Under takeover the canvas sets `pointerEvents: 'none'` (`src/components/RestExpanded.tsx:130`), so the controls are omitted rather than rendered dead: a button a screen reader announces and nothing can activate is worse than no button. The tap-opened path keeps all four |
+
+**Deviation 1: the third stat tile keeps FREEZE.** Reasoning at
+`src/components/StatTiles.tsx:15-25`, logged in DECISIONS.md. v5's third tile is
+`SESSIONS 149`, a lifetime total: it cannot change what anybody does tonight and
+it is the one number on the screen that only ever grows. FREEZE can change
+tonight. The research the spec itself cites is that unprotected streaks create
+anxiety and churn, so the protection is shown before it is needed rather than
+announced after it is spent. `2` is not a reward to spend; it is the app saying
+two bad weeks this month are already covered.
+
+**Deviation 2: the tab bar keeps its glyphs.** Reasoning at `DECISIONS.md:7881`,
+live at `src/components/TabBar.tsx:22`. The reference is thin here rather than
+decisive: its `TabBar` is seven lines of inline style rendering a label, while
+every other screen in the bundle is specified to the pixel. Icon plus label is
+the bottom-nav convention because of targeting, not decoration, and six tabs
+across 390px is the density where a 14px mark beats 9px mono text. The glyphs
+are not borrowed icons either: each is built from the wordmark's own parts.
+Everything the handoff IS specific about is unchanged (ember 500 rail, nano
+labels, darker ground, tab order).
 
 ### Carried into P2
 
@@ -191,15 +244,18 @@ Item 6, Tell the coach. `TellCoachSheet.tsx` is v3-era and was neither
 restyled nor re-tested in P0. It needs someone to look at it, which is not the
 same as a decision, and it should not be recorded as either a pass or a fail.
 
-### Outside the acceptance list, carried
+### Outside the acceptance list
 
-The web em-dash sweep. Its own PR, greps first, because a copy change is an API
-change to every selector in `e2e/` and `scripts/`.
+The web em-dash sweep. **In progress, 2026-08-19.** `src/lib/i18n.ts` still
+holds 83 em-dashes at HEAD; another session is taking them out as this is
+written, so do not start a second pass at it. Greps first, because a copy change
+is an API change to every selector in `e2e/` and `scripts/`.
 
 ### What is NOT carried, because it is already decided
 
 The rest canvas takeover, after working sets only. Decided 2026-08-17, spec in
-DECISIONS.md, and it is the first build after this gate rather than a P1 item.
+DECISIONS.md. **Shipped in PR #103 (`74f7d9d`)**, and the build found the clause
+was already true: `commitOutcome` has read `setType !== 'warmup'` since Stage 1.
 
 ### A note on the handoff's own checkboxes
 

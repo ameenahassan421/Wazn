@@ -7940,3 +7940,169 @@ change that breaks nine tests. It does not: the smoke fixture has no due
 routine with the coach speaking, so the button is still there for it. All nine
 pass. That was checked before the edit rather than after, because CLAUDE.md
 has the receipt from the last time somebody did it the other way round.
+
+## 2026-08-17 (written 2026-08-19): the Home tiles keep FREEZE, and SESSIONS does not ship
+
+**Backfilled.** `src/components/StatTiles.tsx:25` has cited "Deviation logged in DECISIONS.md
+2026-08-17" since PR #104 merged, and no such entry was ever written. The choice lived only in
+a commit message. Worse than absent: the only 2026-08-17 text on the subject records the
+opposite conclusion, calling the tiles "the worst of them" among the P0 findings. This entry
+settles it, and it is dated to the day the decision was made rather than the day it was
+written down.
+
+**The decision.** Home's three stat tiles are `STREAK · THIS WEEK · FREEZE`. The *order* was
+wrong and PR #104 fixed it: the reference leads with STREAK and the app led with WEEK. The
+*third tile* deliberately does not match. v5 names `SESSIONS 149`; the app keeps `FREEZE 2`.
+
+**Why, under rule 6.** A streak with hidden protection is still a streak that threatens you.
+The research the v5 spec itself cites is that unprotected streaks create anxiety and churn, so
+the protection has to be visible *before* it is needed rather than announced after it is
+spent. `FREEZE 2` is not a reward to spend; it is the app saying "two bad weeks this month are
+already covered". `SESSIONS 149` is a lifetime total: it cannot change what anybody does
+tonight, and it is the one number on that screen that only ever grows. On a home screen with
+exactly three slots, one of them should not be a number that is never actionable.
+
+**What this does not excuse.** The P0 gate was right that the tiles were a real finding, and
+right that "PR 3 examined `StatTiles.tsx` and recorded 'StatTiles needed nothing'" was a
+review that checked typography and was silent about payload. Two of the three tiles were
+genuinely wrong. The disagreement is only about the third.
+
+**Recorded in three places now**, because one of them failing is how this went missing:
+the code comment at `StatTiles.tsx:14-25`, this entry, and the status column in
+`docs/design/v5-momentum/P0-GATE.md`.
+
+## 2026-08-19: ONE codebase. Expo everywhere, the PWA retired, v5 built once
+
+**Ameen's call, after a forensic audit of the whole repo.** Wazn migrates to a single Expo
+codebase (Expo Router plus NativeWind) shipping iOS, Android and web. The separate Vite PWA
+in `src/` is retired at the end of the migration. **v5 "Momentum" is implemented in full as
+part of that migration, not before it.**
+
+### Why one codebase, and why now
+
+Two codebases is not a stable end state, and three days of evidence proved it. Since
+`mobile/` was stood up on 2026-08-16 the split produced: a data-corruption bug (native writes
+`set_type: 'normal'` on every set, so every warm-up becomes a working set), a unit preference
+that does not round-trip between platforms, a `Readiness` type that names two different things
+in the two stacks, a rest-canvas takeover with an opt-out on web and none on native, and ~35
+lines of byte-identical auth code copy-pasted after `portable.ts` already existed. PRs #104
+and #105 fixed five Home findings on web and touched no file under `mobile/`, so the
+divergence was compounding while it was being measured.
+
+All fourteen remaining v5 P1 items are currently two builds. Native imports 24 symbols from 6
+of the 32 barrel modules, out of 286 exported. The door exists and nobody walks through it.
+
+### Why the web is not lost
+
+The alternative I first argued for, keeping the PWA as primary, was wrong, and three checks
+killed it:
+
+1. **`mobile/` already has `react-native-web ~0.21.0` and `react-dom 19.2.3`.** Expo Router
+   builds to web. Expo web is one dependency away (`@expo/metro-runtime`). "Migrate to Expo"
+   costs a web *codebase*, not a web *target*.
+2. **The 222 SEO exercise pages import ZERO things from `src/`.** `scripts/build_seo_pages.mjs`
+   writes static HTML into `dist/`. The only organic acquisition channel is independent of the
+   app and survives untouched. This was the strongest objection and it was simply false.
+3. **The migration surface is far smaller than the line count.** `src/lib` (11,184 lines) is
+   already portable domain and already crosses. Of 74 test files, **58 are `src/lib` tests
+   (9,825 lines) that do not move at all**; only 16 component and screen files (2,430 lines)
+   need React Native Testing Library. Web-only runtime dependencies total four.
+
+Hence the rule that now governs what is worth building on any given day:
+
+> **`src/lib` survives the migration. `src/components` and `src/screens` do not.**
+
+### Why v5 is built inside the migration rather than before it
+
+The port and the restyle are the same edit. Building v5 P1 on web first means building
+fourteen items twice, in a codebase scheduled for deletion. Each screen moves to Expo already
+in its v5 form, once. Stage 4A phase A2 carries all five open P0 findings plus the momentum
+bar, the PR moment, toasts and the finish verdict.
+
+### What was rejected
+
+**Rejected: keep both, indefinitely.** The end state nobody chose but everybody drifts into.
+Every P1 item costs two builds and the divergence bugs above keep arriving.
+
+**Rejected: a big-bang rewrite.** Deleting `src/` and rebuilding takes production down for
+weeks, and `DECISIONS.md:7275` already rejected exactly this on 2026-08-16. Stage 4A is a
+strangler-fig migration: the app stays shippable at every phase, the five stub tabs ship as
+DOM components on day one, and screens are nativized by value afterwards.
+
+**Rejected again: Capacitor.** Already rejected 2026-08-16. The plan's Stage 4B still
+described it as ACTIVE until today, which is a fair sample of the problem this session was
+opened to fix.
+
+**Rejected: migrating before Ameen runs `LAUNCH.md`.** The phone run costs one day, needs zero
+migration work, and is the only source of information this project lacks. Running it against
+an app that is mid-rewrite is the worst possible condition for learning whether the core loop
+works. The two proceed in parallel; neither blocks the other.
+
+### The honest counter-argument, recorded
+
+The native app **does not currently do one thing the PWA cannot.** The stated reasons for
+going native (`DECISIONS.md:7266`) were Guideline 4.2, keyboard and haptic ergonomics, and a
+foundation for background rest timers. `mobile/package.json` declares `expo-keep-awake` and
+**no `expo-notifications` and no `expo-task-manager`**; the native rest timer is a
+`setInterval` in a React component and dies on backgrounding exactly like the web one. The
+background timer is the capability that justifies the migration, so it is scheduled
+explicitly in phase A2 rather than assumed to arrive with the platform.
+
+### GATE A2 is the instrument this project has never had
+
+§1 has said "log a set in under 30 seconds, one hand, mid-workout" for 206 commits and nothing
+in the repo has ever measured it. In the seven days to 2026-08-19, 49,409 insertions landed
+and not one of them made logging a set faster in a way anybody could prove. GATE A2 is a test
+that counts taps and elapsed time from opening the Log screen to committing the first set, on
+a device, and fails the build on regression.
+
+## 2026-08-19: the record broke before the code did, so the record is now enforced
+
+`WAZN_PLAN.md` §7.0 is declared the source of truth by `CLAUDE.md` and by §6. PRs #103, #104,
+#105 and #106 merged code to `main` and **none of them touched it.** By 2026-08-19 it was nine
+commits stale and said, in the same paragraph a fresh session reads first:
+
+- "Rest canvas takeover DECIDED 2026-08-17, **not built**". PR #103 shipped it 48 minutes
+  after that line was written.
+- "**Next action:** the rest canvas takeover". Already done.
+- "**P1 has not started**". PRs #104 and #105 had closed five of the eleven carried findings.
+
+Local `main` was meanwhile eight commits behind `origin/main` with nothing saying so. Nothing
+was broken. The *record* was, which is worse, because every session begins by reading it.
+
+`docs/design/v5-momentum/P0-GATE.md`, which §7.0 delegates the authoritative findings table
+to, had **exactly one commit in its history** and self-pinned to a commit five merges back, so
+the fallback was as stale as the block that delegated to it.
+
+**Four mechanisms now, because the written rule in §6 was not enough. It had been there the
+whole time and was skipped four consecutive times.**
+
+- `.claude/hooks/session-start.sh` prints computed state at session start, including the count
+  of commits landed since `WAZN_PLAN.md` was last edited. Derived, so it cannot go stale.
+- `.claude/hooks/status-guard.sh` (Stop) blocks a session ending with committed changes under
+  `src/`, `mobile/` or `supabase/` that never touched `WAZN_PLAN.md`. Uncommitted scratch work
+  gets a one-line reminder, not a wall.
+- `.claude/hooks/git-safety.sh` (PreToolUse on Bash) snapshots to `refs/wazn-safety/<stamp>`
+  before any destructive git command, then allows it through. **Snapshotting was chosen over
+  blocking deliberately:** reverting is sometimes correct, so a block would have false
+  positives while a snapshot has none.
+- A CI job fails a pull request that changes `src/`, `mobile/` or `supabase/` without changing
+  `WAZN_PLAN.md`. Hooks are local; CI is universal.
+
+**`git-safety.sh` exists because of a live demonstration.** During the audit, a subagent that
+had been told read-only in its own prompt ran `git checkout -- CLAUDE.md` and destroyed this
+session's uncommitted work. It even narrated that it had done so. **Instructions do not bind
+subagents. Commit before you fan out, or accept that you will lose the diff.**
+
+**Branch protection cannot be turned on.** `gh api repos/.../branches/main/protection` returns
+403: the repo is PRIVATE on the GitHub free plan. So the CI rule fails loudly and cannot yet
+block a merge. It becomes enforcing the moment the repo goes public or onto Pro. Four of the
+last twelve PRs merged before their own CI reported and two turned `main` red for 31 minutes.
+
+### One correction to the record, made in the same pass
+
+§7.0 listed "enable leaked-password protection" as blocked on Ameen and called it "a config
+change." **It is Supabase Pro only.** It was attempted, returned 402, and that was already
+recorded at `DECISIONS.md:2468` and encoded at `scripts/supabase_admin.ts:398-421`. The
+authoritative block was wrong about its own top blocker, which is a fair illustration of why
+a claim in that block is now to be verified rather than recited.

@@ -2,7 +2,6 @@ import { useSyncExternalStore } from 'react'
 
 import {
   type BoardExercise,
-  type BoardPosition,
   bankSet,
   bankedVolumeKg,
   currentPosition,
@@ -38,6 +37,13 @@ import { supabase } from '@/services/supabase'
  * them to SQLite is its own PR and its own test. Until then this store must
  * not be described as offline-capable, and the screen says so rather than
  * showing a lifter a green tick it has not earned.
+ *
+ * It is also NOT yet a board that can hold a warm-up. Every set carries a
+ * `type` and it is now carried all the way to the row (see `persistSet`), but
+ * `seedBoard` mints every set `'normal'` and no native control changes it, so
+ * in practice the column is `'normal'` until the set-type toggle lands. The
+ * plumbing is correct ahead of the control on purpose: the failure mode of the
+ * other order is silent, permanent and in the database.
  */
 
 export type LiveStatus = 'idle' | 'active' | 'finished'
@@ -219,7 +225,7 @@ export function bankCurrentSet(weightKg: number | null, reps: number | null): vo
     restEndsAt: rests ? Date.now() + DEFAULT_REST_SECONDS * 1000 : null,
     restTotal: rests ? DEFAULT_REST_SECONDS : 0,
   })
-  void persistSet(position, exercise.exerciseId, setRow.setNumber, weightKg, reps)
+  void persistSet(exercise.exerciseId, setRow.setNumber, setRow.type, weightKg, reps)
 }
 
 /** Dismissed by a tap, or by the lifter deciding they are ready. */
@@ -234,10 +240,23 @@ export function adjustRest(deltaSeconds: number): void {
   set({ restEndsAt: next })
 }
 
+/**
+ * The insert. `setType` is the BOARD's type, never a literal.
+ *
+ * It was `'normal'` hardcoded until 2026-08-19, which meant a warm-up banked
+ * on the phone landed in the same table as a working set and stayed there.
+ * Every consumer of that column reads it as truth: `estimatedOneRepMax`
+ * refuses warm-ups, `exercise_bests` and the record trigger in migration 0009
+ * filter on `set_type <> 'warmup'`, and the momentum target this store chases
+ * is computed the same way. One wrong literal here poisons e1RM, records and
+ * volume for that lifter permanently, and no later edit on the phone can find
+ * the rows to fix. The web app carries the lifter's chosen `setType` into the
+ * row (`LogScreen`'s `optimistic`); this is the same contract, same table.
+ */
 async function persistSet(
-  _position: BoardPosition,
   exerciseId: string,
   setNumber: number,
+  setType: BoardExercise['sets'][number]['type'],
   weightKg: number | null,
   reps: number | null,
 ): Promise<void> {
@@ -252,7 +271,7 @@ async function persistSet(
     set_number: setNumber,
     weight_kg: weightKg,
     reps,
-    set_type: 'normal',
+    set_type: setType,
   })
   if (error !== null) set({ unsynced: state.unsynced + 1 })
 }

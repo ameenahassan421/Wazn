@@ -240,3 +240,94 @@ jobs:
         # real production bundle, because both of those defects were
         # build-shaped.
         run: npm run test:smoke
+
+  plan-state:
+    # The one mechanical cause of this project's drift, and it has already
+    # happened four times: PRs #103, #104, #105 and #106 each merged code to
+    # main without touching WAZN_PLAN.md, whose section 7.0 the repo declares
+    # its single source of truth. By 2026-08-19 that block was nine commits
+    # stale and opened the next session by naming, as the "next action", work
+    # that had already shipped. Nothing was broken. The RECORD was, which is
+    # worse, because the record is the first thing every session reads.
+    #
+    # `.claude/hooks/status-guard.sh` (PR #107) closes the same loop locally.
+    # Hooks are local: they fire only inside a Claude Code session, on a
+    # machine that has them checked out and enabled. They cannot see a commit
+    # pushed from a phone, a cloud session, another editor, or a human. This
+    # is the universal half of that pair, and it deliberately mirrors the
+    # hook's wording so the two read as one rule.
+    #
+    # Its own job rather than a step in `check`, for three reasons: `check`
+    # also runs on pushes to main, where there is no PR to diff against; this
+    # needs neither node nor a checkout, so it answers in seconds instead of
+    # waiting behind a six-minute build wall; and a stale plan is a different
+    # failure from a broken build and should be legible as one on the PR.
+    #
+    # ENFORCEMENT, honestly stated: this repo is PRIVATE on the GitHub free
+    # plan, where branch protection and required status checks do not exist
+    # (the protection endpoints answer 403). So this job fails loudly and red,
+    # and a human can still merge straight past it. It becomes enforcing the
+    # moment the repo goes public or onto a paid plan, with no change needed
+    # here: tick it on as a required check.
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - name: Code changed, so WAZN_PLAN.md must have changed too
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # File NAMES only, straight from the API, so no checkout and no
+          # fetch-depth games. `gh pr diff` would pull the whole patch and
+          # errors on very large diffs; the files endpoint paginates.
+          changed=$(gh api --paginate \
+            "repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/files" \
+            --jq '.[].filename')
+
+          # The four trees whose contents a future session has to be told
+          # about. `.md` files under them are excluded on purpose: a README in
+          # mobile/ changes no state, and requirement was that a
+          # documentation-only PR never trips this.
+          code=$(printf '%s\n' "$changed" \
+            | grep -E '^(src|mobile|supabase/migrations|supabase/functions)/' \
+            | grep -v '\.md$' || true)
+
+          if [ -z "$code" ]; then
+            echo "No code paths changed in this PR. Nothing for section 7.0 to reconcile."
+            exit 0
+          fi
+
+          if printf '%s\n' "$changed" | grep -qx 'WAZN_PLAN.md'; then
+            echo "Code changed and WAZN_PLAN.md is in this PR. Good."
+            exit 0
+          fi
+
+          echo "::error title=WAZN_PLAN.md was not updated::This PR changes code under src/, mobile/, supabase/migrations/ or supabase/functions/ and leaves the source of truth untouched. See the job log for the two ways to fix it."
+          {
+            echo ""
+            echo "FAILED: this PR changes code and never touches WAZN_PLAN.md."
+            echo ""
+            echo "Code changed:"
+            printf '%s\n' "$code" | head -20 | sed 's/^/  /'
+            echo ""
+            echo "WHY THIS FAILS:"
+            echo "  WAZN_PLAN.md section 7.0 is the authoritative current-state block. It is what"
+            echo "  the next session reads before it decides what to build, and section 6 requires"
+            echo "  it to be updated with what is now true. PRs #103, #104, #105 and #106 all"
+            echo "  skipped that. Section 7.0 went nine commits stale and told the following"
+            echo "  session to build a feature that had already shipped. Merged code that nobody"
+            echo "  wrote down is code the next session rebuilds or contradicts."
+            echo ""
+            echo "TWO ACCEPTABLE RESOLUTIONS. Pick one:"
+            echo "  1. Update section 7.0 with what is now true and date-stamp it. This is the"
+            echo "     usual answer for anything that ships behaviour, schema or a screen."
+            echo "  2. If this change genuinely alters no state a future session needs (a rename,"
+            echo "     a test-only edit, a comment), add ONE line to section 7.1 saying so, with"
+            echo "     the date and the reason. Section 7.1 is the chronological log; section 7.0"
+            echo "     is the claim. A change that alters no claim still belongs in the log."
+            echo ""
+            echo "If the change also embodies a decision, append the reasoning to DECISIONS.md."
+          } >&2
+          exit 1
