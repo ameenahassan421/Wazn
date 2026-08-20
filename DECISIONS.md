@@ -7950,13 +7950,13 @@ opposite conclusion, calling the tiles "the worst of them" among the P0 findings
 settles it, and it is dated to the day the decision was made rather than the day it was
 written down.
 
-**The decision.** Home's three stat tiles are `STREAK · THIS WEEK · FREEZE`. The *order* was
+**The decision.** Home's three stat tiles are `STREAK · THIS WEEK · FREEZE`. The _order_ was
 wrong and PR #104 fixed it: the reference leads with STREAK and the app led with WEEK. The
-*third tile* deliberately does not match. v5 names `SESSIONS 149`; the app keeps `FREEZE 2`.
+_third tile_ deliberately does not match. v5 names `SESSIONS 149`; the app keeps `FREEZE 2`.
 
 **Why, under rule 6.** A streak with hidden protection is still a streak that threatens you.
 The research the v5 spec itself cites is that unprotected streaks create anxiety and churn, so
-the protection has to be visible *before* it is needed rather than announced after it is
+the protection has to be visible _before_ it is needed rather than announced after it is
 spent. `FREEZE 2` is not a reward to spend; it is the app saying "two bad weeks this month are
 already covered". `SESSIONS 149` is a lifetime total: it cannot change what anybody does
 tonight, and it is the one number on that screen that only ever grows. On a home screen with
@@ -7999,7 +7999,7 @@ killed it:
 
 1. **`mobile/` already has `react-native-web ~0.21.0` and `react-dom 19.2.3`.** Expo Router
    builds to web. Expo web is one dependency away (`@expo/metro-runtime`). "Migrate to Expo"
-   costs a web *codebase*, not a web *target*.
+   costs a web _codebase_, not a web _target_.
 2. **The 222 SEO exercise pages import ZERO things from `src/`.** `scripts/build_seo_pages.mjs`
    writes static HTML into `dist/`. The only organic acquisition channel is independent of the
    app and survives untouched. This was the strongest objection and it was simply false.
@@ -8068,7 +8068,7 @@ commits stale and said, in the same paragraph a fresh session reads first:
 - "**P1 has not started**". PRs #104 and #105 had closed five of the eleven carried findings.
 
 Local `main` was meanwhile eight commits behind `origin/main` with nothing saying so. Nothing
-was broken. The *record* was, which is worse, because every session begins by reading it.
+was broken. The _record_ was, which is worse, because every session begins by reading it.
 
 `docs/design/v5-momentum/P0-GATE.md`, which §7.0 delegates the authoritative findings table
 to, had **exactly one commit in its history** and self-pinned to a commit five merges back, so

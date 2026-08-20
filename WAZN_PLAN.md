@@ -29,29 +29,37 @@ These override anything else in this file or in any prompt:
 3. **Ads never appear during a workout.** Only placements allowed:
    one interstitial max on the post-workout summary screen; rewarded
    video only when user-initiated. (Ads arrive in Stage 6, not before.)
-4. **Design system: v2 "Loaded Ink, refined" (handoff bundle, being
-   implemented as of 2026-08-04).** Dark only — ink `#0C0B0A`, chalk
-   `#ECEBE8`, single amber `#F0B429` with a 9-step ramp; warm neutrals,
-   never blue-grey. IBM Plex family (Sans for UI, Mono for kickers,
-   Sans Arabic for RTL) — one family, three voices. Numbers min 24px
-   `tabular-nums` (one recorded exception: 20px multi-set summary).
-   Touch targets min 48px, hot-path controls 58–66px. Hero button
-   tier: ONE solid amber button per screen, max. Knurl cross-hatch
-   texture in thin bands and the PR badge only, never as a fill.
-   Elevation = 1px hairline ring + 1px inset top light — no drop
-   shadows. Exactly ONE gradient exists in the app: the header band.
-   Errors are amber and outlined, never red. Motion: two easings only
-   (ease-out, linear); press = 80ms dim+settle; PR = amber flash to
-   persistent 7% tint; reduced-motion collapses durations. No emoji
-   in UI. Full tokens and screens: design handoff
-   `Wazn_design_system_v2` / DECISIONS.md. **Addendum v2.1 (2026-08-04):** four
-   missing screens designed against the same system — Coach tab (AI:
-   notes + routine builder, no chat), Progress dashboard (this-week,
-   muscle-balance chart with knurl target band, volume trend, strength
-   list), Friends (leaderboard + feed + likes), Finish summary + 4:5
-   share card. Tab bar grows to FIVE items: Log · History · Progress ·
-   Coach · Friends. Handoff bundle: `docs/design/v2.1-missing-screens.md`
-   (+ `.html`), committed to the repo so it cannot go missing again.
+4. **Design system: v5 "Momentum" (current since 2026-08-16).** The
+   authoritative values are `src/lib/tokens.ts` and `src/index.css`, not
+   this paragraph: `npm run check:tokens` compares them and regenerates
+   `mobile/tailwind.tokens.js`, and CI fails on drift. **Never type a colour
+   or a size into a document and expect it to stay true.**
+
+   What is stable enough to write down: one accent, **ember `#e8491d`**
+   (adopted 2026-08-12, replacing v2's amber `#F0B429`). Text on solid ember
+   is warm near-black `#1c0e08`, never white. Display and figures are
+   **Saira Semi Condensed**; the type ramp is named steps, and
+   `npm run check:type` fails any off-ramp font size in `src/`. On native,
+   type is a component (`<Txt step="hero">`) and never a class, because React
+   Native picks a font cut by family NAME. Numbers render tabular. Touch
+   targets min 48px, hot-path controls 58 to 66px. Elevation is a 1px hairline
+   ring, no drop shadows. No emoji, no decorative illustration. Two easings
+   (ease-out, linear); reduced-motion collapses durations.
+
+   **The lineage, because four systems in fifteen days is itself a finding.**
+   v2 "Loaded Ink" (2026-08-04, amber, IBM Plex, dark only), v3 "The Plate"
+   (2026-08-13, paper-first, five tabs retired), v3.0 "the coach everywhere"
+   (2026-08-14, six tabs restored on Ameen's call), v5 "Momentum"
+   (2026-08-16, ember ground, named type ramp). **This paragraph specified v2
+   until 2026-08-19**, three systems after it stopped being true, inside the
+   section this plan calls non-negotiable. Live specs:
+   `docs/design/v5-momentum/` (`README.md`, `P0-PLAN.md`, `P0-GATE.md`).
+   Superseded bundles are stamped in place or in `docs/archive/`.
+
+   **v5 is the last new visual system until the app has users.** Stage 4A
+   implements it in full during the Expo migration, because the port and the
+   restyle are the same edit.
+
 5. **CSS logical properties only** (`margin-inline-start`, `text-align:
 start`, etc.), `dir="ltr"` on root. Arabic RTL lands in Stage 5 and
    must be a flip, not a rewrite. The header language toggle is a
@@ -166,7 +174,7 @@ everywhere. Then he logs one real gym session in it.
 Routines (create/edit/duplicate; start workout from routine; sets
 pre-filled from last performance; freestyle still works). Rest timer
 (auto-start on set log, per-exercise default, adjustable ±15s,
-countdown visible in-flow, survives navigation; done state = amber
+countdown visible in-flow, survives navigation; done state = ember
 ring + "Rest done" — SILENT, no sound/modal per design v2, optional
 haptic only). Set types in UI
 (normal/warmup/failure/drop, one tap to cycle; warmups stay excluded
@@ -246,7 +254,7 @@ moment he misses Hevy gets written down and becomes backlog.
 
 Then the insight features: Exercise detail page (history, records: best weight / best est-1RM /
 best session volume, image, notes). PR detection computed on log,
-celebrated inline (amber flash, no confetti), stored consistently.
+celebrated inline (ember flash, no confetti), stored consistently.
 Charts beyond 1RM: session volume over time; weekly sets per muscle
 group vs a 10–20 productive band; rep-range distribution. Custom
 exercises (name, muscle group, equipment; private per existing RLS).
@@ -610,19 +618,19 @@ in the first is banked. Work in the second is rented.
 
 #### Database, read 2026-08-19
 
-|                          |                                              |
-| ------------------------ | -------------------------------------------- |
-| Accounts / profiles      | 8 / 8, one is a robot, one is the simulator  |
-| Workouts                 | 152, of which 2 are unfinished               |
-| Workout sets             | 3198                                         |
-| Routines                 | 18                                           |
-| Exercises                | 134 (0 custom)                               |
-| AI generations           | 83                                           |
-| `client_errors`          | 0                                            |
-| `user_preferences` rows  | 4                                            |
-| Body tables              | `body_weights` 0, `body_measurements` 0, `protein_days` 1, `daily_checkins` 1 |
-| Last workout, any user   | 2026-08-17                                   |
-| Migrations applied       | **0001 through 0028**                        |
+|                         |                                                                               |
+| ----------------------- | ----------------------------------------------------------------------------- |
+| Accounts / profiles     | 8 / 8, one is a robot, one is the simulator                                   |
+| Workouts                | 152, of which 2 are unfinished                                                |
+| Workout sets            | 3198                                                                          |
+| Routines                | 18                                                                            |
+| Exercises               | 134 (0 custom)                                                                |
+| AI generations          | 83                                                                            |
+| `client_errors`         | 0                                                                             |
+| `user_preferences` rows | 4                                                                             |
+| Body tables             | `body_weights` 0, `body_measurements` 0, `protein_days` 1, `daily_checkins` 1 |
+| Last workout, any user  | 2026-08-17                                                                    |
+| Migrations applied      | **0001 through 0028**                                                         |
 
 **THE APP HAS STILL NEVER BEEN SHARED.** The 8 accounts are Ameen, people he already knows,
 one test robot and `simulator@trywazn.app`. **No reading of these numbers is a retention
@@ -639,13 +647,13 @@ one.** `information_schema` is.
 
 #### Code, verified 2026-08-19
 
-|                                    |                                                        |
-| ---------------------------------- | ------------------------------------------------------ |
-| Tests                              | **1,204 in 85 files, all passing** at HEAD             |
-| of which `src/lib` (survive)       | 58 files, 9,825 lines                                  |
-| of which component/screen (do not) | 16 files, 2,430 lines                                  |
-| `mobile/` tests                    | **zero.** No test script, no test file                 |
-| Production web                     | **https://www.trywazn.app**, 200 OK                    |
+|                                    |                                                                          |
+| ---------------------------------- | ------------------------------------------------------------------------ |
+| Tests                              | **1,204 in 85 files, all passing** at HEAD                               |
+| of which `src/lib` (survive)       | 58 files, 9,825 lines                                                    |
+| of which component/screen (do not) | 16 files, 2,430 lines                                                    |
+| `mobile/` tests                    | **zero.** No test script, no test file                                   |
+| Production web                     | **https://www.trywazn.app**, 200 OK                                      |
 | Web-only runtime dependencies      | four: `react`, `react-dom`, `@supabase/supabase-js`, `@vercel/analytics` |
 
 `mobile/` already carries `react-native-web ~0.21.0` and `react-dom 19.2.3`. **Expo web is
@@ -701,13 +709,13 @@ stop between them and the acceptance list was read against the running app after
 
 Of the eleven carried findings, **six are closed and five are open**, verified at HEAD:
 
-| closed | by |
-| --- | --- |
-| stat tile order (FREEZE deliberately kept over SESSIONS, a rule-6 deviation) | #104 `8be4205` |
-| avatar polarity | #104 `8be4205` |
-| header band | #104 `8be4205` |
-| two competing start controls | #105 `6046b08` |
-| tab bar glyphs (DECIDED: glyphs stay) | #105 `6046b08` |
+| closed                                                                                    | by             |
+| ----------------------------------------------------------------------------------------- | -------------- |
+| stat tile order (FREEZE deliberately kept over SESSIONS, a rule-6 deviation)              | #104 `8be4205` |
+| avatar polarity                                                                           | #104 `8be4205` |
+| header band                                                                               | #104 `8be4205` |
+| two competing start controls                                                              | #105 `6046b08` |
+| tab bar glyphs (DECIDED: glyphs stay)                                                     | #105 `6046b08` |
 | screen 08's four inputs (DECIDED by construction: `pointerEvents: 'none'` under takeover) | #103 `74f7d9d` |
 
 Open: numbered plan list rows (06); status strip (07); exercise header (07); cream rest bar

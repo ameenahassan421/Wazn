@@ -18,11 +18,11 @@ gone stale before, and `.claude/hooks/session-start.sh` prints how stale it is.
 Wazn is consolidating onto **Expo** (Expo Router + NativeWind), shipping iOS,
 Android and web from a single tree via react-native-web.
 
-| where           | what it is                                                      |
-| --------------- | --------------------------------------------------------------- |
-| `mobile/`       | the Expo app. Its own npm package, its own lockfile.             |
-| `src/lib/`      | portable domain (units, Epley, coach, readiness). Survives.      |
-| `src/screens/`, `src/components/` | the Vite PWA. Being ported, then retired.     |
+| where                             | what it is                                                                                                                           |
+| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `mobile/`                         | the Expo app. Its own npm package, its own lockfile.                                                                                 |
+| `src/lib/`                        | portable domain (units, Epley, coach, readiness). Survives.                                                                          |
+| `src/screens/`, `src/components/` | the Vite PWA. Being ported, then retired.                                                                                            |
 | `scripts/build_seo_pages.mjs`     | 110 English and 110 Arabic exercise pages, 222 files with the two indexes. Imports nothing from `src/`; unaffected by the migration. |
 
 `src/lib/portable.ts` is the only door between the two apps: `mobile/` resolves
@@ -91,10 +91,10 @@ trusting any list written in prose, including this one.
 
 ## Where the documentation lives
 
-| file                     | what it holds                                     |
-| ------------------------ | ------------------------------------------------- |
-| `WAZN_PLAN.md`           | the plan. Section 7.0 is current state.           |
-| `DECISIONS.md`           | every deviation and why, dated.                   |
-| `CLAUDE.md`              | working rules, traps, and the commands that lie.  |
-| `PRODUCT.md`, `DESIGN.md`, `LAUNCH.md` | product shape, design system, launch. |
-| `docs/`                  | setup guides (auth, agents, domain) and design philosophy. |
+| file                                   | what it holds                                              |
+| -------------------------------------- | ---------------------------------------------------------- |
+| `WAZN_PLAN.md`                         | the plan. Section 7.0 is current state.                    |
+| `DECISIONS.md`                         | every deviation and why, dated.                            |
+| `CLAUDE.md`                            | working rules, traps, and the commands that lie.           |
+| `PRODUCT.md`, `DESIGN.md`, `LAUNCH.md` | product shape, design system, launch.                      |
+| `docs/`                                | setup guides (auth, agents, domain) and design philosophy. |
