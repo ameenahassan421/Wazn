@@ -882,6 +882,38 @@ locale adapter, the unit round-trip to the server, the `Readiness` to `CheckIn`
 rename, and the first `mobile/` tests. GATE A0 is not claimed until all of them
 land and the wall is green on both packages.
 
+#### GATE 4 does not hold on native, and A0 found out why
+
+The A0 gate asks whether a set logged on native and one logged on web agree. On the two
+fields it names they do: both write `weight_kg` (weight is stored in kg always, §2, the
+toggle is display only) and both now write the board's real `set_type`, which a test locks
+(`mobile/src/state/live-workout.test.ts`, "writes the set type the board holds, not a
+hardcoded normal"). But comparing the two payloads turned up divergence the gate did not ask
+about:
+
+|                              | web (`LogScreen.tsx:667`) | native (`live-workout.ts:266`) |
+| ---------------------------- | ------------------------- | ------------------------------ |
+| client-generated `id`        | **yes**                   | **no**                         |
+| goes through the write queue | **yes**                   | **no**                         |
+| `rpe`, `superset_group`      | yes                       | no (both nullable)             |
+
+**The `id` is the idempotency key, and native does not send one.** On web that uuid IS the
+row's primary key, so a replay after a mid-flight kill hits a unique violation, which
+`isAlreadyLanded` reads as the server saying "I already have that". Native lets Postgres
+default the id, so the same replay inserts a duplicate set.
+
+**Native has no write queue at all.** It writes straight through and increments `unsynced` on
+error; `live-workout.ts` says so itself, that the store "must not be described as
+offline-capable". So **GATE 4, an airplane-mode workout that syncs clean on reconnect, is
+proved on web and false on native.** Stage 4 is marked shipped, and it is shipped on one of
+the two targets.
+
+This is not an A0 item and is not being smuggled into one. It lands in **A2**, with the core
+loop, because the queue is shared-domain work (`write-queue.ts` and `offline-store.ts` are 468
+lines that already pass the purity guard) and because a lifter in a basement is exactly the
+user the native app exists for. **GATE A4 re-proves GATE 4 on the new stack**, and it cannot
+pass until this is built.
+
 #### Blocked on Ameen
 
 1. **DONE, reported not verified. `rate_limit_email_sent` raised to 30** by Ameen,
