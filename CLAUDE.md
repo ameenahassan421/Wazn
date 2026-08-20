@@ -43,6 +43,22 @@ Corollary that supersedes the blockquote above: read `WAZN_PLAN.md` §7.0, but
 treat it as a _claim_ to verify, not a fact to recite. The database beats the
 file, and `git log` beats both.
 
+**`cmd || echo "no"` turns a crashed check into a confident wrong answer.**
+On 2026-08-20 two sessions disagreed about whether a commit existed only on one
+laptop. The one that said "not on the remote" had run
+`git merge-base --is-ancestor <sha> <sha>` inside a checkout that had never
+fetched, so the second object was simply absent; git failed on the missing
+object, the `||` branch printed the negative, and a missing-object error read
+as a definitive "this work exists nowhere else". The near-miss was a
+recommendation to protect a directory that was already fully merged.
+
+Two rules, and the second is the one that matters. **Fetch before trusting any
+ref, including refs you are reading out of somebody else's checkout.** And when
+a shell check decides something destructive, **make the failure branch say
+"could not determine" rather than the negative answer**. `|| echo "NO"` and
+`|| echo "unknown"` cost the same to write and only one of them can get
+somebody's work deleted.
+
 **Subagents do not reliably honour "read-only".** On 2026-08-19 an audit
 subagent that had been told, in its prompt, not to edit anything ran
 `git checkout -- CLAUDE.md` and destroyed the parent session's uncommitted

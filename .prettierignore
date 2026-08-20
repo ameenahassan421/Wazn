@@ -39,3 +39,4 @@ mobile/expo-env.d.ts
 # formatting the whole repo went from seconds to minutes once it existed.
 mobile/ios/
 mobile/android/
+.expo-web/

@@ -608,6 +608,26 @@ verbatim, so they survive even if this file isn't read.**
 
 ### How a screen is verified (2026-08-19)
 
+**The web export only reaches the sign-in screen, and that is a hole in this
+rule.** `expo export --platform web` plus a static server renders the app in a
+browser with no simulator and no Xcode, which is how the wordmark defect was
+finally SEEN rather than inferred. But every tab is behind
+`Stack.Protected`, so an unauthenticated session cannot reach History,
+Progress, Body, Coach or Friends. Signing in needs real credentials, which a
+session must never type.
+
+So for any screen behind auth, "read the reference beside the build" degrades
+to "read the reference beside the SOURCE", which is weaker and must be said
+out loud rather than reported as a visual pass. Two ways to close it, neither
+built yet: a dev-only route that renders a screen against fixture data with no
+session, or component tests through `react-native-web` in `mobile/`'s vitest
+(the config already collects `.tsx`). The second is the ratchet and is the
+better answer.
+
+Until one exists: **screens behind auth are verified by Ameen on a device, or
+by reading the reference's source against the implementation. Neither is a
+screenshot, and neither should be written down as one.**
+
 **Five visual defects have shipped from this repo and Ameen found every one of them by
 looking at a screen while the wall was green.** Arabic numerals rendering backwards,
 `ExerciseThumb` missing from the board, exercise names English in Arabic, the eleven v5 P0
