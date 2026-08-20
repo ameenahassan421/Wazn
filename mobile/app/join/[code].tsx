@@ -5,6 +5,7 @@ import { Txt, Kick } from '@/design/Txt'
 import { Btn } from '@/components/ui/Btn'
 import { Screen } from '@/components/ui/Screen'
 import { useAuth } from '@/hooks/use-auth'
+import { useLocale } from '@/hooks/use-locale'
 import { supabase } from '@/services/supabase'
 import { holdPendingInvite } from '@/services/pending-invite'
 
@@ -51,6 +52,7 @@ function nameOf(p: { username: string | null; display_name: string | null }): st
 export default function Join() {
   const { code } = useLocalSearchParams<{ code: string }>()
   const router = useRouter()
+  const { t } = useLocale()
   const { loading, userId } = useAuth()
 
   const [inviter, setInviter] = useState<string | null>(null)
@@ -95,7 +97,7 @@ export default function Join() {
 
   return (
     <Screen scroll={false} style={{ justifyContent: 'center', gap: 14 }}>
-      <Kick ink="accentSoft">YOU WERE INVITED</Kick>
+      <Kick ink="accentSoft">{t('welcome.invited.heading')}</Kick>
 
       {inviter !== null ? (
         <Txt step="fig">{inviter} wants you on the board.</Txt>
@@ -116,7 +118,7 @@ export default function Join() {
       <Btn
         kind="hero"
         full
-        label={signedIn ? 'GO TO THE APP' : 'CREATE AN ACCOUNT'}
+        label={signedIn ? 'GO TO THE APP' : t('auth.signup.link')}
         onPress={() => router.replace(signedIn ? '/' : '/sign-in')}
       />
     </Screen>

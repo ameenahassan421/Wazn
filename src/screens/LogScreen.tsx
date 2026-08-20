@@ -50,7 +50,7 @@ import type { ProposedEdit } from '../lib/tell-coach'
 import type { RecordSetRow, SessionVolumeRow } from '../lib/progress'
 import { LastPrCard, RecentSessionCard, WeekCard } from '../components/HomeFeed'
 import { countsForRecords, totalVolumeKg } from '../lib/summary'
-import { DEFAULT_REST_SECONDS, useRestTimer } from '../lib/use-rest-timer'
+import { useRestTimer } from '../lib/use-rest-timer'
 import { FinishSummary } from '../components/FinishSummary'
 import { RoutineList } from '../components/RoutineList'
 import { InstallPrompt } from '../components/InstallPrompt'
@@ -72,7 +72,13 @@ import type { RoutineDetail, RoutineDraft } from '../lib/routines'
 import { groupOf, nextGroupId, ungroupIds } from '../lib/supersets'
 import { summarise } from '../lib/summary'
 import type { WorkoutSummary } from '../lib/summary'
-import { clampRest, earnedRest, effortPercent, resolveRest } from '../lib/rest'
+import {
+  clampRest,
+  DEFAULT_REST_SECONDS,
+  earnedRest,
+  effortPercent,
+  resolveRest,
+} from '../lib/rest'
 import { commitOutcome } from '../lib/commit'
 import type { CommitOutcome } from '../lib/commit'
 import { buildBlock, groupAdjacent, mergeOrder } from '../lib/plan'

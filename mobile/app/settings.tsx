@@ -1,13 +1,14 @@
 import { View } from 'react-native'
 import { useRouter } from 'expo-router'
 
-import type { Unit } from '@wazn/domain'
+import type { Locale, Unit } from '@wazn/domain'
 import { space } from '@wazn/domain'
 
 import { Txt, Kick } from '@/design/Txt'
 import { Btn, ChipBtn, ChipRow } from '@/components/ui/Btn'
 import { Card, Rule } from '@/components/ui/Surface'
 import { Screen } from '@/components/ui/Screen'
+import { useLocale } from '@/hooks/use-locale'
 import { useUnit } from '@/hooks/use-unit'
 import { signOut } from '@/services/auth'
 
@@ -25,20 +26,39 @@ const UNITS: readonly { key: Unit; label: string }[] = [
   { key: 'kg', label: 'kg' },
 ]
 
+/**
+ * The two languages, each named in its own script.
+ *
+ * `settings.language.en` is `EN` and `settings.language.ar` is `العربية` in
+ * BOTH locales, deliberately: a picker that renders every option in the
+ * reader's current script is unreadable to the one person who needs it, the
+ * one looking for the language they are about to switch TO.
+ */
+const LOCALES: readonly { key: Locale; labelKey: string }[] = [
+  { key: 'en', labelKey: 'settings.language.en' },
+  { key: 'ar', labelKey: 'settings.language.ar' },
+]
+
 export default function Settings() {
   const router = useRouter()
+  const { locale, setLocale, t } = useLocale()
   const { unit, setUnit } = useUnit()
 
   return (
     <Screen>
       <View style={{ height: 56, justifyContent: 'center' }}>
-        <Btn kind="ghost" small label="← BACK" onPress={() => router.back()} />
+        <Btn
+          kind="ghost"
+          small
+          label={`← ${t('settings.back')}`}
+          onPress={() => router.back()}
+        />
       </View>
 
       <Kick style={{ marginBottom: 10 }}>PREFERENCES</Kick>
       <Card bare>
         <View style={{ padding: space.cardPad, gap: 10 }}>
-          <Txt step="body">Weight unit</Txt>
+          <Txt step="body">{t('settings.units')}</Txt>
           {/* Display only. Weight is stored in kilograms and nothing this
               toggle does reaches the database. */}
           <ChipRow>
@@ -56,6 +76,25 @@ export default function Settings() {
           </Txt>
         </View>
         <Rule />
+        {/* Switching to Arabic translates every string on the next render.
+            The LAYOUT does not mirror until the bundle reloads, because
+            `I18nManager.forceRTL` only applies to views built after it is
+            set. `use-locale.tsx` explains why nothing here restarts the app
+            to hide that. */}
+        <View style={{ padding: space.cardPad, gap: 10 }}>
+          <Txt step="body">{t('settings.language')}</Txt>
+          <ChipRow>
+            {LOCALES.map((l) => (
+              <ChipBtn
+                key={l.key}
+                label={t(l.labelKey)}
+                selected={locale === l.key}
+                onPress={() => setLocale(l.key)}
+              />
+            ))}
+          </ChipRow>
+        </View>
+        <Rule />
         <View style={{ padding: space.cardPad }}>
           <Txt step="meta" ink="faint" ltr>
             WAZN 0.1.0 · NATIVE
@@ -70,7 +109,7 @@ export default function Settings() {
       <Btn
         kind="line"
         full
-        label="SIGN OUT"
+        label={t('settings.signout')}
         style={{ marginTop: 18 }}
         onPress={() => {
           // The root guard swaps the stack the moment the session clears, so

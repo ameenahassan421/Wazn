@@ -12,13 +12,23 @@ export const TABS = [
 ] as const
 export type TabKey = (typeof TABS)[number]
 
-export const TAB_LABEL: Record<TabKey, string> = {
-  index: 'LOG',
-  history: 'HISTORY',
-  progress: 'PROGRESS',
-  body: 'BODY',
-  coach: 'COACH',
-  friends: 'FRIENDS',
+/**
+ * The catalogue key for each tab's name, not the name itself. `nav.*` already
+ * carries both locales in `src/lib/i18n.ts`, and the `kick`/`nano` steps
+ * uppercase what they render, so `'Log'` arrives on screen as `LOG` without a
+ * second copy of the word living here.
+ *
+ * `index` is the route directory; `nav.log` is what it is called. That is the
+ * one place the two names differ, and it is why this is a table rather than a
+ * template string.
+ */
+export const TAB_KEY: Record<TabKey, string> = {
+  index: 'nav.log',
+  history: 'nav.history',
+  progress: 'nav.progress',
+  body: 'nav.body',
+  coach: 'nav.coach',
+  friends: 'nav.friends',
 }
 
 /**

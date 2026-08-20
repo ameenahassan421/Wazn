@@ -322,22 +322,56 @@ This is a strangler-fig migration, not a rewrite. The app stays shippable at eve
 logged on web agree on `set_type` and on units. `portable.test.ts` and `npm run check:tokens`
 still pass. `mobile/` has a test suite that runs in CI.
 
-#### Phase A1: Ship day one, no tab is a stub
+#### Phase A1: The five stub tabs, built native, in v5
 
-The five 21-line stubs (History, Progress, Body, Coach, Friends) come over as DOM components
-(`'use dom'`) wrapping the existing web screens, rendered by their native routes. The whole
-app runs on a phone before anything is nativized.
+**Revised 2026-08-19. This phase said "come over as DOM components" and that was wrong.** It
+was written from the generic web-to-native playbook, which assumes ONE package migrating.
+Wazn has two, with a deliberate wall between them, and the wall is what breaks the pattern.
+Four reasons, all verified against this repo, full reasoning in DECISIONS.md 2026-08-19:
 
-Two things this buys that a native rewrite would not:
+1. **Two Tailwind majors, by hard constraint.** Web is `tailwindcss@^4.0.0`; `mobile/` is
+   `tailwindcss@^3.4.19`, forced by NativeWind v4. Separate lockfiles on purpose. A DOM
+   component inside `mobile/` importing web screens needs the v4 pipeline inside the v3.4
+   build.
+2. **It would ship a second auth session.** `src/lib/supabase.ts:19` sets
+   `persistSession: true` against default storage, which is `localStorage`. A DOM component
+   runs in a WebView with its own storage origin, so a lifter signed in natively would open
+   History and find themselves signed out.
+3. **It drags 12,267 lines with it.** 43 web components plus a second locale provider and a
+   second unit provider, duplicating what A0 built natively.
+4. **It wraps code scheduled for deletion.** Those screens are pre-v5 and `src/` retires at
+   A4, so it is a throwaway wrapper around throwaway code, against the whole premise that the
+   port and the restyle are one edit.
 
-- **recharts survives.** It is DOM-only, so `ProgressScreen` (1,449 lines) ships intact
-  inside a webview and is nativized last, or never.
-- Nothing is a stub while the cohort is testing.
+**The one case that appeared to need a WebView does not.** `ProgressScreen.tsx:842` says it
+outright: "Not recharts. This is three paths, and recharts was half the bundle on a screen the
+Log tab must never wait for." The charts were already hand-drawn SVG. `src/lib/progress.ts`
+has **zero imports** and is already exported through `portable.ts`, so every bit of the data
+shaping crosses today, and `react-native-svg@^15.15.4` is already a dependency. **No WebView
+anywhere in this migration.**
 
-Known cost, accepted deliberately: each DOM screen carries roughly 2 MB of web runtime. That
-is an interim state, not the end state, which is why A3 exists.
+Each screen is built once, native, already in v5. Order, and the reasoning for it:
 
-**GATE A1:** all six tabs render real content on a device. No 21-line stub remains.
+1. **History.** The only door to "what did I do before" apart from the tab bar, and it
+   carries the least coach machinery, so it is the cheapest place to establish the pattern
+   the other four follow.
+2. **Body.** Smallest (374 lines of web equivalent) and the one screen with no card door, so
+   the tab bar is its only route in. Its data is empty in production, so it must be built
+   against its degraded render rather than a happy path.
+3. **Coach.** Read-only surfaces first; "Tell the coach" was never assessed in v5 P0 and
+   needs a look rather than a decision.
+4. **Friends.** Social, and the least load-bearing for a lifter mid-session.
+5. **Progress.** Last, because the charts are the most work even hand-drawn, and because it
+   is lazy-loaded on web for a reason the native build must preserve: the Log tab must never
+   wait for it.
+
+Honest cost of the revision: A1 is no longer "ship day one". It is real work per screen,
+against 4,292 lines of web equivalent. The alternative was building all five twice and
+shipping a signed-out WebView in between.
+
+**GATE A1:** all six tabs render real content on a device, no 21-line stub remains, and each
+screen has been read side by side against its v5 reference render in
+`docs/design/v5-momentum/design/` (see "How a screen is verified" in §6).
 
 #### Phase A2: Strangle the core loop, in v5 form
 
@@ -350,6 +384,13 @@ verdict) go behind `portable.ts` before either target renders them, following th
 **The background rest timer ships here** (`expo-notifications`), because a lifter locks their
 phone between sets and a web timer dies when they do. It is the single capability that
 justifies this whole stage, and it does not exist yet.
+
+**The wordmark is fixed here, not in A0.** A0 is explicitly "nothing user-visible" and the
+mark is the most visible thing on the screen. The v5 reference sets it as its own treatment
+(`design/ui.jsx:68`: Saira Semi Condensed 700, 21px, lowercase, ember `a`), NOT as a type-ramp
+step. Native currently borrows `<Txt step="hero">`, whose ramp entry carries
+`uppercase: true` at size 50 (`src/lib/tokens.ts:128`), so it renders `WAZN`. A wordmark is
+not a type step and must not borrow one.
 
 Nativize means redesign, not reskin. Reach for `@expo/ui` before styled primitives.
 
@@ -565,6 +606,40 @@ is no longer parked — it is Stage 4B.)
 **`CLAUDE.md` must contain a pointer to this file and rules §2.6-2.8
 verbatim, so they survive even if this file isn't read.**
 
+### How a screen is verified (2026-08-19)
+
+**Five visual defects have shipped from this repo and Ameen found every one of them by
+looking at a screen while the wall was green.** Arabic numerals rendering backwards,
+`ExerciseThumb` missing from the board, exercise names English in Arabic, the eleven v5 P0
+findings, and the wordmark rendering `WAZN`. `CLAUDE.md` already said "screenshot the app
+after any locale or layout work" and the rule did not hold, because a screenshot on its own
+answers "did it render", never "did it render the right thing".
+
+**The v5 design is a runnable React app and almost nobody has run it.**
+`docs/design/v5-momentum/design/Wazn v5.html` plus `ui.jsx`, `screens_core.jsx`,
+`screens_tabs.jsx`, `data.js`, `coach2.js`. Every screen, live, in a browser. The one time
+anyone read it against the app (the P0 gate, 2026-08-17) it produced **eleven findings in a
+single sitting**, six on Home alone. That is the whole argument for this section.
+
+So, before any screen is called done:
+
+1. **Open the reference next to the build.** The v5 reference in one window, the running
+   screen in the other. Not the spec prose, the running reference.
+2. **Compare per element, not per screen.** "The branding looks right" is the claim that was
+   made about a screen rendering `WAZN` in 50px uppercase. "The wordmark is Saira 700, 21px,
+   lowercase, with the `a` in ember" is a claim that can be wrong out loud.
+3. **The word "verified" is unusable without naming what it was compared against.** A session
+   that writes "verified" and cannot name the reference has not verified anything.
+4. **Every defect a human finds becomes a machine assertion the same day.** This is the only
+   part that compounds. `src/components/Wordmark.test.tsx` exists because a mark once swapped
+   locales; that class of bug cannot ship on web again. `mobile/` had no such test and the
+   mark broke there immediately. A defect found and merely fixed will return.
+
+**Structural properties are machine-checkable and belong in a test: presence, order, count,
+element type, token identity, text direction, case.** Proportion, balance and rhythm are not,
+and belong to the eye. Do not build a check that pretends to judge the second kind, and do not
+leave the first kind to a human twice.
+
 **Step 1 of "ending a session" is enforced now, because it was skipped four
 consecutive times.** PRs #103, #104, #105 and #106 merged code and left §7.0
 untouched. Three hooks and one CI job close that loop:
@@ -731,6 +806,114 @@ none started: momentum bar and its brass flip, the PR moment, toasts, the finish
 remaining screen restyles, coach-volume wiring. Item 6 (Tell the coach) was **never
 assessed**; `TellCoachSheet.tsx` is v3-era.
 
+#### The wordmark renders uppercase on native (Ameen, 2026-08-19)
+
+**Corrected 2026-08-19, same day, after reading the reference.** The first version of this
+block claimed four defects. **Two of them were wrong**, and they were wrong because the
+session wrote them from the web implementation instead of from the v5 reference. Both are
+struck below rather than deleted, because a wrong claim that reached this file is exactly the
+failure this file keeps having.
+
+**The v5 design is a runnable React reference app, not a spec**, and nobody has run it:
+`docs/design/v5-momentum/design/Wazn v5.html` plus `ui.jsx`, `screens_core.jsx`,
+`screens_tabs.jsx`, `data.js`, `coach2.js`. Every screen, live. Open it in a browser.
+
+**The real defect, and it is one line.** The v5 reference sets the wordmark as its own
+treatment, not as a ramp step (`design/ui.jsx:68`):
+
+    fontFamily: 'Saira Semi Condensed', fontWeight: 700, fontSize: 21
+    w<span style={{color:'#e8491d'}}>a</span>zn
+
+Lowercase, 21px, in the header. Native at `mobile/app/sign-in.tsx:116` writes the same
+lowercase `w` + accent `a` + `zn` but sets it with `<Txt step="hero">`, and the shared ramp's
+`hero` step carries **`uppercase: true`** (`src/lib/tokens.ts:128`) at **size 50**. So the
+mark renders `WAZN` at hero scale instead of the wordmark. **The wordmark is not a type step
+and must not borrow one.** Confirm Saira Semi Condensed actually resolves on native while
+fixing it; the reference pulls it from Google Fonts and the local `fonts/` folder ships only
+Sora, Hanken and IBM Plex.
+
+**~~Native renders the mark as text rather than the SVG lockup.~~ WRONG.** v5 _specifies_
+text. The SVG plate lockup with the `evenodd` counter is the v3 "Loaded Ink" mark, and v5
+**deliberately retired it from the interface** in favour of the Latin wordmark. Native's
+approach is correct. `src/components/Wordmark.tsx` is the thing that is now out of step, not
+`mobile/`.
+
+**~~The Arabic وزن mark has no native path.~~ WRONG.** v5 retires وزن from the interface too.
+It stays canonical on the share card, the PWA icon and the favicon, none of which are native
+interface surfaces.
+
+**The lesson, which is worth more than the fix.** The session claimed a defect against
+`src/components/Wordmark.tsx` because it read the _implementation_ and never opened
+`docs/design/v5-momentum/design/`. The reference was sitting in the repo, runnable, the whole
+time. **Read the reference before calling anything a defect, and prefer running it to reading
+it.** Scheduled: the wordmark treatment lands in A0 alongside the type work; the full v5 pass
+is A2.
+
+#### Stage 4A phase A0, in progress (started 2026-08-19)
+
+**The web target exists and runs.** `mobile/` now declares
+`web: { bundler: 'metro', output: 'single' }` and depends on
+`@expo/metro-runtime`. `npx expo export --platform web` produces a working
+build, and it was **verified by running it, not by building it**: served and
+loaded in a clean browser tab, the sign-in screen renders with NativeWind
+styling, the wordmark and the type ramp intact, and **zero console errors**.
+This is the load-bearing claim of the whole migration, now demonstrated.
+
+`output: 'single'` and not `'static'` on purpose. Static prerendering runs
+every route's render in Node at build time, so any module-scope browser access
+anywhere in the tree becomes a build failure. Production is already an SPA
+behind a rewrite. Revisit at A4.
+
+**A green export hid a crash, which is why GATE A0 says run it.**
+`expo-secure-store` has no web implementation at all: every method is undefined
+there, so the first Supabase session read threw
+`getValueWithKeyAsync is not a function` before anything rendered.
+`mobile/src/services/supabase.ts` now picks storage by platform, `localStorage`
+on web (which is what the Vite app has always used, so a session written by one
+and read by the other agrees) and the chunked SecureStore adapter on native.
+`detectSessionInUrl` follows the same split. **Assume nothing about the web
+target that has not been loaded in a browser.**
+
+`mobile/` has `vitest` and a `test` script for the first time. It had 3,768
+lines and no suite while `src/` enforces a per-module coverage floor.
+
+Still open in A0, being built now: `rest.ts` through `portable.ts`, the native
+locale adapter, the unit round-trip to the server, the `Readiness` to `CheckIn`
+rename, and the first `mobile/` tests. GATE A0 is not claimed until all of them
+land and the wall is green on both packages.
+
+#### GATE 4 does not hold on native, and A0 found out why
+
+The A0 gate asks whether a set logged on native and one logged on web agree. On the two
+fields it names they do: both write `weight_kg` (weight is stored in kg always, §2, the
+toggle is display only) and both now write the board's real `set_type`, which a test locks
+(`mobile/src/state/live-workout.test.ts`, "writes the set type the board holds, not a
+hardcoded normal"). But comparing the two payloads turned up divergence the gate did not ask
+about:
+
+|                              | web (`LogScreen.tsx:667`) | native (`live-workout.ts:266`) |
+| ---------------------------- | ------------------------- | ------------------------------ |
+| client-generated `id`        | **yes**                   | **no**                         |
+| goes through the write queue | **yes**                   | **no**                         |
+| `rpe`, `superset_group`      | yes                       | no (both nullable)             |
+
+**The `id` is the idempotency key, and native does not send one.** On web that uuid IS the
+row's primary key, so a replay after a mid-flight kill hits a unique violation, which
+`isAlreadyLanded` reads as the server saying "I already have that". Native lets Postgres
+default the id, so the same replay inserts a duplicate set.
+
+**Native has no write queue at all.** It writes straight through and increments `unsynced` on
+error; `live-workout.ts` says so itself, that the store "must not be described as
+offline-capable". So **GATE 4, an airplane-mode workout that syncs clean on reconnect, is
+proved on web and false on native.** Stage 4 is marked shipped, and it is shipped on one of
+the two targets.
+
+This is not an A0 item and is not being smuggled into one. It lands in **A2**, with the core
+loop, because the queue is shared-domain work (`write-queue.ts` and `offline-store.ts` are 468
+lines that already pass the purity guard) and because a lifter in a basement is exactly the
+user the native app exists for. **GATE A4 re-proves GATE 4 on the new stack**, and it cannot
+pass until this is built.
+
 #### Blocked on Ameen
 
 1. **DONE, reported not verified. `rate_limit_email_sent` raised to 30** by Ameen,
@@ -767,15 +950,63 @@ until it is replaced, and so is any read-back verification of auth config. The S
 Replace the token from the Supabase dashboard (Account, then Access Tokens) into
 `.env.local`. Until then, treat every auth-config claim as reported rather than verified.
 
+#### A simulator is available on this machine (2026-08-19)
+
+Xcode **26.6**, six **iOS 26.5** simulators, and `mobile/ios/` prebuilt with Pods installed.
+This was not true for most of this project's life and it changes two things.
+
+**It makes the visual loop runnable.** Every visual defect this repo has shipped was found by
+Ameen looking at a screen (see "How a screen is verified" in §6), and the reason the wall
+never caught one is that nothing in it renders. A simulator build plus a screenshot, read
+against the runnable v5 reference, is the missing half. **This is how a screen gets checked
+from here on, and it is what would have caught the wordmark.**
+
+**It is a laptop capability, not a CI gate, and the distinction matters.** `mobile/ios/` is
+gitignored (`mobile/.gitignore:42`) and generated by `expo prebuild`, so zero files are
+tracked and GitHub Actions cannot reproduce it. CI keeps `expo export`, which proves a bundle
+and nothing about pixels. **Do not write a gate that depends on a simulator and then mark it
+green in CI.** The simulator pass belongs to whoever is at the machine.
+
+**For Stage 4B it satisfies exactly one prerequisite.** "Build and sign in Xcode on Ameen's
+Mac" is now possible. It buys nothing else: TestFlight and App Review still need the $99
+Apple developer account, Play still needs the $25 one, and GATE 4B still needs cohort
+retention that cannot exist until the app is shared.
+
 #### Next action
 
-**Stage 4A phase A0.** Foundations: the Expo web target, the native locale adapter, the unit
-round-trip, the `set_type` fix, `rest.ts` into `portable.ts`, and a test suite for `mobile/`.
-None of it is user-visible and all of it is load-bearing for everything after.
+**Stage 4A phase A0 is DONE and its gate was read, 2026-08-19** (PR #110). All four clauses
+pass: the Expo web target serves, a set on native and on web agree on `set_type` and units,
+`portable.test.ts` and `check:tokens` still pass, and `mobile/` has a test suite CI now
+actually runs. **Caveat recorded rather than buried:** the set-agreement clause was verified by
+comparing the two insert payloads and by the test that locks it, not by logging two live sets.
+
+**A1 is next and needs Ameen's approval first**, per §2.7. It does not start unprompted.
+
+**A1, when it starts:** the five stub tabs built native, in v5, **no DOM components** (the
+reasoning is in the phase itself and in DECISIONS.md 2026-08-19). Order and why:
+**History** (only door to "what did I do before" besides the bar, least coach machinery, sets
+the pattern), **Body** (smallest, no card door, and its production data is empty so it must be
+built against its degraded render), **Coach** (read-only surfaces first; "Tell the coach" was
+never assessed in v5 P0), **Friends** (least load-bearing mid-session), **Progress** last
+(most work even hand-drawn, and it is lazy-loaded on web for a reason native must preserve:
+the Log tab must never wait for it).
+
+**Two things carried into A2, both already found and neither smuggled into A0:**
+
+1. **The wordmark still renders `WAZN`.** It borrows `<Txt step="hero">` and that ramp entry
+   is `uppercase: true` at size 50 (`src/lib/tokens.ts:128`). The v5 reference sets the mark
+   as its own treatment, not a ramp step. See the wordmark block above.
+2. **GATE 4 is false on native.** No write queue, no client-generated id. See the GATE 4 block
+   above.
+
+**Before building any screen, run the reference.** `docs/design/v5-momentum/design/Wazn v5.html`
+is a working React app of every v5 screen and it has been run essentially once, at the P0
+gate, where it produced eleven findings in a single sitting. See "How a screen is verified"
+in §6.
 
 In parallel, and independently, **Ameen runs `LAUNCH.md` on his phone against the installed
-PWA**. It costs a day, needs no migration work, and is the only source of information this
-project does not have. Nine gates have produced zero evidence-based stops.
+PWA**. It costs a day, needs no migration work, and is still the only source of information
+this project does not have. Nine gates have produced zero evidence-based stops.
 
 #### How this block stays true
 

@@ -17,6 +17,7 @@ import { Chip } from '@/components/ui/Chip'
 import { Fill } from '@/components/ui/Fill'
 import { Screen } from '@/components/ui/Screen'
 import { Txt, Kick } from '@/design/Txt'
+import { useLocale } from '@/hooks/use-locale'
 import { useUnit } from '@/hooks/use-unit'
 import { banked as hapticBanked, tick } from '@/services/haptics'
 import {
@@ -54,6 +55,7 @@ const ZONE = 82
 export default function LiveWorkout() {
   const router = useRouter()
   const insets = useSafeAreaInsets()
+  const { t } = useLocale()
   const { unit, ready } = useUnit()
   const live = useLiveWorkout()
   const view = selectBoardView(live)
@@ -218,7 +220,7 @@ export default function LiveWorkout() {
           }}
           hitSlop={12}
         >
-          <Kick>FINISH</Kick>
+          <Kick>{t('log.finish')}</Kick>
         </Pressable>
       </View>
 
@@ -246,7 +248,7 @@ export default function LiveWorkout() {
         />
       )}
       <Zone
-        label="REPS"
+        label={t('history.reps')}
         value={dialled.reps ?? 0}
         mega={bodyweight}
         onDown={() => step('reps', -1)}

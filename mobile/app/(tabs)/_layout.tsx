@@ -5,7 +5,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { palette, space } from '@wazn/domain'
 
 import { Txt } from '@/design/Txt'
-import { TABS, TAB_LABEL, TabGlyph, type TabKey } from '@/components/ui/TabGlyph'
+import { TABS, TAB_KEY, TabGlyph, type TabKey } from '@/components/ui/TabGlyph'
+import { useLocale } from '@/hooks/use-locale'
 import { tick } from '@/services/haptics'
 
 /**
@@ -42,6 +43,7 @@ type TabBarProps = Parameters<
 
 function WaznTabBar({ state, navigation }: TabBarProps) {
   const insets = useSafeAreaInsets()
+  const { t } = useLocale()
 
   return (
     <View
@@ -66,7 +68,7 @@ function WaznTabBar({ state, navigation }: TabBarProps) {
             key={route.key}
             accessibilityRole="tab"
             accessibilityState={{ selected: on }}
-            accessibilityLabel={TAB_LABEL[tab]}
+            accessibilityLabel={t(TAB_KEY[tab])}
             onPress={() => {
               if (!on) tick()
               const event = navigation.emit({
@@ -101,7 +103,7 @@ function WaznTabBar({ state, navigation }: TabBarProps) {
               <TabGlyph tab={tab} on={on} />
             </View>
             <Txt step="nano" ink={on ? 'accentSoft' : 'faint'}>
-              {TAB_LABEL[tab]}
+              {t(TAB_KEY[tab])}
             </Txt>
           </Pressable>
         )
@@ -111,6 +113,8 @@ function WaznTabBar({ state, navigation }: TabBarProps) {
 }
 
 export default function TabsLayout() {
+  const { t } = useLocale()
+
   return (
     <Tabs
       tabBar={(props) => <WaznTabBar {...props} />}
@@ -120,7 +124,7 @@ export default function TabsLayout() {
       }}
     >
       {TABS.map((name) => (
-        <Tabs.Screen key={name} name={name} options={{ title: TAB_LABEL[name] }} />
+        <Tabs.Screen key={name} name={name} options={{ title: t(TAB_KEY[name]) }} />
       ))}
     </Tabs>
   )

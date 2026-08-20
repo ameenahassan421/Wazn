@@ -1,8 +1,16 @@
-import { useState } from 'react'
 import { View } from 'react-native'
 import { useRouter } from 'expo-router'
 
-import { formatVolume, partOfDay, palette, radius, space } from '@wazn/domain'
+import {
+  CHECK_INS,
+  formatVolume,
+  partOfDay,
+  palette,
+  radius,
+  space,
+  trimmedPlan,
+  type CheckIn,
+} from '@wazn/domain'
 
 import { Txt, Kick } from '@/design/Txt'
 import { Card, Rule } from '@/components/ui/Surface'
@@ -11,8 +19,9 @@ import { ChipBtn, ChipRow, HeroBtn } from '@/components/ui/Btn'
 import { Fill } from '@/components/ui/Fill'
 import { Header } from '@/components/ui/Header'
 import { Empty, Screen, StatTile } from '@/components/ui/Screen'
+import { useLocale } from '@/hooks/use-locale'
 import { useUnit } from '@/hooks/use-unit'
-import { useHome, type Readiness } from '@/hooks/use-home'
+import { useHome } from '@/hooks/use-home'
 
 /**
  * Screen 06 — Home (Log, idle). The hunt.
@@ -23,34 +32,42 @@ import { useHome, type Readiness } from '@/hooks/use-home'
  * beat, with the reason underneath it. Everything else on the screen is
  * secondary to `BEAT {volume}` and the button under it.
  *
- * The order is the handoff's and it is not arbitrary: check-in first (it is
- * one tap and it changes the target), then the target, then the earned states
- * — rank, streak, duel — then the plan. Evidence after the ask.
+ * The order is the handoff's and it is not arbitrary: check-in first, then
+ * the target, then the earned states (rank, streak, duel), then the plan.
+ * Evidence after the ask.
+ *
+ * The check-in does NOT change the target. It is stored and fed to the shared
+ * `computeReadiness`, and what that returns shapes the plan below and the
+ * session's ghosts once one starts. The target is last session's volume and
+ * nothing a lifter taps here moves it: a number to beat that shrinks because
+ * you said you felt tired is not a number to beat.
  */
 
-const READINESS: readonly { key: Readiness; label: string }[] = [
-  { key: 'fresh', label: 'Fresh' },
-  { key: 'normal', label: 'Normal' },
-  { key: 'drained', label: 'Drained' },
-]
+/**
+ * The three taps, in the shared domain's own order, so the row cannot drift
+ * from the union that `computeReadiness` scores. The values are catalogue
+ * keys, not labels: this screen owns which check-in is offered, and
+ * `src/lib/i18n.ts` owns what it is called in each locale.
+ */
+const CHECK_IN_KEY: Record<CheckIn, string> = {
+  fresh: 'checkin.fresh',
+  normal: 'checkin.normal',
+  drained: 'checkin.drained',
+}
 
+/** Also keys. The `kick` step uppercases, so `This morning` arrives as
+ *  `THIS MORNING` without a second copy of the phrase living here. */
 const PART_OF_DAY: Record<ReturnType<typeof partOfDay>, string> = {
-  morning: 'THIS MORNING',
-  afternoon: 'THIS AFTERNOON',
-  evening: 'TONIGHT',
+  morning: 'today.morning',
+  afternoon: 'today.afternoon',
+  evening: 'today.evening',
 }
 
 export default function LogHome() {
   const router = useRouter()
+  const { t } = useLocale()
   const { unit, ready: unitReady } = useUnit()
   const home = useHome()
-
-  /**
-   * The check-in. Local, and never blocking: skipped reads as Normal
-   * silently, which is why there is no "skip" and no confirmation. One tap,
-   * never a modal — a question the app asks must never be a gate.
-   */
-  const [readiness, setReadiness] = useState<Readiness | null>(null)
 
   // Waiting on the stored unit rather than rendering a figure and correcting
   // it: flipping 225 to 102 one frame after paint is worse than a blank frame.
@@ -62,16 +79,21 @@ export default function LogHome() {
     <Screen>
       <Header name={home.username} />
 
-      {/* ── The check-in ─────────────────────────────────────────────────── */}
+      {/* ── The check-in ───────────────────────────────────────────────────
+          It lives in `useHome`, because it is an input to readiness rather
+          than a piece of screen state. Never blocking: an unanswered check-in
+          reads as Normal silently, which is why there is no "skip" and no
+          confirmation. One tap, never a modal, because a question the app
+          asks must never be a gate. */}
       <View style={{ marginTop: 4, marginBottom: 18, gap: 10 }}>
-        <Kick>HOW LOADED?</Kick>
+        <Kick>{t('checkin.kicker')}</Kick>
         <ChipRow>
-          {READINESS.map((r) => (
+          {CHECK_INS.map((state) => (
             <ChipBtn
-              key={r.key}
-              label={r.label}
-              selected={readiness === r.key}
-              onPress={() => setReadiness(r.key)}
+              key={state}
+              label={t(CHECK_IN_KEY[state])}
+              selected={home.checkIn === state}
+              onPress={() => home.setCheckIn(state)}
             />
           ))}
         </ChipRow>
@@ -81,19 +103,20 @@ export default function LogHome() {
       {home.target === null ? (
         // Day one. LAUNCH.md's copy verbatim, and one button — not a target,
         // because "BEAT 0" is not a goal and a fabricated one is worse.
-        <Empty line="Start your first workout.">
+        <Empty line={t('log.start_first')}>
           <HeroBtn
-            label="START A WORKOUT"
+            label={t('history.empty.cta')}
             onPress={() => router.push('/session/new')}
           />
         </Empty>
       ) : (
         <Card style={{ gap: 12 }}>
           <Kick ink="accentSoft">
-            {PART_OF_DAY[partOfDay(new Date())]} · {home.routineName.toUpperCase()}
+            {t(PART_OF_DAY[partOfDay(new Date())])} · {home.routineName.toUpperCase()}
           </Kick>
           <Txt step="hero" ltr>
-            BEAT{'\n'}
+            {t('today.beat')}
+            {'\n'}
             {formatVolume(home.target, unit)}
             <Txt step="num" ink="muted" ltr>
               {' '}
@@ -104,7 +127,7 @@ export default function LogHome() {
             <CoachLine line={home.brief.line} chip={home.brief.chip} />
           )}
           <HeroBtn
-            label="START THE HUNT"
+            label={t('today.start_hunt')}
             onPress={() => router.push('/session/new')}
             style={{ marginTop: 4 }}
           />
@@ -127,9 +150,9 @@ export default function LogHome() {
 
       {/* ── Three tiles ──────────────────────────────────────────────────── */}
       <View style={{ flexDirection: 'row', gap: 8, marginTop: 12 }}>
-        <StatTile label="STREAK" value={home.stats.streak} />
-        <StatTile label="THIS WEEK" value={home.stats.thisWeek} />
-        <StatTile label="SESSIONS" value={home.stats.sessions} />
+        <StatTile label={t('home.tile.streak')} value={home.stats.streak} />
+        <StatTile label={t('home.tile.week')} value={home.stats.thisWeek} />
+        <StatTile label={t('progress.sessions')} value={home.stats.sessions} />
       </View>
 
       {/* ── The plan ─────────────────────────────────────────────────────────
@@ -158,8 +181,12 @@ export default function LogHome() {
                 <Txt step="body" style={{ flex: 1 }} numberOfLines={1}>
                   {row.name}
                 </Txt>
+                {/* A light day is "same lifts, two fewer sets", and this
+                    manifest has to agree with the board that will render the
+                    same session. `committed` is 0: nothing has been logged
+                    yet on an idle home. */}
                 <Txt step="meta" ink="muted" ltr>
-                  {row.sets} SETS
+                  {trimmedPlan(row.sets, 0, home.readiness)} SETS
                 </Txt>
               </View>
             </View>

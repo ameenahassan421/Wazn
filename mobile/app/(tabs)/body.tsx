@@ -1,6 +1,7 @@
 import { Kick } from '@/design/Txt'
 import { Empty, Screen } from '@/components/ui/Screen'
 import { Header } from '@/components/ui/Header'
+import { useLocale } from '@/hooks/use-locale'
 
 /**
  * Screen 14 — Body. Weigh-ins, the protein week, measurements.
@@ -11,10 +12,12 @@ import { Header } from '@/components/ui/Header'
  * deliberately, rather than per screen by whoever built it.
  */
 export default function BodyScreen() {
+  const { t } = useLocale()
+
   return (
     <Screen>
       <Header />
-      <Kick style={{ marginBottom: 14 }}>BODY</Kick>
+      <Kick style={{ marginBottom: 14 }}>{t('nav.body')}</Kick>
       <Empty line="Log a weigh-in to start the second chart." />
     </Screen>
   )

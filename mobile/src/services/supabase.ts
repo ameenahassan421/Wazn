@@ -1,6 +1,6 @@
 import 'react-native-url-polyfill/auto'
 
-import { AppState } from 'react-native'
+import { AppState, Platform } from 'react-native'
 import * as SecureStore from 'expo-secure-store'
 import Constants from 'expo-constants'
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
@@ -56,7 +56,51 @@ export const supabaseConfigError: string | null =
  */
 const CHUNK = 1800
 
-const store = {
+/**
+ * The web target has no keychain, and `expo-secure-store` has no web
+ * implementation at all: every one of its methods is undefined there, so the
+ * first session read throws `getValueWithKeyAsync is not a function` before
+ * anything renders. Stage 4A phase A0 found this by RUNNING the web export,
+ * not by building it. The export was green.
+ *
+ * `localStorage` is the right answer rather than a fallback, and this file's
+ * own preamble already said so: where a session lives is a platform question,
+ * and the browser's answer is localStorage. It is also exactly what the Vite
+ * app being retired has always used, so a session written by one and read by
+ * the other agrees.
+ *
+ * No chunking here. The ~2 KB limit that forces it on native is a KeyStore
+ * constraint; localStorage holds megabytes.
+ */
+const webStore = {
+  async getItem(key: string): Promise<string | null> {
+    try {
+      return globalThis.localStorage?.getItem(key) ?? null
+    } catch {
+      // Private mode and blocked third-party storage both throw on access
+      // rather than returning null. No session is the correct reading.
+      return null
+    }
+  },
+  async setItem(key: string, value: string): Promise<void> {
+    try {
+      globalThis.localStorage?.setItem(key, value)
+    } catch {
+      // Over quota, or storage disabled. The session stays in memory for this
+      // tab, which is a worse experience than persistence and a much better
+      // one than a thrown error at sign-in.
+    }
+  },
+  async removeItem(key: string): Promise<void> {
+    try {
+      globalThis.localStorage?.removeItem(key)
+    } catch {
+      // Nothing to do: if it cannot be removed it was never written.
+    }
+  },
+}
+
+const nativeStore = {
   async getItem(key: string): Promise<string | null> {
     const count = await SecureStore.getItemAsync(`${key}.n`)
     if (count === null) {
@@ -77,7 +121,7 @@ const store = {
   },
 
   async setItem(key: string, value: string): Promise<void> {
-    await store.removeItem(key)
+    await nativeStore.removeItem(key)
     const n = Math.ceil(value.length / CHUNK)
     for (let i = 0; i < n; i++) {
       await SecureStore.setItemAsync(
@@ -105,17 +149,18 @@ const store = {
 
 export const supabase: SupabaseClient = createClient(url, anonKey, {
   auth: {
-    storage: store,
+    storage: Platform.OS === 'web' ? webStore : nativeStore,
     autoRefreshToken: true,
     persistSession: true,
     /**
-     * False on native. `detectSessionInUrl` exists for the browser's OAuth
-     * redirect, where the tokens come back in the location hash. On a phone
-     * the redirect arrives through the `wazn://` scheme and is handled by
-     * `expo-auth-session`, and leaving this on makes the client try to parse
-     * a URL that is not there.
+     * False on native, true on web. `detectSessionInUrl` exists for the
+     * browser's OAuth redirect, where the tokens come back in the location
+     * hash. On a phone the redirect arrives through the `wazn://` scheme and
+     * is handled by `expo-auth-session`, and leaving this on makes the client
+     * try to parse a URL that is not there. On the web target it is the only
+     * way the redirect completes at all.
      */
-    detectSessionInUrl: false,
+    detectSessionInUrl: Platform.OS === 'web',
   },
 })
 

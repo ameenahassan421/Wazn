@@ -2,13 +2,13 @@ import { describe, expect, it } from 'vitest'
 import { earnedRest, effortPercent } from './rest'
 import { MODE_BEHAVIOUR } from './coach-mode'
 import {
+  DEFAULT_REST_SECONDS,
   REST_MAX_SECONDS,
   clampRest,
   describeRest,
   resolveRest,
   stepRest,
 } from './rest'
-import { DEFAULT_REST_SECONDS } from './use-rest-timer'
 
 describe('resolveRest', () => {
   it('prefers the user override over everything', () => {

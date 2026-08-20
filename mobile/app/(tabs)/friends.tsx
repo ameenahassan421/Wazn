@@ -1,6 +1,7 @@
 import { Kick } from '@/design/Txt'
 import { Empty, Screen } from '@/components/ui/Screen'
 import { Header } from '@/components/ui/Header'
+import { useLocale } from '@/hooks/use-locale'
 
 /**
  * Screen 16 — Friends. Weekly leaderboard, duels, the invite row.
@@ -11,10 +12,12 @@ import { Header } from '@/components/ui/Header'
  * deliberately, rather than per screen by whoever built it.
  */
 export default function FriendsScreen() {
+  const { t } = useLocale()
+
   return (
     <Screen>
       <Header />
-      <Kick style={{ marginBottom: 14 }}>FRIENDS</Kick>
+      <Kick style={{ marginBottom: 14 }}>{t('nav.friends')}</Kick>
       <Empty line="A leaderboard of one. Invite someone to chase." />
     </Screen>
   )

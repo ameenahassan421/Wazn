@@ -67,7 +67,32 @@ module.exports = defineConfig([
           message:
             "Use textAlign: 'start' or 'end'. 'left'/'right' do not flip in RTL.",
         },
+        {
+          // `src/design/Txt.tsx` has claimed since it was written that "a lint
+          // rule enforces it". No such rule existed until 2026-08-19, and
+          // `app/_layout.tsx` was already rendering a bare <Text>. A comment
+          // that claims enforcement is worse than no comment: the next session
+          // reads it and believes it.
+          //
+          // Worth a rule rather than a screenshot because RN's default is the
+          // system sans at 14px in BLACK, which on this ground is invisible
+          // rather than wrong, and invisible is the one defect a screenshot
+          // pass genuinely misses.
+          selector: "JSXOpeningElement[name.name='Text']",
+          message:
+            'Use <Txt step="..."> from @/design/Txt. A bare <Text> is the system sans at 14px in black, invisible on this ground.',
+        },
       ],
+    },
+  },
+  {
+    // The one legitimate bare <Text> in the package: `Txt` IS the wrapper the
+    // rule funnels everything else through, so it has to render one. Scoped to
+    // the single file rather than an inline disable, so the exemption is
+    // visible in the config instead of buried in the source.
+    files: ['src/design/Txt.tsx'],
+    rules: {
+      'no-restricted-syntax': 'off',
     },
   },
 ])

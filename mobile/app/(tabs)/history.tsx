@@ -1,6 +1,7 @@
 import { Kick } from '@/design/Txt'
 import { Empty, Screen } from '@/components/ui/Screen'
 import { Header } from '@/components/ui/Header'
+import { useLocale } from '@/hooks/use-locale'
 
 /**
  * Screen 12 — History. Coach's find, the ten-week grid, session rows.
@@ -11,10 +12,12 @@ import { Header } from '@/components/ui/Header'
  * deliberately, rather than per screen by whoever built it.
  */
 export default function HistoryScreen() {
+  const { t } = useLocale()
+
   return (
     <Screen>
       <Header />
-      <Kick style={{ marginBottom: 14 }}>HISTORY</Kick>
+      <Kick style={{ marginBottom: 14 }}>{t('nav.history')}</Kick>
       <Empty line="No workouts yet. Log one on the Log tab and it will appear here." />
     </Screen>
   )

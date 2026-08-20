@@ -8106,3 +8106,97 @@ change." **It is Supabase Pro only.** It was attempted, returned 402, and that w
 recorded at `DECISIONS.md:2468` and encoded at `scripts/supabase_admin.ts:398-421`. The
 authoritative block was wrong about its own top blocker, which is a fair illustration of why
 a claim in that block is now to be verified rather than recited.
+
+## 2026-08-19: A1 reversed to native-first. No WebView anywhere in this migration
+
+**Written into the plan hours earlier, and wrong.** Phase A1 said the five stub tabs would
+"come over as DOM components (`'use dom'`) wrapping the existing web screens". Ameen asked
+what the proper way was, the claim got checked against this repo rather than against the
+playbook it came from, and it did not survive. Reversed the same day, before anything was
+built on it.
+
+**Why it was written.** The `expo-web-to-native` skill teaches a strangler fig: stand up a
+native shell, ship every screen in a DOM webview on day one, then nativize by value. That is
+good advice and it assumes **one package** migrating. Wazn has two, with a deliberate wall
+between them, and the wall is precisely what the pattern cannot cross.
+
+**Why it fails here.** Four reasons, each verified:
+
+1. **Two Tailwind majors, by hard constraint.** Root is `tailwindcss@^4.0.0` with
+   `@tailwindcss/vite`; `mobile/` is `tailwindcss@^3.4.19`, forced by NativeWind v4. The
+   separate lockfiles exist for exactly this reason (DECISIONS.md 2026-08-16). A DOM component
+   inside `mobile/` importing web screens needs the v4 pipeline inside the v3.4 build.
+2. **It would ship a second auth session.** `src/lib/supabase.ts:19` creates the web client
+   with `persistSession: true` against default storage, which is `localStorage`. A DOM
+   component runs in a WebView with its own storage origin, so a lifter signed in natively
+   would open History and find themselves signed out. That is not a rough edge, it is a
+   broken app, and it would have been discovered late and blamed on auth.
+3. **It drags 12,267 lines across.** `src/components/` is 43 files, and `HistoryScreen` alone
+   imports `locale-context`, `unit-context`, the web `supabase`, `ExercisePicker`,
+   `EditSetDialog` and `icons`. A second locale provider and a second unit provider, in a
+   WebView, duplicating what A0 had just built natively that same hour.
+4. **It wraps code scheduled for deletion.** Those screens are pre-v5, and `src/` retires at
+   A4. A throwaway wrapper around throwaway code, against Stage 4A's whole premise that the
+   port and the restyle are one edit.
+
+**The one case that appeared to require a WebView does not, and the file said so.**
+The argument for DOM rested on `ProgressScreen` (1,449 lines) needing recharts, which is
+DOM-only. `ProgressScreen.tsx:842` reads: "Not recharts. This is three paths, and recharts was
+half the bundle on a screen the Log tab must never wait for." **The charts were hand-drawn SVG
+already.** `src/lib/progress.ts` has zero imports and is already exported through
+`portable.ts`, so the data shaping crosses today, and `react-native-svg@^15.15.4` is already a
+dependency. Native draws them directly.
+
+**Decision: every screen is built once, native, already in v5. No DOM components.**
+
+Order, with reasons rather than preference: History (only door to "what did I do before"
+besides the bar, least coach machinery, so it sets the pattern), Body (smallest, no card door,
+and its production data is empty so it must be built against its degraded render), Coach
+(read-only surfaces first; "Tell the coach" was never assessed in v5 P0), Friends (least
+load-bearing mid-session), Progress last (most work even hand-drawn, and it is lazy-loaded on
+web for a reason native must preserve: the Log tab must never wait for it).
+
+**Cost, stated plainly.** A1 stops being "ship day one" and becomes real work per screen,
+against 4,292 lines of web equivalent. The alternative was building all five twice with a
+signed-out WebView in between.
+
+**The lesson, which is the reusable part.** The DOM plan came from a general playbook and was
+written into `WAZN_PLAN.md` without being checked against this repo's own constraints, two of
+which (`the Tailwind majors`, `the second session`) were already documented in `DECISIONS.md`
+and `CLAUDE.md`. **A pattern that is right in general can be wrong here, and this repo already
+writes down why.** Read the constraints before adopting the pattern.
+
+## 2026-08-19: the v5 design is a runnable app, and nobody had run it
+
+`docs/design/v5-momentum/design/` is not a spec. It is a working React app:
+`Wazn v5.html`, `ui.jsx`, `screens_core.jsx`, `screens_tabs.jsx`, `data.js`, `coach2.js`.
+Every screen, live, in a browser, committed 2026-08-16.
+
+This was found while investigating Ameen's report that the brand was missing from the native
+app. The investigating session had already written four claimed defects into `WAZN_PLAN.md`
+§7.0 **from the web implementation**, without opening the reference. Two of the four were
+wrong:
+
+- "Native renders the mark as text rather than the SVG lockup" is **backwards**. The reference
+  at `design/ui.jsx:68` sets the wordmark as text: `fontFamily` Saira Semi Condensed,
+  `fontWeight` 700, `fontSize` 21, lowercase `w` + ember `a` + `zn`. The SVG plate lockup with
+  the `evenodd` counter is the **v3 "Loaded Ink" mark, which v5 deliberately retired from the
+  interface.** Native's approach was correct; `src/components/Wordmark.tsx` is what is now out
+  of step.
+- "The Arabic وزن mark has no native path" is also wrong for the same reason. v5 retires وزن
+  from the interface; it stays canonical on the share card, the PWA icon and the favicon.
+
+**The real defect is one line.** Native writes lowercase `w`/`a`/`zn` but sets it with
+`<Txt step="hero">`, and the shared ramp's `hero` step carries `uppercase: true` at size 50
+(`src/lib/tokens.ts:128`). So it renders `WAZN` at hero scale. **A wordmark is not a type step
+and must not borrow one.** Fixed in A2, not A0, because A0 is explicitly "nothing
+user-visible".
+
+**Both wrong claims are struck rather than deleted in §7.0.** A wrong claim that reached the
+source of truth is the exact failure this whole session was opened to fix, and hiding it would
+teach the next session nothing.
+
+The wider consequence is `WAZN_PLAN.md` §6, "How a screen is verified": the one time anyone
+read this reference against the running app (the v5 P0 gate, 2026-08-17) it produced eleven
+findings in a single sitting, six on Home alone. Nobody has done it since. Running it is now
+part of every screen's gate.

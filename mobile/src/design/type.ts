@@ -29,7 +29,11 @@ import { fontFamily, type, type TypeStepName } from '@wazn/domain'
  * These strings are the keys passed to `useFonts` in `app/_layout.tsx`, and
  * they have to match exactly — a typo produces the system sans at the right
  * size, which looks plausible and makes every measurement taken against it
- * wrong. `assertFontsRegistered` below is what stops that being silent.
+ * wrong. The `__DEV__` block in `app/_layout.tsx` compares the two lists at
+ * startup and throws on a mismatch, which is what stops that being silent.
+ * (This line named a function `assertFontsRegistered` until 2026-08-19. No
+ * such symbol has ever existed in this repo. The guard is real; the name
+ * was not.)
  */
 const CUTS = {
   display: {
