@@ -74,8 +74,14 @@ same hedged sentence.
 ## Part 3 (Ameen: apply the config). DONE 2026-08-08
 
 Verified against the live Supabase config rather than the dashboard, and
-recorded in `WAZN_PLAN.md:1043` and `DECISIONS.md` ("What the live auth config
-says about the Yahoo blocker"). Nothing in this part is outstanding.
+recorded in `WAZN_PLAN.md` section 7.1 (the 2026-08-08 auth entry) and in
+`DECISIONS.md` under "2026-08-08: What the live auth config says about the
+Yahoo blocker". Nothing in this part is outstanding.
+
+> Cited by section and heading rather than by line number on purpose. The
+> 2026-08-19 rewrite of section 7.0 shifted every line in `WAZN_PLAN.md`, and
+> this was the one citation in the repo that broke. A heading survives an edit;
+> a line number does not.
 
 - [x] Google provider **Enabled** (`external_google_enabled` true). The panel
       can hold a client ID with the toggle still off, so the provider list has
