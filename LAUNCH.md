@@ -13,7 +13,9 @@ npm run supabase:admin -- set-email-rate-limit 30
 ```
 
 It writes the value, reads it back, and prints `rate_limit_email_sent set to 30
-per hour (verified)`. If it fails, custom SMTP is not configured: Supabase will
+per hour (verified)`. If it fails, read the error: a read-back mismatch means the write did not
+land (most often custom SMTP is not configured), while an auth or network error means the call
+never got that far. Without custom SMTP, Supabase will
 not raise this above 2 without it. Note the ceiling above it is Resend's own
 free plan, 100 a day, so 30 an hour is not 720 a day. Put it back to 2 when you
 are done.
@@ -223,7 +225,8 @@ that is the single failure this whole phase exists to prevent.
 
 - [ ] **Coach** shows 3–5 notes that reference your actual lifts, each with a
       **data chip** quoting the exact figures. Note #1 carries the knurl band.
-      Footer reads **"AI-GENERATED · NOT MEDICAL ADVICE"** in small caps. The
+      Footer reads **"AI-GENERATED · NOT MEDICAL ADVICE"**, uppercased by CSS at a
+      small size with letter-spacing (`text-nano ... uppercase`). The
       regenerates count joins it only once 3 or fewer are left, so on a fresh
       week its absence is correct.
 - [ ] Reopen Coach. It does **not** regenerate — same text, instantly. It

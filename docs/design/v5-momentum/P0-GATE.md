@@ -49,7 +49,7 @@ the second category were found by looking at pixels rather than by any check.
 | `npm run check:type` | the ramp. **no off-ramp font sizes in `src/`** |
 | `npm run check:tokens` | **16 colours, 10 type steps agree** across `index.css`, `tokens.ts`, `mobile/tailwind.tokens.js` |
 | `npm run check:coverage` | 54 of 64 `src/lib` modules tested, 10 exempt with reasons |
-| `npm test` | **1196 passed, 85 files** |
+| `npm test` | **1204 passed, 85 files** (1196 at the time of the gate) |
 | `npm run shots` | 121 screenshots, six screens x 390/430 x populated/empty, EN and AR |
 | `npm run v5:render` | the reference bundle at 430px, no page errors |
 | Supabase Management API | production counts, grants, advisors, read only |
@@ -154,8 +154,8 @@ needs its own PR with the greps done first.
 **The rest canvas takes over the screen after working sets only** (Ameen,
 2026-08-17). Warm-ups keep the current tap-to-open behaviour, where rest is
 short and the hand stays on the phone. Reasoning and the build spec are in
-`DECISIONS.md` under today's date. This closes the question P0 #5 left open and
-is the first build after this gate.
+`DECISIONS.md` under today's date. This closed the question P0 #5 left open and
+**shipped in PR #103 (`74f7d9d`) the same night**, on both stacks.
 
 ---
 
@@ -246,10 +246,9 @@ same as a decision, and it should not be recorded as either a pass or a fail.
 
 ### Outside the acceptance list
 
-The web em-dash sweep. **In progress, 2026-08-19.** `src/lib/i18n.ts` still
-holds 83 em-dashes at HEAD; another session is taking them out as this is
-written, so do not start a second pass at it. Greps first, because a copy change
-is an API change to every selector in `e2e/` and `scripts/`.
+The web em-dash sweep. **DONE 2026-08-19.** `src/lib/i18n.ts` held 83 and now
+holds zero. The selectors in `e2e/` and `scripts/` that quoted the changed
+strings were updated in the same pass, which is the trap CLAUDE.md records.
 
 ### What is NOT carried, because it is already decided
 

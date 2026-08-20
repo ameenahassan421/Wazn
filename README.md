@@ -7,8 +7,8 @@ Production web: <https://www.trywazn.app>
 
 ## This README does not track feature state
 
-On purpose. The last one claimed "three screens" and "49 tests" for eighteen
-weeks after both stopped being true. What exists today, what is half-built, and
+On purpose. The last one claimed "three screens" and "49 tests" for most of the
+two weeks after both stopped being true. What exists today, what is half-built, and
 what is next live in **`WAZN_PLAN.md` section 7.0**, which is the authoritative
 current-state block. Verify it against the database before quoting it; it has
 gone stale before, and `.claude/hooks/session-start.sh` prints how stale it is.
@@ -23,7 +23,7 @@ Android and web from a single tree via react-native-web.
 | `mobile/`       | the Expo app. Its own npm package, its own lockfile.             |
 | `src/lib/`      | portable domain (units, Epley, coach, readiness). Survives.      |
 | `src/screens/`, `src/components/` | the Vite PWA. Being ported, then retired.     |
-| `scripts/build_seo_pages.mjs`     | the 222 static exercise pages. Imports nothing from `src/`; unaffected by the migration. |
+| `scripts/build_seo_pages.mjs`     | 110 English and 110 Arabic exercise pages, 222 files with the two indexes. Imports nothing from `src/`; unaffected by the migration. |
 
 `src/lib/portable.ts` is the only door between the two apps: `mobile/` resolves
 `@wazn/domain` to it. `src/lib/tokens.ts` is the colour source of truth for

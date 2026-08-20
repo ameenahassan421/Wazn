@@ -57,7 +57,7 @@ const fullBrief: BriefBlock = {
 describe('the briefing skeleton', () => {
   it('leads with the routine that is due and the lift to beat', () => {
     expect(briefSkeleton(fullBrief, 'kg')).toBe(
-      'Push A is up · Bench Press (Barbell) — 100 kg × 5 last time.',
+      'Push A is up · Bench Press (Barbell): 100 kg × 5 last time.',
     )
   })
 
