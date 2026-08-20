@@ -20,8 +20,11 @@
 >   Anthropic limit is hit, which is a different thing from what people reach for
 >   it hoping to get.
 > - `.claude/settings.omniroute.example.json` existed only to point back at this
->   file and was deleted 2026-08-19 along with this archival. Nothing in the repo
->   references OmniRoute any more.
+>   file and was deleted 2026-08-19 along with this archival. No live path
+>   references OmniRoute any more. `DECISIONS.md` (2026-08-08) still describes
+>   both the tool and that deleted settings file, deliberately: it is the
+>   historical record of why this was tried and why it was dropped, and history
+>   is not rewritten to match the tree.
 > - Version-pinned throughout to omniroute 3.8.49 on Node 22.22.2. Treat every
 >   command below as a 2026-08-08 snapshot, not as current CLI surface.
 >
