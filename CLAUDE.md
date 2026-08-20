@@ -282,6 +282,22 @@ npm run bundle:android
 - **`npm run typecheck` in mobile is not a build.** A broken babel preset, a bad
   metro alias, a missing font subpath and a NativeWind/RN version fight are all
   clean to tsc and fatal to `expo export`. Bundle before claiming it works.
+- **Rebuilding `mobile/ios/` takes two commands and the second one needs a
+  locale.** `mobile/ios` is gitignored and regenerates, so it gets deleted
+  whenever the Mac needs space. Bringing it back:
+
+  ```bash
+  npx expo prebuild --platform ios --clean
+  cd ios && LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8 pod install
+  ```
+
+  **`expo prebuild` does NOT run `pod install`**, so the workspace is absent
+  until you do, and `xcodebuild` fails on a missing `Wazn.xcworkspace` in a way
+  that reads like a project problem. And `pod install` without the locale dies
+  with `Unicode Normalization not appropriate for ASCII-8BIT` from deep inside
+  Ruby, which reads like a CocoaPods bug and is a shell encoding. Both cost a
+  detour on 2026-08-20.
+
 - **`api.expo.dev` and `reactnative.directory` are 403 from this org's egress
   proxy**, so `npx expo install` cannot resolve versions and EAS cannot run from
   a session. Read `node_modules/expo/bundledNativeModules.json` instead — it is

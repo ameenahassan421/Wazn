@@ -826,7 +826,7 @@ none started: momentum bar and its brass flip, the PR moment, toasts, the finish
 remaining screen restyles, coach-volume wiring. Item 6 (Tell the coach) was **never
 assessed**; `TellCoachSheet.tsx` is v3-era.
 
-#### The wordmark renders uppercase on native (Ameen, 2026-08-19)
+#### The wordmark renders uppercase on native. FIXED 2026-08-20
 
 **Corrected 2026-08-19, same day, after reading the reference.** The first version of this
 block claimed four defects. **Two of them were wrong**, and they were wrong because the
@@ -837,6 +837,17 @@ failure this file keeps having.
 **The v5 design is a runnable React reference app, not a spec**, and nobody has run it:
 `docs/design/v5-momentum/design/Wazn v5.html` plus `ui.jsx`, `screens_core.jsx`,
 `screens_tabs.jsx`, `data.js`, `coach2.js`. Every screen, live. Open it in a browser.
+
+**FIXED 2026-08-20 in `mobile/src/components/ui/Wordmark.tsx`.** The mark now
+sets itself directly (Saira Semi Condensed 700 by family NAME, lowercase, the
+`a` in ember) at 21 in the header and 34 on auth, and no longer borrows a ramp
+step in either place. The cause turned out to be the same mistake twice in
+opposite directions: the header used `step="num"`, the FIGURES step at weight
+600 and tabular, which was close enough to look right; auth used `step="hero"`,
+which carries `uppercase: true` at 50, which was not. The bare-`<Text>` lint
+rule added in A0 flagged the new component immediately, and it is exempted in
+the config beside `Txt.tsx` with the reason attached rather than by an inline
+disable.
 
 **The real defect, and it is one line.** The v5 reference sets the wordmark as its own
 treatment, not as a ramp step (`design/ui.jsx:68`):
