@@ -200,7 +200,12 @@ and does nothing. Assert the privilege.**
   for the email on any non-social path: resolved server-side, address
   rendered only masked, identical response whether the username exists
   or not. The email templates in `supabase/email_templates/` must
-  contain `{{ .Token }}` or code flows are impossible.
+  contain `{{ .Token }}` or code flows are impossible. **`magic_link.html` is not a
+  magic link and the filename alarms people.** `magic_link` is Supabase's
+  fixed template slot for `signInWithOtp`; the file contains only
+  `{{ .Token }}` and its subject is "{{ .Token }} is your Wazn sign-in code"
+  (`scripts/supabase_admin.ts:83`). It sends the 6-digit code. Verified
+  2026-08-19. Do not "fix" it.
 - **The service-role / secret key is script-only.** Never in a `VITE_*` var,
   never in the client, never in Vercel.
 
