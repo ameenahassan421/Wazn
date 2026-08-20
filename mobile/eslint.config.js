@@ -86,11 +86,19 @@ module.exports = defineConfig([
     },
   },
   {
-    // The one legitimate bare <Text> in the package: `Txt` IS the wrapper the
-    // rule funnels everything else through, so it has to render one. Scoped to
-    // the single file rather than an inline disable, so the exemption is
-    // visible in the config instead of buried in the source.
-    files: ['src/design/Txt.tsx'],
+    // The two legitimate bare <Text> sites in the package, both because they
+    // are the thing the rule points at rather than users of it.
+    //
+    // `Txt` IS the wrapper everything else funnels through, so it must render
+    // one. `Wordmark` is the brand mark, and the whole reason it exists as its
+    // own file is that a wordmark must NOT inherit a ramp step: the header set
+    // it with the figures step (weight 600, tabular) and auth with `hero`
+    // (uppercase at 50), which is how the app came to render WAZN. Routing it
+    // back through `Txt` would reintroduce exactly that.
+    //
+    // Scoped to the two files rather than inline disables, so every exemption
+    // is visible here instead of buried in the source.
+    files: ['src/design/Txt.tsx', 'src/components/ui/Wordmark.tsx'],
     rules: {
       'no-restricted-syntax': 'off',
     },

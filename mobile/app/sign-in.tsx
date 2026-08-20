@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { maskEmail, palette, space } from '@wazn/domain'
 
 import { Txt, Kick } from '@/design/Txt'
+import { Wordmark } from '@/components/ui/Wordmark'
 import { Btn } from '@/components/ui/Btn'
 import { CodeInput, Field } from '@/components/ui/Field'
 import { Card } from '@/components/ui/Surface'
@@ -115,13 +116,9 @@ export default function SignIn() {
         }}
         keyboardShouldPersistTaps="handled"
       >
-        <Txt step="hero" ltr style={{ marginBottom: -4 }}>
-          w
-          <Txt step="hero" ink="accent" ltr>
-            a
-          </Txt>
-          zn
-        </Txt>
+        {/* 34 per README screen 01. This was `step="hero"`, which carries
+            uppercase at 50, so the first screen of the app read WAZN. */}
+        <Wordmark size={34} />
 
         {stage.name === 'credentials' ? (
           <>

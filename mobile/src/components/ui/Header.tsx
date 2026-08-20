@@ -4,15 +4,16 @@ import { useRouter } from 'expo-router'
 import { palette, radius } from '@wazn/domain'
 
 import { Txt } from '@/design/Txt'
+import { Wordmark } from '@/components/ui/Wordmark'
 
 /**
  * The wordmark and the avatar. 56px tall, and on every signed-in screen.
  *
  * ── THE MARK ────────────────────────────────────────────────────────────────
- * Lowercase `w a zn` with the `a` in ember, set in Saira 700 at 21. On the web
- * it is baked outlines in an SVG so it survives a font that has not loaded;
- * here the faces are in the bundle and registered before the first frame, so
- * live text is safe and stays selectable, scalable and one line of code.
+ * Lowercase `w a zn` with the `a` in ember, set in Saira 700 at 21. It lives
+ * in `Wordmark` rather than here: this header rendered it with `step="num"`,
+ * the FIGURES step, which is weight 600 and tabular. Close enough to look
+ * right and not the mark. See that file.
  *
  * ── THE AVATAR IS THE DOOR TO SETTINGS ──────────────────────────────────────
  * Deliberately, and it is the only door: Settings is the rarest screen in the
@@ -40,15 +41,7 @@ export function Header({
         height: 56,
       }}
     >
-      {/* `ltr` on the mark: `w a zn` is a name, and an Arabic layout must not
-          reverse its letters. */}
-      <Txt step="num" ltr accessibilityRole="header">
-        w
-        <Txt step="num" ink="accent" ltr>
-          a
-        </Txt>
-        zn
-      </Txt>
+      <Wordmark />
       <View style={{ flex: 1 }} />
       {right}
       <Pressable
