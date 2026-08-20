@@ -84,6 +84,26 @@ const config: ExpoConfig = {
     ],
   },
 
+  /**
+   * The web target. Stage 4A's whole premise is that "migrate to Expo" costs a
+   * web CODEBASE, not a web TARGET: Expo Router builds to web through
+   * react-native-web, which this package already depended on before the
+   * decision was taken.
+   *
+   * `output: 'single'` and not 'static' on purpose, for now. Static
+   * prerendering runs every route's render in Node at build time, which turns
+   * any module-scope browser access anywhere in the tree into a build failure
+   * rather than a runtime one. The app being replaced is a Vite SPA served
+   * behind a rewrite, so 'single' is the shape production already has and the
+   * smallest honest step. Revisit at phase A4, when the PWA is actually
+   * retired and per-route HTML starts to buy something.
+   */
+  web: {
+    bundler: 'metro',
+    output: 'single',
+    favicon: './assets/images/favicon.png',
+  },
+
   plugins: [
     'expo-router',
     'expo-secure-store',
