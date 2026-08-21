@@ -215,6 +215,99 @@ tab, which is why the tab underperforms at both.
 
 ---
 
+## Part 3B. The tab bar, now that it is not fixed either
+
+**Added 2026-08-21.** Ameen removed the last constraint: tabs can move, merge,
+appear or disappear. That changes the answer, because the honest conclusion is
+that **Friends should not be a tab**, and it is not the only one.
+
+### This was already litigated here once
+
+The 2026-08-13 audit retired the five-tab bar outright, and its reasoning is
+exactly the argument:
+
+> Log is daily; History, Progress, Coach, Friends are occasional. Equal tabs
+> make the app feel bigger and harder than it is.
+
+It replaced the bar with cards-as-doors. A v3 design handoff then brought back
+**six** tabs and that won. The audit's logic was never refuted, only overridden,
+and it applies harder now that one of the six is a stub.
+
+### The production data, which nobody has looked at
+
+Row counts across all nine accounts, read live on 2026-08-21:
+
+| Surface                                                      | Rows      | Has a tab        |
+| ------------------------------------------------------------ | --------- | ---------------- |
+| Logging (`workout_sets`)                                     | **3,477** | yes              |
+| Routines (`routines` + `routine_exercises` + `routine_sets`) | **386**   | **no**           |
+| Body (`body_weights` + `body_measurements`)                  | **1 + 0** | **yes**          |
+| Protein (`protein_days`)                                     | 1         | yes, inside Body |
+| Social (`follows` + `workout_likes`)                         | **1 + 0** | **yes**          |
+
+**The navigation is inverted relative to use.** Body owns a sixth of the tab bar
+for two rows total, and it is the only screen with no card door, so the bar is
+its sole route in. Routines carries 386 rows and has no tab at all.
+
+Nine accounts is a small sample and the app has not been shared, so this is
+weak evidence about demand. It is _strong_ evidence about proportion: nothing
+justifies Body and Friends holding a third of the navigation between them.
+
+### Proposed: four tabs
+
+**Train · Plan · Progress · Crew**
+
+- **Train** (was Log). The daily screen. Start, the coach's brief, the crew
+  line, the pact. Untouched otherwise: the logging path is sacred.
+- **Plan** (new). Routines, and later F7's shareable program pages. This is the
+  tab the data says is missing, and it is where the growth engine belongs.
+- **Progress** (absorbs History, Body and the Coach tab). The retrospective, in
+  one place.
+- **Crew** (was Friends), **and only once S1 ships.** Until then it is a card on
+  Train. A tab that is empty for every user is the stub problem again.
+
+### What dissolves, and why each is defensible
+
+**History folds into Progress.** "What did I do" and "am I getting stronger" are
+the same question at two zoom levels. Keep the History circle beside Start as
+the fast door, which the audit already called the one piece of navigation worth
+keeping as furniture.
+
+**Body folds into Progress, mostly by deletion.** Body weight is a number over
+time, which is a chart, which is what Progress is. It becomes one more card
+beside the e1RM chart. Measurements (0 rows) and protein (1 row) should be cut
+rather than moved: protein is a different domain bolted onto a strength logger,
+and the data says nobody has asked for it.
+
+**The Coach tab dissolves, and this is the one that matters most.** The repo's
+own doctrine is that AI arriving as a tab is the mistake, and the Coach tab is
+the last place that rule was not applied. Its parts have better homes:
+
+- the mode selector is a preference, so it goes to Settings;
+- the **weekly review goes to the top of Progress**, because its four sections
+  are adherence, volume, plateaus and wins, and every one of those is a Progress
+  question phrased by the coach.
+
+That merge also fixes a duplication found on 2026-08-21: the muscle-volume band
+chart shipped on Coach while Progress was being built to show the same numbers.
+One screen with the figures **and** the coach's reading of them is strictly
+better than two screens showing the same data twice.
+
+The coach does not lose surface area. It gains it: it is already on Train (the
+brief), on the board (the ghost), on the rest canvas, and on Finish (the
+debrief). Removing its tab makes it what it was always supposed to be, a layer
+rather than a destination.
+
+### What this does to the Friends plan
+
+It raises the stakes on F0. With four tabs instead of six there is less room to
+hide a surface nobody visits, so the ambient placements stop being a nice idea
+and become the mechanism: the crew's day-to-day presence is the line on Train,
+the line on the rest canvas, and the reactions on Finish. The Crew tab is an
+index that earns its slot only after S1 proves people are in crews at all.
+
+---
+
 ## Part 4. The plan
 
 **Revised 2026-08-21, second pass.** The first draft of this section had six
