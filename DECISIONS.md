@@ -8706,3 +8706,80 @@ used, the analysis was never going to be opened either.
 defaults > figures > sentences > conversations with an attention budget. A video
 critique is none of the four; it is a new mode, and slotting it into the layer
 without saying so would quietly break the budget the layer is built on.
+
+## 2026-08-21 — The tab bar goes from six to four, and Plan is the one that was missing
+
+**Who asked:** `docs/FRIENDS_PLAN.md` Part 3B, approved by Ameen 2026-08-21, and
+step 3 of the handoff order in `WAZN_PLAN.md` §7.0.
+
+**The bar is now `Train · Plan · History · Progress`.** The plan's endpoint is
+`Train · Plan · Progress · Crew` with Crew gated on S1, and this is the step
+that gets there without orphaning anything. History keeps its tab until Progress
+absorbs it, which is the next piece.
+
+**Why Plan exists:** production row counts read 2026-08-21 — routines and their
+children hold 386 rows and had no screen on either stack; Body held 1 and owned a
+sixth of the bar. Home has been naming the due routine on the Up Next card the
+whole time, so a lifter could be told what was up next with nowhere to look.
+
+**Seven tabs is not a thing.** Adding Plan before removing anything was tried on
+a simulator and the bar broke: labels collide and "PROGRESS" wraps onto two
+lines at 402pt. The interim state does not ship, so the add and the removals are
+one commit.
+
+**Nothing lost its door, because native has no harness that would catch it.**
+`npm run shots` walks the WEB app's doors; there is no native equivalent. So the
+doors are explicit: Coach behind the brief card on Train — which is the
+arrangement CLAUDE.md already described and which native had never implemented —
+and Body and Friends as rows under a new "More" heading in Settings.
+
+**Three tab marks were deleted with their tabs.** The `TabKey` union turned
+their `case` arms into type errors, which is how they were found. `git log` has
+them if Crew earns the bar back.
+
+## 2026-08-21 — The routine rotation is inert in production, and the Plan tab is what made it visible
+
+**Not a code change. A measurement, and the thing it implies.**
+
+`workouts.routine_id` is null on every finished workout in the database:
+**170 workouts, 2 carrying a routine, 0 of those finished.** The two that carry
+one are unfinished sessions from 2026-08-16 and 2026-08-17.
+
+**What that does to the coach.** `session_brief()`'s `due` CTE (migration 0021,
+line 191) is:
+
+    select r.id, r.name, max(f.started_at) as last_run
+    from public.routines r
+    left join finished f on f.routine_id = r.id
+    group by r.id, r.name, r.position
+    order by max(f.started_at) asc nulls first, r.position, r.id
+    limit 1
+
+With no finished workout carrying a `routine_id`, `max(f.started_at)` is null
+for all seventeen routines, every one ties on the first sort key, and the order
+collapses to `r.position, r.id`. **"Upper Push is due" is a constant.** It is
+not a rotation, it cannot advance, and it will say the same thing after any
+number of workouts. The Home screen has been printing it as a headline.
+
+Worse: "Upper Push" has **zero** finished workouts by that name. The coach's
+standing recommendation is a routine this account has never once run.
+
+**A name-match backfill does not fix it**, and the numbers are why. Matching
+`workouts.name` to `routines.name` covers 20 of 166 finished workouts — Upper
+(5), Pull (4), Legs (4), Push (4), Lower (2), Upper A (1) — and covers exactly
+none of Upper Push, Upper Pull, Lower Body or Core & Conditioning. The history
+came from Hevy under one set of names; the routines were made in Wazn under
+another.
+
+**The real fix is the one this session deliberately did not make:**
+`startWorkout()` takes no argument and writes no `routine_id`, so the column
+cannot fill going forward no matter what is backfilled. Seeding a board FROM a
+routine is the change that fixes the rotation, makes routines startable from the
+Plan tab, and is a change to the logging path — which is not something to bolt
+on at the end of a long session. It is the next piece of work, not a footnote.
+
+**One copy change fell out of this immediately.** The Plan cards said
+"Never run" on all seven, which is a claim about the LIFTER that the database
+cannot support: he has run Push four times, the record just does not connect
+them. The card now says when a routine was last run when it knows, and says
+nothing when it does not.

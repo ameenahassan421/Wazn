@@ -2,14 +2,21 @@ import { View } from 'react-native'
 
 import { palette } from '@wazn/domain'
 
-export const TABS = [
-  'index',
-  'history',
-  'progress',
-  'body',
-  'coach',
-  'friends',
-] as const
+/**
+ * The four tabs.
+ *
+ * Was six until 2026-08-21, and the bar was inverted relative to use: Body held
+ * a sixth of it for TWO rows in production and was the only screen with no card
+ * door, while routines carried 386 rows and had no tab at all
+ * (`docs/FRIENDS_PLAN.md` Part 3B). Plan arrives; Body, Coach and Friends come
+ * off the bar and keep doors — Coach behind the brief card on Train, which is
+ * the pattern CLAUDE.md already documents, and the other two in Settings.
+ *
+ * A seventh entry is not a small change: at seven the labels collide and
+ * "PROGRESS" wraps onto two lines. Seen on a simulator at 402pt, which is why
+ * this list is a bounded set rather than a place to append to.
+ */
+export const TABS = ['index', 'plan', 'history', 'progress'] as const
 export type TabKey = (typeof TABS)[number]
 
 /**
@@ -24,11 +31,9 @@ export type TabKey = (typeof TABS)[number]
  */
 export const TAB_KEY: Record<TabKey, string> = {
   index: 'nav.log',
+  plan: 'nav.plan',
   history: 'nav.history',
   progress: 'nav.progress',
-  body: 'nav.body',
-  coach: 'nav.coach',
-  friends: 'nav.friends',
 }
 
 /**
@@ -44,6 +49,14 @@ export const TAB_KEY: Record<TabKey, string> = {
  * a wider gap than the old accent/muted pairing, so the current place reads
  * from the corner of the eye rather than being found by reading. Ember 500 is
  * spent on the rail alone, which is the one piece of chrome up here.
+ */
+/*
+ * The `body`, `coach` and `friends` marks were here until 2026-08-21 and went
+ * with their tabs. They are in `git log` if a screen earns the bar back —
+ * `friends` is the likely one, as Crew at S1 — and keeping three unreachable
+ * drawings against that day is how a file grows a museum. The union above
+ * makes their absence a type error rather than a silent gap, which is how
+ * these three were found.
  */
 export function TabGlyph({ tab, on }: { tab: TabKey; on: boolean }) {
   const ink = on ? palette.accentSoft : palette.muted
@@ -81,6 +94,43 @@ export function TabGlyph({ tab, on }: { tab: TabKey; on: boolean }) {
           />
         </View>
       )
+    /*
+     * Three plates in a row with the first one loaded: the rotation, and which
+     * of them is up.
+     *
+     * It was a barbell seen side on — two tall blocks joined by a shaft — and
+     * on a simulator that is an `H`. At 14px a side-on barbell and a capital H
+     * are the same drawing, which is a thing you cannot see in the source.
+     * This is from the plate family like every other mark here, it says what
+     * the screen is FOR rather than what a gym contains, and nothing else in
+     * the bar is a row of discs.
+     */
+    case 'plan':
+      return (
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
+          <View
+            style={{ height: 8, width: 8, borderRadius: 4, backgroundColor: ink }}
+          />
+          <View
+            style={{
+              height: 8,
+              width: 8,
+              borderRadius: 4,
+              borderWidth: 2,
+              borderColor: ink,
+            }}
+          />
+          <View
+            style={{
+              height: 8,
+              width: 8,
+              borderRadius: 4,
+              borderWidth: 2,
+              borderColor: ink,
+            }}
+          />
+        </View>
+      )
     // Three plates stepping up — the same ascending shape the streak uses.
     case 'progress':
       return (
@@ -90,73 +140,6 @@ export function TabGlyph({ tab, on }: { tab: TabKey; on: boolean }) {
           <View style={{ height: 6, width: 3, backgroundColor: ink }} />
           <View style={{ height: 10, width: 3, backgroundColor: ink }} />
           <View style={{ height: 14, width: 3, backgroundColor: ink }} />
-        </View>
-      )
-    // A silhouette at scale: head over shoulders. Non-directional, so it does
-    // not need to flip with the layout.
-    case 'body':
-      return (
-        <View style={{ alignItems: 'center', gap: 1 }}>
-          <View
-            style={{
-              height: 6,
-              width: 6,
-              borderRadius: 3,
-              borderWidth: 2,
-              borderColor: ink,
-            }}
-          />
-          <View
-            style={{
-              height: 5,
-              width: 12,
-              borderRadius: 3,
-              borderWidth: 2,
-              borderColor: ink,
-            }}
-          />
-        </View>
-      )
-    // A plate on edge: the coach reads the bar side on.
-    case 'coach':
-      return (
-        <View
-          style={{
-            height: 11,
-            width: 11,
-            borderWidth: 2,
-            borderColor: ink,
-            transform: [{ rotate: '45deg' }],
-          }}
-        />
-      )
-    // Two discs, overlapping. `marginStart` so the overlap flips with the
-    // layout rather than pointing the wrong way in Arabic.
-    case 'friends':
-      return (
-        <View style={{ flexDirection: 'row' }}>
-          <View
-            style={{
-              height: 12,
-              width: 12,
-              borderRadius: 6,
-              borderWidth: 2,
-              borderColor: ink,
-            }}
-          />
-          <View
-            style={{
-              height: 12,
-              width: 12,
-              borderRadius: 6,
-              borderWidth: 2,
-              borderColor: ink,
-              marginStart: -4,
-              // The BAR's ground, not `surface`: the overlap is a cut-out in
-              // the disc behind it, so it has to match whatever it sits on.
-              backgroundColor: palette.card,
-            }}
-          />
         </View>
       )
   }

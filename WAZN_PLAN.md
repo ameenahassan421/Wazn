@@ -1357,6 +1357,53 @@ sentence rendered as "OUT OF VOLUME, RECORDS AND THE COACH." Prose, shouted, in
 the typeface reserved for plate maths. It is the same defect as the offline
 queue line fixed on 2026-08-19, in the same file. `caption` now.
 
+#### Step 3 has started: four tabs, and Plan is the one that was missing (2026-08-21)
+
+The bar is `Train · Plan · History · Progress`. `FRIENDS_PLAN` Part 3B's
+endpoint is `Train · Plan · Progress · Crew` with Crew gated on S1; History
+keeps its tab until Progress absorbs it, which is the next piece of step 3.
+
+**The Plan tab is new and it reads 386 rows that had no screen.** Seventeen
+routines, ordered by the shared `rotationOrder` so the list agrees with Home's
+Up Next card, each expanding to its planned sets. It cannot START a routine:
+`startWorkout()` takes no argument, and wiring a tap to it would start the wrong
+workout with an air of authority.
+
+**Coach, Body and Friends came off the bar and kept doors** — Coach behind the
+brief card on Train, which is what CLAUDE.md always said and native had never
+implemented; Body and Friends under a new "More" heading in Settings. Native has
+no `npm run shots` equivalent, so an orphan would not have been caught.
+
+**A seven-tab bar breaks.** Verified on a simulator: labels collide, "PROGRESS"
+wraps. The add and the removals are one commit for that reason.
+
+#### FOUND, NOT FIXED: the routine rotation is inert (2026-08-21)
+
+`workouts.routine_id` is null on every finished workout in production — 170
+workouts, 2 with a routine, 0 of those finished. `session_brief()`'s `due` CTE
+joins finished workouts on that column, so every routine ties at null and the
+order collapses to `position`. **"Upper Push is due" is a constant**, printed as
+a Home headline, naming a routine this account has never run.
+
+A name-match backfill covers 20 of 166 workouts and none of the four routines
+that matter, because the history came from Hevy and the routines were made here.
+The fix is to seed a board FROM a routine so the column fills going forward,
+which is a change to the logging path and therefore the next piece of work
+rather than an end-of-session patch. Full numbers in DECISIONS.md.
+
+#### OPEN: the weekly review's figures and its own sentence disagree (2026-08-21)
+
+On the Coach screen, the live figure reads "7 sessions this week · 3.5/wk
+average" and the sentence directly beneath it reads "You trained once this week,
+below your average of 1.9 sessions." SQL confirms **7** is correct.
+
+The obvious explanation is wrong: the note is not stale. `coach_notes.generated_at`
+is 2026-08-21 20:05 and its `basis_workout_at` equals the newest finished
+workout, so it was written after the import, on current data. That makes this a
+grounding question rather than a freshness one, and grounding is the doctrine
+the whole coach rests on. Not diagnosed yet. Do not ship a fix for it without
+reading what the Edge Function actually sends.
+
 #### The auth screen speaks in the app's own voice now (2026-08-21)
 
 The step-2 item, and the three defects the workflow audit named at

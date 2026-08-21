@@ -1,4 +1,5 @@
-import { View } from 'react-native'
+import { useState } from 'react'
+import { Pressable, View } from 'react-native'
 import { useRouter } from 'expo-router'
 
 import {
@@ -76,6 +77,7 @@ function weekday(locale: string): string {
 
 export default function LogHome() {
   const router = useRouter()
+  const [briefDown, setBriefDown] = useState(false)
   const { t, locale } = useLocale()
   const { unit, ready: unitReady } = useUnit()
   const home = useHome()
@@ -124,15 +126,30 @@ export default function LogHome() {
             return is drawn from SQL and upgraded in place if a phrased one
             arrives; the card never re-lays-out around a loading state. */}
         {home.brief !== null && (
-          <Card style={{ paddingVertical: 16, paddingHorizontal: 18 }}>
-            <View style={{ flexDirection: 'row', gap: 12, alignItems: 'flex-start' }}>
-              <Plate size={30} variant="hub" color={palette.ink} />
-              <View style={{ flex: 1 }}>
-                <Kick style={{ marginBottom: 5 }}>{t('coach.kicker')}</Kick>
-                <Txt step="body">{home.brief.line}</Txt>
+          /* And it is the door to Coach now, which is the arrangement CLAUDE.md
+             already described — "Coach behind the coach brief" — and which the
+             native bar had never implemented. The Coach tab came off the bar on
+             2026-08-21; without this the screen would be unreachable, and an
+             orphaned screen is how the web app grew three of them. */
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={`${t('coach.kicker')}. ${home.brief.line}`}
+            onPressIn={() => setBriefDown(true)}
+            onPressOut={() => setBriefDown(false)}
+            onPress={() => router.push('/coach')}
+            // Static, never `({ pressed }) => ...` — see `Btn.tsx`.
+            style={{ opacity: briefDown ? 0.7 : 1 }}
+          >
+            <Card style={{ paddingVertical: 16, paddingHorizontal: 18 }}>
+              <View style={{ flexDirection: 'row', gap: 12, alignItems: 'flex-start' }}>
+                <Plate size={30} variant="hub" color={palette.ink} />
+                <View style={{ flex: 1 }}>
+                  <Kick style={{ marginBottom: 5 }}>{t('coach.kicker')}</Kick>
+                  <Txt step="body">{home.brief.line}</Txt>
+                </View>
               </View>
-            </View>
-          </Card>
+            </Card>
+          </Pressable>
         )}
 
         {/* ── Up next ──────────────────────────────────────────────────────
