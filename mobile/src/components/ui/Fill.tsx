@@ -29,14 +29,12 @@ import { fillEasing, motion, palette } from '@wazn/domain'
 
 export function Fill({
   pct,
-  brass,
   height = 6,
   animate = true,
 }: {
   /** 0–100. Clamped, because a session can exceed its target and the bar
    *  cannot — the overflow is what the brass flip says instead. */
   pct: number
-  brass?: boolean
   height?: number
   /** Off for bars that are read rather than watched — the protein week, the
    *  duel card. Animating a static chart on mount is decoration. */
@@ -71,7 +69,7 @@ export function Fill({
         style={[
           {
             height: '100%',
-            backgroundColor: brass === true ? palette.accent : palette.accent,
+            backgroundColor: palette.accent,
           },
           style,
         ]}

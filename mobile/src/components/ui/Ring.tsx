@@ -38,14 +38,12 @@ export function Ring({
   progress,
   size = 250,
   stroke = 9,
-  brass,
   onInk,
   children,
 }: {
   progress: number
   size?: number
   stroke?: number
-  brass?: boolean
   /** Drawn on the ink ground. The track has to come from the `onInk` family
    *  or it renders as a near-white band: `paper` on `ink` is a 16:1 step, and
    *  the track is meant to be the QUIET half of the ring. */
@@ -95,7 +93,7 @@ export function Ring({
           cy={size / 2}
           r={r}
           fill="none"
-          stroke={brass === true ? palette.accent : palette.accent}
+          stroke={palette.accent}
           strokeWidth={stroke}
           strokeLinecap="round"
           strokeDasharray={circumference}

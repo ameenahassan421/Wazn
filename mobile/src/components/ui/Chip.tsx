@@ -19,17 +19,22 @@ import { Txt } from '@/design/Txt'
  * REQUIRED prop rather than an optional one is that "optional" is how it goes
  * missing.
  *
- * ── BRASS ───────────────────────────────────────────────────────────────────
- * The scoped second hue, and only for the four earned states: rank, duel
- * opponent, record pace, target beaten. The handoff asks that any third use be
- * flagged in review — so treat a `brass` chip on ordinary chrome as a defect.
+ *
+ * ── `brass` IS GONE, AND SO IS ITS PROP (2026-08-21) ────────────────────────
+ * v5 reserved a second hue for earned states. The prototype that replaced it
+ * has none — its earned signal is the `full` plate variant — so the colour
+ * sweep collapsed every `palette.brass*` onto `accent`, which left this
+ * component branching between two IDENTICAL values on a boolean nobody passed.
+ * A flag that selects between the same thing twice is a claim the code does
+ * not honour. If Ameen rules that the tier comes back, it comes back as a real
+ * token with a real branch (WAZN_PLAN 7.0).
  */
 
-export function Chip({ brass, children }: { brass?: boolean; children: string }) {
+export function Chip({ children }: { children: string }) {
   return (
     <View
       style={{
-        backgroundColor: brass === true ? palette.accentWash : palette.accentWash,
+        backgroundColor: palette.accentWash,
         borderRadius: radius.chip,
         paddingVertical: 3,
         paddingHorizontal: 8,
@@ -39,12 +44,7 @@ export function Chip({ brass, children }: { brass?: boolean; children: string })
       {/* `ltr` because a chip is always a figure — `125 × 8`, `▲ 9%`, a date.
           An Arabic locale must not reorder those, and `numberOfLines={1}` is
           the nowrap the web chip gets from `white-space`. */}
-      <Txt
-        step="meta"
-        ink={brass === true ? 'accent' : 'accentSoft'}
-        ltr
-        numberOfLines={1}
-      >
+      <Txt step="meta" ink="accentSoft" ltr numberOfLines={1}>
         {children}
       </Txt>
     </View>
@@ -60,18 +60,10 @@ export function Chip({ brass, children }: { brass?: boolean; children: string })
  * and keeps the sentence readable, which is the order of priority the voice
  * rules imply — the number is the claim, the sentence is the phrasing.
  */
-export function CoachLine({
-  line,
-  chip,
-  brass,
-}: {
-  line: string
-  chip: string
-  brass?: boolean
-}) {
+export function CoachLine({ line, chip }: { line: string; chip: string }) {
   return (
     <View style={{ gap: 8 }}>
-      <Chip brass={brass}>{chip}</Chip>
+      <Chip>{chip}</Chip>
       <Txt step="body" ink="muted">
         {line}
       </Txt>

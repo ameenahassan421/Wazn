@@ -54,8 +54,17 @@ const DISMISS_KEY = 'wazn.history.find_dismissed'
 const CELL_H = 12
 const GAP = 4
 
+/**
+ * Ember for a trained day, and a warm tint for an untrained one.
+ *
+ * The untrained cell was `raised` (`#211d15`) against a dark card and read
+ * clearly. The colour sweep of 2026-08-20 mapped that to `paper`, which on a
+ * WHITE card is a 5% step — the empty half of the grid effectively vanished,
+ * and a heatmap whose zero state is invisible is a row of floating dots. The
+ * ring tint is the quietest thing in the system that is still a thing.
+ */
 function cellColour(day: CalendarDay): string {
-  return day.volumeKg > 0 ? palette.accent : palette.paper
+  return day.volumeKg > 0 ? palette.accent : palette.ring
 }
 
 /** `trainingCalendar` returns days in order from a Monday. Seven to a column
@@ -83,9 +92,11 @@ function SectionHead({ title, right }: { title: string; right?: string }) {
 function SessionRow({
   session,
   unit,
+  t,
 }: {
   session: HistorySession
   unit: 'lbs' | 'kg'
+  t: (key: string, params?: Record<string, string>) => string
 }) {
   // ISO `YYYY-MM-DD`, which is what the reference renders (`{s.d}` off a
   // date-keyed row). A first pass used a localised "Jul 20" and reading the
@@ -95,10 +106,15 @@ function SessionRow({
   const iso = `${when.getFullYear()}-${String(when.getMonth() + 1).padStart(2, '0')}-${String(
     when.getDate(),
   ).padStart(2, '0')}`
+  // Sentence case. v5 set every meta string in shouting mono; this system's
+  // mono voice is quiet — "set 3 of 4 · barbell", "last Fri  60×5" — and a row
+  // that reads "12 SETS · 45 MIN" is the old app wearing the new palette.
   const meta = [
     iso,
-    `${session.sets} SETS`,
-    session.minutes === null ? null : `${session.minutes} MIN`,
+    `${session.sets} ${t(session.sets === 1 ? 'log.set' : 'log.sets')}`,
+    session.minutes === null
+      ? null
+      : t('history.minutes', { n: String(session.minutes) }),
   ]
     .filter((p) => p !== null)
     .join(' · ')
@@ -115,14 +131,10 @@ function SessionRow({
       }}
     >
       <View style={{ flex: 1, minWidth: 0 }}>
-        {/* Sentence case, deliberately: a workout's name is a name, and the
-            ramp's `title` step is uppercase. Same override the auth screen
-            makes for the same reason. */}
-        <Txt
-          step="title"
-          style={{ fontSize: 15, textTransform: 'none' }}
-          numberOfLines={1}
-        >
+        {/* `strong` IS 15 in this system, and it is not uppercase — so the
+            `fontSize` and `textTransform` overrides this line carried are
+            gone. They were v5's, where `title` was 17 and shouted. */}
+        <Txt step="strong" numberOfLines={1}>
           {session.name}
         </Txt>
         <Txt step="meta" ink="muted" ltr style={{ marginTop: 3 }}>
@@ -135,7 +147,7 @@ function SessionRow({
       <Txt step="num" ltr>
         {Math.round(toDisplayWeight(session.volumeKg, unit)).toLocaleString()}
         <Txt step="meta" ink="muted" ltr>
-          {` ${unit.toUpperCase()}`}
+          {` ${unit}`}
         </Txt>
       </Txt>
     </View>
@@ -200,10 +212,10 @@ export default function HistoryScreen() {
       {find !== null && weekdayName !== null && !dismissed ? (
         <Card style={{ marginBottom: space.gutter, gap: 8 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <Kick ink="accentSoft">COACH&apos;S FIND</Kick>
+            <Kick ink="accentSoft">{t('history.find.kicker')}</Kick>
             <View style={{ flex: 1 }} />
             <Kick onPress={dismiss} ink="muted" suppressHighlighting>
-              DISMISS
+              {t('history.find.dismiss')}
             </Kick>
           </View>
           {/* Sentence ABOVE chip, which is the opposite of the shared
@@ -213,23 +225,29 @@ export default function HistoryScreen() {
               handoff is normative, so this card lays itself out rather than
               bending a component three other screens rely on.
 
-              TODO(i18n): this sentence and its chip are the only strings on
-              this screen with no key in the shared catalogue. Both locales are
-              owed before the Arabic pass; English-only here is a known gap,
-              not an oversight.
+              The catalogue owns these strings now. They were the only ones on
+              this screen without a key, flagged as "owed before the Arabic
+              pass" — paid 2026-08-21.
 
               The reference's own copy sets an em-dash after "your day". Not
               reproduced: em-dashes never ship (CLAUDE.md), and a period is the
               same sentence. */}
-          <Txt step="body">
-            {`${weekdayName} is your day. More sessions land there than any other day of the week.`}
-          </Txt>
-          <Chip>{`${find.count} of ${find.total} sessions · ${weekdayName}s`}</Chip>
+          <Txt step="body">{t('history.find.line', { day: weekdayName })}</Txt>
+          <Chip>
+            {t('history.find.chip', {
+              count: String(find.count),
+              total: String(find.total),
+              day: weekdayName,
+            })}
+          </Chip>
         </Card>
       ) : null}
 
       <View style={{ marginBottom: space.gutter }}>
-        <SectionHead title="LAST 10 WEEKS" right={`${total} TOTAL`} />
+        <SectionHead
+          title={t('history.weeks')}
+          right={t('history.total', { n: String(total) })}
+        />
         <Card style={{ padding: 12 }}>
           <View style={{ flexDirection: 'row', gap: GAP }}>
             {toWeeks(calendar).map((week) => (
@@ -251,9 +269,9 @@ export default function HistoryScreen() {
       </View>
 
       <View>
-        <SectionHead title="SESSIONS" />
+        <SectionHead title={t('history.sessions')} />
         {sessions.slice(0, 14).map((s) => (
-          <SessionRow key={s.workoutId} session={s} unit={unit} />
+          <SessionRow key={s.workoutId} session={s} unit={unit} t={t} />
         ))}
       </View>
     </Screen>

@@ -33,17 +33,10 @@ export const supabase = createClient(url ?? 'http://localhost', anonKey ?? 'anon
  * tells the user nothing at the gym. Every caller wraps its own action name
  * around the underlying message so the toast says what failed and what to do.
  */
-export function describeError(action: string, error: unknown): string {
-  const raw =
-    error && typeof error === 'object' && 'message' in error
-      ? String((error as { message: unknown }).message)
-      : String(error)
-
-  if (/failed to fetch|network|load failed/i.test(raw)) {
-    return `${action} failed — no connection to the server. Your last saved set is safe; try again once you have signal.`
-  }
-  if (/jwt|token|not authenticated|session/i.test(raw)) {
-    return `${action} failed — your sign-in expired. Sign in again to continue.`
-  }
-  return `${action} failed — ${raw}`
-}
+/**
+ * Moved to `./errors` on 2026-08-21 so the native app can read it too, and
+ * re-exported here so no web caller had to change. `supabase.ts` builds the
+ * browser client and can never be portable; a pure function over a string
+ * should not have been trapped behind that.
+ */
+export { describeError } from './errors'

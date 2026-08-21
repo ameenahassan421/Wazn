@@ -1379,6 +1379,40 @@ invention; the Finish screen's stat tiles are the obvious home and that is Ameen
 equipment word (`deriveEquipment` needs a muscle group the board does not carry), and the
 coach's sentence (`ghost-reason` is not wired to this screen).
 
+#### History, and a raw Postgres error that was reaching lifters (2026-08-21)
+
+The first of the six screens the prototype does NOT draw. Structure kept, typography moved
+onto the new ramp: rows take `strong` (which IS 15 here, and is not uppercase, so the two
+overrides that line carried are gone), and meta reads `2026-07-20 · 12 sets · 45 min` in
+sentence case rather than v5's shouting mono.
+
+**Three defects, and two of them I introduced with the colour sweep:**
+
+1. **The heatmap's empty half vanished.** An untrained cell was `raised` `#211d15` on a dark
+   card; the sweep mapped that to `paper` on a WHITE card, a 5% step. A heatmap whose zero
+   state is invisible is a row of floating dots.
+2. **`brass` became a prop that branched between two identical values.** `Chip`, `Ring` and
+   `Fill` all read `brass ? accent : accent` after the sweep, on a flag nothing passed. A
+   boolean selecting the same thing twice is a claim the code does not honour. All three props
+   are gone; if the tier returns it returns as a real token with a real branch.
+3. **`permission denied for function session_volume_history` was rendered to the user.**
+   Verified on a simulator, in that wording, on the History tab.
+
+The third is the one that matters, and the fix is shared. `describeError` lived in
+`src/lib/supabase.ts`, which builds the browser client and can never be portable — so native
+had no humaniser at all and printed whatever Postgres said. It is now `src/lib/errors.ts`,
+re-exported from `supabase.ts` so no web caller changed, with six assertions and two fixes:
+
+- **A `permission denied` branch.** It is what every RLS-scoped table and `security invoker`
+  function says to a signed-out request, so it is reachable by a session simply expiring — and
+  the old code fell through to appending the raw string.
+- **No em-dashes.** Both messages carried one, in copy a user reads, against a standing rule.
+  A test asserts their absence rather than a comment claiming it.
+
+**This matters more than one screen.** Auth is off, so every server-backed surface —
+Progress, Body, Coach, Friends — takes exactly this path. They will now say "your sign-in has
+expired" instead of naming a Postgres function.
+
 #### Finish is built, and the four prototype screens are done (2026-08-21)
 
 `mobile/src/components/FinishSummary.tsx`, rendered by the session screen when the store's

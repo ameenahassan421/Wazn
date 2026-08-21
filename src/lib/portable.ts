@@ -51,6 +51,7 @@
 
 /* ── The arithmetic ──────────────────────────────────────────────────────── */
 export * from './epley'
+export * from './errors'
 export * from './units'
 export * from './format'
 export * from './plates'

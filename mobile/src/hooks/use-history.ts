@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useState } from 'react'
 
 import {
+  type CalendarDay,
+  describeError,
+  type SessionVolumeRow,
   topDay,
   trainingCalendar,
-  type CalendarDay,
-  type SessionVolumeRow,
 } from '@wazn/domain'
 
 import { supabase, supabaseConfigError } from '@/services/supabase'
@@ -116,7 +117,10 @@ export function useHistory(): HistoryData {
 
       const failure = workoutsRes.error ?? historyRes.error ?? totalsRes.error
       if (failure) {
-        setError(failure.message)
+        // Through `describeError`, not raw. A signed-out request gets
+        // `permission denied for function session_volume_history` back from
+        // Postgres, and that reached a lifter's screen on 2026-08-21.
+        setError(describeError('Loading your history', failure))
         setLoading(false)
         return
       }

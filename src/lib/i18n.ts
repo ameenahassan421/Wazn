@@ -237,6 +237,18 @@ export const messages: Record<Locale, Record<string, string>> = {
       'Every set you log lands here. The calendar above fills in as you go.',
     'history.empty.cta': 'Start a workout',
     'history.empty': 'Your log starts today.',
+    /* ── History, native (2026-08-21) ─────────────────────────────────────
+       The coach's-find sentence and its chip carried a TODO saying both
+       locales were "owed before the Arabic pass". Paid here. */
+    'history.minutes': '{n} min',
+    'history.weeks': 'Last 10 weeks',
+    'history.total': '{n} total',
+    'history.sessions': 'Sessions',
+    'history.find.kicker': "Coach's find",
+    'history.find.dismiss': 'Dismiss',
+    'history.find.line':
+      '{day} is your day. More sessions land there than any other day of the week.',
+    'history.find.chip': '{count} of {total} sessions · {day}s',
     'history.no_sets': 'This workout has no sets recorded.',
     'history.set': 'set',
     'history.sets': 'sets',
@@ -1231,6 +1243,14 @@ export const messages: Record<Locale, Record<string, string>> = {
       'كل مجموعة تسجّلها تصل إلى هنا، والتقويم أعلاه يمتلئ مع تقدمك.',
     'history.empty.cta': 'ابدأ تمريناً',
     'history.empty': 'سجلك يبدأ اليوم.',
+    'history.minutes': '{n} دقيقة',
+    'history.weeks': 'آخر ١٠ أسابيع',
+    'history.total': '{n} إجمالاً',
+    'history.sessions': 'الجلسات',
+    'history.find.kicker': 'ملاحظة المدرب',
+    'history.find.dismiss': 'إخفاء',
+    'history.find.line': '{day} هو يومك. تتركّز جلساتك فيه أكثر من أي يوم آخر.',
+    'history.find.chip': '{count} من {total} جلسة · {day}',
     'history.no_sets': 'هذا التمرين ليس له مجموعات مسجلة.',
     'history.set': 'مجموعة',
     'history.sets': 'مجموعات',
