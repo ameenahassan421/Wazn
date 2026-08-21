@@ -5,6 +5,7 @@ import {
   radius,
   space,
   formatEstimate,
+  muscleLabel,
   reviewBandScale,
   type ReviewBlock,
   type Unit,
@@ -206,7 +207,7 @@ function Bands({
   bands: ReviewBlock['bands']
   range: [number, number]
 }) {
-  const { t } = useLocale()
+  const { t, locale } = useLocale()
   const [low, high] = range
   const { shown, hidden, ceiling } = reviewBandScale(bands, range, BANDS_SHOWN)
   /** A percentage of the track. Typed as RN's own `%${number}` template so
@@ -221,8 +222,13 @@ function Bands({
       {shown.map((band) => (
         <View key={band.muscle} style={{ gap: 3 }}>
           <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 8 }}>
+            {/* `muscle` is the raw enum off the column — 'biceps', 'glutes'.
+                `muscleLabel` is the existing localised table for exactly
+                these values, and without it the chart rendered lowercase
+                English labels in both locales while every other muscle name
+                in the app was translated. */}
             <Txt step="label" style={{ flex: 1 }} numberOfLines={1}>
-              {band.muscle}
+              {muscleLabel(locale, band.muscle)}
             </Txt>
             <Txt step="meta" ink={band.status === 'in' ? 'accentSoft' : 'muted'} ltr>
               {String(band.sets)}
@@ -261,8 +267,7 @@ function Bands({
                 // the bar is `muted` — present and readable, but not claiming
                 // the one hue this system reserves for the thing that is
                 // right. There is no `inkSoft`; the first draft invented one.
-                backgroundColor:
-                  band.status === 'in' ? palette.accent : palette.muted,
+                backgroundColor: band.status === 'in' ? palette.accent : palette.muted,
               }}
             />
           </View>
@@ -394,11 +399,7 @@ export function CoachNotes({
       ) : (
         lines.wins !== null && (
           <Card bare style={{ borderStartWidth: 3, borderStartColor: palette.accent }}>
-            <Note
-              index={4}
-              kicker={t('coach.review.section.wins')}
-              line={lines.wins}
-            >
+            <Note index={4} kicker={t('coach.review.section.wins')} line={lines.wins}>
               {null}
             </Note>
           </Card>

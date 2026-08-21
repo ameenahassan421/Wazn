@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  formatEstimate,
   formatWeight,
   formatWeightWithUnit,
   fromDisplayWeight,
@@ -62,5 +63,29 @@ describe('formatting', () => {
   it('calls a missing weight bodyweight when the unit is appended', () => {
     expect(formatWeightWithUnit(null, 'lbs')).toBe('bodyweight')
     expect(formatWeightWithUnit(58.97, 'lbs')).toBe('130 lbs')
+  })
+})
+
+describe('formatEstimate', () => {
+  /**
+   * Seen on a simulator 2026-08-21: the weekly review's STALLED section drew
+   * its trend as a 30px "−0", which reads as a broken render rather than as
+   * "this lift is flat". Every near-zero CHANGE this function formats has the
+   * same shape, and it formats gains and deltas as well as values.
+   */
+  it('never prints a negative zero', () => {
+    expect(formatEstimate(-0.01, 'lbs')).toBe('0')
+    expect(formatEstimate(-0.001, 'kg')).toBe('0')
+    expect(formatEstimate(-0, 'kg')).toBe('0')
+  })
+
+  it('still prints a real negative', () => {
+    expect(formatEstimate(-1.4, 'kg')).toBe('-1.4')
+    expect(formatEstimate(-0.06, 'kg')).toBe('-0.1')
+  })
+
+  it('rounds to one decimal and never to a plate step', () => {
+    expect(formatEstimate(116.7, 'kg')).toBe('116.7')
+    expect(formatEstimate(null, 'kg')).toBe('\u2014')
   })
 })

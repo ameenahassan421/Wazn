@@ -267,100 +267,120 @@ export default function CoachTab() {
           throws. */}
       {!speaks ? (
         <Empty line={t('coach.quiet')} />
-      ) : state === 'loading' ? (
-        <Card>
-          {/* A kicker, not a skeleton. v2.1's rule and it still holds: a
-              shimmer implies a layout is arriving; this is waiting on a
-              sentence, and the layout it lands in is one line. */}
-          <Kick>{t('coach.loading')}</Kick>
-          <Txt step="label" ink="muted" style={{ marginTop: 6 }}>
-            {t('coach.loading.body')}
-          </Txt>
-        </Card>
-      ) : state === 'failed' ? (
-        <Card style={{ gap: 12 }}>
-          <Txt step="body">{message ?? t('coach.notes.unavailable')}</Txt>
-          <Btn
-            kind="line"
-            small
-            label={t('coach.retry')}
-            onPress={() => {
-              setState('loading')
-              // `setForce(false)` matters and is not tidiness. `force` is
-              // sticky state: once Regenerate sets it, every later reload
-              // carries it, so a lifter who pressed Regenerate once and then
-              // hit Try again three times would spend four model calls and
-              // four slices of quota recovering from one failure. Retry means
-              // "load it again" and is entitled to the cache; Regenerate is
-              // the only control allowed to spend a call.
-              setForce(false)
-              setReload((n) => n + 1)
-            }}
-          />
-        </Card>
-      ) : review === null ? (
-        // Nothing to say yet, which on a young account is the honest answer
-        // and on this one would mean the function declined. Either way it is
-        // an absence, not an error.
-        <Empty line={t('coach.empty')} />
       ) : (
         <View style={{ gap: 12 }}>
-          <Card style={{ gap: 10 }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-              <Kick style={{ flex: 1 }}>{t('coach.week_review')}</Kick>
-              <Pressable
-                accessibilityRole="button"
-                accessibilityState={{ disabled: spent }}
-                disabled={spent}
-                hitSlop={Math.round((space.touch - 14) / 2)}
+          {/* ── The model's half ──────────────────────────────────────────
+              Headline and the one recommendation. Three states and no fourth,
+              because a screen that renders nothing is indistinguishable from
+              one still loading. */}
+          {state === 'loading' ? (
+            <Card>
+              {/* A kicker, not a skeleton. v2.1's rule and it still holds: a
+              shimmer implies a layout is arriving; this is waiting on a
+              sentence, and the layout it lands in is one line. */}
+              <Kick>{t('coach.loading')}</Kick>
+              <Txt step="label" ink="muted" style={{ marginTop: 6 }}>
+                {t('coach.loading.body')}
+              </Txt>
+            </Card>
+          ) : state === 'failed' ? (
+            <Card style={{ gap: 12 }}>
+              <Txt step="body">{message ?? t('coach.notes.unavailable')}</Txt>
+              <Btn
+                kind="line"
+                small
+                label={t('coach.retry')}
                 onPress={() => {
                   setState('loading')
-                  setForce(true)
+                  // `setForce(false)` matters and is not tidiness. `force` is
+                  // sticky state: once Regenerate sets it, every later reload
+                  // carries it, so a lifter who pressed Regenerate once and then
+                  // hit Try again three times would spend four model calls and
+                  // four slices of quota recovering from one failure. Retry means
+                  // "load it again" and is entitled to the cache; Regenerate is
+                  // the only control allowed to spend a call.
+                  setForce(false)
                   setReload((n) => n + 1)
                 }}
-              >
-                <Kick ink={spent ? 'muted' : 'accentSoft'}>
-                  {t('coach.regenerate')}
-                </Kick>
-              </Pressable>
-            </View>
-
-            {review.headline !== '' && <Txt step="title">{review.headline}</Txt>}
-
-            {recommendation?.line !== undefined && (
-              <>
-                <View
-                  style={{ flexDirection: 'row', gap: 12, alignItems: 'flex-start' }}
+              />
+            </Card>
+          ) : review === null ? (
+            // Nothing to say yet, which on a young account is the honest answer
+            // and on this one would mean the function declined. Either way it is
+            // an absence, not an error.
+            <Empty line={t('coach.empty')} />
+          ) : (
+            <Card style={{ gap: 10 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <Kick style={{ flex: 1 }}>{t('coach.week_review')}</Kick>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityState={{ disabled: spent }}
+                  disabled={spent}
+                  hitSlop={Math.round((space.touch - 14) / 2)}
+                  onPress={() => {
+                    setState('loading')
+                    setForce(true)
+                    setReload((n) => n + 1)
+                  }}
                 >
-                  <Plate size={30} variant="hub" color={palette.ink} />
-                  <Txt step="body" style={{ flex: 1 }}>
-                    {recommendation.line}
-                  </Txt>
-                </View>
-                {/* "No chip, no claim." The chip is where the sentence gets
+                  <Kick ink={spent ? 'muted' : 'accentSoft'}>
+                    {t('coach.regenerate')}
+                  </Kick>
+                </Pressable>
+              </View>
+
+              {review.headline !== '' && <Txt step="title">{review.headline}</Txt>}
+
+              {recommendation?.line !== undefined && (
+                <>
+                  <View
+                    style={{ flexDirection: 'row', gap: 12, alignItems: 'flex-start' }}
+                  >
+                    <Plate size={30} variant="hub" color={palette.ink} />
+                    <Txt step="body" style={{ flex: 1 }}>
+                      {recommendation.line}
+                    </Txt>
+                  </View>
+                  {/* "No chip, no claim." The chip is where the sentence gets
                     pinned to a number the reader can check on Progress, and it
                     renders only when the function actually sent one. */}
-                {recommendation.chip !== undefined && (
-                  <Chip>{recommendation.chip}</Chip>
-                )}
-              </>
-            )}
-          </Card>
+                  {recommendation.chip !== undefined && (
+                    <Chip>{recommendation.chip}</Chip>
+                  )}
+                </>
+              )}
+            </Card>
+          )}
 
           {/* ── Coach's notes ────────────────────────────────────────────
               Figures from `weekly_review()`, sentences from the model, each
               section drawn as what it IS rather than as a fourth paragraph.
-              See `components/CoachNotes.tsx` for why that mattered. */}
-          <CoachNotes
-            block={block}
-            unit={unit}
-            lines={{
-              adherence: review.sections?.adherence?.line ?? null,
-              bands: review.sections?.bands?.line ?? null,
-              plateaus: review.sections?.plateaus?.line ?? null,
-              wins: review.sections?.wins?.line ?? null,
-            }}
-          />
+              See `components/CoachNotes.tsx` for why that mattered.
+
+              **Deliberately OUTSIDE the state chain above.** This block used
+              to be the last branch of it, so it rendered only when the model
+              had already answered — and on 2026-08-21 the Edge Function timed
+              out on a real account and the whole screen collapsed to "The
+              review took too long", figures included, while `block` sat loaded
+              in state a few lines away. Every number here is computed in
+              Postgres and owes the model nothing; tying them to its result
+              made §12's "if AI is dark, render the deterministic skeleton" a
+              comment rather than a behaviour. The figures now appear as soon
+              as SQL answers, stay through a retry, and survive the model
+              failing outright. */}
+          {(block !== null || review !== null) && (
+            <CoachNotes
+              block={block}
+              unit={unit}
+              lines={{
+                adherence: review?.sections?.adherence?.line ?? null,
+                bands: review?.sections?.bands?.line ?? null,
+                plateaus: review?.sections?.plateaus?.line ?? null,
+                wins: review?.sections?.wins?.line ?? null,
+              }}
+            />
+          )}
         </View>
       )}
 

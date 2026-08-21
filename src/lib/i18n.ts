@@ -655,7 +655,8 @@ export const messages: Record<Locale, Record<string, string>> = {
     // each one carries the number as a param rather than baking it in.
     'coach.review.figure.sessions': 'sessions this week · {avg}/wk average',
     'coach.review.figure.band_target': 'target {low}–{high} sets a week',
-    'coach.review.figure.plateau_slope': '{unit} per session across {sessions} sessions',
+    'coach.review.figure.plateau_slope':
+      '{unit} per session across {sessions} sessions',
     'coach.review.figure.band_more': '{count} more above these',
 
     // ── Friends screen (Slice 6) ───────────────────────────────
