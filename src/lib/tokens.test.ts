@@ -57,7 +57,6 @@ function contrast(a: string, b: string): number {
 /** Rounded the way a report would print it, so a failure is readable. */
 const ratio = (a: string, b: string) => Math.round(contrast(a, b) * 100) / 100
 
-
 /**
  * ── THE PAPER GROUND, AND THREE FAILURES THAT ARE SHIPPING ON PURPOSE ──────
  * The current system came from Ameen's prototype and three of its pairings are
@@ -145,7 +144,9 @@ describe('contrast on the iron ground', () => {
 
   it('muted clears AA — it carries real prose, not decoration', () => {
     expect(ratio(legacyPalette.muted, legacyPalette.ink)).toBeGreaterThanOrEqual(4.5)
-    expect(ratio(legacyPalette.muted, legacyPalette.surface)).toBeGreaterThanOrEqual(4.5)
+    expect(ratio(legacyPalette.muted, legacyPalette.surface)).toBeGreaterThanOrEqual(
+      4.5,
+    )
   })
 
   it('faint is BELOW the 3:1 bar — a known, deliberate exception', () => {
@@ -196,27 +197,43 @@ describe('contrast on the iron ground', () => {
 
   it('accentSoft is the small-accent tier and clears AA everywhere', () => {
     // Every kicker, chip and label the accent touches uses this, not 500.
-    expect(ratio(legacyPalette.accentSoft, legacyPalette.ink)).toBeGreaterThanOrEqual(4.5)
-    expect(ratio(legacyPalette.accentSoft, legacyPalette.surface)).toBeGreaterThanOrEqual(4.5)
-    expect(ratio(legacyPalette.accentSoft, legacyPalette.raised)).toBeGreaterThanOrEqual(4.5)
+    expect(ratio(legacyPalette.accentSoft, legacyPalette.ink)).toBeGreaterThanOrEqual(
+      4.5,
+    )
+    expect(
+      ratio(legacyPalette.accentSoft, legacyPalette.surface),
+    ).toBeGreaterThanOrEqual(4.5)
+    expect(
+      ratio(legacyPalette.accentSoft, legacyPalette.raised),
+    ).toBeGreaterThanOrEqual(4.5)
   })
 
   it('text on an ember fill clears AA — the hero button', () => {
-    expect(ratio(legacyPalette.accentInk, legacyPalette.accent)).toBeGreaterThanOrEqual(4.5)
+    expect(ratio(legacyPalette.accentInk, legacyPalette.accent)).toBeGreaterThanOrEqual(
+      4.5,
+    )
   })
 
   it('brassSoft clears AA on the ground and on a card', () => {
     // Rank names and duel figures are read, not glanced at.
-    expect(ratio(legacyPalette.brassSoft, legacyPalette.ink)).toBeGreaterThanOrEqual(4.5)
-    expect(ratio(legacyPalette.brassSoft, legacyPalette.surface)).toBeGreaterThanOrEqual(4.5)
+    expect(ratio(legacyPalette.brassSoft, legacyPalette.ink)).toBeGreaterThanOrEqual(
+      4.5,
+    )
+    expect(
+      ratio(legacyPalette.brassSoft, legacyPalette.surface),
+    ).toBeGreaterThanOrEqual(4.5)
   })
 
   it('the tab bar recedes: it is darker than the ground, not lighter', () => {
     // The one surface in the app below `ink`. A raised tab bar would lift the
     // chrome off the content, which is the opposite of what v5 draws.
     expect(luminance(legacyPalette.tabbar)).toBeLessThan(luminance(legacyPalette.ink))
-    expect(luminance(legacyPalette.surface)).toBeGreaterThan(luminance(legacyPalette.ink))
-    expect(luminance(legacyPalette.raised)).toBeGreaterThan(luminance(legacyPalette.surface))
+    expect(luminance(legacyPalette.surface)).toBeGreaterThan(
+      luminance(legacyPalette.ink),
+    )
+    expect(luminance(legacyPalette.raised)).toBeGreaterThan(
+      luminance(legacyPalette.surface),
+    )
   })
 })
 
@@ -239,9 +256,13 @@ describe('the type ramp', () => {
     // The part that IS a sequence: mega → hero → fig → num → title is the
     // figure ladder, and a step out of order there would break the hierarchy
     // every screen is built on.
-    const display = [legacyType.mega, legacyType.hero, legacyType.fig, legacyType.num, legacyType.title].map(
-      (s) => s.size,
-    )
+    const display = [
+      legacyType.mega,
+      legacyType.hero,
+      legacyType.fig,
+      legacyType.num,
+      legacyType.title,
+    ].map((s) => s.size)
     for (let i = 1; i < display.length; i++) {
       expect(display[i]).toBeLessThan(display[i - 1])
     }
@@ -251,7 +272,10 @@ describe('the type ramp', () => {
     // A weight that shifts by a pixel as it counts up reads as the app being
     // unsure of the number.
     for (const name of ['mega', 'hero', 'fig', 'num', 'meta'] as const) {
-      expect(legacyType[name], `${name} must be tabular`).toHaveProperty('tabular', true)
+      expect(legacyType[name], `${name} must be tabular`).toHaveProperty(
+        'tabular',
+        true,
+      )
     }
   })
 

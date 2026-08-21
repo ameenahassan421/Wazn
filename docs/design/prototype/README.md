@@ -26,17 +26,17 @@ the one JPEG, base64, keyed by uuid.
 
 ## What it is
 
-| | |
-| --- | --- |
-| Ground | paper `#f7f3ec`; the page behind the device is `#e9e4d8` |
-| Cards | `#ffffff`, radius 20, a hairline ring **and** a 1px lift |
-| Text | `#16130e`; prose `#4f4a41`; labels `#8a8378` |
-| Accent | `#e8491d`, pressed `#b83915`, wash `rgba(232,73,29,.09)` |
-| Display | **Sora** 600/700/800, tracking `-.01` to `-.05em` |
-| Body | Hanken Grotesk 500/600 |
-| Mono | IBM Plex Mono 500 |
+|          |                                                                        |
+| -------- | ---------------------------------------------------------------------- |
+| Ground   | paper `#f7f3ec`; the page behind the device is `#e9e4d8`               |
+| Cards    | `#ffffff`, radius 20, a hairline ring **and** a 1px lift               |
+| Text     | `#16130e`; prose `#4f4a41`; labels `#8a8378`                           |
+| Accent   | `#e8491d`, pressed `#b83915`, wash `rgba(232,73,29,.09)`               |
+| Display  | **Sora** 600/700/800, tracking `-.01` to `-.05em`                      |
+| Body     | Hanken Grotesk 500/600                                                 |
+| Mono     | IBM Plex Mono 500                                                      |
 | Controls | pills. The hero CTA is 58 standing, 60 mid-workout, with an ember glow |
-| The mark | the plate glyph used as the letter `a` in `wazn` |
+| The mark | the plate glyph used as the letter `a` in `wazn`                       |
 
 The one dark surface is the **rest canvas**, which inverts the whole screen to
 `#16130e` for the length of a rest and back again. That is why the palette has an

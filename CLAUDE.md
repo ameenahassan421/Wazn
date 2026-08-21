@@ -105,7 +105,10 @@ for visual/brand/logo art, `supabase-postgres-best-practices` before touching
 anything in `supabase/migrations/`, `dataviz` before writing any chart,
 `frontend-slides` / `pptx` / `docx` / `pdf` for documents. The brand
 direction for the mark lives in `docs/design-philosophy.md` ("Loaded Ink") —
-read it before redrawing any logo asset.
+read it before redrawing any logo asset. **The mark as drawn now is the
+plate used as the letter `a`**, which is that lineage arriving in the
+interface rather than a departure from it: `docs/design/prototype/` for the
+reference, `mobile/src/components/ui/Plate.tsx` for the four variants.
 
 ## Non-negotiables carried from WAZN_PLAN.md §2
 
