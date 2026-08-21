@@ -58,31 +58,23 @@ type Stage =
 
 const RESEND_SECONDS = 42
 
-/**
- * The auth headline, off the ramp.
+/*
+ * There was a `Lede` here that took a size and rebuilt `title`'s metrics
+ * around it, and every line of its reasoning was about v5.
  *
- * v5 sets it as `T.title` at 22 on screen 01 and 20 on screen 02, sentence
- * case rather than the step's uppercase (`Onboarding.html:24`, `:75`). The
- * ramp's `title` is 17, which is the size a LABEL wants and reads as a caption
- * under a 34px wordmark. `lineHeight` and `letterSpacing` are recomputed
- * because both are absolute pixels in RN: overriding `fontSize` alone leaves a
- * 22px line in a 20px box.
+ * Three things were wrong with it once the prototype replaced v5. It guarded
+ * `textTransform: 'none'` against an uppercase `title` that the current ramp
+ * does not have. It re-derived `letterSpacing` as `size * 0.01` — POSITIVE
+ * tracking, where every other display heading in this system is tight and
+ * negative — so the one screen a lifter meets first was set loose and nothing
+ * else was. And it took a size argument at all, which is a ramp with two
+ * callers rather than a step.
+ *
+ * `num` is that step: display 22/700 at -0.02, already carrying the Up Next
+ * card's routine name, which is the same job — a short sentence-case line
+ * under a wordmark. The two call sites asked for 22 and 20; two pixels apart
+ * is noise, not hierarchy, so both are `num` now.
  */
-function Lede({ size, children }: { size: number; children: string }) {
-  return (
-    <Txt
-      step="title"
-      style={{
-        fontSize: size,
-        lineHeight: Math.round(size * 1.2),
-        letterSpacing: size * 0.01,
-        textTransform: 'none',
-      }}
-    >
-      {children}
-    </Txt>
-  )
-}
 
 /**
  * One of the ways onward under the primary button.
@@ -263,7 +255,7 @@ export default function SignIn() {
                   uppercase at 50, so the first screen of the app read WAZN. */}
               <Wordmark size={34} />
               <View style={{ marginTop: 12 }}>
-                <Lede size={22}>{t('auth.tagline')}</Lede>
+                <Txt step="num">{t('auth.tagline')}</Txt>
               </View>
               <Txt step="label" ink="muted" style={{ marginTop: 6 }}>
                 {t('auth.tagline.sub')}
@@ -373,9 +365,18 @@ export default function SignIn() {
                 disabled={busy}
                 onPress={() => void onSendCode()}
               />
-              <Dot />
-              {/* `muted`, a tier below the other two. Recovery is a path you
-                  take when something has gone wrong, not an invitation. */}
+            </View>
+
+            {/* Its own row, and no `·` in front of it.
+                `muted` already puts recovery a tier below the other two —
+                it is a path you take when something has gone wrong, not an
+                invitation — and the three were laid out as one wrapping row
+                with separators as SIBLINGS, so the third link wrapped and left
+                its dot stranded at the end of the line above: "Create an
+                account · Email me a code instead ·". Seen on a simulator at
+                402pt, which is to say on the default phone. A separator that
+                can outlive its neighbour is a separator in the wrong place. */}
+            <View style={{ alignItems: 'center' }}>
               <LinkBtn
                 label={t('auth.forgot')}
                 ink="muted"
@@ -390,15 +391,20 @@ export default function SignIn() {
                 defect as a button that does nothing. */}
             <Card style={{ paddingVertical: 14, paddingHorizontal: 16, gap: 3 }}>
               <Txt step="label">{t('auth.hevy.cta')}</Txt>
-              {/* v5 sets this at `T.meta` 10 — mono, caps, and NO tracking.
-                  `Kick` is the same face at the same size with 0.14em on it,
-                  which pushes this line onto a second row. */}
-              <Txt step="meta" ink="muted" style={{ fontSize: 10, lineHeight: 12 }}>
-                {t('auth.hevy.cta.sub').toUpperCase()}
+              {/* Was `meta` at a hand-set 10px with `.toUpperCase()` on it,
+                  transcribing v5's caps-mono label. The string is a sentence —
+                  "Bring your whole history · every set, every PR" — and mono
+                  is this system's machine voice, so it shipped shouted prose
+                  in the typeface reserved for plate maths. `caption` is the
+                  small muted prose step and needs no override. */}
+              <Txt step="caption" ink="muted">
+                {t('auth.hevy.cta.sub')}
               </Txt>
             </Card>
 
-            <Txt step="nano" ink="muted" style={{ textAlign: 'center' }}>
+            {/* Same defect, same screen: `nano` is tracked uppercase mono, and
+                this line is two sentences about codes and Apple sign-in. */}
+            <Txt step="caption" ink="muted" style={{ textAlign: 'center' }}>
               {`${t('auth.privacy.link')} · ${t('auth.footer.note')}`}
             </Txt>
           </>
@@ -407,7 +413,7 @@ export default function SignIn() {
             <View>
               <Wordmark size={26} />
               <View style={{ marginTop: 14 }}>
-                <Lede size={20}>{t('auth.code.head')}</Lede>
+                <Txt step="num">{t('auth.code.head')}</Txt>
               </View>
               {/* Masked, and only ever after the server accepted the request:
                   enough to recognise your own address, not enough to learn

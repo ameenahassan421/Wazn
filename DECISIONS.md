@@ -8668,3 +8668,41 @@ and the momentum target this board chases comes from the same query.
 closes the mirror defect the helper's own header warns about: an empty session
 today would otherwise answer "0 days rested" for somebody who has not trained in
 a month.
+
+## 2026-08-21 — PARKED: video form analysis. Ameen asked; nothing is scheduled
+
+**Who asked:** Ameen, 2026-08-21, mid-session. Logged here because CLAUDE.md
+says anything outside a stage in `WAZN_PLAN.md` §4 needs an entry naming who
+asked. **Nothing is being built.** This is the record of the idea and of what
+it would have to satisfy, so a later session neither loses it nor starts it by
+accident.
+
+**The idea.** The lifter records a video of a rep; a model watches it and says
+something useful about their form.
+
+**Where it would live.** Stage 8, the AI stage, and it inherits every rule
+there: open weights with a genuinely permissive licence, the key in an Edge
+Function and never a `VITE_*` var, the model never on the critical path, and no
+model output written to the database without the lifter pressing something. It
+also inherits Stage 8's gate — the idea is not evidence, and Stage 8 is
+conditional on the Gate 1 backlog actually asking for it.
+
+**What makes it harder than the coach.** Every AI surface in Wazn today is
+grounded: SQL computes the numbers and the model only phrases them, which is
+why a wrong sentence is impossible rather than unlikely. A model watching a
+video has no such ground. It would be the first surface in this app where the
+output is the model's own claim, about a person's body, in a domain where bad
+advice injures people. That is a different risk class from "the coach phrased a
+figure badly" and it needs its own answer before any of it is built — at
+minimum: what it refuses to answer, and what it says when it cannot see enough.
+
+**What is cheap and true today, if the pull is real:** the video itself. Storing
+a rep beside the set that produced it, playable from history, needs no model at
+all and is the thing a lifter can already use to check their own depth. If that
+lands and gets used, the analysis has a corpus and a reason. If it does not get
+used, the analysis was never going to be opened either.
+
+**Not in FRIENDS_PLAN's AI layer.** That layer is governed by
+defaults > figures > sentences > conversations with an attention budget. A video
+critique is none of the four; it is a new mode, and slotting it into the layer
+without saying so would quietly break the budget the layer is built on.
