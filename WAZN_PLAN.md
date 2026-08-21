@@ -1357,6 +1357,43 @@ sentence rendered as "OUT OF VOLUME, RECORDS AND THE COACH." Prose, shouted, in
 the typeface reserved for plate maths. It is the same defect as the offline
 queue line fixed on 2026-08-19, in the same file. `caption` now.
 
+#### The auth screen speaks in the app's own voice now (2026-08-21)
+
+The step-2 item, and the three defects the workflow audit named at
+`sign-in.tsx:78,396,401` were one defect: v5's uppercase-mono voice applied to
+prose on a paper-first screen.
+
+`Lede` is deleted. It took a size and rebuilt `title`'s metrics around it,
+guarded `textTransform: 'none'` against an uppercase `title` the current ramp
+does not have, and derived `letterSpacing` as `size * 0.01` — POSITIVE tracking,
+where every other display heading in this system is tight and negative. So the
+first screen a lifter meets was the one screen set loose. Both call sites are
+`num` now, which is the step that already carries the Up Next card's routine
+name: the same job, a short sentence-case line under a wordmark.
+
+The Hevy subtitle was `meta` at a hand-set 10px with `.toUpperCase()` on it, and
+the string is a sentence. The footer was `nano`, which is tracked uppercase mono,
+and it is two sentences about codes and Apple sign-in. Both are `caption`.
+
+**And the screenshot found one the audit had not.** The three ways onward were
+one wrapping row with the `·` separators as SIBLINGS, so the third link wrapped
+to its own line and left its dot stranded: "Create an account · Email me a code
+instead ·". At 402pt, which is to say on the default phone. Recovery now has its
+own row and no separator, which is what the code's own comment already said it
+was — a tier below the other two.
+
+**Reached without signing out.** A signed-in user is redirected away from
+`/sign-in`, so the route guard in `_layout.tsx` was opened for the walk and
+restored immediately after; `git diff` shows that file untouched. Verified: the
+credentials stage. NOT seen: the code-entry stage, whose headline is the same
+component swap — reaching it sends a real email to a real address.
+
+**Parked, asked for by Ameen 2026-08-21:** video form analysis — the lifter
+records a rep and a model critiques their form. Not scheduled, not started; it
+belongs to Stage 8 and it is the first surface that would carry an ungrounded
+model claim about a person's body. Reasoning and the cheaper first step are in
+DECISIONS.md.
+
 **Still open from this session:** the poisoned 95-rep row (repair blocked by
 the session's safety classifier — fix it in Hevy or approve `reps = null`); the
 `public.e1rm()` migration across the thirteen SQL functions; the
