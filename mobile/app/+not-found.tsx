@@ -17,7 +17,11 @@ export default function NotFound() {
     <Screen scroll={false} style={{ justifyContent: 'center', gap: 14 }}>
       <Kick>NOTHING HERE</Kick>
       <Txt step="title">That link does not go anywhere.</Txt>
-      <Btn kind="hero" label="BACK TO THE LOG" onPress={() => router.replace('/')} />
+      {/* Sentence case. `cta` carries no `uppercase` key, so nothing
+          transforms this — it renders exactly as typed, and typed in v5's
+          shouting idiom it read as a different app. One of only two hardcoded
+          uppercase labels among 30 `label=` sites. */}
+      <Btn kind="hero" label="Back to the log" onPress={() => router.replace('/')} />
     </Screen>
   )
 }

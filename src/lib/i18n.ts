@@ -154,6 +154,7 @@ export const messages: Record<Locale, Record<string, string>> = {
     'auth.signup': 'Create account',
     'auth.signup.busy': 'Creating…',
     'auth.signup.link': 'Create an account',
+    'invite.open_app': 'Open the app',
     'auth.signup.has_account': 'I already have an account',
     'auth.signup.email': 'Email',
     'auth.signup.password.label': 'Password (at least {min} characters)',
@@ -399,6 +400,11 @@ export const messages: Record<Locale, Record<string, string>> = {
     // {count} already includes the number; log.set/log.sets handle plural.
     'log.sync.saving': 'Saving {count}…',
     'log.sync.offline_pending': 'Offline · {count} saved on this device',
+    /* Distinct from the line above, and the difference is a claim about the
+       network. `pending` is "on this device, not yet acknowledged", which is
+       ALSO true for the sub-second window after every ordinary bank — so the
+       board cannot say "Offline" there without lying on the hot path. */
+    'log.sync.pending': '{count} saved on this device · syncing',
     'log.sync.offline': 'Offline · logging as normal',
     'log.sync.cached': 'Offline · showing saved data',
     // CachedNote: the timestamp stays in a tnum span, so it is a prefix.
@@ -1178,6 +1184,7 @@ export const messages: Record<Locale, Record<string, string>> = {
     'auth.signup': 'إنشاء حساب',
     'auth.signup.busy': 'جارٍ الإنشاء…',
     'auth.signup.link': 'إنشاء حساب',
+    'invite.open_app': 'افتح التطبيق',
     'auth.signup.has_account': 'لديّ حساب بالفعل',
     'auth.signup.email': 'البريد الإلكتروني',
     'auth.signup.password.label': 'كلمة المرور (على الأقل {min} أحرف)',
@@ -1406,6 +1413,7 @@ export const messages: Record<Locale, Record<string, string>> = {
     // {count} already includes the number; log.set/log.sets handle plural.
     'log.sync.saving': 'جارٍ حفظ {count}…',
     'log.sync.offline_pending': 'غير متصل · تم حفظ {count} على هذا الجهاز',
+    'log.sync.pending': 'تم حفظ {count} على هذا الجهاز · جارٍ المزامنة',
     'log.sync.offline': 'غير متصل · التسجيل كالمعتاد',
     'log.sync.cached': 'غير متصل · عرض البيانات المحفوظة',
     // CachedNote: the timestamp stays in a tnum span, so it is a prefix.

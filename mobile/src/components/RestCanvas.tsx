@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Pressable, View } from 'react-native'
+import { StatusBar } from 'expo-status-bar'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { palette, radius, space } from '@wazn/domain'
@@ -29,6 +30,22 @@ import { restEnded, tick } from '@/services/haptics'
  * So the ±30s pair and "skip rest" come back — the prototype draws all three —
  * without costing the tap. A tap on the BACKGROUND still goes early, which is
  * the behaviour a lifter already has in their thumb.
+ *
+ * ── AND FOR ONE DAY NONE OF THEM COULD FIRE ─────────────────────────────────
+ * The paragraph above was true of this file and false of the app. The session
+ * screen's root `View` carried
+ * `onTouchStart={live.restEndsAt === null ? undefined : endRest}`, and this
+ * canvas renders INSIDE it. `onTouchStart` fires on touch-DOWN; `onPress`
+ * needs touch-up. So every press here ended the rest and unmounted the canvas
+ * before its own handler could resolve: ±30s, "skip rest" and even the
+ * background Pressable were all dead.
+ *
+ * It was invisible because the OUTCOME of a background tap was correct — the
+ * rest ended, which is what a background tap is for — so the one control
+ * anybody tested looked like it worked. The comment three lines below this one
+ * described the exact bug ("which is what happens when the handler lives on an
+ * ancestor") and was written about a wrapper one level closer than the one
+ * that had it. Found by the audit workflow, 2026-08-21.
  *
  * ── THE RING FILLS, IT DOES NOT DRAIN ───────────────────────────────────────
  * `progress` runs 0 to 1 as the rest elapses, so the ring closes as the lifter
@@ -139,6 +156,17 @@ export function RestCanvas({
         backgroundColor: palette.ink,
       }}
     >
+      {/* The one surface in the app that wants light system glyphs, and it
+          asks for them itself. The root sets `dark` for the paper ground; this
+          is an ink overlay drawn over the whole window, so the clock and the
+          battery would otherwise be near-black on `#16130e`. Unmounting the
+          canvas restores the root's `dark` on its own: `expo-status-bar` wraps
+          React Native's `StatusBar` (see its own source, and its docstring —
+          "the props of each StatusBar component will be merged in the order
+          that they were mounted"), so the last one mounted wins and popping it
+          falls back to the one below. Nothing here has to restore anything. */}
+      <StatusBar style="light" />
+
       {/* The background dismisses. It is a sibling UNDER the content rather
           than a wrapper around it, so pressing ±30s does not also go early —
           which is what happens when the handler lives on an ancestor and RN

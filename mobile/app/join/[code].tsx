@@ -104,9 +104,11 @@ export default function Join() {
       ) : (
         // A code that does not resolve is not an error worth a red screen —
         // it is usually an old link. The door still opens.
-        <Txt step="title" style={{ textTransform: 'none' }}>
-          That invite has expired.
-        </Txt>
+        //
+        // This carried `style={{ textTransform: 'none' }}`, overriding an
+        // uppercase that the `title` step stopped applying when v5 was
+        // retired: a no-op guarding against a system that no longer exists.
+        <Txt step="title">That invite has expired.</Txt>
       )}
 
       <Txt step="body" ink="muted">
@@ -118,7 +120,7 @@ export default function Join() {
       <Btn
         kind="hero"
         full
-        label={signedIn ? 'GO TO THE APP' : t('auth.signup.link')}
+        label={signedIn ? t('invite.open_app') : t('auth.signup.link')}
         onPress={() => router.replace(signedIn ? '/' : '/sign-in')}
       />
     </Screen>

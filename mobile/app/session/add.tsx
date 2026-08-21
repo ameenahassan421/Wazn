@@ -88,7 +88,11 @@ export default function AddExercise() {
         </Txt>
         <Pressable
           accessibilityRole="button"
-          hitSlop={10}
+          /* 16, not 10. `pill` is 13px at 1.2, so the glyph box is 16 and the
+             target was ~36 against the 48 floor in `space.touch`. Slop rather
+             than a height, because a height here would grow the header row.
+             The same arithmetic `Btn` does at line 96. */
+          hitSlop={Math.round((space.touch - 16) / 2)}
           onPress={() => router.back()}
         >
           <Txt step="pill" ink="muted">

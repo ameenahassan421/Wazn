@@ -243,7 +243,19 @@ export default function RootLayout() {
           </UnitProvider>
         </LocaleProvider>
       </SafeAreaProvider>
-      <StatusBar style="light" />
+      {/* `dark`, not `light`, and this was wrong from the day the ground turned
+          to paper. `style` sets the colour of the system glyphs, and `light`
+          means near-white — which on `#f7f3ec` is about 1.05:1, so the clock,
+          the battery and the signal bars were effectively invisible on all ten
+          screens. It survived every screenshot taken during the prototype
+          port, because a status bar is the one part of a screenshot nobody
+          looks at.
+
+          It is set once, here, and governs every route: no `Stack.Screen`
+          overrides `statusBarStyle`. The one surface that genuinely wants
+          light glyphs is the rest canvas, and that is an ink overlay drawn on
+          top rather than a screen ground — it sets its own. */}
+      <StatusBar style="dark" />
     </GestureHandlerRootView>
   )
 }

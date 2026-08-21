@@ -72,8 +72,12 @@ export function Screen({
       style={{ flex: 1, backgroundColor: palette.paper }}
       contentContainerStyle={[padding, style ?? null]}
       keyboardShouldPersistTaps="handled"
-      // iOS default is a white flash at the bounce edges on a dark ground.
-      indicatorStyle="white"
+      /* `black`, which iOS draws as a dark translucent bar. This said `white`
+         with a comment about "a dark ground" — true of v5 Momentum and false
+         since the ground turned to paper, so the scroll indicator was
+         white-on-`#f7f3ec` and invisible on every scrolling screen in the app.
+         The same class of miss as the status bar: chrome nobody photographs. */
+      indicatorStyle="black"
     >
       {children}
     </ScrollView>

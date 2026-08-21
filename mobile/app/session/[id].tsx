@@ -415,12 +415,7 @@ export default function LiveWorkout() {
     .join(' · ')
 
   return (
-    <View
-      style={{ flex: 1, backgroundColor: palette.paper, paddingTop: insets.top }}
-      // The rest canvas vanishes on interaction, and the interaction still
-      // lands where the lifter aimed it. See `RestCanvas`.
-      onTouchStart={live.restEndsAt === null ? undefined : endRest}
-    >
+    <View style={{ flex: 1, backgroundColor: palette.paper, paddingTop: insets.top }}>
       {/* ── Header ──────────────────────────────────────────────────────── */}
       <View
         style={{
@@ -662,10 +657,18 @@ export default function LiveWorkout() {
         )}
 
         {/* The queue, said plainly. These sets are on the phone and will be
-            retried; "saved" is a promise the store can now keep. */}
+            retried; "saved" is a promise the store can now keep.
+
+            It was a raw English template literal, and prose at that — a full
+            sentence in `step="meta"`, which is IBM Plex Mono, this system's
+            machine voice. Two defects in one line: an Arabic lifter read
+            English mid-workout, and the one place the app talks to somebody
+            under a bar did it in the typeface reserved for plate maths.
+            Now a catalogue key, and now dot-separated status, which is what
+            `meta` is actually for. */}
         {live.pending.length > 0 && (
-          <Txt step="meta" ink="muted">
-            {`${live.pending.length} set${live.pending.length === 1 ? '' : 's'} saved on this phone, waiting to sync.`}
+          <Txt step="meta" ink="muted" ltr>
+            {t('log.sync.pending', { count: String(live.pending.length) })}
           </Txt>
         )}
       </ScrollView>

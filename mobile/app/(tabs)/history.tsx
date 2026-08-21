@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { View } from 'react-native'
+import { Pressable, View } from 'react-native'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 
 import { toDisplayWeight, type CalendarDay } from '@wazn/domain'
@@ -214,9 +214,22 @@ export default function HistoryScreen() {
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
             <Kick ink="accentSoft">{t('history.find.kicker')}</Kick>
             <View style={{ flex: 1 }} />
-            <Kick onPress={dismiss} ink="muted" suppressHighlighting>
-              {t('history.find.dismiss')}
-            </Kick>
+            {/* A Pressable, not an `onPress` on the Kick itself. `Txt` spreads
+                onto a bare RN `Text` with no padding and no hit slop, and
+                `kick` is 12px at 1.2 — a 14px target against the 48 floor, on
+                the only control that dismisses this card. The dismissal is
+                persisted, so a lifter who kept missing it saw the card every
+                visit forever. It was also the app's ONLY press handler on a
+                text node. */}
+            <Pressable
+              accessibilityRole="button"
+              hitSlop={Math.round((space.touch - 14) / 2)}
+              onPress={dismiss}
+            >
+              <Kick ink="muted" suppressHighlighting>
+                {t('history.find.dismiss')}
+              </Kick>
+            </Pressable>
           </View>
           {/* Sentence ABOVE chip, which is the opposite of the shared
               `CoachLine`. That component stacks chip-first and says why: at
