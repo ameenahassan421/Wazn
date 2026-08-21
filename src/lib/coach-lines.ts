@@ -160,10 +160,18 @@ export const QUOTA_VISIBLE_AT = 3
 /**
  * The briefing, said without a model.
  *
- * At most two clauses, in the order a lifter cares about them: what is due,
+ * Up to THREE clauses, in the order a lifter cares about them: what is due,
  * what to beat, and — only when it has actually been a while — how long it has
  * been. Returns null when there is genuinely nothing to say, which renders as
  * no card at all rather than as a card apologising for itself.
+ *
+ * This said "at most two" from the day it was written and all three fire
+ * together on any account with a routine, a target and a gap: seen on a
+ * simulator 2026-08-21 as "Push day is up · Bench Press: 60 kg × 8 last time ·
+ * 7 days since your last session." Which is also the honest shape of this
+ * function — a joined LIST, where the prototype's coach card speaks prose.
+ * Closing that gap is the phrased sentence's job, not this one's. The
+ * skeleton's contract is to be true and instant, never to be good writing.
  */
 export function briefSkeleton(
   block: BriefBlock | null,
