@@ -8515,3 +8515,80 @@ figure wrapped to "57,77 / 0" at 30px in a third of a phone's width; the
 frequency caption promised a dashed average line that had never been drawn; and
 "Show all 108" promised a control native does not have. All four are fixed, and
 all four needed a screenshot.
+
+---
+
+## 2026-08-21 — Home reasons over a window, and "up next" stops echoing the session just finished
+
+Ameen: "it should not use the single most recent finished workout. it should
+look at least a week worth of workout or even a month to determine what the
+user should do next", and then "to identify muscles not been worked out
+recently for an example. maybe incorporate A.I?"
+
+### The bug that started it
+
+`use-home.ts` took `limit(1)` and derived the whole screen from that one row:
+the volume target, the routine name, the days-rested line, and `dayOne`, which
+is only `target === null`.
+
+An account with **163 workouts and 3,476 sets** rendered as brand new —
+"Welcome, amin", "Your first workout", "Your log starts today" — because the
+newest finished workout was a 21-second start-and-abandon with no sets. Zero
+volume, null target, first-run screen. The coach card directly above it was
+quoting "Bench Press (Barbell) 140 lbs x 2 last time" at the same moment, which
+is the only reason it was noticed.
+
+Not an import artifact and not rare: **any lifter who taps Start, logs nothing
+and ends the session erases their own history from the screen every workout
+begins on.** `lastLoggedSession` in `src/lib` walks the window back to the last
+session that actually moved weight, and it carries `started_at` with it so
+`daysRested` cannot inherit the mirror defect (an empty session today answering
+"0 days rested" for somebody a month off the bar — migration 0029's scar).
+
+### What "next" means now
+
+The card echoed the name of the session just FINISHED, which is the one thing it
+cannot be. It now reads two things that were already computed and already on the
+screen inside the coach's sentence:
+
+- **`due_routine`** from `session_brief()`, the same rotation rule `rotation.ts`
+  transcribes: never-run first, then longest since last run. Rotation is
+  inherently a window. The greeting uses it too, so the two lines agree.
+- **`low_bands`**, the muscle groups under ten sets in the last seven days,
+  which is Ameen's "muscles not worked out recently", already ordered
+  deterministically in SQL.
+
+**The band gap outranks the volume target, and that order is the point.** "Beat
+8,970 lbs" is a number to clear; "Biceps is at 1 set this week" is a thing to
+DO in the session about to start. The target survives as the fallback, because
+a week with every muscle inside its band has nothing to flag and a card that
+goes blank on a good week punishes the good week.
+
+The header's own long-standing caveat is also now discharged: the target was
+"the last session regardless of routine … on a push/pull/legs split it can ask a
+lifter to beat a leg day's volume on a push day". It is matched to the due
+routine's last run when one can be found.
+
+### On the AI suggestion: no, and not because it is hard
+
+Home is the logging path. §2 pins the coach as template statistics and never an
+LLM there, and the Coach tab's Edge Function was observed timing out on this
+exact account earlier the same day — which is precisely what a model on this
+screen would do to it. "Which muscles are under their band" is arithmetic with
+one exact answer; a model could only phrase it, and would put a network call, a
+quota and a failure mode on the screen whose whole job is to start a workout in
+under thirty seconds. Stage 8 also gates any AI on the Gate 1 backlog asking for
+it, and an idea is not evidence.
+
+### Two nits found and deliberately not fixed
+
+`coach.line.low_band` reads "{muscle} is at {n} sets this week", so it renders
+"Biceps is at 1 set". Correct for chest, wrong for biceps. It is the coach's own
+key, shared with the briefing sentence, and per-muscle pluralisation is a
+translation problem in two locales rather than a one-line fix.
+
+`daysSince` is elapsed-hours floored, so a session nineteen hours ago reads
+"trained today" though it was yesterday evening. Pre-existing and shared with
+the web's `daysRested`. Genuinely contested: for RECOVERY, elapsed hours is the
+better model; for COPY, the calendar day is. `localDay` already exists if the
+copy should split from the readiness input.

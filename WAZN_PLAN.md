@@ -1298,6 +1298,33 @@ sets**; PR flags verified against an independent recomputation, zero mismatches 
 4. **Auth last.** The screen a lifter sees once, the prototype does not cover it, and with auth
    switched off it is unreachable anyway.
 
+#### Home reasons over a window now, and it was erasing history (2026-08-21)
+
+**A 163-workout account rendered as brand new.** `use-home.ts` took `limit(1)`
+and derived the entire screen from it, including `dayOne`, which is only
+`target === null`. The newest finished workout was a 21-second start-and-abandon
+with no sets, so the target was null and Home showed "Welcome, amin", "Your
+first workout", "Your log starts today" — while the coach card directly above
+quoted "Bench Press 140 lbs x 2 last time". **Any lifter who taps Start, logs
+nothing and ends the session hits this.** Fixed with `lastLoggedSession`
+(`src/lib/last-session.ts`, 7 tests), which walks a 30-session window back to
+the last session with working volume and carries its date so `daysRested`
+cannot inherit the mirror defect.
+
+**And "up next" was echoing the session just finished**, which is the one thing
+it cannot be. It now reads `due_routine` (rotation, the same rule `rotation.ts`
+transcribes) and `low_bands` (muscle groups under ten sets in the last seven
+days) from `session_brief()` — both already computed in SQL, both already on the
+screen inside the coach's sentence. The band gap outranks the volume target,
+because "Biceps is at 1 set this week" is a thing to do and "Beat 8,970 lbs" is
+a number to clear; the target stays as the fallback so a good week does not
+render a blank card. The greeting uses the due routine too, so the three cards
+now agree where two of them used to contradict.
+
+**AI was considered for this and declined** — Home is the logging path, §2 pins
+the coach as statistics there, and the same account had just watched the Coach
+tab's Edge Function time out. See DECISIONS.md.
+
 #### Progress is built (2026-08-21)
 
 `mobile/app/(tabs)/progress.tsx` plus `mobile/src/services/progress.ts`. Five

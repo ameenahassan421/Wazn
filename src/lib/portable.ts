@@ -51,6 +51,7 @@
 
 /* ── The arithmetic ──────────────────────────────────────────────────────── */
 export * from './epley'
+export * from './last-session'
 export * from './errors'
 export * from './spark'
 export * from './units'
