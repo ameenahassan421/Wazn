@@ -391,6 +391,14 @@ export const messages: Record<Locale, Record<string, string>> = {
     'workout.short_by': 'plates are {amount} short',
     'workout.log_set': 'Log set {n} · {weight} × {reps}',
     'workout.log_set_reps': 'Log set {n} · {reps} reps',
+    /* A warm-up loses its set NUMBER on the commit button on purpose. The
+       number is a working-set count everywhere it is read, and "Log set 3"
+       over an empty bar is the label that makes a lifter stop trusting the
+       screen. The row keeps its number; the button says what it is. */
+    'workout.warmup': 'Warm-up',
+    'workout.log_warmup': 'Log warm-up · {weight} × {reps}',
+    'workout.log_warmup_reps': 'Log warm-up · {reps} reps',
+    'workout.warmup_note': 'Out of volume, records and the coach.',
     'log.finish_confirm': 'Finish?',
     'log.finish_hint_empty': 'Nothing logged yet. Finishing throws this one away.',
     'log.finish_hint': 'Finish saves it. Discard deletes it and its sets.',
@@ -1412,6 +1420,10 @@ export const messages: Record<Locale, Record<string, string>> = {
     'workout.short_by': 'الأقراص أقل بـ {amount}',
     'workout.log_set': 'سجّل المجموعة {n} · {weight} × {reps}',
     'workout.log_set_reps': 'سجّل المجموعة {n} · {reps} تكرار',
+    'workout.warmup': 'إحماء',
+    'workout.log_warmup': 'سجّل الإحماء · {weight} × {reps}',
+    'workout.log_warmup_reps': 'سجّل الإحماء · {reps} تكرار',
+    'workout.warmup_note': 'خارج الحجم والأرقام القياسية والمدرّب.',
     'log.finish_confirm': 'إنهاء؟',
     'log.finish_hint_empty': 'لم تُسجَّل أي مجموعة بعد. الإنهاء يلغي هذا التمرين.',
     'log.finish_hint': 'الإنهاء يحفظه. التجاهل يحذفه ومجموعاته.',

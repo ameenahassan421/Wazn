@@ -1,7 +1,7 @@
 import { ScrollView, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
-import { palette, space, toDisplayWeight, type Unit } from '@wazn/domain'
+import { palette, space, toDisplayWeight, type SetType, type Unit } from '@wazn/domain'
 
 import { Btn } from '@/components/ui/Btn'
 import { Plate } from '@/components/ui/Plate'
@@ -59,6 +59,8 @@ function Tile({ value, label }: { value: string; label: string }) {
 export interface FinishRow {
   exercise: string
   setNumber: number
+  /** Carried so the summary can say which rows the numbers beside it ignore. */
+  type: SetType
   weightKg: number | null
   reps: number | null
 }
@@ -88,6 +90,18 @@ export function FinishSummary({
 }) {
   const insets = useSafeAreaInsets()
   const { t, locale } = useLocale()
+
+  /**
+   * The tile counts WORKING sets, because the tile beside it counts working
+   * volume.
+   *
+   * It counted every row until 2026-08-21, which was invisible while the board
+   * could not produce a warm-up and wrong the moment it could: a session of two
+   * ramp-up sets and one working set read "1,080 lbs lifted · 3 sets", and the
+   * two figures were measuring different sessions. `bankedVolumeKg` is the one
+   * that cannot change — it feeds the target the NEXT session chases.
+   */
+  const working = rows.filter((row) => row.type !== 'warmup')
 
   /**
    * Asked for only once the row is sealed, and null the whole time it is not.
@@ -130,8 +144,8 @@ export function FinishSummary({
             label={t('finish.volume_lifted', { unit })}
           />
           <Tile
-            value={String(rows.length)}
-            label={t(rows.length === 1 ? 'finish.set.one' : 'finish.set.other')}
+            value={String(working.length)}
+            label={t(working.length === 1 ? 'finish.set.one' : 'finish.set.other')}
           />
         </View>
 
@@ -191,8 +205,18 @@ export function FinishSummary({
                   gap: 12,
                 }}
               >
+                {/* The row keeps its own set number rather than being
+                    renumbered over the working sets the way the web summary
+                    does (`src/components/FinishSummary.tsx`). The board says
+                    "set 3 of 6" about this row and a list that called the same
+                    row "Set 1" would be a second numbering of one session. The
+                    type is stated instead. */}
                 <Txt step="data" numberOfLines={1} style={{ flex: 1 }}>
-                  {`${row.exercise} · ${t('finish.set_n', { n: String(row.setNumber) })}`}
+                  {`${row.exercise} · ${
+                    row.type === 'warmup'
+                      ? t('finish.warmup')
+                      : t('finish.set_n', { n: String(row.setNumber) })
+                  }`}
                 </Txt>
                 <Txt step="data" ink="muted" ltr>
                   {row.weightKg === null

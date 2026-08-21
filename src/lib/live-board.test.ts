@@ -5,6 +5,7 @@ import {
   bankSet,
   bankedVolumeKg,
   currentPosition,
+  markSetType,
   momentumPct,
   seedBoard,
   seedWeight,
@@ -113,6 +114,72 @@ describe('bankedVolumeKg', () => {
   it('excludes a set missing either half, the way the target does', () => {
     const b = bankSet(board(), { exerciseIndex: 0, setIndex: 0 }, null, 12)
     expect(bankedVolumeKg(b)).toBe(0)
+  })
+})
+
+/**
+ * The type is the one field the board writes that nothing downstream can
+ * infer. Thirteen SQL functions filter on `set_type <> 'warmup'`, so a
+ * mislabelled row is not a cosmetic error: it is volume that never happened
+ * and a personal record that was never set.
+ */
+describe('set types', () => {
+  it("carries the previous session's type, so a repeated warm-up stays one", () => {
+    const [squat] = seedBoard(
+      [{ exerciseId: 'squat', name: 'Back Squat', sets: 2 }],
+      [
+        { exerciseId: 'squat', setNumber: 1, weightKg: 40, reps: 10, type: 'warmup' },
+        { exerciseId: 'squat', setNumber: 2, weightKg: 100, reps: 5, type: 'normal' },
+      ],
+    )
+    expect(squat.sets[0].type).toBe('warmup')
+    expect(squat.sets[1].type).toBe('normal')
+  })
+
+  it('keeps a repeated warm-up out of the volume it would otherwise inflate', () => {
+    const seeded = seedBoard(
+      [{ exerciseId: 'squat', name: 'Back Squat', sets: 1 }],
+      [{ exerciseId: 'squat', setNumber: 1, weightKg: 40, reps: 10, type: 'warmup' }],
+    )
+    expect(
+      bankedVolumeKg(bankSet(seeded, { exerciseIndex: 0, setIndex: 0 }, 40, 10)),
+    ).toBe(0)
+  })
+
+  it('defaults to normal for a lift with no history', () => {
+    const [fresh] = seedBoard(
+      [{ exerciseId: 'ohp', name: 'Overhead Press', sets: 1 }],
+      [],
+    )
+    expect(fresh.sets[0].type).toBe('normal')
+  })
+
+  it('marks the set in front of the lifter and nothing else', () => {
+    const b = board()
+    const marked = markSetType(b, { exerciseIndex: 0, setIndex: 0 }, 'warmup')
+    expect(marked[0].sets[0].type).toBe('warmup')
+    expect(marked[0].sets[0].done).toBe(false)
+    expect(marked[0].sets[1].type).toBe('normal')
+    // The untouched lift is the SAME object, not a copy: the store hands this
+    // straight to React and a new reference per exercise re-renders all of them.
+    expect(marked[1]).toBe(b[1])
+  })
+
+  it('refuses a banked row, which is already in Postgres', () => {
+    const banked = bankSet(board(), { exerciseIndex: 0, setIndex: 0 }, 100, 5)
+    expect(markSetType(banked, { exerciseIndex: 0, setIndex: 0 }, 'warmup')).toBe(
+      banked,
+    )
+  })
+
+  it('returns the same board when the type already matches, so nothing checkpoints', () => {
+    const b = board()
+    expect(markSetType(b, { exerciseIndex: 0, setIndex: 0 }, 'normal')).toBe(b)
+  })
+
+  it('is inert on a position that does not exist', () => {
+    const b = board()
+    expect(markSetType(b, { exerciseIndex: 9, setIndex: 9 }, 'warmup')).toBe(b)
   })
 })
 

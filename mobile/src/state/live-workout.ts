@@ -14,7 +14,9 @@ import {
   currentPosition,
   estimatedOneRepMax,
   localDay,
+  markSetType,
   seedBoard,
+  sessionVolume,
 } from '@wazn/domain'
 
 import { supabase } from '@/services/supabase'
@@ -67,12 +69,15 @@ import { supabase } from '@/services/supabase'
  * `flushPending` a connectivity trigger, and the screen still says plainly how
  * many rows are waiting.
  *
- * It is also NOT yet a board that can hold a warm-up. Every set carries a
- * `type` and it is now carried all the way to the row (see `persistSet`), but
- * `seedBoard` mints every set `'normal'` and no native control changes it, so
- * in practice the column is `'normal'` until the set-type toggle lands. The
- * plumbing is correct ahead of the control on purpose: the failure mode of the
- * other order is silent, permanent and in the database.
+ * It DOES hold a warm-up now (2026-08-21). The paragraph here used to say the
+ * opposite and was right to: the type reached the row but nothing ever set it
+ * to anything but `'normal'`, so every warm-up logged in Wazn counted as
+ * working volume in the thirteen SQL functions that filter on
+ * `set_type <> 'warmup'` and could set a personal record off an empty bar.
+ * Two things changed: `seedBoard` carries the previous row's own type, so a
+ * repeated session repeats its warm-ups correctly at zero taps, and
+ * `setCurrentSetType` below gives the board a control for the first time a
+ * lift is done and for the times history is wrong.
  */
 
 export type LiveStatus = 'idle' | 'active' | 'finished'
@@ -307,11 +312,34 @@ export async function startWorkout(): Promise<void> {
       .eq('user_id', userId)
       .not('ended_at', 'is', null)
       .order('started_at', { ascending: false })
-      .limit(1),
+      /*
+       * A WINDOW, not the newest row, and the same 30 `useHome` asks for.
+       *
+       * This was `.limit(1)`, which is the defect `last-session.ts` was written
+       * for, still live in the sibling path: on 2026-08-21 the newest finished
+       * workout on a 163-workout account was a 21-second start-and-abandon with
+       * no sets, so the board seeded EMPTY and Start led to "No exercises yet"
+       * — observed on a simulator, on the account with the most history in it.
+       * Home was fixed the same day and this was not, which is the worse half:
+       * Home renders the wrong copy, this renders no workout at all.
+       *
+       * The window matches Home's deliberately. Two windows are two answers to
+       * "what was my last session", and the momentum target on this board and
+       * the number Home promised come from the same question.
+       */
+      .limit(30),
     supabase.from('daily_checkins').select('state').eq('day', localDay()).maybeSingle(),
   ])
 
-  const last = recent?.[0]
+  /*
+   * The last session that actually moved weight, by the same rule and the same
+   * qualifier Home uses — `sessionVolume` refuses warm-ups and half-empty rows,
+   * so "has volume" means one thing in this app rather than two. An empty
+   * session is not something to repeat and it is not something to rest from.
+   */
+  const last = (recent ?? []).find(
+    (w) => sessionVolume((w.workout_sets ?? []) as never) > 0,
+  )
 
   /**
    * Null means "not asked today", which `computeReadiness` scores as neutral —
@@ -481,6 +509,26 @@ export function bankCurrentSet(weightKg: number | null, reps: number | null): vo
     restTotal: rests ? DEFAULT_REST_SECONDS : 0,
   })
   persistSet(exercise.exerciseId, setRow.setNumber, setRow.type, weightKg, reps)
+}
+
+/**
+ * Type the set the lifter is on.
+ *
+ * The board is truth (see the top of this file), so this only moves the board;
+ * `bankCurrentSet` reads the type off the row it is banking and `persistSet`
+ * sends it. There is no update path and there does not need to be one:
+ * `markSetType` refuses a banked set, so nothing here can contradict a row
+ * that is already in Postgres.
+ *
+ * A no-op position is a no-op, not a throw. The only way to tap this with
+ * nothing in front of you is a chip racing the last commit of the session.
+ */
+export function setCurrentSetType(type: BoardExercise['sets'][number]['type']): void {
+  const position = currentPosition(state.board)
+  if (position === null) return
+  const board = markSetType(state.board, position, type)
+  if (board === state.board) return
+  set({ board })
 }
 
 /**

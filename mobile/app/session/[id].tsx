@@ -19,7 +19,7 @@ import {
 
 import { FinishSummary } from '@/components/FinishSummary'
 import { RestCanvas } from '@/components/RestCanvas'
-import { Btn } from '@/components/ui/Btn'
+import { Btn, ChipBtn } from '@/components/ui/Btn'
 import { Card } from '@/components/ui/Surface'
 import { Plate } from '@/components/ui/Plate'
 import { Txt } from '@/design/Txt'
@@ -34,6 +34,7 @@ import {
   finishWorkout,
   resetWorkout,
   selectBoardView,
+  setCurrentSetType,
   startWorkout,
   useLiveWorkout,
 } from '@/state/live-workout'
@@ -197,6 +198,17 @@ export default function LiveWorkout() {
   const view = selectBoardView(live)
 
   const done = (view.exercise?.sets ?? []).filter((s) => s.done)
+  /**
+   * The ghost reasons about WORKING sets, which is `verdictFor`'s own stated
+   * contract (`ghost-reason.ts:89`, "Working sets already committed today").
+   *
+   * That was a distinction without a difference while every set was `'normal'`.
+   * The moment the board can hold a warm-up it is a real one: a 40 × 10 off an
+   * empty bar inside `committed` reads to the coach as the lifter falling
+   * short of their 100 × 5, and the sentence it draws from that tells them to
+   * take weight OFF.
+   */
+  const working = done.filter((row) => row.type !== 'warmup')
 
   /**
    * The ghost. The thing that makes this a coach and not a spreadsheet.
@@ -235,7 +247,7 @@ export default function LiveWorkout() {
             weightKg: row.previousKg,
             reps: row.previousReps,
           })),
-          committed: done.map((row) => ({
+          committed: working.map((row) => ({
             weightKg: row.weightKg,
             reps: row.reps,
             label: String(row.setNumber),
@@ -351,6 +363,7 @@ export default function LiveWorkout() {
             .map((row) => ({
               exercise: exercise.name,
               setNumber: row.setNumber,
+              type: row.type,
               weightKg: row.weightKg,
               reps: row.reps,
             })),
@@ -365,8 +378,43 @@ export default function LiveWorkout() {
 
   const weightStep = unit === 'kg' ? 2.5 : 5
   const bodyweight = view.set !== null && view.set.weightKg === null
+  const warmup = view.set?.type === 'warmup'
   const shown = toDisplayWeight(dialled.weightKg ?? 0, unit)
   const load = bodyweight ? null : platesFor(shown, unit)
+
+  /**
+   * What the button says it is about to do.
+   *
+   * The type belongs in the LABEL and not only in the chip above it: the label
+   * is the last thing read before the tap, and this screen cannot take the row
+   * back afterwards — `markSetType` refuses a banked set, because by then it is
+   * in Postgres and the board has no update path.
+   *
+   * A warm-up loses its set number on purpose. `set_number` stays what it is on
+   * the row; but the number a lifter READS is a working-set count everywhere
+   * else in the app, and "Log set 3" under an empty bar is exactly the label
+   * that teaches somebody to stop believing the screen.
+   */
+  const commitLabel =
+    view.position === null
+      ? t('log.finish')
+      : warmup
+        ? bodyweight
+          ? t('workout.log_warmup_reps', { reps: String(dialled.reps ?? 0) })
+          : t('workout.log_warmup', {
+              weight: String(shown),
+              reps: String(dialled.reps ?? 0),
+            })
+        : bodyweight
+          ? t('workout.log_set_reps', {
+              n: String(view.set?.setNumber ?? 0),
+              reps: String(dialled.reps ?? 0),
+            })
+          : t('workout.log_set', {
+              n: String(view.set?.setNumber ?? 0),
+              weight: String(shown),
+              reps: String(dialled.reps ?? 0),
+            })
 
   function step(field: 'weightKg' | 'reps', direction: 1 | -1) {
     tick()
@@ -569,11 +617,21 @@ export default function LiveWorkout() {
                     <Txt step="dataLg" ink="muted" ltr style={{ width: 36 }}>
                       {s.setNumber}
                     </Txt>
-                    <Txt step="dataLg" ltr>
+                    {/* A banked row cannot be retyped from this board, so the
+                        list is the only place a mistyped set can be SEEN. It
+                        is muted and named rather than merely styled: a lifter
+                        who reads back four grey rows has to be told which of
+                        them the coach and the records are ignoring. */}
+                    <Txt step="dataLg" ink={s.type === 'warmup' ? 'muted' : 'ink'} ltr>
                       {s.weightKg === null
                         ? `${s.reps}`
                         : `${toDisplayWeight(s.weightKg, unit)} ${unit} × ${s.reps}`}
                     </Txt>
+                    {s.type === 'warmup' && (
+                      <Txt step="nano" ink="muted">
+                        {t('workout.warmup')}
+                      </Txt>
+                    )}
                   </View>
                 ))}
               </View>
@@ -602,6 +660,45 @@ export default function LiveWorkout() {
               onDown={() => step('reps', -1)}
               onUp={() => step('reps', 1)}
             />
+          </View>
+        )}
+
+        {/* ── Warm-up or working ──────────────────────────────────────────
+            Under the dials, not in the card header and not in the commit
+            cluster. Three reasons, in the order they mattered:
+
+            It qualifies the two numbers directly above it, and this is the one
+            place it can sit adjacent to them. It is a thumb's reach from the
+            commit button without floating over the rest canvas the way the
+            sticky cluster does (z-31, deliberately). And it is a CHIP rather
+            than a switch because selected-is-an-ink-fill is how this system
+            already draws a state that is not an action — ember stays with the
+            one thing you press.
+
+            Not sticky across sets, which is where the web app went (`SetEntry`
+            keeps a chosen warm-up after commit). A stuck flag deletes working
+            volume silently and permanently; three taps across a warm-up run,
+            on the unhurried half of a session, is the cheaper failure. History
+            does the work anyway — `seedBoard` carries last session's types. */}
+        {live.board.length > 0 && view.set !== null && (
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+            <ChipBtn
+              label={t('workout.warmup')}
+              selected={warmup}
+              onPress={() => setCurrentSetType(warmup ? 'normal' : 'warmup')}
+            />
+            {/* `caption`, not `nano`. Both are small and muted and only one of
+                them is a VOICE: `nano` is the tracked uppercase mono this
+                system labels machines with (WEIGHT · LBS, ON THE BAR), and a
+                sentence set in it renders as "OUT OF VOLUME, RECORDS AND THE
+                COACH." — prose, shouted, in the typeface reserved for plate
+                maths. Caught on a simulator; the same defect as the offline
+                queue line, in the same file, three weeks apart. */}
+            {warmup && (
+              <Txt step="caption" ink="muted" style={{ flex: 1 }}>
+                {t('workout.warmup_note')}
+              </Txt>
+            )}
           </View>
         )}
 
@@ -724,18 +821,7 @@ export default function LiveWorkout() {
         >
           <Plate size={20} color={palette.onInk} />
           <Txt step="cta" ink="onInk" ltr>
-            {view.position === null
-              ? t('log.finish')
-              : bodyweight
-                ? t('workout.log_set_reps', {
-                    n: String(view.set?.setNumber ?? 0),
-                    reps: String(dialled.reps ?? 0),
-                  })
-                : t('workout.log_set', {
-                    n: String(view.set?.setNumber ?? 0),
-                    weight: String(shown),
-                    reps: String(dialled.reps ?? 0),
-                  })}
+            {commitLabel}
           </Txt>
         </Pressable>
       </View>
