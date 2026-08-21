@@ -1918,6 +1918,67 @@ myself with an untruncated grep, and every one held. This was a claim about RUNT
 opinion is not a second observation.** Adversarial verification raises the bar on reasoning; it
 does not run the code. Two agents reading the same wrong thing agree.
 
+#### THE COACH TAB IS BUILT, AND REAL DATA FOUND THE COACH LYING (2026-08-21)
+
+v5 §15 draws four things. Three shipped, and the fourth is absent rather than stubbed.
+
+**Built:** the mode selector (Strength / Hypertrophy / Meet prep — 2px ember ring and an
+"Active" chip on the current one), the week review card with Regenerate, Coach's Notes as four
+numbered sections behind a 3px ember rail, and the footer with the quota gated at
+`QUOTA_VISIBLE_AT`. `useCoach`'s `setMode` finally has a caller; the audit had it as dead.
+
+**Not built, and each absence is the rule rather than a shortfall:**
+
+- **Ask the coach** needs a `coach-ask` Edge Function. `supabase/functions/` holds
+  `coach-brief`, `coach-notes`, `auth-alias` and `generate-routine`. A free-text box wired to
+  nothing is the defect this repo keeps finding in its own screenshots.
+- **"Apply to week" / "Adjust"** scroll to a routine builder and step a weekly target on the
+  web. Native has neither surface and no `weeklyTarget` store.
+- **Meet prep is drawn and not selectable.** `isModeReady` is false with no meet date, and
+  `ghost-reason` then refuses to seed rather than inventing a percentage — so picking it would
+  silently stop ghosts a lifter relies on, with no way back but a date they cannot enter.
+  Setting one needs `@react-native-community/datetimepicker` (Expo pins 9.1.0, not installed,
+  native module, prebuild plus pods). It renders dashed and reads "Set meet date", which is a
+  labelled precondition rather than a dead control.
+
+**Two client defects the screen showed on its first render with real data:**
+
+- **Every long chip truncated.** `Chip` carried `numberOfLines={1}` as "the nowrap the web chip
+  gets from `white-space`", written when every chip in the app was `125 × 8`. Three of four
+  notes rendered `back 0, chest 0, shoulders 0 - target…`, the ellipsis eating the exact figure
+  the sentence beside it is a claim about. The chip is the app's honesty mechanism — "no chip,
+  no claim" exists so a reader can check the number against Progress — so an ellipsis there is a
+  claim with its evidence torn off. It wraps now.
+- **A comment described an ember rail the code did not draw.** Caught by reading the screenshot
+  against the comment I had just written.
+
+**And the coach told a lifter 32 days off the bar that his longest gap was zero.**
+
+`weekly_review()` (0021, the `gap` CTE) computed `max(gap between consecutive sessions inside
+28 days)` with `coalesce(..., 0)`. With no sessions in the window there is no consecutive pair,
+`max` is null, and the fallback answered **0** — which reads as perfect attendance and means its
+exact opposite. The model repeated it faithfully, as a mitigating clause: "though you have
+trained 5 of the past 8 weeks and your longest gap in the last 28 days is 0 days."
+
+Same shape as the `|| echo "no"` scar: **the branch that runs when there is nothing to measure
+must not answer the flattering value.**
+
+`0029_weekly_review_gap.sql` brackets the window — the window start and `now()` are gap
+boundaries in their own right — so a stretch with no training is a gap rather than an absence of
+gaps. Zero sessions answers 28; one session ten days ago answers 18 rather than 0.
+
+- Parses (`check:migrations`), applies from empty and passes all three SQL suites
+  (`check:sql`).
+- **Proven against the real rows, read-only, without touching production:** the account with
+  149 workouts has 0 sessions in the window, the old expression returns `0`, the new one
+  returns `28`.
+- **NOT APPLIED.** Production is at 0028. Applying it is production DDL and §2.6 makes that an
+  ask. Waiting on Ameen.
+
+`adherence(weeks)` in 0019 carries the same coalesce-to-zero shape over a 12-week window, where
+it is far less likely to bite. Left alone deliberately: this migration changes the one function
+that was observed lying.
+
 #### Waiting on Ameen
 
 Neither blocks the next screen; both get more expensive the longer they sit.

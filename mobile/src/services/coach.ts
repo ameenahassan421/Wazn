@@ -1,4 +1,10 @@
-import type { BriefBlock, CoachLine, DebriefBlock, Unit } from '@wazn/domain'
+import type {
+  BriefBlock,
+  CoachLine,
+  CoachNotes,
+  DebriefBlock,
+  Unit,
+} from '@wazn/domain'
 
 import { supabase } from './supabase'
 
@@ -80,4 +86,48 @@ export async function fetchCoachLine(
   } catch {
     return { line: null, degraded: true }
   }
+}
+
+/**
+ * The weekly review, from the `coach-notes` Edge Function.
+ *
+ * ── THE ONE READ HERE THAT THROWS, AND THAT IS DELIBERATE ───────────────────
+ * Every other function in this file answers null on failure, because every
+ * other surface it feeds is a card that must simply not appear. This one feeds
+ * a SCREEN, and a screen that renders nothing is indistinguishable from a
+ * screen that is still loading. So the Coach tab gets three honest states —
+ * loading, ready, failed with a message and a retry — and that needs the
+ * failure to arrive as a failure. Same contract as the web's `coach.ts`.
+ *
+ * `force` is the Regenerate press. Without it the function serves whatever it
+ * cached for this unit, which is the normal path and costs no model call.
+ */
+export async function fetchWeeklyReview(
+  unit: Unit,
+  options: { force?: boolean } = {},
+): Promise<CoachNotes> {
+  const query = new URLSearchParams({ unit })
+  if (options.force) query.set('force', '1')
+  const { data, error } = await supabase.functions.invoke<CoachNotes>(
+    `coach-notes?${query}`,
+    { method: 'POST' },
+  )
+  if (error) {
+    // The functions client reports a non-2xx as a generic FunctionsHttpError
+    // and puts the useful part in the response BODY — a quota message, a
+    // breaker notice. Reading it is the difference between "Something went
+    // wrong." and a sentence that says what to do next.
+    const context = (error as { context?: Response }).context
+    if (context && typeof context.json === 'function') {
+      try {
+        const body = (await context.json()) as { error?: string }
+        if (body.error) throw new Error(body.error)
+      } catch (parsed) {
+        if (parsed instanceof Error && parsed.message) throw parsed
+      }
+    }
+    throw new Error(error instanceof Error ? error.message : 'Something went wrong.')
+  }
+  if (!data) throw new Error('No review came back.')
+  return data
 }

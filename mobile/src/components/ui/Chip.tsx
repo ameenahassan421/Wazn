@@ -42,9 +42,21 @@ export function Chip({ children }: { children: string }) {
       }}
     >
       {/* `ltr` because a chip is always a figure — `125 × 8`, `▲ 9%`, a date.
-          An Arabic locale must not reorder those, and `numberOfLines={1}` is
-          the nowrap the web chip gets from `white-space`. */}
-      <Txt step="meta" ink="accentSoft" ltr numberOfLines={1}>
+          An Arabic locale must not reorder those.
+
+          It WRAPS, and it used to carry `numberOfLines={1}` as "the nowrap the
+          web chip gets from `white-space`". That was written when every chip
+          in the app was `125 × 8` and it was fine right up until the Coach tab
+          rendered real ones: `back 0, chest 0, shoulders 0 - target…` on a
+          390px phone, three of four notes truncated, the ellipsis eating the
+          exact figure the sentence beside it is a claim about.
+
+          A truncated chip is worse than a wrapped one by the doctrine at the
+          top of this file. "No chip, no claim" exists so the reader can check
+          the number against their own Progress screen; a number cut off mid-
+          word cannot be checked, so an ellipsis here is a claim with its
+          evidence torn off. Two lines are not pretty. Lying is worse. */}
+      <Txt step="meta" ink="accentSoft" ltr>
         {children}
       </Txt>
     </View>
