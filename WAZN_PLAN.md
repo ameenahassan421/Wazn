@@ -1879,6 +1879,45 @@ test that exercises nothing looks exactly like a test that passes.
 Not verified on a device: with auth off there is no signed-in user, so `startWorkout` returns
 before the read and readiness stays Normal on the simulator regardless.
 
+#### AUTH BACK ON, AND NINE MONTHS OF REAL DATA IMMEDIATELY FOUND THINGS (2026-08-21)
+
+Ameen: "import my workout history so you can actually interact with real data. it will help you
+with coach and enable you to find more bugs." **There was nothing to import.** 149 workouts,
+3,197 sets, 131 distinct lifts, 2025-10-22 to 2026-07-20, 836,179 kg of working volume have been
+in production since the Hevy seed, on `ameenahassan421@gmail.com` / username `amin`
+(`6da348ed-c678-4018-b32b-ae0f61e13a6b`). The only thing between the app and all of it was
+`AUTH_ENABLED = false`. Flipped back to `true`; Ameen signed in himself.
+
+**A trap worth knowing about.** There is a second account one letter apart —
+`ameenhassan421@gmail.com`, no second "a", created 2026-08-21 00:35, zero workouts. Ameen signed
+into it first and saw an empty app. Anything that looks like "my data is gone" should check the
+account before it checks the query.
+
+**What real data showed in four taps, none of which zero rows could have shown:**
+
+| Where    | What                                                                                                                                                                                                                                                                                          |
+| -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Home     | The coach's third clause reads "32 days since your last session" directly under a greeting that already reads "Friday · 32d since you trained". The skeleton's `days_since` clause duplicates this screen's own meta line. The web has no such meta line, which is why it never showed there. |
+| Home     | The coach card says "Upper Push is up" and the Up next card under it says "Upper". `due_routine.name` and the last session's `name` are different strings for what a reader takes to be one thing.                                                                                            |
+| History  | Every session row's meta wraps, orphaning "min" onto a second line: `2026-07-19 · 16 sets · 69` / `min`. Four rows visible, four wraps.                                                                                                                                                       |
+| History  | Dates render as raw ISO (`2026-07-19`). `formatWorkoutDate` exists in `src/lib/format.ts` and is not used here.                                                                                                                                                                               |
+| Progress | Renders "Log a workout to load the bar." to an account with 149 workouts. The screen is an unbuilt stub, but its copy is a false claim rather than an absence.                                                                                                                                |
+| Coach    | Renders "Log 3 workouts and the coach will have something to say." to the same account. Same defect, same cause.                                                                                                                                                                              |
+| sign-in  | "Continue with Google" is the ember hero, the loudest control on the app's first screen, and its `onPress` only sets an error saying Google is not available. The OAuth client does not exist yet. Ameen's call, since the plan names Google as the intended hero.                            |
+| sign-in  | The footer and the Hevy card's sub-line are prose forced uppercase in mono. The footer wraps to three shouted lines.                                                                                                                                                                          |
+
+**And one audit finding was WRONG, was confirmed by a second agent, and shipped.** The
+`textTransform: 'none'` on `join/[code].tsx`'s expired-invite line was called "a no-op left over
+from v5's uppercase `title` step". `title` still carries `uppercase: true` in `tokens.ts:349` and
+`design/type.ts:92` still applies it, so deleting the override made the sentence render as THAT
+INVITE HAS EXPIRED. Restored, with a comment saying so.
+
+The lesson is narrower than "audits are unreliable". Every DEADNESS claim I acted on, I re-checked
+myself with an untruncated grep, and every one held. This was a claim about RUNTIME BEHAVIOUR —
+"this override does nothing" — and I took it on trust because a verifier agreed. **A second
+opinion is not a second observation.** Adversarial verification raises the bar on reasoning; it
+does not run the code. Two agents reading the same wrong thing agree.
+
 #### Waiting on Ameen
 
 Neither blocks the next screen; both get more expensive the longer they sit.

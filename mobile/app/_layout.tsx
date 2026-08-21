@@ -90,14 +90,22 @@ if (__DEV__) {
  * render invisible through four green checks: the one screen anybody could
  * look at was the sign-in screen.
  *
- * ── WHAT IT DOES NOT GIVE YOU ───────────────────────────────────────────────
- * Data. Every read is RLS-scoped to `auth.uid()`, so with no session the
+ * ── AND BACK ON, 2026-08-21, FOR THE REASON THE PARAGRAPH BELOW PREDICTED ───
+ * Ameen: "import my workout history so you can actually interact with real
+ * data. it will help you with coach and enable you to find more bugs." There
+ * was nothing to import — 149 workouts and 3,197 sets have been in production
+ * since the Hevy seed — so the only thing standing between this app and nine
+ * months of real training was this constant.
+ *
+ * ── WHAT IT DOES NOT GIVE YOU ON ITS OWN ────────────────────────────────────
+ * Data. Every read is RLS-scoped to `auth.uid()`, so the gate is necessary and
+ * not sufficient: somebody has to actually sign in. With no session the
  * screens render their EMPTY states, not populated ones. That is worth having
  * — day-one copy is a real surface and LAUNCH.md specifies it — but a screen
- * built only against zero rows is half-checked. Populated screens still need
- * Ameen's device, or fixtures.
+ * built only against zero rows is half-checked, and every native screen in
+ * this app was built exactly that way.
  */
-export const AUTH_ENABLED = false
+export const AUTH_ENABLED = true
 
 export default function RootLayout() {
   const [ready, error] = useFonts(FACES)
