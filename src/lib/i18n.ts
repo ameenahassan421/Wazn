@@ -944,6 +944,14 @@ export const messages: Record<Locale, Record<string, string>> = {
     // Finish
     'finish.title': 'In the books.',
     'finish.done': 'Done',
+    /* ── The native finish summary (2026-08-21) ───────────────────────────
+       `finish.new_pr` needs a comparison against history that native does not
+       make yet. `finish.beat_last` is the claim it CAN prove: this session's
+       working volume against the last one's, which the live store already
+       carries as `targetKg`. A smaller claim, and a true one. */
+    'finish.volume_lifted': '{unit} lifted',
+    'finish.beat_last': 'Beat last session',
+    'finish.beat_last.detail': '{delta} {unit} more than last time',
     'finish.ordinal': 'workout {n}',
     'finish.new_pr': 'New PR',
     'finish.e1rm': 'est. 1RM {value} {unit}',
@@ -1898,6 +1906,9 @@ export const messages: Record<Locale, Record<string, string>> = {
     // Finish
     'finish.title': 'في السجل.',
     'finish.done': 'تم',
+    'finish.volume_lifted': '{unit} مرفوعة',
+    'finish.beat_last': 'تجاوزت التمرين السابق',
+    'finish.beat_last.detail': '{delta} {unit} أكثر من المرة السابقة',
     'finish.ordinal': 'التمرين {n}',
     'finish.new_pr': 'رقم قياسي',
     'finish.e1rm': 'أقصى تقديري {value} {unit}',

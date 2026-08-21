@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Pressable, ScrollView, View } from 'react-native'
 import { useRouter } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -9,11 +9,13 @@ import {
   fromDisplayWeight,
   palette,
   platesFor,
+  seedWeight,
   radius,
   space,
   toDisplayWeight,
 } from '@wazn/domain'
 
+import { FinishSummary } from '@/components/FinishSummary'
 import { RestCanvas } from '@/components/RestCanvas'
 import { Btn } from '@/components/ui/Btn'
 import { Card } from '@/components/ui/Surface'
@@ -182,29 +184,6 @@ function Stepper({
   )
 }
 
-/**
- * What the weight dial should show when the board moves to a new set.
- *
- * Three cases and they are all load-bearing:
- *
- *   bodyweight    `weightKg === null` MEANS bodyweight (`live-board.ts:24`).
- *                 It must return null, or a pull-up inherits the 60kg from the
- *                 bench press before it and 60kg is written to the row.
- *   seeded        A set with a real previous number uses it. This is the normal
- *                 case for a board built from history.
- *   fresh         A lift added mid-session seeds `0`, which is "no weight yet"
- *                 rather than "zero kilos". Carrying the last dialled value
- *                 forward is what makes set 2 of an added lift one tap instead
- *                 of eight presses on `+`.
- */
-function seedWeight(
-  next: { weightKg: number | null } | null,
-  carried: number | null,
-): number | null {
-  if (next === null || next.weightKg === null) return null
-  return next.weightKg > 0 ? next.weightKg : (carried ?? 0)
-}
-
 export default function LiveWorkout() {
   const router = useRouter()
   const insets = useSafeAreaInsets()
@@ -249,7 +228,18 @@ export default function LiveWorkout() {
     })
   }
 
+  /**
+   * Start a workout when this route opens, and ONLY then.
+   *
+   * Keyed on `live.status` it re-fired the moment "Done" reset the store to
+   * idle — starting a fresh workout, checkpointing it, and persisting it,
+   * one render before `router.back()` had a chance to leave. Opening the route
+   * is the event; the status is not.
+   */
+  const started = useRef(false)
   useEffect(() => {
+    if (started.current) return
+    started.current = true
     if (live.status === 'idle') void startWorkout()
   }, [live.status])
 
@@ -261,13 +251,41 @@ export default function LiveWorkout() {
       setElapsed(`${Math.floor(secs / 60)}:${String(secs % 60).padStart(2, '0')}`)
     }
     render()
+    // Painted once, then frozen: a finished workout's duration is a fact, and
+    // the summary's first tile counted upwards forever without this.
+    if (live.status !== 'active') return
     const id = setInterval(render, 1000)
     return () => {
       clearInterval(id)
     }
-  }, [live.startedAt])
+  }, [live.startedAt, live.status])
 
   if (!ready) return <View style={{ flex: 1, backgroundColor: palette.paper }} />
+
+  if (live.status === 'finished') {
+    return (
+      <FinishSummary
+        elapsed={elapsed}
+        volumeKg={view.banked}
+        targetKg={live.targetKg}
+        unit={unit}
+        rows={live.board.flatMap((exercise) =>
+          exercise.sets
+            .filter((row) => row.done)
+            .map((row) => ({
+              exercise: exercise.name,
+              setNumber: row.setNumber,
+              weightKg: row.weightKg,
+              reps: row.reps,
+            })),
+        )}
+        onDone={() => {
+          resetWorkout()
+          router.back()
+        }}
+      />
+    )
+  }
 
   const weightStep = unit === 'kg' ? 2.5 : 5
   const bodyweight = view.set !== null && view.set.weightKg === null
@@ -295,11 +313,16 @@ export default function LiveWorkout() {
     bankCurrentSet(dialled.weightKg, dialled.reps)
   }
 
-  function leave() {
-    void finishWorkout().then(() => {
-      resetWorkout()
-      router.back()
-    })
+  /**
+   * Finish ENDS the workout; it does not leave the screen.
+   *
+   * `finishWorkout` sets `status: 'finished'` and drains the queue, and this
+   * screen switches to the summary. Resetting and popping here — which is what
+   * it did until 2026-08-21 — threw the session away before the lifter had
+   * seen a single number about it.
+   */
+  function finish() {
+    void finishWorkout()
   }
 
   const done = (view.exercise?.sets ?? []).filter((s) => s.done)
@@ -377,7 +400,7 @@ export default function LiveWorkout() {
         <Pressable
           accessibilityRole="button"
           hitSlop={8}
-          onPress={leave}
+          onPress={finish}
           style={{
             height: 40,
             paddingHorizontal: 16,
@@ -565,12 +588,23 @@ export default function LiveWorkout() {
       >
         <Pressable
           accessibilityRole="button"
-          disabled={view.position === null}
-          onPress={view.position === null ? leave : bank}
+          /*
+           * A set with no reps is not a set.
+           *
+           * The button was live at 0 reps and wrote `reps: 0` rows — caught in
+           * a finish summary reading "Bench Press · Set 2   0 × 0". Nothing
+           * downstream can use one: `estimatedOneRepMax` refuses it, volume
+           * counts it as nothing, and it still occupies a set number forever.
+           * Finishing stays available, which is the other thing this button
+           * does.
+           */
+          disabled={view.position !== null && (dialled.reps ?? 0) < 1}
+          onPress={view.position === null ? finish : bank}
           style={{
             height: space.ctaLive,
             borderRadius: radius.pill,
             backgroundColor: palette.accent,
+            opacity: view.position !== null && (dialled.reps ?? 0) < 1 ? 0.45 : 1,
             flexDirection: 'row',
             alignItems: 'center',
             justifyContent: 'center',

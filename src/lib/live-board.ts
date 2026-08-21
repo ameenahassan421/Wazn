@@ -172,3 +172,29 @@ export function bankSet(
     }
   })
 }
+
+/**
+ * What the weight dial should show when the board moves to a new set.
+ *
+ * ── THREE CASES, AND ALL THREE SHIPPED BROKEN ON 2026-08-21 ─────────────────
+ *   bodyweight  `weightKg === null` MEANS bodyweight (see `BoardSet` above).
+ *               It must stay null, or a pull-up inherits the 60kg from the
+ *               bench press before it and 60kg reaches the row.
+ *   seeded      A set with a real number uses it. The normal case for a board
+ *               built from history, and it beats anything dialled earlier.
+ *   fresh       A lift added mid-session seeds `0`, which is "no weight yet"
+ *               rather than "zero kilos". Carrying the last dialled value
+ *               forward is what makes set 2 of an added lift one tap instead
+ *               of eight presses on `+` — GATE U2, on a lift with no history.
+ *
+ * Here rather than in the screen because it is arithmetic over the board's own
+ * types with no React in it, and because the web board has the same three
+ * cases the moment it grows an add-exercise path of its own.
+ */
+export function seedWeight(
+  next: Pick<BoardSet, 'weightKg'> | null,
+  carried: number | null,
+): number | null {
+  if (next === null || next.weightKg === null) return null
+  return next.weightKg > 0 ? next.weightKg : (carried ?? 0)
+}

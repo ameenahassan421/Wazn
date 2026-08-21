@@ -1379,6 +1379,44 @@ invention; the Finish screen's stat tiles are the obvious home and that is Ameen
 equipment word (`deriveEquipment` needs a muscle group the board does not carry), and the
 coach's sentence (`ghost-reason` is not wired to this screen).
 
+#### Finish is built, and the four prototype screens are done (2026-08-21)
+
+`mobile/src/components/FinishSummary.tsx`, rendered by the session screen when the store's
+status turns `finished`. Weekday, "In the books." at hero, three stat tiles, the set list, and
+one button.
+
+**Finish now ENDS the workout instead of leaving the screen.** It used to be
+`finishWorkout → resetWorkout → router.back()`, which threw the session away before the lifter
+saw a single number about it. `finishWorkout` drains the queue and sets the status; the screen
+switches; "Done" resets and pops.
+
+**Three of the prototype's claims are not made, because they cannot be proved:** "workout 47"
+needs a lifetime count no query produces; "New PR" needs this session's best set against every
+previous one (`exercise_bests` and 0009's trigger do it server-side, native reads neither);
+the debrief needs `ghost-reason`. The ember card is KEPT and given the claim that IS provable —
+this session's working volume against the last one's, which the store already holds as
+`targetKg`. "Beat last session" is smaller than "New PR" and it is true.
+
+**One button, not two.** The prototype pairs "Share card" with "Done" and there is no share
+surface on native, so it would open nothing.
+
+**Three more defects, all found by walking the flow, none visible to any check:**
+
+1. The duration tile counted upwards forever on the summary — the elapsed interval had no
+   reason to stop. A finished workout's duration is a fact.
+2. "Done" started a NEW workout. The auto-start effect was keyed on `live.status`, so resetting
+   the store to idle re-fired it one render before `router.back()` could leave. Opening the
+   route is the event; the status is not.
+3. **A `0 × 0` set reached the summary.** The commit button was live at zero reps. Nothing
+   downstream can use such a row — `estimatedOneRepMax` refuses it, volume counts it as
+   nothing — and it occupies a set number permanently. The button is now disabled below one
+   rep, and Finish stays available.
+
+`seedWeight` moved to `src/lib/live-board.ts` with five assertions. It was written inline on the
+screen, where it could not be tested: importing the screen pulls in React Native, whose entry
+is Flow, which vitest refuses. It is board arithmetic with no React in it and the web board
+needs the same three cases the day it grows an add-exercise path.
+
 #### Rest is built against the prototype, and it reverses a documented decision (2026-08-21)
 
 The one dark surface in the app. Ink ground, the prototype's 240px ring reproduced exactly

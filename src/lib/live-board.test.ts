@@ -7,6 +7,7 @@ import {
   currentPosition,
   momentumPct,
   seedBoard,
+  seedWeight,
 } from './live-board'
 
 function board(): BoardExercise[] {
@@ -127,5 +128,38 @@ describe('momentumPct', () => {
 
   it('is a plain ratio in the ordinary case', () => {
     expect(momentumPct(250, 1000)).toBe(25)
+  })
+})
+
+/**
+ * What the weight dial shows when the board moves to a new set.
+ *
+ * Every case here shipped broken on 2026-08-21 and was found on a simulator,
+ * not by a check: a lift added mid-session seeded `weightKg: null`, which the
+ * board reads as BODYWEIGHT, so a Bench Press had no weight dial at all;
+ * fixing that to `0` made set 2 reset to zero, turning GATE U2's one-tap
+ * repeat into eight presses on `+`; and carrying the value forward
+ * unconditionally would put the bench press's 60kg onto the pull-up after it.
+ */
+describe('seedWeight', () => {
+  it('is null for a bodyweight set, whatever was dialled before it', () => {
+    expect(seedWeight({ weightKg: null }, 60)).toBeNull()
+  })
+
+  it('is null when there is no next set at all', () => {
+    expect(seedWeight(null, 60)).toBeNull()
+  })
+
+  it("uses the set's own weight when it has one", () => {
+    expect(seedWeight({ weightKg: 100 }, 60)).toBe(100)
+  })
+
+  it('carries the last dialled weight into a fresh set', () => {
+    // `0` is "no weight yet", not "zero kilos" — the seed an added lift gets.
+    expect(seedWeight({ weightKg: 0 }, 60)).toBe(60)
+  })
+
+  it('falls back to zero when nothing has been dialled yet', () => {
+    expect(seedWeight({ weightKg: 0 }, null)).toBe(0)
   })
 })
