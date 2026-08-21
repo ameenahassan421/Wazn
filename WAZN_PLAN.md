@@ -1379,6 +1379,36 @@ invention; the Finish screen's stat tiles are the obvious home and that is Ameen
 equipment word (`deriveEquipment` needs a muscle group the board does not carry), and the
 coach's sentence (`ghost-reason` is not wired to this screen).
 
+#### Body: it told people to log a weigh-in and had no way to (2026-08-21)
+
+The screen was 24 lines whose entire content was the sentence "Log a weigh-in to start the
+second chart." No input, no table read, and no write path anywhere in the native app. The same
+shape as the workout board before it had an exercise picker: the app instructing somebody to
+do a thing it had not built.
+
+It now reads `body_weights` and writes to it. `mobile/src/hooks/use-body.ts` plus a screen with
+the reading as its one figure and a numeric field under it.
+
+- **Upsert, not insert.** `body_weights` is keyed `(user_id, measured_on)` (0027), so a second
+  weigh-in the same morning is an UPDATE. Stepping on the scale twice before coffee is normal.
+- **A field, not a stepper.** The board dials weight in plate increments from a known previous;
+  a first reading is 82.4 from nothing and reaching it by tap is absurd. Seeded with the last
+  reading, so the common case is an edit of one character.
+- **`logWeight` throws.** Unlike the check-in, which degrades to Normal and costs nothing, a
+  weigh-in that silently failed to save is a hole in the one series this screen exists to draw.
+- **The `< 500` bound is checked before the write**, so the failure is a sentence rather than a
+  constraint violation.
+
+**`react-hooks` v7 refused the obvious shape, and it was right to.** A `load()` that both
+fetched and set state is a `setState` reachable synchronously from an effect body — an ERROR,
+not a warning, and the linter sees through `useCallback`. Split into a pure `fetchWeights()`
+and an `apply()` the effect calls from a `.then`. Same shape `use-home` already uses.
+
+**Not built, and named rather than left as empty space:** the chart (`body.empty` promises "the
+second chart" and this draws numbers — a sparkline is shared work with Progress and belongs in
+`components/ui/` where both read it, not hand-rolled twice), protein, and measurements. All
+three exist in `src/lib/body.ts` and in migration 0027 with no surface on native.
+
 #### History, and a raw Postgres error that was reaching lifters (2026-08-21)
 
 The first of the six screens the prototype does NOT draw. Structure kept, typography moved

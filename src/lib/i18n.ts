@@ -601,6 +601,15 @@ export const messages: Record<Locale, Record<string, string>> = {
     'body.log_weigh_in': 'Log weigh-in',
     'body.log_protein': 'Log protein',
     'body.save': 'Save',
+    /* ── Body, native (2026-08-21) ────────────────────────────────────────
+       `body.empty` already said "Log a weigh-in to start the second chart."
+       and the screen had no way to log one. These are the words for the
+       input that closes that. */
+    'body.today': 'Today',
+    'body.average': '{n} {unit} · 28-day average',
+    'body.steady': 'Steady for four weeks',
+    'body.invalid': 'Enter a weight between 20 and 500.',
+    'body.first': 'Your first weigh-in',
     'body.empty': 'Log a weigh-in to start the second chart.',
     'body.weight': 'Weight · 12 wk',
     'body.weight.aria': 'Body weight over twelve weeks',
@@ -1582,6 +1591,11 @@ export const messages: Record<Locale, Record<string, string>> = {
     'body.log_weigh_in': 'سجّل الوزن',
     'body.log_protein': 'سجّل البروتين',
     'body.save': 'حفظ',
+    'body.today': 'اليوم',
+    'body.average': '{n} {unit} · متوسط ٢٨ يوماً',
+    'body.steady': 'ثابت منذ أربعة أسابيع',
+    'body.invalid': 'أدخل وزناً بين ٢٠ و٥٠٠.',
+    'body.first': 'أول قياس لوزنك',
     'body.empty': 'سجّل وزنك لتبدأ الرسم الثاني.',
     'body.weight': 'الوزن · ١٢ أسبوعًا',
     'body.weight.aria': 'وزن الجسم خلال اثني عشر أسبوعًا',
