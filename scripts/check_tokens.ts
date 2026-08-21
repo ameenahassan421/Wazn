@@ -1,35 +1,35 @@
 /**
- * One palette, two rendering stacks, no drift.
+ * `src/lib/tokens.ts` is the source. This checks the copies that cannot import
+ * it.
  *
- * The web PWA reads its tokens from `src/index.css`'s `@theme` block, which
- * Tailwind v4 compiles. The Expo app reads them from `mobile/tailwind.tokens.js`,
- * which Tailwind 3.4 requires from `tailwind.config.js`. The two Tailwind
- * majors cannot share a config file, so the values would be maintained twice
- * — and the last time this project maintained one number in three places, one
- * copy kept its stale value for a week and nothing failed.
+ * There are two, and both exist for a mechanical reason rather than a stylistic
+ * one:
  *
- * `src/lib/tokens.ts` is the source. This script checks the other two against
- * it, and with `--write` regenerates the one that is generated.
+ *   `src/index.css`         a stylesheet. It cannot import TypeScript, and it
+ *                           is what the dying Vite PWA actually draws with, so
+ *                           it is checked against the LEGACY tokens.
+ *   `mobile/app.config.ts`  EAS reads it without a bundler, so the ground
+ *                           colour has to be a literal.
  *
- *   npm run check:tokens          verify all three agree (CI)
- *   npm run check:tokens -- --write   regenerate mobile/tailwind.tokens.js
+ * **The native app is not on this list, and that is new.** Until 2026-08-20
+ * there was a third copy — `mobile/tailwind.tokens.js`, generated here for
+ * NativeWind's `tailwind.config.js`. NativeWind is gone, so native imports
+ * this module directly through `@wazn/domain` and there is nothing to drift.
+ * A check that no longer has a copy to check is a check that was doing its job.
  *
  * It deliberately does NOT check every custom property in `index.css`. Plenty
  * of them — `--divider`, `--flip-bg`, the radius scale the v2 system left
- * behind — have no counterpart on native and inventing one would be busywork.
- * What it checks is the intersection: the palette, the ten type steps, and the
- * four v5 radii. Those are the values the handoff calls normative, and they
- * are the ones both stacks actually draw with.
+ * behind — have no counterpart and inventing one would be busywork. What it
+ * checks is the intersection: the palette, the ten legacy type steps, and the
+ * radii both stacks actually draw with.
  */
-import { readFileSync, writeFileSync } from 'node:fs'
+import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { dirname, resolve } from 'node:path'
 
 import {
-  fontFamily,
   legacyPalette,
   legacyType,
-  motion,
   palette,
   radius,
   space,
@@ -40,9 +40,7 @@ const here = dirname(fileURLToPath(import.meta.url))
 const root = resolve(here, '..')
 const CSS = resolve(root, 'src/index.css')
 const APP_CONFIG = resolve(root, 'mobile/app.config.ts')
-const GENERATED = resolve(root, 'mobile/tailwind.tokens.js')
 
-const write = process.argv.includes('--write')
 const problems: string[] = []
 
 /* ── The CSS side ─────────────────────────────────────────────────────────
@@ -148,90 +146,17 @@ expectCss('--radius-ctl', `${radius.ctl}px`, 'radius')
 expectCss('--radius-pill', `${radius.pill}px`, 'radius')
 expectCss('--tab-bar-height', `${space.tabBar}px`, 'space')
 
-/* ── The generated side ───────────────────────────────────────────────────
-   CommonJS, because `tailwind.config.js` is required by Tailwind 3.4 through
-   `require`. Emitted rather than hand-written so there is no third copy of
-   the palette for anyone to edit by hand and lose. */
-function generate(): string {
-  const colors = Object.fromEntries(
-    Object.entries(palette).map(([k, v]) => [kebab(k), v]),
-  )
-  const fontSize = Object.fromEntries(
-    Object.entries(type).map(([k, s]) => [
-      k,
-      [
-        `${s.size}px`,
-        {
-          lineHeight: String(s.lineHeight),
-          fontWeight: String(s.weight),
-          ...('letterSpacing' in s && s.letterSpacing !== undefined
-            ? { letterSpacing: `${s.letterSpacing}em` }
-            : {}),
-        },
-      ],
-    ]),
-  )
-  const borderRadius = Object.fromEntries(
-    Object.entries(radius).map(([k, v]) => [k, `${v}px`]),
-  )
-  const spacing = Object.fromEntries(
-    Object.entries(space).map(([k, v]) => [k, `${v}px`]),
-  )
+/* ── The generated side is GONE, and that is the point ─────────────────────
+   Until 2026-08-20 this script also emitted `mobile/tailwind.tokens.js`, a
+   CommonJS copy of the palette and ramp for `mobile/tailwind.config.js` to
+   feed NativeWind. NativeWind is gone (the app used `className` zero times;
+   see `mobile/babel.config.js`), so the config is gone, so the copy is gone.
 
-  const body = {
-    colors,
-    fontSize,
-    borderRadius,
-    spacing,
-    fontFamily: {
-      display: [fontFamily.display],
-      body: [fontFamily.body],
-      mono: [fontFamily.mono],
-    },
-    motion,
-    /** Which face each step is set in. NativeWind resolves `fontFamily` and
-        `fontSize` independently, so the pairing has to be stated somewhere. */
-    typeFace: Object.fromEntries(Object.entries(type).map(([k, s]) => [k, s.family])),
-    typeCase: Object.fromEntries(
-      Object.entries(type).map(([k, s]) => [k, 'uppercase' in s && s.uppercase]),
-    ),
-    typeTabular: Object.fromEntries(
-      Object.entries(type).map(([k, s]) => [k, 'tabular' in s && s.tabular]),
-    ),
-  }
-
-  return `/* GENERATED by scripts/check_tokens.ts — do not edit.
- * Source of truth: src/lib/tokens.ts. Run \`npm run check:tokens -- --write\`.
- */
-module.exports = ${JSON.stringify(body, null, 2)}\n`
-}
-
-function kebab(s: string): string {
-  return s.replace(/[A-Z]/g, (c) => `-${c.toLowerCase()}`)
-}
-
-const wanted = generate()
-/** Null when the generated file does not exist yet — which is a stale state
- *  like any other, not an error. The first run writes it. */
-let current: string | null
-try {
-  current = readFileSync(GENERATED, 'utf8')
-} catch {
-  current = null
-}
-
-if (write) {
-  if (current !== wanted) {
-    writeFileSync(GENERATED, wanted)
-    console.log(`wrote ${GENERATED}`)
-  } else {
-    console.log('mobile/tailwind.tokens.js already current')
-  }
-} else if (current !== wanted) {
-  problems.push(
-    'mobile/tailwind.tokens.js is stale — run `npm run check:tokens -- --write`',
-  )
-}
+   Nothing was lost. That generation existed to keep a THIRD copy of the tokens
+   honest; native now imports `src/lib/tokens.ts` directly through
+   `@wazn/domain`, so there is no copy to drift. The two checks above are the
+   ones that were ever load-bearing: `src/index.css`, which cannot import
+   TypeScript, and `mobile/app.config.ts`, which EAS reads without a bundler. */
 
 if (problems.length) {
   console.error(`\ncheck:tokens — ${problems.length} problem(s)\n`)
@@ -242,7 +167,8 @@ if (problems.length) {
 
 console.log(
   `check:tokens ok — ${Object.keys(legacyPalette).length} legacy colours checked ` +
-    `against index.css with ${Object.keys(legacyType).length} legacy type steps; ` +
-    `${Object.keys(palette).length} current colours and ${Object.keys(type).length} ` +
-    'current type steps written to mobile/tailwind.tokens.js',
+    `against index.css with ${Object.keys(legacyType).length} legacy type steps, ` +
+    `and mobile/app.config.ts against palette.paper. The current system ` +
+    `(${Object.keys(palette).length} colours, ${Object.keys(type).length} type steps) ` +
+    'is read straight from tokens.ts by native — no generated copy.',
 )

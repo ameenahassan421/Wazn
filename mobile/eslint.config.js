@@ -21,7 +21,7 @@ const expoConfig = require('eslint-config-expo/flat')
 module.exports = defineConfig([
   expoConfig,
   {
-    ignores: ['.expo/**', '.expo-export*/**', 'node_modules/**', 'tailwind.tokens.js'],
+    ignores: ['.expo/**', '.expo-export*/**', 'node_modules/**'],
   },
   {
     rules: {
@@ -52,10 +52,15 @@ module.exports = defineConfig([
       'no-restricted-syntax': [
         'error',
         {
-          // NativeWind 4.2.6 applies `cssInterop` to Pressable so it can take
-          // a `className`. A FUNCTION `style` does not survive that: it is
-          // dropped whole, and the control renders with no background, no
+          // NativeWind 4.2.6 applied `cssInterop` to Pressable so it could
+          // take a `className`. A FUNCTION `style` did not survive that: it
+          // was dropped whole, and the control rendered with no background, no
           // height, no padding and no flexDirection while still taking taps.
+          //
+          // NativeWind is gone (2026-08-20), so the callback form would work
+          // again. THE RULE STAYS. Re-adding NativeWind is a plausible future
+          // move, this failure mode is completely silent, and the codebase
+          // already has one consistent press pattern that does not need it.
           //
           // On 2026-08-20 every button in the native app was invisible for
           // this reason — SIGN IN was a gap in the layout — through a green
@@ -64,7 +69,7 @@ module.exports = defineConfig([
           selector:
             "JSXOpeningElement[name.name='Pressable'] > JSXAttribute[name.name='style'] > JSXExpressionContainer > :matches(ArrowFunctionExpression, FunctionExpression)",
           message:
-            'Pressable style must be an object or array, never a function. NativeWind drops the callback form and the control renders unstyled. Track the pressed state with onPressIn/onPressOut (see Btn.tsx).',
+            'Pressable style must be an object or array, never a function. Track the pressed state with onPressIn/onPressOut (see Btn.tsx). Kept as a tripwire: NativeWind silently dropped the callback form and every button in this app rendered unstyled for three days.',
         },
         {
           // `ObjectExpression >` is load-bearing. Without it the selector

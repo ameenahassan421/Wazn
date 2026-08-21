@@ -2,7 +2,6 @@
 const path = require('node:path')
 
 const { getDefaultConfig } = require('expo/metro-config')
-const { withNativeWind } = require('nativewind/metro')
 
 /**
  * Metro, taught to reach one directory outside its own project.
@@ -40,4 +39,6 @@ config.resolver.extraNodeModules = {
   '@wazn/domain': domainRoot,
 }
 
-module.exports = withNativeWind(config, { input: './global.css' })
+/* Plain Metro. `withNativeWind(config, { input: './global.css' })` wrapped
+   this until 2026-08-20 — see `babel.config.js` for why it went. */
+module.exports = config

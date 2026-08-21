@@ -270,15 +270,26 @@ statistics can answer.
 
 ## There are TWO apps now (2026-08-16)
 
-`mobile/` is an Expo Router + NativeWind native app, and it is a **separate npm
-package with its own lockfile** — not tidiness, a hard constraint: NativeWind v4
-needs Tailwind 3.4 and the web app is Tailwind v4. Do not add a `workspaces` key
-to the root `package.json`; that changes how Vercel installs.
+`mobile/` is an Expo Router native app, and it is a **separate npm package with
+its own lockfile**. Do not add a `workspaces` key to the root `package.json`;
+that changes how Vercel installs.
+
+**NativeWind was removed 2026-08-20 and must not come back without a reason.**
+It was fully wired — babel preset, metro transform, `tailwind.config.js`,
+types — and the app used `className` **zero times**, because the UI resolves
+through `src/design/Txt.tsx` and `src/components/ui/`, in plain JS. React
+Native picks a font cut by family NAME and a utility class cannot express that,
+so the ramp was never going to be classes here. What it cost: Tailwind pinned
+to 3.4 (the ONLY reason the two packages needed separate Tailwind majors), a
+transform over every file including the shared domain modules, and a
+`cssInterop` on `Pressable` that dropped a function `style` and rendered every
+button in the app invisible for three days. Removing it changed the rendered
+app by zero pixels, verified on a simulator.
 
 ```bash
 cd mobile && npm ci
 npm run typecheck        # tsc
-npm run bundle:ios       # THE gate — real Metro + Babel + NativeWind
+npm run bundle:ios       # THE gate — real Metro + Babel + Hermes
 npm run bundle:android
 ```
 
@@ -287,17 +298,24 @@ npm run bundle:android
   there is a decision; `portable.test.ts` walks the TRANSITIVE import graph and
   fails on any browser global. Domain shared, I/O adapted — `supabase.ts` and
   every `use-*` hook stay per-platform on purpose.
-- **`src/lib/tokens.ts` is the palette's source of truth for BOTH stacks.**
-  `npm run check:tokens` compares it against `index.css` and regenerates
-  `mobile/tailwind.tokens.js`; CI fails on drift. Never type a colour into
-  `mobile/tailwind.config.js`. It found three shipped defects on its first run.
+- **`src/lib/tokens.ts` is the palette's source of truth for BOTH stacks**, and
+  native now imports it DIRECTLY through `@wazn/domain` — there is no generated
+  copy any more. `npm run check:tokens` checks the two copies that cannot import
+  TypeScript: `src/index.css` (against the LEGACY tokens, because the dying PWA
+  still draws v5) and `mobile/app.config.ts`'s ground literal (because EAS reads
+  that file without a bundler). CI fails on drift. It found three shipped
+  defects on its first run, and a fourth on 2026-08-20 — a comment claiming it
+  asserted the `app.config.ts` colour, which it had never opened.
 - **Type is a component on native (`<Txt step="hero">`), not a class.** RN picks
   a font cut by family NAME, not weight — a `text-hero` carrying `fontWeight`
   renders Saira Medium and looks almost right.
-- **A `Pressable` `style` CALLBACK is dropped, and the button disappears.**
-  `style={({ pressed }) => ...}` is the React Native documented form and it does
-  not work here: NativeWind 4.2.6 applies `cssInterop` to `Pressable` for
-  `className`, and the function does not survive it. The control renders with
+- **Never give a `Pressable` a `style` CALLBACK.** `style={({ pressed }) => ...}`
+  is React Native's own documented form and it was silently dropped here:
+  NativeWind 4.2.6 applied `cssInterop` to `Pressable` for `className`, and the
+  function did not survive it. **NativeWind is gone, so the callback would work
+  again — the lint rule stays anyway, as a tripwire.** Re-adding NativeWind is a
+  plausible future move, this failure mode is completely silent, and the codebase
+  already has one consistent press pattern. The control renders with
   no background, no height, no padding and no `flexDirection`, and still takes
   taps. On 2026-08-20 EVERY button in `mobile/` was invisible for this reason —
   SIGN IN was a gap in the layout — through a green `tsc`, a green `eslint` and
@@ -306,7 +324,7 @@ npm run bundle:android
   was the only thing that could have caught it, and nearly did not, because the
   screen it broke was one nobody had looked at since it was written.**
 - **`npm run typecheck` in mobile is not a build.** A broken babel preset, a bad
-  metro alias, a missing font subpath and a NativeWind/RN version fight are all
+  metro alias, a missing font subpath and a babel/RN version fight are all
   clean to tsc and fatal to `expo export`. Bundle before claiming it works.
 - **Rebuilding `mobile/ios/` takes two commands and the second one needs a
   locale.** `mobile/ios` is gitignored and regenerates, so it gets deleted

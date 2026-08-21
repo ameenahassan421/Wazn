@@ -1262,6 +1262,61 @@ preference: the prototype specifies four screens and derives none.
    `expo export` succeeded and the app did not run: the fourth distinct way
    this repo has been green and broken.
 
+#### NativeWind removed 2026-08-20, and it changed the app by zero pixels
+
+Ameen asked whether the stack is the standard way to build a mobile app. It is —
+Expo SDK 57, Expo Router, RN 0.86 on the New Architecture, React 19, Reanimated 4,
+TypeScript 6, ESLint 9 flat config, all current against npm — with one exception,
+and the exception was expensive.
+
+**NativeWind was fully wired and used `className` zero times.** Babel preset,
+Metro transform, `tailwind.config.js`, a generated `tailwind.tokens.js`, a types
+shim, a `global.css` and its `.d.css.ts` sibling. Every screen styles through
+`src/design/Txt.tsx` and `src/components/ui/`, in plain JS, because **React
+Native picks a font cut by family NAME** and a utility class cannot express
+that — so the ramp was never going to be classes here, and once the ramp is a
+component the rest follows it.
+
+What it cost:
+
+- Tailwind pinned to 3.4 while the web app is on v4. That was the stated reason
+  the two packages needed separate lockfiles, in `CLAUDE.md` and in CI's own
+  comments. They still stay separate — a `workspaces` key changes how Vercel
+  installs — but for a different reason now.
+- A transform over every file in the bundle, including the shared domain modules.
+- A third copy of the tokens, generated on every `check:tokens -- --write`.
+- **`cssInterop` on `Pressable`, which silently dropped a function `style` and
+  rendered every button in the app invisible for three days**, through a green
+  `tsc`, `eslint`, `expo export` and `bundle:ios`.
+
+Removed, and verified the honest way: `bundle:ios`, `bundle:android`,
+`check:routes`, mobile tsc/eslint/tests, the full root wall, and **a simulator
+screenshot pixel-identical to the one taken before the removal**. That identity
+is the proof it was doing nothing.
+
+The `Pressable` lint rule STAYS. The callback form would work again now, but
+re-adding NativeWind is a plausible future move and this failure mode is
+completely silent.
+
+#### Still non-standard, and worth knowing
+
+1. **`@wazn/domain` is a Metro alias to `../src/lib`, not a workspace.** The
+   documented Expo answer is an npm/pnpm monorepo; that was ruled out because a
+   root `workspaces` key changes how Vercel installs. It is why
+   `disableHierarchicalLookup` and `watchFolders` exist in `metro.config.js`. It
+   stops mattering when the PWA retires at A4.
+2. **Tests are vitest, not `jest-expo` + `@testing-library/react-native`**, which
+   is the official preset. It is why no component test exists: vitest cannot
+   render an RN tree without a `react-native-web` shim.
+3. **No `eas.json`, no `expo-updates`, no `expo-notifications`.** All three are
+   needed for Stage 4B, and the notifications one is the background rest timer —
+   the single capability that justifies going native at all.
+4. **No offline write queue on native.** `mobile/src/state/live-workout.ts:35`
+   says so itself: a failed insert is remembered as a number and nothing retries
+   it. The web app has `src/lib/write-queue.ts`. **GATE 4 is false on native**,
+   and for an app whose premise is logging sets in a gym basement this is the
+   most important gap on this page.
+
 #### Waiting on Ameen
 
 Neither blocks the next screen; both get more expensive the longer they sit.

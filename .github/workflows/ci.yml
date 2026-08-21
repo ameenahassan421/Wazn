@@ -136,8 +136,11 @@ jobs:
 
   mobile:
     # The Expo app. A separate job with its own `npm ci`, because `mobile/` is
-    # a separate package on purpose: NativeWind v4 needs Tailwind 3.4 and the
-    # web app is on Tailwind v4, so the two cannot share a lockfile.
+    # a separate package with its own lockfile. (Until 2026-08-20 the stated
+    # reason was NativeWind v4 pinning Tailwind 3.4 against the web app's v4.
+    # NativeWind is gone — the app used `className` zero times — so that
+    # particular conflict no longer exists, but the packages stay separate:
+    # adding a `workspaces` key to the root changes how Vercel installs.)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

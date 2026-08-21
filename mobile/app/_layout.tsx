@@ -22,7 +22,6 @@ import { useAuth } from '@/hooks/use-auth'
 import { LocaleProvider } from '@/hooks/use-locale'
 import { UnitProvider } from '@/hooks/use-unit'
 import { supabaseConfigError } from '@/services/supabase'
-import '../global.css'
 
 /**
  * The root.

@@ -15,8 +15,12 @@ import { fontFamily, type, type TypeStepName } from '@wazn/domain'
  * So the ramp cannot be a set of Tailwind classes here; a `text-hero` that
  * carried a `fontWeight` would silently render Sora Regular and look almost
  * right. It is resolved once, in this file, into complete styles, and reached
- * through `<Txt step="hero">`. NativeWind still does everything else — layout,
- * colour, spacing — it just does not own the ramp.
+ * through `<Txt step="hero">`.
+ *
+ * That is also why NativeWind was removed on 2026-08-20: it was kept to "do
+ * everything else — layout, colour, spacing", and it did none of it. The app
+ * used `className` zero times, because once the ramp cannot be classes the
+ * rest follows it into `components/ui/`.
  *
  * Every number comes from `src/lib/tokens.ts`, the same module the web app's
  * `index.css` is checked against. Nothing here is a second opinion about a

@@ -18,17 +18,21 @@
  * systems liking the same ember.
  *
  * ── WHY THIS FILE EXISTS ────────────────────────────────────────────────────
- * The app now renders through two stacks that cannot share a stylesheet. The
- * web PWA is Tailwind v4, whose tokens live in `index.css`'s `@theme` block;
- * the Expo app is NativeWind v4, which needs a JavaScript `tailwind.config.js`
- * and a Tailwind 3.4 that will not co-exist with v4 in one `package.json`.
+ * The app renders through two stacks that cannot share a stylesheet. The web
+ * PWA is Tailwind v4, whose tokens live in `index.css`'s `@theme` block; the
+ * Expo app has no stylesheet at all and resolves the ramp in JavaScript
+ * (`mobile/src/design/type.ts`), because React Native picks a font cut by
+ * family NAME and a utility class cannot express that.
  *
  * Two stacks with two hand-maintained copies of the same palette is a
- * guaranteed drift. So the palette lives HERE, in a module both can read:
- * `mobile/tailwind.config.js` builds its theme from it directly, and
- * `scripts/check_tokens.mjs` parses `src/index.css` and fails the build when
- * the CSS and this file disagree. Neither side is allowed to be the odd one
- * out — the checker does not care which is "right", only that they match.
+ * guaranteed drift. So the palette lives HERE, and native imports it directly
+ * through `@wazn/domain` — no copy, nothing to drift. `scripts/check_tokens.ts`
+ * covers the two places that CANNOT import TypeScript: `src/index.css`, and
+ * the ground literal in `mobile/app.config.ts` that EAS reads without a
+ * bundler.
+ *
+ * (Native had a third copy until 2026-08-20 — `mobile/tailwind.tokens.js`,
+ * generated for NativeWind. NativeWind is gone; see `mobile/babel.config.js`.)
  *
  * ── WHERE THE NUMBERS COME FROM ─────────────────────────────────────────────
  * Read out of the prototype's own markup, not eyeballed from a screenshot: the
