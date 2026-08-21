@@ -282,6 +282,9 @@ export const messages: Record<Locale, Record<string, string>> = {
     'history.sets_retry': 'Could not load these sets. Try again',
     'coach.retry': 'Try again',
     'progress.strength.show_all': 'Show all {n}',
+    // Not a control: the native list states its remainder rather than
+    // promising a tap that only the web screen implements.
+    'progress.strength.more': '{count} more lifts logged',
     'progress.strength.show_fewer': 'Show fewer',
     'history.edit_set': 'Edit set: {name}',
     'home.last_session.aria': 'Opens History',
@@ -1307,6 +1310,7 @@ export const messages: Record<Locale, Record<string, string>> = {
     'history.sets_retry': 'تعذّر تحميل هذه المجموعات. حاول مرة أخرى',
     'coach.retry': 'حاول مرة أخرى',
     'progress.strength.show_all': 'اعرض الكل ({n})',
+    'progress.strength.more': '{count} تمرين آخر مسجّل',
     'progress.strength.show_fewer': 'اعرض أقل',
     'history.edit_set': 'تعديل المجموعة: {name}',
     'home.last_session.aria': 'يفتح السجل',

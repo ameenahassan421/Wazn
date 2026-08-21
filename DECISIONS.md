@@ -8464,3 +8464,54 @@ production and it was not retried, which is the correct outcome for an
 unreviewed destructive change to a lifter's own history. The better repair is in
 Hevy anyway, because that is the source. The guard means a re-sync now aborts
 rather than silently restoring the row, so it is contained while it waits.
+
+---
+
+## 2026-08-21 — Progress is built native, and it is smaller than the web screen on purpose
+
+Two blocks the web equivalent has are absent, and neither is an omission of
+effort.
+
+**The muscle-balance chart is not on Progress, because it is on Coach.**
+`CoachNotes` drew weekly sets per muscle against the productive band earlier the
+same day. Two charts of the same numbers in one app is worse than one, and the
+Coach tab is where the app already answers "am I neglecting legs" with a
+sentence attached to it. If it belongs here instead, it MOVES; it does not get
+a second copy.
+
+**Per-lift charts, the forecast line and the plateau card are not here either.**
+Hevy's own structure puts per-exercise strength on the EXERCISE page and has the
+dashboard link into it. Native has no exercise detail screen, so the honest
+version of this screen ends at the list of lifts with their estimates. Stacking
+per-lift depth onto the dashboard because there is nowhere else to put it would
+be building the wrong screen to avoid building the right one.
+
+No reference covers Progress — `docs/design/prototype/` is Home, Workout, Rest
+and Finish — so per §6 the derivation is stated in the file's header rather than
+left implied: the Finish screen's figure row, `CoachNotes`'s bar-against-a-track,
+and the earned ember wash on exactly one block.
+
+### `weekly_streak` and `sessionsPerWeek` disagreed about what a week is
+
+The screen shipped its first render claiming a **34-week streak** directly above
+a bar chart drawing the gap that broke it.
+
+`weekly_streak(p_timezone)` defaults to **UTC**. `sessionsPerWeek` in
+`@wazn/domain` buckets by local `getDay()`. A session stored
+`2026-07-20 00:01+00` is 2026-07-19 in Chicago, so it falls in different weeks
+under each, and only one of them saw the gap. Passing the device timezone to the
+RPC fixed it and the number went to 4, which is what the bars show.
+
+**This is not confined to Progress.** Any caller of `weekly_streak` that omits
+`p_timezone` compares UTC weeks against a UI that is showing local ones. The
+argument has existed since 0004; nothing was passing it.
+
+### Four defects a green wall did not see
+
+Typecheck, lint, 1,260 tests, both bundles and route checks were green while:
+a duplicate React key redboxed the Records list on first contact with real data
+(`at` is the workout's `started_at`, shared by every set in it); the volume
+figure wrapped to "57,77 / 0" at 30px in a third of a phone's width; the
+frequency caption promised a dashed average line that had never been drawn; and
+"Show all 108" promised a control native does not have. All four are fixed, and
+all four needed a screenshot.

@@ -1292,11 +1292,59 @@ sets**; PR flags verified against an independent recomputation, zero mismatches 
 2. ~~The Coach tab~~ **DONE 2026-08-21**, except **Ask/Tell the coach**, which exists on web
    (`src/lib/tell-coach.ts`, `src/components/TellCoachSheet.tsx`) and has no native surface.
    That is the tab's one remaining piece.
-3. **Progress**, then **Friends**. Neither needs new chart geometry — `sparkGeometry` is
-   built and tested. Both still carry Ameen's open brass question; build in ember and flag,
-   which is what every other screen did.
+3. ~~Progress~~ **DONE 2026-08-21**, then **Friends**, which is still a 24-line stub.
+   `sparkGeometry` is built and tested and Progress used it unchanged. Friends still carries
+   Ameen's open brass question; build in ember and flag, which is what every other screen did.
 4. **Auth last.** The screen a lifter sees once, the prototype does not cover it, and with auth
    switched off it is unreachable anyway.
+
+#### Progress is built (2026-08-21)
+
+`mobile/app/(tabs)/progress.tsx` plus `mobile/src/services/progress.ts`. Five
+blocks: this-week figures, sessions-per-week bars with the average as a dashed
+reference, the 12-week volume trend through the shared `Spark`, records on the
+ember wash, and the lifts by estimated 1RM. Verified on an iPhone 17 Pro
+against the live account.
+
+**It is NOT a port of the web screen's 1,449 lines, and the two omissions are
+decisions.** The muscle-balance chart is absent because `CoachNotes` drew the
+same numbers on the Coach tab earlier the same day, and two charts of one
+dataset in one app is worse than one. Per-lift charts, the forecast line and
+the plateau card are absent because Hevy's own structure puts per-exercise
+strength on the EXERCISE page, and native has no exercise detail screen yet;
+the depth lands when that screen does rather than being stacked here for want
+of anywhere else.
+
+**No reference covers this screen**, per §6, so the derivation is written into
+the file's header: the Finish screen's figure row, `CoachNotes`'s
+bar-against-a-track, and the earned ember wash used on exactly one block.
+
+**Four defects the simulator caught that every green check missed**, all fixed:
+
+1. **Duplicate React key in Records.** `at` is the WORKOUT's `started_at`,
+   shared by every set in it, so two flagged sets of one lift in one session
+   collided. Rendered as a redbox on first contact with real data.
+2. **The volume figure wrapped mid-number** — "57,770" broke to "57,77 / 0" at
+   30px in a third of a phone's width. Volumes now abbreviate past five
+   digits.
+3. **The frequency caption promised a dashed average line that was not drawn.**
+   Copy inherited from the web screen, which draws one. The line is drawn now,
+   over the bars rather than behind them.
+4. **"Show all 108" promised a control that does not exist** on native. It
+   states the remainder instead.
+
+**And one that was NOT mine, and matters beyond this screen:** `weekly_streak`
+buckets weeks in **UTC** while `sessionsPerWeek` buckets in **local time**. A
+session stored `2026-07-20 00:01+00` is 2026-07-19 in Chicago, so the two
+disagree about which week it belongs to — the card claimed a **34-week streak**
+directly above a chart drawing the gap that broke it. Fixed by passing the
+device timezone to the RPC, which the function has always accepted; the number
+went to **4**, matching the bars. Any other caller of `weekly_streak` that
+omits `p_timezone` has the same bug.
+
+**The poisoned Seated Cable Row row is visible here too**, second in the
+strength list at 416.7 lb with a **+277.3** gain in ember. Second surface, same
+single bad datum, still awaiting the repair described below.
 
 #### The implausible-reps guard, and the one row still outstanding (2026-08-21)
 
