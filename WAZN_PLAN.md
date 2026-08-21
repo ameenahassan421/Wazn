@@ -1418,20 +1418,38 @@ on screen. Four assertions.
 never sits on the critical path", "statistics answer anything statistics can answer". It is
 also why the ghost works in a basement with no signal.
 
+**The volume dial is wired, and it went BEFORE the remaining lines on purpose.** Adding three
+more coach surfaces and then gating them means going back to all three.
+`mobile/src/hooks/use-coach.tsx` is the native adapter — AsyncStorage, mirroring the web's
+`coach-context` contract — and it re-exports the two predicates rather than letting a screen
+re-derive them:
+
+- `speaks` = `showsCoachSurfaces` = `full` alone. Gates the SENTENCE.
+- `thinks` = `usesGhostIntelligence` = `full` AND `quiet`. Gates the NUMBERS.
+
+Quiet is "stop talking", not "stop thinking": a quiet app still seeds the next set from the
+coach's arithmetic and simply does not narrate it. `coach-mode.ts` warns in its own header that
+collapsing the two either leaves the coach talking with the dial Off or strips a silenced app
+of ghosts it had before v3 existed. The board honours both separately.
+
+**The rest canvas has its line**, and it is the NEXT set's reasoning by construction: `view.set`
+has already advanced by the time a rest starts, which is exactly what screen 08 specifies. The
+board and the canvas phrase the same verdict once.
+
 **Still `null`, in priority order:**
 
-1. **Rest canvas** — `coachLine`. `verdictFor` for the NEXT set already computes it; this is
-   passing a prop.
-2. **Home** — `brief`. Needs the coach Edge Function OR a computed line; v5 draws a sentence
-   plus chip.
-3. **Finish** — the debrief sentence.
-4. **Coach tab (screen 15)** — the control room: mode selector, week review, notes, Ask the
+1. **Home** — `brief`. v5 draws a sentence plus chip.
+2. **Finish** — the debrief sentence.
+3. **Coach tab (screen 15)** — the control room: mode selector, week review, notes, Ask the
    coach. Untouched.
-5. **Settings coach volume** — Full / Quiet / Off is in `coach-mode.ts` with `MODE_BEHAVIOUR`
-   and nothing on native reads it. v5 §Do-not-regress 6: "Coach volume Off must render a
-   coherent pure logger". Right now every native surface behaves as Full because none of them
-   asks.
-6. **Tell the coach** (screen 09), the PR moment and the notable-set toasts.
+4. **Settings has no dial yet.** The preference now exists and persists; nothing lets a lifter
+   change it. That is the next thing, because a gate nobody can reach is not a feature.
+5. **Tell the coach** (screen 09), the PR moment and the notable-set toasts.
+
+**And the server gap is real.** `use-coach` writes to AsyncStorage only. The web reads and
+writes `user_preferences`, so Off on the phone is still Full in the browser — the same gap
+`use-unit` and `use-locale` carry and that A0 named. `off` in particular has to survive a
+REINSTALL to be a promise, and on this side it currently survives only a relaunch.
 
 **`npm run test:smoke` could not run for this change.** Playwright's browser binary is not
 installed on this machine (`chromium_headless_shell-1194` missing) and `WorkoutOverview.tsx` is

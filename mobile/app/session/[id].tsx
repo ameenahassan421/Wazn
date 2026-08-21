@@ -6,7 +6,6 @@ import Svg, { Line, Path, Rect } from 'react-native-svg'
 
 import {
   computeReadiness,
-  DEFAULT_MODE,
   describeBarMath,
   ghostChip,
   fromDisplayWeight,
@@ -25,6 +24,7 @@ import { Btn } from '@/components/ui/Btn'
 import { Card } from '@/components/ui/Surface'
 import { Plate } from '@/components/ui/Plate'
 import { Txt } from '@/design/Txt'
+import { useCoach } from '@/hooks/use-coach'
 import { useLocale } from '@/hooks/use-locale'
 import { useUnit } from '@/hooks/use-unit'
 import { banked as hapticBanked, tick } from '@/services/haptics'
@@ -193,6 +193,7 @@ export default function LiveWorkout() {
   const insets = useSafeAreaInsets()
   const { t } = useLocale()
   const { unit, ready } = useUnit()
+  const { mode, speaks, thinks } = useCoach()
   const live = useLiveWorkout()
   const view = selectBoardView(live)
 
@@ -214,11 +215,17 @@ export default function LiveWorkout() {
    * "statistics answer anything statistics can answer"), and it is also why
    * this works offline in a basement.
    */
+  /*
+   * `thinks`, not `speaks`. Quiet keeps the arithmetic and loses the sentence,
+   * so the verdict is still computed here and only the chip below is gated on
+   * `speaks`. Collapsing the two would either leave the coach talking with the
+   * dial Off or strip a silenced app of the ghosts it had before v3.
+   */
   const verdict =
-    view.exercise === null || view.set === null
+    view.exercise === null || view.set === null || !thinks
       ? null
       : verdictFor(view.set.setNumber - 1, {
-          mode: DEFAULT_MODE,
+          mode,
           readiness: computeReadiness({ checkIn: null, daysRested: null }),
           previous: view.exercise.sets.map((row) => ({
             weightKg: row.previousKg,
@@ -239,7 +246,21 @@ export default function LiveWorkout() {
           incrementKg: fromDisplayWeight(unit === 'kg' ? 2.5 : 5, unit),
         })
 
-  const chip = verdict === null || verdict.cause === 'none' ? null : ghostChip(verdict)
+  const chip =
+    verdict === null || verdict.cause === 'none' || !speaks ? null : ghostChip(verdict)
+
+  /** The coach's one sentence, phrased once and read by the board AND the rest
+   *  canvas — they are the same verdict about the same set. */
+  const chipText =
+    chip === null
+      ? null
+      : t(chip.key, {
+          weight:
+            chip.weightKg === null ? '—' : String(toDisplayWeight(chip.weightKg, unit)),
+          label: chip.label,
+          run: chip.run.join('/'),
+          reps: String(chip.reps ?? ''),
+        })
 
   /**
    * Dialled values, keyed by the set they belong to.
@@ -722,9 +743,16 @@ export default function LiveWorkout() {
           loggedLabel={`${elapsed} · ${t('workout.logged', {
             n: String(banked),
           })}`}
-          // Null until `ghost-reason` is wired to this screen. The prototype
-          // puts a sentence here; an invented one is worse than the gap.
-          coachLine={null}
+          /*
+           * The same verdict the board is showing, phrased for the canvas.
+           *
+           * It is the NEXT set's reasoning by construction: `view.set` has
+           * already moved on by the time a rest starts, so the sentence a
+           * lifter reads while resting is about the set they are about to do,
+           * which is what v5 screen 08 specifies. Gated on `speaks` with
+           * everything else — a quiet canvas is a ring and a clock.
+           */
+          coachLine={chipText}
           onSkip={endRest}
           onAdjust={adjustRest}
         />
