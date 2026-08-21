@@ -5,8 +5,9 @@ import {
   debriefChip,
   debriefSkeleton,
   ordinal,
+  reviewBandScale,
 } from './coach-lines'
-import type { BriefBlock, DebriefBlock } from './coach-lines'
+import type { BriefBlock, DebriefBlock, ReviewBlock } from './coach-lines'
 
 /**
  * The deterministic skeletons — B1's "if AI is dark, render the deterministic
@@ -270,5 +271,76 @@ describe('ordinal', () => {
       '23rd',
       '101st',
     ])
+  })
+})
+
+describe('reviewBandScale', () => {
+  const band = (muscle: string, sets: number): ReviewBlock['bands'][number] => ({
+    muscle,
+    sets,
+    sets_prev: 0,
+    status: sets < 10 ? 'under' : sets > 20 ? 'over' : 'in',
+  })
+
+  /**
+   * The defect this function exists for, seen on a simulator 2026-08-21.
+   *
+   * `weekly_review()` sorts bands ASCENDING, the chart draws the first N, so
+   * the largest muscle is ALWAYS one of the dropped rows. Scaling by the full
+   * array meant the visible bars were sized against a bar nobody could see.
+   */
+  it('scales to the bars drawn, never to the ones sliced off', () => {
+    const bands = [
+      band('Calves', 2),
+      band('Hamstrings', 6),
+      band('Shoulders', 12),
+      band('Quads', 60),
+    ]
+    const { ceiling } = reviewBandScale(bands, [10, 20], 3)
+    expect(ceiling).toBe(25)
+    // The pre-fix behaviour, spelled out so the regression is unmistakable:
+    // Quads at 60 would have squashed a 12-set shoulder bar to a fifth of the
+    // track and the productive-range wash with it.
+    expect(ceiling).not.toBe(60)
+  })
+
+  it('counts the rows it dropped so the screen can say so', () => {
+    const bands = [band('a', 1), band('b', 2), band('c', 3), band('d', 4)]
+    expect(reviewBandScale(bands, [10, 20], 2).hidden).toBe(2)
+    expect(reviewBandScale(bands, [10, 20], 9).hidden).toBe(0)
+  })
+
+  it('floors at the top of the productive range so a light week is not a full bar', () => {
+    const { ceiling } = reviewBandScale([band('Calves', 2)], [10, 20], 6)
+    expect(ceiling).toBe(25)
+  })
+
+  it('answers a finite ceiling when there are no bands at all', () => {
+    const { shown, hidden, ceiling } = reviewBandScale([], [10, 20], 6)
+    expect(shown).toEqual([])
+    expect(hidden).toBe(0)
+    expect(Number.isFinite(ceiling)).toBe(true)
+  })
+
+  /**
+   * Not about this function — about the field the STALLED section reads.
+   *
+   * The first draft drew `first_e1rm → last_e1rm` and a real account rendered
+   * "STALLED · 140 → 156", a 16 lb RISE presented as a plateau. Both numbers
+   * were accurate; the pairing was not. `weekly_review()` selects on
+   * `regr_slope(e1rm, n) <= 0` over EVERY session, and a lift that peaks
+   * mid-window climbs between its first and last while trending flat. This
+   * pins the reasoning so nobody swaps the figure back.
+   */
+  it('a plateau can rise between its first and last session', () => {
+    const plateau: ReviewBlock['plateaus'][number] = {
+      exercise: 'Bench Press (Barbell)',
+      sessions: 8,
+      slope_per_session: -0.2,
+      first_e1rm: 63.5,
+      last_e1rm: 70.8,
+    }
+    expect(plateau.last_e1rm).toBeGreaterThan(plateau.first_e1rm)
+    expect(plateau.slope_per_session).toBeLessThanOrEqual(0)
   })
 })

@@ -222,6 +222,80 @@ export function buildCatalogue(names: string[]): ExerciseSeed[] {
   })
 }
 
+/**
+ * The rep count past which a set is treated as a probable typo.
+ *
+ * ── WHY 25, AND WHY A REP COUNT RATHER THAN A CLEVERER TEST ─────────────────
+ * Derived from the history, not chosen: of 3,354 sets with a rep count in
+ * Ameen's 163 workouts, 3,350 are at or below 25. The four above it are one
+ * genuine typo and three genuine high-rep calf presses.
+ *
+ * The obvious alternative was "flag a set whose implied e1RM is more than 2x
+ * the trailing best for that exercise", and it was measured against the same
+ * history before being rejected. It is WORSE. A first light session makes the
+ * baseline tiny, so the second real session looks like an explosion: a
+ * Shrug (Dumbbell) at 12 x 75 lb scores **9.38x** its prior best and is
+ * completely legitimate, while the actual typo — Seated Cable Row, 95 reps at
+ * 100 lb — scores only 2.53. Any ratio threshold that catches the typo flags
+ * six real sets first. The rep count is the thing that is actually anomalous.
+ *
+ * ── WHY THIS ABORTS RATHER THAN REPAIRING ───────────────────────────────────
+ * Only the lifter knows whether "95" was 9, 15, or a real burnout set, so the
+ * script does what it already does for an unmapped exercise: it stops and
+ * names the rows. Repairing them silently would be inventing training data,
+ * and dropping them silently would be the truncation this repo keeps getting
+ * burned by. `--allow-implausible` imports them unchanged for the case where
+ * they are real.
+ *
+ * ── WHY HERE ────────────────────────────────────────────────────────────────
+ * This importer is the single door every Hevy row comes through, so one check
+ * covers all of them and covers re-imports. Epley on 95 reps returns a 416.7
+ * lb estimate that becomes a permanent all-time PR anchoring the Progress
+ * chart, the ghost's target and the coach's celebration. Note the ceiling: the
+ * thirteen SQL functions that inline `weight_kg * (1 + reps / 30)` still have
+ * no cap of their own, so a set typed INTO the app is unguarded. That is
+ * WAZN_PLAN.md §7.0's missing-list item 4 and it is a migration, not a flag.
+ */
+export const MAX_PLAUSIBLE_REPS = 25
+
+export interface ImplausibleSet {
+  exercise: string
+  startTime: string
+  setIndex: string
+  reps: number
+}
+
+/** Sets whose rep count is high enough to be a probable mistyped entry. */
+export function implausibleSets(rows: CsvRow[]): ImplausibleSet[] {
+  return rows
+    .filter((row) => {
+      const reps = num(row.reps)
+      return reps !== null && reps > MAX_PLAUSIBLE_REPS
+    })
+    .map((row) => ({
+      exercise: row.exercise_title?.trim() ?? '',
+      startTime: row.start_time?.trim() ?? '',
+      setIndex: row.set_index?.trim() ?? '',
+      reps: num(row.reps)!,
+    }))
+}
+
+/** Stop on probable typos unless the caller has looked and said import them. */
+export function checkPlausible(rows: CsvRow[], allow: boolean): void {
+  const flagged = implausibleSets(rows)
+  if (flagged.length === 0 || allow) return
+  const lines = flagged
+    .map((f) => `  ${f.startTime} — ${f.exercise} set ${f.setIndex}: ${f.reps} reps`)
+    .join('\n')
+  fail(
+    `${flagged.length} set(s) have more than ${MAX_PLAUSIBLE_REPS} reps and are ` +
+      `probably mistyped:\n${lines}\n\n` +
+      'Epley turns a rep count this high into an estimated 1RM that becomes a ' +
+      'permanent all-time PR. Correct them in Hevy and re-sync, or pass ' +
+      '--allow-implausible if they are real.',
+  )
+}
+
 /** Rows grouped into workouts by start_time, in file order. */
 export function buildSessions(rows: CsvRow[]): Session[] {
   const sessions = new Map<string, Session>()
@@ -295,6 +369,7 @@ function readArgs() {
     return index >= 0 ? argv[index + 1] : undefined
   }
 
+  const allowImplausible = argv.includes('--allow-implausible')
   const userId = flag('user') ?? process.env.IMPORT_USER_ID
   const csvPath = flag('csv') ?? process.env.IMPORT_CSV ?? 'workouts_corrected.csv'
   const url = process.env.SUPABASE_URL
@@ -324,14 +399,21 @@ function readArgs() {
     )
   }
 
-  return { userId, csvPath: resolve(process.cwd(), csvPath), url, serviceKey }
+  return {
+    userId,
+    csvPath: resolve(process.cwd(), csvPath),
+    url,
+    serviceKey,
+    allowImplausible,
+  }
 }
 
 async function main() {
-  const { userId, csvPath, url, serviceKey } = readArgs()
+  const { userId, csvPath, url, serviceKey, allowImplausible } = readArgs()
 
   const rows = readCsv(csvPath)
   console.log(`Read ${rows.length} rows from ${csvPath}`)
+  checkPlausible(rows, allowImplausible)
 
   const supabase = createClient(url, serviceKey, {
     auth: { persistSession: false, autoRefreshToken: false },

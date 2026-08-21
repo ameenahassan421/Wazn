@@ -1,7 +1,13 @@
 import { View } from 'react-native'
 import { useRouter } from 'expo-router'
 
-import { CHECK_INS, formatVolume, palette, type CheckIn } from '@wazn/domain'
+import {
+  CHECK_INS,
+  formatVolume,
+  muscleLabel,
+  palette,
+  type CheckIn,
+} from '@wazn/domain'
 
 import { Txt, Kick } from '@/design/Txt'
 import { Card } from '@/components/ui/Surface'
@@ -138,12 +144,33 @@ export default function LogHome() {
           <Txt step="num" ink="onInk" style={{ marginTop: 8, marginBottom: 4 }}>
             {dayOne ? t('today.first_workout') : home.routineName}
           </Txt>
-          <Txt step="label" ink="onInkMuted" ltr>
+          <Txt step="label" ink="onInkMuted" ltr={home.lowBand === null}>
             {/* Not `log.start_first` — that is the button's own words, and a
-                card that restates the button underneath it says nothing. */}
+                card that restates the button underneath it says nothing.
+
+                The band gap OUTRANKS the volume target, and that order is the
+                point of this line. "Beat 8,970 lbs" is a number to clear; "Calves
+                are at 2 sets this week" is a thing to DO, and it is the one the
+                lifter can act on in the session they are about to start. The
+                target stays as the fallback because on a week with every muscle
+                inside its band there is nothing to flag, and a card that goes
+                blank on a good week punishes the good week.
+
+                `ltr` only when it is the figure. The band line is a sentence and
+                forcing it left-to-right would flip the Arabic. */}
             {dayOne
               ? t('history.empty')
-              : `${t('today.beat')} ${formatVolume(home.target ?? 0, unit)} ${unit}`}
+              : home.lowBand !== null
+                ? t(
+                    home.lowBand.sets === 1
+                      ? 'coach.line.low_band_one'
+                      : 'coach.line.low_band',
+                    {
+                      muscle: muscleLabel(locale, home.lowBand.muscle),
+                      n: String(home.lowBand.sets),
+                    },
+                  )
+                : `${t('today.beat')} ${formatVolume(home.target ?? 0, unit)} ${unit}`}
           </Txt>
         </Card>
 

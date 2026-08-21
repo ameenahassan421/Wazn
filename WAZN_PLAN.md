@@ -288,7 +288,11 @@ gym dead zones reported by testers.
 
 ### Stage 4A: One App (ACTIVE, decided 2026-08-19)
 
-**One codebase: Expo Router plus NativeWind, shipping iOS, Android and web.** The separate
+**One codebase: Expo Router, shipping iOS, Android and web.** (This line said "plus
+NativeWind" until 2026-08-21. NativeWind was REMOVED on 2026-08-20 — the app used
+`className` zero times, because the UI resolves through `src/design/Txt.tsx` and
+`src/components/ui/` in plain JS, and React Native picks a font cut by family NAME, which
+a utility class cannot express. See CLAUDE.md.) The separate
 Vite PWA in `src/` is retired at the end of this stage. The web is not lost; it becomes an
 Expo Router web target through `react-native-web`, which `mobile/` already depends on.
 
@@ -336,10 +340,14 @@ was written from the generic web-to-native playbook, which assumes ONE package m
 Wazn has two, with a deliberate wall between them, and the wall is what breaks the pattern.
 Four reasons, all verified against this repo, full reasoning in DECISIONS.md 2026-08-19:
 
-1. **Two Tailwind majors, by hard constraint.** Web is `tailwindcss@^4.0.0`; `mobile/` is
+1. **Two Tailwind majors, by hard constraint.** Web is `tailwindcss@^4.0.0`; `mobile/` was
    `tailwindcss@^3.4.19`, forced by NativeWind v4. Separate lockfiles on purpose. A DOM
    component inside `mobile/` importing web screens needs the v4 pipeline inside the v3.4
-   build.
+   build. **Obsolete as stated since 2026-08-20**: NativeWind and Tailwind are both gone from
+   `mobile/package.json`, so there is no second Tailwind major any more. The separate
+   lockfile stays, for the Vercel-install reason under "What Stage 4A is NOT doing", and the
+   conclusion — build each screen native rather than wrapping web ones — is unchanged by
+   reasons 2 through 4, which never depended on Tailwind.
 2. **It would ship a second auth session.** `src/lib/supabase.ts:19` sets
    `persistSession: true` against default storage, which is `localStorage`. A DOM component
    runs in a WebView with its own storage origin, so a lifter signed in natively would open
@@ -459,9 +467,10 @@ airplane-mode workout still syncs clean on reconnect. GATE 4 re-proved on the ne
 
 #### Hazards, named in advance
 
-- Two Tailwind majors cannot share one lockfile (NativeWind v4 needs Tailwind 3.4, the web
-  app is Tailwind v4). This is why `mobile/` has its own lockfile and why this stage ends by
-  deleting the web app rather than merging the two.
+- ~~Two Tailwind majors cannot share one lockfile (NativeWind v4 needs Tailwind 3.4, the web
+  app is Tailwind v4).~~ **Retired 2026-08-21.** NativeWind was removed on 2026-08-20 and
+  `mobile/` has no Tailwind at all now; verified against `mobile/package.json`. `mobile/`
+  keeps its own lockfile for the Vercel-install reason, not this one.
 - The 16 component and screen test files (2,430 lines) need React Native Testing Library. The
   58 `src/lib` test files (9,825 lines) do not move at all.
 - A green `expo export` proves a screen bundles, not that it renders. Verify by running.
@@ -741,6 +750,59 @@ Every number below was read live, not recited. **Re-verify before quoting it.** 
 was nine commits stale on 2026-08-19 and said so nowhere; PRs #103 through #106 all merged
 code and none of them touched this file. Three hooks now make that visible and expensive
 (see "How this block stays true", last in this section).
+
+#### DONE 2026-08-21: the Coach tab's weekly review draws figures, not four paragraphs
+
+The review's four notes were four identical white boxes, each a numbered kicker, a sentence
+in 14.5px body type, and a chip. Every number was inside the prose, and on a real account a
+52.7 lb gain sat in the same grey box, in the same type, in fourth position, as "zero
+sessions" and "three lifts stalled" — a layout that cannot tell a win from a failure is
+scolding four times and celebrating never.
+
+`mobile/src/components/CoachNotes.tsx` replaces it. Each section is drawn as what it is:
+eight dots for eight weeks on adherence, a bar per muscle against the productive band on
+volume, the trend figure on plateaus, and the ember-wash card with the `full` plate on wins —
+the second surface in the app to carry that earned treatment, after Finish's
+beat-last-session card.
+
+**The figures are a SECOND read, straight from SQL.** `fetchReviewBlock()` calls
+`weekly_review()` directly and answers `null` rather than throwing. The Edge Function's
+`{ line, chip }` per section is everything a paragraph needs and nothing a chart needs, so
+the tab now reads both: numbers from Postgres in one round trip, sentence from the model
+whenever it arrives. If the model is dark every figure is still on screen, which discharges
+§12's requirement by construction instead of by a fallback.
+
+**Two defects were found by looking at it on a simulator, and both had passed the whole
+wall.**
+
+1. **"STALLED · Bench Press (Barbell) · 140 → 156"** — a 16 lb RISE labelled a plateau.
+   `first_e1rm` and `last_e1rm` were both accurate; the pairing was a lie.
+   `weekly_review()` selects a plateau on `regr_slope(e1rm, n) <= 0`, the trend across every
+   session, and a lift that peaks mid-window climbs between its first session and its last
+   while trending flat. The figure is now `slope_per_session`, the quantity the filter
+   actually tests, which is negative or zero by construction.
+2. **The volume chart was scaled by bars it does not draw.** `weekly_review()` returns bands
+   sorted ASCENDING and the chart draws the lowest six, so the max over the full array is
+   always one of the dropped rows. A lifter with 28 sets of quads (hidden) had every visible
+   bar squashed against a bar that was not on screen. Extracted to `reviewBandScale()` in
+   `src/lib/coach-lines.ts` and scaled to what is rendered; the dropped rows are now counted
+   in words under the chart rather than silently truncated.
+
+Both are pinned by tests in `src/lib/coach-lines.test.ts`, and the scale assertion was
+**proved to fail** against the old expression (`expected 60 to be 25`) before it was trusted.
+
+Also corrected on the way through: every weight on the screen went through
+`toDisplayWeight`, which snaps to the nearest loadable plate. These are e1RM estimates,
+nobody racks one, and `units.ts` already had `formatEstimate` with a comment explaining
+exactly why the gap is dangerous — a reader who learns the coach's figures are approximate
+cannot spot a real fabrication. And three labels beside the numbers were hardcoded English
+on a screen whose four section names were being passed in translated; they are `t()` keys
+now, `coach.review.figure.*`, in both locales.
+
+Gates: root and mobile typecheck, lint, 1252 + 20 tests, `check:tokens`, `check:coverage`,
+`check:type`, `check:vercel`, `bundle:ios`, `bundle:android`. Verified on an iPhone 17 Pro
+simulator against a live account, and the volume chart and win card were seen by temporarily
+stubbing the RPC, since that account has neither.
 
 #### P0 FIXED 2026-08-20: every button in the native app was invisible
 
@@ -1204,28 +1266,217 @@ retention that cannot exist until the app is shared.
 
 #### Next action
 
-**RESUME HERE (2026-08-21).** `main` carries the coach's two sentences. Tree clean, the full
-root wall green, `bundle:ios` green, mobile tsc/eslint/tests green.
+**RESUME HERE (2026-08-21, third update — handoff to the implementation
+session, written before compacting).**
+
+**Ameen approved a direction change on 2026-08-21 and the spec for it is
+`docs/FRIENDS_PLAN.md`. Read it in full before building anything social, IA, or
+AI-related.** It supersedes v5 screen 16 and amends the tab structure and the AI
+doctrine. Ten-second version: four tabs (Train · Plan · Progress · Crew); a
+private crew of up to eight competing on adherence-to-own-target, never output
+(the STEP UP trial is the evidence, and its scoring detail is the design rule);
+a pact with a named witness set in advance; duels scored on adherence; program
+pages as the growth layer (deliberately NOT in Crew); and an AI layer governed
+by **defaults > figures > sentences > conversations** with an event-gated
+~10-sentences/week attention budget. Ameen's own verdict, accepted in writing:
+no more planning passes — implement.
+
+**Implementation order, agreed with Ameen:**
+
+1. **Open the PR for `claude/coach-review-figures`** (9 commits: Coach tab
+   figures, the Hevy import + the implausible-reps guard, Progress built
+   native, the Home window fix, and the plan documents) and land it.
+2. **Finish 4A's core loop for a phone in hand** — the gaps in this section's
+   missing-list: the set-type control (data correctness, item 1), the
+   background rest timer, the auth screen, GATE A2's 30-second instrument.
+3. **The four-tab restructure** per FRIENDS_PLAN Part 3B — Plan tab first (the
+   production row counts say it is the missing one), then the Progress merge
+   (History, Body and the Coach tab dissolve into it), Crew last and only as a
+   card on Train until S1 passes.
+4. **S0 of the social plan** — the solo Week Board and the reasoned invite.
+5. **Run LAUNCH.md and send invites.** The week-6 retention number decides
+   everything after that; no document can.
+
+**Two corrections from the final review, so nobody re-derives them wrong:**
+the "seconds-long deploys vs two app stores" asymmetry
+(`BEATING_HEVY_PLAN.md` §1.5) EXPIRES at Stage 4B — Wazn ships to both stores
+too, on Expo (SDK 57, bundle ids already in `app.config.ts`), and what survives
+the stores is EAS Update's OTA lane for JS plus instant Edge Function/SQL
+deploys, not store avoidance. And `eas.json` does not exist yet; EAS runs from
+Ameen's laptop, never from a sandboxed session (`api.expo.dev` is 403 here).
+
+**Still open from this session:** the poisoned 95-rep row (repair blocked by
+the session's safety classifier — fix it in Hevy or approve `reps = null`); the
+`public.e1rm()` migration across the thirteen SQL functions; the
+`coach.line.low_band` pluralisation nit; `daysSince` hours-vs-calendar-day.
+All detailed above.
+
+---
+
+**Previous state (2026-08-21, second update).** `main` plus
+`claude/coach-review-figures`. Full root wall green, `bundle:ios` and
+`bundle:android` green, mobile tsc/eslint/tests green.
 
 **Built and verified on a simulator:** the design system, Home, Workout, Rest, Finish, History,
 Body, the exercise picker, the shared `Spark` chart, GATE 4's durable write queue, the coach's
-ghost with its Full/Quiet/Off gate and its Settings dial, and now the Today brief and the
-Finish debrief.
+ghost with its Full/Quiet/Off gate and its Settings dial, the Today brief, the Finish debrief,
+and the **Coach tab** — mode selector, week review, and the four notes now drawn as figures
+rather than paragraphs.
+
+**The training data is current again (2026-08-21).** Wazn's copy of the history had stopped at
+2026-07-20, which is why every coach surface was reporting a 32-day layoff for a lifter who had
+trained seven times in the previous week. 13 workouts and 279 sets imported from the Hevy API
+covering 2026-08-02 to 2026-08-21, through `scripts/import_hevy.ts` scoped to a
+missing-only CSV so nothing existing was rewritten. Account now holds **163 workouts and 3,476
+sets**; PR flags verified against an independent recomputation, zero mismatches across all
+3,476. One new exercise mapping added (`Decline Bench Press (Machine)`).
 
 **Do these next, in this order:**
 
 1. **The dead code the audit named** — the list below. Each one is a decision rather than a
    delete: three are surfaces that hand-rolled what a token-backed variant already did, and the
    right fix there is the other direction.
-2. **The Coach tab (v5 screen 15)** — the largest remaining piece and the one v5 calls the
-   control room: mode selector, week review, notes, Ask the coach. Currently a stub.
-   `fetchWeeklyReview` and `REVIEW_SECTIONS` already exist on the web; `coach-lines.ts` is
-   where the shareable half of it goes.
-3. **Progress**, then **Friends**. Neither needs new chart geometry — `sparkGeometry` is
-   built and tested. Both still carry Ameen's open brass question; build in ember and flag,
-   which is what every other screen did.
+2. ~~The Coach tab~~ **DONE 2026-08-21**, except **Ask/Tell the coach**, which exists on web
+   (`src/lib/tell-coach.ts`, `src/components/TellCoachSheet.tsx`) and has no native surface.
+   That is the tab's one remaining piece.
+3. ~~Progress~~ **DONE 2026-08-21**, then **Friends**, which is still a 24-line stub.
+   `sparkGeometry` is built and tested and Progress used it unchanged. Friends still carries
+   Ameen's open brass question; build in ember and flag, which is what every other screen did.
 4. **Auth last.** The screen a lifter sees once, the prototype does not cover it, and with auth
    switched off it is unreachable anyway.
+
+#### Home reasons over a window now, and it was erasing history (2026-08-21)
+
+**A 163-workout account rendered as brand new.** `use-home.ts` took `limit(1)`
+and derived the entire screen from it, including `dayOne`, which is only
+`target === null`. The newest finished workout was a 21-second start-and-abandon
+with no sets, so the target was null and Home showed "Welcome, amin", "Your
+first workout", "Your log starts today" — while the coach card directly above
+quoted "Bench Press 140 lbs x 2 last time". **Any lifter who taps Start, logs
+nothing and ends the session hits this.** Fixed with `lastLoggedSession`
+(`src/lib/last-session.ts`, 7 tests), which walks a 30-session window back to
+the last session with working volume and carries its date so `daysRested`
+cannot inherit the mirror defect.
+
+**And "up next" was echoing the session just finished**, which is the one thing
+it cannot be. It now reads `due_routine` (rotation, the same rule `rotation.ts`
+transcribes) and `low_bands` (muscle groups under ten sets in the last seven
+days) from `session_brief()` — both already computed in SQL, both already on the
+screen inside the coach's sentence. The band gap outranks the volume target,
+because "Biceps is at 1 set this week" is a thing to do and "Beat 8,970 lbs" is
+a number to clear; the target stays as the fallback so a good week does not
+render a blank card. The greeting uses the due routine too, so the three cards
+now agree where two of them used to contradict.
+
+**AI was considered for this and declined** — Home is the logging path, §2 pins
+the coach as statistics there, and the same account had just watched the Coach
+tab's Edge Function time out. See DECISIONS.md.
+
+#### Progress is built (2026-08-21)
+
+`mobile/app/(tabs)/progress.tsx` plus `mobile/src/services/progress.ts`. Five
+blocks: this-week figures, sessions-per-week bars with the average as a dashed
+reference, the 12-week volume trend through the shared `Spark`, records on the
+ember wash, and the lifts by estimated 1RM. Verified on an iPhone 17 Pro
+against the live account.
+
+**It is NOT a port of the web screen's 1,449 lines, and the two omissions are
+decisions.** The muscle-balance chart is absent because `CoachNotes` drew the
+same numbers on the Coach tab earlier the same day, and two charts of one
+dataset in one app is worse than one. Per-lift charts, the forecast line and
+the plateau card are absent because Hevy's own structure puts per-exercise
+strength on the EXERCISE page, and native has no exercise detail screen yet;
+the depth lands when that screen does rather than being stacked here for want
+of anywhere else.
+
+**No reference covers this screen**, per §6, so the derivation is written into
+the file's header: the Finish screen's figure row, `CoachNotes`'s
+bar-against-a-track, and the earned ember wash used on exactly one block.
+
+**Four defects the simulator caught that every green check missed**, all fixed:
+
+1. **Duplicate React key in Records.** `at` is the WORKOUT's `started_at`,
+   shared by every set in it, so two flagged sets of one lift in one session
+   collided. Rendered as a redbox on first contact with real data.
+2. **The volume figure wrapped mid-number** — "57,770" broke to "57,77 / 0" at
+   30px in a third of a phone's width. Volumes now abbreviate past five
+   digits.
+3. **The frequency caption promised a dashed average line that was not drawn.**
+   Copy inherited from the web screen, which draws one. The line is drawn now,
+   over the bars rather than behind them.
+4. **"Show all 108" promised a control that does not exist** on native. It
+   states the remainder instead.
+
+**And one that was NOT mine, and matters beyond this screen:** `weekly_streak`
+buckets weeks in **UTC** while `sessionsPerWeek` buckets in **local time**. A
+session stored `2026-07-20 00:01+00` is 2026-07-19 in Chicago, so the two
+disagree about which week it belongs to — the card claimed a **34-week streak**
+directly above a chart drawing the gap that broke it. Fixed by passing the
+device timezone to the RPC, which the function has always accepted; the number
+went to **4**, matching the bars. Any other caller of `weekly_streak` that
+omits `p_timezone` has the same bug.
+
+**The poisoned Seated Cable Row row is visible here too**, second in the
+strength list at 416.7 lb with a **+277.3** gain in ember. Second surface, same
+single bad datum, still awaiting the repair described below.
+
+#### The implausible-reps guard, and the one row still outstanding (2026-08-21)
+
+`scripts/import_hevy.ts` now aborts on any set above `MAX_PLAUSIBLE_REPS` (25),
+naming each row, with `--allow-implausible` for the case where they are real.
+Proved end-to-end against the actual Hevy row rather than only in unit tests:
+it refuses `Seated Cable Row - V Grip (Cable) set 1: 95 reps`.
+
+**25 is derived, not chosen.** Of 3,354 sets with a rep count, 3,350 are at or
+below it. The four above are one typo and three genuine 45-to-70 rep Calf Press
+sets at 15 lb.
+
+**The obvious alternative was measured and REJECTED.** "Flag a set whose implied
+e1RM exceeds 2x the trailing best for that exercise" performs worse on this
+history: a first light session makes the baseline tiny, so a legitimate
+Shrug (Dumbbell) at 12 x 75 lb scores **9.38x** while the actual typo scores
+only **2.53**. Any ratio threshold that catches the typo flags six real sets
+first. Do not revisit this without re-running the numbers.
+
+**Still outstanding, and it needs Ameen:**
+
+1. **The bad row is still in production.** `Seated Cable Row - V Grip (Cable)`,
+   2026-08-06, 95 reps at 100 lb, `pr_e1rm = true`, implying 416.7 lb. The
+   intended repair was `set reps = null` — unknown is true where 95 is
+   known-false, and every qualifying predicate already excludes null reps, so
+   it leaves every e1RM surface without deleting the set. **The write was
+   blocked by the session's safety classifier** and was deliberately not
+   retried. Better still: correct it in the Hevy app, which is the source. The
+   Hevy MCP is read-only, so a Wazn-side edit is reversible by any later
+   re-import of that workout, whereas a Hevy-side fix is permanent. The
+   importer's guard means a re-sync now ABORTS rather than silently restoring
+   it, so it cannot get worse while it waits.
+2. **The SQL half.** Thirteen live functions inline
+   `weight_kg * (1 + reps / 30)` with no rep ceiling: `weekly_review`,
+   `recompute_pr_flags`, `exercise_1rm_history`, `session_brief`,
+   `session_debrief`, `strength_forecast`, `strength_summary`, `coach_stats`,
+   `exercise_bests`, `exercise_best_e1rm`, `exercise_records`, `social_feed`,
+   `workout_sets_pr_flags_insert`. The right shape is one `public.e1rm()`
+   applied across all thirteen, and it is a migration rather than a flag, so it
+   was deliberately NOT half-applied: a cap in some functions and not others
+   would make Progress and Coach disagree, which is worse than the current
+   consistent wrongness.
+
+#### What is MISSING, verified against the code on 2026-08-21
+
+Every row below was checked against the repo, not recalled. Ordered by what breaks if it stays
+missing.
+
+| #   | Gap                                                                                         | Evidence                                                                                                                                                                          | Why it matters                                                                                                                                                                                                                                                                                                                |
+| --- | ------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | **No set-type control on native.** Every set logged in Wazn is `'normal'`.                  | `mobile/app/session/[id].tsx` contains no reference to `warmup`, `setType` or `set_type`. `mobile/src/state/live-workout.ts:72` says it outright: "no native control changes it". | This is a DATA-CORRECTNESS bug, not a parity gap. `weekly_review()`, `recompute_pr_flags` and every volume figure filter on `set_type <> 'warmup'`. A lifter's four warm-up sets of bench count as working volume and can set a fake PR. The Hevy-imported history has correct types; anything logged in Wazn since does not. |
+| 2   | **Nothing measures §1's promise.**                                                          | `grep` for a tap/elapsed harness over `e2e/`, `scripts/`, `mobile/` finds only three prose comments quoting "30 seconds".                                                         | GATE A2 is defined as this instrument and it does not exist. The sentence has governed every design decision for 200+ commits and has never once been checked.                                                                                                                                                                |
+| 3   | **No background rest timer.** `expo-notifications` is not a dependency.                     | Absent from `mobile/package.json`; no `scheduleNotification` anywhere.                                                                                                            | Stage 4A calls it "the single capability that justifies this whole stage". A lifter locks their phone between sets and the timer dies.                                                                                                                                                                                        |
+| 4   | **Implausible-input guard: HALF DONE 2026-08-21.**                                          | The import door refuses them now (`MAX_PLAUSIBLE_REPS`, proved against the real row).                                                                                             | The thirteen SQL functions that inline Epley still have no cap, so a set typed INTO the app is unguarded, and the one bad row already in production is still there. See the block above this table.                                                                                                                           |
+| 5   | **Two 24-line stubs remain.** `friends.tsx`, `progress.tsx`.                                | `wc -l mobile/app/(tabs)/*.tsx`.                                                                                                                                                  | GATE A1's wording is "no 21-line stub remains". It cannot pass.                                                                                                                                                                                                                                                               |
+| 6   | **Cached review prose can contradict live figures.**                                        | Seen 2026-08-21: the volume chart drew 11 chest sets while the sentence under it read "No muscle groups logged working sets this week."                                           | Inherent to the split now that figures are live SQL and sentences are a weekly cache. Correct behaviour beats stale prose, but the contradiction is visible. Either stamp the prose with its as-of date, or invalidate the cache when the underlying window changes.                                                          |
+| 7   | **The Coach tab's Edge Function times out on real data.**                                   | "The review took too long. Try again." on an account with 163 workouts, 2026-08-21.                                                                                               | Now survivable — the figures render regardless since the notes were moved out of the model's state chain — but the sentences are unreachable on the account with the most history, which is the opposite of the intended failure curve.                                                                                       |
+| 8   | **An inert 0-set workout sits in production.** `9ef49d4c`, 2026-08-21, 21 seconds, no sets. | Queried directly.                                                                                                                                                                 | Same class as the 2026-08-01 residue logged in DECISIONS.md, and left alone for the same reason: it is real user data and §2.6 makes deleting it an ask. It does count as a session in adherence.                                                                                                                             |
 
 **THE WORKFLOW AUDIT, 2026-08-21: 49 claimed, 43 confirmed.** Six readers over `mobile/` across
 two dimensions, each finding adversarially verified by a second agent told to refute it. It

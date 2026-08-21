@@ -40,6 +40,7 @@ export const MUSCLE_GROUPS: Record<string, MuscleGroup> = {
   'Crunch (Weighted)': 'core',
   'Deadlift (Barbell)': 'back',
   'Deadlift (Dumbbell)': 'back',
+  'Decline Bench Press (Machine)': 'chest',
   'Decline Crunch (Weighted)': 'core',
   'Dumbbell Row': 'back',
   'Dumbbell Squeeze Press': 'chest',

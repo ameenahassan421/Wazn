@@ -282,6 +282,9 @@ export const messages: Record<Locale, Record<string, string>> = {
     'history.sets_retry': 'Could not load these sets. Try again',
     'coach.retry': 'Try again',
     'progress.strength.show_all': 'Show all {n}',
+    // Not a control: the native list states its remainder rather than
+    // promising a tap that only the web screen implements.
+    'progress.strength.more': '{count} more lifts logged',
     'progress.strength.show_fewer': 'Show fewer',
     'history.edit_set': 'Edit set: {name}',
     'home.last_session.aria': 'Opens History',
@@ -651,6 +654,13 @@ export const messages: Record<Locale, Record<string, string>> = {
     'coach.review.section.plateaus': 'Stalled',
     'coach.review.section.wins': 'Moving',
     'coach.review.section.recommendation': 'Next week',
+    // The review's own figure labels. These sit BESIDE computed numbers, so
+    // each one carries the number as a param rather than baking it in.
+    'coach.review.figure.sessions': 'sessions this week · {avg}/wk average',
+    'coach.review.figure.band_target': 'target {low}–{high} sets a week',
+    'coach.review.figure.plateau_slope':
+      '{unit} per session across {sessions} sessions',
+    'coach.review.figure.band_more': '{count} more above these',
 
     // ── Friends screen (Slice 6) ───────────────────────────────
     'friends.loading': 'Loading…',
@@ -1300,6 +1310,7 @@ export const messages: Record<Locale, Record<string, string>> = {
     'history.sets_retry': 'تعذّر تحميل هذه المجموعات. حاول مرة أخرى',
     'coach.retry': 'حاول مرة أخرى',
     'progress.strength.show_all': 'اعرض الكل ({n})',
+    'progress.strength.more': '{count} تمرين آخر مسجّل',
     'progress.strength.show_fewer': 'اعرض أقل',
     'history.edit_set': 'تعديل المجموعة: {name}',
     'home.last_session.aria': 'يفتح السجل',
@@ -1639,6 +1650,10 @@ export const messages: Record<Locale, Record<string, string>> = {
     'coach.review.section.plateaus': 'ثبات',
     'coach.review.section.wins': 'تقدّم',
     'coach.review.section.recommendation': 'الأسبوع القادم',
+    'coach.review.figure.sessions': 'جلسة هذا الأسبوع · {avg} أسبوعياً بالمتوسط',
+    'coach.review.figure.band_target': 'المستهدف {low}–{high} مجموعة أسبوعياً',
+    'coach.review.figure.plateau_slope': '{unit} لكل جلسة عبر {sessions} جلسة',
+    'coach.review.figure.band_more': '{count} أخرى فوق هذه',
 
     // ── Friends screen (Slice 6): DRAFT, requires native-speaker review ──
     'friends.loading': 'جارٍ التحميل…',

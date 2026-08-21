@@ -3,6 +3,7 @@ import type {
   CoachLine,
   CoachNotes,
   DebriefBlock,
+  ReviewBlock,
   Unit,
 } from '@wazn/domain'
 
@@ -200,4 +201,24 @@ export async function fetchWeeklyReview(
   if (error) throw new Error(await describeFunctionError(error))
   if (!data) throw new Error('No review came back.')
   return data
+}
+
+/**
+ * The review's figures, straight from SQL.
+ *
+ * Deliberately a separate read from `fetchWeeklyReview`, and deliberately one
+ * that answers null. The sentences are the half that can fail slowly — a model
+ * call, bounded above at 45 seconds. The numbers cannot. Asking for them apart
+ * means the Coach tab draws its charts in one round trip and never waits on a
+ * model to render a bar. Same ordering the briefing has always used, one level
+ * further out.
+ */
+export async function fetchReviewBlock(): Promise<ReviewBlock | null> {
+  try {
+    const { data, error } = await supabase.rpc('weekly_review')
+    if (error || !isBlock(data)) return null
+    return data as unknown as ReviewBlock
+  } catch {
+    return null
+  }
 }

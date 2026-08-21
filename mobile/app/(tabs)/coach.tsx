@@ -5,17 +5,18 @@ import {
   COACH_MODES,
   MODE_BEHAVIOUR,
   QUOTA_VISIBLE_AT,
-  REVIEW_SECTIONS,
   isModeReady,
   palette,
   radius,
   space,
   type CoachMode,
-  type CoachNotes,
+  type CoachNotes as CoachNotesPayload,
+  type ReviewBlock,
 } from '@wazn/domain'
 
 import { Btn } from '@/components/ui/Btn'
-import { Card, Rule } from '@/components/ui/Surface'
+import { CoachNotes } from '@/components/CoachNotes'
+import { Card } from '@/components/ui/Surface'
 import { Chip } from '@/components/ui/Chip'
 import { Empty, Screen } from '@/components/ui/Screen'
 import { Header } from '@/components/ui/Header'
@@ -24,7 +25,7 @@ import { Txt, Kick } from '@/design/Txt'
 import { useCoach } from '@/hooks/use-coach'
 import { useLocale } from '@/hooks/use-locale'
 import { useUnit } from '@/hooks/use-unit'
-import { fetchWeeklyReview } from '@/services/coach'
+import { fetchReviewBlock, fetchWeeklyReview } from '@/services/coach'
 import { supabaseConfigError } from '@/services/supabase'
 
 /**
@@ -144,7 +145,16 @@ export default function CoachTab() {
   const { unit } = useUnit()
   const { mode, setMode, speaks } = useCoach()
 
-  const [notes, setNotes] = useState<CoachNotes | null>(null)
+  const [notes, setNotes] = useState<CoachNotesPayload | null>(null)
+  /**
+   * The FIGURES, on their own read and their own cadence.
+   *
+   * One RPC, no model, so the charts are on screen while the sentences are
+   * still being written — and they stay there if the sentences never arrive.
+   * That is the two-stage draw the coach has always used, applied to a whole
+   * screen instead of to one line.
+   */
+  const [block, setBlock] = useState<ReviewBlock | null>(null)
   const [state, setState] = useState<'loading' | 'ready' | 'failed'>('loading')
   const [message, setMessage] = useState<string | null>(null)
   const [reload, setReload] = useState(0)
@@ -170,6 +180,19 @@ export default function CoachTab() {
    * written in whichever unit the reader is on; the function caches per unit,
    * so returning to one already seen costs nothing.
    */
+  /** The numbers. Fetched once, independent of the model, and never forced:
+   *  SQL has no cache to bust and no quota to spend. */
+  useEffect(() => {
+    if (supabaseConfigError !== null || !speaks) return
+    let active = true
+    void fetchReviewBlock().then((facts) => {
+      if (active && facts !== null) setBlock(facts)
+    })
+    return () => {
+      active = false
+    }
+  }, [speaks])
+
   useEffect(() => {
     if (supabaseConfigError !== null || !speaks) return
     let active = true
@@ -204,7 +227,6 @@ export default function CoachTab() {
      other four are the numbered notes. Same five sections the function has
      always returned, read into the shape the design draws — no second call. */
   const recommendation = review?.sections?.recommendation ?? null
-  const noteKeys = REVIEW_SECTIONS.filter((key) => key !== 'recommendation')
 
   return (
     <Screen>
@@ -245,132 +267,119 @@ export default function CoachTab() {
           throws. */}
       {!speaks ? (
         <Empty line={t('coach.quiet')} />
-      ) : state === 'loading' ? (
-        <Card>
-          {/* A kicker, not a skeleton. v2.1's rule and it still holds: a
-              shimmer implies a layout is arriving; this is waiting on a
-              sentence, and the layout it lands in is one line. */}
-          <Kick>{t('coach.loading')}</Kick>
-          <Txt step="label" ink="muted" style={{ marginTop: 6 }}>
-            {t('coach.loading.body')}
-          </Txt>
-        </Card>
-      ) : state === 'failed' ? (
-        <Card style={{ gap: 12 }}>
-          <Txt step="body">{message ?? t('coach.notes.unavailable')}</Txt>
-          <Btn
-            kind="line"
-            small
-            label={t('coach.retry')}
-            onPress={() => {
-              setState('loading')
-              // `setForce(false)` matters and is not tidiness. `force` is
-              // sticky state: once Regenerate sets it, every later reload
-              // carries it, so a lifter who pressed Regenerate once and then
-              // hit Try again three times would spend four model calls and
-              // four slices of quota recovering from one failure. Retry means
-              // "load it again" and is entitled to the cache; Regenerate is
-              // the only control allowed to spend a call.
-              setForce(false)
-              setReload((n) => n + 1)
-            }}
-          />
-        </Card>
-      ) : review === null ? (
-        // Nothing to say yet, which on a young account is the honest answer
-        // and on this one would mean the function declined. Either way it is
-        // an absence, not an error.
-        <Empty line={t('coach.empty')} />
       ) : (
         <View style={{ gap: 12 }}>
-          <Card style={{ gap: 10 }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-              <Kick style={{ flex: 1 }}>{t('coach.week_review')}</Kick>
-              <Pressable
-                accessibilityRole="button"
-                accessibilityState={{ disabled: spent }}
-                disabled={spent}
-                hitSlop={Math.round((space.touch - 14) / 2)}
+          {/* ── The model's half ──────────────────────────────────────────
+              Headline and the one recommendation. Three states and no fourth,
+              because a screen that renders nothing is indistinguishable from
+              one still loading. */}
+          {state === 'loading' ? (
+            <Card>
+              {/* A kicker, not a skeleton. v2.1's rule and it still holds: a
+              shimmer implies a layout is arriving; this is waiting on a
+              sentence, and the layout it lands in is one line. */}
+              <Kick>{t('coach.loading')}</Kick>
+              <Txt step="label" ink="muted" style={{ marginTop: 6 }}>
+                {t('coach.loading.body')}
+              </Txt>
+            </Card>
+          ) : state === 'failed' ? (
+            <Card style={{ gap: 12 }}>
+              <Txt step="body">{message ?? t('coach.notes.unavailable')}</Txt>
+              <Btn
+                kind="line"
+                small
+                label={t('coach.retry')}
                 onPress={() => {
                   setState('loading')
-                  setForce(true)
+                  // `setForce(false)` matters and is not tidiness. `force` is
+                  // sticky state: once Regenerate sets it, every later reload
+                  // carries it, so a lifter who pressed Regenerate once and then
+                  // hit Try again three times would spend four model calls and
+                  // four slices of quota recovering from one failure. Retry means
+                  // "load it again" and is entitled to the cache; Regenerate is
+                  // the only control allowed to spend a call.
+                  setForce(false)
                   setReload((n) => n + 1)
                 }}
-              >
-                <Kick ink={spent ? 'muted' : 'accentSoft'}>
-                  {t('coach.regenerate')}
-                </Kick>
-              </Pressable>
-            </View>
-
-            {review.headline !== '' && <Txt step="title">{review.headline}</Txt>}
-
-            {recommendation?.line !== undefined && (
-              <>
-                <View
-                  style={{ flexDirection: 'row', gap: 12, alignItems: 'flex-start' }}
+              />
+            </Card>
+          ) : review === null ? (
+            // Nothing to say yet, which on a young account is the honest answer
+            // and on this one would mean the function declined. Either way it is
+            // an absence, not an error.
+            <Empty line={t('coach.empty')} />
+          ) : (
+            <Card style={{ gap: 10 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <Kick style={{ flex: 1 }}>{t('coach.week_review')}</Kick>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityState={{ disabled: spent }}
+                  disabled={spent}
+                  hitSlop={Math.round((space.touch - 14) / 2)}
+                  onPress={() => {
+                    setState('loading')
+                    setForce(true)
+                    setReload((n) => n + 1)
+                  }}
                 >
-                  <Plate size={30} variant="hub" color={palette.ink} />
-                  <Txt step="body" style={{ flex: 1 }}>
-                    {recommendation.line}
-                  </Txt>
-                </View>
-                {/* "No chip, no claim." The chip is where the sentence gets
+                  <Kick ink={spent ? 'muted' : 'accentSoft'}>
+                    {t('coach.regenerate')}
+                  </Kick>
+                </Pressable>
+              </View>
+
+              {review.headline !== '' && <Txt step="title">{review.headline}</Txt>}
+
+              {recommendation?.line !== undefined && (
+                <>
+                  <View
+                    style={{ flexDirection: 'row', gap: 12, alignItems: 'flex-start' }}
+                  >
+                    <Plate size={30} variant="hub" color={palette.ink} />
+                    <Txt step="body" style={{ flex: 1 }}>
+                      {recommendation.line}
+                    </Txt>
+                  </View>
+                  {/* "No chip, no claim." The chip is where the sentence gets
                     pinned to a number the reader can check on Progress, and it
                     renders only when the function actually sent one. */}
-                {recommendation.chip !== undefined && (
-                  <Chip>{recommendation.chip}</Chip>
-                )}
-              </>
-            )}
-          </Card>
+                  {recommendation.chip !== undefined && (
+                    <Chip>{recommendation.chip}</Chip>
+                  )}
+                </>
+              )}
+            </Card>
+          )}
 
           {/* ── Coach's notes ────────────────────────────────────────────
-              The other four sections, numbered, behind an ember rail. v5
-              draws a 3px inline-start border; `borderStartWidth` rather than
-              `borderLeftWidth`, because this app grows an Arabic locale and
-              the rail has to follow the text. */}
-          {noteKeys.some((key) => review.sections?.[key]?.line) && (
-            <Card
-              bare
-              style={{
-                // v5 §15's 3px ember rail. `borderStartWidth`, not
-                // `borderLeftWidth`: this app grows an Arabic locale and the
-                // rail has to follow the text to the other side. Written into
-                // the comment above before it was written into the code, which
-                // is its own small lesson — read the screenshot, not the note.
-                borderStartWidth: 3,
-                borderStartColor: palette.accent,
+              Figures from `weekly_review()`, sentences from the model, each
+              section drawn as what it IS rather than as a fourth paragraph.
+              See `components/CoachNotes.tsx` for why that mattered.
+
+              **Deliberately OUTSIDE the state chain above.** This block used
+              to be the last branch of it, so it rendered only when the model
+              had already answered — and on 2026-08-21 the Edge Function timed
+              out on a real account and the whole screen collapsed to "The
+              review took too long", figures included, while `block` sat loaded
+              in state a few lines away. Every number here is computed in
+              Postgres and owes the model nothing; tying them to its result
+              made §12's "if AI is dark, render the deterministic skeleton" a
+              comment rather than a behaviour. The figures now appear as soon
+              as SQL answers, stay through a retry, and survive the model
+              failing outright. */}
+          {(block !== null || review !== null) && (
+            <CoachNotes
+              block={block}
+              unit={unit}
+              lines={{
+                adherence: review?.sections?.adherence?.line ?? null,
+                bands: review?.sections?.bands?.line ?? null,
+                plateaus: review?.sections?.plateaus?.line ?? null,
+                wins: review?.sections?.wins?.line ?? null,
               }}
-            >
-              {noteKeys.map((key, index) => {
-                const section = review.sections?.[key]
-                if (!section?.line) return null
-                return (
-                  <View key={key}>
-                    {index > 0 && <Rule inset={space.cardPad} />}
-                    <View
-                      style={{
-                        flexDirection: 'row',
-                        gap: 12,
-                        padding: space.cardPad,
-                      }}
-                    >
-                      {/* The index in mono — this IS the machine voice doing
-                          the one job it is for, which is counting. */}
-                      <Txt step="meta" ink="muted" ltr>
-                        {String(index + 1).padStart(2, '0')}
-                      </Txt>
-                      <View style={{ flex: 1, gap: 6 }}>
-                        <Kick>{t(`coach.review.section.${key}`)}</Kick>
-                        <Txt step="body">{section.line}</Txt>
-                        {section.chip !== undefined && <Chip>{section.chip}</Chip>}
-                      </View>
-                    </View>
-                  </View>
-                )
-              })}
-            </Card>
+            />
           )}
         </View>
       )}

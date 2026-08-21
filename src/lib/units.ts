@@ -42,7 +42,19 @@ export function toDisplayWeight(kg: number, unit: Unit): number {
 export function formatEstimate(kg: number | null, unit: Unit): string {
   if (kg === null) return '—'
   const raw = unit === 'kg' ? kg : kgToLbs(kg)
-  return raw.toFixed(1).replace(/\.0$/, '')
+  const text = raw.toFixed(1).replace(/\.0$/, '')
+  /*
+   * `-0` is not a number anyone says out loud.
+   *
+   * This function formats CHANGES as well as values — a gain, a delta, the
+   * slope under the review's STALLED heading — and any of those can be a
+   * small negative that rounds to zero. `(-0.02).toFixed(1)` is `"-0.0"`,
+   * which the trim above turns into `"-0"`. On 2026-08-21 that shipped to a
+   * simulator as a 30px "−0" under "STALLED", which reads as a broken render
+   * rather than as "this lift is flat". A change that rounds to zero IS zero
+   * at this precision, so it prints as zero.
+   */
+  return text === '-0' ? '0' : text
 }
 
 /** What the user typed in their display unit -> kg for storage. */
