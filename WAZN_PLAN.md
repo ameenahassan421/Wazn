@@ -643,8 +643,13 @@ single sitting**, six on Home alone. That is the whole argument for this section
 
 So, before any screen is called done:
 
-1. **Open the reference next to the build.** The v5 reference in one window, the running
-   screen in the other. Not the spec prose, the running reference.
+1. **Open the reference next to the build, and NAME THE FILE.** There are TWO reference
+   apps, and on 2026-08-20 a session verified the auth screen against the one that does not
+   contain it. `design/Wazn v5.html` is the signed-in tab app: Home, Live, Rest, History,
+   Progress, Body, Coach, Friends, Settings. `design/Onboarding.html` is auth and onboarding,
+   screens 01 to 05, and holds `AuthScreen` and the `Word` component. **Before comparing,
+   confirm the screen you are looking at exists in the file you opened.** "I ran the
+   reference" is not a claim until it names which one.
 2. **Compare per element, not per screen.** "The branding looks right" is the claim that was
    made about a screen rendering `WAZN` in 50px uppercase. "The wordmark is Saira 700, 21px,
    lowercase, with the `a` in ember" is a claim that can be wrong out loud.
@@ -826,7 +831,7 @@ none started: momentum bar and its brass flip, the PR moment, toasts, the finish
 remaining screen restyles, coach-volume wiring. Item 6 (Tell the coach) was **never
 assessed**; `TellCoachSheet.tsx` is v3-era.
 
-#### The wordmark renders uppercase on native. FIXED 2026-08-20
+#### The wordmark renders uppercase on native. THE MARK IS FIXED 2026-08-20
 
 **Corrected 2026-08-19, same day, after reading the reference.** The first version of this
 block claimed four defects. **Two of them were wrong**, and they were wrong because the
@@ -912,6 +917,43 @@ Still open in A0, being built now: `rest.ts` through `portable.ts`, the native
 locale adapter, the unit round-trip to the server, the `Readiness` to `CheckIn`
 rename, and the first `mobile/` tests. GATE A0 is not claimed until all of them
 land and the wall is green on both packages.
+
+#### The auth screen does not match, and the wordmark claim was too broad
+
+**Ameen, 2026-08-20, from the design zip.** The entry above said the wordmark
+was "FIXED and verified on a device". The MARK is correct and that part holds:
+the reference's computed styles are Saira Semi Condensed 700, 34px,
+`textTransform: none`, `#ece7dc` with the `a` at `#e8491d`, and the device
+renders exactly that. **But a screenshot of the whole screen was offered as the
+evidence, which implied the screen was right. It is not.**
+
+Against `design/Onboarding.html:22-48`, where `AuthScreen` actually lives:
+
+| element                     | reference                                                   | `mobile/app/sign-in.tsx`      |
+| --------------------------- | ----------------------------------------------------------- | ----------------------------- |
+| subtitle                    | "Log a set in under thirty seconds, one hand, mid-workout." | **absent**                    |
+| "Your training, on record." | `T.title` at **22**                                         | `title` step, which is **17** |
+| fields                      | placeholders inside the input                               | mono uppercase labels above   |
+| SIGN IN                     | `kind="ink"`, cream fill, 52px                              | renders grey                  |
+| links                       | one centred row, sentence case, `·` separated               | stacked, uppercase            |
+
+**The Google hero button and the OR divider are NOT on that list.** They are
+deliberately absent: neither credential exists, and stubbing a sign-in path
+that cannot work is worse than omitting it.
+
+**The methodology failure is the finding.** Auth is not in `design/Wazn v5.html`
+at all. The session ran that file, compared History against it, wrote "run the
+reference beside the build" into §6 as a rule, and then verified auth against a
+reference that does not contain auth. Same shape as describing the wordmark
+from the web implementation instead of the reference: the check was performed,
+against the wrong artefact, and reported as though it had passed. §6 now
+requires naming the file and confirming the screen is in it.
+
+The zip Ameen sent is byte-identical to `docs/design/v5-momentum/`. Nothing was
+missing from the repo. It simply had not all been read.
+
+**Scope: auth is screen 01, P0 work, not one of A1's five tabs.** Carried here
+rather than folded into A1 without a decision.
 
 #### GATE 4 does not hold on native, and A0 found out why
 
@@ -1008,6 +1050,10 @@ retention that cannot exist until the app is shared.
 **A0 is DONE and merged** (PR #110). **A1 is IN PROGRESS** on
 `claude/a1-history`, three commits, pushed, no PR open yet.
 
+**Open, and Ameen's call before A1 continues:** the auth screen has five
+verified mismatches against `design/Onboarding.html` (see the block above). It
+is screen 01, P0 work, not one of A1's five tabs, so it has NOT been folded in.
+
 **Done in A1 so far:**
 
 - **History, built native in v5.** `mobile/app/(tabs)/history.tsx` plus
@@ -1015,10 +1061,12 @@ retention that cannot exist until the app is shared.
   `src/lib/progress.ts` with six tests, for COACH'S FIND.
   `trainingCalendar` needed nothing, it already crossed; v5's 10 weeks against
   the web's 13 was a parameter. **Not visually verified, see below.**
-- **The wordmark, FIXED and verified on a device.** Renders `wazn` lowercase,
-  Saira 700, ember `a`, 34 on auth and 21 in the header. Screenshotted on an
-  iPhone 17 Pro simulator, iOS 26.5. First visual claim in this project's
-  history checked on a device rather than inferred.
+- **The wordmark MARK, fixed and verified on a device.** Renders `wazn`
+  lowercase, Saira 700, ember `a`, 34 on auth and 21 in the header, confirmed
+  against the reference's computed styles and screenshotted on an iPhone 17
+  Pro, iOS 26.5. First visual claim in this project's history checked on a
+  device rather than inferred. **The mark only. The screen it sits on does not
+  match, and offering a full-screen screenshot as the evidence overstated it.**
 
 **Next: Body**, then Coach, Friends, Progress last. Reasons for the order are
 in the phase itself.
