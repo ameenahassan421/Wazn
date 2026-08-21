@@ -2,11 +2,12 @@ import { View } from 'react-native'
 import { useRouter } from 'expo-router'
 
 import type { Locale, Unit } from '@wazn/domain'
-import { space } from '@wazn/domain'
+import { COACH_VOLUMES, space } from '@wazn/domain'
 
 import { Txt, Kick } from '@/design/Txt'
 import { Btn, ChipBtn, ChipRow } from '@/components/ui/Btn'
 import { Card, Rule } from '@/components/ui/Surface'
+import { useCoach } from '@/hooks/use-coach'
 import { Screen } from '@/components/ui/Screen'
 import { useLocale } from '@/hooks/use-locale'
 import { useUnit } from '@/hooks/use-unit'
@@ -44,6 +45,7 @@ export default function Settings() {
   const router = useRouter()
   const { locale, setLocale, t } = useLocale()
   const { unit, setUnit } = useUnit()
+  const { volume, setVolume } = useCoach()
 
   return (
     <Screen>
@@ -55,6 +57,39 @@ export default function Settings() {
           onPress={() => router.back()}
         />
       </View>
+
+      {/* ── The coach ─────────────────────────────────────────────────────
+          The dial existed as a stored preference and two gates for exactly one
+          commit before this: `use-coach` shipped, the board honoured it, and
+          nothing let a lifter change it. A gate nobody can reach is not a
+          feature.
+
+          Volume, not mode. `COACH_MODES` is a lens over the same history and
+          belongs on the Coach tab beside what it changes (v5 screen 15); a
+          mode picker buried in Settings would be the one place a lifter never
+          looks for it. */}
+      <Kick style={{ marginBottom: 10 }}>{t('settings.coach')}</Kick>
+      <Card bare style={{ marginBottom: space.gutter }}>
+        <View style={{ padding: space.cardPad, gap: 10 }}>
+          <Txt step="body">{t('settings.coach.volume')}</Txt>
+          <ChipRow>
+            {COACH_VOLUMES.map((v) => (
+              <ChipBtn
+                key={v}
+                label={t(`settings.coach.volume.${v}`)}
+                selected={volume === v}
+                onPress={() => setVolume(v)}
+              />
+            ))}
+          </ChipRow>
+          {/* `label`, not `meta`. Mono is this system's MACHINE voice — set
+              counts, timestamps, plate maths — and a four-line paragraph in it
+              is a v5 leftover that reads like a terminal. Prose is Hanken. */}
+          <Txt step="label" ink="muted">
+            {t('settings.coach.note')}
+          </Txt>
+        </View>
+      </Card>
 
       <Kick style={{ marginBottom: 10 }}>PREFERENCES</Kick>
       <Card bare>
@@ -72,7 +107,7 @@ export default function Settings() {
               />
             ))}
           </ChipRow>
-          <Txt step="meta" ink="muted">
+          <Txt step="label" ink="muted">
             Display only. Every weight is stored in kilograms.
           </Txt>
         </View>

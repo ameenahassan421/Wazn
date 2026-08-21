@@ -1442,9 +1442,20 @@ board and the canvas phrase the same verdict once.
 2. **Finish** — the debrief sentence.
 3. **Coach tab (screen 15)** — the control room: mode selector, week review, notes, Ask the
    coach. Untouched.
-4. **Settings has no dial yet.** The preference now exists and persists; nothing lets a lifter
-   change it. That is the next thing, because a gate nobody can reach is not a feature.
+4. ~~Settings has no dial yet.~~ **Built.** Volume only — `COACH_MODES` is a lens over the same
+   history and belongs on the Coach tab beside what it changes (v5 screen 15); a mode picker
+   buried in Settings is the one place a lifter would never look for it.
+
+   **Not verified end to end.** Setting Off is one boolean away from silencing the board, and
+   with no data there is no verdict to silence, so the gate has been typechecked and never
+   watched to work. It needs one signed-in session with history.
+
 5. **Tell the coach** (screen 09), the PR moment and the notable-set toasts.
+
+**Settings was printing prose in the machine voice.** The coach note and the units note both
+took `step="meta"` — IBM Plex Mono — so a four-line paragraph rendered like a terminal. Mono in
+this system is set counts, timestamps and plate maths; prose is Hanken. Both moved to `label`.
+It is a v5 leftover and worth grepping for elsewhere.
 
 **And the server gap is real.** `use-coach` writes to AsyncStorage only. The web reads and
 writes `user_preferences`, so Off on the phone is still Full in the browser — the same gap
