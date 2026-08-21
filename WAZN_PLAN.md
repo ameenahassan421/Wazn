@@ -1972,8 +1972,27 @@ gaps. Zero sessions answers 28; one session ten days ago answers 18 rather than 
 - **Proven against the real rows, read-only, without touching production:** the account with
   149 workouts has 0 sessions in the window, the old expression returns `0`, the new one
   returns `28`.
-- **NOT APPLIED.** Production is at 0028. Applying it is production DDL and §2.6 makes that an
-  ask. Waiting on Ameen.
+- **APPLIED to production 2026-08-21**, on Ameen's explicit go-ahead. Production is now at
+  **0029**. Verified against `pg_proc` rather than the `{"success": true}`, which per CLAUDE.md
+  proves nothing: `pg_get_functiondef` contains `gap_points`, no longer contains
+  `coalesce(max(g.days), 0)`, the function is still `stable` and still `security invoker`, and
+  the row is recorded in `supabase_migrations.schema_migrations` as `weekly_review_gap`.
+
+**One thing the privilege check turned up, and it is NOT a regression from this.**
+`has_function_privilege('anon', …, 'EXECUTE')` is **true** for `weekly_review` — and equally
+true for `session_brief`, `session_debrief` and `exercise_usage`, which this migration did not
+touch. 0028 only revoked `upsert_user_preference`, `body_overview` and `strength_forecast`; it
+never covered the coach RPCs. All four are `security invoker`, so an anonymous caller runs under
+anon's RLS and sees no rows, which is why Supabase's own linter does not flag them (it warns
+only on `security definer`). Not urgent, and worth closing anyway, since the value of the 0028
+rule is that it holds everywhere rather than in three places.
+
+`get_advisors` after the change reports what it reported before it: `resolve_invite` executable
+by anon as `security definer` (deliberate, 0028 says so), `social_feed` /
+`upsert_user_preference` / `weekly_leaderboard` executable by authenticated as `security
+definer`, and **leaked-password protection disabled** — a one-toggle hardening item that
+CLAUDE.md's auth rule ("every hardening Supabase offers on our tier") arguably already asks for.
+Ameen's call.
 
 `adherence(weeks)` in 0019 carries the same coalesce-to-zero shape over a 12-week window, where
 it is far less likely to bite. Left alone deliberately: this migration changes the one function
