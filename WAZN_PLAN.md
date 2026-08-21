@@ -1226,15 +1226,25 @@ preference: the prototype specifies four screens and derives none.
 
 **Four things a resuming session needs and will not guess:**
 
-1. **Screens behind auth cannot be seen.** Every tab sits behind
-   `Stack.Protected`; the simulator and the web export both stop at sign-in,
-   and signing in needs credentials a session must never type. So every screen
-   after auth is verified by reading the reference against the SOURCE, which is
-   weaker than a visual pass and must be reported as such. The real fix is
-   component tests through `react-native-web` in `mobile/`'s vitest, whose
-   config already collects `.tsx`. **Not built, and it is now the single
-   highest-value thing left in this stage** — nine screens are about to be
-   built and none of them can currently be looked at.
+1. **Auth is OFF and every screen can now be SEEN** (`AUTH_ENABLED` in
+   `mobile/app/_layout.tsx`, Ameen 2026-08-20: "take out the sign in and sign
+   out functionality for now, that can be the last thing we do"). Nothing was
+   deleted — `sign-in.tsx`, `services/auth.ts`, `use-auth.ts` and the Edge
+   Function are untouched, and one constant restores the gate.
+
+   This closes the hole §6 called the biggest one in how a screen gets
+   verified. Every tab used to sit behind `Stack.Protected`, so a session that
+   cannot type credentials could see one screen of ten — which is how every
+   button in the app rendered invisible through four green checks.
+
+   **It does not give you DATA.** Reads are RLS-scoped to `auth.uid()`, so the
+   screens render their EMPTY states. Day-one copy is a real surface and
+   LAUNCH.md specifies it, so that is worth having — but a screen built only
+   against zero rows is half-checked, and populated screens still need Ameen's
+   device or fixtures. Component tests through `react-native-web` in `mobile/`'s
+   vitest (the config already collects `.tsx`) remain the ratchet, and are now
+   a nice-to-have rather than the only way to see anything.
+
 2. **Read the prototype's SOURCE, not its screenshot.**
    `docs/design/prototype/README.md` has the ten lines of Python that unpack
    the bundle. Every size, colour, radius and shadow is a literal in it.

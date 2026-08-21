@@ -11,6 +11,7 @@ import { Screen } from '@/components/ui/Screen'
 import { useLocale } from '@/hooks/use-locale'
 import { useUnit } from '@/hooks/use-unit'
 import { signOut } from '@/services/auth'
+import { AUTH_ENABLED } from './_layout'
 
 /**
  * Screen 17 — Settings. Reached from the header avatar, and from nowhere
@@ -102,21 +103,30 @@ export default function Settings() {
         </View>
       </Card>
 
-      {/* No confirmation dialog. Signing out is reversible in ten seconds and
-          the offline queue survives it — `reconcileDeviceUser` is what clears
-          a device, and it runs on a DIFFERENT user signing in, not on sign-out.
-          A modal here would be theatre. */}
-      <Btn
-        kind="line"
-        full
-        label={t('settings.signout')}
-        style={{ marginTop: 18 }}
-        onPress={() => {
-          // The root guard swaps the stack the moment the session clears, so
-          // there is nothing to navigate to by hand.
-          void signOut()
-        }}
-      />
+      {/* Hidden while auth is off (`AUTH_ENABLED` in `app/_layout.tsx`, Ameen
+          2026-08-20). A sign-out button with no session to end would clear
+          nothing and swap to a stack that is not mounted — a control that
+          looks live and does nothing, which is the exact defect class this
+          repo keeps finding. The code stays; only the button is gone.
+
+          When it comes back: no confirmation dialog. Signing out is reversible
+          in ten seconds and the offline queue survives it —
+          `reconcileDeviceUser` is what clears a device, and it runs on a
+          DIFFERENT user signing in, not on sign-out. A modal here would be
+          theatre. */}
+      {AUTH_ENABLED ? (
+        <Btn
+          kind="line"
+          full
+          label={t('settings.signout')}
+          style={{ marginTop: 18 }}
+          onPress={() => {
+            // The root guard swaps the stack the moment the session clears, so
+            // there is nothing to navigate to by hand.
+            void signOut()
+          }}
+        />
+      ) : null}
     </Screen>
   )
 }

@@ -71,6 +71,33 @@ if (__DEV__) {
   }
 }
 
+/**
+ * Auth is OFF, and the app opens straight into the tabs.
+ *
+ * Ameen, 2026-08-20: "take out the sign in and sign out functionality for now,
+ * that can be the last thing we do." Nothing is deleted — `sign-in.tsx`,
+ * `services/auth.ts`, `use-auth.ts` and the Edge Function all stay exactly as
+ * they are, and flipping this back to `true` restores the gate. Auth is the
+ * screen a lifter sees once and the prototype does not cover it, so it is the
+ * last thing worth building, not the first.
+ *
+ * ── WHAT THIS UNBLOCKS, WHICH IS THE REAL REASON IT IS WORTH DOING NOW ──────
+ * Every tab sat behind `Stack.Protected`, so a session that cannot type
+ * credentials could not SEE nine of the app's ten screens — not on the
+ * simulator, not in the web export. WAZN_PLAN §6 calls that the biggest hole
+ * in how a screen gets verified, and it is why every button in this app could
+ * render invisible through four green checks: the one screen anybody could
+ * look at was the sign-in screen.
+ *
+ * ── WHAT IT DOES NOT GIVE YOU ───────────────────────────────────────────────
+ * Data. Every read is RLS-scoped to `auth.uid()`, so with no session the
+ * screens render their EMPTY states, not populated ones. That is worth having
+ * — day-one copy is a real surface and LAUNCH.md specifies it — but a screen
+ * built only against zero rows is half-checked. Populated screens still need
+ * Ameen's device, or fixtures.
+ */
+export const AUTH_ENABLED = false
+
 export default function RootLayout() {
   const [ready, error] = useFonts(FACES)
   const { loading, userId } = useAuth()
@@ -147,7 +174,7 @@ export default function RootLayout() {
                     session that is not there, and the redirect lands a frame
                     later — so a signed-out launch flashes an empty Log screen
                     and fires a doomed Supabase read on the way past. */}
-                <Stack.Protected guard={userId !== null}>
+                <Stack.Protected guard={!AUTH_ENABLED || userId !== null}>
                   <Stack.Screen name="(tabs)" />
                   <Stack.Screen
                     name="session/[id]"
@@ -170,7 +197,7 @@ export default function RootLayout() {
                     an invite link is how somebody arrives before they have an
                     account, and bouncing them to a bare sign-in screen loses
                     the code and the reason they tapped. */}
-                <Stack.Protected guard={userId === null}>
+                <Stack.Protected guard={AUTH_ENABLED && userId === null}>
                   <Stack.Screen name="sign-in" />
                 </Stack.Protected>
 
