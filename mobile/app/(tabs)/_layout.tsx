@@ -50,9 +50,9 @@ function WaznTabBar({ state, navigation }: TabBarProps) {
       accessibilityRole="tablist"
       style={{
         flexDirection: 'row',
-        backgroundColor: palette.tabbar,
+        backgroundColor: palette.card,
         borderTopWidth: 1,
-        borderTopColor: palette.line,
+        borderTopColor: palette.ring,
         // 58px of chrome plus whatever the phone reserves below it. Without
         // the inset the home indicator sits on top of the labels.
         paddingBottom: insets.bottom,
@@ -78,14 +78,18 @@ function WaznTabBar({ state, navigation }: TabBarProps) {
               })
               if (!on && !event.defaultPrevented) navigation.navigate(route.name)
             }}
-            style={({ pressed }) => ({
+            // Static, not `({ pressed }) => ...`: NativeWind's cssInterop on
+            // Pressable drops a function `style` entirely, which renders this as
+            // an unstyled box. See the long note in `Btn.tsx`. The press dim is
+            // gone with it rather than reintroduced through state — this is
+            // chrome, the haptic already fires, and it never actually worked.
+            style={{
               flex: 1,
               height: space.tabBar,
               alignItems: 'center',
               justifyContent: 'center',
               gap: 3,
-              opacity: pressed ? 0.82 : 1,
-            })}
+            }}
           >
             {/* The live rail. Absolute, so it costs the column no height and
                 the glyphs cannot shift by two pixels on navigation. */}
@@ -102,7 +106,7 @@ function WaznTabBar({ state, navigation }: TabBarProps) {
             <View style={{ height: 14, justifyContent: 'center', marginTop: 3 }}>
               <TabGlyph tab={tab} on={on} />
             </View>
-            <Txt step="nano" ink={on ? 'accentSoft' : 'faint'}>
+            <Txt step="nano" ink={on ? 'accentSoft' : 'muted'}>
               {t(TAB_KEY[tab])}
             </Txt>
           </Pressable>
@@ -120,7 +124,7 @@ export default function TabsLayout() {
       tabBar={(props) => <WaznTabBar {...props} />}
       screenOptions={{
         headerShown: false,
-        sceneStyle: { backgroundColor: palette.ink },
+        sceneStyle: { backgroundColor: palette.paper },
       }}
     >
       {TABS.map((name) => (

@@ -1,47 +1,70 @@
 import { View, type ViewProps, type ViewStyle } from 'react-native'
 
-import { palette, radius, space } from '@wazn/domain'
+import { elevation, palette, radius, space } from '@wazn/domain'
 
 /**
- * A card, and the hairline that separates it from the ground.
+ * A card, and the four grounds one can have.
  *
- * ── ELEVATION IS AN EDGE, NOT A SHADOW ──────────────────────────────────────
- * The web app draws this as `box-shadow: 0 0 0 1px line` — a ring, which sits
- * OUTSIDE the box and costs no layout. React Native has no such thing:
- * `shadowColor`/`elevation` are real drop shadows, which §2.4 forbids
- * outright, and there is no spread-only shadow to borrow.
+ * ── THE RING SAYS "SURFACE", THE SHADOW SAYS "ABOVE IT" ─────────────────────
+ * v5 forbade shadows outright and drew every edge as a ring. This system uses
+ * both, and the pair is load-bearing rather than decorative: on paper, a white
+ * card with no shadow at all is nearly invisible (`#ffffff` on `#f7f3ec` is a
+ * 5% step), so the 1px lift is what separates the card from the page and the
+ * ring is what gives it an edge when the shadow is clipped by a screenshot or
+ * a low-contrast display.
  *
- * So on native the ring becomes a 1px border. That is not a downgrade dressed
- * up — a border is inside the box, so it eats a pixel of padding on each side,
- * and the padding below is stated as the design's 16 with the border drawn on
- * top of the ground rather than 15 plus a border. At `rgba(236,231,220,0.08)`
- * on `#181510` the difference is invisible and the geometry stays honest.
- *
- * `hairlineWidth` is deliberately NOT used. It is 0.33px on a 3× screen, which
- * is what you want for a table rule and not what you want for the one thing
- * separating a card from a near-black ground.
+ * Both are the prototype's own values, and the shadow is stated in RN's terms
+ * because React Native has no `box-shadow` — a CSS string would have to be
+ * re-parsed here, which is a second source of truth for one number.
  */
 
+export type CardTone =
+  /** The default. White, ringed, lifted 1px. */
+  | 'card'
+  /** Ink. The Up Next card — a card that is the NEXT thing, not this thing. */
+  | 'ink'
+  /** Ember wash. Earned only: the PR card. Never a container for prose. */
+  | 'wash'
+  /** Translucent cream. The only card tone the rest canvas can use. */
+  | 'onInk'
+
+const TONES: Record<CardTone, { bg: string; ring?: string; lift?: boolean }> = {
+  card: { bg: palette.card, ring: palette.ring, lift: true },
+  ink: { bg: palette.ink },
+  wash: { bg: palette.accentWash },
+  onInk: { bg: palette.onInkSurface },
+}
+
 export type CardProps = ViewProps & {
-  /** The raised tier — menus, pressed states, the unfilled half of a track. */
-  raised?: boolean
+  tone?: CardTone
+  /** The smaller radius — a stat tile, a stepper, the plate strip. */
+  small?: boolean
   /** Drop the padding, for cards that are full-bleed inside. */
   bare?: boolean
   style?: ViewStyle | ViewStyle[]
 }
 
-export function Card({ raised, bare, style, ...rest }: CardProps) {
+export function Card({ tone = 'card', small, bare, style, ...rest }: CardProps) {
+  const t = TONES[tone]
   return (
     <View
       {...rest}
       style={[
         {
-          backgroundColor: raised === true ? palette.raised : palette.surface,
-          borderRadius: radius.card,
-          borderWidth: 1,
-          borderColor: palette.line,
+          backgroundColor: t.bg,
+          borderRadius: small === true ? radius.cardSm : radius.card,
           padding: bare === true ? 0 : space.cardPad,
         },
+        t.ring !== undefined ? { borderWidth: 1, borderColor: t.ring } : null,
+        t.lift === true
+          ? {
+              shadowColor: palette.ink,
+              shadowOpacity: 0.06,
+              shadowOffset: { width: 0, height: elevation.card.y },
+              shadowRadius: elevation.card.blur / 2,
+              elevation: 1,
+            }
+          : null,
         style ?? null,
       ]}
     />
@@ -51,17 +74,16 @@ export function Card({ raised, bare, style, ...rest }: CardProps) {
 /**
  * The hairline on its own — a rule between rows inside a card.
  *
- * Full-bleed by default: a divider inset from both edges reads as a gap in
- * the content, while one that runs edge to edge reads as a boundary. The
- * `inset` prop exists for the list idiom where the leading element (a tile, an
- * index) is meant to sit above the rule rather than beside it.
+ * Full-bleed by default: a divider inset from both edges reads as a gap in the
+ * content, while one that runs edge to edge reads as a boundary. `inset` is
+ * for the list idiom where a leading tile sits above the rule, not beside it.
  */
-export function Rule({ inset = 0 }: { inset?: number }) {
+export function Rule({ inset = 0, onInk }: { inset?: number; onInk?: boolean }) {
   return (
     <View
       style={{
         height: 1,
-        backgroundColor: palette.line,
+        backgroundColor: onInk === true ? palette.onInkTrack : palette.ring,
         marginStart: inset,
       }}
     />

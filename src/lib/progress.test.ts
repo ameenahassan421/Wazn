@@ -13,6 +13,7 @@ import {
   underBand,
   weekStart,
   thisWeek,
+  topDay,
   weeklyVolume,
 } from './progress'
 import type { LadderSet } from './progress'
@@ -582,5 +583,77 @@ describe('thisWeek', () => {
     const week = thisWeek([row(lastWeek, 9999)], wed)
     expect(week.every((d) => d.volumeKg === 0)).toBe(true)
     expect(week.every((d) => d.level === 0)).toBe(true)
+  })
+})
+
+describe('topDay', () => {
+  const at = (iso: string): SessionVolumeRow => ({
+    workout_id: iso,
+    started_at: iso,
+    volume_kg: 1000,
+    set_count: 10,
+  })
+
+  it('names the weekday most sessions land on, and how many of how many', () => {
+    const top = topDay([
+      at('2026-08-03T18:00:00'), // Monday
+      at('2026-08-10T18:00:00'), // Monday
+      at('2026-08-17T18:00:00'), // Monday
+      at('2026-08-05T18:00:00'), // Wednesday
+      at('2026-08-08T18:00:00'), // Saturday
+    ])
+    expect(top).toEqual({ weekday: 1, count: 3, total: 5 })
+  })
+
+  it('breaks a tie toward the earlier weekday, so the sentence never moves', () => {
+    // Two Mondays, two Wednesdays. Both true; only one may be said, and it
+    // must be the same one on every reload.
+    const rows = [
+      at('2026-08-03T18:00:00'),
+      at('2026-08-10T18:00:00'),
+      at('2026-08-05T18:00:00'),
+      at('2026-08-12T18:00:00'),
+    ]
+    expect(topDay(rows)?.weekday).toBe(1)
+    expect(topDay([...rows].reverse())?.weekday).toBe(1)
+  })
+
+  it('says nothing under the minimum rather than making a shaky claim', () => {
+    expect(topDay([at('2026-08-03T18:00:00')])).toBeNull()
+    expect(topDay([at('2026-08-03T18:00:00'), at('2026-08-10T18:00:00')])).toBeNull()
+  })
+
+  it('says nothing when every session is on a different day, because that is a week and not a pattern', () => {
+    expect(
+      topDay([
+        at('2026-08-03T18:00:00'),
+        at('2026-08-04T18:00:00'),
+        at('2026-08-05T18:00:00'),
+        at('2026-08-06T18:00:00'),
+      ]),
+    ).toBeNull()
+  })
+
+  it('reads the weekday in local time, because "Monday is your day" is a claim about the lifter, not UTC', () => {
+    // 18:00 Monday in a UTC-5 zone is already Tuesday in UTC. The card must
+    // still say Monday.
+    const top = topDay([
+      at('2026-08-03T18:00:00'),
+      at('2026-08-10T18:00:00'),
+      at('2026-08-17T18:00:00'),
+      at('2026-08-24T18:00:00'),
+    ])
+    expect(top?.weekday).toBe(1)
+  })
+
+  it('ignores a row with an unparseable date rather than throwing on the History screen', () => {
+    const top = topDay([
+      at('2026-08-03T18:00:00'),
+      at('2026-08-10T18:00:00'),
+      at('not a date'),
+      at('2026-08-17T18:00:00'),
+      at('2026-08-05T18:00:00'),
+    ])
+    expect(top).toEqual({ weekday: 1, count: 3, total: 4 })
   })
 })

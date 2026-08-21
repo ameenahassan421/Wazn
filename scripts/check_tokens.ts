@@ -25,11 +25,21 @@ import { readFileSync, writeFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { dirname, resolve } from 'node:path'
 
-import { fontFamily, motion, palette, radius, space, type } from '../src/lib/tokens'
+import {
+  fontFamily,
+  legacyPalette,
+  legacyType,
+  motion,
+  palette,
+  radius,
+  space,
+  type,
+} from '../src/lib/tokens'
 
 const here = dirname(fileURLToPath(import.meta.url))
 const root = resolve(here, '..')
 const CSS = resolve(root, 'src/index.css')
+const APP_CONFIG = resolve(root, 'mobile/app.config.ts')
 const GENERATED = resolve(root, 'mobile/tailwind.tokens.js')
 
 const write = process.argv.includes('--write')
@@ -62,10 +72,19 @@ function expectCss(prop: string, expected: string | number, label: string) {
   }
 }
 
-/* The palette. `accentInk`, `chipBg`, `brassBg` and the ramp's tints are
-   named differently on the two sides; this is the map, and it is exhaustive
-   on purpose so adding a colour to one side without the other fails here. */
-const COLOR_TO_CSS: Record<keyof typeof palette, string> = {
+/* ── The web side is checked against the LEGACY tokens, on purpose ─────────
+   `src/index.css` is the dying Vite PWA's stylesheet and it still renders v5
+   "Momentum". The current system (paper, Sora) replaced v5 for the NATIVE app
+   on 2026-08-20; repainting an app that Stage 4A deletes is rented work. So
+   this half checks `legacyPalette`/`legacyType` — the web cannot drift while
+   it lives — and the generated half below emits the CURRENT tokens, which is
+   what `mobile/` reads. When `src/index.css` goes at phase A4, this half and
+   the legacy exports go with it.
+
+   `accentInk`, `chipBg`, `brassBg` and the ramp's tints are named differently
+   on the two sides; this is the map, and it is exhaustive on purpose so
+   adding a colour to one side without the other fails here. */
+const COLOR_TO_CSS: Record<keyof typeof legacyPalette, string> = {
   ink: '--color-ink',
   surface: '--color-surface',
   raised: '--color-raised',
@@ -85,13 +104,13 @@ const COLOR_TO_CSS: Record<keyof typeof palette, string> = {
 }
 
 for (const [key, prop] of Object.entries(COLOR_TO_CSS)) {
-  expectCss(prop, palette[key as keyof typeof palette], 'colour')
+  expectCss(prop, legacyPalette[key as keyof typeof legacyPalette], 'colour')
 }
 
 /* The ten steps. Size, weight and leading each travel with the step, so all
    three are checked — a step that kept its size and lost its weight is the
    exact failure the ramp exists to prevent. */
-for (const [name, step] of Object.entries(type)) {
+for (const [name, step] of Object.entries(legacyType)) {
   expectCss(`--text-${name}`, `${step.size}px`, `type.${name}`)
   expectCss(`--text-${name}--font-weight`, step.weight, `type.${name}`)
   expectCss(`--text-${name}--line-height`, step.lineHeight, `type.${name}`)
@@ -102,6 +121,27 @@ for (const [name, step] of Object.entries(type)) {
       `type.${name}`,
     )
   }
+}
+
+/* ── The third copy, which nothing was checking ────────────────────────────
+   `mobile/app.config.ts` needs the ground as a literal: EAS reads that file
+   without a bundler, so it cannot import this module. tokens.ts has carried a
+   comment since it was written saying "check:tokens knows it; the value is
+   asserted there rather than trusted here". That was false — nothing here had
+   ever opened app.config.ts. Found on 2026-08-20 while changing the ground
+   from iron to paper, which is exactly when a stale third copy bites. */
+const appConfig = readFileSync(APP_CONFIG, 'utf8')
+const groundLiteral = /^const PAPER = '(#[0-9a-f]{6})'$/m.exec(appConfig)
+if (groundLiteral === null) {
+  problems.push(
+    "mobile/app.config.ts: could not find `const PAPER = '#rrggbb'`. It is the " +
+      'splash and window background, and EAS reads that file without a bundler, ' +
+      'so it cannot import tokens.ts. Keep the literal, and keep it findable.',
+  )
+} else if (groundLiteral[1] !== palette.paper) {
+  problems.push(
+    `mobile/app.config.ts: PAPER is ${groundLiteral[1]} — tokens.ts says ${palette.paper}`,
+  )
 }
 
 expectCss('--radius-ctl', `${radius.ctl}px`, 'radius')
@@ -201,7 +241,8 @@ if (problems.length) {
 }
 
 console.log(
-  `check:tokens ok — ${Object.keys(palette).length} colours, ` +
-    `${Object.keys(type).length} type steps agree across index.css, ` +
-    'tokens.ts and mobile/tailwind.tokens.js',
+  `check:tokens ok — ${Object.keys(legacyPalette).length} legacy colours checked ` +
+    `against index.css with ${Object.keys(legacyType).length} legacy type steps; ` +
+    `${Object.keys(palette).length} current colours and ${Object.keys(type).length} ` +
+    'current type steps written to mobile/tailwind.tokens.js',
 )

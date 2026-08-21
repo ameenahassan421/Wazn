@@ -153,7 +153,7 @@ export default function LiveWorkout() {
             justifyContent: 'center',
           }}
         >
-          <Txt step="title" ink="accentInk">
+          <Txt step="title" ink="onInk">
             CLAIM THE SESSION
           </Txt>
         </Pressable>
@@ -183,7 +183,7 @@ export default function LiveWorkout() {
       {view.pct !== null && (
         <View style={{ paddingHorizontal: space.gutter, paddingBottom: 10, gap: 6 }}>
           <View style={{ flexDirection: 'row', alignItems: 'baseline' }}>
-            <Kick ink={view.recordPace ? 'brassSoft' : 'muted'}>
+            <Kick ink={view.recordPace ? 'accent' : 'muted'}>
               {view.recordPace ? 'RECORD PACE' : 'SESSION VOLUME'}
             </Kick>
             <View style={{ flex: 1 }} />
@@ -204,7 +204,7 @@ export default function LiveWorkout() {
           paddingHorizontal: space.gutter,
           borderTopWidth: 1,
           borderBottomWidth: 1,
-          borderColor: palette.line,
+          borderColor: palette.ring,
         }}
       >
         <Txt step="meta" ink="muted" ltr>
@@ -284,10 +284,10 @@ export default function LiveWorkout() {
           zIndex: 31,
         }}
       >
-        <Txt step="title" ink="accentInk" style={{ fontSize: 23, letterSpacing: 0.46 }}>
+        <Txt step="title" ink="onInk" style={{ fontSize: 23, letterSpacing: 0.46 }}>
           BANK IT
         </Txt>
-        <Txt step="title" ink="accentInk" ltr style={{ fontSize: 23 }}>
+        <Txt step="title" ink="onInk" ltr style={{ fontSize: 23 }}>
           {bodyweight
             ? `· ${dialled.reps ?? 0}`
             : `· ${shownWeight ?? 0} × ${dialled.reps ?? 0}`}
@@ -346,7 +346,7 @@ function Zone({
         flexDirection: 'row',
         alignItems: 'stretch',
         borderTopWidth: 1,
-        borderColor: palette.line,
+        borderColor: palette.ring,
       }}
     >
       <Pressable
@@ -354,7 +354,7 @@ function Zone({
         style={{
           width: ZONE,
           borderEndWidth: 1,
-          borderColor: palette.line,
+          borderColor: palette.ring,
           alignItems: 'center',
           justifyContent: 'center',
         }}
@@ -374,7 +374,7 @@ function Zone({
         style={{
           width: ZONE,
           borderStartWidth: 1,
-          borderColor: palette.line,
+          borderColor: palette.ring,
           alignItems: 'center',
           justifyContent: 'center',
         }}

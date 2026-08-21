@@ -561,3 +561,55 @@ export function repMaxLadder(
 
   return ladder
 }
+
+export interface TopDay {
+  /** 0 = Sunday, matching `Date.prototype.getDay`. */
+  weekday: number
+  /** Sessions that landed on that weekday. */
+  count: number
+  /** Sessions in the whole window, so the card can say "N of M". */
+  total: number
+}
+
+/**
+ * The weekday a lifter actually trains on, for History's COACH'S FIND card
+ * (v5 screen 12): "Monday is your day, more sessions land there than any
+ * other day of the week."
+ *
+ * Ties break toward the EARLIER weekday rather than by insertion order, so
+ * the same history always produces the same sentence. A coach line that moves
+ * between two equally-true answers on reload reads as a bug even though both
+ * were correct.
+ *
+ * Returns null under `minimum` sessions rather than a shaky claim. Four is
+ * the floor because three sessions can put two on one day by accident, and
+ * the card's whole premise is that the pattern is real. The caller renders
+ * nothing rather than hedging, per §2: the coach never pads.
+ *
+ * `started_at` is read as a wall-clock local date on purpose. "Monday is your
+ * day" is a claim about the lifter's week, not about UTC, and a 6pm session
+ * in Minneapolis is already Tuesday in UTC.
+ */
+export function topDay(rows: SessionVolumeRow[], minimum = 4): TopDay | null {
+  if (rows.length < minimum) return null
+
+  const byWeekday = new Array<number>(7).fill(0)
+  for (const row of rows) {
+    const at = new Date(row.started_at)
+    if (Number.isNaN(at.getTime())) continue
+    byWeekday[at.getDay()] += 1
+  }
+
+  const total = byWeekday.reduce((a, b) => a + b, 0)
+  if (total < minimum) return null
+
+  let weekday = 0
+  for (let i = 1; i < 7; i += 1) {
+    if (byWeekday[i] > byWeekday[weekday]) weekday = i
+  }
+
+  // Every session on a different day is not a pattern, it is a week.
+  if (byWeekday[weekday] < 2) return null
+
+  return { weekday, count: byWeekday[weekday], total }
+}

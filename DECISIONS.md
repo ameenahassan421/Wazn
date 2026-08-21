@@ -8200,3 +8200,90 @@ The wider consequence is `WAZN_PLAN.md` §6, "How a screen is verified": the one
 read this reference against the running app (the v5 P0 gate, 2026-08-17) it produced eleven
 findings in a single sitting, six on Home alone. Nobody has done it since. Running it is now
 part of every screen's gate.
+
+## 2026-08-20 — The prototype replaces v5 "Momentum" (Ameen)
+
+Ameen supplied `Wazn Prototype.html` and said, twice, that the design and the logo were not
+being followed. Asked which system governs, he chose **"The prototype replaces v5"**, and for
+the wordmark, **"same as prototype"**. Checked in at `docs/design/prototype/`, with the source
+extracted from its bundle so it can be read rather than eyeballed.
+
+It is not v5 in different colours. Paper `#f7f3ec` instead of iron `#0f0d0a`; **Sora** instead
+of Saira Semi Condensed; pill controls instead of 12px rectangles; real shadows where v5
+forbade them outright; sentence-case CTAs where v5 shouted; and a mark that is the **plate
+glyph used AS the letter `a`** rather than an `a` coloured ember. It covers four screens —
+Home, Workout, Rest, Finish — and no others.
+
+### Deviations taken, and why
+
+**1. `src/lib/tokens.ts` holds BOTH systems rather than being replaced.**
+`palette`/`type`/`fontFamily` are the prototype's and native reads them; `legacyPalette` /
+`legacyType` are v5's. Nothing new may read the legacy pair — they exist only so
+`scripts/check_tokens.ts` can keep checking `src/index.css`, which is the dying Vite PWA's
+stylesheet. Repainting an app that Stage 4A deletes is the definition of rented work, and the
+web app's appearance is unchanged because it reads `index.css` and never this module. Both go
+at phase A4 with the stylesheet.
+
+**2. Three contrast pairs ship below WCAG AA for small text, deliberately.**
+
+| pair                                                    | measured | candidate if fixed               |
+| ------------------------------------------------------- | -------- | -------------------------------- |
+| `muted` `#8a8378` on paper                              | 3.39:1   | `body` `#4f4a41` at 7.95:1       |
+| `accent` on paper — the "12 wk" chip, the NEW PR kicker | 3.51:1   | `accentSoft` `#9a3012` at 6.77:1 |
+| `onInk` on the ember CTA, a 16px label                  | 3.51:1   | v5's `#1c0e08` at 4.84:1         |
+
+They are the designer's own values and were not quietly corrected: changing a designer's greys
+behind their back is not a fix. But they are not hidden either — `tokens.test.ts` pins each at
+its MEASURED figure rather than against a floor, so a change is loud, and `palette.accentSoft`
+exists so any small ember text the app adds itself has a compliant option. Ameen's ruling
+outstanding. This app is read one-handed in gym lighting, so the first row is the one that
+matters.
+
+**3. Brass is gone and nothing replaced it.** v5 reserved a second hue for earned states —
+rank, duel opponent, record pace, target beaten. The prototype has no such tier; its "earned"
+signal is the `full` plate variant on the PR card. Every brass usage swept to `accent`, which
+puts a second ember on Friends and Progress, screens that already have an action. Recorded as
+open rather than resolved by invention.
+
+**4. The mark is aligned, not nudged.** The prototype writes the plate as `width: 14` and
+`top: 3px` against 26px type. Those are not arbitrary: `26px/1` with Sora's metrics puts the
+baseline at 23.0 from the row top and the x-height at 9.2, and the plate lands at top 9.0,
+bottom 23.0 — it occupies the x-height box exactly, a letter with no ascender and no
+descender. The first port carried `3px` across as `size * 0.115` and the plate hung below the
+baseline; Ameen caught it by eye. It now uses `alignItems: 'baseline'` with the plate sized to
+the x-height, so it sits on the line by construction at any size.
+
+**A proportion copied out of a browser is a bet that two layout engines agree.**
+
+## 2026-08-20 — Every button in the native app was invisible
+
+`Pressable`'s `style={({ pressed }) => ...}` — React Native's own documented form — is
+**silently dropped** under NativeWind 4.2.6 on RN 0.86. NativeWind applies `cssInterop` to
+`Pressable` so it can carry a `className`, and a function `style` does not survive it. The
+control renders with no background, no height, no padding and no `flexDirection`, and still
+takes taps.
+
+Every `Btn` in `mobile/` used that form. SIGN IN was a gap in the layout; CONTINUE WITH GOOGLE
+was two lines of near-black text on a near-black ground. `tsc`, `eslint`, `expo export` and
+`npm run bundle:ios` were green throughout, because none of it is a type error.
+
+Fixed at four call sites with `onPressIn`/`onPressOut` state. `mobile/eslint.config.js` fails
+the build on the callback form, and **the rule was proved to fire against a probe file rather
+than assumed to work** — the repo has shipped guards that read correctly and did nothing
+before (0027's `revoke`, the invented-lift guard).
+
+This also corrects a claim written into `WAZN_PLAN.md` §7.0 on 2026-08-19: the sign-in button
+was reported as "grey where the reference fills it cream", attributed to a disabled-state
+opacity. It had no fill at all.
+
+## 2026-08-20 — `check:tokens` now reads `mobile/app.config.ts`, which it never had
+
+`app.config.ts` needs the ground colour as a literal, because EAS reads that file without a
+bundler and it cannot import the token module. It has carried a comment since the day it was
+written saying "`check:tokens` knows it: the value is asserted there rather than trusted
+here."
+
+That was false. `scripts/check_tokens.ts` had never opened the file. It was found while
+changing the ground from iron to paper — exactly the change a stale third copy survives, and
+exactly the class of defect this repo keeps finding: a guard that reads correctly and does
+nothing. The assertion is real now and was proved to fail on a deliberate mismatch.

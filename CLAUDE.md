@@ -43,6 +43,22 @@ Corollary that supersedes the blockquote above: read `WAZN_PLAN.md` §7.0, but
 treat it as a _claim_ to verify, not a fact to recite. The database beats the
 file, and `git log` beats both.
 
+**`cmd || echo "no"` turns a crashed check into a confident wrong answer.**
+On 2026-08-20 two sessions disagreed about whether a commit existed only on one
+laptop. The one that said "not on the remote" had run
+`git merge-base --is-ancestor <sha> <sha>` inside a checkout that had never
+fetched, so the second object was simply absent; git failed on the missing
+object, the `||` branch printed the negative, and a missing-object error read
+as a definitive "this work exists nowhere else". The near-miss was a
+recommendation to protect a directory that was already fully merged.
+
+Two rules, and the second is the one that matters. **Fetch before trusting any
+ref, including refs you are reading out of somebody else's checkout.** And when
+a shell check decides something destructive, **make the failure branch say
+"could not determine" rather than the negative answer**. `|| echo "NO"` and
+`|| echo "unknown"` cost the same to write and only one of them can get
+somebody's work deleted.
+
 **Subagents do not reliably honour "read-only".** On 2026-08-19 an audit
 subagent that had been told, in its prompt, not to edit anything ran
 `git checkout -- CLAUDE.md` and destroyed the parent session's uncommitted
@@ -89,7 +105,10 @@ for visual/brand/logo art, `supabase-postgres-best-practices` before touching
 anything in `supabase/migrations/`, `dataviz` before writing any chart,
 `frontend-slides` / `pptx` / `docx` / `pdf` for documents. The brand
 direction for the mark lives in `docs/design-philosophy.md` ("Loaded Ink") —
-read it before redrawing any logo asset.
+read it before redrawing any logo asset. **The mark as drawn now is the
+plate used as the letter `a`**, which is that lineage arriving in the
+interface rather than a departure from it: `docs/design/prototype/` for the
+reference, `mobile/src/components/ui/Plate.tsx` for the four variants.
 
 ## Non-negotiables carried from WAZN_PLAN.md §2
 
@@ -183,9 +202,21 @@ and does nothing. Assert the privilege.**
   grow an Arabic RTL locale.
 - **Weight is stored in kg, always.** The header lbs/kg toggle is display only,
   rounded to 0.5 lb / 0.25 kg. Never round the stored value.
-- **Dark-first, one accent (ember `#e8491d`, adopted 2026-08-12).** Nothing else is coloured. No
-  gradients, shadows, emoji, or decorative illustration. Numbers render large
-  and tabular (`.tnum`). Touch targets ≥ 48px.
+- **Paper-first, one accent (ember `#e8491d`), since 2026-08-20.** This line said
+  "dark-first… no shadows" until Ameen's prototype replaced v5 Momentum. The
+  ground is `#f7f3ec`, cards are white with a hairline ring AND a 1px lift, the
+  display face is **Sora**, every control is a pill, and the CTA carries an
+  ember glow. The ONE dark surface is the rest canvas, which inverts to `ink`
+  and back. Nothing else is coloured, no gradients, no emoji, no decorative
+  illustration. Numbers render large and tabular. Touch targets ≥ 48px.
+  **`src/lib/tokens.ts` holds both systems**: `palette`/`type` are current and
+  native reads them, `legacy*` exist only for the dying PWA's `index.css` and
+  go at phase A4. The mark is the **plate used as the letter `a`** —
+  `mobile/src/components/ui/Plate.tsx`, four variants, one job each.
+- **The reference is `~/Downloads/Wazn Prototype.html`, and its extracted
+  source is in `docs/design/prototype/`.** `docs/design/v5-momentum/` is
+  history. Read the source, not a screenshot: the bundle unpacks with a dozen
+  lines of Python and every size, colour and radius is a literal in it.
 - **Auth offers four ways in — never a magic link.** Ameen's decisions
   2026-08-07 (see DECISIONS.md, including the explicit reversal of the
   old no-passwords rule): (1) **Google sign-in**, the hero path once its
@@ -263,9 +294,36 @@ npm run bundle:android
 - **Type is a component on native (`<Txt step="hero">`), not a class.** RN picks
   a font cut by family NAME, not weight — a `text-hero` carrying `fontWeight`
   renders Saira Medium and looks almost right.
+- **A `Pressable` `style` CALLBACK is dropped, and the button disappears.**
+  `style={({ pressed }) => ...}` is the React Native documented form and it does
+  not work here: NativeWind 4.2.6 applies `cssInterop` to `Pressable` for
+  `className`, and the function does not survive it. The control renders with
+  no background, no height, no padding and no `flexDirection`, and still takes
+  taps. On 2026-08-20 EVERY button in `mobile/` was invisible for this reason —
+  SIGN IN was a gap in the layout — through a green `tsc`, a green `eslint` and
+  a green `bundle:ios`. Track the pressed state with `onPressIn`/`onPressOut`;
+  `eslint.config.js` fails the build on the callback form now. **A screenshot
+  was the only thing that could have caught it, and nearly did not, because the
+  screen it broke was one nobody had looked at since it was written.**
 - **`npm run typecheck` in mobile is not a build.** A broken babel preset, a bad
   metro alias, a missing font subpath and a NativeWind/RN version fight are all
   clean to tsc and fatal to `expo export`. Bundle before claiming it works.
+- **Rebuilding `mobile/ios/` takes two commands and the second one needs a
+  locale.** `mobile/ios` is gitignored and regenerates, so it gets deleted
+  whenever the Mac needs space. Bringing it back:
+
+  ```bash
+  npx expo prebuild --platform ios --clean
+  cd ios && LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8 pod install
+  ```
+
+  **`expo prebuild` does NOT run `pod install`**, so the workspace is absent
+  until you do, and `xcodebuild` fails on a missing `Wazn.xcworkspace` in a way
+  that reads like a project problem. And `pod install` without the locale dies
+  with `Unicode Normalization not appropriate for ASCII-8BIT` from deep inside
+  Ruby, which reads like a CocoaPods bug and is a shell encoding. Both cost a
+  detour on 2026-08-20.
+
 - **`api.expo.dev` and `reactnative.directory` are 403 from this org's egress
   proxy**, so `npx expo install` cannot resolve versions and EAS cannot run from
   a session. Read `node_modules/expo/bundledNativeModules.json` instead — it is

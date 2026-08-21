@@ -52,6 +52,21 @@ module.exports = defineConfig([
       'no-restricted-syntax': [
         'error',
         {
+          // NativeWind 4.2.6 applies `cssInterop` to Pressable so it can take
+          // a `className`. A FUNCTION `style` does not survive that: it is
+          // dropped whole, and the control renders with no background, no
+          // height, no padding and no flexDirection while still taking taps.
+          //
+          // On 2026-08-20 every button in the native app was invisible for
+          // this reason — SIGN IN was a gap in the layout — through a green
+          // tsc, a green eslint and a green `expo export`. Use
+          // `onPressIn`/`onPressOut` state instead; `Btn.tsx` is the pattern.
+          selector:
+            "JSXOpeningElement[name.name='Pressable'] > JSXAttribute[name.name='style'] > JSXExpressionContainer > :matches(ArrowFunctionExpression, FunctionExpression)",
+          message:
+            'Pressable style must be an object or array, never a function. NativeWind drops the callback form and the control renders unstyled. Track the pressed state with onPressIn/onPressOut (see Btn.tsx).',
+        },
+        {
           // `ObjectExpression >` is load-bearing. Without it the selector
           // also matches destructuring patterns and caught `{ name, right }`
           // in a component's own props on the first run — a prop called
@@ -86,11 +101,19 @@ module.exports = defineConfig([
     },
   },
   {
-    // The one legitimate bare <Text> in the package: `Txt` IS the wrapper the
-    // rule funnels everything else through, so it has to render one. Scoped to
-    // the single file rather than an inline disable, so the exemption is
-    // visible in the config instead of buried in the source.
-    files: ['src/design/Txt.tsx'],
+    // The two legitimate bare <Text> sites in the package, both because they
+    // are the thing the rule points at rather than users of it.
+    //
+    // `Txt` IS the wrapper everything else funnels through, so it must render
+    // one. `Wordmark` is the brand mark, and the whole reason it exists as its
+    // own file is that a wordmark must NOT inherit a ramp step: the header set
+    // it with the figures step (weight 600, tabular) and auth with `hero`
+    // (uppercase at 50), which is how the app came to render WAZN. Routing it
+    // back through `Txt` would reintroduce exactly that.
+    //
+    // Scoped to the two files rather than inline disables, so every exemption
+    // is visible here instead of buried in the source.
+    files: ['src/design/Txt.tsx', 'src/components/ui/Wordmark.tsx'],
     rules: {
       'no-restricted-syntax': 'off',
     },

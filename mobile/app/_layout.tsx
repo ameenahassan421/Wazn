@@ -7,10 +7,12 @@ import * as SplashScreen from 'expo-splash-screen'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
 
-import { HankenGrotesk_400Regular } from '@expo-google-fonts/hanken-grotesk/400Regular'
+import { HankenGrotesk_500Medium } from '@expo-google-fonts/hanken-grotesk/500Medium'
+import { HankenGrotesk_600SemiBold } from '@expo-google-fonts/hanken-grotesk/600SemiBold'
 import { IBMPlexMono_500Medium } from '@expo-google-fonts/ibm-plex-mono/500Medium'
-import { SairaSemiCondensed_600SemiBold } from '@expo-google-fonts/saira-semi-condensed/600SemiBold'
-import { SairaSemiCondensed_700Bold } from '@expo-google-fonts/saira-semi-condensed/700Bold'
+import { Sora_600SemiBold } from '@expo-google-fonts/sora/600SemiBold'
+import { Sora_700Bold } from '@expo-google-fonts/sora/700Bold'
+import { Sora_800ExtraBold } from '@expo-google-fonts/sora/800ExtraBold'
 
 import { palette } from '@wazn/domain'
 
@@ -46,9 +48,11 @@ import '../global.css'
 void SplashScreen.preventAutoHideAsync()
 
 const FACES = {
-  SairaSemiCondensed_600SemiBold,
-  SairaSemiCondensed_700Bold,
-  HankenGrotesk_400Regular,
+  Sora_600SemiBold,
+  Sora_700Bold,
+  Sora_800ExtraBold,
+  HankenGrotesk_500Medium,
+  HankenGrotesk_600SemiBold,
   IBMPlexMono_500Medium,
 }
 
@@ -104,7 +108,7 @@ export default function RootLayout() {
       <View
         style={{
           flex: 1,
-          backgroundColor: palette.ink,
+          backgroundColor: palette.paper,
           alignItems: 'center',
           justifyContent: 'center',
           padding: 24,
@@ -118,7 +122,7 @@ export default function RootLayout() {
   }
 
   return (
-    <GestureHandlerRootView style={{ flex: 1, backgroundColor: palette.ink }}>
+    <GestureHandlerRootView style={{ flex: 1, backgroundColor: palette.paper }}>
       <SafeAreaProvider>
         {/* Locale outside unit: `t` is chrome for every screen including the
             ones that never render a weight, and the unit provider has no
@@ -128,11 +132,11 @@ export default function RootLayout() {
             {/* The ground is painted here as well as on every screen. A route
                 transition briefly shows whatever is behind the stack, and the
                 platform default behind it is white. */}
-            <View style={{ flex: 1, backgroundColor: palette.ink }}>
+            <View style={{ flex: 1, backgroundColor: palette.paper }}>
               <Stack
                 screenOptions={{
                   headerShown: false,
-                  contentStyle: { backgroundColor: palette.ink },
+                  contentStyle: { backgroundColor: palette.paper },
                   animation: 'fade',
                   animationDuration: 160,
                 }}

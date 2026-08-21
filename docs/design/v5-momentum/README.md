@@ -1,3 +1,17 @@
+> ## SUPERSEDED 2026-08-20 — this is history, not the spec
+>
+> Ameen replaced v5 "Momentum" with the prototype at **`docs/design/prototype/`**. Different
+> ground (paper `#f7f3ec`, not iron), different display face (**Sora**, not Saira Semi
+> Condensed), pill controls, shadows where this document forbids them, sentence-case CTAs, and
+> a wordmark whose `a` is the plate glyph. See `DECISIONS.md` 2026-08-20 and `WAZN_PLAN.md`
+> §7.0.
+>
+> **Everything below still reads as normative and is not.** It is kept because it is the only
+> written record of what several shipped decisions were FOR — the coach's one-sentence rule,
+> the six-tab IA, the rest-canvas z-order, the LAUNCH.md empty-state copy — and because six
+> screens the new prototype does not cover have to be derived, which is easier with the
+> reasoning than without it. Read it for the WHY. Take no colour, size or weight from it.
+
 # Handoff: Wazn v5 "Momentum" — full app redesign + AI layer
 
 ## Overview

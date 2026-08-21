@@ -292,10 +292,17 @@ gym dead zones reported by testers.
 Vite PWA in `src/` is retired at the end of this stage. The web is not lost; it becomes an
 Expo Router web target through `react-native-web`, which `mobile/` already depends on.
 
-**v5 "Momentum" is implemented in full here, not in a separate stage.** The port and the
-restyle are the same edit. Every screen moves to Expo already in its v5 form, once. Building
-v5 on the web first would mean building all fourteen P1 items twice, in a codebase that is
+**The redesign is implemented in full here, not in a separate stage.** The port and the
+restyle are the same edit. Every screen moves to Expo already in its final form, once.
+Building it on the web first would mean building everything twice, in a codebase that is
 being deleted.
+
+**Which redesign changed on 2026-08-20.** This stage said "v5 Momentum" everywhere until
+Ameen replaced it with the prototype at `docs/design/prototype/`. The premise did not change
+— one edit, not two — but the target did, and A1 was already three screens in when it moved.
+See DECISIONS.md 2026-08-20 and §7.0. **The design system itself is now DONE**: tokens, ramp,
+fonts, mark, `Btn`, `Card`, `Txt` and the icon set are all on the new system and green on the
+full wall. What remains is screens.
 
 This is a strangler-fig migration, not a rewrite. The app stays shippable at every step.
 
@@ -369,14 +376,29 @@ Honest cost of the revision: A1 is no longer "ship day one". It is real work per
 against 4,292 lines of web equivalent. The alternative was building all five twice and
 shipping a signed-out WebView in between.
 
+**Reordered 2026-08-20, and A1 is no longer next.** History was built, and Body was about to
+be, when the design changed underneath. Two things follow, and neither is a preference:
+
+- **The four screens the prototype actually specifies come first.** Home, Workout, Rest and
+  Finish are drawn, measured and running in `docs/design/prototype/`. The other six are not.
+  Building a derived screen before a specified one means inventing a language and then finding
+  out it disagrees with the reference — which is the failure that produced this reorder.
+- **History has to be revisited.** It was built against v5 and swept to paper mechanically. It
+  compiles and it is not the design.
+
+So A2's core loop runs BEFORE the rest of A1. The order is now Home → Workout → Rest → Finish
+(specified), then History → Body → Coach → Friends → Progress (derived), with auth last
+because it is the screen a lifter sees once.
+
 **GATE A1:** all six tabs render real content on a device, no 21-line stub remains, and each
-screen has been read side by side against its v5 reference render in
-`docs/design/v5-momentum/design/` (see "How a screen is verified" in §6).
+screen has been read side by side against `docs/design/prototype/` where the prototype covers
+it — and, where it does not, against a written derivation that says which of the prototype's
+patterns it is built from (see "How a screen is verified" in §6).
 
-#### Phase A2: Strangle the core loop, in v5 form
+#### Phase A2: Strangle the core loop (NEXT, and it now runs before the rest of A1)
 
-Home (screen 06), Live (screen 07) and the rest canvas (screen 08) become native, already in
-v5. This phase carries **all five open P0 findings** and P1's momentum bar, PR moment,
+Home, Workout, Rest and Finish become native, already in the prototype's form. These are the
+four screens `docs/design/prototype/` actually draws, which is why they go first. This phase carries **all five open P0 findings** and P1's momentum bar, PR moment,
 toasts and finish verdict. Shared triggers (notable-set, in-session PR baseline, finish
 verdict) go behind `portable.ts` before either target renders them, following the
 `live-board.ts` precedent.
@@ -385,12 +407,12 @@ verdict) go behind `portable.ts` before either target renders them, following th
 phone between sets and a web timer dies when they do. It is the single capability that
 justifies this whole stage, and it does not exist yet.
 
-**The wordmark is fixed here, not in A0.** A0 is explicitly "nothing user-visible" and the
-mark is the most visible thing on the screen. The v5 reference sets it as its own treatment
-(`design/ui.jsx:68`: Saira Semi Condensed 700, 21px, lowercase, ember `a`), NOT as a type-ramp
-step. Native currently borrows `<Txt step="hero">`, whose ramp entry carries
-`uppercase: true` at size 50 (`src/lib/tokens.ts:128`), so it renders `WAZN`. A wordmark is
-not a type step and must not borrow one.
+**The wordmark is DONE (2026-08-20)** and took three attempts to get right, which is the
+argument for it never being a type step. It rendered `WAZN` at hero scale because it borrowed
+`<Txt step="hero">`; it then rendered a v5 mark after v5 had been replaced; and it then hung
+below the baseline because a CSS pixel offset was ported as a ratio. It is now
+`mobile/src/components/ui/Wordmark.tsx`: `w` + the plate glyph + `zn`, baseline-aligned, with
+the plate sized to Sora's x-height. `Plate.tsx` holds the mark's four variants.
 
 Nativize means redesign, not reskin. Reach for `@expo/ui` before styled primitives.
 
@@ -608,6 +630,26 @@ verbatim, so they survive even if this file isn't read.**
 
 ### How a screen is verified (2026-08-19)
 
+**The web export only reaches the sign-in screen, and that is a hole in this
+rule.** `expo export --platform web` plus a static server renders the app in a
+browser with no simulator and no Xcode, which is how the wordmark defect was
+finally SEEN rather than inferred. But every tab is behind
+`Stack.Protected`, so an unauthenticated session cannot reach History,
+Progress, Body, Coach or Friends. Signing in needs real credentials, which a
+session must never type.
+
+So for any screen behind auth, "read the reference beside the build" degrades
+to "read the reference beside the SOURCE", which is weaker and must be said
+out loud rather than reported as a visual pass. Two ways to close it, neither
+built yet: a dev-only route that renders a screen against fixture data with no
+session, or component tests through `react-native-web` in `mobile/`'s vitest
+(the config already collects `.tsx`). The second is the ratchet and is the
+better answer.
+
+Until one exists: **screens behind auth are verified by Ameen on a device, or
+by reading the reference's source against the implementation. Neither is a
+screenshot, and neither should be written down as one.**
+
 **Five visual defects have shipped from this repo and Ameen found every one of them by
 looking at a screen while the wall was green.** Arabic numerals rendering backwards,
 `ExerciseThumb` missing from the board, exercise names English in Arabic, the eleven v5 P0
@@ -615,25 +657,51 @@ findings, and the wordmark rendering `WAZN`. `CLAUDE.md` already said "screensho
 after any locale or layout work" and the rule did not hold, because a screenshot on its own
 answers "did it render", never "did it render the right thing".
 
-**The v5 design is a runnable React app and almost nobody has run it.**
-`docs/design/v5-momentum/design/Wazn v5.html` plus `ui.jsx`, `screens_core.jsx`,
-`screens_tabs.jsx`, `data.js`, `coach2.js`. Every screen, live, in a browser. The one time
-anyone read it against the app (the P0 gate, 2026-08-17) it produced **eleven findings in a
-single sitting**, six on Home alone. That is the whole argument for this section.
+**The design is a runnable React app and almost nobody has run it.**
+`docs/design/prototype/Wazn-Prototype.html` — open it in a browser and the core loop runs,
+with a live rest timer and plate maths. The one time anyone read the PREVIOUS reference
+against the app (the v5 P0 gate, 2026-08-17) it produced **eleven findings in a single
+sitting**, six on Home alone. That is the whole argument for this section.
+
+**And running it is still not the strongest form of the check.** On 2026-08-20 the prototype's
+bundle was unpacked instead: the `__bundler/template` block is a JSON string holding the whole
+design, and every size, colour, radius and shadow in the system is a literal in it. Counting
+literals found 25 distinct font sizes where a screenshot would have found "some big text".
+`docs/design/prototype/README.md` has the ten lines of Python. **Read the source; look at the
+render to check you read it right.**
 
 So, before any screen is called done:
 
-1. **Open the reference next to the build.** The v5 reference in one window, the running
-   screen in the other. Not the spec prose, the running reference.
+1. **Open the reference next to the build, and NAME THE FILE.** `docs/design/prototype/`
+   covers FOUR screens: Home, Workout, Rest, Finish. It does not contain auth, History,
+   Progress, Body, Coach or Friends. **Before comparing, confirm the screen you are looking at
+   exists in the file you opened** — on 2026-08-20 a session verified the auth screen against
+   a reference that did not contain it, and reported a pass. "I ran the reference" is not a
+   claim until it names which one and confirms the screen is in it.
+   **For the six screens the prototype does not cover there is no reference to open**, and the
+   honest move is to say so and write down which of the prototype's patterns the screen is
+   derived from — not to quietly compare it to the retired v5 handoff.
 2. **Compare per element, not per screen.** "The branding looks right" is the claim that was
-   made about a screen rendering `WAZN` in 50px uppercase. "The wordmark is Saira 700, 21px,
-   lowercase, with the `a` in ember" is a claim that can be wrong out loud.
+   made about a screen rendering `WAZN` in 50px uppercase, and "the wordmark matches" is the
+   claim that was made while the plate hung below the baseline. A claim about one element is
+   a claim that can be wrong out loud; a full-screen screenshot offered as evidence for it is
+   not evidence.
 3. **The word "verified" is unusable without naming what it was compared against.** A session
    that writes "verified" and cannot name the reference has not verified anything.
 4. **Every defect a human finds becomes a machine assertion the same day.** This is the only
    part that compounds. `src/components/Wordmark.test.tsx` exists because a mark once swapped
    locales; that class of bug cannot ship on web again. `mobile/` had no such test and the
-   mark broke there immediately. A defect found and merely fixed will return.
+   mark broke there three times.
+   **And the assertion has to be proved to fail.** The `Pressable` lint rule added on
+   2026-08-20 was run against a deliberate violation before it was trusted, because this repo
+   has shipped guards that read correctly and did nothing (0027's `revoke`, the invented-lift
+   guard, and `check:tokens` claiming for months to assert a colour in a file it had never
+   opened). A guard nobody watched fail is a comment.
+5. **A screenshot catches what nothing else can, and it is not optional.** Four of the
+   defects in the paragraph above were invisible to every automated check in the repo. The
+   worst — every button in the native app rendering with no background — was found by taking
+   one screenshot on 2026-08-20, after `tsc`, `eslint`, `expo export` and `bundle:ios` had all
+   passed on it repeatedly.
 
 **Structural properties are machine-checkable and belong in a test: presence, order, count,
 element type, token identity, text direction, case.** Proportion, balance and rhythm are not,
@@ -673,6 +741,120 @@ Every number below was read live, not recited. **Re-verify before quoting it.** 
 was nine commits stale on 2026-08-19 and said so nowhere; PRs #103 through #106 all merged
 code and none of them touched this file. Three hooks now make that visible and expensive
 (see "How this block stays true", last in this section).
+
+#### P0 FIXED 2026-08-20: every button in the native app was invisible
+
+`Pressable`'s idiomatic `style={({ pressed }) => ...}` callback is **silently dropped** under
+NativeWind 4.2.6 + React Native 0.86. NativeWind applies `cssInterop` to `Pressable` so it can
+carry a `className`, and a function `style` does not survive it. The control renders with no
+background, no height, no padding and no `flexDirection` — and still takes taps.
+
+Every `Btn` in `mobile/` used that form. On the sign-in screen SIGN IN was a **gap in the
+layout** and CONTINUE WITH GOOGLE was two lines of near-black text on a near-black ground. The
+tab bar's buttons had no height and the header avatar had no disc. `tsc`, `eslint`,
+`expo export` and `npm run bundle:ios` were all green throughout, because none of it is a type
+error and the bundle builds fine.
+
+It was found by taking a screenshot, which is the only thing that could have found it.
+
+Fixed at four call sites — `Btn`, `ChipBtn`, `Header`'s avatar, the tab bar — by tracking the
+pressed state with `onPressIn`/`onPressOut` instead. `mobile/eslint.config.js` now fails the
+build on a function `style` on a `Pressable`; the rule was proved to fire against a probe file
+rather than assumed to work.
+
+This also corrects a claim this file made on 2026-08-19: the sign-in button was reported as
+"grey where the reference fills it cream", attributed to a disabled-state opacity. It had no
+fill at all.
+
+#### DECIDED 2026-08-20: the prototype replaces v5 Momentum
+
+Ameen attached `~/Downloads/Wazn Prototype.html` (dated 2026-08-20) with "you are not
+following the design" and "even the logo is not correct based on the v5 design". It is a
+runnable four-screen prototype — Home, Workout, Rest, Finish — and it is **not** the v5
+Momentum system in `docs/design/v5-momentum/`. Source extracted from its bundle; these are
+read out of it, not inferred:
+
+|                | v5 Momentum (this repo)              | The attached prototype                                          |
+| -------------- | ------------------------------------ | --------------------------------------------------------------- |
+| Ground         | ink `#0f0d0a`                        | paper `#f7f3ec`, page `#e9e4d8`                                 |
+| Text / muted   | `#ece7dc` / `#9a927f`                | `#16130e` / `#8a8378`                                           |
+| Cards          | `#181510`, hairline ring             | `#ffffff`, ring **plus** `0 1px 2px` shadow                     |
+| Display face   | Saira Semi Condensed 600/700         | **Sora 600/700/800**, tracking `-.02`…`-.05em`                  |
+| Body / mono    | Hanken Grotesk, IBM Plex Mono        | same                                                            |
+| Accent         | `#e8491d`                            | `#e8491d`, pressed `#b83915`                                    |
+| Control radius | 12                                   | **99 (pill)**, cards 20                                         |
+| Shadows        | forbidden outright                   | used, including `0 10px 26px rgba(232,73,29,.35)` under the CTA |
+| Wordmark       | `w` + ember `a` + `zn`, set in Saira | `w` + **an ember plate glyph AS the `a`** + `zn`, Sora 800      |
+
+The wordmark difference is the one Ameen named. The prototype's mark is a plate seen
+side-on — disc with a counter, plus a rounded bar at the right — used as the letter, at 14px
+beside 26px type. Neither the interface wordmark nor the app icon in this repo is that.
+
+**Why this cannot be absorbed quietly.** It contradicts a hard rule in `CLAUDE.md`
+("Dark-first… No gradients, shadows"), the whole of `docs/design/v5-momentum/`, and
+`src/lib/tokens.ts` — which is the palette's source of truth for BOTH stacks and is
+CI-checked against `index.css` and `mobile/tailwind.config.js`. Adopting it means new tokens,
+a new type ramp, a fourth font family shipped in the native bundle (Sora), a new icon set,
+and every screen redrawn in both apps.
+
+**Ameen's call, 2026-08-20: the prototype replaces v5, and the wordmark goes with it**
+("same as prototype"). What that cost and what it left open:
+
+DONE, and green on the full wall (1222 tests, lint, typecheck, check:tokens, check:type,
+check:coverage, production build, `bundle:ios`):
+
+- `src/lib/tokens.ts` carries BOTH systems. `palette`/`type`/`fontFamily` are the prototype's
+  and the native app reads them; `legacyPalette`/`legacyType` are v5's and exist only so
+  `src/index.css` can still be checked against something while the dying PWA lives. They go
+  at phase A4 with the stylesheet. The web app's APPEARANCE did not change — it reads
+  `index.css`, never this module.
+- 19 colours, 19 type steps, `elevation`, and the new `radius`/`space` shapes.
+- Sora 600/700/800 and Hanken 500/600 ship in the native bundle; Saira is gone from it.
+- `Plate.tsx` — the mark at its four levels of detail, paths copied from the prototype.
+  `Wordmark.tsx` sets `w` + the plate + `zn`, which is what "the logo is wrong" meant.
+- `Btn` is five pill kinds with sentence-case labels and the ember glow; `Card` is four tones
+  including the two the rest canvas needs; `Txt` has the paper ink roles and the `onInk`
+  family for the one screen that inverts.
+- Every screen swept off the v5 roles. The app compiles, bundles and runs.
+- The icon set is the ember plate on paper, and `app.config.ts` is `light`/`#f7f3ec`.
+
+FIXED the same day, and worth the note: the plate in the wordmark hung below the baseline.
+The prototype writes it as `width: 14` and `top: 3px` against 26px type, which reads like two
+arbitrary nudges. It is not: `26px/1` with Sora's metrics puts the baseline at 23.0 from the
+row top and the x-height at 9.2, and those two numbers land the plate at top 9.0, bottom 23.0.
+The plate occupies the x-height box exactly — it is set as a letter with no ascender and no
+descender, which is what `a` is. The first port carried the `3px` across as a ratio of font
+size; React Native does not compute a text box the way CSS does, so it drifted and Ameen
+caught it by eye. It now uses `alignItems: 'baseline'`, which Yoga resolves to a non-text
+child's bottom edge, so the plate sits on the line by construction at any size.
+
+**A proportion copied out of a browser is a bet that two layout engines agree.** They do not.
+
+OPEN, and none of it guessed at:
+
+1. **Six screens the prototype does not cover.** It has Home, Workout, Rest and Finish. Auth,
+   History, Progress, Body, Coach and Friends have to be DERIVED in this language, not copied.
+   Auth is currently the v5 layout wearing paper — it works and it is not the prototype.
+2. **Brass is gone and nothing replaced it.** v5 reserved a second hue for earned states —
+   rank, duel opponent, record pace. The prototype has no such tier; its "earned" signal is
+   the `full` plate on the PR card. Every brass usage was swept to `accent`, which puts a
+   second ember on screens that already have an action. Friends and Progress need a ruling.
+3. **Three contrast pairs are below AA for small text**, all of them the prototype's own
+   values, all asserted at their measured figure in `tokens.test.ts` so they cannot drift
+   silently:
+
+   | pair                                                    | measured | candidate                        |
+   | ------------------------------------------------------- | -------- | -------------------------------- |
+   | `muted` on paper                                        | 3.39:1   | `body` `#4f4a41` at 7.95:1       |
+   | `accent` on paper (the "12 wk" chip, the NEW PR kicker) | 3.51:1   | `accentSoft` `#9a3012` at 6.77:1 |
+   | `onInk` on the ember CTA (a 16px label)                 | 3.51:1   | v5's `#1c0e08` at 4.84:1         |
+
+   They were NOT quietly corrected. Changing a designer's greys behind their back is not a fix,
+   and this app is read one-handed in gym lighting, so the numbers belong in front of Ameen.
+
+4. **The core loop is still the v5 layout in paper clothes.** Home, Workout, Rest and Finish
+   are the four screens the prototype actually specifies and they are the four still to be
+   rebuilt against it. That is the next block of work, and it is A2, not A1.
 
 #### The decision that governs everything below
 
@@ -806,7 +988,7 @@ none started: momentum bar and its brass flip, the PR moment, toasts, the finish
 remaining screen restyles, coach-volume wiring. Item 6 (Tell the coach) was **never
 assessed**; `TellCoachSheet.tsx` is v3-era.
 
-#### The wordmark renders uppercase on native (Ameen, 2026-08-19)
+#### The wordmark renders uppercase on native. THE MARK IS FIXED 2026-08-20
 
 **Corrected 2026-08-19, same day, after reading the reference.** The first version of this
 block claimed four defects. **Two of them were wrong**, and they were wrong because the
@@ -817,6 +999,17 @@ failure this file keeps having.
 **The v5 design is a runnable React reference app, not a spec**, and nobody has run it:
 `docs/design/v5-momentum/design/Wazn v5.html` plus `ui.jsx`, `screens_core.jsx`,
 `screens_tabs.jsx`, `data.js`, `coach2.js`. Every screen, live. Open it in a browser.
+
+**FIXED 2026-08-20 in `mobile/src/components/ui/Wordmark.tsx`.** The mark now
+sets itself directly (Saira Semi Condensed 700 by family NAME, lowercase, the
+`a` in ember) at 21 in the header and 34 on auth, and no longer borrows a ramp
+step in either place. The cause turned out to be the same mistake twice in
+opposite directions: the header used `step="num"`, the FIGURES step at weight
+600 and tabular, which was close enough to look right; auth used `step="hero"`,
+which carries `uppercase: true` at 50, which was not. The bare-`<Text>` lint
+rule added in A0 flagged the new component immediately, and it is exempted in
+the config beside `Txt.tsx` with the reason attached rather than by an inline
+disable.
 
 **The real defect, and it is one line.** The v5 reference sets the wordmark as its own
 treatment, not as a ramp step (`design/ui.jsx:68`):
@@ -881,6 +1074,43 @@ Still open in A0, being built now: `rest.ts` through `portable.ts`, the native
 locale adapter, the unit round-trip to the server, the `Readiness` to `CheckIn`
 rename, and the first `mobile/` tests. GATE A0 is not claimed until all of them
 land and the wall is green on both packages.
+
+#### The auth screen does not match, and the wordmark claim was too broad
+
+**Ameen, 2026-08-20, from the design zip.** The entry above said the wordmark
+was "FIXED and verified on a device". The MARK is correct and that part holds:
+the reference's computed styles are Saira Semi Condensed 700, 34px,
+`textTransform: none`, `#ece7dc` with the `a` at `#e8491d`, and the device
+renders exactly that. **But a screenshot of the whole screen was offered as the
+evidence, which implied the screen was right. It is not.**
+
+Against `design/Onboarding.html:22-48`, where `AuthScreen` actually lives:
+
+| element                     | reference                                                   | `mobile/app/sign-in.tsx`      |
+| --------------------------- | ----------------------------------------------------------- | ----------------------------- |
+| subtitle                    | "Log a set in under thirty seconds, one hand, mid-workout." | **absent**                    |
+| "Your training, on record." | `T.title` at **22**                                         | `title` step, which is **17** |
+| fields                      | placeholders inside the input                               | mono uppercase labels above   |
+| SIGN IN                     | `kind="ink"`, cream fill, 52px                              | renders grey                  |
+| links                       | one centred row, sentence case, `·` separated               | stacked, uppercase            |
+
+**The Google hero button and the OR divider are NOT on that list.** They are
+deliberately absent: neither credential exists, and stubbing a sign-in path
+that cannot work is worse than omitting it.
+
+**The methodology failure is the finding.** Auth is not in `design/Wazn v5.html`
+at all. The session ran that file, compared History against it, wrote "run the
+reference beside the build" into §6 as a rule, and then verified auth against a
+reference that does not contain auth. Same shape as describing the wordmark
+from the web implementation instead of the reference: the check was performed,
+against the wrong artefact, and reported as though it had passed. §6 now
+requires naming the file and confirming the screen is in it.
+
+The zip Ameen sent is byte-identical to `docs/design/v5-momentum/`. Nothing was
+missing from the repo. It simply had not all been read.
+
+**Scope: auth is screen 01, P0 work, not one of A1's five tabs.** Carried here
+rather than folded into A1 without a decision.
 
 #### GATE 4 does not hold on native, and A0 found out why
 
@@ -974,58 +1204,67 @@ retention that cannot exist until the app is shared.
 
 #### Next action
 
-**Stage 4A phase A0 is DONE and its gate was read, 2026-08-19** (PR #110). All four clauses
-pass: the Expo web target serves, a set on native and on web agree on `set_type` and units,
-`portable.test.ts` and `check:tokens` still pass, and `mobile/` has a test suite CI now
-actually runs. **Caveat recorded rather than buried:** the set-agreement clause was verified by
-comparing the two insert payloads and by the test that locks it, not by logging two live sets.
+**A0 is DONE and merged** (PR #110). **The design system is DONE** on the new
+prototype, green on the full wall. **A2's core loop is next**, and it now runs
+before the rest of A1 — reasons in the phase itself, and they are not a
+preference: the prototype specifies four screens and derives none.
 
-**A1 is next and needs Ameen's approval first**, per §2.7. It does not start unprompted.
+**The order from here:**
 
-**A1, when it starts:** the five stub tabs built native, in v5, **no DOM components** (the
-reasoning is in the phase itself and in DECISIONS.md 2026-08-19). Order and why:
-**History** (only door to "what did I do before" besides the bar, least coach machinery, sets
-the pattern), **Body** (smallest, no card door, and its production data is empty so it must be
-built against its degraded render), **Coach** (read-only surfaces first; "Tell the coach" was
-never assessed in v5 P0), **Friends** (least load-bearing mid-session), **Progress** last
-(most work even hand-drawn, and it is lazy-loaded on web for a reason native must preserve:
-the Log tab must never wait for it).
+1. **Home**, the screen the prototype opens with. Date line, hero sentence,
+   coach card, the ink Up Next card, and the ember CTA with the plate icon.
+   It is the highest-traffic screen in the app and the one with the most
+   patterns per pixel, so it establishes the language the other nine follow.
+2. **Workout**, **Rest**, **Finish** — the rest of the specified set. Rest is
+   the one screen that inverts to the ink ground, so it is the first real use
+   of the `onInk` ink family and worth building third rather than last.
+3. **History**, then Body, Coach, Friends, Progress. History EXISTS and was
+   built against v5; it was swept to paper mechanically, so it compiles and it
+   is not the design. Treat it as unbuilt.
+4. **Auth last.** It is the screen a lifter sees once, the prototype does not
+   cover it, and it currently works.
 
-**Two things carried into A2, both already found and neither smuggled into A0:**
+**Four things a resuming session needs and will not guess:**
 
-1. **The wordmark still renders `WAZN`.** It borrows `<Txt step="hero">` and that ramp entry
-   is `uppercase: true` at size 50 (`src/lib/tokens.ts:128`). The v5 reference sets the mark
-   as its own treatment, not a ramp step. See the wordmark block above.
-2. **GATE 4 is false on native.** No write queue, no client-generated id. See the GATE 4 block
-   above.
+1. **Screens behind auth cannot be seen.** Every tab sits behind
+   `Stack.Protected`; the simulator and the web export both stop at sign-in,
+   and signing in needs credentials a session must never type. So every screen
+   after auth is verified by reading the reference against the SOURCE, which is
+   weaker than a visual pass and must be reported as such. The real fix is
+   component tests through `react-native-web` in `mobile/`'s vitest, whose
+   config already collects `.tsx`. **Not built, and it is now the single
+   highest-value thing left in this stage** — nine screens are about to be
+   built and none of them can currently be looked at.
+2. **Read the prototype's SOURCE, not its screenshot.**
+   `docs/design/prototype/README.md` has the ten lines of Python that unpack
+   the bundle. Every size, colour, radius and shadow is a literal in it.
+   Counting literals found 25 distinct font sizes; a screenshot finds "some
+   big text".
+3. **A cold iOS build is 855 seconds.** Metro on 8081 plus the installed app
+   makes the next screen a fast-refresh instead. If Metro died with the
+   session, `npx expo start` in `mobile/` and relaunch; the built `.app` is
+   under `~/Library/Application Support/Claude/simulator-builds/`. Only a
+   native-module change needs another `xcodebuild` — **and the new icon and
+   splash are native assets, so they will not appear on the simulator's home
+   screen until one runs.**
+4. **A Debug build has no embedded bundle.** It launched to a red
+   `No script URL provided` until Metro was up. `xcodebuild` succeeded and
+   `expo export` succeeded and the app did not run: the fourth distinct way
+   this repo has been green and broken.
 
-**Before building any screen, run the reference.** `docs/design/v5-momentum/design/Wazn v5.html`
-is a working React app of every v5 screen and it has been run essentially once, at the P0
-gate, where it produced eleven findings in a single sitting. See "How a screen is verified"
-in §6.
+#### Waiting on Ameen
 
-In parallel, and independently, **Ameen runs `LAUNCH.md` on his phone against the installed
-PWA**. It costs a day, needs no migration work, and is still the only source of information
-this project does not have. Nine gates have produced zero evidence-based stops.
+Neither blocks the next screen; both get more expensive the longer they sit.
 
-#### How this block stays true
-
-Four mechanisms, because the written rule in §6 was skipped four consecutive times.
-
-- `.claude/hooks/session-start.sh` prints computed state at every session start, including
-  **how many commits have landed since this file was last edited**. Derived, so it cannot go
-  stale.
-- `.claude/hooks/status-guard.sh` blocks a session from ending with committed changes under
-  `src/`, `mobile/` or `supabase/` that never touched `WAZN_PLAN.md`.
-- `.claude/hooks/git-safety.sh` snapshots uncommitted work to `refs/wazn-safety/<stamp>`
-  before any destructive git command. Written after a subagent that had been told read-only
-  ran `git checkout -- CLAUDE.md` and destroyed a session's work.
-- CI fails a pull request that changes `src/`, `mobile/` or `supabase/` without changing
-  `WAZN_PLAN.md`. Hooks are local; CI is universal. It cannot block a merge until branch
-  protection exists (see blocked item 6), but it fails loudly.
-
-**Read this block as a claim to verify, not a fact to recite. The database beats the file,
-and `git log` beats both.**
+1. **Three contrast pairs below AA for small text**, shipping as the prototype
+   draws them, tabled above with candidates. The `muted` one is the one that
+   matters — it carries the date line, the exercise meta and every stat
+   sub-label, and this app is read one-handed in gym lighting.
+2. **What replaces brass.** v5 reserved a second hue for earned states; the
+   prototype has no such tier, so every brass usage swept to `accent`. That
+   puts a second ember on Friends and Progress, screens that already have an
+   action. It does not bite until those screens are built, which is item 3 of
+   the order above.
 
 ### 7.1 Log (chronological, newest last)
 

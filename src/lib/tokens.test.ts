@@ -1,6 +1,16 @@
 import { describe, expect, it } from 'vitest'
 
-import { fontFamily, motion, palette, radius, space, type } from './tokens'
+import {
+  fontFamily,
+  legacyFontFamily,
+  legacyPalette,
+  legacyType,
+  motion,
+  palette,
+  radius,
+  space,
+  type,
+} from './tokens'
 
 /**
  * The contrast facts, asserted instead of written down.
@@ -47,15 +57,96 @@ function contrast(a: string, b: string): number {
 /** Rounded the way a report would print it, so a failure is readable. */
 const ratio = (a: string, b: string) => Math.round(contrast(a, b) * 100) / 100
 
+/**
+ * ── THE PAPER GROUND, AND THREE FAILURES THAT ARE SHIPPING ON PURPOSE ──────
+ * The current system came from Ameen's prototype and three of its pairings are
+ * below WCAG AA for small text. They are asserted at their MEASURED value
+ * rather than against a floor, because the point is not "this passes" — it is
+ * "this is 3.39 and if somebody changes it, this test says so out loud".
+ *
+ * All three are recorded in WAZN_PLAN 7.0 with candidate replacements. They
+ * are the designer's own values and were not quietly corrected here; changing
+ * a designer's greys behind their back is not a fix.
+ */
+describe('contrast on the paper ground', () => {
+  it('ink on paper is AAA — the thing almost everything is set in', () => {
+    expect(ratio(palette.ink, palette.paper)).toBeGreaterThanOrEqual(7)
+    expect(ratio(palette.ink, palette.card)).toBeGreaterThanOrEqual(7)
+  })
+
+  it('prose clears AA on both the ground and a card', () => {
+    expect(ratio(palette.body, palette.paper)).toBeGreaterThanOrEqual(4.5)
+    expect(ratio(palette.body, palette.card)).toBeGreaterThanOrEqual(4.5)
+  })
+
+  it('the rest canvas inverts and still clears AA', () => {
+    expect(ratio(palette.onInk, palette.ink)).toBeGreaterThanOrEqual(4.5)
+    expect(ratio(palette.onInkBody, palette.ink)).toBeGreaterThanOrEqual(4.5)
+    expect(ratio(palette.onInkMuted, palette.ink)).toBeGreaterThanOrEqual(4.5)
+  })
+
+  it('accentSoft is the compliant tier for small ember text', () => {
+    expect(ratio(palette.accentSoft, palette.paper)).toBeGreaterThanOrEqual(4.5)
+    expect(ratio(palette.accentSoft, palette.card)).toBeGreaterThanOrEqual(4.5)
+  })
+
+  it('KNOWN: muted is 3.39 on paper, below AA for small text', () => {
+    expect(ratio(palette.muted, palette.paper)).toBeCloseTo(3.39, 2)
+    // `body` (7.95) is the replacement if Ameen wants it fixed.
+    expect(ratio(palette.body, palette.paper)).toBeCloseTo(7.95, 2)
+  })
+
+  it('KNOWN: raw accent is 3.51 on paper — the 12 wk chip and the PR kicker', () => {
+    expect(ratio(palette.accent, palette.paper)).toBeCloseTo(3.51, 2)
+    expect(ratio(palette.accentSoft, palette.paper)).toBeCloseTo(6.77, 2)
+  })
+
+  it('KNOWN: cream on the ember CTA is 3.51 — the button label is 16px', () => {
+    expect(ratio(palette.onInk, palette.accent)).toBeCloseTo(3.51, 2)
+    // v5's answer, if Ameen wants the label darkened instead: 4.84.
+    expect(ratio('#1c0e08', palette.accent)).toBeCloseTo(4.84, 2)
+  })
+})
+
+describe('the current ramp', () => {
+  it('is set in the three faces the prototype uses', () => {
+    expect(fontFamily.display).toBe('Sora')
+    expect(fontFamily.body).toBe('Hanken Grotesk')
+    expect(fontFamily.mono).toBe('IBM Plex Mono')
+  })
+
+  it('every step names a face that exists', () => {
+    for (const [name, step] of Object.entries(type)) {
+      expect(Object.keys(fontFamily), `type.${name}`).toContain(step.family)
+    }
+  })
+
+  it('every figure a lifter reads is tabular', () => {
+    for (const name of ['mega', 'fig', 'num', 'data', 'dataLg', 'meta'] as const) {
+      expect(type[name], name).toHaveProperty('tabular', true)
+    }
+  })
+
+  it('the CTA step is sentence case — this system does not shout', () => {
+    expect(type.cta).not.toHaveProperty('uppercase')
+    expect(type.title).not.toHaveProperty('uppercase')
+    // The two that ARE uppercase, and the only two.
+    expect(type.kick).toHaveProperty('uppercase', true)
+    expect(type.nano).toHaveProperty('uppercase', true)
+  })
+})
+
 describe('contrast on the iron ground', () => {
   it('body text clears AA on both the ground and a card', () => {
-    expect(ratio(palette.text, palette.ink)).toBeGreaterThanOrEqual(4.5)
-    expect(ratio(palette.text, palette.surface)).toBeGreaterThanOrEqual(4.5)
+    expect(ratio(legacyPalette.text, legacyPalette.ink)).toBeGreaterThanOrEqual(4.5)
+    expect(ratio(legacyPalette.text, legacyPalette.surface)).toBeGreaterThanOrEqual(4.5)
   })
 
   it('muted clears AA — it carries real prose, not decoration', () => {
-    expect(ratio(palette.muted, palette.ink)).toBeGreaterThanOrEqual(4.5)
-    expect(ratio(palette.muted, palette.surface)).toBeGreaterThanOrEqual(4.5)
+    expect(ratio(legacyPalette.muted, legacyPalette.ink)).toBeGreaterThanOrEqual(4.5)
+    expect(ratio(legacyPalette.muted, legacyPalette.surface)).toBeGreaterThanOrEqual(
+      4.5,
+    )
   })
 
   it('faint is BELOW the 3:1 bar — a known, deliberate exception', () => {
@@ -74,10 +165,10 @@ describe('contrast on the iron ground', () => {
      * cannot be described as passing. It is a recorded exception with a
      * measurement attached.
      */
-    expect(ratio(palette.faint, palette.ink)).toBeCloseTo(2.88, 1)
-    expect(ratio(palette.faint, palette.surface)).toBeCloseTo(2.7, 1)
+    expect(ratio(legacyPalette.faint, legacyPalette.ink)).toBeCloseTo(2.88, 1)
+    expect(ratio(legacyPalette.faint, legacyPalette.surface)).toBeCloseTo(2.7, 1)
     // Still clearly above the ground it sits on — this is dim, not invisible.
-    expect(ratio(palette.faint, palette.ink)).toBeGreaterThan(2)
+    expect(ratio(legacyPalette.faint, legacyPalette.ink)).toBeGreaterThan(2)
   })
 
   it('THE EMBER RULE is a CROSS-THEME rule, not an iron one', () => {
@@ -93,46 +184,62 @@ describe('contrast on the iron ground', () => {
      * is fine on iron and a defect on paper, and since the components are
      * shared, the stricter ground sets the rule.
      */
-    expect(ratio(palette.accent, palette.ink)).toBeCloseTo(4.99, 1)
-    expect(ratio(palette.accent, palette.surface)).toBeCloseTo(4.68, 1)
+    expect(ratio(legacyPalette.accent, legacyPalette.ink)).toBeCloseTo(4.99, 1)
+    expect(ratio(legacyPalette.accent, legacyPalette.surface)).toBeCloseTo(4.68, 1)
 
     // The paper ground, which is why the rule exists. Not in `palette` — that
     // object is the iron theme — so the value comes from `index.css`'s
     // `[data-theme='paper']` block and is stated here as the reason.
     const CHALK = '#f7f3ec'
-    expect(ratio(palette.accent, CHALK)).toBeLessThan(4.5)
-    expect(ratio(palette.accent, CHALK)).toBeGreaterThanOrEqual(3)
+    expect(ratio(legacyPalette.accent, CHALK)).toBeLessThan(4.5)
+    expect(ratio(legacyPalette.accent, CHALK)).toBeGreaterThanOrEqual(3)
   })
 
   it('accentSoft is the small-accent tier and clears AA everywhere', () => {
     // Every kicker, chip and label the accent touches uses this, not 500.
-    expect(ratio(palette.accentSoft, palette.ink)).toBeGreaterThanOrEqual(4.5)
-    expect(ratio(palette.accentSoft, palette.surface)).toBeGreaterThanOrEqual(4.5)
-    expect(ratio(palette.accentSoft, palette.raised)).toBeGreaterThanOrEqual(4.5)
+    expect(ratio(legacyPalette.accentSoft, legacyPalette.ink)).toBeGreaterThanOrEqual(
+      4.5,
+    )
+    expect(
+      ratio(legacyPalette.accentSoft, legacyPalette.surface),
+    ).toBeGreaterThanOrEqual(4.5)
+    expect(
+      ratio(legacyPalette.accentSoft, legacyPalette.raised),
+    ).toBeGreaterThanOrEqual(4.5)
   })
 
   it('text on an ember fill clears AA — the hero button', () => {
-    expect(ratio(palette.accentInk, palette.accent)).toBeGreaterThanOrEqual(4.5)
+    expect(ratio(legacyPalette.accentInk, legacyPalette.accent)).toBeGreaterThanOrEqual(
+      4.5,
+    )
   })
 
   it('brassSoft clears AA on the ground and on a card', () => {
     // Rank names and duel figures are read, not glanced at.
-    expect(ratio(palette.brassSoft, palette.ink)).toBeGreaterThanOrEqual(4.5)
-    expect(ratio(palette.brassSoft, palette.surface)).toBeGreaterThanOrEqual(4.5)
+    expect(ratio(legacyPalette.brassSoft, legacyPalette.ink)).toBeGreaterThanOrEqual(
+      4.5,
+    )
+    expect(
+      ratio(legacyPalette.brassSoft, legacyPalette.surface),
+    ).toBeGreaterThanOrEqual(4.5)
   })
 
   it('the tab bar recedes: it is darker than the ground, not lighter', () => {
     // The one surface in the app below `ink`. A raised tab bar would lift the
     // chrome off the content, which is the opposite of what v5 draws.
-    expect(luminance(palette.tabbar)).toBeLessThan(luminance(palette.ink))
-    expect(luminance(palette.surface)).toBeGreaterThan(luminance(palette.ink))
-    expect(luminance(palette.raised)).toBeGreaterThan(luminance(palette.surface))
+    expect(luminance(legacyPalette.tabbar)).toBeLessThan(luminance(legacyPalette.ink))
+    expect(luminance(legacyPalette.surface)).toBeGreaterThan(
+      luminance(legacyPalette.ink),
+    )
+    expect(luminance(legacyPalette.raised)).toBeGreaterThan(
+      luminance(legacyPalette.surface),
+    )
   })
 })
 
 describe('the type ramp', () => {
   it('is ten steps and no more', () => {
-    expect(Object.keys(type)).toHaveLength(10)
+    expect(Object.keys(legacyType)).toHaveLength(10)
   })
 
   it('gives every step its own size — no two steps collide', () => {
@@ -141,7 +248,7 @@ describe('the type ramp', () => {
     // `meta` (11) because both are the mono voice and the section label comes
     // before the data chip. Asserting a descending sequence looked right and
     // was simply false about the design.
-    const sizes = Object.values(type).map((s) => s.size)
+    const sizes = Object.values(legacyType).map((s) => s.size)
     expect(new Set(sizes).size).toBe(sizes.length)
   })
 
@@ -149,9 +256,13 @@ describe('the type ramp', () => {
     // The part that IS a sequence: mega → hero → fig → num → title is the
     // figure ladder, and a step out of order there would break the hierarchy
     // every screen is built on.
-    const display = [type.mega, type.hero, type.fig, type.num, type.title].map(
-      (s) => s.size,
-    )
+    const display = [
+      legacyType.mega,
+      legacyType.hero,
+      legacyType.fig,
+      legacyType.num,
+      legacyType.title,
+    ].map((s) => s.size)
     for (let i = 1; i < display.length; i++) {
       expect(display[i]).toBeLessThan(display[i - 1])
     }
@@ -161,7 +272,10 @@ describe('the type ramp', () => {
     // A weight that shifts by a pixel as it counts up reads as the app being
     // unsure of the number.
     for (const name of ['mega', 'hero', 'fig', 'num', 'meta'] as const) {
-      expect(type[name], `${name} must be tabular`).toHaveProperty('tabular', true)
+      expect(legacyType[name], `${name} must be tabular`).toHaveProperty(
+        'tabular',
+        true,
+      )
     }
   })
 
@@ -170,15 +284,15 @@ describe('the type ramp', () => {
     // narrow. A fallback to a normal-width sans makes every measurement taken
     // against the ramp wrong while looking entirely plausible.
     for (const name of ['mega', 'hero', 'fig', 'num', 'title'] as const) {
-      expect(type[name].family).toBe('display')
+      expect(legacyType[name].family).toBe('display')
     }
-    expect(fontFamily.display).toContain('Condensed')
+    expect(legacyFontFamily.display).toContain('Condensed')
   })
 
   it('keeps kick and nano distinct in both size and tracking', () => {
     // The two are not interchangeable, which is the whole reason both exist.
-    expect(type.kick.size).not.toBe(type.nano.size)
-    expect(type.kick.letterSpacing).not.toBe(type.nano.letterSpacing)
+    expect(legacyType.kick.size).not.toBe(legacyType.nano.size)
+    expect(legacyType.kick.letterSpacing).not.toBe(legacyType.nano.letterSpacing)
   })
 })
 

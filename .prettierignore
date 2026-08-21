@@ -39,3 +39,9 @@ mobile/expo-env.d.ts
 # formatting the whole repo went from seconds to minutes once it existed.
 mobile/ios/
 mobile/android/
+.expo-web/
+
+# Extracted design reference. Not source: a bundle fragment, and prettier
+# rejects it as HTML. Reformatting it would also destroy its value as a
+# verbatim copy of what the designer shipped.
+docs/design/prototype/
