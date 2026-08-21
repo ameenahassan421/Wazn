@@ -8407,3 +8407,60 @@ than by a fallback." That was a comment describing an intention, not the code.
 The notes now render on `block !== null || review !== null`, outside the state
 chain, so the figures appear as soon as SQL answers, stay through a retry, and
 survive the model failing outright. The model's half keeps its three states.
+
+---
+
+## 2026-08-21 — the implausible-reps guard goes at the import door, and its threshold is measured rather than picked
+
+Ameen deferred both calls (fix the bad set, and whether the guard precedes
+Progress and Friends). Recorded here because both were decided against evidence
+that took work to gather and should not be re-derived.
+
+**Where.** `scripts/import_hevy.ts`. It is the single door every Hevy row comes
+through, including re-imports, and it needs no migration and no production DDL.
+The Hevy MCP is read-only, so a fix applied to Wazn's copy is reversible by any
+later import of that workout; a guard at the door is not.
+
+**What it does.** Aborts, naming every offending row, exactly as it already does
+for an unmapped exercise. It does not repair and it does not drop. Only the
+lifter knows whether "95" was 9, 15, or a real burnout set, so repairing would
+be inventing training data and dropping would be the silent truncation this repo
+keeps getting burned by. `--allow-implausible` covers the real ones.
+
+**Why 25.** Of 3,354 sets with a rep count in the account's 163 workouts, 3,350
+are at or below 25. The four above it are one typo (Seated Cable Row, 95 reps at
+100 lb) and three genuine Calf Press sets at 15 lb.
+
+### The clever heuristic was measured and it lost
+
+The plan's own earlier suggestion was "e1RM more than 2x the trailing best for
+that exercise". Run against the real history, it is WORSE than a rep count:
+
+| Set                                   | Ratio to prior best | Real?  |
+| ------------------------------------- | ------------------- | ------ |
+| Shrug (Dumbbell), 12 x 75 lb          | **9.38**            | yes    |
+| Pullover (Machine), 12 x 41 lb        | 4.84                | yes    |
+| Single Arm Landmine Press, 10 x 45 lb | 4.50                | yes    |
+| Seated Cable Row, **95** x 100 lb     | **2.53**            | **NO** |
+
+A first light session makes the baseline tiny, so the second real session looks
+like an explosion. Any threshold that catches the typo flags six legitimate sets
+above it first. The rep count is the thing that is actually anomalous. Do not
+reintroduce the ratio idea without re-running these numbers.
+
+### What was deliberately NOT done
+
+**The thirteen SQL functions that inline `weight_kg * (1 + reps / 30)` were left
+alone.** The complete fix is one `public.e1rm()` with a rep ceiling applied
+across all of them. Capping some and not others would make Progress disagree
+with Coach about the same lift, which is worse than today's consistent
+wrongness. It is a migration and it is logged in §7.0 as its own piece of work,
+with the thirteen named.
+
+**The bad row was not repaired.** The intended edit was `reps = null`, since
+unknown is true where 95 is known-false and every qualifying predicate already
+excludes null reps. The session's safety classifier blocked the write to
+production and it was not retried, which is the correct outcome for an
+unreviewed destructive change to a lifter's own history. The better repair is in
+Hevy anyway, because that is the source. The guard means a re-sync now aborts
+rather than silently restoring the row, so it is contained while it waits.

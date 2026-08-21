@@ -1,9 +1,13 @@
 import { describe, expect, it } from 'vitest'
 import {
+  ImportError,
+  MAX_PLAUSIBLE_REPS,
   buildCatalogue,
   buildSessions,
   buildSetRows,
   catalogueNames,
+  checkPlausible,
+  implausibleSets,
   parseHevyDate,
   readCsv,
 } from './import_hevy'
@@ -222,5 +226,59 @@ describe('superset_group', () => {
     // collapse to it — every set would look supersetted together.
     const rows = buildSetRows(sessionOf({ ...blankRow }), 'w-1', ids)
     expect(rows[0].superset_group).toBeNull()
+  })
+})
+
+describe('the implausible-reps guard', () => {
+  /**
+   * The real row, verbatim. Seated Cable Row at 100 lb for 95 reps, imported
+   * from Hevy on 2026-08-21. Epley returns a 416.7 lb estimate, which became
+   * this account's largest "win" on the Coach tab and a permanent all-time PR.
+   */
+  const typo: CsvRow = {
+    ...blankRow,
+    exercise_title: 'Seated Cable Row - V Grip (Cable)',
+    start_time: 'Aug 5, 2026, 7:31 PM',
+    end_time: 'Aug 5, 2026, 8:31 PM',
+    weight_lbs: '100',
+    reps: '95',
+  }
+
+  it('catches the set that shipped a 416.7 lb estimate', () => {
+    expect(implausibleSets([typo])).toHaveLength(1)
+    expect(implausibleSets([typo])[0].reps).toBe(95)
+  })
+
+  it('aborts the import, naming the row rather than repairing it', () => {
+    expect(() => checkPlausible([typo], false)).toThrow(ImportError)
+    expect(() => checkPlausible([typo], false)).toThrow(/95 reps/)
+    expect(() => checkPlausible([typo], false)).toThrow(
+      /Seated Cable Row - V Grip \(Cable\)/,
+    )
+  })
+
+  it('imports them unchanged once the caller has looked', () => {
+    expect(() => checkPlausible([typo], true)).not.toThrow()
+  })
+
+  /**
+   * The three 45-to-70 rep Calf Press sets on 2026-05-31 are real training at
+   * 15 lb, and they are flagged too. That is the intended cost: the guard is
+   * a prompt, not a filter, and `--allow-implausible` is the answer for them.
+   * What must NOT happen is a normal working set tripping it.
+   */
+  it('leaves ordinary working sets alone', () => {
+    const ordinary = [
+      { ...blankRow, reps: '5' },
+      { ...blankRow, reps: '12' },
+      { ...blankRow, reps: String(MAX_PLAUSIBLE_REPS) },
+      { ...blankRow, reps: '' },
+    ]
+    expect(implausibleSets(ordinary)).toEqual([])
+    expect(() => checkPlausible(ordinary, false)).not.toThrow()
+  })
+
+  it('is derived from the history: 25 keeps 3,350 of 3,354 real sets', () => {
+    expect(MAX_PLAUSIBLE_REPS).toBe(25)
   })
 })
