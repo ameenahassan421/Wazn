@@ -39,12 +39,17 @@ export function Ring({
   size = 250,
   stroke = 9,
   brass,
+  onInk,
   children,
 }: {
   progress: number
   size?: number
   stroke?: number
   brass?: boolean
+  /** Drawn on the ink ground. The track has to come from the `onInk` family
+   *  or it renders as a near-white band: `paper` on `ink` is a 16:1 step, and
+   *  the track is meant to be the QUIET half of the ring. */
+  onInk?: boolean
   children?: React.ReactNode
 }) {
   const r = (size - stroke * 2) / 2
@@ -82,7 +87,7 @@ export function Ring({
           cy={size / 2}
           r={r}
           fill="none"
-          stroke={palette.paper}
+          stroke={onInk === true ? palette.onInkTrack : palette.paper}
           strokeWidth={stroke}
         />
         <AnimatedCircle

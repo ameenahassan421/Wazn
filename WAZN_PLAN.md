@@ -1379,6 +1379,57 @@ invention; the Finish screen's stat tiles are the obvious home and that is Ameen
 equipment word (`deriveEquipment` needs a muscle group the board does not carry), and the
 coach's sentence (`ghost-reason` is not wired to this screen).
 
+#### Rest is built against the prototype, and it reverses a documented decision (2026-08-21)
+
+The one dark surface in the app. Ink ground, the prototype's 240px ring reproduced exactly
+(a 22.5px band at a 102.5px radius — it draws a 96-unit viewBox at 240px with a 9-unit
+stroke), the 54px clock, `REST · OF 2:00` at the prototype's own 0.16em, the ±30s pair and
+"skip rest".
+
+**The previous canvas took no touches at all, and its reasoning was good.** Built once as a
+full-screen Pressable it swallowed every touch on the board, so the next set cost
+dismiss-then-commit and GATE U2's one tap became two. Its comment concluded, in bold:
+"a zIndex cannot fix that".
+
+**That conclusion was wrong, and the web app has been disproving it since v5.**
+`src/components/RestExpanded.tsx:126` renders the takeover at `z-[29]`;
+`src/components/SetEntry.tsx:640` renders the commit bar at `z-[31]`. The bar sits ABOVE the
+takeover, so a repeat set is one tap there while the takeover owns its own controls. Native
+now does the same: canvas at `zIndex: 29`, session CTA at `zIndex: 31`. **Verified on a
+simulator: mid-rest, `Log set 2 · 2.5 × 1` is visible and pressable over the dark canvas.**
+
+That z-order pair is in the CODE and in neither `WAZN_PLAN.md` nor `DECISIONS.md`. It is
+written down here now because it took a search of three documents and a read of two components
+to recover, and lowering either number is a silent two-tap regression on the only metric §1
+states.
+
+The prototype's translucent "next Bench — set 3 · 62.5 × 5" strip is deliberately NOT drawn:
+the CTA above the canvas already carries that sentence, as an action rather than a
+description.
+
+**Two defects the screenshot caught and no check could:**
+
+- The canvas is absolutely positioned to the root, so it does not inherit the session screen's
+  `paddingTop` — its header drew over the status bar and the clock. An overlay covering the
+  window owns its own safe area.
+- The COACH LINE is `null`. `ghost-reason` is not wired to this screen, and the prototype puts
+  a sentence there. A gap, not a placeholder.
+
+#### TWO BUGS IN THE PICKER PATH, FOUND BY WALKING IT (2026-08-21)
+
+Neither was visible to `tsc`, eslint, the tests or `bundle:ios`. Both were visible in one
+screenshot of a board with a lift added.
+
+1. **A freshly added Bench Press had no weight dial.** `addExercise` seeded every set with
+   `weightKg: null`, and `live-board.ts:24` defines a null `weightKg` as _bodyweight lift_ —
+   so the board hid the weight stepper entirely. The picker knows the equipment; it now says
+   so, and only a genuine bodyweight lift gets a null.
+2. **Set 2 of an added lift reset to zero.** The dialled values re-seed from the new set, and
+   a lift with no history has none — so banking set 1 at 60×8 left set 2 showing 0, which is
+   GATE U2's one-tap repeat turning into eight presses on `+`. The values now carry forward
+   when the next set has none, and `seedWeight` keeps a bodyweight set from inheriting the
+   60kg of the bench press before it.
+
 #### DAY ONE IS A DEAD END ON NATIVE, AND THIS SCREEN MADE IT VISIBLE
 
 The board is seeded from the LAST session, so on the first workout of a new account it is

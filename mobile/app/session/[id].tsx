@@ -23,6 +23,7 @@ import { useLocale } from '@/hooks/use-locale'
 import { useUnit } from '@/hooks/use-unit'
 import { banked as hapticBanked, tick } from '@/services/haptics'
 import {
+  adjustRest,
   bankCurrentSet,
   endRest,
   finishWorkout,
@@ -181,6 +182,29 @@ function Stepper({
   )
 }
 
+/**
+ * What the weight dial should show when the board moves to a new set.
+ *
+ * Three cases and they are all load-bearing:
+ *
+ *   bodyweight    `weightKg === null` MEANS bodyweight (`live-board.ts:24`).
+ *                 It must return null, or a pull-up inherits the 60kg from the
+ *                 bench press before it and 60kg is written to the row.
+ *   seeded        A set with a real previous number uses it. This is the normal
+ *                 case for a board built from history.
+ *   fresh         A lift added mid-session seeds `0`, which is "no weight yet"
+ *                 rather than "zero kilos". Carrying the last dialled value
+ *                 forward is what makes set 2 of an added lift one tap instead
+ *                 of eight presses on `+`.
+ */
+function seedWeight(
+  next: { weightKg: number | null } | null,
+  carried: number | null,
+): number | null {
+  if (next === null || next.weightKg === null) return null
+  return next.weightKg > 0 ? next.weightKg : (carried ?? 0)
+}
+
 export default function LiveWorkout() {
   const router = useRouter()
   const insets = useSafeAreaInsets()
@@ -207,10 +231,21 @@ export default function LiveWorkout() {
   }>({ key, weightKg: view.set?.weightKg ?? null, reps: view.set?.reps ?? null })
 
   if (dialled.key !== key) {
+    /*
+     * Seeded from the new set when it HAS numbers, carried forward from the
+     * last ones when it does not.
+     *
+     * A board seeded from history gives every set the previous session's
+     * numbers, so the first branch is the normal case. A lift added mid-session
+     * has none — and resetting to null there meant banking set 1 at 60×8 and
+     * finding set 2 showing 0, which is GATE U2's one-tap repeat turning into
+     * eight taps on the `+`. "The stepper KEEPS them" is the gate; this is
+     * where it is kept.
+     */
     setDialled({
       key,
-      weightKg: view.set?.weightKg ?? null,
-      reps: view.set?.reps ?? null,
+      weightKg: seedWeight(view.set, dialled.weightKg),
+      reps: view.set?.reps ?? dialled.reps,
     })
   }
 
@@ -268,6 +303,10 @@ export default function LiveWorkout() {
   }
 
   const done = (view.exercise?.sets ?? []).filter((s) => s.done)
+  const banked = live.board.reduce(
+    (n, e) => n + e.sets.filter((row) => row.done).length,
+    0,
+  )
   const previous = (view.exercise?.sets ?? [])
     .filter((s) => s.previousReps !== null)
     .map((s) =>
@@ -511,6 +550,17 @@ export default function LiveWorkout() {
           paddingTop: 10,
           paddingBottom: Math.max(insets.bottom, 26),
           paddingHorizontal: space.gutter,
+          /*
+           * 31, against the rest canvas's 29 — the same pair the web app has
+           * used since v5 (`SetEntry.tsx:640` and `RestExpanded.tsx:126`).
+           *
+           * It is what lets the canvas be a real surface with its own controls
+           * while a repeat set stays ONE tap: the commit button is never
+           * covered, so the finger goes where it already knows to go and the
+           * rest ends on the way past. Lowering this number is a two-tap
+           * regression on the app's only stated metric.
+           */
+          zIndex: 31,
         }}
       >
         <Pressable
@@ -558,13 +608,15 @@ export default function LiveWorkout() {
         <RestCanvas
           endsAt={live.restEndsAt}
           total={live.restTotal}
-          nextLabel={
-            view.set === null
-              ? null
-              : view.set.weightKg === null
-                ? `${view.set.reps ?? 0} reps`
-                : `${toDisplayWeight(view.set.weightKg, unit)} × ${view.set.reps ?? 0}`
-          }
+          title={live.name === '' ? t('log.workout_fallback') : live.name}
+          loggedLabel={`${elapsed} · ${t('workout.logged', {
+            n: String(banked),
+          })}`}
+          // Null until `ghost-reason` is wired to this screen. The prototype
+          // puts a sentence here; an invented one is worse than the gap.
+          coachLine={null}
+          onSkip={endRest}
+          onAdjust={adjustRest}
         />
       )}
     </View>

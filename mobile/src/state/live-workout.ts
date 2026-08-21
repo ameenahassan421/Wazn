@@ -435,13 +435,24 @@ export function bankCurrentSet(weightKg: number | null, reps: number | null): vo
  * done before, the honest previous is one `previous_session` RPC away and is a
  * follow-up; null renders as "no ghost", which is a missing hint rather than a
  * wrong one.
+ *
+ * ── `weightKg: 0` AND NOT `null`, WHICH IS NOT A DETAIL ─────────────────────
+ * `live-board.ts:24` defines a null `weightKg` as "bodyweight lift", and the
+ * board screen hides the weight dial entirely when it sees one. Seeding every
+ * added lift with null therefore shipped a Bench Press you could not put a
+ * weight on — caught on a simulator, not by any check, because the picker path
+ * had never been walked. The caller knows the equipment; it has to say.
  */
-export function addExercise(exerciseId: string, name: string): void {
+export function addExercise(
+  exerciseId: string,
+  name: string,
+  bodyweight = false,
+): void {
   if (state.board.some((e) => e.exerciseId === exerciseId)) return
   const sets = [1, 2, 3].map((setNumber) => ({
     setNumber,
     type: 'normal' as const,
-    weightKg: null,
+    weightKg: bodyweight ? null : 0,
     reps: null,
     done: false,
     previousKg: null,

@@ -1,48 +1,104 @@
 import { useEffect, useState } from 'react'
-import { View } from 'react-native'
+import { Pressable, View } from 'react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
-import { palette, space } from '@wazn/domain'
+import { palette, radius, space } from '@wazn/domain'
 
 import { Ring } from '@/components/ui/Ring'
-import { Txt, Kick } from '@/design/Txt'
-import { restEnded } from '@/services/haptics'
+import { Plate } from '@/components/ui/Plate'
+import { Txt } from '@/design/Txt'
+import { restEnded, tick } from '@/services/haptics'
 
 /**
- * Screen 08, the rest canvas.
+ * Rest, against `docs/design/prototype/source.html` — the screen labelled
+ * "Rest". The one dark surface in the whole app.
+ *
+ * ── IT TAKES TOUCHES NOW, AND THAT REVERSES A DELIBERATE DECISION ───────────
+ * The previous version was `pointerEvents="none"` with no controls at all, and
+ * its reasoning was sound: built as a full-screen Pressable it swallowed every
+ * touch on the board, so the next set cost dismiss-then-commit and GATE U2's
+ * one tap became two. Its comment concluded "a zIndex cannot fix that".
+ *
+ * That conclusion was wrong, and the WEB APP has been proving it since v5:
+ * `src/components/RestExpanded.tsx:126` renders the takeover at `z-[29]` and
+ * `src/components/SetEntry.tsx:640` renders the commit bar at `z-[31]`. The
+ * bar sits ABOVE the takeover, so a repeat set is one tap there while the
+ * takeover still owns its own controls. Native now does the same: this canvas
+ * is `zIndex: 29` and the session screen's CTA is `zIndex: 31`.
+ *
+ * So the ±30s pair and "skip rest" come back — the prototype draws all three —
+ * without costing the tap. A tap on the BACKGROUND still goes early, which is
+ * the behaviour a lifter already has in their thumb.
  *
  * ── THE RING FILLS, IT DOES NOT DRAIN ───────────────────────────────────────
  * `progress` runs 0 to 1 as the rest elapses, so the ring closes as the lifter
  * gets closer to lifting again. A draining ring says "time is running out",
- * which is the opposite of what rest is: the bar is not going anywhere and the
- * clock is on their side.
+ * which is the opposite of what rest is: the bar is not going anywhere.
  *
  * ── IT IS SILENT ────────────────────────────────────────────────────────────
  * Do-not-regress #5. No sound, ever, from a timer in a room where somebody is
  * under a bar. The end announces itself through the hand, once, via
  * `restEnded()`. That is the whole notification.
- *
- * ── IT NEVER BLOCKS AND NEVER ASKS ──────────────────────────────────────────
- * A tap anywhere dismisses it, and it is a plain overlay rather than a modal:
- * no focus trap, no dialog role, nothing that has to be answered.
- *
- * ── IT APPEARS ON ITS OWN, SINCE 2026-08-17 ─────────────────────────────────
- * Ameen turned the takeover on. Warm-ups are excluded for free, because the
- * commit rule already starts no rest for them.
- *
- * It takes no props for dismissing or adjusting, and that is deliberate: this
- * surface has no inputs and no touches. The session screen dismisses it on the
- * first touch anywhere, and the rest bar on the board owns the timer.
  */
+
+/** The ±30s pair and "skip rest": Hanken 600, not the display face. The
+ *  prototype sets every secondary action on this screen in the body voice,
+ *  which is what keeps them from competing with a 54px clock. */
+function QuietAction({
+  label,
+  filled,
+  onPress,
+}: {
+  label: string
+  /** The ±30s pills have a ground; "skip rest" does not. */
+  filled?: boolean
+  onPress: () => void
+}) {
+  return (
+    <Pressable
+      accessibilityRole="button"
+      hitSlop={8}
+      onPress={() => {
+        tick()
+        onPress()
+      }}
+      style={{
+        minHeight: 44,
+        paddingHorizontal: filled === true ? 22 : 8,
+        borderRadius: radius.pill,
+        backgroundColor: filled === true ? palette.onInkRaised : 'transparent',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+    >
+      <Txt step="action" ink={filled === true ? 'onInk' : 'onInkMuted'}>
+        {label}
+      </Txt>
+    </Pressable>
+  )
+}
+
 export function RestCanvas({
   endsAt,
   total,
-  nextLabel,
+  title,
+  loggedLabel,
+  coachLine,
+  onSkip,
+  onAdjust,
 }: {
   endsAt: number
   total: number
-  /** The set waiting on the other side, already formatted and unit-aware. */
-  nextLabel: string | null
+  /** The routine's name, so the canvas does not lose where you are. */
+  title: string
+  /** "3:24 · set 2 logged ✓", already formatted. */
+  loggedLabel: string
+  /** The coach's sentence, or null when there is nothing true to say. */
+  coachLine: string | null
+  onSkip: () => void
+  onAdjust: (deltaSeconds: number) => void
 }) {
+  const insets = useSafeAreaInsets()
   const [now, setNow] = useState(() => Date.now())
 
   useEffect(() => {
@@ -66,74 +122,130 @@ export function RestCanvas({
   }, [remaining === 0])
 
   const progress = total <= 0 ? 1 : Math.min(1, (total - remaining) / total)
-  const minutes = Math.floor(remaining / 60)
-  const seconds = String(remaining % 60).padStart(2, '0')
+  const clock = (s: number) =>
+    `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
 
   return (
-    /*
-     * `pointerEvents="none"`, and it is the whole design rather than a detail.
-     *
-     * v5 screen 08 is "passive, silent, no inputs; vanishes on interaction".
-     * Built as a full-screen Pressable, this swallowed every touch on the
-     * board, so the next set cost dismiss-then-commit and GATE U2's one tap
-     * became two. A zIndex cannot fix that: whatever is on top of a Pressable
-     * still has a Pressable under it eating the rest of the screen.
-     *
-     * Taking no touches at all means the first tap lands wherever the lifter
-     * aimed it, and the screen's own `onTouchStart` clears the canvas on the
-     * way past. One tap, everywhere. The web half is `RestExpanded`'s
-     * `takeover` prop, where the same defect wore `inert` instead.
-     *
-     * `progressbar` rather than `button`: it announces the rest, and there is
-     * nothing here to press.
-     */
     <View
-      pointerEvents="none"
-      accessibilityRole="progressbar"
-      accessibilityLabel="Rest. Tap anywhere to go early."
       style={{
         position: 'absolute',
         top: 0,
         bottom: 0,
         start: 0,
         end: 0,
-        // Paint order only, now that nothing here takes a touch: 29 keeps the
-        // BANK IT bar at 31 reading as ON the canvas rather than behind it.
+        // 29, and the session screen's CTA is 31. See the note above: this is
+        // what lets the canvas own controls without costing the repeat tap.
         zIndex: 29,
-        backgroundColor: palette.paper,
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: 18,
-        paddingHorizontal: space.gutter,
+        backgroundColor: palette.ink,
       }}
     >
-      {/* The coach's voice, not a section label, so it takes the accent tier
-          rather than muted. A middot replaces the reference's dash: no
-          em-dashes in copy a user reads. */}
-      <Kick ink="accentSoft">REST · THE COACH IS THINKING</Kick>
+      {/* The background dismisses. It is a sibling UNDER the content rather
+          than a wrapper around it, so pressing ±30s does not also go early —
+          which is what happens when the handler lives on an ancestor and RN
+          bubbles the touch up to it. */}
+      <Pressable
+        accessibilityLabel="Go early"
+        onPress={onSkip}
+        style={{ position: 'absolute', top: 0, bottom: 0, start: 0, end: 0 }}
+      />
 
-      <Ring progress={progress} size={250}>
-        <Txt step="mega" ltr style={{ fontSize: 64 }}>
-          {`${minutes}:${seconds}`}
-        </Txt>
-      </Ring>
-
-      {nextLabel !== null && (
-        <View style={{ alignItems: 'center', gap: 8 }}>
-          <Kick>NEXT</Kick>
-          <Txt step="fig" ltr style={{ fontSize: 38 }}>
-            {nextLabel}
-          </Txt>
+      {/* Its own inset. The canvas is absolutely positioned to the ROOT, so
+          it does not inherit the session screen's `paddingTop` — its header
+          drew over the status bar and the clock until 2026-08-21. An overlay
+          that covers the whole window owns its own safe area. */}
+      <View
+        pointerEvents="box-none"
+        style={{
+          flex: 1,
+          paddingHorizontal: space.gutter,
+          paddingTop: insets.top,
+        }}
+      >
+        <View
+          pointerEvents="box-none"
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 12,
+            paddingTop: 10,
+          }}
+        >
+          <View style={{ flex: 1 }} pointerEvents="none">
+            <Txt step="cta" ink="onInk" numberOfLines={1}>
+              {title}
+            </Txt>
+            <Txt step="meta" ink="onInkFaint" ltr style={{ marginTop: 2 }}>
+              {loggedLabel}
+            </Txt>
+          </View>
+          <QuietAction label="skip rest" onPress={onSkip} />
         </View>
-      )}
 
-      {/* The ±30s pair is GONE, and that is the spec rather than a casualty.
-          Screen 08 says this surface has no inputs; a layer taking no touches
-          could not have driven them anyway. Changing the timer is the rest
-          bar's job on the board underneath, which is one tap away because
-          this canvas no longer stands between the finger and the screen. */}
+        <View
+          pointerEvents="box-none"
+          style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: 30 }}
+        >
+          {/* 250 and 22.5 reproduce the prototype's arc exactly: it draws a
+              240px SVG on a 96-unit viewBox with a 9-unit stroke at r41, which
+              scales to a 22.5px band at a 102.5px radius. */}
+          <Ring progress={progress} size={250} stroke={22.5} onInk>
+            <View pointerEvents="none" style={{ alignItems: 'center' }}>
+              <Txt step="mega" ink="onInk" ltr>
+                {clock(remaining)}
+              </Txt>
+              <Txt
+                step="meta"
+                ink="onInkMuted"
+                ltr
+                style={{
+                  marginTop: 4,
+                  // The prototype's own 0.16em, wider than any step on the
+                  // ramp. It is the only tracked label on the screen and it is
+                  // what stops a 54px clock reading as the whole surface.
+                  letterSpacing: 12 * 0.16,
+                  textTransform: 'uppercase',
+                }}
+              >
+                {`Rest · of ${clock(total)}`}
+              </Txt>
+            </View>
+          </Ring>
 
-      <Kick ink="muted">TAP TO GO EARLY</Kick>
+          <View style={{ flexDirection: 'row', gap: 10 }}>
+            <QuietAction filled label="− 30s" onPress={() => onAdjust(-30)} />
+            <QuietAction filled label="+ 30s" onPress={() => onAdjust(30)} />
+          </View>
+
+          {coachLine !== null && (
+            <View
+              pointerEvents="none"
+              style={{
+                flexDirection: 'row',
+                alignItems: 'flex-start',
+                gap: 12,
+                maxWidth: 320,
+                backgroundColor: palette.onInkSurface,
+                borderRadius: radius.cardSm,
+                paddingVertical: 16,
+                paddingHorizontal: 18,
+              }}
+            >
+              <Plate size={24} variant="hub" color={palette.onInk} />
+              <Txt step="body" ink="onInkBody" style={{ flex: 1 }}>
+                {coachLine}
+              </Txt>
+            </View>
+          )}
+        </View>
+
+        {/* The prototype closes with a translucent "next  Bench — set 3 ·
+            62.5 × 5" strip that skips the rest. That strip is not drawn here
+            because the session screen's ember CTA sits above this canvas at
+            zIndex 31 and already carries the same sentence — as an action
+            rather than a description. Two controls saying "the next set is
+            62.5 × 5" is one too many, and the one that BANKS it wins. */}
+        <View style={{ height: space.ctaLive + 40 }} pointerEvents="none" />
+      </View>
     </View>
   )
 }

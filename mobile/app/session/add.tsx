@@ -63,7 +63,10 @@ export default function AddExercise() {
 
   function choose(exercise: CatalogueExercise) {
     tick()
-    addExercise(exercise.id, exercise.name)
+    // The equipment decides whether this lift has a weight dial at all. A
+    // null `weightKg` means "bodyweight" to the board, so guessing here would
+    // hide the dial on a barbell lift.
+    addExercise(exercise.id, exercise.name, exercise.equipment === 'bodyweight')
     router.back()
   }
 
