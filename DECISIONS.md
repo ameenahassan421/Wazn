@@ -8592,3 +8592,79 @@ translation problem in two locales rather than a one-line fix.
 the web's `daysRested`. Genuinely contested: for RECOVERY, elapsed hours is the
 better model; for COPY, the calendar day is. `localDay` already exists if the
 copy should split from the readiness input.
+
+## 2026-08-21 — the set-type control is a warm-up TOGGLE, and history sets it for free
+
+Missing-list item 1: every set logged in Wazn was `'normal'`, because
+`persistSet` carried the board's type and nothing ever set it to anything else.
+Thirteen SQL functions filter on `set_type <> 'warmup'`, so four ramp-up sets of
+bench counted as working volume and could set a personal record off an empty
+bar.
+
+**A toggle, not the web's four-way cycle.** `SetEntry` on the web cycles
+normal → warmup → failure → drop. `grep` over every migration says only ONE of
+those four is ever discriminated: `warmup`, in thirteen functions. `failure` and
+`drop` are annotations nothing reads, and this control exists to fix a
+data-correctness bug rather than to reach parity, so it draws the distinction
+the database actually makes and no others. Adding the other two is a
+five-minute change the day something reads them.
+
+**`seedBoard` carries the previous row's type, and that is the bigger half.**
+Every other field on a seeded set is read off the matching previous row and the
+type was minted `'normal'`. So repeating last session one tap per set — GATE
+U2's own path — took a warm-up run and relabelled it as working sets. It now
+carries, which means a lifter who repeats a session gets their warm-ups back
+correctly at ZERO taps. Verified on a simulator against the live account: sets
+1 and 2 of "Aug 20-26 Day A: Lower" arrived pre-marked from Hevy's own types,
+no rest started after either, and the working set at 180 × 6 started a 2:00
+rest.
+
+**Not sticky across sets, which is a deliberate deviation from the web.**
+`SetEntry.tsx:294` keeps a chosen warm-up after commit and resets only
+`failure`/`drop`. A stuck warm-up flag deletes working volume silently and
+permanently — the mirror of the bug being fixed, and the worse direction, since
+the lifter sees a normal-looking row. Three taps across a warm-up run on the
+unhurried half of a session is the cheaper failure, and with the seed carrying
+types the common case costs zero anyway.
+
+**Two second-order fixes shipped with it, both of which only became wrong the
+moment a warm-up was possible.** `verdictFor`'s contract says `committed` is
+"Working sets already committed today" (`ghost-reason.ts:89`); the board was
+passing every banked row, so a 40 × 10 off an empty bar would have read to the
+coach as falling short and produced a sentence telling the lifter to take weight
+OFF. And the finish summary counted every row in its Sets tile while the tile
+beside it counted working volume — "1,080 lbs lifted · 3 sets" for a session
+with one working set, two figures measuring different sessions. Both were
+invisible for as long as the board could not produce a warm-up.
+
+The finish list keeps each row's own set number rather than renumbering over the
+working sets the way the web summary does. The board says "set 3 of 6" about
+that row; a list calling the same row "Set 1" would be a second numbering of one
+session. It says `Warm-up` in place of the number instead.
+
+## 2026-08-21 — Start led to "No exercises yet" on a 163-workout account, and `limit(1)` was why
+
+Found by pressing Start on a simulator while verifying the control above.
+
+`startWorkout` asked for the single most recent finished workout and seeded the
+board from its sets. That is the same defect `src/lib/last-session.ts` was
+written for on the same day, still live in the sibling path — and worse there:
+Home rendered first-run copy over real history, this rendered NO WORKOUT AT ALL.
+The board came up empty, "Add exercise" was the only way forward, and the app's
+one sentence is "log a set in under thirty seconds".
+
+Production has **four** 0-set residue workouts, not the one this file logged on
+2026-08-01: `20:03 "Upper"` today plus three within nine seconds at `02:21`,
+all of them start-and-abandons from testing. The real last session — 20 sets —
+sits four rows down. Any lifter who taps Start, logs nothing and leaves creates
+one, so this is not a testing artifact with a testing-only blast radius.
+
+Fixed by taking a 30-session window and the first row with working volume,
+using `sessionVolume` — the same qualifier and the same window `useHome`
+already uses. Two windows would be two answers to "what was my last session",
+and the momentum target this board chases comes from the same query.
+
+`daysRested` and the readiness it seeds come from that same row now, which
+closes the mirror defect the helper's own header warns about: an empty session
+today would otherwise answer "0 days rested" for somebody who has not trained in
+a month.

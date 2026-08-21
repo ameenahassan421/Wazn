@@ -1283,11 +1283,12 @@ no more planning passes — implement.
 
 **Implementation order, agreed with Ameen:**
 
-1. **Open the PR for `claude/coach-review-figures`** (9 commits: Coach tab
-   figures, the Hevy import + the implausible-reps guard, Progress built
-   native, the Home window fix, and the plan documents) and land it.
+1. ~~**Open the PR for `claude/coach-review-figures`**~~ **DONE 2026-08-21.**
+   PR #111, all six checks green, merged to `main` as `7ce3a79` with a merge
+   commit so its nine messages survive in `git log`.
 2. **Finish 4A's core loop for a phone in hand** — the gaps in this section's
-   missing-list: the set-type control (data correctness, item 1), the
+   missing-list: ~~the set-type control (data correctness, item 1)~~ **DONE,
+   see below**, the
    background rest timer, the auth screen, GATE A2's 30-second instrument.
 3. **The four-tab restructure** per FRIENDS_PLAN Part 3B — Plan tab first (the
    production row counts say it is the missing one), then the Progress merge
@@ -1304,6 +1305,57 @@ too, on Expo (SDK 57, bundle ids already in `app.config.ts`), and what survives
 the stores is EAS Update's OTA lane for JS plus instant Edge Function/SQL
 deploys, not store avoidance. And `eas.json` does not exist yet; EAS runs from
 Ameen's laptop, never from a sandboxed session (`api.expo.dev` is 403 here).
+
+#### The board can hold a warm-up, and Start was a dead end (2026-08-21, after the merge)
+
+Missing-list item 1, plus a defect found by pressing the button that fixes it.
+
+**The control.** A `Warm-up` chip under the two dials — ink fill when selected,
+because ember belongs to the one thing you press. The commit button reads
+`Log warm-up · 90 × 5` instead of `Log set 1 · 90 × 5`, since the label is the
+last thing read before the tap and this screen cannot retype a banked row.
+`markSetType` lives in `src/lib/live-board.ts` with the rest of the board's
+arithmetic and refuses a done set; the store's `setCurrentSetType` is four
+lines over it.
+
+**`seedBoard` now carries the previous row's type, and that is the half that
+matters.** Every other field on a seeded set was read off the matching previous
+row and the type was minted `'normal'`, so repeating a session one tap per set
+took a warm-up run and wrote it as working volume. Both assertions were watched
+to FAIL against the old expression before they were trusted.
+
+**Two things that were only wrong once a warm-up was possible**, both fixed
+here: the ghost was being handed every banked row as `committed`, whose contract
+says working sets (`ghost-reason.ts:89`), so an empty-bar 40 × 10 would have
+read as falling short and produced a sentence telling the lifter to drop weight;
+and the finish summary counted warm-ups in its Sets tile beside a volume tile
+that excludes them — "1,080 lbs lifted · 3 sets" for a session with one working
+set.
+
+**Then Start led to "No exercises yet" on a 163-workout account.** `startWorkout`
+took `.limit(1)` on the newest finished workout — the same defect
+`last-session.ts` was written for that morning, still live in the sibling path,
+and worse: Home rendered first-run copy over real history, this rendered no
+workout at all. Production holds FOUR 0-set residue rows above the real last
+session. Now a 30-session window and the first row with working volume, by
+`sessionVolume`, matching Home's window so the two cannot answer "what was my
+last session" differently.
+
+**Verified on an iPhone 17 Pro against the live account, and it wrote nothing to
+production.** There is no discard path on native, so a drill session would leave
+a fifth residue row; `ensureWorkoutRow` was stubbed for the walk and the stub
+removed after, and `workouts` was then queried for the window — zero rows. Seen:
+the board seeding from "Aug 20-26 Day A: Lower" with sets 1 and 2 arriving
+pre-marked as warm-ups from Hevy's own types at zero taps, no rest after either,
+a 2:00 rest after the working set, the chip toggling both ways with the button
+label following, the done rows tagged `WARM-UP`, and the summary reading
+"1,080 lbs lifted · 1 Set".
+
+**One defect the simulator caught and every check missed:** the note beside the
+chip was set in `nano`, which is this system's TRACKED UPPERCASE MONO — so a
+sentence rendered as "OUT OF VOLUME, RECORDS AND THE COACH." Prose, shouted, in
+the typeface reserved for plate maths. It is the same defect as the offline
+queue line fixed on 2026-08-19, in the same file. `caption` now.
 
 **Still open from this session:** the poisoned 95-rep row (repair blocked by
 the session's safety classifier — fix it in Hevy or approve `reps = null`); the
@@ -1467,16 +1519,16 @@ first. Do not revisit this without re-running the numbers.
 Every row below was checked against the repo, not recalled. Ordered by what breaks if it stays
 missing.
 
-| #   | Gap                                                                                         | Evidence                                                                                                                                                                          | Why it matters                                                                                                                                                                                                                                                                                                                |
-| --- | ------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1   | **No set-type control on native.** Every set logged in Wazn is `'normal'`.                  | `mobile/app/session/[id].tsx` contains no reference to `warmup`, `setType` or `set_type`. `mobile/src/state/live-workout.ts:72` says it outright: "no native control changes it". | This is a DATA-CORRECTNESS bug, not a parity gap. `weekly_review()`, `recompute_pr_flags` and every volume figure filter on `set_type <> 'warmup'`. A lifter's four warm-up sets of bench count as working volume and can set a fake PR. The Hevy-imported history has correct types; anything logged in Wazn since does not. |
-| 2   | **Nothing measures §1's promise.**                                                          | `grep` for a tap/elapsed harness over `e2e/`, `scripts/`, `mobile/` finds only three prose comments quoting "30 seconds".                                                         | GATE A2 is defined as this instrument and it does not exist. The sentence has governed every design decision for 200+ commits and has never once been checked.                                                                                                                                                                |
-| 3   | **No background rest timer.** `expo-notifications` is not a dependency.                     | Absent from `mobile/package.json`; no `scheduleNotification` anywhere.                                                                                                            | Stage 4A calls it "the single capability that justifies this whole stage". A lifter locks their phone between sets and the timer dies.                                                                                                                                                                                        |
-| 4   | **Implausible-input guard: HALF DONE 2026-08-21.**                                          | The import door refuses them now (`MAX_PLAUSIBLE_REPS`, proved against the real row).                                                                                             | The thirteen SQL functions that inline Epley still have no cap, so a set typed INTO the app is unguarded, and the one bad row already in production is still there. See the block above this table.                                                                                                                           |
-| 5   | **Two 24-line stubs remain.** `friends.tsx`, `progress.tsx`.                                | `wc -l mobile/app/(tabs)/*.tsx`.                                                                                                                                                  | GATE A1's wording is "no 21-line stub remains". It cannot pass.                                                                                                                                                                                                                                                               |
-| 6   | **Cached review prose can contradict live figures.**                                        | Seen 2026-08-21: the volume chart drew 11 chest sets while the sentence under it read "No muscle groups logged working sets this week."                                           | Inherent to the split now that figures are live SQL and sentences are a weekly cache. Correct behaviour beats stale prose, but the contradiction is visible. Either stamp the prose with its as-of date, or invalidate the cache when the underlying window changes.                                                          |
-| 7   | **The Coach tab's Edge Function times out on real data.**                                   | "The review took too long. Try again." on an account with 163 workouts, 2026-08-21.                                                                                               | Now survivable — the figures render regardless since the notes were moved out of the model's state chain — but the sentences are unreachable on the account with the most history, which is the opposite of the intended failure curve.                                                                                       |
-| 8   | **An inert 0-set workout sits in production.** `9ef49d4c`, 2026-08-21, 21 seconds, no sets. | Queried directly.                                                                                                                                                                 | Same class as the 2026-08-01 residue logged in DECISIONS.md, and left alone for the same reason: it is real user data and §2.6 makes deleting it an ask. It does count as a session in adherence.                                                                                                                             |
+| #   | Gap                                                                                                                                  | Evidence                                                                                                                                                              | Why it matters                                                                                                                                                                                                                                                                          |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | ~~**No set-type control on native.**~~ **FIXED 2026-08-21.**                                                                         | A warm-up chip under the dials, `markSetType` in the shared domain, and `seedBoard` carrying the previous row's type. Walked on a simulator against the live account. | Was a DATA-CORRECTNESS bug, not a parity gap: thirteen SQL functions filter on `set_type <> 'warmup'`, so warm-ups logged in Wazn counted as working volume and could set a fake PR. Anything logged in Wazn BEFORE this is still typed `'normal'` and cannot be told apart afterwards. |
+| 2   | **Nothing measures §1's promise.**                                                                                                   | `grep` for a tap/elapsed harness over `e2e/`, `scripts/`, `mobile/` finds only three prose comments quoting "30 seconds".                                             | GATE A2 is defined as this instrument and it does not exist. The sentence has governed every design decision for 200+ commits and has never once been checked.                                                                                                                          |
+| 3   | **No background rest timer.** `expo-notifications` is not a dependency.                                                              | Absent from `mobile/package.json`; no `scheduleNotification` anywhere.                                                                                                | Stage 4A calls it "the single capability that justifies this whole stage". A lifter locks their phone between sets and the timer dies.                                                                                                                                                  |
+| 4   | **Implausible-input guard: HALF DONE 2026-08-21.**                                                                                   | The import door refuses them now (`MAX_PLAUSIBLE_REPS`, proved against the real row).                                                                                 | The thirteen SQL functions that inline Epley still have no cap, so a set typed INTO the app is unguarded, and the one bad row already in production is still there. See the block above this table.                                                                                     |
+| 5   | **Two 24-line stubs remain.** `friends.tsx`, `progress.tsx`.                                                                         | `wc -l mobile/app/(tabs)/*.tsx`.                                                                                                                                      | GATE A1's wording is "no 21-line stub remains". It cannot pass.                                                                                                                                                                                                                         |
+| 6   | **Cached review prose can contradict live figures.**                                                                                 | Seen 2026-08-21: the volume chart drew 11 chest sets while the sentence under it read "No muscle groups logged working sets this week."                               | Inherent to the split now that figures are live SQL and sentences are a weekly cache. Correct behaviour beats stale prose, but the contradiction is visible. Either stamp the prose with its as-of date, or invalidate the cache when the underlying window changes.                    |
+| 7   | **The Coach tab's Edge Function times out on real data.**                                                                            | "The review took too long. Try again." on an account with 163 workouts, 2026-08-21.                                                                                   | Now survivable — the figures render regardless since the notes were moved out of the model's state chain — but the sentences are unreachable on the account with the most history, which is the opposite of the intended failure curve.                                                 |
+| 8   | **FOUR inert 0-set workouts sit in production**, not one. `20:03 "Upper"` plus three at `02:21` within nine seconds, all 2026-08-21. | Queried directly, 2026-08-21 22:30 UTC.                                                                                                                               | Same class as the 2026-08-01 residue logged in DECISIONS.md, and left alone for the same reason: it is real user data and §2.6 makes deleting it an ask. It does count as a session in adherence.                                                                                       |
 
 **THE WORKFLOW AUDIT, 2026-08-21: 49 claimed, 43 confirmed.** Six readers over `mobile/` across
 two dimensions, each finding adversarially verified by a second agent told to refute it. It

@@ -20,6 +20,7 @@ import {
   resetWorkout,
   restoreWorkout,
   selectBoardView,
+  setCurrentSetType,
   startWorkout,
   useLiveWorkout,
 } from './live-workout'
@@ -347,10 +348,9 @@ describe('bankCurrentSet', () => {
    * filter on `set_type <> 'warmup'`, and none of them can tell afterwards.
    * The board's own type has to reach the row.
    *
-   * The type is set by hand here because `seedBoard` mints every set
-   * `'normal'` and no native control changes it yet. That is the point: the
-   * plumbing is being pinned ahead of the control, so the control cannot
-   * arrive on top of a silent corruption.
+   * The type is set by hand here, one layer below the control, so this stays
+   * an assertion about `persistSet` and not about a chip. The control's own
+   * path is the test under it.
    */
   it('writes the set type the board holds, not a hardcoded normal', async () => {
     liveState().board[0].sets[0].type = 'warmup'
@@ -361,6 +361,37 @@ describe('bankCurrentSet', () => {
     bankCurrentSet(100, 5)
     await flushPending()
     expect(lastSetRow().set_type).toBe('normal')
+  })
+
+  /**
+   * The control's whole path, end to end: the chip types the set the lifter is
+   * on, the board carries it, and `persistSet` sends it. Everything between
+   * the tap and the column is here, which is what the plumbing test above
+   * cannot cover because it writes the board by hand.
+   */
+  it('sends the type the chip chose, and stops sending it once untapped', async () => {
+    setCurrentSetType('warmup')
+    bankCurrentSet(60, 10)
+    await flushPending()
+    expect(lastSetRow().set_type).toBe('warmup')
+
+    // The next set is its own row. Nothing is sticky, so this is a working set
+    // without the lifter having to undo anything.
+    bankCurrentSet(100, 5)
+    await flushPending()
+    expect(lastSetRow().set_type).toBe('normal')
+  })
+
+  it('cannot retype a set that is already in Postgres', async () => {
+    bankCurrentSet(100, 5)
+    await flushPending()
+    expect(lastSetRow().set_type).toBe('normal')
+
+    // The board has moved on to set 2, so this types THAT one — the banked row
+    // is untouchable from here and `markSetType` is what refuses it.
+    setCurrentSetType('warmup')
+    expect(liveState().board[0].sets[0].type).toBe('normal')
+    expect(liveState().board[0].sets[1].type).toBe('warmup')
   })
 })
 

@@ -131,7 +131,17 @@ export function seedBoard(
       )
       return {
         setNumber,
-        type: 'normal' as SetType,
+        // The previous row's OWN type, not a hardcoded 'normal'.
+        //
+        // Every one of those fields is read off `match` except this one, which
+        // was minted. A lifter whose last session opened with three warm-ups
+        // got them back pre-dialled at warm-up weights and typed as working
+        // sets, so repeating a session one tap per set — the path GATE U2
+        // measures — wrote fake volume and could set a fake PR. Carrying the
+        // type is both the correct record and zero taps; the control on the
+        // board is for the first time a lift is done and for the times history
+        // is wrong.
+        type: match?.type ?? ('normal' as SetType),
         // Pre-dialled to what they did last time. This is the repeat-set
         // path GATE U2 measures: if the previous values are already in the
         // zones, banking the same set again is one tap and nothing else.
@@ -191,6 +201,37 @@ export function bankSet(
  * types with no React in it, and because the web board has the same three
  * cases the moment it grows an add-exercise path of its own.
  */
+/**
+ * Change the type of the set at `position`, returning a NEW board.
+ *
+ * Only the set in front of the lifter can change. A banked row is a fact — it
+ * is already in Postgres, and `bankSet` holds the same contract — so a done
+ * position returns the board untouched rather than editing history from a
+ * screen that has no way to send the update.
+ *
+ * Returning the SAME array when the type already matches is not a
+ * micro-optimisation: the native store checkpoints to AsyncStorage on every
+ * `set()`, and a chip tapped twice should not cost a disk write.
+ */
+export function markSetType(
+  exercises: BoardExercise[],
+  position: BoardPosition,
+  type: SetType,
+): BoardExercise[] {
+  const target = exercises[position.exerciseIndex]?.sets[position.setIndex]
+  if (target === undefined || target.done || target.type === type) return exercises
+
+  return exercises.map((exercise, ei) => {
+    if (ei !== position.exerciseIndex) return exercise
+    return {
+      ...exercise,
+      sets: exercise.sets.map((set, si) =>
+        si === position.setIndex ? { ...set, type } : set,
+      ),
+    }
+  })
+}
+
 export function seedWeight(
   next: Pick<BoardSet, 'weightKg'> | null,
   carried: number | null,
