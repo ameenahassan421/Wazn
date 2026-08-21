@@ -8287,3 +8287,66 @@ That was false. `scripts/check_tokens.ts` had never opened the file. It was foun
 changing the ground from iron to paper — exactly the change a stale third copy survives, and
 exactly the class of defect this repo keeps finding: a guard that reads correctly and does
 nothing. The assertion is real now and was proved to fail on a deliberate mismatch.
+
+---
+
+## 2026-08-21 — the weekly review reads SQL for its figures and the model only for its prose
+
+**Deviation from the shape the Coach tab shipped with, not from a stage.** The
+`coach-notes` Edge Function returns `{ line, chip }` per section. That is
+everything a paragraph needs and nothing a chart needs, so the tab could only
+ever be a column of prose, and it was: four identical grey boxes where the only
+difference between "you did nothing" and "you gained 24 kg on a press" was the
+words inside them.
+
+`fetchReviewBlock()` now calls `weekly_review()` directly, as a second and
+independent read. It is the same RLS-scoped RPC the Edge Function itself calls,
+so the client is entitled to it and nothing new is exposed. Deliberately
+separate, and deliberately returning `null` instead of throwing: the sentences
+are the half that can fail slowly (a model call, bounded at 45 seconds), the
+numbers cannot, and asking for them apart means the charts are on screen while
+the prose is still being written and stay there if it never comes. That is the
+two-stage draw the coach has always used, applied to a whole screen rather than
+to one line.
+
+**Why this is not "an LLM on the critical path" creeping back.** It is the
+opposite. Every figure on the screen is now computed in Postgres; the model
+phrases and nothing else. §12's "if AI is dark, render the deterministic
+skeleton" is satisfied by construction here rather than by a fallback branch
+that nobody exercises.
+
+### Two things a green wall did not catch, and a screenshot did
+
+**"STALLED · Bench Press (Barbell) · 140 → 156."** The first draft drew
+`first_e1rm → last_e1rm` under the plateau heading. Both figures were accurate.
+The pairing was a lie: `weekly_review()` selects a plateau on
+`regr_slope(e1rm, n) <= 0` across every session, and a lift that peaks
+mid-window rises between its first session and its last while trending flat.
+The section now draws `slope_per_session`, which is the quantity the filter
+tests and is non-positive by construction. Same family as 0029's
+`coalesce(max(gap), 0)`: a number that reads correctly and means its opposite.
+
+**The volume chart was scaled by bars it does not draw.** Bands arrive sorted
+ascending and the chart draws the lowest six, so `max()` over the full array is
+always one of the dropped rows. Fixed by extracting `reviewBandScale()` into
+`src/lib/coach-lines.ts` — the banked side of the migration, where it gets the
+coverage gate and a test — and scaling to the rendered rows. The dropped rows
+are counted in words under the chart, per CLAUDE.md's no-silent-caps rule.
+
+Both are pinned in `src/lib/coach-lines.test.ts`, and the scale assertion was
+run against the old expression and watched to fail (`expected 60 to be 25`)
+before it was trusted.
+
+### Smaller, but the same shape
+
+`toDisplayWeight` was used for every weight on the screen. These are e1RM
+estimates and `units.ts` already had `formatEstimate` for exactly this, with a
+comment explaining why: snapping an estimate to a loadable plate prints 156
+where Progress prints 155.6, and a reader who learns the coach's figures are
+approximate is a reader who cannot spot a real fabrication. The first draft
+hand-rolled its own rounding and walked straight into it.
+
+Three labels beside the numbers were hardcoded English while the four section
+names were being passed in already translated — a screen is localised or it is
+not. They are `coach.review.figure.*` keys now, en and ar, and the existing
+"en and ar have identical key sets" test covers them.

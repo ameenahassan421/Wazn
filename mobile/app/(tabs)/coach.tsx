@@ -5,17 +5,18 @@ import {
   COACH_MODES,
   MODE_BEHAVIOUR,
   QUOTA_VISIBLE_AT,
-  REVIEW_SECTIONS,
   isModeReady,
   palette,
   radius,
   space,
   type CoachMode,
-  type CoachNotes,
+  type CoachNotes as CoachNotesPayload,
+  type ReviewBlock,
 } from '@wazn/domain'
 
 import { Btn } from '@/components/ui/Btn'
-import { Card, Rule } from '@/components/ui/Surface'
+import { CoachNotes } from '@/components/CoachNotes'
+import { Card } from '@/components/ui/Surface'
 import { Chip } from '@/components/ui/Chip'
 import { Empty, Screen } from '@/components/ui/Screen'
 import { Header } from '@/components/ui/Header'
@@ -24,7 +25,7 @@ import { Txt, Kick } from '@/design/Txt'
 import { useCoach } from '@/hooks/use-coach'
 import { useLocale } from '@/hooks/use-locale'
 import { useUnit } from '@/hooks/use-unit'
-import { fetchWeeklyReview } from '@/services/coach'
+import { fetchReviewBlock, fetchWeeklyReview } from '@/services/coach'
 import { supabaseConfigError } from '@/services/supabase'
 
 /**
@@ -144,7 +145,16 @@ export default function CoachTab() {
   const { unit } = useUnit()
   const { mode, setMode, speaks } = useCoach()
 
-  const [notes, setNotes] = useState<CoachNotes | null>(null)
+  const [notes, setNotes] = useState<CoachNotesPayload | null>(null)
+  /**
+   * The FIGURES, on their own read and their own cadence.
+   *
+   * One RPC, no model, so the charts are on screen while the sentences are
+   * still being written — and they stay there if the sentences never arrive.
+   * That is the two-stage draw the coach has always used, applied to a whole
+   * screen instead of to one line.
+   */
+  const [block, setBlock] = useState<ReviewBlock | null>(null)
   const [state, setState] = useState<'loading' | 'ready' | 'failed'>('loading')
   const [message, setMessage] = useState<string | null>(null)
   const [reload, setReload] = useState(0)
@@ -170,6 +180,19 @@ export default function CoachTab() {
    * written in whichever unit the reader is on; the function caches per unit,
    * so returning to one already seen costs nothing.
    */
+  /** The numbers. Fetched once, independent of the model, and never forced:
+   *  SQL has no cache to bust and no quota to spend. */
+  useEffect(() => {
+    if (supabaseConfigError !== null || !speaks) return
+    let active = true
+    void fetchReviewBlock().then((facts) => {
+      if (active && facts !== null) setBlock(facts)
+    })
+    return () => {
+      active = false
+    }
+  }, [speaks])
+
   useEffect(() => {
     if (supabaseConfigError !== null || !speaks) return
     let active = true
@@ -204,7 +227,6 @@ export default function CoachTab() {
      other four are the numbered notes. Same five sections the function has
      always returned, read into the shape the design draws — no second call. */
   const recommendation = review?.sections?.recommendation ?? null
-  const noteKeys = REVIEW_SECTIONS.filter((key) => key !== 'recommendation')
 
   return (
     <Screen>
@@ -326,52 +348,19 @@ export default function CoachTab() {
           </Card>
 
           {/* ── Coach's notes ────────────────────────────────────────────
-              The other four sections, numbered, behind an ember rail. v5
-              draws a 3px inline-start border; `borderStartWidth` rather than
-              `borderLeftWidth`, because this app grows an Arabic locale and
-              the rail has to follow the text. */}
-          {noteKeys.some((key) => review.sections?.[key]?.line) && (
-            <Card
-              bare
-              style={{
-                // v5 §15's 3px ember rail. `borderStartWidth`, not
-                // `borderLeftWidth`: this app grows an Arabic locale and the
-                // rail has to follow the text to the other side. Written into
-                // the comment above before it was written into the code, which
-                // is its own small lesson — read the screenshot, not the note.
-                borderStartWidth: 3,
-                borderStartColor: palette.accent,
-              }}
-            >
-              {noteKeys.map((key, index) => {
-                const section = review.sections?.[key]
-                if (!section?.line) return null
-                return (
-                  <View key={key}>
-                    {index > 0 && <Rule inset={space.cardPad} />}
-                    <View
-                      style={{
-                        flexDirection: 'row',
-                        gap: 12,
-                        padding: space.cardPad,
-                      }}
-                    >
-                      {/* The index in mono — this IS the machine voice doing
-                          the one job it is for, which is counting. */}
-                      <Txt step="meta" ink="muted" ltr>
-                        {String(index + 1).padStart(2, '0')}
-                      </Txt>
-                      <View style={{ flex: 1, gap: 6 }}>
-                        <Kick>{t(`coach.review.section.${key}`)}</Kick>
-                        <Txt step="body">{section.line}</Txt>
-                        {section.chip !== undefined && <Chip>{section.chip}</Chip>}
-                      </View>
-                    </View>
-                  </View>
-                )
-              })}
-            </Card>
-          )}
+              Figures from `weekly_review()`, sentences from the model, each
+              section drawn as what it IS rather than as a fourth paragraph.
+              See `components/CoachNotes.tsx` for why that mattered. */}
+          <CoachNotes
+            block={block}
+            unit={unit}
+            lines={{
+              adherence: review.sections?.adherence?.line ?? null,
+              bands: review.sections?.bands?.line ?? null,
+              plateaus: review.sections?.plateaus?.line ?? null,
+              wins: review.sections?.wins?.line ?? null,
+            }}
+          />
         </View>
       )}
 

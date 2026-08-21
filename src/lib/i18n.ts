@@ -651,6 +651,12 @@ export const messages: Record<Locale, Record<string, string>> = {
     'coach.review.section.plateaus': 'Stalled',
     'coach.review.section.wins': 'Moving',
     'coach.review.section.recommendation': 'Next week',
+    // The review's own figure labels. These sit BESIDE computed numbers, so
+    // each one carries the number as a param rather than baking it in.
+    'coach.review.figure.sessions': 'sessions this week · {avg}/wk average',
+    'coach.review.figure.band_target': 'target {low}–{high} sets a week',
+    'coach.review.figure.plateau_slope': '{unit} per session across {sessions} sessions',
+    'coach.review.figure.band_more': '{count} more above these',
 
     // ── Friends screen (Slice 6) ───────────────────────────────
     'friends.loading': 'Loading…',
@@ -1639,6 +1645,10 @@ export const messages: Record<Locale, Record<string, string>> = {
     'coach.review.section.plateaus': 'ثبات',
     'coach.review.section.wins': 'تقدّم',
     'coach.review.section.recommendation': 'الأسبوع القادم',
+    'coach.review.figure.sessions': 'جلسة هذا الأسبوع · {avg} أسبوعياً بالمتوسط',
+    'coach.review.figure.band_target': 'المستهدف {low}–{high} مجموعة أسبوعياً',
+    'coach.review.figure.plateau_slope': '{unit} لكل جلسة عبر {sessions} جلسة',
+    'coach.review.figure.band_more': '{count} أخرى فوق هذه',
 
     // ── Friends screen (Slice 6): DRAFT, requires native-speaker review ──
     'friends.loading': 'جارٍ التحميل…',

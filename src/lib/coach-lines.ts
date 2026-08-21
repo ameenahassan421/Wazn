@@ -82,6 +82,104 @@ export interface DebriefBlock {
   low_band: { muscle: string; sets: number } | null
 }
 
+/**
+ * The weekly review's RAW block: the figures `weekly_review()` returns.
+ *
+ * Not the WHOLE block. The RPC also returns `recommendation`, a
+ * `{ kind, ... }` union chosen in SQL, which is left off deliberately —
+ * the screen draws the recommendation from the model's phrased
+ * `sections.recommendation`, so typing the raw one here would add a union
+ * with no reader. `REVIEW_BLOCK_KEYS` in
+ * `supabase/functions/_shared/review-contract.ts` is the full list.
+ *
+ * ── WHY THE CLIENT WANTS THIS AS WELL AS THE SENTENCES ──────────────────────
+ * The `coach-notes` Edge Function hands back `{ line, chip }` per section: a
+ * phrased sentence and one string. That is everything a paragraph needs and
+ * nothing a CHART needs, so a screen built on it alone can only ever be a
+ * column of prose — which is what the Coach tab was, four identical grey boxes
+ * where the only difference between "you did nothing" and "you gained 24 kg on
+ * a press" was the words inside them.
+ *
+ * The numbers were never missing. `weekly_review()` is the same RLS-scoped RPC
+ * the Edge Function itself calls, the client is entitled to it, and it returns
+ * the sets per muscle, the productive range, the plateau slopes and the gains
+ * as figures. So the tab reads BOTH: figures from SQL, sentence from the
+ * model. That is the two-stage draw this file already documents, applied one
+ * level further out, and it means every number on that screen is computed with
+ * the model only ever phrasing.
+ *
+ * ── EVERYTHING HERE IS KILOGRAMS ────────────────────────────────────────────
+ * `unit` is the literal `'kg'`, like every other block. The screen converts.
+ */
+export interface ReviewBlock {
+  unit: 'kg'
+  window_days: number
+  /** The band a muscle's weekly sets should land in. `[10, 20]` today. */
+  productive_range: [number, number]
+  plateau_min_sessions: number
+  adherence: {
+    sessions_this_week: number
+    sessions_prev_week: number
+    avg_sessions_per_week_8w: number
+    weeks_trained_of_8: number
+    sessions_last_28: number
+    from_routine_last_28: number
+    longest_gap_days_28: number
+  }
+  bands: {
+    muscle: string
+    sets: number
+    sets_prev: number
+    status: 'under' | 'in' | 'over'
+  }[]
+  plateaus: {
+    exercise: string
+    sessions: number
+    slope_per_session: number
+    first_e1rm: number
+    last_e1rm: number
+  }[]
+  wins: { exercise: string; e1rm_28d: number; e1rm_before: number; gain: number }[]
+  records_last_7: number
+  total_sets_90d: number
+}
+
+/**
+ * What the review's volume chart draws, and what it drops.
+ *
+ * `weekly_review()` returns up to twelve muscles sorted by weekly sets
+ * ASCENDING. A chart cannot legibly stack twelve bars on a phone, and the
+ * lowest are the ones the section exists to surface ("am I neglecting legs"),
+ * so it draws the first `limit` of them.
+ *
+ * ── WHY THE CEILING IS COMPUTED HERE AND NOT INLINE ─────────────────────────
+ * The first version of this took `max(...)` over ALL the bands. Because the
+ * rows arrive ascending, that max is always one of the rows the slice throws
+ * away — so a lifter doing 28 sets of quads (dropped) and six lighter muscles
+ * (drawn) had every visible bar scaled against a bar that was not on screen,
+ * and the productive-range wash squashed along with them. The bug is invisible
+ * in any account whose twelve muscles are close together, which is most of
+ * them, and it gets worse exactly when the chart matters most.
+ *
+ * The floor of `high * 1.25` is separate and deliberate: it stops a week where
+ * every muscle is under-trained from stretching two sets across the full track
+ * and reading as a full bar.
+ */
+export function reviewBandScale(
+  bands: ReviewBlock['bands'],
+  range: [number, number],
+  limit: number,
+): { shown: ReviewBlock['bands']; hidden: number; ceiling: number } {
+  const shown = bands.slice(0, limit)
+  return {
+    shown,
+    hidden: bands.length - shown.length,
+    // `range[1] * 1.25` is always present, so `Math.max` cannot see an empty
+    // argument list and answer -Infinity on a week with no bands at all.
+    ceiling: Math.max(range[1] * 1.25, ...shown.map((b) => b.sets)),
+  }
+}
+
 /* ── The phrased line ─────────────────────────────────────────────────────── */
 
 export interface CoachLine {

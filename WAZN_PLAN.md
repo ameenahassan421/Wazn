@@ -742,6 +742,59 @@ was nine commits stale on 2026-08-19 and said so nowhere; PRs #103 through #106 
 code and none of them touched this file. Three hooks now make that visible and expensive
 (see "How this block stays true", last in this section).
 
+#### DONE 2026-08-21: the Coach tab's weekly review draws figures, not four paragraphs
+
+The review's four notes were four identical white boxes, each a numbered kicker, a sentence
+in 14.5px body type, and a chip. Every number was inside the prose, and on a real account a
+52.7 lb gain sat in the same grey box, in the same type, in fourth position, as "zero
+sessions" and "three lifts stalled" — a layout that cannot tell a win from a failure is
+scolding four times and celebrating never.
+
+`mobile/src/components/CoachNotes.tsx` replaces it. Each section is drawn as what it is:
+eight dots for eight weeks on adherence, a bar per muscle against the productive band on
+volume, the trend figure on plateaus, and the ember-wash card with the `full` plate on wins —
+the second surface in the app to carry that earned treatment, after Finish's
+beat-last-session card.
+
+**The figures are a SECOND read, straight from SQL.** `fetchReviewBlock()` calls
+`weekly_review()` directly and answers `null` rather than throwing. The Edge Function's
+`{ line, chip }` per section is everything a paragraph needs and nothing a chart needs, so
+the tab now reads both: numbers from Postgres in one round trip, sentence from the model
+whenever it arrives. If the model is dark every figure is still on screen, which discharges
+§12's requirement by construction instead of by a fallback.
+
+**Two defects were found by looking at it on a simulator, and both had passed the whole
+wall.**
+
+1. **"STALLED · Bench Press (Barbell) · 140 → 156"** — a 16 lb RISE labelled a plateau.
+   `first_e1rm` and `last_e1rm` were both accurate; the pairing was a lie.
+   `weekly_review()` selects a plateau on `regr_slope(e1rm, n) <= 0`, the trend across every
+   session, and a lift that peaks mid-window climbs between its first session and its last
+   while trending flat. The figure is now `slope_per_session`, the quantity the filter
+   actually tests, which is negative or zero by construction.
+2. **The volume chart was scaled by bars it does not draw.** `weekly_review()` returns bands
+   sorted ASCENDING and the chart draws the lowest six, so the max over the full array is
+   always one of the dropped rows. A lifter with 28 sets of quads (hidden) had every visible
+   bar squashed against a bar that was not on screen. Extracted to `reviewBandScale()` in
+   `src/lib/coach-lines.ts` and scaled to what is rendered; the dropped rows are now counted
+   in words under the chart rather than silently truncated.
+
+Both are pinned by tests in `src/lib/coach-lines.test.ts`, and the scale assertion was
+**proved to fail** against the old expression (`expected 60 to be 25`) before it was trusted.
+
+Also corrected on the way through: every weight on the screen went through
+`toDisplayWeight`, which snaps to the nearest loadable plate. These are e1RM estimates,
+nobody racks one, and `units.ts` already had `formatEstimate` with a comment explaining
+exactly why the gap is dangerous — a reader who learns the coach's figures are approximate
+cannot spot a real fabrication. And three labels beside the numbers were hardcoded English
+on a screen whose four section names were being passed in translated; they are `t()` keys
+now, `coach.review.figure.*`, in both locales.
+
+Gates: root and mobile typecheck, lint, 1252 + 20 tests, `check:tokens`, `check:coverage`,
+`check:type`, `check:vercel`, `bundle:ios`, `bundle:android`. Verified on an iPhone 17 Pro
+simulator against a live account, and the volume chart and win card were seen by temporarily
+stubbing the RPC, since that account has neither.
+
 #### P0 FIXED 2026-08-20: every button in the native app was invisible
 
 `Pressable`'s idiomatic `style={({ pressed }) => ...}` callback is **silently dropped** under
