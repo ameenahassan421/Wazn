@@ -1317,6 +1317,43 @@ completely silent.
    and for an app whose premise is logging sets in a gym basement this is the
    most important gap on this page.
 
+#### Home is built against the prototype (2026-08-21)
+
+`mobile/app/(tabs)/index.tsx`, the first screen rebuilt in the new language rather than swept
+into it. Header (mark at 26, ink avatar at 38), a two-line greeting under a meta line, an ink
+Up next card, the check-in, and one ember CTA with the plate as its glyph.
+
+**Three v5 surfaces were removed, and removing them cost nothing.** The stat tiles, the rank
+card and the plan manifest were never wired on native: `use-home.ts` returns
+`{...DAY_ONE, username, target, routineName, daysRested}`, so `stats` stayed
+`{streak:'—', thisWeek:'—', sessions:'—'}`, `plan` stayed `[]` and `rank` stayed `null` on
+every render this app has ever done. The tiles rendered three em-dashes. They come back when
+the queries do.
+
+**Two things the prototype draws are NOT drawn, because there is no data for them.** The
+header's `12 wk` chip and the meta line's "week 12 · 3 of 4 done" need a training-week count
+and plan progress that no query produces. Omitted rather than faked, per the same rule that
+keeps `rank` null. The coach card renders only when `brief` is non-null, which needs the coach
+Edge Function.
+
+**The number to beat moved rather than died.** v5 gave `BEAT 4,320 KG` a card at hero scale;
+the prototype has no such card. It is now the Up next card's third line — the slot that
+answers "what am I about to do". Section 1's number survives, its container does not.
+
+#### The app icon on the home screen is still Expo's default
+
+`mobile/assets/images/icon.png` is the plate on paper and has been since 2026-08-20, but the
+installed simulator build still shows the blue chevron: **icons are baked into `ios/` at
+prebuild, not served by Metro.** Nothing is wrong with the asset. It needs
+
+```bash
+npx expo prebuild --platform ios --clean
+cd ios && LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8 pod install
+```
+
+and a rebuild, which is ~14 minutes cold. Worth doing once before the next device check, not
+per change.
+
 #### READ BEFORE BUILDING WORKOUT: 1,244 lines of it already exist, on a branch
 
 `origin/claude/live-board-duplicate-backup` (1 commit, 2026-08-18, "Build the live board —
