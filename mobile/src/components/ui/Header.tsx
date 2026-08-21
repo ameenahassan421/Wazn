@@ -37,11 +37,12 @@ export function Header({
       style={{
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 10,
-        height: 56,
+        gap: 8,
+        paddingTop: 10,
+        paddingBottom: 4,
       }}
     >
-      <Wordmark />
+      <Wordmark size={26} />
       <View style={{ flex: 1 }} />
       {right}
       <Pressable
@@ -49,23 +50,26 @@ export function Header({
         accessibilityLabel="You, settings"
         hitSlop={7}
         onPress={() => router.push('/settings')}
-        // Static, not `({ pressed }) => ...`: NativeWind's cssInterop on
-        // Pressable drops a function `style` entirely, which renders this as
-        // an unstyled box. See the long note in `Btn.tsx`. The press dim is
-        // gone with it rather than reintroduced through state — this is
-        // chrome, the haptic already fires, and it never actually worked.
+        // A static object, not `({ pressed }) => ...`. The callback form is
+        // banned by `eslint.config.js` — it was silently dropped by
+        // NativeWind's cssInterop and rendered every button in the app
+        // unstyled. NativeWind is gone, so it would work again; the rule and
+        // this pattern stay as a tripwire. See `Btn.tsx`.
+        //
+        // No press dim, deliberately: this is chrome, the haptic already
+        // fires, and 38px of ink dimming under a thumb is the kind of motion
+        // that draws the eye to the least important control on the screen.
         style={{
-          width: 34,
-          height: 34,
+          width: 38,
+          height: 38,
           borderRadius: radius.pill,
-          backgroundColor: palette.paper,
-          borderWidth: 1,
-          borderColor: palette.ring,
+          backgroundColor: palette.ink,
           alignItems: 'center',
           justifyContent: 'center',
         }}
       >
-        <Txt step="label" ink="ink">
+        {/* Sora 700 at 14 on ink, per the prototype's header. */}
+        <Txt step="pill" ink="onInk">
           {initial}
         </Txt>
       </Pressable>

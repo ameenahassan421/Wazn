@@ -478,6 +478,17 @@ export const messages: Record<Locale, Record<string, string>> = {
     'today.evening': 'Tonight',
     'today.beat': 'Beat',
     'today.start_hunt': 'Start the hunt',
+    /* ── Home, rebuilt against docs/design/prototype/ (2026-08-21) ────────
+       The prototype's Home says five things and no more. `today.start_hunt`
+       and `today.beat` survive from v5 because the CONCEPT survived — the
+       number to beat moved into the Up next card rather than being cut. */
+    'today.welcome': 'Welcome',
+    'today.up_next': 'Up next',
+    'today.first_workout': 'Your first workout',
+    'today.start_workout': 'Start workout',
+    'today.rested': '{days}d since you trained',
+    'today.rested_today': 'trained today',
+    'coach.kicker': 'Coach',
     'readiness.light': 'Lighter today. Same lifts, one fewer set.',
     'readiness.chip.sleep': 'sleep {value}',
     'readiness.chip.fresh': 'felt fresh',
@@ -1418,6 +1429,13 @@ export const messages: Record<Locale, Record<string, string>> = {
     // "Start the hunt" is an English idiom, and the literal Arabic reads as
     // an animal chase. The Arabic keeps the app's own terse register.
     'today.start_hunt': 'ابدأ التمرين',
+    'today.welcome': 'أهلاً',
+    'today.up_next': 'التالي',
+    'today.first_workout': 'تمرينك الأول',
+    'today.start_workout': 'ابدأ التمرين',
+    'today.rested': 'مضى {days} يوم على آخر تمرين',
+    'today.rested_today': 'تمرّنت اليوم',
+    'coach.kicker': 'المدرب',
     'readiness.light': 'اليوم أخف. نفس التمارين، مجموعة أقل.',
     'readiness.chip.sleep': 'نوم {value}',
     'readiness.chip.fresh': 'شعور بالنشاط',
