@@ -1266,7 +1266,54 @@ retention that cannot exist until the app is shared.
 
 #### Next action
 
-**RESUME HERE (2026-08-21, second update).** `main` plus
+**RESUME HERE (2026-08-21, third update — handoff to the implementation
+session, written before compacting).**
+
+**Ameen approved a direction change on 2026-08-21 and the spec for it is
+`docs/FRIENDS_PLAN.md`. Read it in full before building anything social, IA, or
+AI-related.** It supersedes v5 screen 16 and amends the tab structure and the AI
+doctrine. Ten-second version: four tabs (Train · Plan · Progress · Crew); a
+private crew of up to eight competing on adherence-to-own-target, never output
+(the STEP UP trial is the evidence, and its scoring detail is the design rule);
+a pact with a named witness set in advance; duels scored on adherence; program
+pages as the growth layer (deliberately NOT in Crew); and an AI layer governed
+by **defaults > figures > sentences > conversations** with an event-gated
+~10-sentences/week attention budget. Ameen's own verdict, accepted in writing:
+no more planning passes — implement.
+
+**Implementation order, agreed with Ameen:**
+
+1. **Open the PR for `claude/coach-review-figures`** (9 commits: Coach tab
+   figures, the Hevy import + the implausible-reps guard, Progress built
+   native, the Home window fix, and the plan documents) and land it.
+2. **Finish 4A's core loop for a phone in hand** — the gaps in this section's
+   missing-list: the set-type control (data correctness, item 1), the
+   background rest timer, the auth screen, GATE A2's 30-second instrument.
+3. **The four-tab restructure** per FRIENDS_PLAN Part 3B — Plan tab first (the
+   production row counts say it is the missing one), then the Progress merge
+   (History, Body and the Coach tab dissolve into it), Crew last and only as a
+   card on Train until S1 passes.
+4. **S0 of the social plan** — the solo Week Board and the reasoned invite.
+5. **Run LAUNCH.md and send invites.** The week-6 retention number decides
+   everything after that; no document can.
+
+**Two corrections from the final review, so nobody re-derives them wrong:**
+the "seconds-long deploys vs two app stores" asymmetry
+(`BEATING_HEVY_PLAN.md` §1.5) EXPIRES at Stage 4B — Wazn ships to both stores
+too, on Expo (SDK 57, bundle ids already in `app.config.ts`), and what survives
+the stores is EAS Update's OTA lane for JS plus instant Edge Function/SQL
+deploys, not store avoidance. And `eas.json` does not exist yet; EAS runs from
+Ameen's laptop, never from a sandboxed session (`api.expo.dev` is 403 here).
+
+**Still open from this session:** the poisoned 95-rep row (repair blocked by
+the session's safety classifier — fix it in Hevy or approve `reps = null`); the
+`public.e1rm()` migration across the thirteen SQL functions; the
+`coach.line.low_band` pluralisation nit; `daysSince` hours-vs-calendar-day.
+All detailed above.
+
+---
+
+**Previous state (2026-08-21, second update).** `main` plus
 `claude/coach-review-figures`. Full root wall green, `bundle:ios` and
 `bundle:android` green, mobile tsc/eslint/tests green.
 
