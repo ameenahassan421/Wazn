@@ -775,6 +775,18 @@ check:coverage, production build, `bundle:ios`):
 - Every screen swept off the v5 roles. The app compiles, bundles and runs.
 - The icon set is the ember plate on paper, and `app.config.ts` is `light`/`#f7f3ec`.
 
+FIXED the same day, and worth the note: the plate in the wordmark hung below the baseline.
+The prototype writes it as `width: 14` and `top: 3px` against 26px type, which reads like two
+arbitrary nudges. It is not: `26px/1` with Sora's metrics puts the baseline at 23.0 from the
+row top and the x-height at 9.2, and those two numbers land the plate at top 9.0, bottom 23.0.
+The plate occupies the x-height box exactly — it is set as a letter with no ascender and no
+descender, which is what `a` is. The first port carried the `3px` across as a ratio of font
+size; React Native does not compute a text box the way CSS does, so it drifted and Ameen
+caught it by eye. It now uses `alignItems: 'baseline'`, which Yoga resolves to a non-text
+child's bottom edge, so the plate sits on the line by construction at any size.
+
+**A proportion copied out of a browser is a bet that two layout engines agree.** They do not.
+
 OPEN, and none of it guessed at:
 
 1. **Six screens the prototype does not cover.** It has Home, Workout, Rest and Finish. Auth,
