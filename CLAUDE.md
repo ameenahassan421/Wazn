@@ -43,6 +43,13 @@ Corollary that supersedes the blockquote above: read `WAZN_PLAN.md` §7.0, but
 treat it as a _claim_ to verify, not a fact to recite. The database beats the
 file, and `git log` beats both.
 
+**A TRUNCATED search that decides whether something EXISTS is the same bug.**
+On 2026-08-21 a session ran `grep -rn "export function.*plate|perSide" src/lib/*.ts | head -5`,
+saw no plate module, and wrote `src/lib/plates.ts` from scratch — over a
+tested one that had shipped in stage 1. `platesFor` matched the pattern and
+sat below the cut. **`head` on a search whose answer is "does this exist" makes
+absence indistinguishable from truncation.** Grep first, then narrow.
+
 **`cmd || echo "no"` turns a crashed check into a confident wrong answer.**
 On 2026-08-20 two sessions disagreed about whether a commit existed only on one
 laptop. The one that said "not on the remote" had run

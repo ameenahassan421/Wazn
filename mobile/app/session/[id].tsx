@@ -1,22 +1,23 @@
 import { useEffect, useState } from 'react'
-import { Pressable, View } from 'react-native'
+import { Pressable, ScrollView, View } from 'react-native'
 import { useRouter } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import Svg, { Line, Path, Rect } from 'react-native-svg'
 
 import {
-  formatWeight,
+  describeBarMath,
   fromDisplayWeight,
   palette,
+  platesFor,
   radius,
   space,
   toDisplayWeight,
 } from '@wazn/domain'
 
 import { RestCanvas } from '@/components/RestCanvas'
-import { Chip } from '@/components/ui/Chip'
-import { Fill } from '@/components/ui/Fill'
-import { Screen } from '@/components/ui/Screen'
-import { Txt, Kick } from '@/design/Txt'
+import { Card } from '@/components/ui/Surface'
+import { Plate } from '@/components/ui/Plate'
+import { Txt } from '@/design/Txt'
 import { useLocale } from '@/hooks/use-locale'
 import { useUnit } from '@/hooks/use-unit'
 import { banked as hapticBanked, tick } from '@/services/haptics'
@@ -31,26 +32,153 @@ import {
 } from '@/state/live-workout'
 
 /**
- * Screen 07, the live board. The screen the app exists for.
+ * The live board, against `docs/design/prototype/source.html` — the screen
+ * labelled "Workout". The screen the app exists for.
  *
- * ── THE SHAPE IS THE ARGUMENT ───────────────────────────────────────────────
- * Two full-bleed rows, each a 82px minus zone, the figure, and a 82px plus
- * zone, with a 70px commit bar under them. That geometry is the reason the
- * job takes 30 seconds one handed: every target is enormous and every one of
- * them sits in the bottom half of a phone, where a thumb already is. The v5
- * reference puts BOTH steppers in one row; this follows the shipped web
- * board instead and gives each its own full-width row, because a stepper pair
- * and a figure sharing 390px leaves each target under the 48px floor.
+ * ── THE SHAPE CHANGED, AND THE 48px FLOOR DID NOT ───────────────────────────
+ * v5 gave each stepper a full-bleed row with 82px minus and plus zones, and
+ * this file argued for it: a stepper pair sharing 390px leaves each target
+ * under the floor. The prototype puts BOTH in one row, as two cards with 46px
+ * keys, and 46 is under 48.
  *
- * ── WHAT IS DELIBERATELY NOT HERE ───────────────────────────────────────────
- * The rest canvas, the ghost's reasoning chip and the PR moment. Each is its
- * own surface with its own rules, and this PR is the board and the commit.
- * The momentum bar IS here because it is the only thing on screen that
- * answers "am I winning", which is the question the hunt card asked on the
- * way in.
+ * It is drawn at 46 and `hitSlop` brings the target to 48 — the same honest
+ * technique `Btn` uses for its small variant. The ink is the prototype's, the
+ * target is the plan's, and neither is compromised.
+ *
+ * The figure between the keys is `flex: 1` rather than intrinsic, and shrinks
+ * its own text. The prototype is drawn at 430pt wide; on a 375pt phone the
+ * reps card's inner width falls to about 20pt and a two-digit figure at 29px
+ * would overflow it. Flexing degrades instead of clipping.
+ *
+ * ── WHAT THE PROTOTYPE DROPPED, AND THIS DROPS WITH IT ──────────────────────
+ * The momentum bar. It answered "am I winning" and it WORKED — `view.pct` is
+ * real, from the last session's volume — so unlike Home's three tiles this is
+ * a live feature being removed rather than dead chrome. The prototype's board
+ * has no slot for it and inventing one would be the reskin this migration
+ * exists to avoid. Recorded in WAZN_PLAN 7.0 for Ameen rather than quietly
+ * relocated: the Finish screen's stat tiles are the obvious new home.
+ *
+ * ── WHAT IS NOT DRAWN, FOR WANT OF DATA ─────────────────────────────────────
+ * The exercise thumbnail (no image pipeline on native), the equipment word
+ * (`deriveEquipment` needs a muscle group the board does not carry), and the
+ * coach's sentence (`ghost-reason` is not wired here yet). Each is a hole in
+ * the layout rather than a placeholder, for the reason Home gives.
  */
 
-const ZONE = 82
+/** The prototype's back chevron, at its own weight. */
+function BackChevron() {
+  return (
+    <Svg width={16} height={16} viewBox="0 0 24 24">
+      <Path
+        d="M14 5l-7 7 7 7"
+        fill="none"
+        stroke={palette.ink}
+        strokeWidth={2.4}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  )
+}
+
+/**
+ * A loaded bar, seen from the side. Decorative and deliberately so: the
+ * NUMBERS beside it are the instruction, and this says at a glance which of
+ * the two lines on the card is the one about the bar.
+ */
+function Barbell() {
+  return (
+    <Svg width={110} height={44} viewBox="0 0 120 52">
+      <Line
+        x1={4}
+        y1={26}
+        x2={116}
+        y2={26}
+        stroke={palette.ink}
+        strokeWidth={5}
+        strokeLinecap="round"
+      />
+      <Rect x={30} y={3} width={11} height={46} rx={3} fill={palette.accent} />
+      <Rect x={45} y={16} width={7} height={20} rx={2.5} fill={palette.ink} />
+      <Rect
+        x={14}
+        y={19}
+        width={9}
+        height={14}
+        rx={2}
+        fill={palette.ink}
+        opacity={0.25}
+      />
+    </Svg>
+  )
+}
+
+/** One half of the stepper row. 46px keys, 48px targets. */
+function Stepper({
+  label,
+  value,
+  flex,
+  onDown,
+  onUp,
+}: {
+  label: string
+  value: string
+  flex: number
+  onDown: () => void
+  onUp: () => void
+}) {
+  const key = {
+    width: 46,
+    height: 46,
+    borderRadius: radius.ctl,
+    backgroundColor: palette.paper,
+    alignItems: 'center',
+    justifyContent: 'center',
+  } as const
+  return (
+    <Card small style={{ flex, paddingVertical: 11, paddingHorizontal: 14 }}>
+      <Txt step="nano" ink="muted" style={{ marginBottom: 5 }}>
+        {label}
+      </Txt>
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+        }}
+      >
+        {/* 46 drawn, 48 pressed: `(48 - 46) / 2` on every edge. */}
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="−"
+          hitSlop={1}
+          onPress={onDown}
+          style={key}
+        >
+          <Txt step="glyph">−</Txt>
+        </Pressable>
+        <Txt
+          step="fig"
+          ltr
+          numberOfLines={1}
+          adjustsFontSizeToFit
+          style={{ flex: 1, textAlign: 'center' }}
+        >
+          {value}
+        </Txt>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="+"
+          hitSlop={1}
+          onPress={onUp}
+          style={key}
+        >
+          <Txt step="glyph">+</Txt>
+        </Pressable>
+      </View>
+    </Card>
+  )
+}
 
 export default function LiveWorkout() {
   const router = useRouter()
@@ -65,8 +193,7 @@ export default function LiveWorkout() {
    *
    * Adjusted during render rather than in an effect: when the position moves
    * the seeded values ARE the answer on the first frame, and an effect that
-   * set them would paint the previous set's numbers first. That is the same
-   * rule `SetEntry` follows on the web.
+   * set them would paint the previous set's numbers first.
    */
   const key =
     view.position === null
@@ -95,8 +222,7 @@ export default function LiveWorkout() {
     if (live.startedAt === 0) return
     const render = () => {
       const secs = Math.floor((Date.now() - live.startedAt) / 1000)
-      const m = Math.floor(secs / 60)
-      setElapsed(`${m}:${String(secs % 60).padStart(2, '0')}`)
+      setElapsed(`${Math.floor(secs / 60)}:${String(secs % 60).padStart(2, '0')}`)
     }
     render()
     const id = setInterval(render, 1000)
@@ -105,12 +231,12 @@ export default function LiveWorkout() {
     }
   }, [live.startedAt])
 
-  // The unit is a keychain-free read but still async, and a figure that flips
-  // from 225 to 102 one frame after paint is worse than one blank frame.
-  if (!ready) return <Screen scroll={false} />
+  if (!ready) return <View style={{ flex: 1, backgroundColor: palette.paper }} />
 
   const weightStep = unit === 'kg' ? 2.5 : 5
   const bodyweight = view.set !== null && view.set.weightKg === null
+  const shown = toDisplayWeight(dialled.weightKg ?? 0, unit)
+  const load = bodyweight ? null : platesFor(shown, unit)
 
   function step(field: 'weightKg' | 'reps', direction: 1 | -1) {
     tick()
@@ -118,195 +244,300 @@ export default function LiveWorkout() {
       if (field === 'reps') {
         return { ...d, reps: Math.max(1, (d.reps ?? 0) + direction) }
       }
-      const shown = toDisplayWeight(d.weightKg ?? 0, unit)
-      const next = Math.max(0, shown + direction * weightStep)
+      const next = Math.max(
+        0,
+        toDisplayWeight(d.weightKg ?? 0, unit) + direction * weightStep,
+      )
       return { ...d, weightKg: fromDisplayWeight(next, unit) }
     })
   }
 
   function bank() {
     // The haptic and the board move together, before anything is asked of the
-    // network. `bankCurrentSet` is synchronous for exactly this reason: it
-    // updates the board and hands the insert off unawaited.
+    // network. `bankCurrentSet` is synchronous for exactly this reason.
     hapticBanked()
     bankCurrentSet(dialled.weightKg, dialled.reps)
   }
 
-  if (view.position === null && live.status !== 'idle') {
-    return (
-      <Screen scroll={false} style={{ justifyContent: 'center', gap: 16 }}>
-        <Txt step="title" style={{ textAlign: 'center' }}>
-          EVERY SET LOGGED
-        </Txt>
+  function leave() {
+    void finishWorkout().then(() => {
+      resetWorkout()
+      router.back()
+    })
+  }
+
+  const done = (view.exercise?.sets ?? []).filter((s) => s.done)
+  const previous = (view.exercise?.sets ?? [])
+    .filter((s) => s.previousReps !== null)
+    .map((s) =>
+      s.previousKg === null
+        ? `${s.previousReps}`
+        : `${toDisplayWeight(s.previousKg, unit)}×${s.previousReps}`,
+    )
+    .join(' · ')
+
+  return (
+    <View
+      style={{ flex: 1, backgroundColor: palette.paper, paddingTop: insets.top }}
+      // The rest canvas vanishes on interaction, and the interaction still
+      // lands where the lifter aimed it. See `RestCanvas`.
+      onTouchStart={live.restEndsAt === null ? undefined : endRest}
+    >
+      {/* ── Header ──────────────────────────────────────────────────────── */}
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: 12,
+          paddingTop: 10,
+          paddingBottom: 12,
+          paddingHorizontal: space.gutter,
+        }}
+      >
         <Pressable
-          onPress={() => {
-            void finishWorkout().then(() => {
-              resetWorkout()
-              router.back()
-            })
-          }}
+          accessibilityRole="button"
+          // English-only, and the only untranslated string on this screen.
+          // `common.back` is not in the catalogue and minting a key for a
+          // VoiceOver label on a control that already shows a chevron is more
+          // catalogue than it is worth. Revisit with the RTL pass.
+          accessibilityLabel="Back"
+          hitSlop={8}
+          onPress={() => router.back()}
           style={{
-            height: 60,
-            borderRadius: radius.ctl,
-            backgroundColor: palette.accent,
+            width: space.back,
+            height: space.back,
+            borderRadius: radius.pill,
+            backgroundColor: palette.card,
+            borderWidth: 1,
+            borderColor: palette.ring,
             alignItems: 'center',
             justifyContent: 'center',
           }}
         >
-          <Txt step="title" ink="onInk">
-            CLAIM THE SESSION
+          <BackChevron />
+        </Pressable>
+
+        <View style={{ flex: 1 }}>
+          <Txt step="cta" numberOfLines={1}>
+            {live.name === '' ? t('log.workout_fallback') : live.name}
           </Txt>
-        </Pressable>
-      </Screen>
-    )
-  }
-
-  const shownWeight =
-    dialled.weightKg === null ? null : toDisplayWeight(dialled.weightKg, unit)
-  const addedVolume =
-    dialled.weightKg !== null && dialled.reps !== null
-      ? `+${formatWeight(dialled.weightKg * dialled.reps, unit)} TO THE BAR`
-      : `+${dialled.reps ?? 0} REPS`
-
-  return (
-    <Screen
-      scroll={false}
-      gutter={0}
-      style={{ paddingTop: insets.top }}
-      // Screen 08 vanishes on interaction, and the interaction still lands.
-      // See the RestCanvas block below.
-      onTouchStart={live.restEndsAt === null ? undefined : endRest}
-    >
-      {/* The momentum bar. Absent on day one rather than empty: an empty
-          track is a claim that you have done nothing, and on a first session
-          that is not true, it is just unmeasured. */}
-      {view.pct !== null && (
-        <View style={{ paddingHorizontal: space.gutter, paddingBottom: 10, gap: 6 }}>
-          <View style={{ flexDirection: 'row', alignItems: 'baseline' }}>
-            <Kick ink={view.recordPace ? 'accent' : 'muted'}>
-              {view.recordPace ? 'RECORD PACE' : 'SESSION VOLUME'}
-            </Kick>
-            <View style={{ flex: 1 }} />
-            <Txt step="meta" ink="muted" ltr>
-              {`${formatWeight(view.banked, unit)} / ${formatWeight(live.targetKg ?? 0, unit)}`}
-            </Txt>
-          </View>
-          <Fill pct={view.pct} brass={view.recordPace} />
+          <Txt step="meta" ink="muted" ltr style={{ marginTop: 2 }}>
+            {/* "exercise 1 of 0" until 2026-08-21, on the first workout of
+                every new account. The counter only makes sense once there IS
+                a board. */}
+            {live.board.length === 0
+              ? elapsed
+              : `${elapsed} · ${t('workout.exercise_of', {
+                  n: String((view.position?.exerciseIndex ?? 0) + 1),
+                  total: String(live.board.length),
+                })}`}
+          </Txt>
         </View>
-      )}
 
-      <View
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          gap: 14,
-          paddingVertical: 8,
-          paddingHorizontal: space.gutter,
-          borderTopWidth: 1,
-          borderBottomWidth: 1,
-          borderColor: palette.ring,
-        }}
-      >
-        <Txt step="meta" ink="muted" ltr>
-          {elapsed}
-        </Txt>
-        <View style={{ flex: 1 }} />
         <Pressable
-          onPress={() => {
-            void finishWorkout().then(() => {
-              resetWorkout()
-              router.back()
-            })
+          accessibilityRole="button"
+          hitSlop={8}
+          onPress={leave}
+          style={{
+            height: 40,
+            paddingHorizontal: 16,
+            borderRadius: radius.pill,
+            backgroundColor: palette.card,
+            borderWidth: 1,
+            borderColor: palette.ringStrong,
+            alignItems: 'center',
+            justifyContent: 'center',
           }}
-          hitSlop={12}
         >
-          <Kick>{t('log.finish')}</Kick>
+          <Txt step="pill">{t('log.finish')}</Txt>
         </Pressable>
       </View>
 
-      <View
-        style={{ paddingHorizontal: space.gutter, paddingTop: 18, paddingBottom: 8 }}
+      <ScrollView
+        contentContainerStyle={{
+          paddingHorizontal: space.gutter,
+          gap: 11,
+          paddingBottom: 8,
+        }}
+        keyboardShouldPersistTaps="handled"
       >
-        <Txt step="title" style={{ fontSize: 24 }}>
-          {view.exercise?.name ?? ''}
-        </Txt>
-        <Txt step="meta" ink="muted" ltr style={{ marginTop: 6 }}>
-          {`SET ${(view.position?.setIndex ?? 0) + 1} / ${view.exercise?.sets.length ?? 0}`}
-          {view.set?.previousReps === null || view.set === null
-            ? ''
-            : ` · LAST ${view.set.previousKg === null ? '' : `${formatWeight(view.set.previousKg, unit)}×`}${view.set.previousReps}`}
-        </Txt>
-      </View>
+        {/* ── Nothing to log against ──────────────────────────────────────
+            The board is seeded from the LAST session, so it is empty on the
+            first workout of a new account — and the prototype has no empty
+            state for this screen, because its demo always has a bench press.
+            An empty white card is not a design, it is a hole, so this says
+            what is true and `WAZN_PLAN.md` records the real gap: native has no
+            way to ADD an exercise, which makes this a dead end rather than an
+            empty state. That is day one for every new user. */}
+        {live.board.length === 0 ? (
+          <Card style={{ paddingVertical: 20, paddingHorizontal: 18 }}>
+            {/* `log.empty` only. An "Add exercise" line under it read as a
+                button and there is nothing behind it on native — a control
+                that does nothing is the defect this repo keeps shipping. */}
+            <Txt step="title">{t('log.empty')}</Txt>
+          </Card>
+        ) : (
+          <Card style={{ paddingVertical: 14, paddingHorizontal: 18 }}>
+            <Txt step="title" numberOfLines={1}>
+              {view.exercise?.name ?? ''}
+            </Txt>
+            <Txt step="meta" ink="muted" ltr style={{ marginTop: 3 }}>
+              {t('workout.set_of', {
+                n: String(view.set?.setNumber ?? 0),
+                total: String(view.exercise?.sets.length ?? 0),
+              })}
+            </Txt>
 
-      {!bodyweight && (
-        <Zone
-          label={unit === 'kg' ? 'KG' : 'LBS'}
-          value={shownWeight ?? 0}
-          mega
-          onDown={() => step('weightKg', -1)}
-          onUp={() => step('weightKg', 1)}
-        />
-      )}
-      <Zone
-        label={t('history.reps')}
-        value={dialled.reps ?? 0}
-        mega={bodyweight}
-        onDown={() => step('reps', -1)}
-        onUp={() => step('reps', 1)}
-      />
+            {previous !== '' && (
+              <Txt step="meta" ink="muted" ltr style={{ marginTop: 12 }}>
+                {`${t('workout.previous')}  ${previous}`}
+              </Txt>
+            )}
 
-      <View style={{ paddingHorizontal: space.gutter, paddingTop: 12 }}>
-        <Chip>{addedVolume}</Chip>
-      </View>
+            {done.length > 0 && (
+              <View style={{ gap: 6, marginTop: 8 }}>
+                {done.map((s) => (
+                  <View
+                    key={s.setNumber}
+                    style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}
+                  >
+                    <Plate size={16} />
+                    <Txt step="dataLg" ink="muted" ltr style={{ width: 36 }}>
+                      {s.setNumber}
+                    </Txt>
+                    <Txt step="dataLg" ltr>
+                      {s.weightKg === null
+                        ? `${s.reps}`
+                        : `${toDisplayWeight(s.weightKg, unit)} ${unit} × ${s.reps}`}
+                    </Txt>
+                  </View>
+                ))}
+              </View>
+            )}
+          </Card>
+        )}
 
-      {/* The queue, said plainly. The wording changed on 2026-08-21 with the
-          thing it describes: these sets used to be on this screen and nowhere
-          else, and now they are on the phone and will be retried. "Saved on
-          this phone" is a promise the store can now keep. */}
-      {live.pending.length > 0 && (
-        <View style={{ paddingHorizontal: space.gutter, paddingTop: 10 }}>
+        {/* ── The two dials ───────────────────────────────────────────────
+            1.3 to 1, the prototype's ratio: a weight can be 102.5 and a rep
+            count is almost never three digits. */}
+        {live.board.length > 0 && (
+          <View style={{ flexDirection: 'row', gap: 10 }}>
+            {!bodyweight && (
+              <Stepper
+                flex={1.3}
+                label={t('workout.weight', { unit })}
+                value={String(shown)}
+                onDown={() => step('weightKg', -1)}
+                onUp={() => step('weightKg', 1)}
+              />
+            )}
+            <Stepper
+              flex={1}
+              label={t('workout.reps')}
+              value={String(dialled.reps ?? 0)}
+              onDown={() => step('reps', -1)}
+              onUp={() => step('reps', 1)}
+            />
+          </View>
+        )}
+
+        {/* ── What to hang on the bar ─────────────────────────────────────
+            `platesFor` returns null under the bar's own weight, which is not
+            an error — it is a bar with nothing on it, and saying so is more
+            use than an empty card. `short` is the case the prototype ignores:
+            plates that cannot make the number exactly. A lifter who loads what
+            this printed and logs what they dialled has a wrong record, so it
+            is said out loud. */}
+        {load !== null && (
+          <Card
+            small
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 16,
+              paddingVertical: 12,
+              paddingHorizontal: 16,
+            }}
+          >
+            <View style={{ flex: 1 }}>
+              <Txt step="nano" ink="muted" style={{ marginBottom: 3 }}>
+                {t('workout.on_the_bar')}
+              </Txt>
+              <Txt step="strong" ltr>
+                {load.perSide.length === 0
+                  ? t('workout.empty_bar')
+                  : describeBarMath(load)}
+              </Txt>
+              {load.remainder > 0 && (
+                <Txt step="meta" ink="accentSoft" ltr style={{ marginTop: 3 }}>
+                  {t('workout.short_by', {
+                    amount: `${Number(load.remainder.toFixed(2))} ${unit}`,
+                  })}
+                </Txt>
+              )}
+            </View>
+            <Barbell />
+          </Card>
+        )}
+
+        {/* The queue, said plainly. These sets are on the phone and will be
+            retried; "saved" is a promise the store can now keep. */}
+        {live.pending.length > 0 && (
           <Txt step="meta" ink="muted">
             {`${live.pending.length} set${live.pending.length === 1 ? '' : 's'} saved on this phone, waiting to sync.`}
           </Txt>
-        </View>
-      )}
+        )}
+      </ScrollView>
 
-      <View style={{ flex: 1 }} />
-
-      <Pressable
-        onPress={bank}
+      {/* ── The one action ──────────────────────────────────────────────── */}
+      <View
         style={{
-          height: 70,
-          marginBottom: insets.bottom,
-          backgroundColor: palette.accent,
-          alignItems: 'center',
-          justifyContent: 'center',
-          flexDirection: 'row',
-          gap: 8,
-          // 31, over the rest canvas's 29. Without this the canvas covers the
-          // commit control and GATE U2's one-tap repeat set becomes two.
-          zIndex: 31,
+          paddingTop: 10,
+          paddingBottom: Math.max(insets.bottom, 26),
+          paddingHorizontal: space.gutter,
         }}
       >
-        <Txt step="title" ink="onInk" style={{ fontSize: 23, letterSpacing: 0.46 }}>
-          BANK IT
-        </Txt>
-        <Txt step="title" ink="onInk" ltr style={{ fontSize: 23 }}>
-          {bodyweight
-            ? `· ${dialled.reps ?? 0}`
-            : `· ${shownWeight ?? 0} × ${dialled.reps ?? 0}`}
-        </Txt>
-      </Pressable>
+        <Pressable
+          accessibilityRole="button"
+          disabled={view.position === null}
+          onPress={view.position === null ? leave : bank}
+          style={{
+            height: space.ctaLive,
+            borderRadius: radius.pill,
+            backgroundColor: palette.accent,
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 11,
+            shadowColor: palette.accent,
+            shadowOpacity: 0.35,
+            shadowOffset: { width: 0, height: 10 },
+            shadowRadius: 13,
+            elevation: 8,
+          }}
+        >
+          <Plate size={20} color={palette.onInk} />
+          <Txt step="cta" ink="onInk" ltr>
+            {view.position === null
+              ? t('log.finish')
+              : bodyweight
+                ? t('workout.log_set_reps', {
+                    n: String(view.set?.setNumber ?? 0),
+                    reps: String(dialled.reps ?? 0),
+                  })
+                : t('workout.log_set', {
+                    n: String(view.set?.setNumber ?? 0),
+                    weight: String(shown),
+                    reps: String(dialled.reps ?? 0),
+                  })}
+          </Txt>
+        </Pressable>
+      </View>
 
-      {/* Screen 08. An overlay on the board rather than a route, so dismissing
-          it costs no navigation and the board underneath never unmounts.
-
-          It takes no touches (see RestCanvas). Dismissal is the screen's job,
-          on `onTouchStart` at the root: RN bubbles touches up from whatever
-          was actually pressed, so the tap that clears this canvas is the same
-          tap that banks the set, opens the menu or finishes the workout. One
-          tap, wherever it lands, which is what GATE U2 counts and what every
-          other control needs too. */}
+      {/* Screen 08. Still the v5 canvas — the prototype draws a Rest screen of
+          its own and it is the next one built. Kept wired rather than removed:
+          a rest timer that stops working between two commits is a regression a
+          lifter feels immediately. */}
       {live.restEndsAt !== null && (
         <RestCanvas
           endsAt={live.restEndsAt}
@@ -320,73 +551,6 @@ export default function LiveWorkout() {
           }
         />
       )}
-    </Screen>
-  )
-}
-
-/**
- * One full-bleed stepper row.
- *
- * The side zones are 82px and full height rather than round buttons, so the
- * target is the whole edge of the phone. A lifter with chalk on their hands
- * and a bar to get back to does not aim.
- */
-function Zone({
-  label,
-  value,
-  mega,
-  onDown,
-  onUp,
-}: {
-  label: string
-  value: number
-  mega: boolean
-  onDown: () => void
-  onUp: () => void
-}) {
-  return (
-    <View
-      style={{
-        flexDirection: 'row',
-        alignItems: 'stretch',
-        borderTopWidth: 1,
-        borderColor: palette.ring,
-      }}
-    >
-      <Pressable
-        onPress={onDown}
-        style={{
-          width: ZONE,
-          borderEndWidth: 1,
-          borderColor: palette.ring,
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
-        <Txt step="fig" ink="muted">
-          −
-        </Txt>
-      </Pressable>
-      <View style={{ flex: 1, alignItems: 'center', paddingTop: 4, paddingBottom: 8 }}>
-        <Kick>{label}</Kick>
-        <Txt step="mega" ltr style={mega ? undefined : { fontSize: 56 }}>
-          {String(value)}
-        </Txt>
-      </View>
-      <Pressable
-        onPress={onUp}
-        style={{
-          width: ZONE,
-          borderStartWidth: 1,
-          borderColor: palette.ring,
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
-        <Txt step="fig" ink="muted">
-          +
-        </Txt>
-      </Pressable>
     </View>
   )
 }

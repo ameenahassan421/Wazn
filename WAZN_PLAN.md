@@ -1353,6 +1353,47 @@ cd ios && LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8 pod install
 and a rebuild, which is ~14 minutes cold. Worth doing once before the next device check, not
 per change.
 
+#### Workout is built against the prototype (2026-08-21)
+
+`mobile/app/session/[id].tsx`. Header with a back circle and a Finish pill, the exercise card
+with its banked sets, the two dials in one row, the plate strip, and one ember CTA pinned
+below the scroll.
+
+**The 48px floor survived a layout that breaks it.** v5 gave each stepper a full-bleed row
+with 82px zones, and this file argued for that: a pair sharing 390px puts each target under
+the floor. The prototype draws them as two cards with **46px** keys. They are drawn at 46 and
+`hitSlop` brings the target to 48 — the same technique `Btn` uses for its small variant. The
+ink is the prototype's, the target is §2.4's.
+
+**The prototype is drawn at 430pt and the reps card does not survive 375.** Its inner width
+falls to roughly 20pt there, against a 29px figure. The figure is `flex: 1` with
+`adjustsFontSizeToFit`, so it shrinks rather than clips. Verified at 402pt on a simulator;
+**not yet verified on a 375pt device**, and that check is worth doing before this ships.
+
+**The momentum bar is gone, and unlike Home's tiles it WORKED.** `view.pct` is real, computed
+from the last session's volume, and it answered "am I winning" — the question the Home card
+asks on the way in. The prototype's board has no slot for it. Removed rather than relocated by
+invention; the Finish screen's stat tiles are the obvious home and that is Ameen's call.
+
+**Not drawn, for want of data:** the exercise thumbnail (no image pipeline on native), the
+equipment word (`deriveEquipment` needs a muscle group the board does not carry), and the
+coach's sentence (`ghost-reason` is not wired to this screen).
+
+#### DAY ONE IS A DEAD END ON NATIVE, AND THIS SCREEN MADE IT VISIBLE
+
+The board is seeded from the LAST session, so on the first workout of a new account it is
+**empty** — and native has no way to add an exercise. `startWorkout` succeeds, the screen
+renders, and the only control that does anything is Finish.
+
+Before 2026-08-21 this rendered as a blank white card under the header "exercise 1 of 0". It
+now says `log.empty`. That is honesty, not a fix: **a new user cannot log a single set on the
+phone.** The branch `origin/claude/live-board-duplicate-backup` carries a
+`mobile/src/services/exercises.ts` and a `Picker.tsx` that main does not have, which is where
+this closes.
+
+It has been true since the native app existed and nothing surfaced it, because every check
+runs against a signed-in account with history.
+
 #### GATE 4 on native: sets now survive the app being killed (2026-08-21)
 
 Found by reading `origin/claude/live-board-duplicate-backup` before building Workout, which is
