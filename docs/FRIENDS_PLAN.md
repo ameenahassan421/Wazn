@@ -559,6 +559,147 @@ dishonest about where the growth actually is.
 
 ---
 
+## Part 4C. The AI layer across the four tabs
+
+**Added 2026-08-21 at Ameen's request: AI at every possible touchpoint, balanced
+and not overwhelming.** Researched independently; where this section disagrees
+with the repo's existing AI doctrine it says so.
+
+### The category already ran the experiment
+
+Strava and Whoop shipped LLM features a year apart, on the same class of model,
+and got opposite receptions. That pair is the whole lesson.
+
+**Strava's Athlete Intelligence flopped**: "bland pep talks", a marathon praised
+as "an impressive long run", a restaurant name hallucinated into a run in China,
+mocked in memes, walked back by the CEO as "for newer users". Its structural
+mistake: **it narrates data the screen already shows**, unconditionally, on
+every activity.
+
+**Whoop Coach is the best-received AI in fitness**, and it does the opposite of
+Strava on every axis: it speaks **only when asked**, answers questions the
+screen _cannot_ show (cross-signal, "why", "what if"), grounds every answer in
+the user's own data, and connects claims to published research.
+
+The rule that falls out, independently of anything in this repo:
+
+> **AI that narrates the visible fails. AI that answers the invisible works.
+> And the surest way to fail is to speak on a schedule instead of on an event.**
+
+Wazn's existing "SQL computes, the model phrases" doctrine survives this test —
+it is the Whoop half of the split. Three other parts of the current doctrine do
+not survive unmodified, below.
+
+### The trust environment turned hostile, which changes the packaging
+
+Between 2025 and 2026 the share of consumers whose trust in a brand _drops_
+when it leans on AI went from 20% to 40%; 53% distrust AI-generated summaries
+outright; frustration with AI agents is rising year on year. Two consequences:
+
+- **The brand is the coach, never the model.** No "AI-powered" anywhere a user
+  or a store listing can see. The disclosure line ("AI-generated · not medical
+  advice") stays — that is ethics, not marketing — but it is a footer, not a
+  feature.
+- **Every sentence must carry a checkable number.** This is Wazn's existing
+  grounding contract, and the research upgrades it from a nice principle to the
+  one visible difference between the app users trust and the app they meme.
+
+### Three self-criticisms of the current doctrine
+
+**One. "One sentence + one chip" on every surface is Strava's mistake at a
+politer volume.** The v5 spec weaves a coach line through every moment, daily,
+whether or not anything happened. Unconditional presence habituates into
+wallpaper — Strava proved it. The correction is an **attention budget**: silence
+is the coach's default state, not its fallback, and speech is _earned by
+events_ — a PR, a plateau crossing its threshold, a band newly under, a pact at
+risk. Concretely: the coach should say something like ten sentences a week, not
+ten a day, and `coach_views` already exists to measure the real number.
+
+**Two. The chat refusal is half right, and the wrong half is showing.** The repo
+refuses a chat box as the front door, and the backlash data supports that. But
+Whoop's Q&A is the single best-received AI feature in the category, and the
+current plan buries Wazn's equivalent in a tab this document just dissolved. The
+synthesis is **object-anchored questions**: every figure, chart and card in the
+app is long-pressable to "ask about this", with the question pre-seeded by the
+object ("Why is my bench forecast flat?"). No blank input box exists anywhere;
+full interrogation capability exists everywhere. The chat box dies, the
+conversation survives, and it opens already knowing what it is about.
+
+**Three. The best AI in the app is not text, and no document says so.** The
+ghost — the pre-filled next set — is the most successful intelligence Wazn has,
+and it produces zero sentences. That is the calm-technology finding exactly: the
+strongest AI pattern is a **changed default**, not a message. The hierarchy,
+made explicit for every future feature:
+
+> **defaults > figures > sentences > conversations.**
+> Ship intelligence as far up that list as it can go. A sentence is what you
+> ship when you could not make it a default.
+
+### The touchpoint map
+
+Four tiers, then the tabs. Tier 0 is invisible and unlimited; tier 2 is
+budgeted; tier 3 exists only on demand.
+
+| Tier | Form                                                                   | Budget                        |
+| ---- | ---------------------------------------------------------------------- | ----------------------------- |
+| 0    | Changed defaults: ghosts, proposed targets, learned rest, picker order | unlimited, invisible          |
+| 1    | Computed figures: forecasts, slopes, bands — SQL, never phrased        | unlimited, visible            |
+| 2    | Coach sentences, event-gated                                           | ~10/week across the whole app |
+| 3    | Conversation, object-anchored, on demand                               | user-initiated only           |
+
+**Train.** Already the densest AI surface, so the work here is _subtraction_:
+the ghost (T0), check-in feeding the ghost silently (T0), the rest canvas's
+reasoning chip (T1). The brief becomes event-gated (T2) — on a day with nothing
+true to say, the card does not render, and that is the feature. Tell-the-coach
+stays as-is (T3, mid-workout, already bounded).
+
+**Plan.** The tab with the most AI headroom, and the place adaptive-programming
+evidence points. Fitbod and JuggernautAI prove lifters accept algorithmic
+programming — 4.8-4.9 store ratings — and their universal complaint is the cold
+start: "the first ten to fifteen workouts feel generic before the algorithm
+learns you." **Wazn structurally does not have that problem: the Hevy import
+means the coach knows years of history on day one.** So: draft-me-a-routine
+(exists), then **program adaptation as previewed proposals** — "chest volume in
+this routine sits under your band; preview the change" — accepted or declined,
+never auto-applied. Progressive autonomy is also what the trust research
+prescribes. Program pages carry the coach's evidence line (T1).
+
+**Progress.** The weekly review at the top (T2, already weekly, already
+budgeted). Forecasts and plateau slopes as figures (T1). One plateau-fix card
+maximum (T2). And every chart long-pressable to ask (T3) — this is where
+object-anchored Q&A earns its keep, because Progress is where the questions
+actually occur.
+
+**Crew.** The pact's proposed target (T0 — derived from the four-week average,
+confirmed not typed). The pact message drafted for the witness (T2). The Monday
+recap (T2, weekly). Duel fair-matching (T0, invisible). The crew is the surface
+where the coach speaks _least_, because the humans are the feature.
+
+**Onboarding, the missing touchpoint in every prior plan.** The churn evidence:
+users completing fewer than three workouts in the first fourteen days churn at
+three to four times the rate, and the aha moment has to land in the first
+session. Wazn's aha is unique and nobody has claimed it: **import is the
+onboarding.** Hevy CSV in, and the coach's first sentence proves it read _your_
+history — "Bench moved 12 lb in eight weeks. Your first session opens with your
+own numbers." Personalisation before the first question is asked, and the
+cold-start complaint that dogs every adaptive competitor never happens.
+
+**Notifications.** One per week, event-driven, opt-in after the third completed
+workout. The review-is-ready ping and nothing else. Every addition to this list
+is argued against the backlash data, not against the roadmap.
+
+### What would falsify this
+
+- If `coach_views` shows briefing read-rate _rising_ when the brief renders
+  daily versus event-gated, the attention budget is wrong and unconditional
+  presence wins. Measure, don't assume.
+- If nobody long-presses a chart in a month of beta, object-anchored Q&A is a
+  designer's fantasy and dies quietly — it costs one gesture, so it can.
+- If pact-holders ignore the derived target and always retype it, T0 targeting
+  is mis-derived and the four-week average is the wrong baseline.
+
+---
+
 ## Part 5. What this plan deliberately does not do, with the guardrails lifted
 
 Ameen lifted §13. These are the things that remain refused, and the reasoning is
@@ -639,6 +780,15 @@ buildable today. S1 onward needs people.
 - [Nudges in Exercise Commitment Contracts: A Randomized Trial](https://www.nber.org/system/files/working_papers/w21406/w21406.pdf), NBER w21406.
 - [Commitment Lotteries Promote Physical Activity Among Overweight Adults](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6361262/), cluster RCT.
 - [stickK: how referees work](https://www.stickk.com/faq/referees/Commitment+Contracts) and [Accountability Partner Apps Ranked by Science](https://www.accountablo.com/blog/accountability-partner-app). The 78% vs 35% referee figure.
+
+**AI reception and UX patterns**
+
+- [Strava Upsets Fans With New AI Feature That Promises Insights But Provides Bland Pep Talks](https://www.forbes.com/sites/cyrusfarivar/2024/10/12/strava-upsets-fans-with-new-ai-feature-that-promises-insights-but-provides-bland-pep-talks/), Forbes; [Strava says its new AI feature is "not a novelty" — but I think it's pointless](https://www.cyclingweekly.com/news/strava-says-its-new-ai-feature-is-not-a-novelty-but-i-think-its-pointless), Cycling Weekly; [Fortune on the memes](https://fortune.com/2024/10/11/strava-app-artificial-intelligence-fitness-athletic-memes).
+- [WHOOP Coach powered by OpenAI](https://www.whoop.com/us/en/thelocker/whoop-unveils-the-new-whoop-coach-powered-by-openai/) and [an independent review](https://agent-finder.co/reviews/whoop-coach).
+- [AI backlash grows across US, UK and Canada](https://www.prnewswire.com/news-releases/ai-backlash-grows-across-us-uk-and-canada-more-customers-reject-bots-for-human-support-in-2026-302770476.html); [eMarketer: consumer concern drowning out AI excitement](https://www.emarketer.com/content/consumer-concern-drowning-ai-excitement) (brand-trust drop 20%→40%; Gartner's 53% distrust of AI summaries).
+- [Calm technology and ambient AI](https://edges.ideo.com/posts/the-ambient-revolution-why-calm-technology-matters-more-in-the-age-of-ai), IDEO; [Just-in-Time Interfaces](https://medium.com/@andrewsims/just-in-time-interfaces-9694a78b7fb0); [The UX of Silence](https://figr.design/blog/the-ux-of-silence).
+- [JuggernautAI review](https://www.garagegymreviews.com/juggernautai-review), Garage Gym Reviews; [Best AI fitness apps 2026](https://fast.io/resources/best-ai-fitness-apps-2026/) (the cold-start complaint).
+- [Fitness app churn benchmarks](https://retentioncheck.com/churn-benchmarks/fitness-apps) (the fewer-than-three-workouts churn multiplier); [Userpilot on the aha moment](https://userpilot.com/blog/aha-moment/).
 
 **Product and market**
 
