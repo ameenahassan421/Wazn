@@ -1204,73 +1204,67 @@ retention that cannot exist until the app is shared.
 
 #### Next action
 
-**A0 is DONE and merged** (PR #110). **A1 is IN PROGRESS** on
-`claude/a1-history`, three commits, pushed, no PR open yet.
+**A0 is DONE and merged** (PR #110). **The design system is DONE** on the new
+prototype, green on the full wall. **A2's core loop is next**, and it now runs
+before the rest of A1 — reasons in the phase itself, and they are not a
+preference: the prototype specifies four screens and derives none.
 
-**Open, and Ameen's call before A1 continues:** the auth screen has five
-verified mismatches against `design/Onboarding.html` (see the block above). It
-is screen 01, P0 work, not one of A1's five tabs, so it has NOT been folded in.
+**The order from here:**
 
-**Done in A1 so far:**
+1. **Home**, the screen the prototype opens with. Date line, hero sentence,
+   coach card, the ink Up Next card, and the ember CTA with the plate icon.
+   It is the highest-traffic screen in the app and the one with the most
+   patterns per pixel, so it establishes the language the other nine follow.
+2. **Workout**, **Rest**, **Finish** — the rest of the specified set. Rest is
+   the one screen that inverts to the ink ground, so it is the first real use
+   of the `onInk` ink family and worth building third rather than last.
+3. **History**, then Body, Coach, Friends, Progress. History EXISTS and was
+   built against v5; it was swept to paper mechanically, so it compiles and it
+   is not the design. Treat it as unbuilt.
+4. **Auth last.** It is the screen a lifter sees once, the prototype does not
+   cover it, and it currently works.
 
-- **History, built native in v5.** `mobile/app/(tabs)/history.tsx` plus
-  `mobile/src/hooks/use-history.ts`. New shared domain: `topDay` in
-  `src/lib/progress.ts` with six tests, for COACH'S FIND.
-  `trainingCalendar` needed nothing, it already crossed; v5's 10 weeks against
-  the web's 13 was a parameter. **Not visually verified, see below.**
-- **The wordmark MARK, fixed and verified on a device.** Renders `wazn`
-  lowercase, Saira 700, ember `a`, 34 on auth and 21 in the header, confirmed
-  against the reference's computed styles and screenshotted on an iPhone 17
-  Pro, iOS 26.5. First visual claim in this project's history checked on a
-  device rather than inferred. **The mark only. The screen it sits on does not
-  match, and offering a full-screen screenshot as the evidence overstated it.**
-
-**Next: Body**, then Coach, Friends, Progress last. Reasons for the order are
-in the phase itself.
-
-**Three things a resuming session needs and will not guess:**
+**Four things a resuming session needs and will not guess:**
 
 1. **Screens behind auth cannot be seen.** Every tab sits behind
    `Stack.Protected`; the simulator and the web export both stop at sign-in,
-   and signing in needs credentials a session must never type. So History and
-   every screen after it is verified by reading the reference against the
-   SOURCE, which is weaker than a visual pass and must be reported as such.
-   The real fix is component tests through `react-native-web` in `mobile/`'s
-   vitest, whose config already collects `.tsx`. **Not built. It is the single
-   highest-value thing left in A1.**
-2. **A cold iOS build is 855 seconds.** Metro on 8081 plus the installed app
+   and signing in needs credentials a session must never type. So every screen
+   after auth is verified by reading the reference against the SOURCE, which is
+   weaker than a visual pass and must be reported as such. The real fix is
+   component tests through `react-native-web` in `mobile/`'s vitest, whose
+   config already collects `.tsx`. **Not built, and it is now the single
+   highest-value thing left in this stage** — nine screens are about to be
+   built and none of them can currently be looked at.
+2. **Read the prototype's SOURCE, not its screenshot.**
+   `docs/design/prototype/README.md` has the ten lines of Python that unpack
+   the bundle. Every size, colour, radius and shadow is a literal in it.
+   Counting literals found 25 distinct font sizes; a screenshot finds "some
+   big text".
+3. **A cold iOS build is 855 seconds.** Metro on 8081 plus the installed app
    makes the next screen a fast-refresh instead. If Metro died with the
    session, `npx expo start` in `mobile/` and relaunch; the built `.app` is
    under `~/Library/Application Support/Claude/simulator-builds/`. Only a
-   native-module change needs another `xcodebuild`.
-3. **A Debug build has no embedded bundle.** It launched to a red
+   native-module change needs another `xcodebuild` — **and the new icon and
+   splash are native assets, so they will not appear on the simulator's home
+   screen until one runs.**
+4. **A Debug build has no embedded bundle.** It launched to a red
    `No script URL provided` until Metro was up. `xcodebuild` succeeded and
    `expo export` succeeded and the app did not run: the fourth distinct way
    this repo has been green and broken.
 
-In parallel, and independently, **Ameen runs `LAUNCH.md` on his phone against
-the installed PWA**. Still the only source of information this project does not
-have. Its blocker is gone: the email rate limit was raised to 30 on
-2026-08-19.
+#### Waiting on Ameen
 
-#### How this block stays true
+Neither blocks the next screen; both get more expensive the longer they sit.
 
-Four mechanisms, because the written rule in §6 was skipped four consecutive times.
-
-- `.claude/hooks/session-start.sh` prints computed state at every session start, including
-  **how many commits have landed since this file was last edited**. Derived, so it cannot go
-  stale.
-- `.claude/hooks/status-guard.sh` blocks a session from ending with committed changes under
-  `src/`, `mobile/` or `supabase/` that never touched `WAZN_PLAN.md`.
-- `.claude/hooks/git-safety.sh` snapshots uncommitted work to `refs/wazn-safety/<stamp>`
-  before any destructive git command. Written after a subagent that had been told read-only
-  ran `git checkout -- CLAUDE.md` and destroyed a session's work.
-- CI fails a pull request that changes `src/`, `mobile/` or `supabase/` without changing
-  `WAZN_PLAN.md`. Hooks are local; CI is universal. It cannot block a merge until branch
-  protection exists (see blocked item 6), but it fails loudly.
-
-**Read this block as a claim to verify, not a fact to recite. The database beats the file,
-and `git log` beats both.**
+1. **Three contrast pairs below AA for small text**, shipping as the prototype
+   draws them, tabled above with candidates. The `muted` one is the one that
+   matters — it carries the date line, the exercise meta and every stat
+   sub-label, and this app is read one-handed in gym lighting.
+2. **What replaces brass.** v5 reserved a second hue for earned states; the
+   prototype has no such tier, so every brass usage swept to `accent`. That
+   puts a second ember on Friends and Progress, screens that already have an
+   action. It does not bite until those screens are built, which is item 3 of
+   the order above.
 
 ### 7.1 Log (chronological, newest last)
 
