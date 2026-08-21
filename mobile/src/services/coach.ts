@@ -61,6 +61,88 @@ export async function fetchDebriefBlock(
 }
 
 /**
+ * The useful half of a non-2xx from an Edge Function, or an honest fallback.
+ *
+ * The functions client reports every non-2xx as a generic `FunctionsHttpError`
+ * and puts the part worth reading — a quota message, a breaker notice — in the
+ * response BODY. Reading it is the difference between "Something went wrong."
+ * and a sentence that says what to do next.
+ *
+ * ── THE PARSE FAILURE IS NOT THE ANSWER, AND THIS SHIPPED SAYING IT WAS ─────
+ * The first version of this re-threw whatever `context.json()` threw. On
+ * 2026-08-21 the `coach-notes` call died with an EMPTY body, `json()` threw a
+ * SyntaxError, and the Coach tab rendered **"JSON Parse error: Unexpected end
+ * of input"** to a lifter, in place of the review, with a Try again button
+ * under it. Screenshotted.
+ *
+ * That is the `|| echo "no"` scar for the third time in one day: a diagnostic
+ * whose own failure gets reported as the finding. A body that cannot be parsed
+ * is a body that said NOTHING, which is exactly the case the fallback is for.
+ * So the parse is swallowed, and the caller gets a sentence written for a
+ * person.
+ */
+async function describeFunctionError(error: unknown): Promise<string> {
+  const context = (error as { context?: Response }).context
+  if (context && typeof context.json === 'function') {
+    try {
+      const body = (await context.json()) as { error?: unknown }
+      if (typeof body.error === 'string' && body.error !== '') return body.error
+    } catch {
+      // Empty or non-JSON body. Nothing to report; fall through to the
+      // fallback rather than reporting the parser.
+    }
+  }
+  // A timeout from `withDeadline` is already a sentence for a person.
+  if (error instanceof TimeoutError) return error.message
+  return 'The review could not be loaded. Try again.'
+}
+
+/**
+ * How long a MODEL call may take before the app stops waiting on it.
+ *
+ * ── WHY THIS EXISTS, WITH A TIMESTAMP ───────────────────────────────────────
+ * 2026-08-21, on a simulator, against a real account: Regenerate was pressed
+ * on the Coach tab at 19:27:32. The function booted (26ms), called
+ * `weekly_review` (200), checked the quota, read the exercise catalogue — and
+ * then stopped logging, because the next thing it does is ask a model, and
+ * that does not travel through Supabase's edge logs. Two minutes later the
+ * card still read "Reading your log…". There was no timeout, no cancel and no
+ * way out but leaving the tab.
+ *
+ * `supabase.functions.invoke` imposes no deadline of its own, so a request
+ * that never answers is a promise that never settles and a spinner that never
+ * stops. Every OTHER read in this file already degrades — they answer null and
+ * the surface simply does not appear. The two model-backed calls could not,
+ * because they have nothing to answer null WITH until they answer.
+ *
+ * ── WHY A RACE RATHER THAN AN ABORT ─────────────────────────────────────────
+ * Aborting would be tidier and is version-dependent on the functions client.
+ * Racing is version-proof and has a property that matters more here: the
+ * request keeps running server-side, so a generation that was merely slow
+ * still lands in the function's cache. The lifter gets an honest failure and a
+ * Retry, and the Retry is then usually instant rather than another model call.
+ *
+ * 45 seconds. Long enough for a five-section generation on a cold model, short
+ * enough that nobody stares at a card wondering whether the app is broken.
+ */
+const MODEL_TIMEOUT_MS = 45_000
+
+class TimeoutError extends Error {}
+
+function withDeadline<T>(work: Promise<T>, label: string): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined
+  const deadline = new Promise<never>((_, reject) => {
+    timer = setTimeout(
+      () => reject(new TimeoutError(`${label} took too long. Try again.`)),
+      MODEL_TIMEOUT_MS,
+    )
+  })
+  return Promise.race([work, deadline]).finally(() => {
+    if (timer !== undefined) clearTimeout(timer)
+  }) as Promise<T>
+}
+
+/**
  * The phrased line, from the `coach-brief` Edge Function.
  *
  * The display unit travels with the request because the MODEL writes the
@@ -78,9 +160,12 @@ export async function fetchCoachLine(
   workoutId?: string,
 ): Promise<CoachLine> {
   try {
-    const { data, error } = await supabase.functions.invoke<CoachLine>('coach-brief', {
-      body: { surface, unit, ...(workoutId ? { workoutId } : {}) },
-    })
+    const { data, error } = await withDeadline(
+      supabase.functions.invoke<CoachLine>('coach-brief', {
+        body: { surface, unit, ...(workoutId ? { workoutId } : {}) },
+      }),
+      'The coach',
+    )
     if (error) return { line: null, degraded: true }
     return data ?? { line: null, degraded: true }
   } catch {
@@ -108,26 +193,11 @@ export async function fetchWeeklyReview(
 ): Promise<CoachNotes> {
   const query = new URLSearchParams({ unit })
   if (options.force) query.set('force', '1')
-  const { data, error } = await supabase.functions.invoke<CoachNotes>(
-    `coach-notes?${query}`,
-    { method: 'POST' },
+  const { data, error } = await withDeadline(
+    supabase.functions.invoke<CoachNotes>(`coach-notes?${query}`, { method: 'POST' }),
+    'The review',
   )
-  if (error) {
-    // The functions client reports a non-2xx as a generic FunctionsHttpError
-    // and puts the useful part in the response BODY — a quota message, a
-    // breaker notice. Reading it is the difference between "Something went
-    // wrong." and a sentence that says what to do next.
-    const context = (error as { context?: Response }).context
-    if (context && typeof context.json === 'function') {
-      try {
-        const body = (await context.json()) as { error?: string }
-        if (body.error) throw new Error(body.error)
-      } catch (parsed) {
-        if (parsed instanceof Error && parsed.message) throw parsed
-      }
-    }
-    throw new Error(error instanceof Error ? error.message : 'Something went wrong.')
-  }
+  if (error) throw new Error(await describeFunctionError(error))
   if (!data) throw new Error('No review came back.')
   return data
 }

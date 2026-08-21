@@ -1998,6 +1998,44 @@ Ameen's call.
 it is far less likely to bite. Left alone deliberately: this migration changes the one function
 that was observed lying.
 
+#### THREE MORE FROM PRESSING ONE BUTTON ON THE SCREEN I HAD JUST BUILT (2026-08-21)
+
+Regenerate, on the Coach tab, against the real account. What it found, in the order it found it.
+
+**1. The loading state had no bound.** The function booted at 19:27:32, called `weekly_review`
+(200), checked the quota, read the catalogue, and then stopped logging — because the next thing
+it does is ask a model, and that does not travel through Supabase's edge logs. Two minutes later
+the card still read "Reading your log…". `supabase.functions.invoke` imposes no deadline, so a
+request that never answers is a promise that never settles and a spinner that never stops.
+
+Both model-backed calls are now raced against a 45-second deadline (`withDeadline` in
+`mobile/src/services/coach.ts`). A race rather than an abort, deliberately: the request keeps
+running server-side, so a generation that was merely slow still lands in the function's cache and
+the Retry after it is usually instant rather than another model call.
+
+**2. Then the failed state rendered `JSON Parse error: Unexpected end of input`.** The call died
+with an EMPTY body, `context.json()` threw a SyntaxError, and my error reader re-threw it as
+though it were the server's message. **Third instance of the `|| echo "no"` scar in one day**: a
+diagnostic reporting its own failure as the finding. A body that cannot be parsed is a body that
+said nothing, which is precisely the case the fallback exists for. Swallowed now, with a sentence
+written for a person.
+
+**3. `force` was sticky, so Retry spent a model call.** Regenerate set it and nothing cleared it,
+so a lifter who pressed Regenerate once and then Try again three times would spend four
+generations and four slices of quota recovering from one failure. Retry now clears it: Retry
+means "load it again" and is entitled to the cache, and Regenerate is the only control allowed to
+spend a call.
+
+**And the 0029 fix is confirmed in the app, not just in the catalogue.** The regenerated review
+reads "having trained 5 of those 8 weeks **with a longest gap of 28 days**", where an hour
+earlier it read "your longest gap in the last 28 days is 0 days". The recommendation also moved
+to the correct `start_again` branch — "Start again with training sessions", chip "0 sessions last
+28 days" — which the old zero could never have triggered.
+
+**The pattern, said once more because it keeps paying.** Every one of these was invisible to
+`tsc`, `eslint`, 1,247 tests, both bundles and `check:sql`. All three came from pressing one
+button on a screen that had already passed every gate.
+
 #### Waiting on Ameen
 
 Neither blocks the next screen; both get more expensive the longer they sit.

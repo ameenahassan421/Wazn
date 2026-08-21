@@ -264,6 +264,14 @@ export default function CoachTab() {
             label={t('coach.retry')}
             onPress={() => {
               setState('loading')
+              // `setForce(false)` matters and is not tidiness. `force` is
+              // sticky state: once Regenerate sets it, every later reload
+              // carries it, so a lifter who pressed Regenerate once and then
+              // hit Try again three times would spend four model calls and
+              // four slices of quota recovering from one failure. Retry means
+              // "load it again" and is entitled to the cache; Regenerate is
+              // the only control allowed to spend a call.
+              setForce(false)
               setReload((n) => n + 1)
             }}
           />
