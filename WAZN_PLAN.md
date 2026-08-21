@@ -1204,63 +1204,43 @@ retention that cannot exist until the app is shared.
 
 #### Next action
 
-**A0 is DONE and merged** (PR #110). **The design system is DONE** on the new
-prototype, green on the full wall. **A2's core loop is next**, and it now runs
-before the rest of A1 — reasons in the phase itself, and they are not a
-preference: the prototype specifies four screens and derives none.
+**RESUME HERE (2026-08-21, written before a compaction).** `main` is at the coach dial commit,
+tree clean, CI green on `check` / `smoke` / `mobile`. Nothing is uncommitted and nothing is
+half-done.
 
-**The order from here:**
+**Built and verified on a simulator:** the design system, Home, Workout, Rest, Finish, History,
+Body, the exercise picker, the shared `Spark` chart, GATE 4's durable write queue, and the
+coach's ghost with its Full/Quiet/Off gate and its Settings dial.
 
-1. **Home**, the screen the prototype opens with. Date line, hero sentence,
-   coach card, the ink Up Next card, and the ember CTA with the plate icon.
-   It is the highest-traffic screen in the app and the one with the most
-   patterns per pixel, so it establishes the language the other nine follow.
-2. **Workout**, **Rest**, **Finish** — the rest of the specified set. Rest is
-   the one screen that inverts to the ink ground, so it is the first real use
-   of the `onInk` ink family and worth building third rather than last.
-3. **History**, then Body, Coach, Friends, Progress. History EXISTS and was
-   built against v5; it was swept to paper mechanically, so it compiles and it
-   is not the design. Treat it as unbuilt.
-4. **Auth last.** It is the screen a lifter sees once, the prototype does not
-   cover it, and it currently works.
+**Do these next, in this order:**
 
-**Four things a resuming session needs and will not guess:**
+1. **Home's `brief`** — the coach's sentence on the highest-traffic screen. `use-home.ts`
+   returns `brief: null` unconditionally; `verdictFor` and `forecast.ts` can both supply a true
+   line. Gate on `speaks` from `useCoach`.
+2. **The Finish debrief** — same shape, one sentence over the session's own numbers.
+3. **The Coach tab (v5 screen 15)** — the largest remaining piece and the one v5 calls the
+   control room: mode selector, week review, notes, Ask the coach. Currently a stub.
+4. **Progress**, then **Friends**. Neither needs new chart geometry — `sparkGeometry` is
+   built and tested. Both still carry Ameen's open brass question; build in ember and flag,
+   which is what every other screen did.
+5. **Auth last.** The screen a lifter sees once, the prototype does not cover it, and with auth
+   switched off it is unreachable anyway.
 
-1. **Auth is OFF and every screen can now be SEEN** (`AUTH_ENABLED` in
-   `mobile/app/_layout.tsx`, Ameen 2026-08-20: "take out the sign in and sign
-   out functionality for now, that can be the last thing we do"). Nothing was
-   deleted — `sign-in.tsx`, `services/auth.ts`, `use-auth.ts` and the Edge
-   Function are untouched, and one constant restores the gate.
+**Two audits worth a WORKFLOW rather than a linear read** (ultracode is on; Ameen confirmed
+2026-08-21). Both are read-only fan-outs, so no file conflicts:
 
-   This closes the hole §6 called the biggest one in how a screen gets
-   verified. Every tab used to sit behind `Stack.Protected`, so a session that
-   cannot type credentials could see one screen of ten — which is how every
-   button in the app rendered invisible through four green checks.
+- **v5 leftovers across all native screens.** Settings was found printing a four-line paragraph
+  in IBM Plex Mono because it took `step="meta"`. Mono is this system's machine voice. That
+  class is almost certainly elsewhere, along with uppercase copy and ramp misuse.
+- **Dead controls and dead props.** The recurring defect of this whole session: a `brass` prop
+  branching to the same value twice, an "Add exercise" line with nothing behind it, a Save
+  button over an empty catalogue, `adjustRest` with no caller. Every one was found by eye.
 
-   **It does not give you DATA.** Reads are RLS-scoped to `auth.uid()`, so the
-   screens render their EMPTY states. Day-one copy is a real surface and
-   LAUNCH.md specifies it, so that is worth having — but a screen built only
-   against zero rows is half-checked, and populated screens still need Ameen's
-   device or fixtures. Component tests through `react-native-web` in `mobile/`'s
-   vitest (the config already collects `.tsx`) remain the ratchet, and are now
-   a nice-to-have rather than the only way to see anything.
+**The standing pattern, and the reason to keep doing it:** every automated gate stayed green
+through nine defects this week, and a screenshot found all nine. Run the app.
 
-2. **Read the prototype's SOURCE, not its screenshot.**
-   `docs/design/prototype/README.md` has the ten lines of Python that unpack
-   the bundle. Every size, colour, radius and shadow is a literal in it.
-   Counting literals found 25 distinct font sizes; a screenshot finds "some
-   big text".
-3. **A cold iOS build is 855 seconds.** Metro on 8081 plus the installed app
-   makes the next screen a fast-refresh instead. If Metro died with the
-   session, `npx expo start` in `mobile/` and relaunch; the built `.app` is
-   under `~/Library/Application Support/Claude/simulator-builds/`. Only a
-   native-module change needs another `xcodebuild` — **and the new icon and
-   splash are native assets, so they will not appear on the simulator's home
-   screen until one runs.**
-4. **A Debug build has no embedded bundle.** It launched to a red
-   `No script URL provided` until Metro was up. `xcodebuild` succeeded and
-   `expo export` succeeded and the app did not run: the fourth distinct way
-   this repo has been green and broken.
+**Still open for Ameen, unchanged:** the `muted` contrast at 3.39:1, and what replaces the
+brass tier on Friends and Progress.
 
 #### NativeWind removed 2026-08-20, and it changed the app by zero pixels
 
