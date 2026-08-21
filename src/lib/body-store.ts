@@ -1,6 +1,6 @@
 import { supabase } from './supabase'
 import type { Measurement, ProteinDay, WeighIn } from './body'
-import { asCheckIn, type CheckIn } from './readiness'
+import { asCheckIn, localDay, type CheckIn } from './readiness'
 
 /**
  * Reads and writes for the second dataset — migration 0027's tables.
@@ -35,13 +35,13 @@ function asArray<T>(value: unknown): T[] {
   return Array.isArray(value) ? (value as T[]) : []
 }
 
-/** `YYYY-MM-DD` for the LOCAL day. `toISOString()` here would be UTC, and a
- *  9pm weigh-in in Cairo would be filed under tomorrow. */
-export function localDay(date = new Date()): string {
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(
-    date.getDate(),
-  ).padStart(2, '0')}`
-}
+/**
+ * Re-exported, not redefined. It moved to `readiness.ts` on 2026-08-21 so the
+ * native store could use it too — this module imports the browser Supabase
+ * client and can never enter `@wazn/domain`, and a date boundary copied per
+ * platform is a date boundary that eventually disagrees with itself.
+ */
+export { localDay }
 
 export async function fetchBodyOverview(weeks = 12): Promise<BodyOverview> {
   try {

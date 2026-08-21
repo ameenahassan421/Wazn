@@ -5,7 +5,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import Svg, { Line, Path, Rect } from 'react-native-svg'
 
 import {
-  computeReadiness,
   describeBarMath,
   ghostChip,
   fromDisplayWeight,
@@ -226,7 +225,12 @@ export default function LiveWorkout() {
       ? null
       : verdictFor(view.set.setNumber - 1, {
           mode,
-          readiness: computeReadiness({ checkIn: null, daysRested: null }),
+          // Seeded in `startWorkout` from today's check-in and the gap since
+          // the last session, and frozen there. This was
+          // `computeReadiness({ checkIn: null, daysRested: null })` — a
+          // hardcoded Normal — which made Home's three check-in chips write a
+          // row and change nothing.
+          readiness: live.readiness,
           previous: view.exercise.sets.map((row) => ({
             weightKg: row.previousKg,
             reps: row.previousReps,

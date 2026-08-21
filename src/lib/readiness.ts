@@ -111,6 +111,25 @@ export function computeReadiness(inputs: ReadinessInputs): Readiness {
 }
 
 /**
+ * `YYYY-MM-DD` for the LOCAL day — the key `daily_checkins` is filed under.
+ *
+ * `toISOString()` here would be UTC, and a 9pm check-in in Cairo would land on
+ * tomorrow's row. That is not a rounding annoyance: the tap would be invisible
+ * to the same day's workout, which is the only thing it exists to change.
+ *
+ * It lives in THIS module because the check-in is a readiness input and this
+ * is the module that owns the concept. It was a private copy in the web's
+ * `body-store` and a second private copy in the native `use-home`, and the
+ * store needed a third the day the board started reading the check-in. Three
+ * copies of a date boundary is how two of them end up disagreeing.
+ */
+export function localDay(date = new Date()): string {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(
+    date.getDate(),
+  ).padStart(2, '0')}`
+}
+
+/**
  * The chip that entitles a readiness claim, or null.
  *
  * Null means the app has no figure to show, and doctrine 1 forbids the

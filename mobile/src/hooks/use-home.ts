@@ -1,12 +1,6 @@
 import { useEffect, useState } from 'react'
 
-import {
-  asCheckIn,
-  computeReadiness,
-  estimatedOneRepMax,
-  type CheckIn,
-  type Readiness,
-} from '@wazn/domain'
+import { asCheckIn, estimatedOneRepMax, localDay, type CheckIn } from '@wazn/domain'
 
 import { useCoachLine } from '@/hooks/use-coach-line'
 import { supabase, supabaseConfigError } from '@/services/supabase'
@@ -28,20 +22,18 @@ import { supabase, supabaseConfigError } from '@/services/supabase'
  * Flagged rather than silently "fixed" into something the design did not ask
  * for.
  *
- * ── THE CHECK-IN IS AN INPUT, NOT A DISPLAY ─────────────────────────────────
- * The tap is stored in `daily_checkins` (migration 0027) and fed to the shared
- * `computeReadiness`, exactly as `LogScreen` does on the web. What comes back
- * is one of three internal states that are never rendered as a word: readiness
- * shows up only as changed behaviour, which on this screen means the plan's set
- * counts and, once a session starts, the ghosts.
+ * ── THE CHECK-IN IS AN INPUT, AND THIS SCREEN ONLY COLLECTS IT ──────────────
+ * The tap is stored in `daily_checkins` (migration 0027). It is never rendered
+ * as a word and this hook no longer scores it: readiness shows up as changed
+ * BEHAVIOUR, and the only behaviour that acts on it is the ghost on the board.
  *
- * **And nothing reads it yet, which is a defect and not a design.** The
- * preference this paragraph used to say was missing landed on 2026-08-21
- * (`use-coach.tsx`), but `readiness` is still returned by this hook and
- * consumed by no screen, and the board seeds its ghosts from
- * `computeReadiness({ checkIn: null, daysRested: null })` — a hardcoded
- * Normal. So the three chips on Home write a row and change nothing anywhere.
- * Tracked as the next fix; see WAZN_PLAN.md §7.0.
+ * So `startWorkout` reads the row and freezes a `Readiness` onto the live
+ * store, and this hook returns the tap and its setter and nothing more. It
+ * used to return a `readiness` that grep proved no screen read, while the
+ * board seeded its ghosts from `computeReadiness({ checkIn: null, daysRested:
+ * null })` — a hardcoded Normal. Three chips on the highest-traffic screen
+ * wrote a row to Postgres and changed nothing a lifter could see. Fixed
+ * 2026-08-21 by giving the value ONE owner instead of two half-owners.
  *
  * ── THE BRIEF IS THE COACH'S OWN, AND IT IS NOT FETCHED HERE ────────────────
  * `useCoachLine` owns it: `session_brief()` first, the Edge Function's
@@ -62,16 +54,6 @@ import { supabase, supabaseConfigError } from '@/services/supabase'
  * nothing in its place. A fabricated rank on a screen whose whole job is to be
  * trusted with numbers is worse than an absence.
  */
-
-/** `YYYY-MM-DD` for the LOCAL day. `toISOString()` here would be UTC, and a
- *  9pm check-in in Cairo would be filed under tomorrow. Mirrors `localDay` in
- *  the web's `body-store`, which is not shareable: it lives in a module that
- *  imports the browser's Supabase client. */
-function localDay(date = new Date()): string {
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(
-    date.getDate(),
-  ).padStart(2, '0')}`
-}
 
 /**
  * Whole days since a timestamp, or null when there is none.
@@ -142,8 +124,6 @@ export type HomeData = Fetched & {
    */
   brief: { line: string } | null
   checkIn: CheckIn | null
-  /** Computed, never displayed as a gauge. Drives behaviour, not copy. */
-  readiness: Readiness
   setCheckIn: (state: CheckIn) => void
 }
 
@@ -270,7 +250,6 @@ export function useHome(): HomeData {
     ...data,
     brief: briefLine === null ? null : { line: briefLine },
     checkIn,
-    readiness: computeReadiness({ checkIn, daysRested: data.daysRested }),
     setCheckIn: (state) => {
       // Optimistic, and deliberately not awaited. The row is already painted
       // by the time the write leaves the phone.

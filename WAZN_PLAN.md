@@ -1214,13 +1214,8 @@ Finish debrief.
 
 **Do these next, in this order:**
 
-1. **The check-in does nothing, and that is a live defect.** Home writes `daily_checkins` and
-   computes `readiness` from it. **No screen reads either.** `useHome()` returns `readiness`
-   and nothing consumes it, and the board seeds its ghosts from
-   `computeReadiness({ checkIn: null, daysRested: null })` — a hardcoded Normal
-   (`mobile/app/session/[id].tsx:229`). So three chips on the highest-traffic screen write a
-   row to Postgres and change nothing a lifter can see. Fix at the root: one `useReadiness`
-   both surfaces read, rather than threading Home's value into a different route.
+1. **The 43 audit findings below.** The user-visible ones first: the status bar, the scroll
+   indicator, the two dead rest controls, the two undersized tap targets.
 2. **The Coach tab (v5 screen 15)** — the largest remaining piece and the one v5 calls the
    control room: mode selector, week review, notes, Ask the coach. Currently a stub.
    `fetchWeeklyReview` and `REVIEW_SECTIONS` already exist on the web; `coach-lines.ts` is
@@ -1231,9 +1226,39 @@ Finish debrief.
 4. **Auth last.** The screen a lifter sees once, the prototype does not cover it, and with auth
    switched off it is unreachable anyway.
 
-**A workflow audit ran 2026-08-21** over all of `mobile/` — six readers across two dimensions
-(v5 leftovers, dead controls and props), each finding adversarially verified by a second agent.
-Its surviving findings are the backlog above and below; do not re-run it against unchanged code.
+**THE WORKFLOW AUDIT, 2026-08-21: 49 claimed, 43 confirmed.** Six readers over `mobile/` across
+two dimensions, each finding adversarially verified by a second agent told to refute it. It
+independently found the check-in defect that had just been found by hand, from the other end
+(`index.tsx:161`, "the chips write a state the only consumer throws away"), which is the
+strongest thing that can be said about the method. Do not re-run it against unchanged code.
+
+**User-visible, unfixed:**
+
+| Where                                                            | What                                                                                                                                                                                                                                                                                                           |
+| ---------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `mobile/app/_layout.tsx:246`                                     | `<StatusBar style="light" />` on a paper ground. The clock, battery and signal are near-white on `#f7f3ec` — roughly 1.05:1 — on every screen. The one surface that wants light content, the rest canvas, sets no StatusBar of its own. **Visible in every screenshot taken this week and noticed by nobody.** |
+| `mobile/src/components/ui/Screen.tsx:76`                         | `indicatorStyle="white"`, so the scroll indicator is invisible on every scrolling screen.                                                                                                                                                                                                                      |
+| `mobile/src/components/RestCanvas.tsx:215`                       | **The − 30s / + 30s buttons can never fire.** An ancestor `View`'s `onTouchStart` ends the rest on touch-DOWN and unmounts the canvas before `onPress` resolves.                                                                                                                                               |
+| `mobile/app/session/add.tsx:89`                                  | The picker's Cancel is ~36px against the 48px floor.                                                                                                                                                                                                                                                           |
+| `mobile/app/(tabs)/history.tsx:217`                              | The find card's dismiss is an `onPress` on a bare 12px `<Kick>`: a ~14px target, no hit slop, and the dismissal is persisted so a lifter who cannot hit it sees the card forever.                                                                                                                              |
+| `mobile/app/session/[id].tsx:663`                                | The offline-queue sentence is prose in `step="meta"` (IBM Plex Mono) AND a raw English literal, while `log.sync.offline_pending` already exists translated in both locales. An Arabic lifter sees English. Fires on every banked set, not only offline.                                                        |
+| `mobile/app/+not-found.tsx:20`, `mobile/app/join/[code].tsx:121` | Hardcoded uppercase CTAs (`BACK TO THE LOG`, `GO TO THE APP`) — the v5 button idiom the paper system retired. The only two of 30 `label=` sites that are not sentence-case `t()` keys.                                                                                                                         |
+| `mobile/app/sign-in.tsx:78,396,401`                              | Uppercase prose in mono below the sign-in fold, and a `Lede` that re-derives v5's `title` metrics over the current ramp.                                                                                                                                                                                       |
+
+**Dead, and each one is a decision rather than a delete:** `Fill` (the dropped momentum bar),
+`StatTile`, `Chip.tsx`'s `CoachLine`, `Btn`'s `onInk` kind, `Card`'s `wash` and `onInk` tones,
+`Screen`'s `onTouchStart` and `gutter`, `HeroBtn`'s `live`, `Header`'s `right`, `use-home`'s
+`stats` / `rank` / `plan`, `selectBoardView`'s `recordPace`, `use-locale`'s `ready`. Three of
+these are surfaces that hand-rolled what the token-backed variant already did, which is worth
+fixing in the other direction.
+
+**Two that are functional gaps, not tidy-ups:** `takePendingInvite` has no caller, so an invite
+code held across sign-up is written to AsyncStorage and never redeemed; and `haptics.record()`
+is never called, so the app's one celebratory haptic has never fired. Both sit behind auth.
+
+**One that is simply not built yet:** `useCoach`'s `setMode` has no caller, so `mode` is frozen
+at `strength` and the argument threaded into every ghost is a constant. The mode selector is
+the Coach tab's job — item 2.
 
 **The standing pattern, and the reason to keep doing it:** every automated gate stayed green
 through nine defects this week, and a screenshot found all nine. Run the app.
@@ -1792,6 +1817,43 @@ therefore never been observed on native at all — only the skeleton path has.
 grep says nothing reads it. The board computes its own from hardcoded nulls. The three check-in
 chips are therefore decorative: they write a row and change no behaviour anywhere. Item 1 of
 Next action.
+
+#### THE CHECK-IN WAS WRITE-ONLY, AND EVERY GATE WAS GREEN (2026-08-21)
+
+Home offered three chips — Fresh, Normal, Drained — wrote the tap to `daily_checkins`, and
+`useHome()` scored it into a `Readiness`. Grep says no screen ever read that value. Meanwhile
+the board seeded its ghosts from `computeReadiness({ checkIn: null, daysRested: null })`, a
+hardcoded Normal, in a call that reads as deliberate because it names the right function.
+
+So the loop was open at both ends: the value had two half-owners and no consumer. The row was
+written, the arithmetic was correct, the types were sound, and nothing a lifter could see
+changed. **The audit workflow found the same defect from the other direction on the same day**,
+which is the corroboration worth recording: one reader was told to look for dead controls and
+landed on `index.tsx:161` — "the chips write a readiness state that the only consumer throws
+away".
+
+Fixed by giving the value ONE owner. `startWorkout` already asks the database for the last
+finished session; it now selects `started_at` as well and reads today's check-in in the same
+`Promise.all`, then freezes a `Readiness` onto the live store. The board reads `live.readiness`.
+`useHome` no longer computes one.
+
+**Frozen at start, deliberately.** Readiness is a property of the day you walked in. Re-reading
+it mid-session would let the ghosts move under a lifter halfway through, which is the one thing
+the coach must never do.
+
+`localDay` moved to `readiness.ts` and into `@wazn/domain`. It was a private copy in the web's
+`body-store` and a second private copy in native's `use-home`, and the store needed a third.
+`body-store` re-exports it so no web call site moved.
+
+**Five assertions, and writing them found a second thing.** The suite's `beforeEach` ends with
+`await startWorkout()`, so a session is already open when a test body runs — and `startWorkout`
+returns immediately on an active one, which is correct behaviour (a double-tap on Start must not
+reseed a board mid-session). The first draft of these tests called `startWorkout()` without
+resetting, read a workout opened with the DEFAULT config, and **three of the four passed**. A
+test that exercises nothing looks exactly like a test that passes.
+
+Not verified on a device: with auth off there is no signed-in user, so `startWorkout` returns
+before the read and readiness stays Normal on the simulator regardless.
 
 #### Waiting on Ameen
 

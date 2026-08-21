@@ -62,6 +62,10 @@ const fake = vi.hoisted(() => {
     failSets: false,
     /** Make it fail with a duplicate key, which is a SUCCESS to the queue. */
     duplicateSets: false,
+    /** Today's row in `daily_checkins`, or null for "not asked". */
+    checkIn: null as string | null,
+    /** When the last finished session started. Null on day one. */
+    lastSessionAt: null as string | null,
   }
 
   class Query {
@@ -90,6 +94,9 @@ const fake = vi.hoisted(() => {
     single() {
       return this
     }
+    maybeSingle() {
+      return this
+    }
     insert(row: Record<string, unknown>) {
       this.verb = 'insert'
       inserts.push({ table: this.table, row })
@@ -107,7 +114,22 @@ const fake = vi.hoisted(() => {
     private result(): { data: unknown; error: unknown } {
       if (this.table === 'workouts' && this.verb === 'select') {
         return {
-          data: [{ id: 'workout-prev', name: 'Push', workout_sets: config.previous }],
+          data: [
+            {
+              id: 'workout-prev',
+              name: 'Push',
+              started_at: config.lastSessionAt,
+              workout_sets: config.previous,
+            },
+          ],
+          error: null,
+        }
+      }
+      // `maybeSingle`, so a row or null — never an array. Null is "not asked
+      // today", which `computeReadiness` scores as neutral.
+      if (this.table === 'daily_checkins') {
+        return {
+          data: config.checkIn === null ? null : { state: config.checkIn },
           error: null,
         }
       }
@@ -170,6 +192,8 @@ beforeEach(async () => {
   fake.inserts.length = 0
   fake.config.failSets = false
   fake.config.duplicateSets = false
+  fake.config.checkIn = null
+  fake.config.lastSessionAt = null
   fake.config.previous = [
     {
       exercise_id: 'squat',
@@ -207,6 +231,73 @@ describe('startWorkout', () => {
     expect(workoutId).toBe(uuid(1))
     // 100x5 + 100x5 + 60x8, the volume today is chasing.
     expect(targetKg).toBe(1480)
+  })
+})
+
+/**
+ * The check-in used to be write-only.
+ *
+ * Home stored a tap in `daily_checkins` and computed a `readiness` that grep
+ * proved no screen read, while this store seeded `verdictFor` from
+ * `computeReadiness({ checkIn: null, daysRested: null })` — a hardcoded
+ * Normal. Every gate was green: the row was written, the arithmetic was
+ * correct, and the value went nowhere. These assertions are what a green wall
+ * could not say.
+ */
+describe('readiness is seeded from the account, not hardcoded', () => {
+  /**
+   * `resetWorkout()` first, every time, and it is not ceremony.
+   *
+   * The file's `beforeEach` ends with `await startWorkout()`, so a session is
+   * already open when a test body runs — and `startWorkout` returns
+   * immediately on an active one, which is real behaviour worth keeping (a
+   * double-tap on Start must not reseed a board mid-session). Without the
+   * reset these four assertions read a workout opened with the DEFAULT config
+   * and pass or fail for reasons that have nothing to do with the check-in.
+   * That is exactly how they were first written, and three of the four passed.
+   */
+  async function startFresh(checkIn: string | null, daysAgo: number | null) {
+    resetWorkout()
+    fake.config.checkIn = checkIn
+    fake.config.lastSessionAt =
+      daysAgo === null
+        ? null
+        : new Date(Date.now() - daysAgo * 86_400_000).toISOString()
+    await startWorkout()
+  }
+
+  it('is normal when nothing was asked and there is no history', async () => {
+    await startFresh(null, null)
+    expect(liveState().readiness).toBe('normal')
+  })
+
+  // Three days is the neutral rest band — neither `>= 4` nor `<= 1` — so
+  // these two isolate the tap itself.
+  it('is light on the tap alone, because the lifter volunteered it', async () => {
+    await startFresh('drained', 3)
+    expect(liveState().readiness).toBe('light')
+  })
+
+  it('is loaded when fresh and rested, which needs BOTH', async () => {
+    await startFresh('fresh', 5)
+    expect(liveState().readiness).toBe('loaded')
+    // `fresh` is +2 and `loaded` needs +3: the thresholds are asymmetric on
+    // purpose, because easing off costs two sets and pushing on costs a
+    // session. So the same tap after three days is not enough.
+    await startFresh('fresh', 3)
+    expect(liveState().readiness).toBe('normal')
+  })
+
+  it('lets a long rest offset a drained tap, rather than either winning', async () => {
+    await startFresh('drained', 5)
+    expect(liveState().readiness).toBe('normal')
+  })
+
+  it('ignores a state the app has never heard of rather than trusting it', async () => {
+    // A row can outlive the build that wrote it. `asCheckIn` is the widener,
+    // and a bad value must read as "not asked", never as a fourth state.
+    await startFresh('obliterated', 5)
+    expect(liveState().readiness).toBe('normal')
   })
 })
 
@@ -309,6 +400,7 @@ describe('selectBoardView', () => {
       name: '',
       board,
       targetKg,
+      readiness: 'normal',
       userId: null,
       pending: [],
       sealed: false,

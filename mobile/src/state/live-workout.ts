@@ -4,11 +4,16 @@ import * as Crypto from 'expo-crypto'
 
 import {
   type BoardExercise,
+  type CheckIn,
+  type Readiness,
   DEFAULT_REST_SECONDS,
+  asCheckIn,
   bankSet,
   bankedVolumeKg,
+  computeReadiness,
   currentPosition,
   estimatedOneRepMax,
+  localDay,
   momentumPct,
   seedBoard,
 } from '@wazn/domain'
@@ -99,6 +104,27 @@ export interface LiveState {
   board: BoardExercise[]
   /** Last finished session's working volume, in kg. Null on day one. */
   targetKg: number | null
+  /**
+   * How ready the lifter is, frozen at the moment the session started.
+   *
+   * ── WHY IT LIVES HERE AND NOT ON HOME ───────────────────────────────────
+   * Home collects the check-in; the ghosts are the only thing that acts on
+   * it. Until 2026-08-21 nothing closed that loop: `useHome()` computed a
+   * `readiness` no screen read, and this board seeded `verdictFor` from
+   * `computeReadiness({ checkIn: null, daysRested: null })` — a hardcoded
+   * Normal. So three chips on the highest-traffic screen wrote a row to
+   * Postgres and changed nothing a lifter could see.
+   *
+   * It is seeded in `startWorkout` because that function already asks the
+   * database for the last finished session; it needed one more column
+   * (`started_at`) and one more small read (today's check-in).
+   *
+   * ── FROZEN, AND THAT IS THE POINT ───────────────────────────────────────
+   * Readiness is a property of the day you walked in. Re-reading it mid-set
+   * would let the ghosts move under a lifter halfway through a session, which
+   * is exactly the thing the coach must never do.
+   */
+  readiness: Readiness
   /** Who the workout belongs to. Held so a retry can rebuild the workout row
    *  without asking the network who is signed in. */
   userId: string | null
@@ -146,6 +172,7 @@ const EMPTY: LiveState = {
   name: '',
   board: [],
   targetKg: null,
+  readiness: 'normal',
   userId: null,
   pending: [],
   sealed: false,
@@ -263,17 +290,44 @@ export async function startWorkout(): Promise<void> {
   if (userId === undefined) return
   set({ userId })
 
-  const { data: recent } = await supabase
-    .from('workouts')
-    .select(
-      'id, name, workout_sets(exercise_id, set_number, weight_kg, reps, set_type)',
-    )
-    .eq('user_id', userId)
-    .not('ended_at', 'is', null)
-    .order('started_at', { ascending: false })
-    .limit(1)
+  /**
+   * Both reads at once. The check-in is a separate table and a separate row,
+   * and awaiting them in series would put a second round trip between the tap
+   * on Start and the board appearing — on the one screen where that is felt.
+   *
+   * `started_at` is selected purely for `daysRested`. It costs nothing on a
+   * query already being made, which is the reason readiness is seeded here
+   * rather than by a hook of its own on a screen that would have to ask again.
+   */
+  const [{ data: recent }, { data: today }] = await Promise.all([
+    supabase
+      .from('workouts')
+      .select(
+        'id, name, started_at, workout_sets(exercise_id, set_number, weight_kg, reps, set_type)',
+      )
+      .eq('user_id', userId)
+      .not('ended_at', 'is', null)
+      .order('started_at', { ascending: false })
+      .limit(1),
+    supabase.from('daily_checkins').select('state').eq('day', localDay()).maybeSingle(),
+  ])
 
   const last = recent?.[0]
+
+  /**
+   * Null means "not asked today", which `computeReadiness` scores as neutral —
+   * the same thing a skipped check-in means, and the reason there is no
+   * "skip" button on Home.
+   */
+  const checkIn: CheckIn | null = asCheckIn(
+    (today as { state?: unknown } | null)?.state,
+  )
+  const lastAt = (last?.started_at as string | null | undefined) ?? null
+  const lastMs = lastAt === null ? Number.NaN : new Date(lastAt).getTime()
+  const daysRested = Number.isNaN(lastMs)
+    ? null
+    : Math.floor((Date.now() - lastMs) / 86_400_000)
+  set({ readiness: computeReadiness({ checkIn, daysRested }) })
   const previousRows = (last?.workout_sets ?? []) as {
     exercise_id: string
     set_number: number
