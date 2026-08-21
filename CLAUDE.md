@@ -199,9 +199,21 @@ and does nothing. Assert the privilege.**
   grow an Arabic RTL locale.
 - **Weight is stored in kg, always.** The header lbs/kg toggle is display only,
   rounded to 0.5 lb / 0.25 kg. Never round the stored value.
-- **Dark-first, one accent (ember `#e8491d`, adopted 2026-08-12).** Nothing else is coloured. No
-  gradients, shadows, emoji, or decorative illustration. Numbers render large
-  and tabular (`.tnum`). Touch targets ≥ 48px.
+- **Paper-first, one accent (ember `#e8491d`), since 2026-08-20.** This line said
+  "dark-first… no shadows" until Ameen's prototype replaced v5 Momentum. The
+  ground is `#f7f3ec`, cards are white with a hairline ring AND a 1px lift, the
+  display face is **Sora**, every control is a pill, and the CTA carries an
+  ember glow. The ONE dark surface is the rest canvas, which inverts to `ink`
+  and back. Nothing else is coloured, no gradients, no emoji, no decorative
+  illustration. Numbers render large and tabular. Touch targets ≥ 48px.
+  **`src/lib/tokens.ts` holds both systems**: `palette`/`type` are current and
+  native reads them, `legacy*` exist only for the dying PWA's `index.css` and
+  go at phase A4. The mark is the **plate used as the letter `a`** —
+  `mobile/src/components/ui/Plate.tsx`, four variants, one job each.
+- **The reference is `~/Downloads/Wazn Prototype.html`, and its extracted
+  source is in `docs/design/prototype/`.** `docs/design/v5-momentum/` is
+  history. Read the source, not a screenshot: the bundle unpacks with a dozen
+  lines of Python and every size, colour and radius is a literal in it.
 - **Auth offers four ways in — never a magic link.** Ameen's decisions
   2026-08-07 (see DECISIONS.md, including the explicit reversal of the
   old no-passwords rule): (1) **Google sign-in**, the hero path once its

@@ -138,7 +138,7 @@ export default function LogHome() {
           Brass, and one of only four places in the app allowed to be. */}
       {home.rank !== null && (
         <Card style={{ marginTop: 12, gap: 10 }}>
-          <Txt step="num" ink="brassSoft">
+          <Txt step="num" ink="accent">
             {home.rank.name}
           </Txt>
           <Fill pct={home.rank.pct} brass />
@@ -175,7 +175,7 @@ export default function LogHome() {
                   height: space.touch,
                 }}
               >
-                <Txt step="meta" ink="faint" ltr>
+                <Txt step="meta" ink="muted" ltr>
                   {String(i + 1).padStart(2, '0')}
                 </Txt>
                 <Txt step="body" style={{ flex: 1 }} numberOfLines={1}>
@@ -204,7 +204,7 @@ export default function LogHome() {
           height: 1,
           backgroundColor: 'transparent',
           borderRadius: radius.chip,
-          borderColor: palette.line,
+          borderColor: palette.ring,
         }}
       />
     </Screen>

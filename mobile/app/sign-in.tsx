@@ -123,7 +123,7 @@ function LinkBtn({
         opacity: pressed ? 0.6 : 1,
       }}
     >
-      <Txt step={step} ink={disabled === true ? 'faint' : ink}>
+      <Txt step={step} ink={disabled === true ? 'muted' : ink}>
         {label}
       </Txt>
     </Pressable>
@@ -133,7 +133,7 @@ function LinkBtn({
 /** The `·` between them, in `faint` so it separates without competing. */
 function Dot({ step = 'label' }: { step?: 'label' | 'meta' }) {
   return (
-    <Txt step={step} ink="faint">
+    <Txt step={step} ink="muted">
       ·
     </Txt>
   )
@@ -148,7 +148,7 @@ function GoogleDisc() {
         width: 24,
         height: 24,
         borderRadius: 12,
-        backgroundColor: palette.accentInk,
+        backgroundColor: palette.onInk,
         alignItems: 'center',
         justifyContent: 'center',
       }}
@@ -239,7 +239,7 @@ export default function SignIn() {
       // the password field and the sign-in button on a small phone; `padding`
       // lifts the content instead of leaving the user to guess.
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={{ flex: 1, backgroundColor: palette.ink }}
+      style={{ flex: 1, backgroundColor: palette.paper }}
     >
       <ScrollView
         contentContainerStyle={{
@@ -280,9 +280,9 @@ export default function SignIn() {
             />
 
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-              <View style={{ flex: 1, height: 1, backgroundColor: palette.line }} />
+              <View style={{ flex: 1, height: 1, backgroundColor: palette.ring }} />
               <Kick>{t('auth.or')}</Kick>
-              <View style={{ flex: 1, height: 1, backgroundColor: palette.line }} />
+              <View style={{ flex: 1, height: 1, backgroundColor: palette.ring }} />
             </View>
 
             <View style={{ gap: 10 }}>
@@ -393,12 +393,12 @@ export default function SignIn() {
               {/* v5 sets this at `T.meta` 10 — mono, caps, and NO tracking.
                   `Kick` is the same face at the same size with 0.14em on it,
                   which pushes this line onto a second row. */}
-              <Txt step="meta" ink="faint" style={{ fontSize: 10, lineHeight: 12 }}>
+              <Txt step="meta" ink="muted" style={{ fontSize: 10, lineHeight: 12 }}>
                 {t('auth.hevy.cta.sub').toUpperCase()}
               </Txt>
             </Card>
 
-            <Txt step="nano" ink="faint" style={{ textAlign: 'center' }}>
+            <Txt step="nano" ink="muted" style={{ textAlign: 'center' }}>
               {`${t('auth.privacy.link')} · ${t('auth.footer.note')}`}
             </Txt>
           </>
@@ -474,7 +474,7 @@ export default function SignIn() {
             {/* The no-oracle note. The screen cannot tell you whether that
                 account exists, and saying so out loud is kinder than letting
                 someone retype a typo six times. */}
-            <Txt step="nano" ink="faint" style={{ textAlign: 'center' }}>
+            <Txt step="nano" ink="muted" style={{ textAlign: 'center' }}>
               {t('auth.code.no_oracle')}
             </Txt>
           </>

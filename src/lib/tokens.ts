@@ -1,5 +1,21 @@
 /**
- * The v5 "Momentum" design tokens, in one place, as plain TypeScript.
+ * The design tokens, in one place, as plain TypeScript.
+ *
+ * ── TWO SYSTEMS LIVE HERE, AND ONLY ONE OF THEM IS BEING BUILT ──────────────
+ * `palette` / `type` / `fontFamily` are the CURRENT system, taken from the
+ * prototype Ameen supplied on 2026-08-20 (`Wazn Prototype.html`, four screens:
+ * Home, Workout, Rest, Finish). Paper ground, Sora display, pill controls,
+ * real shadows, and the plate glyph used as the letter `a`. Ameen's call the
+ * same day: **it replaces v5 "Momentum"**. The native app reads these.
+ *
+ * `legacyPalette` / `legacyType` are v5 Momentum. Nothing new may read them.
+ * They survive for exactly one reason: `src/index.css` is still the dying Vite
+ * PWA's stylesheet, `scripts/check_tokens.ts` still checks the two agree, and
+ * repainting an app that Stage 4A deletes is the definition of rented work.
+ * When `src/index.css` goes at phase A4, so do they.
+ *
+ * A colour that appears in both is not shared — it is a coincidence of two
+ * systems liking the same ember.
  *
  * ── WHY THIS FILE EXISTS ────────────────────────────────────────────────────
  * The app now renders through two stacks that cannot share a stylesheet. The
@@ -15,9 +31,11 @@
  * out — the checker does not care which is "right", only that they match.
  *
  * ── WHERE THE NUMBERS COME FROM ─────────────────────────────────────────────
- * `docs/design/v5-momentum/design/ui.jsx`, which the handoff README names as
- * "THE token source". Where this file and the handoff differ, the handoff is
- * normative (README §Fidelity) and this file is the bug.
+ * Read out of the prototype's own markup, not eyeballed from a screenshot: the
+ * bundle was unpacked and every `font:`, `background:`, `border-radius:` and
+ * `box-shadow:` counted. `docs/design/prototype/` holds the extracted source.
+ * Where this file and that source differ, the source is normative and this
+ * file is the bug.
  *
  * Nothing in here imports anything. No React, no browser, no Vite. That is
  * deliberate: it is the one module both a Metro bundle and a Vite bundle have
@@ -39,7 +57,7 @@
    this ground — chrome and large text only. Small accent text uses
    `accentSoft` (#f4a68c), which is 9.87:1. `tokens.test.ts` asserts both, so
    the figure stops living in a comment that goes stale. */
-export const palette = {
+export const legacyPalette = {
   /** App ground. Warm near-black: a cool ground fights a warm accent. */
   ink: '#0f0d0a',
   /** Cards. */
@@ -74,7 +92,7 @@ export const palette = {
   tabbar: '#0b0906',
 } as const
 
-export type PaletteKey = keyof typeof palette
+export type LegacyPaletteKey = keyof typeof legacyPalette
 
 /* ── Type ──────────────────────────────────────────────────────────────────
    Three faces and ten steps. Weight and leading travel WITH each step so a
@@ -84,21 +102,18 @@ export type PaletteKey = keyof typeof palette
    and declares 10. What is enforced is that no size is anonymous — every one
    is a named step or one of the three idioms the reference itself repeats.
    `scripts/check_type_ramp.mjs` fails the build on anything else. */
-export const fontFamily = {
-  /** Display and every figure. Condensed is load-bearing: mega is 84px and
-      only fits a phone because the face is narrow. */
+export const legacyFontFamily = {
   display: 'Saira Semi Condensed',
   body: 'Hanken Grotesk',
-  /** The meta voice: kickers, timestamps, chips. Machine-set, not spoken. */
   mono: 'IBM Plex Mono',
 } as const
 
-export type FontRole = keyof typeof fontFamily
+export type FontRole = keyof typeof legacyFontFamily
 
 export type TypeStep = {
   family: FontRole
   size: number
-  weight: 400 | 500 | 600 | 700
+  weight: 400 | 500 | 600 | 700 | 800
   /** Unitless multiplier, as CSS `line-height` and RN's ratio both want. */
   lineHeight: number
   /** In `em`, so both stacks can scale it by `size`. */
@@ -108,7 +123,7 @@ export type TypeStep = {
   tabular?: boolean
 }
 
-export const type = {
+export const legacyType = {
   /** The live weight zone. Reps sit at 56 — an override, not a step. */
   mega: {
     family: 'display',
@@ -168,22 +183,251 @@ export const type = {
   },
 } as const satisfies Record<string, TypeStep>
 
+export type LegacyTypeStepName = keyof typeof legacyType
+
+/* ── THE CURRENT SYSTEM ────────────────────────────────────────────────────
+   Paper, not iron. The ground is warm off-white, cards are pure white lifted
+   by a hairline ring and a 1px shadow, and the ONE dark surface is the rest
+   canvas — which inverts to `ink` for the length of a rest and back again.
+   That inversion is the whole reason `ink` is both "the colour text is set
+   in" and "the colour a screen can be made of"; it is one value doing two
+   jobs on purpose, so the `on*` roles below exist to say which job.
+
+   CONTRAST, MEASURED, NOT ASSUMED (`tokens.test.ts` pins all of these):
+
+     ink       on paper   16.70:1   ✓
+     body      on paper    7.95:1   ✓
+     muted     on paper    3.39:1   ✗ below AA for small text
+     accent    on paper    3.51:1   ✗ below AA for small text
+     accentSoft on paper   6.77:1   ✓
+
+   The two failures are the prototype's own values and are kept, because the
+   prototype is the spec and changing a designer's greys behind their back is
+   not a fix. They are recorded in WAZN_PLAN 7.0 with the candidate
+   replacements, for Ameen to rule on. `accentSoft` exists so that any small
+   ember text this app adds ITSELF has a compliant option — the prototype sets
+   the "12 wk" chip and the NEW PR kicker in raw `accent`. */
+export const palette = {
+  /** Behind the device on a wide web viewport. Native never shows it. */
+  page: '#e9e4d8',
+  /** The app ground. */
+  paper: '#f7f3ec',
+  /** Cards, and the only pure white in the system. */
+  card: '#ffffff',
+  /**
+   * Text on paper — and the GROUND of the rest canvas and the Up Next card.
+   * One value, two jobs; see the note above.
+   */
+  ink: '#16130e',
+  /** Prose. A step off `ink` so a paragraph does not shout like a heading. */
+  body: '#4f4a41',
+  /** Labels, meta, anything secondary. 3.39:1 — see the note above. */
+  muted: '#8a8378',
+  /** THE accent: the one action per screen, the live ring, PR, the plate. */
+  accent: '#e8491d',
+  /** Pressed and hover. */
+  accentPress: '#b83915',
+  /** Small ember text that has to pass AA. The prototype does not use it. */
+  accentSoft: '#9a3012',
+  /** The wash behind an ember chip or the PR card. */
+  accentWash: 'rgba(232, 73, 29, 0.09)',
+  /** Text and glyphs ON ember, and on `ink`. Same value as `paper`. */
+  onInk: '#f7f3ec',
+  /** Prose on `ink`. */
+  onInkBody: '#d6d1c6',
+  /** Labels on `ink`. */
+  onInkMuted: '#9d968a',
+  /** Chrome on `ink` — the status row, the "logged ✓" line. */
+  onInkFaint: '#7a7469',
+  /** A raised surface ON the ink ground: the rest coach card, the ±30s pills. */
+  onInkSurface: 'rgba(247, 243, 236, 0.06)',
+  /** The same, one step up: the ±30s buttons. */
+  onInkRaised: 'rgba(247, 243, 236, 0.1)',
+  /** The rest ring's unfilled track. */
+  onInkTrack: 'rgba(247, 243, 236, 0.12)',
+  /** The hairline ring around every card on paper. */
+  ring: 'rgba(22, 19, 14, 0.06)',
+  /** The ring when it is doing a BUTTON's job, not a card's. */
+  ringStrong: 'rgba(22, 19, 14, 0.1)',
+} as const
+
+export type PaletteKey = keyof typeof palette
+
+/* ── Type ──────────────────────────────────────────────────────────────────
+   Sora for display and every figure, Hanken Grotesk for prose, IBM Plex Mono
+   for the machine voice. The prototype renders 25 distinct sizes; these are
+   the 18 named steps they collapse to, and the collapses are all under 1px
+   except two noted at their step. */
+export const fontFamily = {
+  /** Display and every figure. Geometric, tight-tracked, heavy at the top. */
+  display: 'Sora',
+  body: 'Hanken Grotesk',
+  /** The meta voice: figures in rows, timestamps, machine labels. */
+  mono: 'IBM Plex Mono',
+} as const
+
+export const type = {
+  /** The rest countdown, and nothing else. */
+  mega: {
+    family: 'display',
+    size: 54,
+    weight: 800,
+    lineHeight: 1,
+    letterSpacing: -0.03,
+    tabular: true,
+  },
+  /** The one sentence a screen opens with: "Push day," / "In the books." */
+  hero: {
+    family: 'display',
+    size: 34,
+    weight: 800,
+    lineHeight: 1.12,
+    letterSpacing: -0.03,
+  },
+  /** The wordmark's two Latin halves. Not a heading — see `Wordmark`. */
+  mark: {
+    family: 'display',
+    size: 26,
+    weight: 800,
+    lineHeight: 1,
+    letterSpacing: -0.05,
+  },
+  /** The stepper figures, weight and reps. */
+  fig: {
+    family: 'display',
+    size: 29,
+    weight: 700,
+    lineHeight: 1.05,
+    letterSpacing: -0.02,
+    tabular: true,
+  },
+  /** Stat tiles, and the routine name on the Up Next card. */
+  num: {
+    family: 'display',
+    size: 22,
+    weight: 700,
+    lineHeight: 1.15,
+    letterSpacing: -0.02,
+    tabular: true,
+  },
+  /** The `+` and `−` of a stepper. A glyph, which is why it is 600 not 700. */
+  glyph: { family: 'display', size: 22, weight: 600, lineHeight: 1 },
+  /** An exercise name, a PR line. */
+  title: {
+    family: 'display',
+    size: 17,
+    weight: 700,
+    lineHeight: 1.2,
+    letterSpacing: -0.02,
+  },
+  /** Button labels, and the screen title in a workout header. SENTENCE case:
+      the prototype's CTAs read "Start workout", never "START WORKOUT". */
+  cta: {
+    family: 'display',
+    size: 16,
+    weight: 700,
+    lineHeight: 1.2,
+    letterSpacing: -0.02,
+  },
+  /** The secondary pair of buttons, and the plate maths line. */
+  strong: {
+    family: 'display',
+    size: 15,
+    weight: 700,
+    lineHeight: 1.2,
+    letterSpacing: -0.01,
+  },
+  /** A chip that is a button — "Finish", "12 wk". */
+  pill: {
+    family: 'display',
+    size: 13,
+    weight: 700,
+    lineHeight: 1.2,
+    letterSpacing: -0.01,
+  },
+  /** COACH · UP NEXT · NEW PR. Display, not mono — this system's kicker is
+      set in the display face, which is where it differs most from v5's. */
+  kick: {
+    family: 'display',
+    size: 12,
+    weight: 700,
+    lineHeight: 1.2,
+    letterSpacing: 0.08,
+    uppercase: true,
+  },
+  /** Coach sentences and prose. */
+  body: { family: 'body', size: 14, weight: 500, lineHeight: 1.6 },
+  /** A secondary action that is not a button — "skip rest", "± 30s". */
+  action: { family: 'body', size: 14, weight: 600, lineHeight: 1.2 },
+  /** The date line, the routine meta. Collapses the prototype's 13/400. */
+  label: { family: 'body', size: 13, weight: 500, lineHeight: 1.5 },
+  /** A stat tile's sub-label. The one fractional size, and it is the
+      prototype's own. */
+  caption: { family: 'body', size: 11.5, weight: 500, lineHeight: 1.3 },
+  /** The live set rows — the figures a lifter reads mid-set, so the largest
+      the mono voice goes. */
+  dataLg: { family: 'mono', size: 14, weight: 500, lineHeight: 1.4, tabular: true },
+  /** Status row, the finish set list, the "next up" strip. */
+  data: { family: 'mono', size: 13, weight: 500, lineHeight: 1.4, tabular: true },
+  /** "set 3 of 4 · barbell", elapsed time. */
+  meta: { family: 'mono', size: 12, weight: 500, lineHeight: 1.3, tabular: true },
+  /** WEIGHT · KG, REST · OF 2:00. The tracked machine label. */
+  nano: {
+    family: 'mono',
+    size: 11,
+    weight: 500,
+    lineHeight: 1.2,
+    letterSpacing: 0.1,
+    uppercase: true,
+  },
+} as const satisfies Record<string, TypeStep>
+
 export type TypeStepName = keyof typeof type
+
+/* ── Elevation ─────────────────────────────────────────────────────────────
+   v5 forbade shadows outright and drew every edge as a ring. This system uses
+   both, and the distinction is load-bearing: the ring says "this is a
+   surface", the shadow says "this is ABOVE the surface", and the ember glow
+   says "this is the one thing to press". Three, and no fourth.
+
+   Stated as numbers rather than a CSS string because React Native has no
+   `box-shadow`: it wants `shadowColor` / `shadowOffset` / `shadowRadius`, and
+   a string would have to be re-parsed on that side. */
+export const elevation = {
+  /** A card at rest: the ring, plus a 1px lift. */
+  card: { color: 'rgba(22, 19, 14, 0.06)', y: 1, blur: 2 },
+  /** The one action on the screen. Ember, and only ever under ember. */
+  cta: { color: 'rgba(232, 73, 29, 0.35)', y: 10, blur: 26 },
+} as const
 
 /* ── Shape, spacing, motion ────────────────────────────────────────────── */
 
 export const radius = {
-  card: 16,
+  /** A card. */
+  card: 20,
+  /** The smaller card — a stat tile, the stepper, the plate strip. */
+  cardSm: 18,
+  /** A control inside a card: the stepper's ± keys, an input, a thumbnail. */
   ctl: 12,
+  /** The rest canvas's "next up" strip, which is neither card nor control. */
+  strip: 16,
   chip: 6,
+  /** Every button in this system, and the avatar. */
   pill: 999,
 } as const
 
 export const space = {
-  /** Screen gutter. Auth screens use 22. */
-  gutter: 18,
+  /** Screen gutter. 22 everywhere in the prototype, including auth. */
+  gutter: 22,
   authGutter: 22,
-  cardPad: 16,
+  cardPad: 18,
+  /** The hero CTA. 58 on Home, 60 mid-workout — the taller one is the
+      button a lifter presses with the back of a wrist. */
+  cta: 58,
+  ctaLive: 60,
+  /** A stepper's ± key, and the workout header's back button. */
+  key: 46,
+  back: 40,
   /** Touch floor, §2.4. Nothing pressable is smaller. */
   touch: 48,
   /** The tab bar's height, in ONE place. Three sticky clusters clear it. */

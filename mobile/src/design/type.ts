@@ -3,17 +3,17 @@ import { type TextStyle } from 'react-native'
 import { fontFamily, type, type TypeStepName } from '@wazn/domain'
 
 /**
- * The v5 ramp, resolved into React Native text styles.
+ * The ramp, resolved into React Native text styles.
  *
  * ── WHY TYPE IS A COMPONENT ON NATIVE AND A CLASS ON WEB ────────────────────
- * On the web a step is `text-hero` and the browser picks the 700 cut of Saira
+ * On the web a step is `text-hero` and the browser picks the 800 cut of Sora
  * out of the family. React Native does not do that: `fontWeight` on a custom
  * font is either ignored or, on Android, faked by smearing the glyphs. The
- * family name IS the weight — you ask for `SairaSemiCondensed_700Bold` and
- * there is no such thing as asking for Saira at 700.
+ * family name IS the weight — you ask for `Sora_800ExtraBold` and there is no
+ * such thing as asking for Sora at 800.
  *
  * So the ramp cannot be a set of Tailwind classes here; a `text-hero` that
- * carried a `fontWeight` would silently render Saira Medium and look almost
+ * carried a `fontWeight` would silently render Sora Regular and look almost
  * right. It is resolved once, in this file, into complete styles, and reached
  * through `<Txt step="hero">`. NativeWind still does everything else — layout,
  * colour, spacing — it just does not own the ramp.
@@ -37,11 +37,13 @@ import { fontFamily, type, type TypeStepName } from '@wazn/domain'
  */
 const CUTS = {
   display: {
-    600: 'SairaSemiCondensed_600SemiBold',
-    700: 'SairaSemiCondensed_700Bold',
+    600: 'Sora_600SemiBold',
+    700: 'Sora_700Bold',
+    800: 'Sora_800ExtraBold',
   },
   body: {
-    400: 'HankenGrotesk_400Regular',
+    500: 'HankenGrotesk_500Medium',
+    600: 'HankenGrotesk_600SemiBold',
   },
   mono: {
     500: 'IBMPlexMono_500Medium',

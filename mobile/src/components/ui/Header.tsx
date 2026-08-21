@@ -58,14 +58,14 @@ export function Header({
           width: 34,
           height: 34,
           borderRadius: radius.pill,
-          backgroundColor: palette.raised,
+          backgroundColor: palette.paper,
           borderWidth: 1,
-          borderColor: palette.line,
+          borderColor: palette.ring,
           alignItems: 'center',
           justifyContent: 'center',
         }}
       >
-        <Txt step="label" ink="text">
+        <Txt step="label" ink="ink">
           {initial}
         </Txt>
       </Pressable>

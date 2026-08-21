@@ -55,7 +55,7 @@ const CELL_H = 12
 const GAP = 4
 
 function cellColour(day: CalendarDay): string {
-  return day.volumeKg > 0 ? palette.accent : palette.raised
+  return day.volumeKg > 0 ? palette.accent : palette.paper
 }
 
 /** `trainingCalendar` returns days in order from a Monday. Seven to a column
@@ -72,7 +72,7 @@ function SectionHead({ title, right }: { title: string; right?: string }) {
       <Kick>{title}</Kick>
       <View style={{ flex: 1 }} />
       {right !== undefined ? (
-        <Txt step="meta" ink="faint" ltr>
+        <Txt step="meta" ink="muted" ltr>
           {right}
         </Txt>
       ) : null}
@@ -111,7 +111,7 @@ function SessionRow({
         gap: 12,
         paddingVertical: 12,
         borderTopWidth: 1,
-        borderTopColor: palette.line,
+        borderTopColor: palette.ring,
       }}
     >
       <View style={{ flex: 1, minWidth: 0 }}>
@@ -125,7 +125,7 @@ function SessionRow({
         >
           {session.name}
         </Txt>
-        <Txt step="meta" ink="faint" ltr style={{ marginTop: 3 }}>
+        <Txt step="meta" ink="muted" ltr style={{ marginTop: 3 }}>
           {meta}
         </Txt>
       </View>
@@ -134,7 +134,7 @@ function SessionRow({
       ) : null}
       <Txt step="num" ltr>
         {Math.round(toDisplayWeight(session.volumeKg, unit)).toLocaleString()}
-        <Txt step="meta" ink="faint" ltr>
+        <Txt step="meta" ink="muted" ltr>
           {` ${unit.toUpperCase()}`}
         </Txt>
       </Txt>
@@ -202,7 +202,7 @@ export default function HistoryScreen() {
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
             <Kick ink="accentSoft">COACH&apos;S FIND</Kick>
             <View style={{ flex: 1 }} />
-            <Kick onPress={dismiss} ink="faint" suppressHighlighting>
+            <Kick onPress={dismiss} ink="muted" suppressHighlighting>
               DISMISS
             </Kick>
           </View>

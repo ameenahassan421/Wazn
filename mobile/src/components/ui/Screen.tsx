@@ -59,7 +59,7 @@ export function Screen({
     return (
       <View
         onTouchStart={onTouchStart}
-        style={[{ flex: 1, backgroundColor: palette.ink }, padding, style ?? null]}
+        style={[{ flex: 1, backgroundColor: palette.paper }, padding, style ?? null]}
       >
         {children}
       </View>
@@ -69,7 +69,7 @@ export function Screen({
   return (
     <ScrollView
       onTouchStart={onTouchStart}
-      style={{ flex: 1, backgroundColor: palette.ink }}
+      style={{ flex: 1, backgroundColor: palette.paper }}
       contentContainerStyle={[padding, style ?? null]}
       keyboardShouldPersistTaps="handled"
       // iOS default is a white flash at the bounce edges on a dark ground.
@@ -108,7 +108,7 @@ export function Empty({
           height: 64,
           borderRadius: 32,
           borderWidth: 2,
-          borderColor: palette.line2,
+          borderColor: palette.ringStrong,
           alignItems: 'center',
           justifyContent: 'center',
         }}

@@ -1,0 +1,264 @@
+</style>
+<style>body{margin:0;background:#e9e4d8;color:#16130e;font-family:'Hanken Grotesk',ui-sans-serif,system-ui,sans-serif;-webkit-font-smoothing:antialiased}a{color:#e8491d;text-decoration:none}a:hover{color:#b83915}button{font-family:inherit;border:none;cursor:pointer;padding:0;background:none;color:inherit}</style>
+</helmet>
+<div style="min-height:100dvh;display:flex;align-items:center;justify-content:center;padding:28px 0">
+<div style="width:390px;height:844px;background:#f7f3ec;border-radius:44px;box-shadow:0 24px 70px rgba(22,19,14,.18),0 0 0 1px rgba(22,19,14,.06);overflow:hidden;display:flex;flex-direction:column;position:relative">
+
+<sc-if value="{{ isHome }}" hint-placeholder-val="{{ true }}">
+<div data-screen-label="Home" style="display:flex;flex-direction:column;height:100%">
+  <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 24px 4px;font:500 13px 'IBM Plex Mono',monospace;color:#8a8378"><span>9:41</span><span>●●●</span></div>
+  <div style="display:flex;align-items:center;padding:10px 22px 0">
+    <div style="display:flex;align-items:center;gap:1px" role="img" aria-label="Wazn">
+      <span style="font:800 26px/1 'Sora',sans-serif;letter-spacing:-.05em">w</span>
+      <svg width="14" height="14" sc-camel-view-box="0 0 100 100" style="position:relative;top:3px;margin:0 1px"><path fill="#e8491d" fill-rule="evenodd" d="M46 4 a46 46 0 1 0 0 92 a46 46 0 1 0 0 -92 Z M46 30 a16 16 0 1 1 0 32 a16 16 0 1 1 0 -32 Z"></path><path fill="#e8491d" d="M93 4 a7 7 0 0 1 7 7 v78 a7 7 0 0 1 -14 0 v-78 a7 7 0 0 1 7 -7 Z"></path></svg>
+      <span style="font:800 26px/1 'Sora',sans-serif;letter-spacing:-.05em">zn</span>
+    </div>
+    <div style="margin-inline-start:auto;display:flex;gap:8px;align-items:center">
+      <span style="font:700 12px 'Sora',sans-serif;color:#e8491d;background:rgba(232,73,29,.09);border-radius:99px;padding:8px 13px">12 wk</span>
+      <span style="width:38px;height:38px;border-radius:50%;background:#16130e;display:flex;align-items:center;justify-content:center;font:700 14px 'Sora',sans-serif;color:#f7f3ec">A</span>
+    </div>
+  </div>
+  <div style="padding:26px 22px 18px">
+    <p style="font:500 13px 'Hanken Grotesk',sans-serif;color:#8a8378;margin:0 0 8px">Tuesday · week 12 · 3 of 4 done</p>
+    <p style="font:800 34px/1.12 'Sora',sans-serif;letter-spacing:-.03em;margin:0">Push day,<br>Ameen.</p>
+  </div>
+  <div style="flex:1;overflow:hidden;padding:0 22px;display:flex;flex-direction:column;gap:12px">
+    <div style="background:#ffffff;border-radius:20px;box-shadow:0 1px 2px rgba(22,19,14,.06),0 0 0 1px rgba(22,19,14,.05);padding:16px 18px">
+      <div style="display:flex;gap:12px;align-items:flex-start">
+        <svg width="30" height="30" sc-camel-view-box="0 0 96 96" style="flex-shrink:0"><path fill="#16130e" fill-rule="evenodd" d="M48 4 a44 44 0 1 0 0 88 a44 44 0 1 0 0 -88 Z M48 33 a15 15 0 1 1 0 30 a15 15 0 1 1 0 -30 Z"></path><circle cx="48" cy="48" r="9" fill="#e8491d"></circle></svg>
+        <div style="flex:1">
+          <p style="font:700 12px 'Sora',sans-serif;letter-spacing:.08em;text-transform:uppercase;color:#8a8378;margin:0 0 5px">Coach</p>
+          <p style="font:500 14.5px/1.55 'Hanken Grotesk',sans-serif;margin:0;color:#16130e">Bench moved well last week — <strong>62.5 kg</strong> is there today. We'll warm up longer; your shoulder felt tight Friday.</p>
+        </div>
+      </div>
+    </div>
+    <div style="background:#16130e;border-radius:20px;padding:18px;color:#f7f3ec">
+      <p style="font:700 12px 'Sora',sans-serif;letter-spacing:.08em;text-transform:uppercase;color:#9d968a;margin:0">Up next</p>
+      <p style="font:700 22px 'Sora',sans-serif;letter-spacing:-.02em;margin:8px 0 4px">Push Day A</p>
+      <p style="font:400 13px 'Hanken Grotesk',sans-serif;color:#9d968a;margin:0">6 exercises · ~55 min · last done Friday</p>
+    </div>
+  </div>
+  <div style="padding:14px 22px 26px">
+    <button type="button" sc-camel-on-click="{{ start }}" style="width:100%;display:flex;align-items:center;justify-content:center;gap:11px;background:#e8491d;border-radius:99px;height:58px;box-shadow:0 10px 26px rgba(232,73,29,.35)">
+      <svg width="20" height="20" sc-camel-view-box="0 0 96 96"><path fill="#f7f3ec" fill-rule="evenodd" d="M48 4 a44 44 0 1 0 0 88 a44 44 0 1 0 0 -88 Z M48 33 a15 15 0 1 1 0 30 a15 15 0 1 1 0 -30 Z"></path></svg>
+      <span style="font:700 16px 'Sora',sans-serif;color:#f7f3ec">Start workout</span>
+    </button>
+  </div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isWorkout }}" hint-placeholder-val="{{ false }}">
+<div data-screen-label="Workout" style="display:flex;flex-direction:column;height:100%">
+  <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 24px 4px;font:500 13px 'IBM Plex Mono',monospace;color:#8a8378"><span>9:41</span><span>●●●</span></div>
+  <div style="display:flex;align-items:center;gap:12px;padding:10px 22px 12px">
+    <button type="button" sc-camel-on-click="{{ goHome }}" style="width:40px;height:40px;border-radius:50%;background:#ffffff;box-shadow:0 0 0 1px rgba(22,19,14,.08);display:flex;align-items:center;justify-content:center"><svg width="16" height="16" sc-camel-view-box="0 0 24 24" fill="none" stroke="#16130e" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M14 5l-7 7 7 7"></path></svg></button>
+    <div style="flex:1"><p style="font:700 16px 'Sora',sans-serif;letter-spacing:-.02em;margin:0">Push Day A</p><p style="font:500 12px 'IBM Plex Mono',monospace;color:#8a8378;margin:2px 0 0">{{ elapsedLabel }} · exercise 1 of 6</p></div>
+    <button type="button" sc-camel-on-click="{{ finish }}" style="font:700 13px 'Sora',sans-serif;color:#16130e;background:#ffffff;box-shadow:0 0 0 1px rgba(22,19,14,.1);border-radius:99px;padding:11px 16px">Finish</button>
+  </div>
+  <div style="flex:1;overflow:hidden;padding:0 22px;display:flex;flex-direction:column;gap:11px">
+    <div style="background:#ffffff;border-radius:20px;box-shadow:0 1px 2px rgba(22,19,14,.06),0 0 0 1px rgba(22,19,14,.05);padding:14px 18px">
+      <div style="display:flex;align-items:center;gap:12px">
+        <img src="00a7a7bf-13e2-4b5d-99d0-aa8efd4cd182" alt="Bench press" style="width:44px;height:44px;border-radius:12px;object-fit:cover;filter:grayscale(1) contrast(1.05)">
+        <div style="flex:1"><p style="font:700 17px 'Sora',sans-serif;letter-spacing:-.02em;margin:0">Bench Press</p><p style="font:500 12px 'IBM Plex Mono',monospace;color:#8a8378;margin:3px 0 0">set {{ setNum }} of 4 · barbell</p></div>
+      </div>
+      <p style="font:500 12px 'IBM Plex Mono',monospace;color:#8a8378;margin:12px 0 0">last Fri&nbsp;&nbsp;60×5 · 60×5 · 60×4</p>
+      <div style="display:flex;flex-direction:column;gap:6px;margin-top:8px">
+        <sc-for list="{{ setsRows }}" as="s" hint-placeholder-count="2">
+          <div style="display:flex;align-items:center;gap:10px;font:500 14px 'IBM Plex Mono',monospace;color:#16130e"><svg width="16" height="16" sc-camel-view-box="0 0 96 96"><path fill="#e8491d" fill-rule="evenodd" d="M48 4 a44 44 0 1 0 0 88 a44 44 0 1 0 0 -88 Z M48 33 a15 15 0 1 1 0 30 a15 15 0 1 1 0 -30 Z"></path></svg><span style="width:36px;color:#8a8378">{{ s.n }}</span><span>{{ s.w }} kg × {{ s.r }}</span></div>
+        </sc-for>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px">
+      <div style="flex:1.3;background:#ffffff;border-radius:18px;box-shadow:0 0 0 1px rgba(22,19,14,.06);padding:11px 14px">
+        <p style="font:500 11px 'IBM Plex Mono',monospace;letter-spacing:.1em;text-transform:uppercase;color:#8a8378;margin:0 0 5px">Weight · kg</p>
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <button type="button" sc-camel-on-click="{{ decW }}" style="width:46px;height:46px;border-radius:12px;background:#f7f3ec;display:flex;align-items:center;justify-content:center;font:600 22px 'Sora',sans-serif;color:#16130e">−</button>
+          <span style="font:700 29px 'Sora',sans-serif;letter-spacing:-.02em;font-variant-numeric:tabular-nums">{{ weightLabel }}</span>
+          <button type="button" sc-camel-on-click="{{ incW }}" style="width:46px;height:46px;border-radius:12px;background:#f7f3ec;display:flex;align-items:center;justify-content:center;font:600 22px 'Sora',sans-serif;color:#16130e">+</button>
+        </div>
+      </div>
+      <div style="flex:1;background:#ffffff;border-radius:18px;box-shadow:0 0 0 1px rgba(22,19,14,.06);padding:11px 14px">
+        <p style="font:500 11px 'IBM Plex Mono',monospace;letter-spacing:.1em;text-transform:uppercase;color:#8a8378;margin:0 0 5px">Reps</p>
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <button type="button" sc-camel-on-click="{{ decR }}" style="width:46px;height:46px;border-radius:12px;background:#f7f3ec;display:flex;align-items:center;justify-content:center;font:600 22px 'Sora',sans-serif;color:#16130e">−</button>
+          <span style="font:700 29px 'Sora',sans-serif;letter-spacing:-.02em;font-variant-numeric:tabular-nums">{{ reps }}</span>
+          <button type="button" sc-camel-on-click="{{ incR }}" style="width:46px;height:46px;border-radius:12px;background:#f7f3ec;display:flex;align-items:center;justify-content:center;font:600 22px 'Sora',sans-serif;color:#16130e">+</button>
+        </div>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;align-items:flex-start;padding:0 4px">
+      <svg width="22" height="22" sc-camel-view-box="0 0 96 96" style="flex-shrink:0;margin-top:1px"><path fill="#16130e" fill-rule="evenodd" d="M48 4 a44 44 0 1 0 0 88 a44 44 0 1 0 0 -88 Z M48 33 a15 15 0 1 1 0 30 a15 15 0 1 1 0 -30 Z"></path><circle cx="48" cy="48" r="9" fill="#e8491d"></circle></svg>
+      <p style="font:500 13px/1.5 'Hanken Grotesk',sans-serif;color:#4f4a41;margin:0">{{ coachLine }}</p>
+    </div>
+    <div style="background:#ffffff;border-radius:18px;box-shadow:0 0 0 1px rgba(22,19,14,.06);padding:12px 16px;display:flex;align-items:center;gap:16px">
+      <div style="flex:1">
+        <p style="font:500 11px 'IBM Plex Mono',monospace;letter-spacing:.1em;text-transform:uppercase;color:#8a8378;margin:0 0 3px">On the bar · per side</p>
+        <p style="font:700 15px 'Sora',sans-serif;letter-spacing:-.01em;margin:0;font-variant-numeric:tabular-nums">{{ plateLabel }}</p>
+      </div>
+      <svg width="110" height="44" sc-camel-view-box="0 0 120 52"><line x1="4" y1="26" x2="116" y2="26" stroke="#16130e" stroke-width="5" stroke-linecap="round"></line><rect x="30" y="3" width="11" height="46" rx="3" fill="#e8491d"></rect><rect x="45" y="16" width="7" height="20" rx="2.5" fill="#16130e"></rect><rect x="14" y="19" width="9" height="14" rx="2" fill="#16130e" opacity=".25"></rect></svg>
+    </div>
+  </div>
+  <div style="padding:10px 22px 26px;display:flex;flex-direction:column;gap:10px">
+    <button type="button" sc-camel-on-click="{{ logSet }}" style="width:100%;display:flex;align-items:center;justify-content:center;gap:11px;background:#e8491d;border-radius:99px;height:60px;box-shadow:0 10px 26px rgba(232,73,29,.35)">
+      <svg width="20" height="20" sc-camel-view-box="0 0 96 96"><path fill="#f7f3ec" fill-rule="evenodd" d="M48 4 a44 44 0 1 0 0 88 a44 44 0 1 0 0 -88 Z M48 33 a15 15 0 1 1 0 30 a15 15 0 1 1 0 -30 Z"></path></svg>
+      <span style="font:700 16px 'Sora',sans-serif;color:#f7f3ec">{{ logLabel }}</span>
+    </button>
+  </div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isRest }}" hint-placeholder-val="{{ false }}">
+<div data-screen-label="Rest" style="display:flex;flex-direction:column;height:100%;background:#16130e;color:#f7f3ec">
+  <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 24px 4px;font:500 13px 'IBM Plex Mono',monospace;color:#7a7469"><span>9:41</span><span>●●●</span></div>
+  <div style="display:flex;align-items:center;gap:12px;padding:10px 22px 0">
+    <div style="flex:1"><p style="font:700 16px 'Sora',sans-serif;letter-spacing:-.02em;margin:0">Push Day A</p><p style="font:500 12px 'IBM Plex Mono',monospace;color:#7a7469;margin:2px 0 0">{{ elapsedLabel }} · set {{ lastSetNum }} logged ✓</p></div>
+    <button type="button" sc-camel-on-click="{{ skipRest }}" style="font:600 13px 'Hanken Grotesk',sans-serif;color:#9d968a;height:44px;padding:0 8px">skip rest</button>
+  </div>
+  <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:30px;padding:0 22px">
+    <div style="position:relative;width:240px;height:240px;display:flex;align-items:center;justify-content:center">
+      <svg width="240" height="240" sc-camel-view-box="0 0 96 96" style="position:absolute;inset:0"><circle cx="48" cy="48" r="41" fill="none" stroke="rgba(247,243,236,.12)" stroke-width="9"></circle><circle cx="48" cy="48" r="41" fill="none" stroke="#e8491d" stroke-width="9" stroke-linecap="round" stroke-dasharray="257.6" stroke-dashoffset="{{ restDash }}" transform="rotate(-90 48 48)" style="transition:stroke-dashoffset 1s linear"></circle></svg>
+      <div style="text-align:center"><p style="font:800 54px 'Sora',sans-serif;letter-spacing:-.03em;margin:0;font-variant-numeric:tabular-nums">{{ restLabel }}</p><p style="font:500 12px 'IBM Plex Mono',monospace;letter-spacing:.16em;color:#9d968a;margin:4px 0 0">REST · OF {{ restTotalLabel }}</p></div>
+    </div>
+    <div style="display:flex;gap:10px">
+      <button type="button" sc-camel-on-click="{{ sub30 }}" style="font:600 14px 'Hanken Grotesk',sans-serif;color:#f7f3ec;background:rgba(247,243,236,.1);border-radius:99px;padding:13px 22px">− 30s</button>
+      <button type="button" sc-camel-on-click="{{ add30 }}" style="font:600 14px 'Hanken Grotesk',sans-serif;color:#f7f3ec;background:rgba(247,243,236,.1);border-radius:99px;padding:13px 22px">+ 30s</button>
+    </div>
+    <div style="display:flex;gap:12px;align-items:flex-start;background:rgba(247,243,236,.06);border-radius:18px;padding:16px 18px;max-width:320px">
+      <svg width="24" height="24" sc-camel-view-box="0 0 96 96" style="flex-shrink:0"><path fill="#f7f3ec" fill-rule="evenodd" d="M48 4 a44 44 0 1 0 0 88 a44 44 0 1 0 0 -88 Z M48 33 a15 15 0 1 1 0 30 a15 15 0 1 1 0 -30 Z"></path><circle cx="48" cy="48" r="9" fill="#e8491d"></circle></svg>
+      <p style="font:500 14px/1.55 'Hanken Grotesk',sans-serif;color:#d6d1c6;margin:0">{{ restCoachLine }}</p>
+    </div>
+  </div>
+  <div style="padding:0 22px 30px">
+    <button type="button" sc-camel-on-click="{{ skipRest }}" style="width:100%;background:rgba(247,243,236,.06);border-radius:16px;padding:14px 18px;display:flex;justify-content:space-between;align-items:center">
+      <span style="font:500 13px 'IBM Plex Mono',monospace;color:#9d968a">next&nbsp;&nbsp;<span style="color:#f7f3ec">Bench — set {{ setNum }} · {{ weightLabel }} × {{ reps }}</span></span>
+      <svg width="16" height="16" sc-camel-view-box="0 0 24 24" fill="none" stroke="#9d968a" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M10 5l7 7-7 7"></path></svg>
+    </button>
+  </div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isFinish }}" hint-placeholder-val="{{ false }}">
+<div data-screen-label="Finish" style="display:flex;flex-direction:column;height:100%">
+  <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 24px 4px;font:500 13px 'IBM Plex Mono',monospace;color:#8a8378"><span>9:41</span><span>●●●</span></div>
+  <div style="padding:26px 22px 18px">
+    <p style="font:500 13px 'Hanken Grotesk',sans-serif;color:#8a8378;margin:0 0 8px">Tuesday · workout 47</p>
+    <p style="font:800 34px/1.12 'Sora',sans-serif;letter-spacing:-.03em;margin:0">In the books.</p>
+  </div>
+  <div style="flex:1;overflow:hidden;padding:0 22px;display:flex;flex-direction:column;gap:12px">
+    <div style="display:flex;gap:10px">
+      <div style="flex:1;background:#ffffff;border-radius:18px;box-shadow:0 0 0 1px rgba(22,19,14,.06);padding:14px 16px"><p style="font:700 22px 'Sora',sans-serif;letter-spacing:-.02em;margin:0;font-variant-numeric:tabular-nums">{{ elapsedLabel }}</p><p style="font:500 11.5px 'Hanken Grotesk',sans-serif;color:#8a8378;margin:3px 0 0">duration</p></div>
+      <div style="flex:1;background:#ffffff;border-radius:18px;box-shadow:0 0 0 1px rgba(22,19,14,.06);padding:14px 16px"><p style="font:700 22px 'Sora',sans-serif;letter-spacing:-.02em;margin:0;font-variant-numeric:tabular-nums">{{ volumeLabel }}</p><p style="font:500 11.5px 'Hanken Grotesk',sans-serif;color:#8a8378;margin:3px 0 0">kg lifted</p></div>
+      <div style="flex:1;background:#ffffff;border-radius:18px;box-shadow:0 0 0 1px rgba(22,19,14,.06);padding:14px 16px"><p style="font:700 22px 'Sora',sans-serif;letter-spacing:-.02em;margin:0;font-variant-numeric:tabular-nums">{{ setCount }}</p><p style="font:500 11.5px 'Hanken Grotesk',sans-serif;color:#8a8378;margin:3px 0 0">bench sets</p></div>
+    </div>
+    <sc-if value="{{ gotPR }}" hint-placeholder-val="{{ true }}">
+    <div style="background:rgba(232,73,29,.09);border-radius:20px;padding:18px;display:flex;gap:14px;align-items:center">
+      <svg width="44" height="44" sc-camel-view-box="0 0 96 96" style="flex-shrink:0"><path fill="#e8491d" fill-rule="evenodd" d="M48 4 a44 44 0 1 0 0 88 a44 44 0 1 0 0 -88 Z M48 33 a15 15 0 1 1 0 30 a15 15 0 1 1 0 -30 Z M17 43 h6 a5 5 0 0 1 5 5 a5 5 0 0 1 -5 5 h-6 a5 5 0 0 1 -5 -5 a5 5 0 0 1 5 -5 Z M73 43 h6 a5 5 0 0 1 5 5 a5 5 0 0 1 -5 5 h-6 a5 5 0 0 1 -5 -5 a5 5 0 0 1 5 -5 Z"></path></svg>
+      <div><p style="font:700 12px 'Sora',sans-serif;letter-spacing:.08em;text-transform:uppercase;color:#e8491d;margin:0 0 4px">New PR</p><p style="font:700 17px 'Sora',sans-serif;letter-spacing:-.02em;margin:0">Bench Press — {{ bestSetLabel }}</p><p style="font:500 12px 'IBM Plex Mono',monospace;color:#8a8378;margin:4px 0 0">est. 1RM {{ e1rmLabel }} kg</p></div>
+    </div>
+    </sc-if>
+    <div style="background:#ffffff;border-radius:20px;box-shadow:0 0 0 1px rgba(22,19,14,.06);padding:16px 18px;display:flex;gap:12px;align-items:flex-start">
+      <svg width="26" height="26" sc-camel-view-box="0 0 96 96" style="flex-shrink:0"><path fill="#16130e" fill-rule="evenodd" d="M48 4 a44 44 0 1 0 0 88 a44 44 0 1 0 0 -88 Z M48 33 a15 15 0 1 1 0 30 a15 15 0 1 1 0 -30 Z"></path><circle cx="48" cy="48" r="9" fill="#e8491d"></circle></svg>
+      <p style="font:500 14px/1.6 'Hanken Grotesk',sans-serif;color:#4f4a41;margin:0">{{ debrief }}</p>
+    </div>
+    <div style="background:#ffffff;border-radius:20px;box-shadow:0 0 0 1px rgba(22,19,14,.06);padding:14px 18px;display:flex;flex-direction:column;gap:8px">
+      <sc-for list="{{ setsRows }}" as="s" hint-placeholder-count="4">
+        <div style="display:flex;justify-content:space-between;font:500 13px 'IBM Plex Mono',monospace"><span style="color:#16130e">Bench Press · set {{ s.n }}</span><span style="color:#8a8378;white-space:nowrap">{{ s.w }} × {{ s.r }}</span></div>
+      </sc-for>
+    </div>
+  </div>
+  <div style="padding:14px 22px 30px;display:flex;gap:10px">
+    <button type="button" sc-camel-on-click="{{ done }}" style="flex:1;display:flex;align-items:center;justify-content:center;font:700 15px 'Sora',sans-serif;color:#16130e;background:#ffffff;box-shadow:0 0 0 1px rgba(22,19,14,.1);border-radius:99px;height:56px">Share card</button>
+    <button type="button" sc-camel-on-click="{{ done }}" style="flex:1;display:flex;align-items:center;justify-content:center;font:700 15px 'Sora',sans-serif;color:#f7f3ec;background:#16130e;border-radius:99px;height:56px">Done</button>
+  </div>
+</div>
+</sc-if>
+
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script="" data-props="{&quot;$preview&quot;:{&quot;width&quot;:430,&quot;height&quot;:900},&quot;restSeconds&quot;:{&quot;editor&quot;:&quot;range&quot;,&quot;default&quot;:120,&quot;min&quot;:30,&quot;max&quot;:300,&quot;step&quot;:15,&quot;unit&quot;:&quot;s&quot;,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;Behavior&quot;},&quot;showCoach&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Behavior&quot;}}">
+class Component extends DCLogic {
+  state = {
+    screen: 'home', weight: 62.5, reps: 5,
+    sets: [{ n: 1, w: '62.5', r: 5 }, { n: 2, w: '62.5', r: 5 }],
+    restTotal: 120, restLeft: 120, elapsed: 1394,
+  };
+  componentDidMount() {
+    this.timer = setInterval(() => {
+      this.setState((s) => {
+        if (s.screen === 'workout') return { elapsed: s.elapsed + 1 };
+        if (s.screen === 'rest') {
+          if (s.restLeft <= 1) return { screen: 'workout', restLeft: s.restTotal, elapsed: s.elapsed + 1 };
+          return { restLeft: s.restLeft - 1, elapsed: s.elapsed + 1 };
+        }
+        return null;
+      });
+    }, 1000);
+  }
+  componentWillUnmount() { clearInterval(this.timer); }
+  fmt(sec) {
+    const m = Math.floor(sec / 60), s = sec % 60;
+    return m + ':' + String(s).padStart(2, '0');
+  }
+  fmtW(w) { return w % 1 === 0 ? String(w) : w.toFixed(w * 10 % 5 === 0 ? 1 : 2); }
+  plates(total) {
+    let per = (total - 20) / 2;
+    if (per <= 0) return 'empty bar = 20 total';
+    const parts = [];
+    for (const p of [25, 20, 15, 10, 5, 2.5, 1.25]) {
+      while (per >= p - 1e-9) { parts.push(this.fmtW(p)); per -= p; }
+    }
+    return parts.join(' + ') + '  = ' + this.fmtW(total) + ' total';
+  }
+  renderVals() {
+    const st = this.state;
+    const restDefault = this.props.restSeconds ?? 120;
+    const coachOn = this.props.showCoach ?? true;
+    const setNum = st.sets.length + 1;
+    const coachLines = {
+      3: 'Two clean fives. Same again — brace hard, this is the money set.',
+      4: 'Last one. Everything you have, then we press overhead.',
+    };
+    const volume = st.sets.reduce((a, x) => a + parseFloat(x.w) * x.r, 0);
+    const best = st.sets.reduce((a, x) => Math.max(a, parseFloat(x.w) * (1 + x.r / 30)), 0);
+    const bestSet = st.sets.reduce((a, x) => (parseFloat(x.w) >= parseFloat(a.w) ? x : a), st.sets[0] || { w: '0', r: 0 });
+    return {
+      isHome: st.screen === 'home', isWorkout: st.screen === 'workout',
+      isRest: st.screen === 'rest', isFinish: st.screen === 'finish',
+      weightLabel: this.fmtW(st.weight), reps: st.reps, setNum,
+      lastSetNum: st.sets.length, setsRows: st.sets,
+      elapsedLabel: this.fmt(st.elapsed),
+      restLabel: this.fmt(st.restLeft), restTotalLabel: this.fmt(st.restTotal),
+      restDash: 257.6 * (st.restLeft / st.restTotal),
+      coachLine: coachOn ? (coachLines[setNum] || 'Warm-up done. Work sets start now — steady pace.') : '',
+      restCoachLine: coachOn ? 'Shake the arms out. Breathe. The next one is the money set.' : '',
+      plateLabel: this.plates(st.weight),
+      logLabel: 'Log set ' + setNum + ' — ' + this.fmtW(st.weight) + ' × ' + st.reps,
+      volumeLabel: volume.toLocaleString('en-US'), setCount: st.sets.length,
+      gotPR: st.sets.some((x) => parseFloat(x.w) >= 62.5),
+      bestSetLabel: bestSet.w + ' kg × ' + bestSet.r,
+      e1rmLabel: best.toFixed(1),
+      debrief: 'All bench sets at speed — the 2.5 jump held. Eat, sleep. Pull day Thursday.',
+      start: () => this.setState({ screen: 'workout', restTotal: restDefault, restLeft: restDefault }),
+      goHome: () => this.setState({ screen: 'home' }),
+      finish: () => this.setState({ screen: 'finish' }),
+      done: () => this.setState({ screen: 'home', sets: [{ n: 1, w: '62.5', r: 5 }, { n: 2, w: '62.5', r: 5 }], weight: 62.5, reps: 5, elapsed: 1394 }),
+      incW: () => this.setState((s) => ({ weight: s.weight + 2.5 })),
+      decW: () => this.setState((s) => ({ weight: Math.max(20, s.weight - 2.5) })),
+      incR: () => this.setState((s) => ({ reps: s.reps + 1 })),
+      decR: () => this.setState((s) => ({ reps: Math.max(1, s.reps - 1) })),
+      logSet: () => this.setState((s) => {
+        const sets = [...s.sets, { n: s.sets.length + 1, w: this.fmtW(s.weight), r: s.reps }];
+        if (sets.length >= 4) return { sets, screen: 'finish' };
+        return { sets, screen: 'rest', restLeft: s.restTotal };
+      }),
+      skipRest: () => this.setState((s) => ({ screen: 'workout', restLeft: s.restTotal })),
+      add30: () => this.setState((s) => ({ restLeft: s.restLeft + 30, restTotal: Math.max(s.restTotal, s.restLeft + 30) })),
+      sub30: () => this.setState((s) => ({ restLeft: Math.max(1, s.restLeft - 30) })),
+    };
+  }
+}
+</script>
+
+
+</body></html>

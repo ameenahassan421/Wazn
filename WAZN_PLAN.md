@@ -723,7 +723,7 @@ This also corrects a claim this file made on 2026-08-19: the sign-in button was 
 "grey where the reference fills it cream", attributed to a disabled-state opacity. It had no
 fill at all.
 
-#### OPEN AND BLOCKING: which design is v5? (2026-08-20)
+#### DECIDED 2026-08-20: the prototype replaces v5 Momentum
 
 Ameen attached `~/Downloads/Wazn Prototype.html` (dated 2026-08-20) with "you are not
 following the design" and "even the logo is not correct based on the v5 design". It is a
@@ -754,11 +754,51 @@ CI-checked against `index.css` and `mobile/tailwind.config.js`. Adopting it mean
 a new type ramp, a fourth font family shipped in the native bundle (Sora), a new icon set,
 and every screen redrawn in both apps.
 
-**Until Ameen answers, A1 does not continue.** Building Body, Coach, Friends and Progress in
-ink-and-Saira is throwaway work if the answer is paper-and-Sora, and the reverse is equally
-true. The prototype covers only the core loop; it has no auth, History, Progress, Body,
-Coach or Friends screen, so an answer of "yes, this one" still leaves those six to be derived
-rather than copied.
+**Ameen's call, 2026-08-20: the prototype replaces v5, and the wordmark goes with it**
+("same as prototype"). What that cost and what it left open:
+
+DONE, and green on the full wall (1222 tests, lint, typecheck, check:tokens, check:type,
+check:coverage, production build, `bundle:ios`):
+
+- `src/lib/tokens.ts` carries BOTH systems. `palette`/`type`/`fontFamily` are the prototype's
+  and the native app reads them; `legacyPalette`/`legacyType` are v5's and exist only so
+  `src/index.css` can still be checked against something while the dying PWA lives. They go
+  at phase A4 with the stylesheet. The web app's APPEARANCE did not change — it reads
+  `index.css`, never this module.
+- 19 colours, 19 type steps, `elevation`, and the new `radius`/`space` shapes.
+- Sora 600/700/800 and Hanken 500/600 ship in the native bundle; Saira is gone from it.
+- `Plate.tsx` — the mark at its four levels of detail, paths copied from the prototype.
+  `Wordmark.tsx` sets `w` + the plate + `zn`, which is what "the logo is wrong" meant.
+- `Btn` is five pill kinds with sentence-case labels and the ember glow; `Card` is four tones
+  including the two the rest canvas needs; `Txt` has the paper ink roles and the `onInk`
+  family for the one screen that inverts.
+- Every screen swept off the v5 roles. The app compiles, bundles and runs.
+- The icon set is the ember plate on paper, and `app.config.ts` is `light`/`#f7f3ec`.
+
+OPEN, and none of it guessed at:
+
+1. **Six screens the prototype does not cover.** It has Home, Workout, Rest and Finish. Auth,
+   History, Progress, Body, Coach and Friends have to be DERIVED in this language, not copied.
+   Auth is currently the v5 layout wearing paper — it works and it is not the prototype.
+2. **Brass is gone and nothing replaced it.** v5 reserved a second hue for earned states —
+   rank, duel opponent, record pace. The prototype has no such tier; its "earned" signal is
+   the `full` plate on the PR card. Every brass usage was swept to `accent`, which puts a
+   second ember on screens that already have an action. Friends and Progress need a ruling.
+3. **Three contrast pairs are below AA for small text**, all of them the prototype's own
+   values, all asserted at their measured figure in `tokens.test.ts` so they cannot drift
+   silently:
+
+   | pair | measured | candidate |
+   | --- | --- | --- |
+   | `muted` on paper | 3.39:1 | `body` `#4f4a41` at 7.95:1 |
+   | `accent` on paper (the "12 wk" chip, the NEW PR kicker) | 3.51:1 | `accentSoft` `#9a3012` at 6.77:1 |
+   | `onInk` on the ember CTA (a 16px label) | 3.51:1 | v5's `#1c0e08` at 4.84:1 |
+
+   They were NOT quietly corrected. Changing a designer's greys behind their back is not a fix,
+   and this app is read one-handed in gym lighting, so the numbers belong in front of Ameen.
+4. **The core loop is still the v5 layout in paper clothes.** Home, Workout, Rest and Finish
+   are the four screens the prototype actually specifies and they are the four still to be
+   rebuilt against it. That is the next block of work, and it is A2, not A1.
 
 #### The decision that governs everything below
 

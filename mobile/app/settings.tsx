@@ -71,7 +71,7 @@ export default function Settings() {
               />
             ))}
           </ChipRow>
-          <Txt step="meta" ink="faint">
+          <Txt step="meta" ink="muted">
             Display only. Every weight is stored in kilograms.
           </Txt>
         </View>
@@ -96,7 +96,7 @@ export default function Settings() {
         </View>
         <Rule />
         <View style={{ padding: space.cardPad }}>
-          <Txt step="meta" ink="faint" ltr>
+          <Txt step="meta" ink="muted" ltr>
             WAZN 0.1.0 · NATIVE
           </Txt>
         </View>

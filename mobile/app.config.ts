@@ -26,11 +26,18 @@ import type { ExpoConfig } from 'expo/config'
  * the custom scheme meanwhile.
  */
 
-/** The iron ground, from `src/lib/tokens.ts`. Native config is JSON by the
+/** The paper ground, from `src/lib/tokens.ts`. Native config is JSON by the
  *  time EAS reads it, so this cannot be an import from the token module — it
- *  is the one duplicated colour in the project, and `check:tokens` knows it:
- *  the value is asserted there rather than trusted here. */
-const INK = '#0f0d0a'
+ *  is the one duplicated colour in the project, and `check:tokens` asserts it
+ *  against `palette.paper`.
+ *
+ *  That last sentence was FALSE from the day it was written until 2026-08-20:
+ *  `check_tokens.ts` had never opened this file. It was found while changing
+ *  the ground from iron to paper, which is exactly the change a stale third
+ *  copy survives. The assertion is real now, and it was proved to fail on a
+ *  deliberate mismatch rather than assumed to work. Keep the literal on one
+ *  line and keep the name `PAPER` — the regex looks for both. */
+const PAPER = '#f7f3ec'
 const BUNDLE_ID = 'app.wazn.client'
 
 const config: ExpoConfig = {
@@ -41,12 +48,14 @@ const config: ExpoConfig = {
   orientation: 'portrait',
   icon: './assets/images/icon.png',
   /**
-   * Dark, not `automatic`. v5 has one ground on native and a lifter who has
-   * their phone in light mode should not get a half-translated app; the web
-   * PWA keeps its paper theme, which is where that choice lives today.
+   * Light, not `automatic`. The system has one ground and it is paper; a
+   * lifter whose phone is in dark mode should not get a half-translated app.
+   * (This said `dark` and `#0f0d0a` until 2026-08-20, when the prototype
+   * replaced v5 — the ONE dark surface left is the rest canvas, which the app
+   * paints itself.)
    */
-  userInterfaceStyle: 'dark',
-  backgroundColor: INK,
+  userInterfaceStyle: 'light',
+  backgroundColor: PAPER,
   /** Fonts ship inside the bundle as TTFs from `@expo-google-fonts/*`, so the
    *  app looks like itself with no network at all — the same reasoning that
    *  made the PWA self-host its woff2 instead of hitting Google. */
@@ -67,7 +76,7 @@ const config: ExpoConfig = {
   android: {
     package: BUNDLE_ID,
     adaptiveIcon: {
-      backgroundColor: INK,
+      backgroundColor: PAPER,
       foregroundImage: './assets/images/android-icon-foreground.png',
       monochromeImage: './assets/images/android-icon-monochrome.png',
     },
@@ -114,7 +123,7 @@ const config: ExpoConfig = {
     [
       'expo-splash-screen',
       {
-        backgroundColor: INK,
+        backgroundColor: PAPER,
         image: './assets/images/splash-icon.png',
         imageWidth: 96,
       },

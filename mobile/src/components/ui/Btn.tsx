@@ -1,19 +1,22 @@
 import { useState, type ReactNode } from 'react'
 import { Pressable, View, type ViewStyle } from 'react-native'
 
-import { palette, radius, space } from '@wazn/domain'
+import { elevation, palette, radius, space } from '@wazn/domain'
 
 import { Txt } from '@/design/Txt'
 import { tick } from '@/services/haptics'
 
 /**
- * The four button kinds the handoff draws, and nothing else.
+ * The five button kinds this system draws, and nothing else.
+ *
+ * ── EVERY BUTTON IS A PILL, AND THE LABEL IS A SENTENCE ─────────────────────
+ * `borderRadius: pill` on all five, and the label takes the `cta` step, which
+ * is Sora 700 at 16 in SENTENCE case. Both are departures from v5, which drew
+ * 12px rectangles labelled in uppercase. "Start workout", never "START
+ * WORKOUT" — the prototype does not shout, and an uppercase label here reads
+ * as a different app.
  *
  * ── PRESS FEEDBACK, AND WHY IT IS NOT `style={({pressed}) => ...}` ──────────
- * `opacity` on press rather than a background swap. A background swap needs a
- * second colour per kind — four more tokens the design never named — and on a
- * near-black ground a 0.82 dim reads as the same physical press.
- *
  * The pressed flag comes from `onPressIn`/`onPressOut` state and NOT from
  * Pressable's `style` callback, which is the idiomatic React Native form and
  * is SILENTLY DROPPED here. NativeWind 4.2.6 applies `cssInterop` to
@@ -27,10 +30,6 @@ import { tick } from '@/services/haptics'
  * nothing about it is a type error. `eslint.config.js` now has a rule so the
  * next one is a build failure instead of a screenshot.
  *
- * `android_ripple` is deliberately absent. The ripple is Material's answer and
- * this is not a Material app; more to the point it renders in the platform
- * accent, which would put a fifth colour on screen.
- *
  * ── THE 48px FLOOR ──────────────────────────────────────────────────────────
  * `hitSlop` brings a `small` button (40px) up to the touch floor without
  * making it look 48 tall. That is the honest way to satisfy §2.4: the target
@@ -38,23 +37,26 @@ import { tick } from '@/services/haptics'
  */
 
 export type BtnKind =
-  /** THE action on a screen. Ember fill, one per view. */
+  /** THE action on a screen. Ember fill, ember glow, one per view. */
   | 'hero'
-  /** A real alternative. Outline, drawn in `line2`. */
-  | 'line'
-  /** A way out — dismiss, later, skip. No box at all. */
-  | 'ghost'
-  /** The inverse: text-coloured fill, ink-coloured label. Sign in, verify. */
+  /** The affirmative that is not the hero — "Done". Ink fill, cream label. */
   | 'ink'
+  /** A real alternative — "Share card", "Finish". White, ringed. */
+  | 'line'
+  /** A way out — "skip rest". No box at all. */
+  | 'ghost'
+  /** The only kind for the rest canvas: translucent cream on the ink ground. */
+  | 'onInk'
 
 const KINDS: Record<
   BtnKind,
-  { bg: string; ink: Parameters<typeof Txt>[0]['ink']; border?: string }
+  { bg: string; ink: Parameters<typeof Txt>[0]['ink']; ring?: string; glow?: boolean }
 > = {
-  hero: { bg: palette.accent, ink: 'accentInk' },
-  line: { bg: 'transparent', ink: 'text', border: palette.line2 },
+  hero: { bg: palette.accent, ink: 'onInk', glow: true },
+  ink: { bg: palette.ink, ink: 'onInk' },
+  line: { bg: palette.card, ink: 'ink', ring: palette.ringStrong },
   ghost: { bg: 'transparent', ink: 'muted' },
-  ink: { bg: palette.text, ink: 'ink' },
+  onInk: { bg: palette.onInkRaised, ink: 'onInk' },
 }
 
 export function Btn({
@@ -75,9 +77,9 @@ export function Btn({
   /** Stretch to the container. The hero CTA always does. */
   full?: boolean
   /**
-   * A glyph before the label, at the base row gap of 8. Exactly one button in
-   * v5 has one — the Google disc on screen 01 (`Onboarding.html:27`) — so this
-   * is a slot rather than an icon system.
+   * A glyph before the label, at the base row gap of 11. In this system it is
+   * almost always `<Plate size={20} color={palette.onInk} />` — the CTA on
+   * Home and the commit button mid-workout both carry one.
    */
   leading?: ReactNode
   style?: ViewStyle
@@ -101,25 +103,33 @@ export function Btn({
       style={[
         {
           height,
-          borderRadius: radius.ctl,
-          paddingHorizontal: small === true ? 14 : 20,
+          borderRadius: radius.pill,
+          paddingHorizontal: small === true ? 16 : 20,
           flexDirection: 'row',
-          gap: 8,
+          gap: 11,
           alignItems: 'center',
           justifyContent: 'center',
-          backgroundColor: k.bg,
+          backgroundColor: pressed && kind === 'hero' ? palette.accentPress : k.bg,
           alignSelf: full === true ? 'stretch' : 'flex-start',
-          // 45%, which is the opacity the handoff gives every disabled
-          // control it draws (VERIFY before six digits, FINISH IMPORT before
-          // the import completes).
-          opacity: disabled === true ? 0.45 : pressed ? 0.82 : 1,
+          opacity: disabled === true ? 0.45 : pressed ? 0.9 : 1,
         },
-        k.border !== undefined ? { borderWidth: 1, borderColor: k.border } : null,
+        k.ring !== undefined ? { borderWidth: 1, borderColor: k.ring } : null,
+        // The ember glow, and the only place in the app it is allowed. It is
+        // what makes one button the button; a second one would make neither.
+        k.glow === true && disabled !== true
+          ? {
+              shadowColor: palette.accent,
+              shadowOpacity: 0.35,
+              shadowOffset: { width: 0, height: elevation.cta.y },
+              shadowRadius: elevation.cta.blur / 2,
+              elevation: 8,
+            }
+          : null,
         style ?? null,
       ]}
     >
       {leading}
-      <Txt step="title" ink={k.ink}>
+      <Txt step="cta" ink={k.ink}>
         {label}
       </Txt>
     </Pressable>
@@ -129,25 +139,31 @@ export function Btn({
 /**
  * The hero CTA at its own height.
  *
- * 56px, not the 52 every other button gets — `START THE HUNT` and `Continue
- * with Google` are both drawn taller than the buttons around them, and the
- * extra four pixels are the whole of how the design says "this one".
+ * 58 standing still, 60 mid-workout. Not a rounding: the taller one is the
+ * button pressed with the back of a wrist between sets, and the prototype
+ * draws exactly that difference between Home and the workout screen.
  */
-export function HeroBtn(
-  props: Omit<Parameters<typeof Btn>[0], 'kind' | 'small' | 'full'>,
-) {
+export function HeroBtn({
+  live,
+  ...props
+}: Omit<Parameters<typeof Btn>[0], 'kind' | 'small' | 'full'> & { live?: boolean }) {
   return (
-    <Btn {...props} kind="hero" full style={[{ height: 56 }, props.style] as never} />
+    <Btn
+      {...props}
+      kind="hero"
+      full
+      style={
+        [{ height: live === true ? space.ctaLive : space.cta }, props.style] as never
+      }
+    />
   )
 }
 
 /**
- * A chip that is a button — the check-in row's Fresh/Normal/Drained, the
- * Tell-the-coach presets, the preset questions on Coach.
+ * A chip that is a button — the coach's presets, a check-in answer.
  *
- * Selected is a TEXT FILL, not a tint: the handoff's check-in chips invert to
- * `text` on selection rather than taking an ember wash, which keeps ember for
- * the one action on the screen.
+ * Selected is an INK fill, not a tint: ember belongs to the one action on the
+ * screen, and a selected chip is a state, not an action.
  */
 export function ChipBtn({
   label,
@@ -171,27 +187,27 @@ export function ChipBtn({
         onPress()
       }}
       style={{
-        height: 30,
-        paddingHorizontal: 12,
+        height: 34,
+        paddingHorizontal: 14,
         borderRadius: radius.pill,
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: selected === true ? palette.text : 'transparent',
+        backgroundColor: selected === true ? palette.ink : palette.card,
         borderWidth: 1,
-        borderColor: selected === true ? palette.text : palette.line2,
-        opacity: pressed ? 0.82 : 1,
+        borderColor: selected === true ? palette.ink : palette.ringStrong,
+        opacity: pressed ? 0.9 : 1,
       }}
     >
-      <Txt step="label" ink={selected === true ? 'ink' : 'muted'}>
+      <Txt step="pill" ink={selected === true ? 'onInk' : 'ink'}>
         {label}
       </Txt>
     </Pressable>
   )
 }
 
-/** A row of chips that wraps. The gap is the handoff's 8. */
+/** A row of chips that wraps. The gap is the prototype's 10. */
 export function ChipRow({ children }: { children: React.ReactNode }) {
   return (
-    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>{children}</View>
+    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>{children}</View>
   )
 }

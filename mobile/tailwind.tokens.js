@@ -3,51 +3,71 @@
  */
 module.exports = {
   "colors": {
-    "ink": "#0f0d0a",
-    "surface": "#181510",
-    "raised": "#211d15",
-    "line": "rgba(236, 231, 220, 0.08)",
-    "line2": "rgba(236, 231, 220, 0.16)",
-    "text": "#ece7dc",
-    "muted": "#9a927f",
-    "faint": "#615b4d",
+    "page": "#e9e4d8",
+    "paper": "#f7f3ec",
+    "card": "#ffffff",
+    "ink": "#16130e",
+    "body": "#4f4a41",
+    "muted": "#8a8378",
     "accent": "#e8491d",
-    "accent-ink": "#1c0e08",
-    "accent-soft": "#f4a68c",
-    "chip-bg": "rgba(232, 73, 29, 0.15)",
-    "brass": "#b08d3e",
-    "brass-soft": "#d9bc7a",
-    "brass-bg": "rgba(176, 141, 62, 0.18)",
-    "tabbar": "#0b0906"
+    "accent-press": "#b83915",
+    "accent-soft": "#9a3012",
+    "accent-wash": "rgba(232, 73, 29, 0.09)",
+    "on-ink": "#f7f3ec",
+    "on-ink-body": "#d6d1c6",
+    "on-ink-muted": "#9d968a",
+    "on-ink-faint": "#7a7469",
+    "on-ink-surface": "rgba(247, 243, 236, 0.06)",
+    "on-ink-raised": "rgba(247, 243, 236, 0.1)",
+    "on-ink-track": "rgba(247, 243, 236, 0.12)",
+    "ring": "rgba(22, 19, 14, 0.06)",
+    "ring-strong": "rgba(22, 19, 14, 0.1)"
   },
   "fontSize": {
     "mega": [
-      "84px",
+      "54px",
       {
         "lineHeight": "1",
-        "fontWeight": "700",
-        "letterSpacing": "-0.01em"
+        "fontWeight": "800",
+        "letterSpacing": "-0.03em"
       }
     ],
     "hero": [
-      "50px",
+      "34px",
       {
-        "lineHeight": "0.98",
-        "fontWeight": "700",
-        "letterSpacing": "-0.01em"
+        "lineHeight": "1.12",
+        "fontWeight": "800",
+        "letterSpacing": "-0.03em"
+      }
+    ],
+    "mark": [
+      "26px",
+      {
+        "lineHeight": "1",
+        "fontWeight": "800",
+        "letterSpacing": "-0.05em"
       }
     ],
     "fig": [
-      "30px",
+      "29px",
       {
         "lineHeight": "1.05",
-        "fontWeight": "700"
+        "fontWeight": "700",
+        "letterSpacing": "-0.02em"
       }
     ],
     "num": [
-      "21px",
+      "22px",
       {
-        "lineHeight": "1.1",
+        "lineHeight": "1.15",
+        "fontWeight": "700",
+        "letterSpacing": "-0.02em"
+      }
+    ],
+    "glyph": [
+      "22px",
+      {
+        "lineHeight": "1",
         "fontWeight": "600"
       }
     ],
@@ -55,58 +75,116 @@ module.exports = {
       "17px",
       {
         "lineHeight": "1.2",
-        "fontWeight": "600",
-        "letterSpacing": "0.01em"
+        "fontWeight": "700",
+        "letterSpacing": "-0.02em"
+      }
+    ],
+    "cta": [
+      "16px",
+      {
+        "lineHeight": "1.2",
+        "fontWeight": "700",
+        "letterSpacing": "-0.02em"
+      }
+    ],
+    "strong": [
+      "15px",
+      {
+        "lineHeight": "1.2",
+        "fontWeight": "700",
+        "letterSpacing": "-0.01em"
+      }
+    ],
+    "pill": [
+      "13px",
+      {
+        "lineHeight": "1.2",
+        "fontWeight": "700",
+        "letterSpacing": "-0.01em"
+      }
+    ],
+    "kick": [
+      "12px",
+      {
+        "lineHeight": "1.2",
+        "fontWeight": "700",
+        "letterSpacing": "0.08em"
       }
     ],
     "body": [
       "14px",
       {
-        "lineHeight": "1.5",
-        "fontWeight": "400"
+        "lineHeight": "1.6",
+        "fontWeight": "500"
+      }
+    ],
+    "action": [
+      "14px",
+      {
+        "lineHeight": "1.2",
+        "fontWeight": "600"
       }
     ],
     "label": [
       "13px",
       {
-        "lineHeight": "1.4",
-        "fontWeight": "400"
+        "lineHeight": "1.5",
+        "fontWeight": "500"
       }
     ],
-    "kick": [
-      "10px",
+    "caption": [
+      "11.5px",
       {
-        "lineHeight": "1.2",
-        "fontWeight": "500",
-        "letterSpacing": "0.14em"
+        "lineHeight": "1.3",
+        "fontWeight": "500"
+      }
+    ],
+    "dataLg": [
+      "14px",
+      {
+        "lineHeight": "1.4",
+        "fontWeight": "500"
+      }
+    ],
+    "data": [
+      "13px",
+      {
+        "lineHeight": "1.4",
+        "fontWeight": "500"
       }
     ],
     "meta": [
-      "11px",
+      "12px",
       {
-        "lineHeight": "1.2",
+        "lineHeight": "1.3",
         "fontWeight": "500"
       }
     ],
     "nano": [
-      "9px",
+      "11px",
       {
-        "lineHeight": "1.1",
+        "lineHeight": "1.2",
         "fontWeight": "500",
         "letterSpacing": "0.1em"
       }
     ]
   },
   "borderRadius": {
-    "card": "16px",
+    "card": "20px",
+    "cardSm": "18px",
     "ctl": "12px",
+    "strip": "16px",
     "chip": "6px",
     "pill": "999px"
   },
   "spacing": {
-    "gutter": "18px",
+    "gutter": "22px",
     "authGutter": "22px",
-    "cardPad": "16px",
+    "cardPad": "18px",
+    "cta": "58px",
+    "ctaLive": "60px",
+    "key": "46px",
+    "back": "40px",
     "touch": "48px",
     "tabBar": "58px",
     "stepperZone": "82px",
@@ -115,7 +193,7 @@ module.exports = {
   },
   "fontFamily": {
     "display": [
-      "Saira Semi Condensed"
+      "Sora"
     ],
     "body": [
       "Hanken Grotesk"
@@ -135,36 +213,63 @@ module.exports = {
   "typeFace": {
     "mega": "display",
     "hero": "display",
+    "mark": "display",
     "fig": "display",
     "num": "display",
+    "glyph": "display",
     "title": "display",
+    "cta": "display",
+    "strong": "display",
+    "pill": "display",
+    "kick": "display",
     "body": "body",
+    "action": "body",
     "label": "body",
-    "kick": "mono",
+    "caption": "body",
+    "dataLg": "mono",
+    "data": "mono",
     "meta": "mono",
     "nano": "mono"
   },
   "typeCase": {
     "mega": false,
-    "hero": true,
+    "hero": false,
+    "mark": false,
     "fig": false,
     "num": false,
-    "title": true,
-    "body": false,
-    "label": false,
+    "glyph": false,
+    "title": false,
+    "cta": false,
+    "strong": false,
+    "pill": false,
     "kick": true,
+    "body": false,
+    "action": false,
+    "label": false,
+    "caption": false,
+    "dataLg": false,
+    "data": false,
     "meta": false,
     "nano": true
   },
   "typeTabular": {
     "mega": true,
-    "hero": true,
+    "hero": false,
+    "mark": false,
     "fig": true,
     "num": true,
+    "glyph": false,
     "title": false,
-    "body": false,
-    "label": false,
+    "cta": false,
+    "strong": false,
+    "pill": false,
     "kick": false,
+    "body": false,
+    "action": false,
+    "label": false,
+    "caption": false,
+    "dataLg": true,
+    "data": true,
     "meta": true,
     "nano": false
   }

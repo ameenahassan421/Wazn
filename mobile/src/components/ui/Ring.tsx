@@ -82,7 +82,7 @@ export function Ring({
           cy={size / 2}
           r={r}
           fill="none"
-          stroke={palette.raised}
+          stroke={palette.paper}
           strokeWidth={stroke}
         />
         <AnimatedCircle
@@ -90,7 +90,7 @@ export function Ring({
           cy={size / 2}
           r={r}
           fill="none"
-          stroke={brass === true ? palette.brass : palette.accent}
+          stroke={brass === true ? palette.accent : palette.accent}
           strokeWidth={stroke}
           strokeLinecap="round"
           strokeDasharray={circumference}

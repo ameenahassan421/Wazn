@@ -46,7 +46,7 @@ export const TAB_KEY: Record<TabKey, string> = {
  * spent on the rail alone, which is the one piece of chrome up here.
  */
 export function TabGlyph({ tab, on }: { tab: TabKey; on: boolean }) {
-  const ink = on ? palette.accentSoft : palette.faint
+  const ink = on ? palette.accentSoft : palette.muted
 
   switch (tab) {
     // A loaded plate, seen face on — the mark's own part.
@@ -154,7 +154,7 @@ export function TabGlyph({ tab, on }: { tab: TabKey; on: boolean }) {
               marginStart: -4,
               // The BAR's ground, not `surface`: the overlap is a cut-out in
               // the disc behind it, so it has to match whatever it sits on.
-              backgroundColor: palette.tabbar,
+              backgroundColor: palette.card,
             }}
           />
         </View>

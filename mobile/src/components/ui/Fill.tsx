@@ -62,7 +62,7 @@ export function Fill({
       accessibilityValue={{ min: 0, max: 100, now: Math.round(clamped) }}
       style={{
         height,
-        backgroundColor: palette.raised,
+        backgroundColor: palette.paper,
         borderRadius: 3,
         overflow: 'hidden',
       }}
@@ -71,7 +71,7 @@ export function Fill({
         style={[
           {
             height: '100%',
-            backgroundColor: brass === true ? palette.brass : palette.accent,
+            backgroundColor: brass === true ? palette.accent : palette.accent,
           },
           style,
         ]}

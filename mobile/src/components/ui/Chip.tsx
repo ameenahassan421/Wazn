@@ -29,7 +29,7 @@ export function Chip({ brass, children }: { brass?: boolean; children: string })
   return (
     <View
       style={{
-        backgroundColor: brass === true ? palette.brassBg : palette.chipBg,
+        backgroundColor: brass === true ? palette.accentWash : palette.accentWash,
         borderRadius: radius.chip,
         paddingVertical: 3,
         paddingHorizontal: 8,
@@ -41,7 +41,7 @@ export function Chip({ brass, children }: { brass?: boolean; children: string })
           the nowrap the web chip gets from `white-space`. */}
       <Txt
         step="meta"
-        ink={brass === true ? 'brassSoft' : 'accentSoft'}
+        ink={brass === true ? 'accent' : 'accentSoft'}
         ltr
         numberOfLines={1}
       >

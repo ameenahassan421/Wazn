@@ -100,7 +100,7 @@ export function RestCanvas({
         // Paint order only, now that nothing here takes a touch: 29 keeps the
         // BANK IT bar at 31 reading as ON the canvas rather than behind it.
         zIndex: 29,
-        backgroundColor: palette.ink,
+        backgroundColor: palette.paper,
         alignItems: 'center',
         justifyContent: 'center',
         gap: 18,
@@ -133,7 +133,7 @@ export function RestCanvas({
           bar's job on the board underneath, which is one tap away because
           this canvas no longer stands between the finger and the screen. */}
 
-      <Kick ink="faint">TAP TO GO EARLY</Kick>
+      <Kick ink="muted">TAP TO GO EARLY</Kick>
     </View>
   )
 }

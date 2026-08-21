@@ -1,56 +1,57 @@
-import { Text } from 'react-native'
+import { View } from 'react-native'
 
 import { palette } from '@wazn/domain'
 
+import { Txt } from '@/design/Txt'
+import { Plate } from './Plate'
+
 /**
- * `w a zn`, the v5 interface mark.
+ * `w`, the plate, `zn`.
  *
- * ── WHY THIS IS NOT A TYPE STEP ─────────────────────────────────────────────
- * It was, twice, and both were wrong in different directions. The header set
- * it with `step="num"`, which is the FIGURES step: display 21 at weight 600,
- * tabular. Auth set it with `step="hero"`, which carries `uppercase: true` at
- * size 50, so the brand rendered `WAZN` at hero scale on the first screen of
- * the app. Ameen caught that from a screenshot on 2026-08-19 while every check
- * was green.
+ * ── THE MARK IS NOT A STRING ────────────────────────────────────────────────
+ * The `a` is not a letter `a` coloured ember, which is what v5 did and what
+ * this component did until 2026-08-20. It is the plate glyph, set between two
+ * halves of Sora 800 at 26 with `-0.05em` tracking pulling them onto it.
+ * Ameen: "same as prototype", after two rounds of being told the logo was
+ * wrong while every automated check was green.
  *
- * A wordmark is not a size in a ramp. It is a fixed relationship between two
- * letterforms and a colour, and it must not inherit `uppercase`, `tabular` or
- * a weight chosen for numbers. `docs/design/v5-momentum/design/ui.jsx:68` sets
- * it directly and so does this: Saira Semi Condensed 700, lowercase, the `a`
- * in ember. The sizes are the reference's own, 21 in the header and 34 on auth
- * (README screen 01).
+ * ── THE THREE NUMBERS THAT MAKE IT READ AS A WORD ───────────────────────────
+ * The plate is 14 to the type's 26 — a little over half — and it sits 3px BELOW
+ * the baseline the letters sit on, because a circle centred on an x-height
+ * reads as floating. The 1px gaps either side are the whole of the kerning: at
+ * `-0.05em` the two halves are already tight enough that a 2px gap opens a
+ * hole. Every one of those is the prototype's; none is a preference.
  *
- * ── THE FAMILY NAME IS THE WEIGHT ───────────────────────────────────────────
- * `SairaSemiCondensed_700Bold` is asked for by name, not by `fontWeight: 700`.
- * React Native picks a cut by family name; a `fontWeight` on a custom font is
- * ignored on iOS and smeared on Android, and the failure mode is Saira Medium
- * looking almost right. Same reason `type.ts` resolves cuts rather than
- * passing weights through, and the same string `_layout.tsx` registers.
- *
- * ── LIVE TEXT, NOT THE SVG LOCKUP ───────────────────────────────────────────
- * The web draws a baked SVG (`src/components/Wordmark.tsx`, plate-as-counter
- * with an `evenodd` hole) because a font may not have loaded. That is the v3
- * "Loaded Ink" mark, which **v5 deliberately retired from the interface**; it
- * stays canonical on the share card, the PWA icon and the favicon. Here the
- * faces ship in the bundle and are verified registered before the first frame,
- * so live text is safe, selectable and one line.
+ * ── WHY IT IS NOT `step="mark"` ALONE ───────────────────────────────────────
+ * The ramp gives the two Latin halves their size and weight, and that is all a
+ * ramp can do here. A wordmark is a fixed relationship between letterforms, a
+ * glyph and a colour; the last two are not sizes and cannot live on a step.
  */
-export function Wordmark({ size = 21 }: { size?: number }) {
+export function Wordmark({
+  size = 26,
+  /** The two Latin halves. The plate is always ember. */
+  color = palette.ink,
+}: {
+  size?: number
+  color?: string
+}) {
+  const half = { fontSize: size, lineHeight: size, letterSpacing: size * -0.05 }
   return (
-    <Text
+    <View
       accessibilityRole="header"
       accessibilityLabel="Wazn"
-      // `ltr`: `w a zn` is a name, and an Arabic layout must not reverse it.
-      style={{
-        fontFamily: 'SairaSemiCondensed_700Bold',
-        fontSize: size,
-        lineHeight: size * 1.1,
-        color: palette.text,
-        writingDirection: 'ltr',
-      }}
+      // `ltr`: `wazn` is a name, and an Arabic layout must not reverse it.
+      style={{ flexDirection: 'row', alignItems: 'center', direction: 'ltr' }}
     >
-      w<Text style={{ color: palette.accent }}>a</Text>
-      zn
-    </Text>
+      <Txt step="mark" style={[half, { color }]}>
+        w
+      </Txt>
+      <View style={{ marginHorizontal: 1, top: size * 0.115 }}>
+        <Plate size={size * 0.54} variant="mark" />
+      </View>
+      <Txt step="mark" style={[half, { color }]}>
+        zn
+      </Txt>
+    </View>
   )
 }

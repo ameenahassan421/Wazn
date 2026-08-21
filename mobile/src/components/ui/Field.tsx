@@ -45,7 +45,7 @@ export const Field = forwardRef<
       <TextInput
         ref={ref}
         accessibilityLabel={label}
-        placeholderTextColor={palette.faint}
+        placeholderTextColor={palette.muted}
         // The ground, not a surface. v5 draws inputs as cut-outs with a
         // drawn `line2` border rather than as raised fields — the opposite
         // of the card language, on purpose: you type INTO the page.
@@ -55,9 +55,9 @@ export const Field = forwardRef<
             paddingHorizontal: 14,
             borderRadius: radius.ctl,
             borderWidth: 1,
-            borderColor: palette.line2,
-            backgroundColor: palette.ink,
-            color: palette.text,
+            borderColor: palette.ringStrong,
+            backgroundColor: palette.paper,
+            color: palette.ink,
             fontFamily: TYPE.body.fontFamily,
             fontSize: 16,
           },
@@ -134,7 +134,7 @@ export function CodeInput({
               height: space.otpCell,
               borderRadius: radius.ctl,
               borderWidth: filled ? 1.5 : 1,
-              borderColor: filled ? palette.accent : palette.line2,
+              borderColor: filled ? palette.accent : palette.ringStrong,
               alignItems: 'center',
               justifyContent: 'center',
             }}
