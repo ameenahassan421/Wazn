@@ -1317,6 +1317,44 @@ completely silent.
    and for an app whose premise is logging sets in a gym basement this is the
    most important gap on this page.
 
+#### READ BEFORE BUILDING WORKOUT: 1,244 lines of it already exist, on a branch
+
+`origin/claude/live-board-duplicate-backup` (1 commit, 2026-08-18, "Build the live board —
+steppers, BANK IT, and the rest canvas") holds native workout-loop code that **`main` does
+not have**:
+
+| file                                            | lines | on main?                                                                                                |
+| ----------------------------------------------- | ----- | ------------------------------------------------------------------------------------------------------- |
+| `mobile/src/hooks/use-workout.ts`               | 310   | **no**                                                                                                  |
+| `mobile/src/hooks/use-rest-timer.ts`            | 112   | **no**                                                                                                  |
+| `mobile/src/components/workout/Zone.tsx`        | 129   | **no**                                                                                                  |
+| `mobile/src/components/workout/Picker.tsx`      | 117   | **no**                                                                                                  |
+| `mobile/src/components/workout/RestCanvas.tsx`  | 114   | no (main has a different 139-line one at `components/RestCanvas.tsx`)                                   |
+| `mobile/src/components/workout/CommitBar.tsx`   | 73    | **no**                                                                                                  |
+| `mobile/src/components/workout/MomentumBar.tsx` | 48    | **no**                                                                                                  |
+| `mobile/src/services/exercises.ts`              | 26    | **no**                                                                                                  |
+| `mobile/app/session/[id].tsx`                   | +332  | main's is 388 lines with `LiveWorkout` and `Zone` inline; the branch's is ~720 with the parts extracted |
+
+**Workout and Rest are the next two screens in A2.** Building them without reading this branch
+rebuilds a day of work that already exists. It was written against v5, so the STYLING is
+obsolete — but `use-workout.ts`, `use-rest-timer.ts` and `services/exercises.ts` are logic and
+I/O, not pixels, and those are the expensive half.
+
+This is exactly the failure Ameen opened this project to fix on 2026-08-19: "multiple sessions
+kept creating PRs and I have no clue the status". A local `git branch -d` sweep on 2026-08-21
+deleted nineteen LOCAL branches and touched no remote, so the banner still counts these.
+
+#### The other unmerged remotes, triaged 2026-08-21
+
+| branch                                      | verdict                                                                                                                                                                                                                                                        |
+| ------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `claude/direction-and-exempt`               | **empty diff against main** — its one commit is a merge commit whose content is already in. Noise.                                                                                                                                                             |
+| `claude/forecast-dst-span`                  | one 183-line `docs/` handoff, for a session long past. Read once or drop.                                                                                                                                                                                      |
+| `claude/home-gate-findings`                 | `.prettierignore`, a `DECISIONS.md` entry, and `src/screens` — the last is the retiring PWA, so obsolete. The decisions entry may not be.                                                                                                                      |
+| `claude/one-app-consolidation`              | 8 commits of hooks, CI and CLAUDE.md work. **A peer session may still be on it — do not delete, do not rebuild.**                                                                                                                                              |
+| `claude/workout-tracker-pwa-slice-1-97kisx` | 11 lines correcting `docs/agent-setup.md`, and **the correction is right**: cloud environments have no secrets store, so an env var is plain text readable by anyone who can use that environment. Main still carries the weaker advice. Worth cherry-picking. |
+| `v5/p0-tokens`                              | 5,716 lines, almost all `docs/design/v5-momentum` and fonts that are already in main. v5 is retired; the one live piece is a web perf fix, "fill-move animates transform, not width".                                                                          |
+
 #### Waiting on Ameen
 
 Neither blocks the next screen; both get more expensive the longer they sit.
