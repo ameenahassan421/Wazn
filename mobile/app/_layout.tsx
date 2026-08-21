@@ -208,6 +208,13 @@ export default function RootLayout() {
                       gestureEnabled: false,
                     }}
                   />
+                  {/* The picker. A sheet, not a full-screen takeover: it is a
+                      detour from the board rather than a place, and the swipe
+                      down is the cancel a lifter reaches for first. */}
+                  <Stack.Screen
+                    name="session/add"
+                    options={{ presentation: 'modal', animation: 'slide_from_bottom' }}
+                  />
                   <Stack.Screen
                     name="settings"
                     options={{ animation: 'slide_from_right' }}

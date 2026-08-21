@@ -1385,14 +1385,34 @@ The board is seeded from the LAST session, so on the first workout of a new acco
 **empty** — and native has no way to add an exercise. `startWorkout` succeeds, the screen
 renders, and the only control that does anything is Finish.
 
-Before 2026-08-21 this rendered as a blank white card under the header "exercise 1 of 0". It
-now says `log.empty`. That is honesty, not a fix: **a new user cannot log a single set on the
-phone.** The branch `origin/claude/live-board-duplicate-backup` carries a
-`mobile/src/services/exercises.ts` and a `Picker.tsx` that main does not have, which is where
-this closes.
+It had been true since the native app existed and nothing surfaced it, because every check runs
+against a signed-in account with history.
 
-It has been true since the native app existed and nothing surfaced it, because every check
-runs against a signed-in account with history.
+**Closed the same day.** `mobile/app/session/add.tsx` is the picker, `services/exercises.ts`
+the catalogue read, and `addExercise` on the store puts a lift on the board with three blank
+sets. The prototype does not draw a picker — its demo always has a bench press — so it is
+DERIVED: paper ground, one white card, hairline-separated rows, the same 22px gutter, and no
+primitive that is not already in `components/ui/`.
+
+Two things worth keeping:
+
+- **Ranked by `exercise_usage()`, not alphabetically.** The catalogue is 130-odd lifts and a
+  lifter uses fifteen. By name, "Romanian Deadlift" is nine screens down for the person who
+  does it every week. The web picker has always sorted this way; native now does too, from the
+  same RPC. Ties break alphabetically so rows do not move between two openings.
+- **Search is local, through the SHARED `searchByName`.** A per-keystroke round trip in a
+  basement is a picker that fails in the one place this app is used, and sharing the matcher
+  means a search that hits on the phone hits in the browser.
+
+**IT IS UNVERIFIED WITH REAL DATA, AND THAT IS A CONSEQUENCE OF AUTH BEING OFF.**
+`exercises` is `for select to authenticated` (0001_init.sql:91), so an anon read returns ZERO
+ROWS rather than an error. Every screenshot of this picker is its empty state. The populated
+list, the usage ranking and the tap-to-add path have been typechecked, linted and bundled and
+have never rendered a row. **Re-verify the moment auth comes back on.**
+
+That empty read also produced a small wrong claim, now fixed: the screen said "No lift by that
+name" — a SEARCH result — when the truth was that the catalogue had not loaded at all. Two
+states that render identically if you only check `shown.length`.
 
 #### GATE 4 on native: sets now survive the app being killed (2026-08-21)
 

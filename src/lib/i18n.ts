@@ -739,6 +739,16 @@ export const messages: Record<Locale, Record<string, string>> = {
     'notes.saved': 'Saved when you tap away.',
     'notes.error.save': 'Saving the workout note',
     // New exercise
+    /* ── The native exercise picker (2026-08-21) ──────────────────────────
+       The `exercise.new.*` block above is the web's "create a lift that is not
+       in the catalogue" flow. This is the plainer one: choose from what is
+       already there. Native has no create flow yet. */
+    'exercise.search': 'Search lifts',
+    'exercise.cancel': 'Cancel',
+    'exercise.catalogue_empty':
+      'No lifts loaded. The catalogue is only readable by a signed-in account.',
+    'exercise.none': 'No lift by that name.',
+    'exercise.failed': 'Could not load the catalogue. Check your connection.',
     'exercise.new.title': 'New exercise',
     'exercise.new.back': 'Back',
     'exercise.new.name.placeholder': 'Hack Squat (Machine)',
@@ -1689,6 +1699,12 @@ export const messages: Record<Locale, Record<string, string>> = {
     'notes.saved': 'يُحفظ عند الخروج من الحقل.',
     'notes.error.save': 'حفظ ملاحظة التمرين',
     // New exercise
+    'exercise.search': 'ابحث عن تمرين',
+    'exercise.cancel': 'إلغاء',
+    'exercise.catalogue_empty':
+      'لم تُحمّل أي تمارين. القائمة متاحة للحسابات المسجّلة فقط.',
+    'exercise.none': 'لا يوجد تمرين بهذا الاسم.',
+    'exercise.failed': 'تعذّر تحميل القائمة. تحقّق من الاتصال.',
     'exercise.new.title': 'تمرين جديد',
     'exercise.new.back': 'رجوع',
     'exercise.new.name.placeholder': 'هاك سكوات (جهاز)',

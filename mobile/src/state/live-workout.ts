@@ -413,6 +413,43 @@ export function bankCurrentSet(weightKg: number | null, reps: number | null): vo
   persistSet(exercise.exerciseId, setRow.setNumber, setRow.type, weightKg, reps)
 }
 
+/**
+ * Put a lift on the board mid-session.
+ *
+ * ── WHY THIS EXISTS, AND WHY IT IS NOT OPTIONAL ─────────────────────────────
+ * The board is seeded from the LAST session, so on a new account it is EMPTY.
+ * Until 2026-08-21 native had no way to add anything to it, which meant a new
+ * lifter could start a workout, see nothing, and finish it. The app's one
+ * sentence is "log a set in under thirty seconds" and a new account could not
+ * log one at all. Every check ran against an account with history, so nothing
+ * ever said so.
+ *
+ * ── THREE BLANK SETS, AND NO PREVIOUS ───────────────────────────────────────
+ * Three because it is the commonest working prescription and because the board
+ * walks off the end cleanly — a lifter who wants a fourth gets it when set
+ * three banks and `currentPosition` finds nothing, which is the finish state,
+ * not an error. It is a default, not a claim.
+ *
+ * `previousKg`/`previousReps` are null. For the case this unblocks — a lift
+ * with no history — that IS the truth. For a lifter adding a lift they have
+ * done before, the honest previous is one `previous_session` RPC away and is a
+ * follow-up; null renders as "no ghost", which is a missing hint rather than a
+ * wrong one.
+ */
+export function addExercise(exerciseId: string, name: string): void {
+  if (state.board.some((e) => e.exerciseId === exerciseId)) return
+  const sets = [1, 2, 3].map((setNumber) => ({
+    setNumber,
+    type: 'normal' as const,
+    weightKg: null,
+    reps: null,
+    done: false,
+    previousKg: null,
+    previousReps: null,
+  }))
+  set({ board: [...state.board, { exerciseId, name, sets }] })
+}
+
 /** Dismissed by a tap, or by the lifter deciding they are ready. */
 export function endRest(): void {
   set({ restEndsAt: null, restTotal: 0 })

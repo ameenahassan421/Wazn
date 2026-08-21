@@ -15,6 +15,7 @@ import {
 } from '@wazn/domain'
 
 import { RestCanvas } from '@/components/RestCanvas'
+import { Btn } from '@/components/ui/Btn'
 import { Card } from '@/components/ui/Surface'
 import { Plate } from '@/components/ui/Plate'
 import { Txt } from '@/design/Txt'
@@ -370,11 +371,14 @@ export default function LiveWorkout() {
             way to ADD an exercise, which makes this a dead end rather than an
             empty state. That is day one for every new user. */}
         {live.board.length === 0 ? (
-          <Card style={{ paddingVertical: 20, paddingHorizontal: 18 }}>
-            {/* `log.empty` only. An "Add exercise" line under it read as a
-                button and there is nothing behind it on native — a control
-                that does nothing is the defect this repo keeps shipping. */}
+          <Card style={{ paddingVertical: 20, paddingHorizontal: 18, gap: 14 }}>
             <Txt step="title">{t('log.empty')}</Txt>
+            <Btn
+              kind="ink"
+              full
+              label={t('log.add_exercise')}
+              onPress={() => router.push('/session/add')}
+            />
           </Card>
         ) : (
           <Card style={{ paddingVertical: 14, paddingHorizontal: 18 }}>
@@ -478,6 +482,18 @@ export default function LiveWorkout() {
             </View>
             <Barbell />
           </Card>
+        )}
+
+        {/* Adding is a `line` button, not the hero: the hero is the set in
+            front of you. It sits under the board rather than in the header so
+            a thumb reaching for it cannot hit Finish. */}
+        {live.board.length > 0 && (
+          <Btn
+            kind="line"
+            full
+            label={t('log.add_exercise')}
+            onPress={() => router.push('/session/add')}
+          />
         )}
 
         {/* The queue, said plainly. These sets are on the phone and will be
