@@ -23,38 +23,51 @@ import { TYPE } from '@/design/type'
  * is the difference between signing in with a thumb and typing 24 characters
  * one-handed.
  */
-export const Field = forwardRef<TextInput, TextInputProps & { label: string }>(
-  function Field({ label, style, ...rest }, ref) {
-    return (
-      <View style={{ gap: 7 }}>
-        <Txt step="kick">{label.toUpperCase()}</Txt>
-        <TextInput
-          ref={ref}
-          accessibilityLabel={label}
-          placeholderTextColor={palette.faint}
-          // The ground, not a surface. v5 draws inputs as cut-outs with a
-          // drawn `line2` border rather than as raised fields — the opposite
-          // of the card language, on purpose: you type INTO the page.
-          style={[
-            {
-              height: space.touch,
-              paddingHorizontal: 14,
-              borderRadius: radius.ctl,
-              borderWidth: 1,
-              borderColor: palette.line2,
-              backgroundColor: palette.ink,
-              color: palette.text,
-              fontFamily: TYPE.body.fontFamily,
-              fontSize: 16,
-            },
-            style,
-          ]}
-          {...rest}
-        />
-      </View>
-    )
-  },
-)
+export const Field = forwardRef<
+  TextInput,
+  TextInputProps & {
+    label: string
+    /**
+     * Do not DRAW the label above the field.
+     *
+     * v5's auth screen puts the same words inside as a placeholder instead
+     * (`Onboarding.html:35-36`) — a mono kicker over each of two stacked
+     * inputs is a lot of chrome for `email` and `password`. The label is still
+     * passed, still reaches VoiceOver through `accessibilityLabel`, and is
+     * still the thing a test queries by; it just has no pixels.
+     */
+    hideLabel?: boolean
+  }
+>(function Field({ label, hideLabel, style, ...rest }, ref) {
+  return (
+    <View style={{ gap: hideLabel === true ? 0 : 7 }}>
+      {hideLabel === true ? null : <Txt step="kick">{label.toUpperCase()}</Txt>}
+      <TextInput
+        ref={ref}
+        accessibilityLabel={label}
+        placeholderTextColor={palette.faint}
+        // The ground, not a surface. v5 draws inputs as cut-outs with a
+        // drawn `line2` border rather than as raised fields — the opposite
+        // of the card language, on purpose: you type INTO the page.
+        style={[
+          {
+            height: space.touch,
+            paddingHorizontal: 14,
+            borderRadius: radius.ctl,
+            borderWidth: 1,
+            borderColor: palette.line2,
+            backgroundColor: palette.ink,
+            color: palette.text,
+            fontFamily: TYPE.body.fontFamily,
+            fontSize: 16,
+          },
+          style,
+        ]}
+        {...rest}
+      />
+    </View>
+  )
+})
 
 /**
  * The six-digit code, as six cells.

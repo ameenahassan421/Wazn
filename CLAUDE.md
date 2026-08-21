@@ -279,6 +279,17 @@ npm run bundle:android
 - **Type is a component on native (`<Txt step="hero">`), not a class.** RN picks
   a font cut by family NAME, not weight — a `text-hero` carrying `fontWeight`
   renders Saira Medium and looks almost right.
+- **A `Pressable` `style` CALLBACK is dropped, and the button disappears.**
+  `style={({ pressed }) => ...}` is the React Native documented form and it does
+  not work here: NativeWind 4.2.6 applies `cssInterop` to `Pressable` for
+  `className`, and the function does not survive it. The control renders with
+  no background, no height, no padding and no `flexDirection`, and still takes
+  taps. On 2026-08-20 EVERY button in `mobile/` was invisible for this reason —
+  SIGN IN was a gap in the layout — through a green `tsc`, a green `eslint` and
+  a green `bundle:ios`. Track the pressed state with `onPressIn`/`onPressOut`;
+  `eslint.config.js` fails the build on the callback form now. **A screenshot
+  was the only thing that could have caught it, and nearly did not, because the
+  screen it broke was one nobody had looked at since it was written.**
 - **`npm run typecheck` in mobile is not a build.** A broken babel preset, a bad
   metro alias, a missing font subpath and a NativeWind/RN version fight are all
   clean to tsc and fatal to `expo export`. Bundle before claiming it works.

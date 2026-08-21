@@ -78,14 +78,18 @@ function WaznTabBar({ state, navigation }: TabBarProps) {
               })
               if (!on && !event.defaultPrevented) navigation.navigate(route.name)
             }}
-            style={({ pressed }) => ({
+            // Static, not `({ pressed }) => ...`: NativeWind's cssInterop on
+            // Pressable drops a function `style` entirely, which renders this as
+            // an unstyled box. See the long note in `Btn.tsx`. The press dim is
+            // gone with it rather than reintroduced through state — this is
+            // chrome, the haptic already fires, and it never actually worked.
+            style={{
               flex: 1,
               height: space.tabBar,
               alignItems: 'center',
               justifyContent: 'center',
               gap: 3,
-              opacity: pressed ? 0.82 : 1,
-            })}
+            }}
           >
             {/* The live rail. Absolute, so it costs the column no height and
                 the glyphs cannot shift by two pixels on navigation. */}

@@ -699,6 +699,67 @@ was nine commits stale on 2026-08-19 and said so nowhere; PRs #103 through #106 
 code and none of them touched this file. Three hooks now make that visible and expensive
 (see "How this block stays true", last in this section).
 
+#### P0 FIXED 2026-08-20: every button in the native app was invisible
+
+`Pressable`'s idiomatic `style={({ pressed }) => ...}` callback is **silently dropped** under
+NativeWind 4.2.6 + React Native 0.86. NativeWind applies `cssInterop` to `Pressable` so it can
+carry a `className`, and a function `style` does not survive it. The control renders with no
+background, no height, no padding and no `flexDirection` — and still takes taps.
+
+Every `Btn` in `mobile/` used that form. On the sign-in screen SIGN IN was a **gap in the
+layout** and CONTINUE WITH GOOGLE was two lines of near-black text on a near-black ground. The
+tab bar's buttons had no height and the header avatar had no disc. `tsc`, `eslint`,
+`expo export` and `npm run bundle:ios` were all green throughout, because none of it is a type
+error and the bundle builds fine.
+
+It was found by taking a screenshot, which is the only thing that could have found it.
+
+Fixed at four call sites — `Btn`, `ChipBtn`, `Header`'s avatar, the tab bar — by tracking the
+pressed state with `onPressIn`/`onPressOut` instead. `mobile/eslint.config.js` now fails the
+build on a function `style` on a `Pressable`; the rule was proved to fire against a probe file
+rather than assumed to work.
+
+This also corrects a claim this file made on 2026-08-19: the sign-in button was reported as
+"grey where the reference fills it cream", attributed to a disabled-state opacity. It had no
+fill at all.
+
+#### OPEN AND BLOCKING: which design is v5? (2026-08-20)
+
+Ameen attached `~/Downloads/Wazn Prototype.html` (dated 2026-08-20) with "you are not
+following the design" and "even the logo is not correct based on the v5 design". It is a
+runnable four-screen prototype — Home, Workout, Rest, Finish — and it is **not** the v5
+Momentum system in `docs/design/v5-momentum/`. Source extracted from its bundle; these are
+read out of it, not inferred:
+
+| | v5 Momentum (this repo) | The attached prototype |
+| --- | --- | --- |
+| Ground | ink `#0f0d0a` | paper `#f7f3ec`, page `#e9e4d8` |
+| Text / muted | `#ece7dc` / `#9a927f` | `#16130e` / `#8a8378` |
+| Cards | `#181510`, hairline ring | `#ffffff`, ring **plus** `0 1px 2px` shadow |
+| Display face | Saira Semi Condensed 600/700 | **Sora 600/700/800**, tracking `-.02`…`-.05em` |
+| Body / mono | Hanken Grotesk, IBM Plex Mono | same |
+| Accent | `#e8491d` | `#e8491d`, pressed `#b83915` |
+| Control radius | 12 | **99 (pill)**, cards 20 |
+| Shadows | forbidden outright | used, including `0 10px 26px rgba(232,73,29,.35)` under the CTA |
+| Wordmark | `w` + ember `a` + `zn`, set in Saira | `w` + **an ember plate glyph AS the `a`** + `zn`, Sora 800 |
+
+The wordmark difference is the one Ameen named. The prototype's mark is a plate seen
+side-on — disc with a counter, plus a rounded bar at the right — used as the letter, at 14px
+beside 26px type. Neither the interface wordmark nor the app icon in this repo is that.
+
+**Why this cannot be absorbed quietly.** It contradicts a hard rule in `CLAUDE.md`
+("Dark-first… No gradients, shadows"), the whole of `docs/design/v5-momentum/`, and
+`src/lib/tokens.ts` — which is the palette's source of truth for BOTH stacks and is
+CI-checked against `index.css` and `mobile/tailwind.config.js`. Adopting it means new tokens,
+a new type ramp, a fourth font family shipped in the native bundle (Sora), a new icon set,
+and every screen redrawn in both apps.
+
+**Until Ameen answers, A1 does not continue.** Building Body, Coach, Friends and Progress in
+ink-and-Saira is throwaway work if the answer is paper-and-Sora, and the reverse is equally
+true. The prototype covers only the core loop; it has no auth, History, Progress, Body,
+Coach or Friends screen, so an answer of "yes, this one" still leaves those six to be derived
+rather than copied.
+
 #### The decision that governs everything below
 
 **ONE CODEBASE. Expo, shipping iOS, Android and web.** Decided by Ameen 2026-08-19. The

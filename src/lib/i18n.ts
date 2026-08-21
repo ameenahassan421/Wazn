@@ -134,6 +134,11 @@ export const messages: Record<Locale, Record<string, string>> = {
     'auth.or': 'or',
     'auth.google': 'Continue with Google',
     'auth.google.error': 'Google sign-in did not start: {message}',
+    /* Pressed before the OAuth client exists. The button is DRAWN (v5 makes it
+       the hero of screen 01 and the layout has a hole without it) but it
+       cannot sign anyone in yet, so it says so rather than failing silently. */
+    'auth.google.pending':
+      'Google sign-in arrives with the App Store build. Use your email for now.',
     'auth.email_or_username': 'Email or username',
     'auth.password': 'Password',
     'auth.placeholder.email': 'you@example.com',
@@ -166,6 +171,30 @@ export const messages: Record<Locale, Record<string, string>> = {
     'auth.confirm.error.invalid':
       'That code is not valid. Re-enter the 6 digits from the newest email. If you already have an account with this address, sign in instead.',
     'auth.forgot': 'Forgot password?',
+
+    /* ── v5 screens 01 and 02 ────────────────────────────────────────────────
+       docs/design/v5-momentum/design/Onboarding.html. The v5 auth screen says
+       less than the web one it replaces: the headline is a sentence, the
+       fields carry their labels as placeholders, and the three ways onward sit
+       in one centred row instead of three stacked buttons. Where a line here
+       looks like a shorter twin of an older key, that is why. */
+    'auth.tagline': 'Your training, on record.',
+    'auth.tagline.sub': 'Log a set in under thirty seconds, one hand, mid-workout.',
+    'auth.placeholder.identifier': 'email or username',
+    'auth.placeholder.password.signin': 'password',
+    'auth.placeholder.password.signup': 'password, 8+ characters',
+    'auth.code.path.short': 'Email me a code instead',
+    'auth.hevy.cta': 'Coming from Hevy?',
+    'auth.hevy.cta.sub': 'Bring your whole history · every set, every PR',
+    'auth.footer.note':
+      '6-digit codes, never magic links · Apple sign-in arrives with the App Store build',
+    'auth.code.head': 'Check your email.',
+    'auth.code.otw': 'A 6-digit code is on its way to {address}.',
+    'auth.code.verify.short': 'Verify',
+    'auth.code.resend': 'Resend code',
+    'auth.back': 'Back',
+    'auth.code.no_oracle':
+      'Same response whether the account exists or not · no oracle',
     'auth.code.path': 'Email me a code instead, no password needed',
     'auth.code.send': 'Send code',
     'auth.code.send.busy': 'Sending…',
@@ -1065,6 +1094,8 @@ export const messages: Record<Locale, Record<string, string>> = {
     'auth.or': 'أو',
     'auth.google': 'المتابعة مع Google',
     'auth.google.error': 'لم تبدأ جلسة تسجيل الدخول عبر Google: {message}',
+    'auth.google.pending':
+      'تسجيل الدخول عبر Google يصل مع نسخة App Store. استخدم بريدك الإلكتروني في الوقت الحالي.',
     'auth.email_or_username': 'البريد الإلكتروني أو اسم المستخدم',
     'auth.password': 'كلمة المرور',
     'auth.placeholder.email': 'you@example.com',
@@ -1096,6 +1127,25 @@ export const messages: Record<Locale, Record<string, string>> = {
     'auth.confirm.error.invalid':
       'هذا الرمز غير صالح. أدخل الأرقام الستة من أحدث بريد. إذا كان لديك حساب بهذا العنوان، سجّل الدخول بدلاً من ذلك.',
     'auth.forgot': 'نسيت كلمة المرور؟',
+
+    /* ── v5 screens 01 and 02 ─────────────────────────────────────────────── */
+    'auth.tagline': 'تدريبك، موثّقاً.',
+    'auth.tagline.sub':
+      'سجّل مجموعة في أقل من ثلاثين ثانية، بيد واحدة، في وسط التمرين.',
+    'auth.placeholder.identifier': 'البريد الإلكتروني أو اسم المستخدم',
+    'auth.placeholder.password.signin': 'كلمة المرور',
+    'auth.placeholder.password.signup': 'كلمة المرور، 8 أحرف فأكثر',
+    'auth.code.path.short': 'أرسل لي رمزاً بدلاً من ذلك',
+    'auth.hevy.cta': 'قادم من Hevy؟',
+    'auth.hevy.cta.sub': 'أحضر سجلّك كاملاً · كل مجموعة، كل رقم قياسي',
+    'auth.footer.note':
+      'رموز من 6 أرقام، لا روابط سحرية أبداً · تسجيل الدخول عبر Apple يصل مع نسخة App Store',
+    'auth.code.head': 'تحقّق من بريدك.',
+    'auth.code.otw': 'رمز من 6 أرقام في طريقه إلى {address}.',
+    'auth.code.verify.short': 'تحقّق',
+    'auth.code.resend': 'إعادة إرسال الرمز',
+    'auth.back': 'رجوع',
+    'auth.code.no_oracle': 'الاستجابة نفسها سواء كان الحساب موجوداً أم لا · بلا كشف',
     'auth.code.path': 'أرسل لي رمزاً بدلاً من ذلك، لا حاجة لكلمة مرور',
     'auth.code.send': 'إرسال الرمز',
     'auth.code.send.busy': 'جارٍ الإرسال…',

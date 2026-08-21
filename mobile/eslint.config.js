@@ -52,6 +52,21 @@ module.exports = defineConfig([
       'no-restricted-syntax': [
         'error',
         {
+          // NativeWind 4.2.6 applies `cssInterop` to Pressable so it can take
+          // a `className`. A FUNCTION `style` does not survive that: it is
+          // dropped whole, and the control renders with no background, no
+          // height, no padding and no flexDirection while still taking taps.
+          //
+          // On 2026-08-20 every button in the native app was invisible for
+          // this reason — SIGN IN was a gap in the layout — through a green
+          // tsc, a green eslint and a green `expo export`. Use
+          // `onPressIn`/`onPressOut` state instead; `Btn.tsx` is the pattern.
+          selector:
+            "JSXOpeningElement[name.name='Pressable'] > JSXAttribute[name.name='style'] > JSXExpressionContainer > :matches(ArrowFunctionExpression, FunctionExpression)",
+          message:
+            'Pressable style must be an object or array, never a function. NativeWind drops the callback form and the control renders unstyled. Track the pressed state with onPressIn/onPressOut (see Btn.tsx).',
+        },
+        {
           // `ObjectExpression >` is load-bearing. Without it the selector
           // also matches destructuring patterns and caught `{ name, right }`
           // in a component's own props on the first run — a prop called

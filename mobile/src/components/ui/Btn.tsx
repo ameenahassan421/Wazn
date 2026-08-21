@@ -1,3 +1,4 @@
+import { useState, type ReactNode } from 'react'
 import { Pressable, View, type ViewStyle } from 'react-native'
 
 import { palette, radius, space } from '@wazn/domain'
@@ -8,10 +9,23 @@ import { tick } from '@/services/haptics'
 /**
  * The four button kinds the handoff draws, and nothing else.
  *
- * ── PRESS FEEDBACK ──────────────────────────────────────────────────────────
+ * ── PRESS FEEDBACK, AND WHY IT IS NOT `style={({pressed}) => ...}` ──────────
  * `opacity` on press rather than a background swap. A background swap needs a
  * second colour per kind — four more tokens the design never named — and on a
  * near-black ground a 0.82 dim reads as the same physical press.
+ *
+ * The pressed flag comes from `onPressIn`/`onPressOut` state and NOT from
+ * Pressable's `style` callback, which is the idiomatic React Native form and
+ * is SILENTLY DROPPED here. NativeWind 4.2.6 applies `cssInterop` to
+ * `Pressable` to give it `className`; a function `style` does not survive
+ * that, and RN renders the button with no background, no height, no padding
+ * and no `flexDirection` — an invisible control that still takes taps.
+ *
+ * Found on 2026-08-20 from a simulator screenshot: SIGN IN was a gap in the
+ * layout and CONTINUE WITH GOOGLE was two lines of near-black text on a
+ * near-black ground. `tsc`, eslint and `expo export` were all green, because
+ * nothing about it is a type error. `eslint.config.js` now has a rule so the
+ * next one is a build failure instead of a screenshot.
  *
  * `android_ripple` is deliberately absent. The ripple is Material's answer and
  * this is not a Material app; more to the point it renders in the platform
@@ -50,6 +64,7 @@ export function Btn({
   small,
   disabled,
   full,
+  leading,
   style,
 }: {
   kind?: BtnKind
@@ -59,10 +74,17 @@ export function Btn({
   disabled?: boolean
   /** Stretch to the container. The hero CTA always does. */
   full?: boolean
+  /**
+   * A glyph before the label, at the base row gap of 8. Exactly one button in
+   * v5 has one — the Google disc on screen 01 (`Onboarding.html:27`) — so this
+   * is a slot rather than an icon system.
+   */
+  leading?: ReactNode
   style?: ViewStyle
 }) {
   const k = KINDS[kind]
   const height = small === true ? 40 : 52
+  const [pressed, setPressed] = useState(false)
 
   return (
     <Pressable
@@ -70,15 +92,19 @@ export function Btn({
       accessibilityState={{ disabled: disabled === true }}
       disabled={disabled}
       hitSlop={Math.max(0, (space.touch - height) / 2)}
+      onPressIn={() => setPressed(true)}
+      onPressOut={() => setPressed(false)}
       onPress={() => {
         tick()
         onPress()
       }}
-      style={({ pressed }) => [
+      style={[
         {
           height,
           borderRadius: radius.ctl,
           paddingHorizontal: small === true ? 14 : 20,
+          flexDirection: 'row',
+          gap: 8,
           alignItems: 'center',
           justifyContent: 'center',
           backgroundColor: k.bg,
@@ -92,6 +118,7 @@ export function Btn({
         style ?? null,
       ]}
     >
+      {leading}
       <Txt step="title" ink={k.ink}>
         {label}
       </Txt>
@@ -131,16 +158,19 @@ export function ChipBtn({
   selected?: boolean
   onPress: () => void
 }) {
+  const [pressed, setPressed] = useState(false)
   return (
     <Pressable
       accessibilityRole="button"
       accessibilityState={{ selected: selected === true }}
       hitSlop={9}
+      onPressIn={() => setPressed(true)}
+      onPressOut={() => setPressed(false)}
       onPress={() => {
         tick()
         onPress()
       }}
-      style={({ pressed }) => ({
+      style={{
         height: 30,
         paddingHorizontal: 12,
         borderRadius: radius.pill,
@@ -150,7 +180,7 @@ export function ChipBtn({
         borderWidth: 1,
         borderColor: selected === true ? palette.text : palette.line2,
         opacity: pressed ? 0.82 : 1,
-      })}
+      }}
     >
       <Txt step="label" ink={selected === true ? 'ink' : 'muted'}>
         {label}

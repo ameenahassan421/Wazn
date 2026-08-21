@@ -49,7 +49,12 @@ export function Header({
         accessibilityLabel="You, settings"
         hitSlop={7}
         onPress={() => router.push('/settings')}
-        style={({ pressed }) => ({
+        // Static, not `({ pressed }) => ...`: NativeWind's cssInterop on
+        // Pressable drops a function `style` entirely, which renders this as
+        // an unstyled box. See the long note in `Btn.tsx`. The press dim is
+        // gone with it rather than reintroduced through state — this is
+        // chrome, the haptic already fires, and it never actually worked.
+        style={{
           width: 34,
           height: 34,
           borderRadius: radius.pill,
@@ -58,8 +63,7 @@ export function Header({
           borderColor: palette.line,
           alignItems: 'center',
           justifyContent: 'center',
-          opacity: pressed ? 0.82 : 1,
-        })}
+        }}
       >
         <Txt step="label" ink="text">
           {initial}
