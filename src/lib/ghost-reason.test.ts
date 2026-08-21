@@ -2,9 +2,11 @@ import { describe, expect, it } from 'vitest'
 import {
   causeOf,
   earnedProgression,
+  ghostChip,
+  type GhostContext,
+  type GhostVerdict,
   trimmedPlan,
   verdictFor,
-  type GhostContext,
 } from './ghost-reason'
 import type { PlannedSet, RowPrevious } from './plan'
 
@@ -230,5 +232,58 @@ describe('trimmedPlan', () => {
   it('leaves normal and loaded days alone', () => {
     expect(trimmedPlan(4, 0, 'normal')).toBe(4)
     expect(trimmedPlan(4, 0, 'loaded')).toBe(4)
+  })
+})
+
+/**
+ * Which chip a cause wears.
+ *
+ * The ladder lived inside `WorkoutOverview`'s `ReasonChip` and the native
+ * board was about to grow a second copy. A rule that exists twice drifts, and
+ * the drift here would be silent: both apps would show A chip, just not the
+ * same one for the same session.
+ */
+describe('ghostChip', () => {
+  const verdict = (over: Partial<GhostVerdict>): GhostVerdict => ({
+    kind: 'hold',
+    cause: 'none',
+    weightKg: 100,
+    reps: 5,
+    facts: {},
+    ...over,
+  })
+
+  it('maps each cause to its own key', () => {
+    expect(ghostChip(verdict({ cause: 'under-plan' })).key).toBe('reason.chip.eased')
+    expect(ghostChip(verdict({ cause: 'progression' })).key).toBe('reason.chip.raised')
+    expect(ghostChip(verdict({ cause: 'readiness' })).key).toBe('reason.chip.hold')
+    // Everything unaccounted for falls to the rep chip rather than to nothing.
+    expect(ghostChip(verdict({ cause: 'none' })).key).toBe('reason.chip.reps')
+    expect(ghostChip(verdict({ cause: 'rep-band' })).key).toBe('reason.chip.reps')
+  })
+
+  it('returns KILOGRAMS, not a formatted string', () => {
+    // The shared half must not know what unit is on screen. A formatted string
+    // here would also make this untestable without a locale.
+    expect(ghostChip(verdict({ weightKg: 102.5 })).weightKg).toBe(102.5)
+  })
+
+  it('is raised only when the bar actually went up', () => {
+    expect(ghostChip(verdict({ kind: 'raise' })).raised).toBe(true)
+    for (const kind of ['hold', 'ease', 'repeat'] as const) {
+      expect(ghostChip(verdict({ kind })).raised).toBe(false)
+    }
+  })
+
+  it('carries the figures the chips interpolate, and empties rather than undefined', () => {
+    const full = ghostChip(
+      verdict({ facts: { previousRepsRun: [8, 8, 7], causeSetLabel: '2' } }),
+    )
+    expect(full.run).toEqual([8, 8, 7])
+    expect(full.label).toBe('2')
+    // A missing fact must not reach a template as the string "undefined".
+    const bare = ghostChip(verdict({}))
+    expect(bare.run).toEqual([])
+    expect(bare.label).toBe('')
   })
 })

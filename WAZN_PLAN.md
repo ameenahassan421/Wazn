@@ -1379,6 +1379,64 @@ invention; the Finish screen's stat tiles are the obvious home and that is Ameen
 equipment word (`deriveEquipment` needs a muscle group the board does not carry), and the
 coach's sentence (`ghost-reason` is not wired to this screen).
 
+#### THE COACH WAS BUILT AND NOTHING ON NATIVE CALLED IT (2026-08-21)
+
+Ameen: "did you wire the AI into the app? read v5 again. This app niche is integrating AI at
+every user touchpoint across the journey."
+
+He is right and the miss is worse than "not built yet". **The engine exists, is tested, and is
+already portable**, and the migration shipped six screens that render `null` where its
+sentence belongs:
+
+| module            | what it decides                                                       | exported via `@wazn/domain` |
+| ----------------- | --------------------------------------------------------------------- | --------------------------- |
+| `ghost-reason.ts` | `verdictFor` — raise / hold / ease / repeat, with a cause             | yes                         |
+| `coach-mode.ts`   | strength / hypertrophy / meet-prep, AND the Full / Quiet / Off volume | yes                         |
+| `forecast.ts`     | slope, forecast, plateau                                              | yes                         |
+| `tell-coach.ts`   | `proposeEdit` for the mid-workout sheet                               | yes                         |
+
+v5's handoff is titled "full app redesign **+ AI layer**" and its §Coach is explicit: _"The
+deterministic engine is `design/coach2.js` … The model only phrases; every number comes from
+computed stats."_ Sixteen of its seventeen screens carry a coach surface. Native had none.
+
+**Wired so far: the ghost, on the live board.** It is the hero, it is on the logging path, and
+it now does both halves of its job:
+
+- **It proposes the numbers.** The dial seeds from `verdict.weightKg` / `verdict.reps` ahead of
+  the stored value. Without that the chip would explain a jump the dial never made: "↑ 102.5 ·
+  8/8/8 last time" printed over a dial showing 100. The lifter still commits; nothing
+  auto-writes.
+- **It says why, in one sentence and one chip**, and is ABSENT rather than empty when
+  `cause === 'none'` — the honest silence.
+
+`ghostChip` moved into `ghost-reason.ts` so the branch is shared: the web's `WorkoutOverview`
+picked its chip with an if-ladder and native was about to grow a second copy. The rule is
+shared, the FORMATTING is not — the shared half returns kilograms and never learns what unit is
+on screen. Four assertions.
+
+**No model is on this path, and that is the rule, not an omission.** CLAUDE.md: "the model
+never sits on the critical path", "statistics answer anything statistics can answer". It is
+also why the ghost works in a basement with no signal.
+
+**Still `null`, in priority order:**
+
+1. **Rest canvas** — `coachLine`. `verdictFor` for the NEXT set already computes it; this is
+   passing a prop.
+2. **Home** — `brief`. Needs the coach Edge Function OR a computed line; v5 draws a sentence
+   plus chip.
+3. **Finish** — the debrief sentence.
+4. **Coach tab (screen 15)** — the control room: mode selector, week review, notes, Ask the
+   coach. Untouched.
+5. **Settings coach volume** — Full / Quiet / Off is in `coach-mode.ts` with `MODE_BEHAVIOUR`
+   and nothing on native reads it. v5 §Do-not-regress 6: "Coach volume Off must render a
+   coherent pure logger". Right now every native surface behaves as Full because none of them
+   asks.
+6. **Tell the coach** (screen 09), the PR moment and the notable-set toasts.
+
+**`npm run test:smoke` could not run for this change.** Playwright's browser binary is not
+installed on this machine (`chromium_headless_shell-1194` missing) and `WorkoutOverview.tsx` is
+a web component that this touched. CI runs it; it was NOT verified locally.
+
 #### The shared chart, and a chart that lied about its own numbers (2026-08-21)
 
 `src/lib/spark.ts` places the points; `mobile/src/components/ui/Spark.tsx` turns them into

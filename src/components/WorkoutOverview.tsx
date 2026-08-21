@@ -10,7 +10,7 @@ import { REST_STEP_SECONDS } from '../lib/use-rest-timer'
 import { ExerciseThumb } from './ExerciseThumb'
 import { IconMore } from './icons'
 import { useLocale } from '../lib/locale-context'
-import type { GhostVerdict } from '../lib/ghost-reason'
+import { ghostChip, type GhostVerdict } from '../lib/ghost-reason'
 
 /**
  * The workout overview — design v2.2, the spine of a session.
@@ -873,25 +873,22 @@ function ReasonChip({ verdict, unit }: { verdict: GhostVerdict; unit: Unit }) {
   const { t } = useLocale()
   const w = (kg: number | null) => (kg === null ? '—' : formatWeight(kg, unit))
 
-  const text =
-    verdict.cause === 'under-plan'
-      ? t('reason.chip.eased', {
-          weight: w(verdict.weightKg),
-          label: verdict.facts.causeSetLabel ?? '',
-        })
-      : verdict.cause === 'progression'
-        ? t('reason.chip.raised', {
-            weight: w(verdict.weightKg),
-            run: (verdict.facts.previousRepsRun ?? []).join('/'),
-          })
-        : verdict.cause === 'readiness'
-          ? t('reason.chip.hold')
-          : t('reason.chip.reps', { reps: String(verdict.reps ?? '') })
+  // The BRANCH moved to `ghostChip` in `ghost-reason.ts` on 2026-08-21, so the
+  // native board picks the same chip for the same cause instead of growing a
+  // second copy of this ladder. Formatting stays here: the display unit is a
+  // platform concern and the shared half must not know about it.
+  const chip = ghostChip(verdict)
+  const text = t(chip.key, {
+    weight: w(chip.weightKg),
+    label: chip.label,
+    run: chip.run.join('/'),
+    reps: String(chip.reps ?? ''),
+  })
 
   // Raised is the one that gets the accent; everything else is the muted step
   // of the same chip, which keeps "one chip per row" true without giving an
   // ease-off the visual weight of a personal record.
-  const raised = verdict.kind === 'raise'
+  const raised = chip.raised
 
   return (
     <span

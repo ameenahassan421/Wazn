@@ -5,11 +5,15 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import Svg, { Line, Path, Rect } from 'react-native-svg'
 
 import {
+  computeReadiness,
+  DEFAULT_MODE,
   describeBarMath,
+  ghostChip,
   fromDisplayWeight,
   palette,
   platesFor,
   seedWeight,
+  verdictFor,
   radius,
   space,
   toDisplayWeight,
@@ -192,6 +196,51 @@ export default function LiveWorkout() {
   const live = useLiveWorkout()
   const view = selectBoardView(live)
 
+  const done = (view.exercise?.sets ?? []).filter((s) => s.done)
+
+  /**
+   * The ghost. The thing that makes this a coach and not a spreadsheet.
+   *
+   * ── IT WAS BUILT AND TESTED AND NOTHING CALLED IT ───────────────────────
+   * `verdictFor` has been in `src/lib/ghost-reason.ts`, exported through
+   * `@wazn/domain`, with its own suite, since before this app existed — and
+   * every native screen rendered `null` where its sentence belongs. v5's
+   * handoff is titled "full app redesign + AI layer" and weaves the coach
+   * through every moment; the migration shipped the moments and skipped the
+   * coach.
+   *
+   * Every number below is COMPUTED. No model sits on this path — that is the
+   * standing rule (CLAUDE.md: "the model never sits on the critical path",
+   * "statistics answer anything statistics can answer"), and it is also why
+   * this works offline in a basement.
+   */
+  const verdict =
+    view.exercise === null || view.set === null
+      ? null
+      : verdictFor(view.set.setNumber - 1, {
+          mode: DEFAULT_MODE,
+          readiness: computeReadiness({ checkIn: null, daysRested: null }),
+          previous: view.exercise.sets.map((row) => ({
+            weightKg: row.previousKg,
+            reps: row.previousReps,
+          })),
+          committed: done.map((row) => ({
+            weightKg: row.weightKg,
+            reps: row.reps,
+            label: String(row.setNumber),
+          })),
+          // A plate increment, not a percentage. `weightStep` is the same jump
+          // the ± keys make, so the coach never proposes a load the lifter
+          // cannot actually build.
+          // The same jump the ± keys make, so the coach never proposes a
+          // load the lifter cannot actually build. Inlined rather than reusing
+          // `weightStep`, which is declared after the `ready` guard: the ghost
+          // is computed during render, before it.
+          incrementKg: fromDisplayWeight(unit === 'kg' ? 2.5 : 5, unit),
+        })
+
+  const chip = verdict === null || verdict.cause === 'none' ? null : ghostChip(verdict)
+
   /**
    * Dialled values, keyed by the set they belong to.
    *
@@ -325,7 +374,6 @@ export default function LiveWorkout() {
     void finishWorkout()
   }
 
-  const done = (view.exercise?.sets ?? []).filter((s) => s.done)
   const banked = live.board.reduce(
     (n, e) => n + e.sets.filter((row) => row.done).length,
     0,
@@ -458,6 +506,34 @@ export default function LiveWorkout() {
               <Txt step="meta" ink="muted" ltr style={{ marginTop: 12 }}>
                 {`${t('workout.previous')}  ${previous}`}
               </Txt>
+            )}
+
+            {/* The coach's one line, above the log. One sentence, one chip —
+              the doctrine v5 states and this app had nowhere on native. It is
+              absent rather than empty when there is nothing computed to say:
+              `cause: 'none'` is the honest silence, not a bug. */}
+            {chip !== null && (
+              <View
+                style={{
+                  flexDirection: 'row',
+                  gap: 10,
+                  alignItems: 'center',
+                  marginTop: 12,
+                }}
+              >
+                <Plate size={18} variant="hub" color={palette.ink} />
+                <Txt step="meta" ink={chip.raised ? 'accentSoft' : 'muted'} ltr>
+                  {t(chip.key, {
+                    weight:
+                      chip.weightKg === null
+                        ? '—'
+                        : String(toDisplayWeight(chip.weightKg, unit)),
+                    label: chip.label,
+                    run: chip.run.join('/'),
+                    reps: String(chip.reps ?? ''),
+                  })}
+                </Txt>
+              </View>
             )}
 
             {done.length > 0 && (

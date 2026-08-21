@@ -278,3 +278,50 @@ export function trimmedPlan(
 ): number {
   return Math.max(committed, planned - setsToTrim(readiness, planned))
 }
+
+/**
+ * Which chip a verdict wears, as a key and its raw figures.
+ *
+ * ── THE BRANCH IS SHARED, THE FORMATTING IS NOT ─────────────────────────────
+ * Choosing which of the four chips a cause maps to is a RULE, and a rule that
+ * exists twice drifts: the web picked it inside `WorkoutOverview`'s
+ * `ReasonChip`, and native was about to grow a second copy of the same
+ * if-ladder. This returns the key and the raw numbers; each stack formats the
+ * weight for its own display unit and runs it through its own `t`.
+ *
+ * `weightKg` comes back in KILOGRAMS, always, like everything else stored —
+ * the caller converts. Returning a formatted string here would put a display
+ * decision in the shared half and make the function untestable without a
+ * locale.
+ */
+export interface GhostChip {
+  key: string
+  /** Kilograms. Null when there is no weight to name. */
+  weightKg: number | null
+  /** Every rep count from the previous session, for `8/8/8 last time`. */
+  run: number[]
+  /** The row that caused an ease-off. */
+  label: string
+  reps: number | null
+  /**
+   * Ember when the bar went UP, muted otherwise.
+   *
+   * One chip per row stays true either way; what changes is that an ease-off
+   * does not get the visual weight of a personal record.
+   */
+  raised: boolean
+}
+
+export function ghostChip(verdict: GhostVerdict): GhostChip {
+  const base = {
+    weightKg: verdict.weightKg,
+    run: verdict.facts.previousRepsRun ?? [],
+    label: verdict.facts.causeSetLabel ?? '',
+    reps: verdict.reps,
+    raised: verdict.kind === 'raise',
+  }
+  if (verdict.cause === 'under-plan') return { ...base, key: 'reason.chip.eased' }
+  if (verdict.cause === 'progression') return { ...base, key: 'reason.chip.raised' }
+  if (verdict.cause === 'readiness') return { ...base, key: 'reason.chip.hold' }
+  return { ...base, key: 'reason.chip.reps' }
+}
