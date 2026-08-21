@@ -1005,39 +1005,48 @@ retention that cannot exist until the app is shared.
 
 #### Next action
 
-**Stage 4A phase A0 is DONE and its gate was read, 2026-08-19** (PR #110). All four clauses
-pass: the Expo web target serves, a set on native and on web agree on `set_type` and units,
-`portable.test.ts` and `check:tokens` still pass, and `mobile/` has a test suite CI now
-actually runs. **Caveat recorded rather than buried:** the set-agreement clause was verified by
-comparing the two insert payloads and by the test that locks it, not by logging two live sets.
+**A0 is DONE and merged** (PR #110). **A1 is IN PROGRESS** on
+`claude/a1-history`, three commits, pushed, no PR open yet.
 
-**A1 is next and needs Ameen's approval first**, per §2.7. It does not start unprompted.
+**Done in A1 so far:**
 
-**A1, when it starts:** the five stub tabs built native, in v5, **no DOM components** (the
-reasoning is in the phase itself and in DECISIONS.md 2026-08-19). Order and why:
-**History** (only door to "what did I do before" besides the bar, least coach machinery, sets
-the pattern), **Body** (smallest, no card door, and its production data is empty so it must be
-built against its degraded render), **Coach** (read-only surfaces first; "Tell the coach" was
-never assessed in v5 P0), **Friends** (least load-bearing mid-session), **Progress** last
-(most work even hand-drawn, and it is lazy-loaded on web for a reason native must preserve:
-the Log tab must never wait for it).
+- **History, built native in v5.** `mobile/app/(tabs)/history.tsx` plus
+  `mobile/src/hooks/use-history.ts`. New shared domain: `topDay` in
+  `src/lib/progress.ts` with six tests, for COACH'S FIND.
+  `trainingCalendar` needed nothing, it already crossed; v5's 10 weeks against
+  the web's 13 was a parameter. **Not visually verified, see below.**
+- **The wordmark, FIXED and verified on a device.** Renders `wazn` lowercase,
+  Saira 700, ember `a`, 34 on auth and 21 in the header. Screenshotted on an
+  iPhone 17 Pro simulator, iOS 26.5. First visual claim in this project's
+  history checked on a device rather than inferred.
 
-**Two things carried into A2, both already found and neither smuggled into A0:**
+**Next: Body**, then Coach, Friends, Progress last. Reasons for the order are
+in the phase itself.
 
-1. **The wordmark still renders `WAZN`.** It borrows `<Txt step="hero">` and that ramp entry
-   is `uppercase: true` at size 50 (`src/lib/tokens.ts:128`). The v5 reference sets the mark
-   as its own treatment, not a ramp step. See the wordmark block above.
-2. **GATE 4 is false on native.** No write queue, no client-generated id. See the GATE 4 block
-   above.
+**Three things a resuming session needs and will not guess:**
 
-**Before building any screen, run the reference.** `docs/design/v5-momentum/design/Wazn v5.html`
-is a working React app of every v5 screen and it has been run essentially once, at the P0
-gate, where it produced eleven findings in a single sitting. See "How a screen is verified"
-in §6.
+1. **Screens behind auth cannot be seen.** Every tab sits behind
+   `Stack.Protected`; the simulator and the web export both stop at sign-in,
+   and signing in needs credentials a session must never type. So History and
+   every screen after it is verified by reading the reference against the
+   SOURCE, which is weaker than a visual pass and must be reported as such.
+   The real fix is component tests through `react-native-web` in `mobile/`'s
+   vitest, whose config already collects `.tsx`. **Not built. It is the single
+   highest-value thing left in A1.**
+2. **A cold iOS build is 855 seconds.** Metro on 8081 plus the installed app
+   makes the next screen a fast-refresh instead. If Metro died with the
+   session, `npx expo start` in `mobile/` and relaunch; the built `.app` is
+   under `~/Library/Application Support/Claude/simulator-builds/`. Only a
+   native-module change needs another `xcodebuild`.
+3. **A Debug build has no embedded bundle.** It launched to a red
+   `No script URL provided` until Metro was up. `xcodebuild` succeeded and
+   `expo export` succeeded and the app did not run: the fourth distinct way
+   this repo has been green and broken.
 
-In parallel, and independently, **Ameen runs `LAUNCH.md` on his phone against the installed
-PWA**. It costs a day, needs no migration work, and is still the only source of information
-this project does not have. Nine gates have produced zero evidence-based stops.
+In parallel, and independently, **Ameen runs `LAUNCH.md` on his phone against
+the installed PWA**. Still the only source of information this project does not
+have. Its blocker is gone: the email rate limit was raised to 30 on
+2026-08-19.
 
 #### How this block stays true
 
