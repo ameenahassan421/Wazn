@@ -51,22 +51,10 @@ export function Chip({ children }: { children: string }) {
   )
 }
 
-/**
- * One coach sentence and its one chip.
- *
- * The chip is required, and the sentence renders BELOW it rather than beside
- * it: at 430px a chip inline with 14px prose either wraps mid-number or
- * squeezes the sentence to three words a line. Stacking keeps the figure whole
- * and keeps the sentence readable, which is the order of priority the voice
- * rules imply — the number is the claim, the sentence is the phrasing.
+/*
+ * `CoachLine` was here — a chip-above-sentence stack, exported and rendered by
+ * nothing. Both surfaces that show a coach sentence (Home and Finish) lay it
+ * out by hand, because the prototype draws a PLATE beside the line rather than
+ * a chip above it. Removed 2026-08-21; the layout that ships is the one in
+ * those two screens.
  */
-export function CoachLine({ line, chip }: { line: string; chip: string }) {
-  return (
-    <View style={{ gap: 8 }}>
-      <Chip>{chip}</Chip>
-      <Txt step="body" ink="muted">
-        {line}
-      </Txt>
-    </View>
-  )
-}

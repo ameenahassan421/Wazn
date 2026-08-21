@@ -22,12 +22,10 @@ import { Wordmark } from '@/components/ui/Wordmark'
  */
 export function Header({
   name,
-  right,
 }: {
   /** The signed-in username, for the monogram. Null before it has loaded — a
    *  dash, not a guess, and never the previous account's initial. */
   name?: string | null
-  right?: React.ReactNode
 }) {
   const router = useRouter()
   const initial = name != null && name.length > 0 ? name[0].toUpperCase() : '—'
@@ -44,7 +42,6 @@ export function Header({
     >
       <Wordmark size={26} />
       <View style={{ flex: 1 }} />
-      {right}
       <Pressable
         accessibilityRole="button"
         accessibilityLabel="You, settings"

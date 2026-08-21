@@ -1253,16 +1253,32 @@ could NOT be walked — reaching any of them needs a board, a board needs the ex
 and `exercises` is `for select to authenticated`. With auth off the picker is empty and no rest
 ever starts. Those are code- and bundle-verified only, and that is the honest state of them.
 
-**Dead, and each one is a decision rather than a delete:** `Fill` (the dropped momentum bar),
-`StatTile`, `Chip.tsx`'s `CoachLine`, `Btn`'s `onInk` kind, `Card`'s `wash` and `onInk` tones,
-`Screen`'s `onTouchStart` and `gutter`, `HeroBtn`'s `live`, `Header`'s `right`, `use-home`'s
-`stats` / `rank` / `plan`, `selectBoardView`'s `recordPace`, `use-locale`'s `ready`. Three of
-these are surfaces that hand-rolled what the token-backed variant already did, which is worth
-fixing in the other direction.
+**Dead, and DELETED 2026-08-21.** `Fill` (the dropped momentum bar) as a whole file; `StatTile`;
+`Chip.tsx`'s `CoachLine` component; `Btn`'s `onInk` kind; `Card`'s `onInk` tone; `Screen`'s
+`onTouchStart` and `gutter`; `HeroBtn`'s `live`; `Header`'s `right`; `selectBoardView`'s `pct`
+and `recordPace`; `setHapticsEnabled` and the module flag its guard could never take.
 
-**Two that are functional gaps, not tidy-ups:** `takePendingInvite` has no caller, so an invite
-code held across sign-up is written to AsyncStorage and never redeemed; and `haptics.record()`
-is never called, so the app's one celebratory haptic has never fired. Both sit behind auth.
+Two of those deserve their reasoning recorded rather than a line in a list:
+
+- **`Btn`'s `onInk` kind and `Card`'s `onInk` tone both named the rest canvas, and the rest
+  canvas uses neither.** It hand-rolls `QuietAction` and its coach card instead. That is the
+  right call, not an oversight: the canvas is the one inverted context in the app and its
+  controls take their metrics from the prototype's drawing rather than from this ramp. A variant
+  nobody selects is a claim about the design that the design disagrees with, so the variants went
+  rather than the surfaces.
+- **`Card`'s `wash` tone went the other way.** Finish's ember card was inlining
+  `backgroundColor: palette.accentWash, borderRadius: 20, padding: 18` — which is exactly
+  `wash` + `radius.card` + `space.cardPad`. Converted, and screenshotted after: identical pixels,
+  three literals gone, and a tone that was dead is now the one thing selecting it. A dead variant
+  and a surface that hand-rolls it are the same defect seen from two ends.
+
+**Still returned by `useHome` and read by nobody:** `stats`, `rank` and `plan`. Left alone
+deliberately — they are the shape the queries will fill (`rank` needs migration 0029), and
+`DAY_ONE` is the only thing that populates them today. Delete them if 0029 slips again.
+
+**Two that are functional gaps, not tidy-ups, and both sit behind auth:** `takePendingInvite` has
+no caller, so an invite code held across sign-up is written to AsyncStorage and never redeemed;
+and `haptics.record()` is never called, so the app's one celebratory haptic has never fired.
 
 **One that is simply not built yet:** `useCoach`'s `setMode` has no caller, so `mode` is frozen
 at `strength` and the argument threaded into every ghost is a constant. The mode selector is

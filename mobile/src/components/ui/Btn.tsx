@@ -45,8 +45,6 @@ export type BtnKind =
   | 'line'
   /** A way out — "skip rest". No box at all. */
   | 'ghost'
-  /** The only kind for the rest canvas: translucent cream on the ink ground. */
-  | 'onInk'
 
 const KINDS: Record<
   BtnKind,
@@ -56,8 +54,17 @@ const KINDS: Record<
   ink: { bg: palette.ink, ink: 'onInk' },
   line: { bg: palette.card, ink: 'ink', ring: palette.ringStrong },
   ghost: { bg: 'transparent', ink: 'muted' },
-  onInk: { bg: palette.onInkRaised, ink: 'onInk' },
 }
+
+/*
+ * There was an `onInk` kind here, documented as "the only kind for the rest
+ * canvas", and the rest canvas never used it: it hand-rolls `QuietAction`
+ * instead. That is the right call and not an oversight — the canvas is the one
+ * inverted context in the app and its controls take their metrics from the
+ * prototype's own drawing rather than from this ramp. Removed rather than
+ * forced, because a variant nobody selects is a claim about the design that
+ * the design disagrees with.
+ */
 
 export function Btn({
   kind = 'line',
@@ -143,18 +150,15 @@ export function Btn({
  * button pressed with the back of a wrist between sets, and the prototype
  * draws exactly that difference between Home and the workout screen.
  */
-export function HeroBtn({
-  live,
-  ...props
-}: Omit<Parameters<typeof Btn>[0], 'kind' | 'small' | 'full'> & { live?: boolean }) {
+export function HeroBtn(
+  props: Omit<Parameters<typeof Btn>[0], 'kind' | 'small' | 'full'>,
+) {
   return (
     <Btn
       {...props}
       kind="hero"
       full
-      style={
-        [{ height: live === true ? space.ctaLive : space.cta }, props.style] as never
-      }
+      style={[{ height: space.cta }, props.style] as never}
     />
   )
 }

@@ -14,7 +14,6 @@ import {
   currentPosition,
   estimatedOneRepMax,
   localDay,
-  momentumPct,
   seedBoard,
 } from '@wazn/domain'
 
@@ -599,12 +598,15 @@ export function resetWorkout(): void {
 export function selectBoardView(s: LiveState) {
   const position = currentPosition(s.board)
   const banked = bankedVolumeKg(s.board)
-  const pct = momentumPct(banked, s.targetKg)
+  /*
+   * `pct` and `recordPace` were computed here for the momentum bar, which the
+   * board dropped in the prototype port (see the note in `session/[id].tsx`).
+   * Nothing read either one afterwards except their own test. `momentumPct`
+   * stays in the shared domain — the web still draws it.
+   */
   return {
     position,
     banked,
-    pct,
-    recordPace: pct !== null && pct >= 100,
     exercise: position === null ? null : s.board[position.exerciseIndex],
     set:
       position === null

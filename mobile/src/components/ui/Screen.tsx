@@ -22,29 +22,24 @@ import { Card } from './Surface'
 export function Screen({
   children,
   scroll = true,
-  gutter = space.gutter,
   style,
-  onTouchStart,
 }: {
   /** Optional so a screen can render the ground alone while it waits on the
    *  stored unit or a first read — a blank frame on the right colour, rather
    *  than a figure that corrects itself one frame after paint. */
   children?: React.ReactNode
   scroll?: boolean
-  gutter?: number
   style?: ViewStyle
-  /**
-   * Fires on the first touch anywhere in the screen, BEFORE and independently
-   * of whatever the touch actually hit. RN bubbles touches up from the real
-   * target, so this observes without intercepting.
-   *
-   * It exists for the rest canvas: screen 08 vanishes on interaction, and the
-   * interaction has to still land where the lifter aimed it. A dismissal
-   * driven by the canvas itself would have to swallow the touch to see it,
-   * which is the two-tap regression this design exists to avoid.
-   */
-  onTouchStart?: () => void
 }) {
+  /*
+   * `gutter` and `onTouchStart` were props here until 2026-08-21 and neither
+   * could change anything. `gutter` had one call site and it passed the
+   * default. `onTouchStart` was documented at length as existing for the rest
+   * canvas and passed by none of the sixteen call sites — the canvas's handler
+   * was on the session screen's root View instead, where it fired on
+   * touch-DOWN and killed every control the canvas owns.
+   */
+  const gutter = space.gutter
   const insets = useSafeAreaInsets()
 
   const padding: ViewStyle = {
@@ -58,7 +53,6 @@ export function Screen({
   if (!scroll) {
     return (
       <View
-        onTouchStart={onTouchStart}
         style={[{ flex: 1, backgroundColor: palette.paper }, padding, style ?? null]}
       >
         {children}
@@ -68,7 +62,6 @@ export function Screen({
 
   return (
     <ScrollView
-      onTouchStart={onTouchStart}
       style={{ flex: 1, backgroundColor: palette.paper }}
       contentContainerStyle={[padding, style ?? null]}
       keyboardShouldPersistTaps="handled"
@@ -130,20 +123,6 @@ export function Empty({
         {line}
       </Txt>
       {children}
-    </Card>
-  )
-}
-
-/** A stat tile — STREAK / THIS WEEK / SESSIONS. Three across the gutter. */
-export function StatTile({ label, value }: { label: string; value: string }) {
-  return (
-    <Card bare style={{ flex: 1, paddingVertical: 11, paddingHorizontal: 13 }}>
-      <Txt step="kick" ink="muted" numberOfLines={1}>
-        {label}
-      </Txt>
-      <Txt step="num" ltr style={{ marginTop: 5 }}>
-        {value}
-      </Txt>
     </Card>
   )
 }

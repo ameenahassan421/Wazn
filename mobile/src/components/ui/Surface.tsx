@@ -25,15 +25,18 @@ export type CardTone =
   | 'ink'
   /** Ember wash. Earned only: the PR card. Never a container for prose. */
   | 'wash'
-  /** Translucent cream. The only card tone the rest canvas can use. */
-  | 'onInk'
 
 const TONES: Record<CardTone, { bg: string; ring?: string; lift?: boolean }> = {
   card: { bg: palette.card, ring: palette.ring, lift: true },
   ink: { bg: palette.ink },
   wash: { bg: palette.accentWash },
-  onInk: { bg: palette.onInkSurface },
 }
+
+/*
+ * An `onInk` tone was here for the rest canvas's coach card, and the canvas
+ * builds that surface by hand. Same reasoning as `Btn`'s removed `onInk` kind:
+ * the inverted context draws from the prototype, not from this ramp.
+ */
 
 export type CardProps = ViewProps & {
   tone?: CardTone

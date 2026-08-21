@@ -24,16 +24,15 @@ import * as Haptics from 'expo-haptics'
  * is allowed to cost a frame.
  */
 
-/** Silence everything. Wired to the Settings toggle; a gym is loud, and some
- *  people find a buzzing phone mid-set worse than useless. */
-let enabled = true
-
-export function setHapticsEnabled(next: boolean) {
-  enabled = next
-}
+/*
+ * There was a module-level `enabled` flag and a `setHapticsEnabled` here,
+ * commented "wired to the Settings toggle". There is no Settings toggle and
+ * there never was, so the flag was permanently true and its guard in `fire`
+ * could not take. Removed rather than left as a lie; a real toggle brings back
+ * these four lines in the same commit as the control that moves them.
+ */
 
 function fire(run: () => Promise<void>) {
-  if (!enabled) return
   // Deliberately unawaited, and deliberately swallowing: a device with no
   // taptic engine rejects, and a set must not fail to log because of it.
   void run().catch(() => {})

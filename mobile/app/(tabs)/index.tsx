@@ -1,7 +1,7 @@
 import { View } from 'react-native'
 import { useRouter } from 'expo-router'
 
-import { CHECK_INS, formatVolume, palette, space, type CheckIn } from '@wazn/domain'
+import { CHECK_INS, formatVolume, palette, type CheckIn } from '@wazn/domain'
 
 import { Txt, Kick } from '@/design/Txt'
 import { Card } from '@/components/ui/Surface'
@@ -83,7 +83,7 @@ export default function LogHome() {
   const dayOne = home.target === null
 
   return (
-    <Screen gutter={space.gutter}>
+    <Screen>
       <Header name={home.username} />
 
       {/* ── The greeting ───────────────────────────────────────────────────

@@ -415,8 +415,6 @@ describe('selectBoardView', () => {
     expect(view).toEqual({
       position: { exerciseIndex: 0, setIndex: 0 },
       banked: 0,
-      pct: 0,
-      recordPace: false,
       exercise: board[0],
       set: board[0].sets[0],
     })
@@ -427,16 +425,16 @@ describe('selectBoardView', () => {
     expect(view.position).toBeNull()
     expect(view.exercise).toBeNull()
     expect(view.set).toBeNull()
-    expect(view.pct).toBeNull()
-    expect(view.recordPace).toBe(false)
   })
 
-  it('flags record pace at the target, not past it', () => {
-    const board = seedBoard([{ exerciseId: 'squat', name: 'Back Squat', sets: 1 }], [])
-    board[0].sets[0] = { ...board[0].sets[0], weightKg: 100, reps: 5, done: true }
-    expect(selectBoardView(stateWith(board, 500)).recordPace).toBe(true)
-    expect(selectBoardView(stateWith(board, 501)).recordPace).toBe(false)
-  })
+  /*
+   * A third case asserted `pct` and `recordPace` — the momentum bar's two
+   * figures, which `selectBoardView` stopped returning on 2026-08-21 because
+   * the board dropped the bar in the prototype port and nothing else ever read
+   * them. `momentumPct` itself is still in the shared domain, still drawn by
+   * the web, and still covered by `src/lib`'s own suite. This file was the only
+   * thing keeping the native copies alive.
+   */
 })
 
 /**

@@ -135,16 +135,16 @@ export function FinishSummary({
           />
         </View>
 
+        {/* `tone="wash"` rather than the three literals it used to inline.
+            Identical pixels — `wash` IS `palette.accentWash`, `radius.card` IS
+            20 and `space.cardPad` IS 18 — and it makes the ember card the only
+            selector of a tone that was otherwise dead in `Surface.tsx`. A
+            variant nothing selects and a surface that hand-rolls it are the
+            same defect seen from two ends. */}
         {beat && (
-          <View
-            style={{
-              backgroundColor: palette.accentWash,
-              borderRadius: 20,
-              padding: 18,
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: 14,
-            }}
+          <Card
+            tone="wash"
+            style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}
           >
             {/* The `full` plate — collars and all. It is the earned variant and
                 this is the only screen allowed to use it. */}
@@ -160,7 +160,7 @@ export function FinishSummary({
                 {t('finish.beat_last.detail', { delta: String(delta), unit })}
               </Txt>
             </View>
-          </View>
+          </Card>
         )}
 
         {/* ── The debrief ──────────────────────────────────────────────────
