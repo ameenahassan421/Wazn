@@ -1,5 +1,11 @@
 import { useState } from 'react'
-import { KeyboardAvoidingView, Platform, TextInput, View } from 'react-native'
+import {
+  KeyboardAvoidingView,
+  Platform,
+  TextInput,
+  useWindowDimensions,
+  View,
+} from 'react-native'
 
 import {
   fromDisplayWeight,
@@ -11,6 +17,7 @@ import {
 
 import { Btn } from '@/components/ui/Btn'
 import { Card } from '@/components/ui/Surface'
+import { Spark } from '@/components/ui/Spark'
 import { Empty, Screen } from '@/components/ui/Screen'
 import { Header } from '@/components/ui/Header'
 import { Txt, Kick } from '@/design/Txt'
@@ -46,10 +53,8 @@ import { useUnit } from '@/hooks/use-unit'
 export default function BodyScreen() {
   const { t } = useLocale()
   const { unit, ready } = useUnit()
-  // `series` is deliberately not read yet: it is the chart's input, and the
-  // chart is shared work with Progress. `useBody` returns it so the screen
-  // that draws it needs no second hook.
-  const { loading, error, latestKg, averageKg, steady, logWeight } = useBody()
+  const { width } = useWindowDimensions()
+  const { loading, error, series, latestKg, averageKg, steady, logWeight } = useBody()
 
   const [draft, setDraft] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
@@ -139,6 +144,22 @@ export default function BodyScreen() {
             </Txt>
           )}
         </Card>
+
+        {/* The chart `body.empty` has been promising. Width is the screen
+            minus both gutters and both card paddings — measured rather than
+            guessed, because an SVG wider than its card clips silently. */}
+        {series.length > 0 && (
+          <Card style={{ marginBottom: 12, gap: 10 }}>
+            <Kick>{t('body.weight')}</Kick>
+            <Spark
+              values={series.map((point) => toDisplayWeight(point.kg, unit))}
+              width={width - space.gutter * 2 - space.cardPad * 2}
+              label={(value) => String(value)}
+              range={(low, high) => t('body.range', { low, high, unit })}
+              emptyLine={t('body.one_reading')}
+            />
+          </Card>
+        )}
 
         <Card style={{ gap: 12 }}>
           <Kick>{t('body.log_weigh_in')}</Kick>

@@ -1379,6 +1379,32 @@ invention; the Finish screen's stat tiles are the obvious home and that is Ameen
 equipment word (`deriveEquipment` needs a muscle group the board does not carry), and the
 coach's sentence (`ghost-reason` is not wired to this screen).
 
+#### The shared chart, and a chart that lied about its own numbers (2026-08-21)
+
+`src/lib/spark.ts` places the points; `mobile/src/components/ui/Spark.tsx` turns them into
+SVG. Split that way because what can be got wrong is arithmetic, and arithmetic is testable —
+seven assertions, and three of them are traps:
+
+- **It normalises to `min..max`, not `0..max`.** That is the difference from the web's volume
+  bars, which scale from zero because a bar's length IS its value. A LINE is about change: body
+  weight between 80.4 and 82.9 drawn from zero is a flat line four pixels from the top.
+- **A flat series sits through the MIDDLE.** The v5 reference writes `(mx - mn) || 1`, which
+  avoids the division by zero and silently pins every point to the bottom edge. A lifter whose
+  weight has not moved should not see a line along the floor.
+- **A single reading is centred, and reported as `flat`** so the caller says "one reading so
+  far" instead of drawing a horizontal line that reads as a measurement.
+
+**The first version labelled the band at both ends and the chart lied.** `min` at the left,
+`max` at the right — which is exactly where a reader's eye expects FIRST and LAST. A series
+running 82.4 down to 81.2 was labelled "80.7 … 82.9" and read as rising. Every number on
+screen was correct and the chart said the opposite of the truth. It is one line now: "Range
+80.7 to 82.9 kg".
+
+Because the band is normalised, that label is not decoration: 0.4kg of drift fills the box
+exactly as 40kg would, and the range is the only thing keeping the shape honest.
+
+Body draws it. Progress is the other caller, and needs no new geometry.
+
 #### Body: it told people to log a weigh-in and had no way to (2026-08-21)
 
 The screen was 24 lines whose entire content was the sentence "Log a weigh-in to start the

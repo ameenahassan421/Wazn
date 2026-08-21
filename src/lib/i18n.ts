@@ -606,6 +606,8 @@ export const messages: Record<Locale, Record<string, string>> = {
        and the screen had no way to log one. These are the words for the
        input that closes that. */
     'body.today': 'Today',
+    'body.range': 'Range {low} to {high} {unit}',
+    'body.one_reading': 'One reading so far. A trend needs two.',
     'body.average': '{n} {unit} · 28-day average',
     'body.steady': 'Steady for four weeks',
     'body.invalid': 'Enter a weight between 20 and 500.',
@@ -1592,6 +1594,8 @@ export const messages: Record<Locale, Record<string, string>> = {
     'body.log_protein': 'سجّل البروتين',
     'body.save': 'حفظ',
     'body.today': 'اليوم',
+    'body.range': 'المدى من {low} إلى {high} {unit}',
+    'body.one_reading': 'قياس واحد حتى الآن. الاتجاه يحتاج اثنين.',
     'body.average': '{n} {unit} · متوسط ٢٨ يوماً',
     'body.steady': 'ثابت منذ أربعة أسابيع',
     'body.invalid': 'أدخل وزناً بين ٢٠ و٥٠٠.',
