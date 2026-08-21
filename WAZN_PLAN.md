@@ -1311,11 +1311,10 @@ completely silent.
 3. **No `eas.json`, no `expo-updates`, no `expo-notifications`.** All three are
    needed for Stage 4B, and the notifications one is the background rest timer —
    the single capability that justifies going native at all.
-4. **No offline write queue on native.** `mobile/src/state/live-workout.ts:35`
-   says so itself: a failed insert is remembered as a number and nothing retries
-   it. The web app has `src/lib/write-queue.ts`. **GATE 4 is false on native**,
-   and for an app whose premise is logging sets in a gym basement this is the
-   most important gap on this page.
+4. ~~**No offline write queue on native.**~~ **Built 2026-08-21** — see below.
+   `mobile/src/state/live-workout.ts` now checkpoints to AsyncStorage on every
+   mutation and retries with client-generated ids. It is not yet a BACKGROUND
+   sync: nothing drains when the radio returns on its own.
 
 #### Home is built against the prototype (2026-08-21)
 
@@ -1353,6 +1352,55 @@ cd ios && LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8 pod install
 
 and a rebuild, which is ~14 minutes cold. Worth doing once before the next device check, not
 per change.
+
+#### GATE 4 on native: sets now survive the app being killed (2026-08-21)
+
+Found by reading `origin/claude/live-board-duplicate-backup` before building Workout, which is
+the only reason it was found at all. That branch holds a second, independent implementation of
+the live workout, and comparing the two turned up something worse than "the screen exists
+twice":
+
+|                                          | `main` before this          | the branch       | now                    |
+| ---------------------------------------- | --------------------------- | ---------------- | ---------------------- |
+| set id                                   | server-generated            | **client**       | client                 |
+| persistence                              | none, a module variable     | **AsyncStorage** | AsyncStorage           |
+| failed insert                            | `unsynced++`, never retried | queued           | **queued and retried** |
+| set banked before the workout row landed | **DROPPED, never sent**     | queued           | queued                 |
+| survives an app kill                     | no                          | yes              | yes                    |
+
+The third and fourth rows are data loss on the app's core action, in its stated use case. The
+file said so honestly in its own header and nobody had acted on it.
+
+**The schema already allowed the fix.** `workouts.id` and `workout_sets.id` are both
+`uuid primary key default gen_random_uuid()`, so the client may supply them, and a replay is a
+23505 rather than a duplicate row. `workouts` also has a unique `(user_id, started_at)` index,
+so even the workout row is idempotent. Nothing needed a migration.
+
+Neither implementation was adopted wholesale. `main`'s module store is the right architecture —
+it outlives the `fullScreenModal` route and does not re-render every tab when a set lands — so
+the branch's two mechanisms were ported INTO it.
+
+**Two bugs were written and caught by the tests, not by review.** A drain per banked set sent
+the same row once per walk in flight (12 inserts for 3 sets). Then the guard against that was a
+boolean, so `finishWorkout`'s `await flushPending()` no-opped against the drain
+`bankCurrentSet` had just started and marked a workout ended with its sets still on the phone.
+The guard is a promise now, so a second caller awaits the work rather than being told "busy".
+
+**Testing it required stubbing two native modules.** `AsyncStorage` and `expo-crypto` both
+reach into `react-native`, whose entry is Flow, which vitest refuses — so importing them would
+have made this file untestable on the day it started to matter most. `mobile/test/stubs/` holds
+working implementations rather than `vi.fn()`s, because the questions worth asking are "what
+came back after the kill" and "did the replay collide", and only a real store answers those.
+Six new assertions, 16 in the file.
+
+**What is still missing**, and it is named rather than implied:
+
+- **No background sync.** `flushPending()` runs on a banked set, a restored checkpoint and a
+  finished workout. Not on a timer, and not when connectivity returns. A lifter who finishes
+  offline and never reopens the app has sets on the phone only. It closes by giving that
+  function a `NetInfo` or `AppState` trigger.
+- **No resume affordance.** The launch restore brings the DATA back and starts draining it, but
+  nothing navigates to the board or offers to. That belongs on Home.
 
 #### READ BEFORE BUILDING WORKOUT: 1,244 lines of it already exist, on a branch
 

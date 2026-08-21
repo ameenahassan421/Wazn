@@ -19,6 +19,7 @@ import { palette } from '@wazn/domain'
 import { REQUIRED_FONTS } from '@/design/type'
 import { Txt } from '@/design/Txt'
 import { useAuth } from '@/hooks/use-auth'
+import { restoreWorkout } from '@/state/live-workout'
 import { LocaleProvider } from '@/hooks/use-locale'
 import { UnitProvider } from '@/hooks/use-unit'
 import { supabaseConfigError } from '@/services/supabase'
@@ -100,6 +101,27 @@ export const AUTH_ENABLED = false
 export default function RootLayout() {
   const [ready, error] = useFonts(FACES)
   const { loading, userId } = useAuth()
+
+  /**
+   * Bring back a workout the OS killed, once, at launch.
+   *
+   * Here rather than in the session screen because the checkpoint has to be
+   * read whether or not that route is the one being opened: a lifter whose app
+   * was killed mid-set reopens to Home, and the sets they logged have to be on
+   * the phone and draining before they touch anything.
+   *
+   * `restoreWorkout` no-ops when a workout is already active, so a fast refresh
+   * in development cannot clobber a live board with a stale checkpoint.
+   *
+   * ── WHAT THIS DOES NOT DO YET ─────────────────────────────────────────────
+   * It restores the DATA, not the route. A restored workout is in the store and
+   * its unsent sets are on their way, but nothing navigates the lifter back to
+   * the board or offers to. That is a resume affordance on Home and it belongs
+   * with Home's next pass, not smuggled in here.
+   */
+  useEffect(() => {
+    void restoreWorkout()
+  }, [])
 
   /**
    * Nothing is shown until BOTH the faces are registered and the keychain has

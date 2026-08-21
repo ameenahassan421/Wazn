@@ -259,10 +259,14 @@ export default function LiveWorkout() {
         <Chip>{addedVolume}</Chip>
       </View>
 
-      {live.unsynced > 0 && (
+      {/* The queue, said plainly. The wording changed on 2026-08-21 with the
+          thing it describes: these sets used to be on this screen and nowhere
+          else, and now they are on the phone and will be retried. "Saved on
+          this phone" is a promise the store can now keep. */}
+      {live.pending.length > 0 && (
         <View style={{ paddingHorizontal: space.gutter, paddingTop: 10 }}>
           <Txt step="meta" ink="muted">
-            {`${live.unsynced} set${live.unsynced === 1 ? '' : 's'} not sent yet. They are on this screen, not on the server.`}
+            {`${live.pending.length} set${live.pending.length === 1 ? '' : 's'} saved on this phone, waiting to sync.`}
           </Txt>
         </View>
       )}

@@ -34,6 +34,25 @@ export default defineConfig({
       { find: /^@wazn\/domain\//, replacement: `${domainRoot}/` },
       { find: /^@\/assets\//, replacement: `${path.resolve(projectRoot, 'assets')}/` },
       { find: /^@\//, replacement: `${path.resolve(projectRoot, 'src')}/` },
+      /*
+       * Two native modules, stubbed — see `test/stubs/`. Both reach into
+       * `react-native`, whose entry is Flow and which vitest's parser refuses,
+       * so importing either makes the file that does it untestable. That is
+       * how `live-workout.ts` would have lost its suite the day it started
+       * checkpointing, which is the day the suite started to matter most.
+       *
+       * These are real implementations, not `vi.fn()`s: the questions worth
+       * asking are "what came back after the app was killed" and "did the
+       * replay collide", and only a working store can answer them.
+       */
+      {
+        find: /^@react-native-async-storage\/async-storage$/,
+        replacement: path.resolve(projectRoot, 'test/stubs/async-storage.ts'),
+      },
+      {
+        find: /^expo-crypto$/,
+        replacement: path.resolve(projectRoot, 'test/stubs/expo-crypto.ts'),
+      },
     ],
   },
   test: {

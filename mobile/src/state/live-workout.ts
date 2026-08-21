@@ -1,4 +1,6 @@
 import { useSyncExternalStore } from 'react'
+import AsyncStorage from '@react-native-async-storage/async-storage'
+import * as Crypto from 'expo-crypto'
 
 import {
   type BoardExercise,
@@ -31,13 +33,35 @@ import { supabase } from '@/services/supabase'
  * handed and a gym has no signal. The insert follows and its failure is
  * counted, not thrown.
  *
- * ── WHAT THIS IS NOT, YET ───────────────────────────────────────────────────
- * It is NOT the offline queue. A failed insert is remembered as a number on
- * `unsynced` and nothing retries it. The web app has `write-queue` and a
- * checkpoint for exactly this and GATE 4 is the gate that measures it; wiring
- * them to SQLite is its own PR and its own test. Until then this store must
- * not be described as offline-capable, and the screen says so rather than
- * showing a lifter a green tick it has not earned.
+ * ── IT SURVIVES THE APP BEING KILLED (2026-08-21) ───────────────────────────
+ * This block said the opposite, and it was right to: a failed insert was
+ * counted on `unsynced` and nothing retried it, a set banked before the
+ * workout row landed was DROPPED without being sent at all, and the store was
+ * a module variable that died with the process. A workout logged in a basement
+ * was lost. GATE 4 measures exactly this.
+ *
+ * Three things fix it, and all three are cheap because the schema already
+ * allowed them:
+ *
+ *   1. **Every id is generated on the device.** `workouts.id` and
+ *      `workout_sets.id` are both `uuid primary key default gen_random_uuid()`,
+ *      so a client may supply them — and a replay of the same insert is a
+ *      23505 rather than a duplicate row. That is the whole reason retry is
+ *      safe. `workouts` also carries a unique `(user_id, started_at)` index, so
+ *      even a workout row sent twice collides instead of forking.
+ *   2. **Every mutation is checkpointed to AsyncStorage**, inside `set()`, so
+ *      no path can change the board without persisting it.
+ *   3. **`pending` is a queue, not a counter.** A set that cannot be sent — no
+ *      network, or no workout row yet — is held with the id it will be
+ *      inserted under, and `flushPending()` retries it in order.
+ *
+ * What this still is NOT: a background sync. `flushPending()` runs when a set
+ * is banked, when a checkpoint is restored, and when a workout finishes — not
+ * on a timer and not when the radio returns on its own. A lifter who finishes
+ * offline and never reopens the app has sets on the phone and not on the
+ * server. That is a smaller gap than the one it replaces, it closes by giving
+ * `flushPending` a connectivity trigger, and the screen still says plainly how
+ * many rows are waiting.
  *
  * It is also NOT yet a board that can hold a warm-up. Every set carries a
  * `type` and it is now carried all the way to the row (see `persistSet`), but
@@ -49,6 +73,23 @@ import { supabase } from '@/services/supabase'
 
 export type LiveStatus = 'idle' | 'active' | 'finished'
 
+/** One row of `workout_sets`, held on the device until the server has it. */
+export interface PendingSet {
+  /** Client-generated, and the server's primary key. This is what makes the
+   *  retry safe: a second attempt collides instead of duplicating. */
+  id: string
+  exerciseId: string
+  setNumber: number
+  setType: BoardExercise['sets'][number]['type']
+  weightKg: number | null
+  reps: number | null
+}
+
+/** Where the checkpoint lives. One key: the state is one document, and a
+ *  half-restored workout is worse than none. Exported so the test asserts the
+ *  same key the app writes rather than a copy of it. */
+export const CHECKPOINT_KEY = 'wazn.live-workout'
+
 export interface LiveState {
   status: LiveStatus
   /** Null until the workout row lands. Sets wait for it. */
@@ -58,8 +99,17 @@ export interface LiveState {
   board: BoardExercise[]
   /** Last finished session's working volume, in kg. Null on day one. */
   targetKg: number | null
-  /** Sets banked on the board that no insert has confirmed. */
-  unsynced: number
+  /** Who the workout belongs to. Held so a retry can rebuild the workout row
+   *  without asking the network who is signed in. */
+  userId: string | null
+  /**
+   * Sets banked on the board that no insert has confirmed, each carrying the
+   * id it will be inserted under.
+   *
+   * A LIST, not a count. A count can only be shown to the lifter; a list can
+   * actually be sent.
+   */
+  pending: PendingSet[]
   /**
    * Rest, as two numbers rather than a ticking one.
    *
@@ -80,7 +130,8 @@ const EMPTY: LiveState = {
   name: '',
   board: [],
   targetKg: null,
-  unsynced: 0,
+  userId: null,
+  pending: [],
   restEndsAt: null,
   restTotal: 0,
 }
@@ -88,9 +139,67 @@ const EMPTY: LiveState = {
 let state: LiveState = EMPTY
 const listeners = new Set<() => void>()
 
+/**
+ * The drain in flight, or null.
+ *
+ * A PROMISE rather than a boolean, so a second caller can await the work that
+ * is already happening instead of being told "busy" and returning immediately.
+ * The boolean version passed its own test suite and was wrong: `finishWorkout`
+ * awaited a flush that no-opped against the one `bankCurrentSet` had just
+ * started, and marked the workout ended with its sets still on the phone.
+ *
+ * Module-scoped rather than part of `LiveState` because it is not something the
+ * screen may render: "syncing" is a spinner, and a spinner on the logging path
+ * is what this store exists to avoid. `pending.length` is the honest thing to
+ * show.
+ */
+let draining: Promise<void> | null = null
+
 function set(next: Partial<LiveState>) {
   state = { ...state, ...next }
   for (const notify of listeners) notify()
+  checkpoint()
+}
+
+/**
+ * Persist the whole state, fire and forget.
+ *
+ * Inside `set()` rather than at each call site, because "no path can mutate
+ * without persisting" is the only version of this that survives someone adding
+ * a fourth mutation. Not awaited: the board is painted by the time this runs,
+ * and a checkpoint that blocked the logging path would defeat the point.
+ *
+ * Rest costs nothing here — `restEndsAt` is a wall-clock instant rather than a
+ * ticking number, so this fires when a rest STARTS, not once a second.
+ */
+function checkpoint(): void {
+  if (state.status === 'idle') {
+    void AsyncStorage.removeItem(CHECKPOINT_KEY).catch(() => {})
+    return
+  }
+  void AsyncStorage.setItem(CHECKPOINT_KEY, JSON.stringify(state)).catch(() => {})
+}
+
+/**
+ * Bring back a workout the OS killed, and try to send what it was holding.
+ *
+ * A corrupt checkpoint is dropped rather than thrown: a lost workout is bad, an
+ * app that cannot launch is worse, and the lifter cannot tell the difference
+ * between the two failures anyway.
+ */
+export async function restoreWorkout(): Promise<void> {
+  if (state.status !== 'idle') return
+  try {
+    const raw = await AsyncStorage.getItem(CHECKPOINT_KEY)
+    if (raw === null) return
+    const saved = JSON.parse(raw) as LiveState
+    if (saved.status === 'idle') return
+    set(saved)
+  } catch {
+    void AsyncStorage.removeItem(CHECKPOINT_KEY).catch(() => {})
+    return
+  }
+  await flushPending()
 }
 
 function subscribe(listener: () => void) {
@@ -120,11 +229,22 @@ export async function startWorkout(): Promise<void> {
   if (state.status === 'active') return
 
   const startedAt = Date.now()
-  set({ ...EMPTY, status: 'active', startedAt })
+  /**
+   * Minted HERE, not read back from the insert.
+   *
+   * The old order was: insert the workout, await it, keep the id it returns —
+   * and a set banked inside that window had no `workout_id` to reference, so
+   * `persistSet` counted it and dropped it. With the id in hand before the
+   * first await, a set can be queued against it from the first frame, and the
+   * workout row's own insert becomes just another retryable write.
+   */
+  const workoutId = Crypto.randomUUID()
+  set({ ...EMPTY, status: 'active', startedAt, workoutId })
 
   const { data: auth } = await supabase.auth.getUser()
   const userId = auth.user?.id
   if (userId === undefined) return
+  set({ userId })
 
   const { data: recent } = await supabase
     .from('workouts')
@@ -171,22 +291,89 @@ export async function startWorkout(): Promise<void> {
     return total + (r.weight_kg ?? 0) * (r.reps ?? 0)
   }, 0)
 
-  const { data: created } = await supabase
-    .from('workouts')
-    .insert({
-      user_id: userId,
-      name: (last?.name as string | null) ?? null,
-      started_at: new Date(startedAt).toISOString(),
-    })
-    .select('id')
-    .single()
-
   set({
-    workoutId: (created?.id as string | undefined) ?? null,
     name: (last?.name as string | null) ?? '',
     board: seedBoard(plan, previous),
     targetKg: targetKg > 0 ? targetKg : null,
   })
+
+  // Not awaited, and a failure here is not fatal: `flushPending` tries again
+  // with the same id the next time a set is banked.
+  void ensureWorkoutRow()
+}
+
+/**
+ * Make sure the workout row exists, and say whether it does.
+ *
+ * A 23505 is SUCCESS. The row is keyed by an id this device generated and by a
+ * unique `(user_id, started_at)` index, so a duplicate means an earlier attempt
+ * landed — which is exactly what a retry wants to hear. Treating it as an error
+ * is how an idempotent write turns into a stuck queue.
+ */
+async function ensureWorkoutRow(): Promise<boolean> {
+  const { workoutId, userId, name, startedAt } = state
+  if (workoutId === null || userId === null) return false
+  const { error } = await supabase.from('workouts').insert({
+    id: workoutId,
+    user_id: userId,
+    name: name === '' ? null : name,
+    started_at: new Date(startedAt).toISOString(),
+  })
+  return error === null || error.code === '23505'
+}
+
+/**
+ * Send everything the server does not have yet.
+ *
+ * Exported because it is real API rather than a hook for tests: it is what an
+ * app-foreground or connectivity listener calls, and the one gap this store
+ * still has closes by giving this function a trigger.
+ */
+export function flushPending(): Promise<void> {
+  if (draining !== null) return draining
+  draining = run().finally(() => {
+    draining = null
+  })
+  return draining
+}
+
+/**
+ * The walk itself.
+ *
+ * One narrow race remains and is deliberate: a set banked between the `while`
+ * condition failing and `draining` clearing waits for the next trigger rather
+ * than this walk. Closing it needs a second loop around the whole function to
+ * catch a window of microseconds, and the next banked set drains it anyway.
+ */
+async function run(): Promise<void> {
+  {
+    // Once, not per row: the workout row is a single insert and asking for it
+    // inside the loop would put a round trip between every set.
+    if (state.pending.length > 0 && !(await ensureWorkoutRow())) return
+
+    // Always the HEAD, re-read each pass rather than iterated over a snapshot,
+    // so a set banked mid-drain goes out on this same walk.
+    while (state.pending.length > 0) {
+      const row = state.pending[0]
+      const workoutId = state.workoutId
+      if (workoutId === null) return
+
+      const { error } = await supabase.from('workout_sets').insert({
+        id: row.id,
+        workout_id: workoutId,
+        exercise_id: row.exerciseId,
+        set_number: row.setNumber,
+        weight_kg: row.weightKg,
+        reps: row.reps,
+        set_type: row.setType,
+      })
+      // Same rule as the workout row. Anything that is not a duplicate is a
+      // real failure, and the queue keeps its place IN ORDER — a set that
+      // cannot be sent must not let the next one past it.
+      if (error !== null && error.code !== '23505') return
+      set({ pending: state.pending.filter((p) => p.id !== row.id) })
+    }
+  }
 }
 
 /**
@@ -223,7 +410,7 @@ export function bankCurrentSet(weightKg: number | null, reps: number | null): vo
     restEndsAt: rests ? Date.now() + DEFAULT_REST_SECONDS * 1000 : null,
     restTotal: rests ? DEFAULT_REST_SECONDS : 0,
   })
-  void persistSet(exercise.exerciseId, setRow.setNumber, setRow.type, weightKg, reps)
+  persistSet(exercise.exerciseId, setRow.setNumber, setRow.type, weightKg, reps)
 }
 
 /** Dismissed by a tap, or by the lifter deciding they are ready. */
@@ -251,33 +438,30 @@ export function adjustRest(deltaSeconds: number): void {
  * the rows to fix. The web app carries the lifter's chosen `setType` into the
  * row (`LogScreen`'s `optimistic`); this is the same contract, same table.
  */
-async function persistSet(
+function persistSet(
   exerciseId: string,
   setNumber: number,
   setType: BoardExercise['sets'][number]['type'],
   weightKg: number | null,
   reps: number | null,
-): Promise<void> {
-  const workoutId = state.workoutId
-  if (workoutId === null) {
-    set({ unsynced: state.unsynced + 1 })
-    return
-  }
-  const { error } = await supabase.from('workout_sets').insert({
-    workout_id: workoutId,
-    exercise_id: exerciseId,
-    set_number: setNumber,
-    weight_kg: weightKg,
-    reps,
-    set_type: setType,
+): void {
+  set({
+    pending: [
+      ...state.pending,
+      { id: Crypto.randomUUID(), exerciseId, setNumber, setType, weightKg, reps },
+    ],
   })
-  if (error !== null) set({ unsynced: state.unsynced + 1 })
+  void flushPending()
 }
 
 export async function finishWorkout(): Promise<void> {
   const workoutId = state.workoutId
   set({ status: 'finished' })
   if (workoutId === null) return
+  // Last chance to land the sets, and it runs BEFORE `ended_at` is written: a
+  // workout marked finished while its sets are still on the phone reads, to
+  // every query downstream, as a completed session with missing volume.
+  await flushPending()
   await supabase
     .from('workouts')
     .update({ ended_at: new Date().toISOString() })

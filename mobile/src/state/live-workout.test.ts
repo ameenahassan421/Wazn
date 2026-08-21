@@ -2,14 +2,32 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { type BoardExercise, seedBoard } from '@wazn/domain'
 
+import AsyncStorage from '@react-native-async-storage/async-storage'
+
+// Imported by PATH, not through the alias: the `__reset` helpers exist only on
+// the stubs, so the alias's real types would reject them. Same file either
+// way — vite resolves both specifiers to it — so this is the same module
+// instance the store is using.
+import { __reset as resetStorage } from '../../test/stubs/async-storage'
+import { __reset as resetIds } from '../../test/stubs/expo-crypto'
+
 import {
+  CHECKPOINT_KEY,
   type LiveState,
   bankCurrentSet,
+  finishWorkout,
+  flushPending,
   resetWorkout,
+  restoreWorkout,
   selectBoardView,
   startWorkout,
   useLiveWorkout,
 } from './live-workout'
+
+/** The id `test/stubs/expo-crypto.ts` mints on its nth call. Sequential on
+ *  purpose: every assertion here is about identity, and a random id could only
+ *  ever be checked for shape. */
+const uuid = (n: number) => `00000000-0000-4000-8000-${String(n).padStart(12, '0')}`
 
 /**
  * The fake Supabase client, and why the store gets one rather than a refactor.
@@ -40,6 +58,10 @@ const fake = vi.hoisted(() => {
       set_type: string
     }[],
     catalogue: [] as { id: string; name: string }[],
+    /** Make every `workout_sets` insert fail, to stand in for a basement. */
+    failSets: false,
+    /** Make it fail with a duplicate key, which is a SUCCESS to the queue. */
+    duplicateSets: false,
   }
 
   class Query {
@@ -93,6 +115,14 @@ const fake = vi.hoisted(() => {
         return { data: { id: 'workout-today' }, error: null }
       }
       if (this.table === 'exercises') return { data: config.catalogue, error: null }
+      if (this.verb === 'insert' && this.table === 'workout_sets') {
+        if (config.duplicateSets) {
+          return { data: null, error: { code: '23505', message: 'duplicate key' } }
+        }
+        if (config.failSets) {
+          return { data: null, error: { code: '08006', message: 'connection failure' } }
+        }
+      }
       return { data: null, error: null }
     }
   }
@@ -135,7 +165,11 @@ function lastSetRow(): Record<string, unknown> {
 
 beforeEach(async () => {
   resetWorkout()
+  resetStorage()
+  resetIds()
   fake.inserts.length = 0
+  fake.config.failSets = false
+  fake.config.duplicateSets = false
   fake.config.previous = [
     {
       exercise_id: 'squat',
@@ -166,19 +200,24 @@ describe('startWorkout', () => {
     expect(board.map((e) => e.name)).toEqual(['Back Squat', 'Bench Press'])
     expect(board[0].sets).toHaveLength(2)
     expect(board[0].sets[0].previousKg).toBe(100)
-    expect(workoutId).toBe('workout-today')
+    // The FIRST uuid this session mints, not the one the server returned.
+    // `startWorkout` generates it before its first await so a set banked in
+    // that window has something to reference — the window in which sets were
+    // previously counted and dropped.
+    expect(workoutId).toBe(uuid(1))
     // 100x5 + 100x5 + 60x8, the volume today is chasing.
     expect(targetKg).toBe(1480)
   })
 })
 
 describe('bankCurrentSet', () => {
-  it('advances to the next set, and its own set number goes in the row', () => {
+  it('advances to the next set, and its own set number goes in the row', async () => {
     expect(selectBoardView(liveState()).set?.setNumber).toBe(1)
 
     bankCurrentSet(102.5, 4)
+    await flushPending()
     expect(lastSetRow()).toMatchObject({
-      workout_id: 'workout-today',
+      workout_id: uuid(1),
       exercise_id: 'squat',
       set_number: 1,
       weight_kg: 102.5,
@@ -197,13 +236,14 @@ describe('bankCurrentSet', () => {
     expect(selectBoardView(liveState()).exercise?.name).toBe('Bench Press')
   })
 
-  it('banks nothing more once the board is done, so a stray tap is inert', () => {
+  it('banks nothing more once the board is done, so a stray tap is inert', async () => {
     bankCurrentSet(100, 5)
     bankCurrentSet(100, 5)
     bankCurrentSet(60, 8)
     expect(selectBoardView(liveState()).position).toBeNull()
 
     bankCurrentSet(999, 999)
+    await flushPending()
     expect(fake.inserts.filter((i) => i.table === 'workout_sets')).toHaveLength(3)
   })
 
@@ -221,12 +261,14 @@ describe('bankCurrentSet', () => {
    * plumbing is being pinned ahead of the control, so the control cannot
    * arrive on top of a silent corruption.
    */
-  it('writes the set type the board holds, not a hardcoded normal', () => {
+  it('writes the set type the board holds, not a hardcoded normal', async () => {
     liveState().board[0].sets[0].type = 'warmup'
     bankCurrentSet(60, 10)
+    await flushPending()
     expect(lastSetRow().set_type).toBe('warmup')
 
     bankCurrentSet(100, 5)
+    await flushPending()
     expect(lastSetRow().set_type).toBe('normal')
   })
 })
@@ -267,7 +309,8 @@ describe('selectBoardView', () => {
       name: '',
       board,
       targetKg,
-      unsynced: 0,
+      userId: null,
+      pending: [],
       restEndsAt: null,
       restTotal: 0,
     }
@@ -300,5 +343,97 @@ describe('selectBoardView', () => {
     board[0].sets[0] = { ...board[0].sets[0], weightKg: 100, reps: 5, done: true }
     expect(selectBoardView(stateWith(board, 500)).recordPace).toBe(true)
     expect(selectBoardView(stateWith(board, 501)).recordPace).toBe(false)
+  })
+})
+
+/**
+ * GATE 4, and the reason this store was rewritten on 2026-08-21.
+ *
+ * Before it, a set banked with no signal was counted on `unsynced` and never
+ * sent again, and the whole store was a module variable that died with the
+ * process. In a basement gym — the app's stated use case — a workout was lost.
+ * These four assertions are the ones that would have failed then.
+ */
+describe('durability', () => {
+  it('keeps a set that could not be sent, and sends it when the network returns', async () => {
+    fake.config.failSets = true
+    bankCurrentSet(100, 5)
+    await flushPending()
+
+    // On the board, and still on the phone.
+    expect(selectBoardView(liveState()).banked).toBe(500)
+    expect(liveState().pending).toHaveLength(1)
+    expect(fake.inserts.filter((i) => i.table === 'workout_sets')).toHaveLength(1)
+
+    fake.config.failSets = false
+    await flushPending()
+
+    expect(liveState().pending).toHaveLength(0)
+    // The RETRY carries the id the first attempt used, which is what makes a
+    // replay a 23505 instead of a second row.
+    const attempts = fake.inserts.filter((i) => i.table === 'workout_sets')
+    expect(attempts).toHaveLength(2)
+    expect(attempts[0].row.id).toBe(attempts[1].row.id)
+  })
+
+  it('treats a duplicate key as sent, because it means an earlier attempt landed', async () => {
+    fake.config.duplicateSets = true
+    bankCurrentSet(100, 5)
+    await flushPending()
+
+    // 23505 is success. The opposite reading is how an idempotent write turns
+    // into a queue that never empties.
+    expect(liveState().pending).toHaveLength(0)
+  })
+
+  it('holds the queue in order — a set that cannot go must not let the next one past', async () => {
+    fake.config.failSets = true
+    bankCurrentSet(100, 5)
+    bankCurrentSet(100, 5)
+    await flushPending()
+    expect(liveState().pending.map((p) => p.setNumber)).toEqual([1, 2])
+
+    fake.config.failSets = false
+    await flushPending()
+    const sent = fake.inserts
+      .filter((i) => i.table === 'workout_sets')
+      .map((i) => i.row.set_number)
+    expect(sent.slice(-2)).toEqual([1, 2])
+  })
+
+  it('comes back after the app is killed, board and queue intact', async () => {
+    fake.config.failSets = true
+    bankCurrentSet(100, 5)
+    await flushPending()
+
+    // What the OS would find on disk. Read through the same key the app writes.
+    const saved = await AsyncStorage.getItem(CHECKPOINT_KEY)
+    expect(saved).not.toBeNull()
+
+    // The kill: the module's state is gone, the disk is not. `resetWorkout`
+    // would ALSO clear the checkpoint — correctly, since a reset workout must
+    // not come back — so the process death is staged by writing the saved
+    // document back after the reset.
+    resetWorkout()
+    expect(liveState().status).toBe('idle')
+    await AsyncStorage.setItem(CHECKPOINT_KEY, saved as string)
+
+    fake.config.failSets = false
+    await restoreWorkout()
+
+    expect(liveState().status).toBe('active')
+    expect(selectBoardView(liveState()).banked).toBe(500)
+    // Restoring also flushes: the set that could not be sent in the gym goes
+    // out the moment the app is opened again.
+    expect(liveState().pending).toHaveLength(0)
+  })
+
+  it('does not lose sets when a workout is finished offline', async () => {
+    fake.config.failSets = true
+    bankCurrentSet(100, 5)
+    await finishWorkout()
+
+    expect(liveState().status).toBe('finished')
+    expect(liveState().pending).toHaveLength(1)
   })
 })
