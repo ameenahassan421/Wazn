@@ -121,6 +121,22 @@ export interface LiveState {
    */
   restEndsAt: number | null
   restTotal: number
+  /**
+   * True once `ended_at` has actually landed on the workout row.
+   *
+   * `finishWorkout` flips `status` to `finished` on the FIRST line so the
+   * summary paints instantly, then drains the queue, then writes `ended_at`.
+   * That is the right order for the lifter and the wrong order for anything
+   * that queries the session: `session_debrief()` joins only workouts with an
+   * `ended_at`, so a debrief fetched the moment the summary appears reads a
+   * workout that does not exist yet and answers `found: false` — silently, and
+   * permanently, because nothing re-asks.
+   *
+   * So the seal is its own fact rather than something inferred from `status`
+   * or from `pending.length`. An empty queue means the sets landed; it says
+   * nothing about the row that owns them.
+   */
+  sealed: boolean
 }
 
 const EMPTY: LiveState = {
@@ -132,6 +148,7 @@ const EMPTY: LiveState = {
   targetKg: null,
   userId: null,
   pending: [],
+  sealed: false,
   restEndsAt: null,
   restTotal: 0,
 }
@@ -504,16 +521,20 @@ function persistSet(
 
 export async function finishWorkout(): Promise<void> {
   const workoutId = state.workoutId
-  set({ status: 'finished' })
+  set({ status: 'finished', sealed: false })
   if (workoutId === null) return
   // Last chance to land the sets, and it runs BEFORE `ended_at` is written: a
   // workout marked finished while its sets are still on the phone reads, to
   // every query downstream, as a completed session with missing volume.
   await flushPending()
-  await supabase
+  const { error } = await supabase
     .from('workouts')
     .update({ ended_at: new Date().toISOString() })
     .eq('id', workoutId)
+  // Sealed only on success. An update that failed leaves the row without an
+  // `ended_at`, and a debrief asked for it would come back empty — so the
+  // honest state is "not sealed", and the summary simply says less.
+  if (!error) set({ sealed: true })
 }
 
 export function resetWorkout(): void {

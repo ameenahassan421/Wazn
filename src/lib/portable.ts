@@ -64,6 +64,14 @@ export * from './variations'
    Every number the coach says comes from one of these. The model only ever
    phrases; nothing here asks a network a question. */
 export * from './coach-mode'
+/**
+ * The SKELETONS, not the reads. `coach.ts` builds a browser Supabase client,
+ * so it can never come through this door; `coach-lines.ts` is the half that
+ * turns `session_brief()` / `session_debrief()` output into a sentence, and
+ * both apps run exactly that one. What differs is which client fetched the
+ * block, which is the rule this barrel exists to state.
+ */
+export * from './coach-lines'
 export * from './readiness'
 export * from './ghost-reason'
 export * from './forecast'

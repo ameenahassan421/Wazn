@@ -5,8 +5,8 @@ import {
   debriefChip,
   debriefSkeleton,
   ordinal,
-} from './coach'
-import type { BriefBlock, DebriefBlock } from './coach'
+} from './coach-lines'
+import type { BriefBlock, DebriefBlock } from './coach-lines'
 
 /**
  * The deterministic skeletons — B1's "if AI is dark, render the deterministic

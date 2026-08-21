@@ -311,6 +311,7 @@ describe('selectBoardView', () => {
       targetKg,
       userId: null,
       pending: [],
+      sealed: false,
       restEndsAt: null,
       restTotal: 0,
     }

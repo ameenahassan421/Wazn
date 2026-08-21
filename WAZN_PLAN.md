@@ -1204,37 +1204,36 @@ retention that cannot exist until the app is shared.
 
 #### Next action
 
-**RESUME HERE (2026-08-21, written before a compaction).** `main` is at the coach dial commit,
-tree clean, CI green on `check` / `smoke` / `mobile`. Nothing is uncommitted and nothing is
-half-done.
+**RESUME HERE (2026-08-21).** `main` carries the coach's two sentences. Tree clean, the full
+root wall green, `bundle:ios` green, mobile tsc/eslint/tests green.
 
 **Built and verified on a simulator:** the design system, Home, Workout, Rest, Finish, History,
-Body, the exercise picker, the shared `Spark` chart, GATE 4's durable write queue, and the
-coach's ghost with its Full/Quiet/Off gate and its Settings dial.
+Body, the exercise picker, the shared `Spark` chart, GATE 4's durable write queue, the coach's
+ghost with its Full/Quiet/Off gate and its Settings dial, and now the Today brief and the
+Finish debrief.
 
 **Do these next, in this order:**
 
-1. **Home's `brief`** — the coach's sentence on the highest-traffic screen. `use-home.ts`
-   returns `brief: null` unconditionally; `verdictFor` and `forecast.ts` can both supply a true
-   line. Gate on `speaks` from `useCoach`.
-2. **The Finish debrief** — same shape, one sentence over the session's own numbers.
-3. **The Coach tab (v5 screen 15)** — the largest remaining piece and the one v5 calls the
+1. **The check-in does nothing, and that is a live defect.** Home writes `daily_checkins` and
+   computes `readiness` from it. **No screen reads either.** `useHome()` returns `readiness`
+   and nothing consumes it, and the board seeds its ghosts from
+   `computeReadiness({ checkIn: null, daysRested: null })` — a hardcoded Normal
+   (`mobile/app/session/[id].tsx:229`). So three chips on the highest-traffic screen write a
+   row to Postgres and change nothing a lifter can see. Fix at the root: one `useReadiness`
+   both surfaces read, rather than threading Home's value into a different route.
+2. **The Coach tab (v5 screen 15)** — the largest remaining piece and the one v5 calls the
    control room: mode selector, week review, notes, Ask the coach. Currently a stub.
-4. **Progress**, then **Friends**. Neither needs new chart geometry — `sparkGeometry` is
+   `fetchWeeklyReview` and `REVIEW_SECTIONS` already exist on the web; `coach-lines.ts` is
+   where the shareable half of it goes.
+3. **Progress**, then **Friends**. Neither needs new chart geometry — `sparkGeometry` is
    built and tested. Both still carry Ameen's open brass question; build in ember and flag,
    which is what every other screen did.
-5. **Auth last.** The screen a lifter sees once, the prototype does not cover it, and with auth
+4. **Auth last.** The screen a lifter sees once, the prototype does not cover it, and with auth
    switched off it is unreachable anyway.
 
-**Two audits worth a WORKFLOW rather than a linear read** (ultracode is on; Ameen confirmed
-2026-08-21). Both are read-only fan-outs, so no file conflicts:
-
-- **v5 leftovers across all native screens.** Settings was found printing a four-line paragraph
-  in IBM Plex Mono because it took `step="meta"`. Mono is this system's machine voice. That
-  class is almost certainly elsewhere, along with uppercase copy and ramp misuse.
-- **Dead controls and dead props.** The recurring defect of this whole session: a `brass` prop
-  branching to the same value twice, an "Add exercise" line with nothing behind it, a Save
-  button over an empty catalogue, `adjustRest` with no caller. Every one was found by eye.
+**A workflow audit ran 2026-08-21** over all of `mobile/` — six readers across two dimensions
+(v5 leftovers, dead controls and props), each finding adversarially verified by a second agent.
+Its surviving findings are the backlog above and below; do not re-run it against unchanged code.
 
 **The standing pattern, and the reason to keep doing it:** every automated gate stayed green
 through nine defects this week, and a screenshot found all nine. Run the app.
@@ -1746,6 +1745,53 @@ deleted nineteen LOCAL branches and touched no remote, so the banner still count
 | `claude/one-app-consolidation`              | 8 commits of hooks, CI and CLAUDE.md work. **A peer session may still be on it — do not delete, do not rebuild.**                                                                                                                                              |
 | `claude/workout-tracker-pwa-slice-1-97kisx` | 11 lines correcting `docs/agent-setup.md`, and **the correction is right**: cloud environments have no secrets store, so an env var is plain text readable by anyone who can use that environment. Main still carries the weaker advice. Worth cherry-picking. |
 | `v5/p0-tokens`                              | 5,716 lines, almost all `docs/design/v5-momentum` and fonts that are already in main. v5 is retired; the one live piece is a web perf fix, "fill-move animates transform, not width".                                                                          |
+
+#### THE COACH'S SENTENCES CROSS TO NATIVE, AND ONE FILE BOUNDARY WAS THE WHOLE BLOCKER (2026-08-21)
+
+Home had a coach card in its markup and `brief: null` in its hook. Finish said in its own
+header comment that the debrief needed `ghost-reason` wiring. Both were wrong about why.
+
+**The sentences already existed, shipped, and tested — in a file the native app could not
+import.** `src/lib/coach.ts` held `briefSkeleton`, `briefChip`, `debriefSkeleton` and
+`debriefChip`, all pure, all covered by 71 assertions. It also held four Supabase reads, and
+its first line was `import { supabase } from './supabase'`. One import poisoned the module for
+`portable.ts`, whose test walks the TRANSITIVE graph, so the whole thing stayed on the web.
+
+Split along the seam the repo already names — **domain shared, I/O adapted**:
+
+- **`src/lib/coach-lines.ts`** (new): the block types and the four composers. Pure TypeScript,
+  imports only `./units` and `./i18n`, both already in the barrel. `coach.test.ts` moved with
+  it unchanged.
+- **`src/lib/coach.ts`**: reads only, and `export * from './coach-lines'` so no web call site
+  moved. It now has no test file and an exemption in `check_coverage_floor.mjs` naming what it
+  became: four `rpc`/`functions.invoke` wrappers with no branching beyond returning null.
+- **`mobile/src/services/coach.ts`** (new): the same reads against the native client, with the
+  `isBlock` shape guard carried over verbatim — an RPC that does not exist answers `[]`, `[]`
+  is truthy, and `.low_bands.length` on an array once took the web's Log screen down behind an
+  error boundary.
+- **`mobile/src/hooks/use-coach-line.ts`** (new): the two-stage draw, ONCE. SQL first, the
+  Edge Function's sentence second, `speaks` gating both. The web wrote this ordering twice and
+  says in its own comments that it should not have.
+
+**`sealed` is new state on the live store, and it is not bookkeeping.** `finishWorkout` flips
+`status` to `finished` on its first line so the summary paints instantly, then drains the
+queue, then writes `ended_at`. `session_debrief()` joins only workouts that HAVE an `ended_at`,
+so a debrief fetched when the summary appears reads a workout that does not exist yet, answers
+`found: false`, and nothing ever re-asks. The seal is its own fact rather than inferred from
+`status` or from an empty queue: an empty queue means the sets landed and says nothing about
+the row that owns them. It is set only when the update returns no error.
+
+**What was verified, and what was not.** The composition is tested (71 assertions). `tsc`,
+`eslint`, `bundle:ios`, 1,247 web tests and 16 mobile tests are green. The card was rendered on
+a simulator against a fixture block, because **this session had no Supabase credentials**
+(`env | grep -i supabase` is empty) and auth is switched off, so no signed-in session exists
+and `session_brief()` returns nothing to a real run. The Edge Function's phrased upgrade has
+therefore never been observed on native at all — only the skeleton path has.
+
+**A defect found on the way, not yet fixed.** `useHome()` computes `readiness` and returns it;
+grep says nothing reads it. The board computes its own from hardcoded nulls. The three check-in
+chips are therefore decorative: they write a row and change no behaviour anywhere. Item 1 of
+Next action.
 
 #### Waiting on Ameen
 

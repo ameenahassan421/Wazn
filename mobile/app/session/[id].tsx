@@ -339,6 +339,8 @@ export default function LiveWorkout() {
         volumeKg={view.banked}
         targetKg={live.targetKg}
         unit={unit}
+        workoutId={live.workoutId}
+        sealed={live.sealed}
         rows={live.board.flatMap((exercise) =>
           exercise.sets
             .filter((row) => row.done)

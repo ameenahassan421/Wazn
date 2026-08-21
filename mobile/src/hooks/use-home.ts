@@ -8,6 +8,7 @@ import {
   type Readiness,
 } from '@wazn/domain'
 
+import { useCoachLine } from '@/hooks/use-coach-line'
 import { supabase, supabaseConfigError } from '@/services/supabase'
 
 /**
@@ -34,17 +35,32 @@ import { supabase, supabaseConfigError } from '@/services/supabase'
  * shows up only as changed behaviour, which on this screen means the plan's set
  * counts and, once a session starts, the ghosts.
  *
- * The web gates that on Coach volume (`usesGhostIntelligence`). Native has no
- * volume preference to read yet, and the default is `full`, so an ungated
- * computation is the same answer for every account that has not changed a
- * setting this app does not expose. When the preference lands, gate it here.
+ * **And nothing reads it yet, which is a defect and not a design.** The
+ * preference this paragraph used to say was missing landed on 2026-08-21
+ * (`use-coach.tsx`), but `readiness` is still returned by this hook and
+ * consumed by no screen, and the board seeds its ghosts from
+ * `computeReadiness({ checkIn: null, daysRested: null })` — a hardcoded
+ * Normal. So the three chips on Home write a row and change nothing anywhere.
+ * Tracked as the next fix; see WAZN_PLAN.md §7.0.
  *
- * ── WHAT IS NOT WIRED, AND WHY IT RETURNS NULL RATHER THAN A PLACEHOLDER ────
+ * ── THE BRIEF IS THE COACH'S OWN, AND IT IS NOT FETCHED HERE ────────────────
+ * `useCoachLine` owns it: `session_brief()` first, the Edge Function's
+ * sentence second, silence when Coach volume is not Full. It is a separate
+ * read on a separate cadence, so it lives in a separate hook and is merely
+ * handed back through this one — the screen asks `useHome()` for everything
+ * on it and should not have to know which query answered.
+ *
+ * The comment that used to sit here said the brief "needs the coach Edge
+ * Function". It did not. It needed the skeleton, which shipped on the web in
+ * B1 and could not cross into `@wazn/domain` because it lived in a file that
+ * imports the browser Supabase client. Splitting `coach-lines.ts` out of
+ * `coach.ts` on 2026-08-21 is the whole of what was missing.
+ *
+ * ── WHAT IS STILL NOT WIRED, AND WHY IT IS NULL RATHER THAN A PLACEHOLDER ───
  * `rank` and the duel need migration 0029 (the rank ladder and duel tables),
- * which is written but NOT applied — this build session has no Supabase
- * credentials. `brief` needs the coach Edge Function. Both return null, and
- * the screen renders nothing in their place. A fabricated rank on a screen
- * whose whole job is to be trusted with numbers is worse than an absence.
+ * which is written but NOT applied. It returns null and the screen renders
+ * nothing in its place. A fabricated rank on a screen whose whole job is to be
+ * trusted with numbers is worse than an absence.
  */
 
 /** `YYYY-MM-DD` for the LOCAL day. `toISOString()` here would be UTC, and a
@@ -112,13 +128,19 @@ type Fetched = {
   routineName: string
   /** Whole days since the last finished session. Null on day one. */
   daysRested: number | null
-  brief: { line: string; chip: string } | null
   rank: { name: string; pct: number; detail: string } | null
   stats: { streak: string; thisWeek: string; sessions: string }
   plan: { name: string; sets: number }[]
 }
 
 export type HomeData = Fetched & {
+  /**
+   * The coach's sentence, or null when there is nothing true to say and when
+   * the dial is not on Full. No chip: the prototype's coach card is a kicker
+   * and one sentence, and the figure a chip would carry ("beat 4,320 kg") is
+   * already the third line of the Up next card directly beneath it.
+   */
+  brief: { line: string } | null
   checkIn: CheckIn | null
   /** Computed, never displayed as a gauge. Drives behaviour, not copy. */
   readiness: Readiness
@@ -131,7 +153,6 @@ const DAY_ONE: Fetched = {
   target: null,
   routineName: '',
   daysRested: null,
-  brief: null,
   rank: null,
   stats: { streak: '—', thisWeek: '—', sessions: '—' },
   plan: [],
@@ -155,6 +176,9 @@ export function useHome(): HomeData {
    * authored, and losing it to a race would be the app arguing with them.
    */
   const [checkIn, setCheckInState] = useState<CheckIn | null>(null)
+
+  /** Silent unless Coach volume is Full; see `use-coach-line.ts`. */
+  const briefLine = useCoachLine({ surface: 'briefing' })
 
   useEffect(() => {
     if (supabaseConfigError !== null) return
@@ -244,6 +268,7 @@ export function useHome(): HomeData {
 
   return {
     ...data,
+    brief: briefLine === null ? null : { line: briefLine },
     checkIn,
     readiness: computeReadiness({ checkIn, daysRested: data.daysRested }),
     setCheckIn: (state) => {

@@ -46,6 +46,8 @@ const EXEMPT = {
     'Client construction plus describeError. Constructing it is what every other test mocks away; describeError is exercised through the modules that call it.',
   'ai.ts':
     'Thin functions.invoke wrappers with no branching beyond error passthrough. The contract they wrap is asserted in the Edge Function tests and the eval harness.',
+  'coach.ts':
+    'Reads only since the 2026-08-21 split: four supabase.rpc/functions.invoke wrappers and a fire-and-forget insert, with no branching beyond returning null on failure. Everything it used to compose is in coach-lines.ts, which is tested.',
   'auth-alias.ts':
     'Thin functions.invoke wrapper. The logic it fronts is server-side in supabase/functions/auth-alias, where identical-response behaviour is the thing worth testing.',
   'use-auth.ts':

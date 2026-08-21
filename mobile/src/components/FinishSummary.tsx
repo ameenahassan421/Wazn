@@ -7,6 +7,7 @@ import { Btn } from '@/components/ui/Btn'
 import { Plate } from '@/components/ui/Plate'
 import { Card } from '@/components/ui/Surface'
 import { Txt, Kick } from '@/design/Txt'
+import { useCoachLine } from '@/hooks/use-coach-line'
 import { useLocale } from '@/hooks/use-locale'
 
 /**
@@ -20,7 +21,13 @@ import { useLocale } from '@/hooks/use-locale'
  *   "New PR"        needs this session's best set compared against every
  *                   previous one. `exercise_bests` and migration 0009's record
  *                   trigger do that server-side; native reads neither.
- *   the debrief     a coach sentence. `ghost-reason` is not wired here.
+ *
+ * **The debrief was the third, and it is here now.** `session_debrief()` is
+ * the same RLS-scoped RPC the web reads, and `debriefSkeleton` the same
+ * composer — both crossed into `@wazn/domain` on 2026-08-21. It says one thing
+ * about the session's anchor lift and it is deliberately silent about volume,
+ * sets and duration, which are on this screen already, in larger type, three
+ * centimetres above it. Repeating them is the coach proving it can read.
  *
  * The ember card is kept and given the claim that IS provable: this session's
  * working volume against the last session's, which the live store already
@@ -62,6 +69,8 @@ export function FinishSummary({
   targetKg,
   rows,
   unit,
+  workoutId,
+  sealed,
   onDone,
 }: {
   elapsed: string
@@ -70,10 +79,25 @@ export function FinishSummary({
   targetKg: number | null
   rows: FinishRow[]
   unit: Unit
+  /** Null before the workout row exists — an offline session still queuing. */
+  workoutId: string | null
+  /** `ended_at` has landed. Until it has, `session_debrief()` cannot see this
+   *  workout at all; see `live-workout.ts`. */
+  sealed: boolean
   onDone: () => void
 }) {
   const insets = useSafeAreaInsets()
   const { t, locale } = useLocale()
+
+  /**
+   * Asked for only once the row is sealed, and null the whole time it is not.
+   * There is no spinner and no "generating…" — the card is simply absent until
+   * there is a true sentence for it, which on a first-ever session and on a
+   * phone with no signal is the whole time.
+   */
+  const debrief = useCoachLine(
+    workoutId !== null && sealed ? { surface: 'debrief', workoutId } : null,
+  )
 
   const shownVolume = Math.round(toDisplayWeight(volumeKg, unit))
   const beat = targetKg !== null && targetKg > 0 && volumeKg > targetKg
@@ -137,6 +161,23 @@ export function FinishSummary({
               </Txt>
             </View>
           </View>
+        )}
+
+        {/* ── The debrief ──────────────────────────────────────────────────
+            Under the ember card and above the receipt: it comments on the
+            session, so it follows the claim and precedes the evidence. Plain
+            white, no accent. The ember card is this screen's one hero and a
+            second coloured surface would split it. */}
+        {debrief !== null && (
+          <Card style={{ paddingVertical: 16, paddingHorizontal: 18 }}>
+            <View style={{ flexDirection: 'row', gap: 12, alignItems: 'flex-start' }}>
+              <Plate size={30} variant="hub" color={palette.ink} />
+              <View style={{ flex: 1 }}>
+                <Kick style={{ marginBottom: 5 }}>{t('coach.kicker')}</Kick>
+                <Txt step="body">{debrief}</Txt>
+              </View>
+            </View>
+          </Card>
         )}
 
         {rows.length > 0 && (

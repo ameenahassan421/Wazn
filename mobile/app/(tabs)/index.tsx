@@ -111,8 +111,12 @@ export default function LogHome() {
       <View style={{ gap: 12 }}>
         {/* ── The coach ────────────────────────────────────────────────────
             The hub plate at 30, and the sentence beside it. Renders only when
-            there IS a sentence: `brief` needs the coach Edge Function, and an
-            empty coach card is a promise the screen cannot keep. */}
+            there IS a sentence, and an empty coach card is a promise the
+            screen cannot keep — so `useCoachLine` returns null in all three
+            cases that matter: nothing true to say, the dial off Full, and the
+            model dark. Never a placeholder, never a spinner. The line it does
+            return is drawn from SQL and upgraded in place if a phrased one
+            arrives; the card never re-lays-out around a loading state. */}
         {home.brief !== null && (
           <Card style={{ paddingVertical: 16, paddingHorizontal: 18 }}>
             <View style={{ flexDirection: 'row', gap: 12, alignItems: 'flex-start' }}>
