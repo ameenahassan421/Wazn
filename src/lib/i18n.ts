@@ -32,6 +32,7 @@ export const messages: Record<Locale, Record<string, string>> = {
     // Tab navigation, left to right
     'nav.log': 'Log',
     'nav.plan': 'Plan',
+    'nav.train': 'Train',
     'rest.alarm.title': 'Rest is up',
     'rest.alarm.body': '{n}s done. Next set.',
     'rest.alarm.body.plain': 'Next set.',
@@ -665,6 +666,8 @@ export const messages: Record<Locale, Record<string, string>> = {
     'body.site.hips': 'Hips',
     'settings.coach': 'Coach',
     'settings.more': 'More',
+    'settings.prefs': 'Preferences',
+    'settings.units.note': 'Display only. Every weight is stored in kilograms.',
     'settings.coach.volume': 'Coach volume',
     'settings.coach.volume.full': 'Full',
     'settings.coach.volume.quiet': 'Quiet',
@@ -1109,6 +1112,7 @@ export const messages: Record<Locale, Record<string, string>> = {
     // Tab navigation
     'nav.log': 'التمارين',
     'nav.plan': 'الخطة',
+    'nav.train': 'التمرين',
     'rest.alarm.title': 'انتهت الراحة',
     'rest.alarm.body': 'مرّت {n} ثانية. المجموعة التالية.',
     'rest.alarm.body.plain': 'المجموعة التالية.',
@@ -1682,6 +1686,8 @@ export const messages: Record<Locale, Record<string, string>> = {
     'body.site.hips': 'الورك',
     'settings.coach': 'المدرب',
     'settings.more': 'المزيد',
+    'settings.prefs': 'التفضيلات',
+    'settings.units.note': 'للعرض فقط. كل وزن مخزّن بالكيلوغرام.',
     'settings.coach.volume': 'مستوى المدرب',
     'settings.coach.volume.full': 'كامل',
     'settings.coach.volume.quiet': 'هادئ',

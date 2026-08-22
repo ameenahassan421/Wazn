@@ -1275,6 +1275,40 @@ may kill the session. Steps 1 to 3 are DONE. Read this one, not the third.)**
 #115 the coach-cache diagnosis, #116 three tabs plus the History circle.
 Working tree clean, everything pushed, 1275 tests green.
 
+#### Train, and two more strings that were typed rather than looked up (2026-08-21)
+
+The first tab is `nav.train` on native now. **Native only:** `nav.log` still
+drives the dying PWA's `TabBar.tsx`, and `scripts/perf.mjs` CLICKS the string
+'Log' to walk that app, so renaming both would mean editing a perf harness for a
+surface retired at the end of 4A.
+
+Settings also had `PREFERENCES` as a literal and the units note in hardcoded
+English, both visible between two translated headings with the app in Arabic.
+Same class as the notification copy the peer audit found: strings typed instead
+of looked up. Found by switching the app to Arabic on a simulator, which is now
+worth doing on every screen at least once.
+
+#### A capability audit found the readiness wedge is partly unwired (2026-08-21)
+
+**Not fixed, recorded.** A peer session's eval named "training that adapts to
+recovery" as differentiator #1, citing `readiness.ts` collapsing check-in, sleep
+debt, HRV and days-rested into `setsToTrim` and `loadFactor`. Three greps
+against main:
+
+- `setsToTrim` / `loadFactor` in native source: **zero** (tests only).
+- `sleepMinutes` / `hrv` supplied anywhere in either app: **zero**.
+- `computeReadiness` in native: one call, `live-workout.ts:374`.
+
+What ships is real but narrower: a three-way subjective chip plus days-rested,
+feeding `verdictFor` on the board. The four-input model is the module's
+SIGNATURE, not the app's behaviour. Two other portable modules have no native
+consumer at all: `tell-coach` and `supersets`.
+
+**And there is no way to add an exercise.** 135 in the catalogue, **0
+user-created**, no native create path, while `exercises.owner_id` exists — the
+model is there and the surface is not. A lifter whose movement is not in those
+135 cannot log it, which is a core-loop floor rather than a breadth gap.
+
 #### 0030 is WRITTEN and PROVEN LOCALLY, and NOT APPLIED (2026-08-21)
 
 Ameen approved applying it. The auto-mode classifier blocked `apply_migration`
