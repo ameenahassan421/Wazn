@@ -342,12 +342,34 @@ npm run bundle:android
   cd ios && LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8 pod install
   ```
 
-  **`expo prebuild` does NOT run `pod install`**, so the workspace is absent
-  until you do, and `xcodebuild` fails on a missing `Wazn.xcworkspace` in a way
-  that reads like a project problem. And `pod install` without the locale dies
-  with `Unicode Normalization not appropriate for ASCII-8BIT` from deep inside
-  Ruby, which reads like a CocoaPods bug and is a shell encoding. Both cost a
-  detour on 2026-08-20.
+  **The locale is the whole story, and the first half of this note was wrong.**
+  It said `expo prebuild` does NOT run `pod install`. On 2026-08-21 it did —
+  and died with `Unicode Normalization not appropriate for ASCII-8BIT` from
+  deep inside Ruby, which reads like a CocoaPods bug and is a shell encoding.
+  So the failure is not "the workspace is absent because nothing installed
+  Pods", it is "the install ran and crashed on the encoding", which looks
+  completely different in the output and lands you in the same place: no
+  `Wazn.xcworkspace`, and an `xcodebuild` failure that reads like a project
+  problem.
+
+  Set the locale for anything that can reach CocoaPods, not just for the
+  `pod install` you type yourself. **`npx expo run:ios` shells out to
+  `pod install` too**, in its own environment, so it fails the same way even
+  when `mobile/ios/Pods` is already installed.
+
+  **And `expo run:ios --device <udid>` does not mean "that simulator".** Given
+  a simulator UDID it routed to the physical-device path and stopped on
+  `No code signing certificates are available to use`, which is a confusing
+  error for a machine with no device attached. Passing the device NAME did the
+  same. What works is going straight to the tool underneath:
+
+  ```bash
+  LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8 xcodebuild \
+    -workspace ios/Wazn.xcworkspace -scheme Wazn -configuration Debug \
+    -destination 'platform=iOS Simulator,id=<udid>' \
+    -derivedDataPath ios/build build
+  xcrun simctl install <udid> ios/build/Build/Products/Debug-iphonesimulator/Wazn.app
+  ```
 
 - **`api.expo.dev` and `reactnative.directory` are 403 from this org's egress
   proxy**, so `npx expo install` cannot resolve versions and EAS cannot run from

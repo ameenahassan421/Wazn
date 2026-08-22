@@ -1275,6 +1275,29 @@ may kill the session. Steps 1 to 3 are DONE. Read this one, not the third.)**
 #115 the coach-cache diagnosis, #116 three tabs plus the History circle.
 Working tree clean, everything pushed, 1275 tests green.
 
+#### The rest timer reaches a pocket (2026-08-21)
+
+**Step 2's last item, and the plan's own "capability that justifies stage 4A".**
+`expo-notifications` at the pinned `~57.0.11`, one service that WATCHES the
+store's `restEndsAt` from the root layout. It called the three writers directly
+at first and CI killed it in 52 seconds: `live-workout.ts` is headless-tested
+state, and importing a native service put `react-native`'s Flow syntax into a
+node test run. `bundle:ios` could never have caught that, because it bundles for
+a phone where the import is correct. Permission is
+asked on the FIRST REST rather than at launch; a refusal degrades to the silent
+countdown that already worked, and nothing on the logging path can be blocked by
+it.
+
+Two bugs, both found by running it. The first rest would have fired late by
+however long the iOS permission sheet stayed open, because the interval was
+computed before that await — fixed by asking first and using a DATE trigger,
+since `restEndsAt` is already an instant. And a reload orphaned the pending
+alarm id, which in production is a force-quit leaving an un-cancellable alarm —
+fixed by cancelling all rather than tracking an id this app never needs.
+
+**Verified on the simulator:** banked a working set, backgrounded the app, and
+the banner arrived reading "Rest is up — 120s done. Next set."
+
 **Steps 1 to 3 of the order below are complete.** The next thing to build is
 **step 4: S0 of the social plan — the solo Week Board and the reasoned invite**
 (`docs/FRIENDS_PLAN.md` Part 6). Then step 5, `LAUNCH.md` and invites.
@@ -1297,10 +1320,12 @@ these; they are decided-pending, not undiscovered.**
    change to the LOGGING PATH — plan it, do not bolt it on.
 4. **The poisoned 95-rep row** is still in production (unchanged from the third
    update): fix in Hevy, or approve `reps = null`.
-5. **Disk space.** The background rest timer needs `expo-notifications`, which
-   needs prebuild + Pods + Xcode: roughly 5-6 GB. The machine was at 2.5 GB and
-   FALLING on 2026-08-21. `mobile/ios` does not exist; CLAUDE.md has the two
-   commands and the locale gotcha for rebuilding it.
+5. ~~**Disk space.**~~ **RESOLVED 2026-08-21.** Ameen freed 11 GB (Claude
+   Desktop's `vm_bundles`) and parked the Tahoe update, taking the machine from
+   2.5 GB to 20 GB. **The background rest timer is BUILT and verified** — see
+   below. `mobile/ios` exists again, and CLAUDE.md's build notes were corrected:
+   `expo prebuild` DOES run `pod install`, and `expo run:ios --device <udid>`
+   misroutes a simulator UDID to the physical-device path.
 
 **Also parked, asked for by Ameen:** video form analysis (Stage 8; DECISIONS.md
 has the reasoning and the cheaper first step).

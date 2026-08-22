@@ -120,6 +120,20 @@ const config: ExpoConfig = {
     /** Mandatory in the iOS build the moment Google sign-in exists there —
      *  App Store rule, and one of the four ways in that CLAUDE.md fixes. */
     'expo-apple-authentication',
+    /** The rest alarm — `services/rest-alarm.ts` is the only caller.
+     *
+     *  Registered as a plugin rather than left to autolinking for ONE reason:
+     *  Android's small notification icon must be a monochrome silhouette or
+     *  the system renders a filled white blob. `android-icon-monochrome.png`
+     *  already is one, so it is reused rather than a seventh asset drawn.
+     *
+     *  No `color` key, deliberately. It would put an ember hex in this file,
+     *  and this file's own comment above explains what a colour literal here
+     *  costs: `check_tokens.ts` asserts PAPER by name and would not see it, so
+     *  it would be a third copy of the palette with nothing checking it. The
+     *  tint defaults to the system accent, which is worth more than an
+     *  unguarded literal. */
+    ['expo-notifications', { icon: './assets/images/android-icon-monochrome.png' }],
     [
       'expo-splash-screen',
       {

@@ -8876,3 +8876,75 @@ inflate `sessions_this_week` to 7. There is a coherent claim underneath all
 three symptoms — **an empty workout is not a session and the app counts it as
 one** — but the fix spans `weekly_review()` and `session_brief()`, which is a
 migration, which is Ameen's call under §2.6.
+
+## 2026-08-21 — The rest timer reaches a pocket, and two bugs the simulator found
+
+**Who asked:** `WAZN_PLAN.md` §7.0's step 2 — "the background rest timer" — and
+the plan's own description of it as the capability that justifies stage 4A.
+
+**What was already true and what was missing.** The countdown already survived
+backgrounding, because `restEndsAt` is a wall-clock instant rather than a
+duration. What it could not do was TELL you. A lifter who pockets their phone
+between sets got nothing at zero, which is the one moment the app exists to
+mark.
+
+**The shape, after CI rejected the first one.** `expo-notifications` at the
+SDK-pinned `~57.0.11`, one service (`mobile/src/services/rest-alarm.ts`), and
+it **watches** the store rather than being called by it.
+
+The first version put a `syncRestAlarm` call beside each of the three writes to
+`restEndsAt` — banking a set, `endRest`, `adjustRest`. The `mobile` CI job
+failed it in 52 seconds: `live-workout.ts` is state, vitest tests it headlessly,
+and importing a service that reaches `react-native` and `expo-notifications`
+dragged `react-native/index.js` and its Flow syntax into a node test run. **The
+local wall missed it because the mobile wall I was running was typecheck, lint
+and `bundle:ios` — and `bundle:ios` bundles for a phone, where those imports are
+exactly right.** `npx vitest run` in `mobile/` is part of that job and was not
+part of my habit.
+
+Inverting it is what the architecture already wanted. `watchRest` subscribes to
+the store from the root layout; the store stays portable and headless; and a
+fourth writer of `restEndsAt` cannot forget to sync, because a subscriber cannot
+be forgotten by code that does not know it exists. It is armed at the root
+rather than on the rest canvas, because backing out to Home mid-rest is a thing
+lifters do and the alarm still has to fire.
+
+Permission is asked **on the first rest**, not at launch. iOS gives an app one
+prompt, and spending it before a lifter has logged anything spends it on
+somebody who does not yet know what the app does. A refusal costs only this
+feature: everything is wrapped so a denial degrades to the silent countdown
+that already worked, and nothing on the logging path can be blocked or thrown
+by a notification framework having a bad day.
+
+**Two bugs, both found by running it rather than reading it.**
+
+1. **The first rest would have fired late by however long the permission sheet
+   was open.** The interval was computed from `endsAt` BEFORE awaiting
+   `ensurePermission()`, and on the first rest that await shows the iOS sheet.
+   On the simulator the sheet sat about forty seconds, which would have put a
+   two-minute alarm at 2:40. Every later rest was correct, so this only ever
+   hurt the first one — which is the only one a new user judges the feature by.
+   Fixed by asking permission first and switching to a **DATE trigger**:
+   `restEndsAt` IS an instant, and turning an instant into a duration is a lossy
+   conversion that is only correct if nothing happens in between.
+
+2. **A reload orphaned the pending alarm.** The scheduled id lived in a
+   module-level `let`, and a Fast Refresh reset it to null while iOS still held
+   the notification. A JS reload in development is an app RESTART in
+   production, and scheduled notifications deliberately survive restarts — so a
+   lifter who force-quit mid-rest, reopened, and skipped the rest would still be
+   buzzed for a rest they had ended. Fixed with
+   `cancelAllScheduledNotificationsAsync`: this app has exactly one alarm at a
+   time, so "cancel everything" and "cancel the rest alarm" are the same
+   statement, and the one that cannot lose track of its own state is better.
+
+**No `color` key on the plugin, deliberately.** It would put an ember hex in
+`app.config.ts`, where `check_tokens.ts` asserts `PAPER` by name and would not
+see it — a third copy of the palette with nothing checking it, which is the
+exact failure that file's own comment documents. The icon reuses
+`android-icon-monochrome.png`, which is already the monochrome silhouette
+Android requires, rather than a seventh asset being drawn.
+
+**Verified on a device, not by a green wall.** Banked a working set, backgrounded
+the app, and the banner arrived: "Rest is up — 120s done. Next set." A warm-up
+correctly starts no alarm, because it starts no rest.
