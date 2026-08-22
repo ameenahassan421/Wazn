@@ -1589,6 +1589,50 @@ user-created**, no native create path, while `exercises.owner_id` exists — the
 model is there and the surface is not. A lifter whose movement is not in those
 135 cannot log it, which is a core-loop floor rather than a breadth gap.
 
+#### The coach's sentences now survive a model outage (2026-08-22)
+
+Three findings, one fix, and the middle finding is the one worth keeping.
+
+**1. The model is rate-limited, not dead.** `coach_notes` holds a successful
+generation at 17:43 UTC on `nvidia/nemotron-3-super-120b-a12b:free`, and three
+Regenerate presses in the two hours after it produced ZERO new rows. It worked,
+then stopped. `openrouter.ts:11` already names this failure mode: "Free tiers
+are rate-limited, not unreliable."
+
+**2. The paid fallback is unreachable by the user, by construction.** The server
+tries free with a 45s abort, then paid (`COACH_MODEL ?? moonshotai/kimi-k2.5`)
+with another 45s: a worst case of 90 seconds. The client's deadline is 45. So
+whenever the free attempt times out, the client has ALWAYS given up before the
+paid attempt can answer, even if the paid attempt would answer in five seconds.
+Nothing landed in the cache either, so the paid attempt is also failing, which
+points at the OpenRouter account rather than at this code. **Ameen's to check:
+whether `OPENROUTER_API_KEY` has paid credit.**
+
+**3. A failed refresh destroyed the review it failed to replace.** The Edge
+Function's own comment has promised the opposite since the review contract
+shipped: "a second failure is a failed generation, said plainly, and the client
+keeps whatever it had". It did not. The server rethrew, the client checked
+`phase` before `review`, and a failed Regenerate swapped a readable review for
+"The review took too long."
+
+Both halves are fixed and they had to land together with the version bump:
+
+- **Server**: the catch block serves `serveCached(true, ...)` when a cached row
+  exists, rethrowing only when there is nothing to fall back to. A first-ever
+  generation that fails still has to say so, or "no review" would be
+  indistinguishable from an account with nothing to review.
+- **Client**: `WeekReview` renders the review plus a one-line note and a Try
+  again, instead of an error card, whenever it still holds one.
+- **`PROMPT_VERSION` bumped `coach-review@1` to `@2`**, which is what finally
+  invalidates the pre-0030 prose. Safe ONLY because of the two above: a bump
+  forces a miss, a miss forces a model call, and before this a failed call
+  replaced the stale review with nothing.
+
+Verified on a simulator against the real account, with the server change NOT yet
+deployed, which is exactly the case the client half must cover: Regenerate, wait
+past 45s, and the review stays on screen with "Showing your last review. A new
+one could not be written." under it and the figures below intact.
+
 #### 0033: the orphan is gone (2026-08-22)
 
 `public.workout_sets_pr_flags_trigger()` dropped, without `cascade`, after 0032

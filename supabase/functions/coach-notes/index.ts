@@ -57,8 +57,25 @@ import {
  * makes every cached row from the old shape a miss, so the first Coach open
  * after this deploys regenerates into the new contract instead of rendering
  * last week's list forever.
+ *
+ * ── @1 to @2, 2026-08-22 ────────────────────────────────────────────────────
+ * Migration 0030 changed what `weekly_review()` RETURNS: a workout with no
+ * sets stopped counting as a session, and `weeks_trained_of_8` stopped being
+ * able to exceed 8. The cache key includes this constant precisely so that a
+ * change of that kind can invalidate every stored review, and 0030 did not
+ * turn it. The result was a Progress screen showing the figure "8 sessions
+ * this week" directly above a cached sentence reading "You completed 10
+ * sessions ... trained in 9 of the last 8 weeks".
+ *
+ * **A bump is only safe because of the fallback added in the same commit.**
+ * On its own it forces a miss, a miss forces a model call, and a model call
+ * that fails used to rethrow: a bump alone would have replaced a stale but
+ * readable review with a permanent error card. Serving the cached review on
+ * generation failure is what makes an invalidation survive a model outage,
+ * and the two must stay together. Do not bump this again without checking
+ * that the catch block below still falls back.
  */
-const PROMPT_VERSION = 'coach-review@1'
+const PROMPT_VERSION = 'coach-review@2'
 
 const SYSTEM = `You write the weekly training review for a strength-training app called Wazn.
 
@@ -199,7 +216,22 @@ Deno.serve(async (request) => {
       !Array.isArray(cachedPayload) &&
       typeof cachedPayload === 'object'
 
-    const serveCached = (stale: boolean, regeneratesLeft: number) =>
+    /*
+     * `refreshFailed` is a SEPARATE flag from `stale`, and conflating them was
+     * a real defect caught in review.
+     *
+     * `stale` has one meaning already and two call sites reading it: the
+     * cached review is from an older CONTRACT, which `CoachScreen.tsx` renders
+     * as the suffix " · in the previous format". Reusing it to mean
+     * "generation failed, here is the last one" would print that sentence to
+     * every web user during a model outage, when the format is fine and the
+     * model is not.
+     */
+    const serveCached = (
+      stale: boolean,
+      regeneratesLeft: number,
+      refreshFailed = false,
+    ) =>
       json({
         review: cachedIsReview ? (cachedPayload as WeeklyReview) : null,
         insights: cachedIsReview ? null : (cachedPayload ?? []),
@@ -210,6 +242,7 @@ Deno.serve(async (request) => {
         // left this week" is a real state, and it renders as a note rather
         // than as an error. See the quota branch below.
         stale,
+        refreshFailed,
         regeneratesLeft,
       })
 
@@ -412,6 +445,51 @@ Deno.serve(async (request) => {
         tokensIn: lastCall?.tokensIn,
         tokensOut: lastCall?.tokensOut,
       })
+
+      /*
+       * A failed generation serves the LAST review, not an error.
+       *
+       * The comment thirty lines up already promised this: "a second failure
+       * is a failed generation, said plainly, and the client keeps whatever it
+       * had". It did not, because this rethrew and the client has no payload
+       * to keep on a cold launch. Observed on 2026-08-22: three Regenerate
+       * presses over two hours produced zero new `coach_notes` rows, and the
+       * screen went from a stale-but-readable review to "The review took too
+       * long."
+       *
+       * `stale: true` is the flag the client renders as a note rather than as
+       * an error, and it is the same call the missing-schema branch above
+       * already makes. The figures on that screen come from `weekly_review()`
+       * and are unaffected either way; this is only about the sentences.
+       *
+       * Rethrow only when there is nothing to fall back TO. A first-ever
+       * generation that fails is a real error and has to say so, because
+       * silently answering "no review" would be indistinguishable from an
+       * account with nothing to review yet.
+       */
+      if (cached) {
+        console.warn('generation failed, serving the cached review', {
+          promptVersion: PROMPT_VERSION,
+          code: error instanceof HttpError ? error.code : 'unknown',
+        })
+        /*
+         * `stale: false`, `refreshFailed: true`. The served review is OLD, but
+         * it is not from an older contract, which is the only thing `stale`
+         * has ever meant here.
+         *
+         * The quota read is wrapped: it is a network call inside a catch, and
+         * letting it throw would replace a handled generation failure with an
+         * unhandled 500, turning a graceful fallback into the loudest possible
+         * failure at exactly the wrong moment.
+         */
+        let left = 0
+        try {
+          left = await quotaRemaining(caller, 'coach_notes')
+        } catch {
+          // The review matters; the number beside it does not.
+        }
+        return serveCached(false, left, true)
+      }
       throw error
     }
 

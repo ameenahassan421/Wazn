@@ -136,6 +136,33 @@ export function WeekReview() {
   const recommendation = review?.sections?.recommendation ?? null
 
   /*
+   * A refresh that failed while we still hold a review is NOT an error state.
+   *
+   * The Edge Function's own comment has promised this since the review
+   * contract shipped: "a second failure is a failed generation, said plainly,
+   * and the client keeps whatever it had". It did not keep it. `phase` was
+   * checked before `review`, so a failed Regenerate replaced a perfectly
+   * readable review with "The review took too long", and the lifter lost the
+   * thing they were reading in exchange for news about a thing they did not
+   * ask about.
+   *
+   * Observed 2026-08-22 on a simulator against the real account, and it is not
+   * hypothetical: three Regenerate presses over two hours produced zero new
+   * `coach_notes` rows, so this is the state a real outage actually puts the
+   * screen in.
+   *
+   * `refreshFailed` is the server saying the same thing from its side: it
+   * served the cached review because generation failed. Either way the review
+   * renders and the failure is a note under it.
+   *
+   * NOT `stale`, which means the cached row is from an older CONTRACT and is
+   * rendered elsewhere as " · in the previous format". During a model outage
+   * the format is fine and the model is not.
+   */
+  const showingOld =
+    (req.phase === 'failed' && review !== null) || notes?.refreshFailed === true
+
+  /*
    * Silenced, and it SAYS so, in one muted line.
    *
    * This returned null, on the reasoning that there is a whole screen
@@ -174,7 +201,10 @@ export function WeekReview() {
             {t('coach.loading.body')}
           </Txt>
         </Card>
-      ) : req.phase === 'failed' ? (
+      ) : req.phase === 'failed' && review === null ? (
+        /* Only when there is nothing to fall back TO. A first-ever generation
+           that fails has to say so: silently rendering "no review" would be
+           indistinguishable from an account with nothing to review yet. */
         <Card style={{ gap: 12 }}>
           <Txt step="body">{req.message ?? t('coach.notes.unavailable')}</Txt>
           <Btn
@@ -231,6 +261,24 @@ export function WeekReview() {
                   below, and it renders only when the function sent one. */}
               {recommendation.chip !== undefined && <Chip>{recommendation.chip}</Chip>}
             </>
+          )}
+
+          {/* The failure, demoted to a footnote under the thing it failed to
+              replace. `caption`, not `body`, and no card of its own: the news
+              is that the sentences above are older than the figures below,
+              which is worth one line and not a takeover. */}
+          {showingOld && (
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+              <Txt step="caption" ink="muted" style={{ flex: 1 }}>
+                {t('coach.refresh_failed')}
+              </Txt>
+              <Btn
+                kind="line"
+                small
+                label={t('coach.retry')}
+                onPress={() => dispatch({ type: 'retry' })}
+              />
+            </View>
           )}
         </Card>
       )}
