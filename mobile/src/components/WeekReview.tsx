@@ -151,12 +151,16 @@ export function WeekReview() {
    * `coach_notes` rows, so this is the state a real outage actually puts the
    * screen in.
    *
-   * `stale` is the server saying the same thing from its side: it served the
-   * cached review because generation failed. Either way the review renders and
-   * the failure is a note under it.
+   * `refreshFailed` is the server saying the same thing from its side: it
+   * served the cached review because generation failed. Either way the review
+   * renders and the failure is a note under it.
+   *
+   * NOT `stale`, which means the cached row is from an older CONTRACT and is
+   * rendered elsewhere as " · in the previous format". During a model outage
+   * the format is fine and the model is not.
    */
-  const refreshFailed = req.phase === 'failed' && review !== null
-  const showingOld = refreshFailed || notes?.stale === true
+  const showingOld =
+    (req.phase === 'failed' && review !== null) || notes?.refreshFailed === true
 
   /*
    * Silenced, and it SAYS so, in one muted line.

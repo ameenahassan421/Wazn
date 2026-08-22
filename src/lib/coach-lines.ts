@@ -233,6 +233,14 @@ export interface CoachNotes {
   cached: boolean
   /** The cached answer is from an older contract and quota said no. */
   stale?: boolean
+  /**
+   * Generation failed and the LAST review was served instead.
+   *
+   * Deliberately not `stale`, which means "older contract" and is rendered as
+   * " · in the previous format". During a model outage the format is fine and
+   * the model is not, so the two need different words.
+   */
+  refreshFailed?: boolean
   degraded?: boolean
   regeneratesLeft?: number
 }

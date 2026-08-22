@@ -216,7 +216,22 @@ Deno.serve(async (request) => {
       !Array.isArray(cachedPayload) &&
       typeof cachedPayload === 'object'
 
-    const serveCached = (stale: boolean, regeneratesLeft: number) =>
+    /*
+     * `refreshFailed` is a SEPARATE flag from `stale`, and conflating them was
+     * a real defect caught in review.
+     *
+     * `stale` has one meaning already and two call sites reading it: the
+     * cached review is from an older CONTRACT, which `CoachScreen.tsx` renders
+     * as the suffix " · in the previous format". Reusing it to mean
+     * "generation failed, here is the last one" would print that sentence to
+     * every web user during a model outage, when the format is fine and the
+     * model is not.
+     */
+    const serveCached = (
+      stale: boolean,
+      regeneratesLeft: number,
+      refreshFailed = false,
+    ) =>
       json({
         review: cachedIsReview ? (cachedPayload as WeeklyReview) : null,
         insights: cachedIsReview ? null : (cachedPayload ?? []),
@@ -227,6 +242,7 @@ Deno.serve(async (request) => {
         // left this week" is a real state, and it renders as a note rather
         // than as an error. See the quota branch below.
         stale,
+        refreshFailed,
         regeneratesLeft,
       })
 
@@ -456,7 +472,23 @@ Deno.serve(async (request) => {
           promptVersion: PROMPT_VERSION,
           code: error instanceof HttpError ? error.code : 'unknown',
         })
-        return serveCached(true, await quotaRemaining(caller, 'coach_notes'))
+        /*
+         * `stale: false`, `refreshFailed: true`. The served review is OLD, but
+         * it is not from an older contract, which is the only thing `stale`
+         * has ever meant here.
+         *
+         * The quota read is wrapped: it is a network call inside a catch, and
+         * letting it throw would replace a handled generation failure with an
+         * unhandled 500, turning a graceful fallback into the loudest possible
+         * failure at exactly the wrong moment.
+         */
+        let left = 0
+        try {
+          left = await quotaRemaining(caller, 'coach_notes')
+        } catch {
+          // The review matters; the number beside it does not.
+        }
+        return serveCached(false, left, true)
       }
       throw error
     }

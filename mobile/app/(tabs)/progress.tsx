@@ -497,10 +497,6 @@ export default function ProgressScreen() {
           <Records entries={records} unit={unit} />
 
           <StrengthList rows={data?.strength ?? []} unit={unit} />
-
-          <Txt step="caption" ink="muted" style={{ marginTop: 4 }}>
-            {t('progress.empty_notice')}
-          </Txt>
         </View>
       )}
     </Screen>
