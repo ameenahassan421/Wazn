@@ -25,12 +25,20 @@ export type TabKey = (typeof TABS)[number]
  * uppercase what they render, so `'Log'` arrives on screen as `LOG` without a
  * second copy of the word living here.
  *
- * `index` is the route directory; `nav.log` is what it is called. That is the
+ * `index` is the route directory; `nav.train` is what it is called. That is the
  * one place the two names differ, and it is why this is a table rather than a
  * template string.
+ *
+ * **`nav.train`, not `nav.log`, and the web app keeps saying Log.**
+ * `FRIENDS_PLAN` Part 3B renames this tab to Train, because "Log" names the
+ * verb the screen performs and "Train" names the thing the lifter came to do.
+ * The rename is native-only on purpose: `nav.log` is still wired to the dying
+ * PWA's `TabBar.tsx`, and `scripts/perf.mjs` CLICKS the string 'Log' to walk
+ * that app. Renaming both would mean editing a perf harness for a surface being
+ * retired at the end of 4A, which is the definition of rented work.
  */
 export const TAB_KEY: Record<TabKey, string> = {
-  index: 'nav.log',
+  index: 'nav.train',
   plan: 'nav.plan',
   progress: 'nav.progress',
 }

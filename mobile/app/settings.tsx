@@ -151,7 +151,12 @@ export default function Settings() {
         <DoorRow label={t('nav.friends')} onPress={() => router.push('/friends')} />
       </Card>
 
-      <Kick style={{ marginBottom: 10 }}>PREFERENCES</Kick>
+      {/* Was the literal 'PREFERENCES', which `Kick` uppercases anyway. Caught
+          on a simulator with the app in Arabic, sitting between المزيد and
+          الوحدات — two translated headings with an English one between them.
+          Same class as the notification copy a peer audit found the same
+          evening: strings that were typed rather than looked up. */}
+      <Kick style={{ marginBottom: 10 }}>{t('settings.prefs')}</Kick>
       <Card bare>
         <View style={{ padding: space.cardPad, gap: 10 }}>
           <Txt step="body">{t('settings.units')}</Txt>
@@ -168,7 +173,7 @@ export default function Settings() {
             ))}
           </ChipRow>
           <Txt step="label" ink="muted">
-            Display only. Every weight is stored in kilograms.
+            {t('settings.units.note')}
           </Txt>
         </View>
         <Rule />
