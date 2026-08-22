@@ -317,7 +317,21 @@ export function useLiveWorkout(): LiveState {
  */
 async function routinePlan(routineId: string): Promise<{
   name: string
-  plan: { exerciseId: string; name: string; sets: number }[]
+  plan: {
+    exerciseId: string
+    name: string
+    sets: number
+    /*
+     * DECLARED, not merely returned. This type omitted `bodyweight` when the
+     * routine path shipped, and the value only reached `seedBoard` because
+     * that function declares the field optional — so the compiler believed
+     * routine plans had no such field while the runtime object carried one.
+     * Nothing would have flagged its removal, and losing it silently
+     * reintroduces the defect fixed one commit earlier: a bodyweight lift
+     * drawing a weight stepper.
+     */
+    bodyweight: boolean
+  }[]
   exerciseIds: string[]
 } | null> {
   const [{ data: routine }, { data: rx }] = await Promise.all([
@@ -383,13 +397,32 @@ async function routinePlan(routineId: string): Promise<{
 /**
  * The lifter's most recent real sets for a given list of lifts.
  *
- * ONE query rather than `previous_session` per exercise: that RPC answers for a
- * single lift, and a six-exercise routine would be six round trips on the tap
- * that opens the board. The rows come back newest-first and the newest WORKOUT
- * per exercise wins, so a lift trained twice in a week seeds from the later
- * session and not from a blend of both.
+ * ── `previous_session` PER LIFT, IN PARALLEL, AND THE HAND-ROLLED VERSION
+ *    WAS WRONG ───────────────────────────────────────────────────────────────
+ * This was one `workout_sets` query with `.order('workout_id').limit(600)`,
+ * grouping in JS to find the newest workout per exercise. Its own comment
+ * claimed the rows "come back newest-first". They do not: `workout_id` is a
+ * v4 UUID, so that ordering is random, and the 600-row cap therefore kept an
+ * ARBITRARY subset. Measured on 2026-08-22, the Push routine's lifts already
+ * had 521 finished historical sets and Pull 475 — about fifteen more Push
+ * sessions from silently dropping the newest Bench Press workout out of the
+ * slice and opening that lift blank despite years of history.
+ *
+ * The fix is not a better `order` clause, it is the function that already
+ * exists. `previous_session(p_exercise_id, p_exclude_workout)` picks the
+ * newest workout containing that lift and returns its sets in set order, in
+ * SQL, with no cap to get wrong. One call per lift, but issued together: a
+ * routine holds a handful of exercises, so this is one wall-clock round trip
+ * rather than the six SEQUENTIAL ones the old comment was arguing against.
+ *
+ * `p_exclude_workout` is the session being started. It has no sets yet so it
+ * cannot win, but passing it is what makes that true by construction rather
+ * than by timing.
  */
-async function previousFor(exerciseIds: string[]): Promise<
+async function previousFor(
+  exerciseIds: string[],
+  excludeWorkoutId: string,
+): Promise<
   {
     exerciseId: string
     setNumber: number
@@ -399,49 +432,36 @@ async function previousFor(exerciseIds: string[]): Promise<
   }[]
 > {
   if (exerciseIds.length === 0) return []
-  const { data } = await supabase
-    .from('workout_sets')
-    .select(
-      'exercise_id, set_number, weight_kg, reps, set_type, workout_id, workouts!inner(started_at, ended_at)',
-    )
-    .in('exercise_id', exerciseIds)
-    .not('workouts.ended_at', 'is', null)
-    .order('workout_id')
-    .limit(600)
+
+  const results = await Promise.all(
+    exerciseIds.map((id) =>
+      supabase.rpc('previous_session', {
+        p_exercise_id: id,
+        p_exclude_workout: excludeWorkoutId,
+      }),
+    ),
+  )
 
   type Row = {
-    exercise_id: string
     set_number: number
     weight_kg: number | null
     reps: number | null
     set_type: string
-    workout_id: string
-    workouts: { started_at: string } | { started_at: string }[]
   }
-  const startedAt = (r: Row): string => {
-    const w = Array.isArray(r.workouts) ? r.workouts[0] : r.workouts
-    return w?.started_at ?? ''
-  }
-
-  // Newest workout per exercise, then that workout's rows only.
-  const newest = new Map<string, { at: string; workoutId: string }>()
-  for (const r of (data ?? []) as Row[]) {
-    const at = startedAt(r)
-    const held = newest.get(r.exercise_id)
-    if (held === undefined || at > held.at) {
-      newest.set(r.exercise_id, { at, workoutId: r.workout_id })
-    }
-  }
-
-  return ((data ?? []) as Row[])
-    .filter((r) => newest.get(r.exercise_id)?.workoutId === r.workout_id)
-    .map((r) => ({
-      exerciseId: r.exercise_id,
+  return results.flatMap((res, i) =>
+    /*
+     * A lift whose read failed contributes nothing rather than failing the
+     * board. The rest of the routine still opens, and a lift with no ghost is
+     * a state `seedBoard` already draws.
+     */
+    ((res.data ?? []) as Row[]).map((r) => ({
+      exerciseId: exerciseIds[i],
       setNumber: r.set_number,
       weightKg: r.weight_kg,
       reps: r.reps,
       type: r.set_type as BoardExercise['sets'][number]['type'],
-    }))
+    })),
+  )
 }
 
 /**
@@ -558,8 +578,16 @@ export async function startWorkout(routineId?: string): Promise<void> {
     set_type: string
   }[]
 
-  // Names come from the catalogue in one read rather than a join per row.
-  const ids = [...new Set(previousRows.map((r) => r.exercise_id))]
+  /*
+   * Names come from the catalogue in one read rather than a join per row.
+   *
+   * NOT READ AT ALL on the routine path, because `routinePlan` does its own
+   * catalogue read for the routine's lifts and the board built from this one is
+   * discarded a few lines below. This was two catalogue queries on the tap that
+   * opens the board, one of them for a plan nothing rendered.
+   */
+  const ids =
+    routineId === undefined ? [...new Set(previousRows.map((r) => r.exercise_id))] : []
   const { data: catalogue } = ids.length
     ? await supabase.from('exercises').select('id, name, equipment').in('id', ids)
     : { data: [] as { id: string; name: string; equipment: string | null }[] }
@@ -612,7 +640,43 @@ export async function startWorkout(routineId?: string): Promise<void> {
     const fromRoutine = await routinePlan(routineId)
     if (fromRoutine !== null) {
       name = fromRoutine.name
-      board = seedBoard(fromRoutine.plan, await previousFor(fromRoutine.exerciseIds))
+      board = seedBoard(
+        fromRoutine.plan,
+        await previousFor(fromRoutine.exerciseIds, workoutId),
+      )
+    } else {
+      /*
+       * The routine could not be read, and `ids` was skipped above on the
+       * assumption it would be. Fall back to the last session properly rather
+       * than to the EMPTY board that skipping would otherwise leave: this is
+       * the "recoverable in two taps" branch the comment above promises, and
+       * without this read it would have been the dead end it warns about.
+       */
+      const fallbackIds = [...new Set(previousRows.map((r) => r.exercise_id))]
+      if (fallbackIds.length > 0) {
+        const { data: late } = await supabase
+          .from('exercises')
+          .select('id, name, equipment')
+          .in('id', fallbackIds)
+        const lateRows = (late ?? []) as {
+          id: string
+          name: string
+          equipment: string | null
+        }[]
+        const lateName = new Map(lateRows.map((e) => [e.id, e.name]))
+        const lateBw = new Map(
+          lateRows.map((e) => [e.id, e.equipment === 'bodyweight']),
+        )
+        board = seedBoard(
+          fallbackIds.map((id) => ({
+            exerciseId: id,
+            name: lateName.get(id) ?? 'Exercise',
+            sets: previousRows.filter((r) => r.exercise_id === id).length,
+            bodyweight: lateBw.get(id) === true,
+          })),
+          previous,
+        )
+      }
     }
   }
 

@@ -9137,3 +9137,46 @@ Crunch (`equipment = 'bodyweight'`): the board renders REPS only and the commit
 bar reads "Log set 1 · 15 reps". The loaded-with-no-history case is covered by a
 new unit test rather than a screenshot, because this account has no routine
 containing a loaded lift it has never trained.
+
+## 2026-08-22 — The first `/code-review` found three defects in the code from an hour earlier
+
+**Who asked:** Ameen, 2026-08-22: run `/code-review` on the recent merges and on
+all future ones. CLAUDE.md had carried it as "the default before opening a PR"
+since 2026-08-19 and this session had opened eight PRs without running it once,
+so the rule is now written as a rule, with the count in it.
+
+All three findings were in `live-workout.ts`, written in the previous hour, and
+all three had passed a green wall and a device screenshot.
+
+**1. `previousFor` truncated in UUID order.** It ordered by `workout_id` and
+capped at 600 rows, while its own comment claimed "the rows come back
+newest-first". `workout_id` is a v4 UUID, so that ordering is random and the cap
+kept an ARBITRARY subset. Measured: Push's lifts already hold 521 finished
+historical sets, Pull 475, Upper Push 429 — roughly fifteen more Push sessions
+from silently dropping the newest Bench Press workout out of the slice and
+opening that lift blank despite years of history.
+
+**Fixed by deleting the query, not by fixing its `order`.**
+`previous_session(p_exercise_id, p_exclude_workout)` already existed, already
+picks the newest workout containing a lift, already returns its sets in order,
+in SQL, with no cap to get wrong. One call per lift issued together with
+`Promise.all` is one wall-clock round trip — the old comment was arguing against
+six SEQUENTIAL ones, which was never what the alternative had to be.
+
+**2. `routinePlan`'s return type omitted `bodyweight`.** The runtime object
+carried it and `seedBoard` declares the parameter optional, so it worked while
+the compiler believed routine plans had no such field. Any refactor trusting the
+type would have dropped it with a green `tsc` and silently reintroduced the
+defect fixed one commit earlier. Now declared.
+
+**3. The routine path ran the whole last-session fan-out and threw it away,**
+including a second read of `exercises`. The catalogue read is now skipped when a
+routine id is given — and the fallback branch, for a routine that cannot be
+read, does its own read rather than inheriting the skip, because otherwise the
+"recoverable in two taps" promise in that comment would have become the empty
+board it warns about.
+
+**The lesson is not the three defects.** It is that the first finding was a
+FALSE COMMENT, written while explaining why one query beat six, in a file whose
+commit message said it had been verified on a device. Both statements were true
+and neither covered the claim.

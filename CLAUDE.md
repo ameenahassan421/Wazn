@@ -77,7 +77,21 @@ Three review paths, in ascending cost. Project-scoped in
 `.claude/settings.json`, so they arrive with the repo.
 
 - `/code-review`, the built-in. Reviews the working diff, a PR number, or a
-  branch, at a chosen effort level. This is the default before opening a PR.
+  branch, at a chosen effort level. **Run it before EVERY PR. Not "the default",
+  not "when it feels warranted" — every one.**
+
+  This line said "this is the default before opening a PR" from 2026-08-19, and
+  on 2026-08-21 a single session opened EIGHT PRs and ran it zero times. A
+  default that is skipped eight times in a row is not a default, it is a
+  suggestion. Ameen made it a rule on 2026-08-22 after a parallel session's
+  capability audit found seven defects, three of them in a file written four
+  hours earlier that had shipped with "verified on a device" in its commit
+  message.
+
+  The reason it matters here specifically: CI answers "is this correct", and
+  every defect found that night had already passed a green CI. Nothing in the
+  pipeline asks "is this good", and this is the only thing that does.
+
 - `/review-pr` and the six `pr-review-toolkit` agents (`code-reviewer`,
   `silent-failure-hunter`, `code-simplifier`, `comment-analyzer`,
   `pr-test-analyzer`, `type-design-analyzer`). Reach for a single agent when

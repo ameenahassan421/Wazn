@@ -1275,6 +1275,17 @@ may kill the session. Steps 1 to 3 are DONE. Read this one, not the third.)**
 #115 the coach-cache diagnosis, #116 three tabs plus the History circle.
 Working tree clean, everything pushed, 1275 tests green.
 
+#### `/code-review` is now mandatory, and its first run found three (2026-08-22)
+
+Ameen made it a rule after this session opened eight PRs without running it.
+The first run, on the keystone and the bodyweight fix, found three defects in
+code written in the previous hour, all of which had passed a green wall and a
+device screenshot. The serious one: `previousFor` ordered by `workout_id` (a
+UUID) and capped at 600 rows while claiming to be newest-first, which Push's
+521 historical sets were about fifteen sessions from breaking. Replaced with the
+`previous_session` RPC, which had always done it correctly in SQL. Full entry in
+DECISIONS.md.
+
 #### THE KEYSTONE LANDED: a workout can start from a routine (2026-08-22)
 
 `startWorkout(routineId?)`. The Plan tab's expanded card starts that routine,
