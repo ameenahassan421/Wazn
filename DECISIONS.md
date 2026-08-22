@@ -8948,3 +8948,27 @@ Android requires, rather than a seventh asset being drawn.
 **Verified on a device, not by a green wall.** Banked a working set, backgrounded
 the app, and the banner arrived: "Rest is up — 120s done. Next set." A warm-up
 correctly starts no alarm, because it starts no rest.
+
+## 2026-08-21 — DEVIATION: Friends went to a Settings row, not a card on Train
+
+**Logged because §2.6 requires a deviation from the plan to be written down with
+its reasoning, and this one was not flagged when it shipped in PR #114.**
+
+`docs/FRIENDS_PLAN.md` Part 3B says of the fourth tab: "Crew (was Friends), and
+only once S1 ships. **Until then it is a card on Train.**" What actually shipped
+is a row under a "More" heading in Settings, and `grep` for crew or friends on
+`mobile/app/(tabs)/index.tsx` returns nothing.
+
+**Why.** S0 has not been built. `friends.tsx` is still the 24-line v5 day-one
+placeholder, so a card on Train would be a prominent door onto a stub — which is
+the exact failure Part 3B objects to two sentences earlier ("A tab empty for
+every user is the stub problem again"). Moving a stub from the tab bar to the
+home screen relocates the problem rather than solving it. The Settings row keeps
+the screen reachable, which is all it needs while it has nothing to show.
+
+**What this owes.** The card is not cancelled, it is deferred to S0. When the
+solo Week Board lands, Friends becomes worth opening, and THEN the card belongs
+on Train — which is also when F0's "one line of crew state on Home" arrives, and
+the two are the same piece of work rather than two. If S0 ships without the card
+appearing on Train, this deviation has quietly become a permanent divergence and
+should be re-argued rather than inherited.
