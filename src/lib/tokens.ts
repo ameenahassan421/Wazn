@@ -257,6 +257,83 @@ export const palette = {
 
 export type PaletteKey = keyof typeof palette
 
+/* ── The second ground ─────────────────────────────────────────────────────
+   The comment above `legacyPalette` predicted this exact shape: "`accentSoft`
+   means 'small accent text readable on THIS ground' ... when it grows a second
+   theme this becomes a record per ground, not a second flat object." This is
+   that record.
+
+   ── NOTHING HERE IS INVENTED ──────────────────────────────────────────────
+   Every dark value comes from `legacyPalette`, which was a DARK-FIRST system
+   shipped and contrast-reasoned before the paper redesign, or from the
+   `onInk*` set the rest canvas already uses. Picking fresh colours would mean
+   re-deriving judgement this repo has already made twice.
+
+   ── `ink` KEEPS ITS TWO JOBS, BECAUSE THE SYSTEM IS INVERSION ──────────────
+   `ink` is both the text colour and the GROUND of the Up Next card and the
+   rest canvas, which is the one thing that looked like it would break here:
+   on a dark theme a "dark card" cannot be the emphasis.
+
+   It does not break, because the card's job was never darkness, it was
+   INVERSION. On paper the emphasis card is dark; on iron it is light. So
+   `ink` and `onInk` swap wholesale and every existing call site stays correct
+   without learning a new token. Four call sites use `ink` as a surface
+   (`Surface.tsx` tone="ink", `Btn.tsx` kind="ink", `Header.tsx`'s avatar,
+   `RestCanvas.tsx`) and all four want inversion.
+
+   ── MEASURED, NOT ASSERTED ────────────────────────────────────────────────
+   On the iron ground and on its card, in that order:
+     ink       15.74 / 14.76      body   12.75 / 11.96
+     muted      6.28 /  5.89      accent  4.99 /  4.68
+     accentSoft 9.87 /  9.26
+   `muted` is the one worth pointing at: it is 6.28 here and 3.39 on paper, so
+   the dark theme is the MORE readable of the two and the paper `muted` remains
+   the open item in WAZN_PLAN 7.0. `tokens.test.ts` asserts these. */
+export const palettes = {
+  light: palette,
+  dark: {
+    /** Behind the device on a wide web viewport. */
+    page: '#0b0906',
+    /** The app ground. `legacyPalette.ink`: warm near-black, because a cool
+     *  ground fights a warm accent. */
+    paper: '#0f0d0a',
+    /** Cards. `legacyPalette.surface`. */
+    card: '#181510',
+    /** Text on the ground, AND the ground of the inverted card. Both jobs, as
+     *  on paper, because the card inverts rather than darkens. */
+    ink: '#ece7dc',
+    /** Prose, a step off `ink`. */
+    body: '#d6d1c6',
+    /** Labels and meta. 6.28:1 here against 3.39:1 on paper. */
+    muted: '#9a927f',
+    accent: '#e8491d',
+    /** Pressed. On iron the press goes UP in luminance, not down: a darker
+     *  press on a dark ground reads as the control disappearing. */
+    accentPress: '#f4643c',
+    /** Small ember text that has to pass AA on this ground. */
+    accentSoft: '#f4a68c',
+    /** `legacyPalette.chipBg`, a heavier tint than paper's because a 9% wash
+     *  is invisible on iron. */
+    accentWash: 'rgba(232, 73, 29, 0.15)',
+    /** Text ON ember and ON the inverted (light) card. */
+    onInk: '#1c0e08',
+    onInkBody: '#3a2f26',
+    onInkMuted: '#5c5044',
+    onInkFaint: '#7a6f60',
+    onInkSurface: 'rgba(15, 13, 10, 0.06)',
+    onInkRaised: 'rgba(15, 13, 10, 0.1)',
+    onInkTrack: 'rgba(15, 13, 10, 0.12)',
+    /** The hairline. Light on dark, mirroring `legacyPalette.line`. */
+    ring: 'rgba(236, 231, 220, 0.08)',
+    /** The drawn border. `legacyPalette.line2`. */
+    ringStrong: 'rgba(236, 231, 220, 0.16)',
+  },
+} as const
+
+/** Which ground the app is drawn on. `system` follows the OS. */
+export type Scheme = 'light' | 'dark'
+export type ThemeChoice = Scheme | 'system'
+
 /* ── Type ──────────────────────────────────────────────────────────────────
    Sora for display and every figure, Hanken Grotesk for prose, IBM Plex Mono
    for the machine voice. The prototype renders 25 distinct sizes; these are
