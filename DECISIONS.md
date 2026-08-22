@@ -9299,3 +9299,58 @@ path that does not exist, and it was the one case nothing looked at. Backticks
 are in the quote class now and `${...}` collapses to a wildcard segment, which
 is what a `[param]` matches anyway. Proved by pointing the call at
 `/routinez/${r.id}` and watching the check fail before restoring it.
+
+## 2026-08-22: 0031, and the comment that unlearned a rule the repo had
+
+**Decision: revoke EXECUTE from BOTH `public` and `anon`, and assert the end
+state in `supabase/tests/coach_surfaces.sql` rather than trusting any comment.**
+
+0030 shipped `public.e1rm` with `revoke execute ... from anon` and the function
+was still callable by a signed-out request. Caught only because the privilege
+was read back after applying. `apply_migration` had answered
+`{"success": true}`.
+
+Two grants reach `anon`. Postgres grants EXECUTE on every new function to PUBLIC
+(`=X/postgres` in `proacl`, empty grantee). Supabase grants anon, authenticated
+and service_role directly via `alter default privileges`.
+
+**This was never unknown here.** `0007_progress_analytics.sql:122`, from 2026:
+"revoke from public first, since functions are created with execute granted to
+public by default." 0006, 0011, 0012 and 0021 all revoke from both.
+
+What went wrong is narrower and worse than a knowledge gap:
+
+- **0027** revoked three functions from `public` and forgot `anon`.
+- **0028** fixed that correctly, then wrote down the wrong reason: "Supabase
+  does not grant EXECUTE through PUBLIC ... and the first line is a no-op."
+- **0030** read 0028, revoked from anon only, and shipped `e1rm` open.
+
+A correct rule stated at 0007 was overwritten by a confident wrong explanation
+at 0028. CLAUDE.md carried the same wrong sentence and is corrected too.
+
+**The assertion is the real change, and the first version of it was too weak.**
+It named six functions and asserted anon-denied plus authenticated-allowed. That
+is a regression guard, and it could not have caught this: `e1rm` was on no list
+the day it shipped, which is the shape of every instance of this bug so far. The
+second check inverts it. Any non-extension function in `public` carrying the
+PUBLIC grant fails unless it is on a written grandfathered list of nine.
+
+Verified non-vacuous by deleting 0031 AND striking `e1rm` from the named list.
+The sweep still failed on exactly `e1rm(numeric,integer)`.
+
+Extension functions are excluded by `pg_depend.deptype = 'e'`. That is not
+tidiness: `pg_shim.sql` installs pgcrypto into `public` where Supabase keeps it
+in `extensions`, and the unfiltered version flagged 35 pgcrypto functions plus
+`gen_random_uuid`, whose revoke would break the DEFAULT on nearly every primary
+key in the schema.
+
+**Deliberately NOT done, and left to Ameen.** Nine functions are grandfathered
+and 17 in total are anon-executable. Every one is `security invoker` behind RLS,
+so an anonymous call returns zero rows rather than data, which makes this
+surface area rather than a leak. `resolve_invite` is the only `security definer`
+among them and is intentional (0011, 0028): an invite link is how somebody
+arrives before they have an account. Changing grants is a change to auth, and
+plan §2.6 makes that an ask.
+
+Supabase's linter separately reports leaked-password protection disabled. That
+is an auth setting, not a migration, and it is Ameen's to flip.
