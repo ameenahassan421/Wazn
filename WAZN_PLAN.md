@@ -1589,6 +1589,50 @@ user-created**, no native create path, while `exercises.owner_id` exists — the
 model is there and the surface is not. A lifter whose movement is not in those
 135 cannot log it, which is a core-loop floor rather than a breadth gap.
 
+#### S0 SHIPPED: Crew is the fourth tab (2026-08-22)
+
+`Train · Plan · Progress · Crew`. Verified on a simulator: four labels fit at
+402pt with no wrapping, which the seven-tab warning in `TabGlyph.tsx` was about
+rather than four.
+
+**The board works at n=1 and that is the whole point.** Ameen's real row reads
+**"You — 6 of 3"** with a full ember bar and "2.5 a week over the last four"
+under it. The target stepper sits below at 3, with the one sentence that makes
+F2's decision visible: "The board ranks on hitting your own number, not on how
+much you lift." A lifter cannot tell adherence from volume by looking, so the
+screen has to say it.
+
+What it replaced: a 24-line stub whose only string was hardcoded English
+("A leaderboard of one. Invite someone to chase.") outside the catalogue, so the
+one screen about other people was the one screen unreadable in Arabic.
+
+**The invite line is not an `Empty` card**, deliberately. The board above it is
+real and full; a 64px ring glyph announcing an absence would contradict the
+screen it sits under. F6: the invite is an addition to a working screen, never
+the price of entry to a blank one.
+
+##### The crew glyph was drawn twice
+
+The first was three discs in a ROW at different fills, and its comment claimed
+it was "distinct by fill rather than by shape". On a simulator it was
+indistinguishable from `plan`, which is also three discs in a row: PLAN read as
+a dot and two rings, CREW as a dot, a ring and a ring. **At 14px fill is not a
+distinction.** The eye reads the silhouette, and both silhouettes were one
+horizontal line of three circles.
+
+Same class as the side-on barbell that read as a capital `H`, and caught the
+same way, which is the only way these are ever caught: by looking at the bar
+instead of at the source. Redrawn as a triangle cluster, one disc above two,
+which is a different silhouette at any size and the better meaning: a crew is a
+group seen at once, and `plan` owns the row because a rotation IS a sequence.
+
+##### Still open in S0
+
+The reasoned invite. `join/[code]` exists as a route and `resolve_invite` is the
+one deliberately anon-callable function, but nothing generates a code yet, and
+F6 wants the link to open on the inviter's actual week rather than on a signup
+form.
+
 #### 0035: the weekly target already existed and 0030 added a second one
 
 Caught while wiring the Week Board, before any screen was built on it.

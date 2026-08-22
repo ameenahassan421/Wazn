@@ -16,7 +16,7 @@ import { palette } from '@wazn/domain'
  * "PROGRESS" wraps onto two lines. Seen on a simulator at 402pt, which is why
  * this list is a bounded set rather than a place to append to.
  */
-export const TABS = ['index', 'plan', 'progress'] as const
+export const TABS = ['index', 'plan', 'progress', 'crew'] as const
 export type TabKey = (typeof TABS)[number]
 
 /**
@@ -41,6 +41,7 @@ export const TAB_KEY: Record<TabKey, string> = {
   index: 'nav.train',
   plan: 'nav.plan',
   progress: 'nav.progress',
+  crew: 'nav.crew',
 }
 
 /**
@@ -59,17 +60,69 @@ export const TAB_KEY: Record<TabKey, string> = {
  */
 /*
  * The `history`, `body`, `coach` and `friends` marks were here until
- * 2026-08-21 and went
- * with their tabs. They are in `git log` if a screen earns the bar back —
- * `friends` is the likely one, as Crew at S1 — and keeping three unreachable
- * drawings against that day is how a file grows a museum. The union above
- * makes their absence a type error rather than a silent gap, which is how
- * these three were found.
+ * 2026-08-21 and went with their tabs. They are in `git log` if a screen earns
+ * the bar back, and keeping unreachable drawings against that day is how a file
+ * grows a museum. The union above makes their absence a type error rather than
+ * a silent gap, which is how they were found.
+ *
+ * **`friends` came back as `crew` on 2026-08-22, which that note predicted.**
+ * It is not the old drawing: `friends` was two overlapping discs, and this is
+ * three at different fills, because the board is about who is keeping up rather
+ * than about who knows whom. It is drawn fresh from the plate family instead of
+ * restored from `git log`.
  */
 export function TabGlyph({ tab, on }: { tab: TabKey; on: boolean }) {
   const ink = on ? palette.accentSoft : palette.muted
 
   switch (tab) {
+    /*
+     * A cluster: one disc above two. Several people, seen at once.
+     *
+     * ── THE FIRST DRAWING WAS A ROW AND THAT WAS WRONG ─────────────────────
+     * It was three discs in a row at different fills, and on a simulator it
+     * was indistinguishable from `plan`, which is also three discs in a row.
+     * PLAN read as a dot and two rings; CREW read as a dot, a ring and a ring.
+     * The comment justifying it said the two were "distinct by fill rather than
+     * by shape", and at 14px fill is not a distinction: the eye reads the
+     * SILHOUETTE from the corner of the vision and both silhouettes were one
+     * horizontal line of three circles.
+     *
+     * Same class of miss as the side-on barbell that read as a capital H, and
+     * caught the same way, which is the only way these are ever caught: by
+     * looking at the bar rather than at the source.
+     *
+     * A triangle is a different silhouette at any size. It is also the right
+     * meaning: a crew is a group seen together, not a sequence, and `plan` owns
+     * the row because a rotation IS a sequence.
+     */
+    case 'crew':
+      return (
+        <View style={{ alignItems: 'center', gap: 2 }}>
+          <View
+            style={{ height: 6, width: 6, borderRadius: 3, backgroundColor: ink }}
+          />
+          <View style={{ flexDirection: 'row', gap: 2 }}>
+            <View
+              style={{
+                height: 6,
+                width: 6,
+                borderRadius: 3,
+                borderWidth: 1.5,
+                borderColor: ink,
+              }}
+            />
+            <View
+              style={{
+                height: 6,
+                width: 6,
+                borderRadius: 3,
+                borderWidth: 1.5,
+                borderColor: ink,
+              }}
+            />
+          </View>
+        </View>
+      )
     // A loaded plate, seen face on — the mark's own part.
     case 'index':
       return (

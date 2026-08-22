@@ -306,7 +306,6 @@ export default function Settings() {
       <Card bare style={{ marginBottom: 20 }}>
         <DoorRow label={t('nav.body')} onPress={() => router.push('/body')} />
         <Rule />
-        <DoorRow label={t('nav.friends')} onPress={() => router.push('/friends')} />
       </Card>
 
       {/* Was the literal 'PREFERENCES', which `Kick` uppercases anyway. Caught
