@@ -9299,3 +9299,46 @@ path that does not exist, and it was the one case nothing looked at. Backticks
 are in the quote class now and `${...}` collapses to a wildcard segment, which
 is what a `[param]` matches anyway. Proved by pointing the call at
 `/routinez/${r.id}` and watching the check fail before restoring it.
+
+## 2026-08-22 — The Coach tab dissolves, and Body does not fold in yet
+
+`docs/FRIENDS_PLAN.md` Part 3B retires the Coach tab into Progress. Done, with
+one deviation.
+
+The mode selector went to Settings. The comment in `settings.tsx` had argued
+the opposite for months: that a mode "belongs on the Coach tab beside what it
+changes" and that Settings is "the one place a lifter never looks for it". Half
+of that argument no longer has a tab to point at. The other half was weak
+anyway: a mode is a preference, set once and left, changing how tomorrow's
+ghosts behave, which is exactly what the volume dial beside it is.
+
+**Body did not fold in, and the plan's reasoning is not what changed.** The
+plan says body weight becomes one card beside the e1RM chart, and that is
+right. Its premise is not yet true: `body_weights` holds one row across all
+nine production accounts, and zero on the only account with real training in
+it. A card on that is a permanent empty state at the top of the one screen
+whose job is to be evidence. Body stays where it is, reachable from Settings,
+and the card arrives the day there is something to draw. Measurements (0 rows)
+and protein (1 row) the plan already says to cut rather than move.
+
+## 2026-08-22 — Three Progress strings were lying, and only the merge exposed them
+
+None of these were introduced by the Coach merge. All three had shipped, and
+all three became visible the moment a second, independent card sat above them.
+
+- `progress.error.load` read **"Loading your progress"** and renders in the
+  `failed` branch. A Progress read that died announced itself as one still in
+  flight, and stayed that way. The key name was accurate the whole time; the
+  string was a loading sentence sitting in an error slot.
+- The `loading` branch rendered `t('coach.loading')`. Fine while Progress had
+  no coach on it. `WeekReview` now renders that same string one card up, so a
+  cold open drew the identical uppercase kicker twice in two stacked cards.
+- The day-one empty state rendered `progress.balance.empty`, which is the
+  muscle-balance chart's absence copy pressed into service for the whole
+  screen. LAUNCH.md's actual day-one line was already in the catalogue under
+  `progress.empty` and unused on native.
+
+The general shape is worth keeping: a screen that borrows another surface's
+string is fine right up until that surface moves in next door, and nothing in
+the type system or the tests can see the collision. Reading the rendered screen
+is the only thing that catches it.

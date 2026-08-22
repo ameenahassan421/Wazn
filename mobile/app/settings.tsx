@@ -2,12 +2,21 @@ import { useState } from 'react'
 import { I18nManager, Pressable, View } from 'react-native'
 import { useRouter } from 'expo-router'
 
-import type { Locale, Unit } from '@wazn/domain'
-import { COACH_VOLUMES, palette, space } from '@wazn/domain'
+import type { CoachMode, Locale, Unit } from '@wazn/domain'
+import {
+  COACH_MODES,
+  COACH_VOLUMES,
+  MODE_BEHAVIOUR,
+  isModeReady,
+  palette,
+  radius,
+  space,
+} from '@wazn/domain'
 
 import { Txt, Kick } from '@/design/Txt'
 import { Btn, ChipBtn, ChipRow } from '@/components/ui/Btn'
 import { Card, Rule } from '@/components/ui/Surface'
+import { Chip } from '@/components/ui/Chip'
 import { useCoach } from '@/hooks/use-coach'
 import { Screen } from '@/components/ui/Screen'
 import { useLocale } from '@/hooks/use-locale'
@@ -97,11 +106,72 @@ function DoorRow({ label, onPress }: { label: string; onPress: () => void }) {
   )
 }
 
+/**
+ * One mode card.
+ *
+ * The active one takes a 2px ember ring and an "Active" chip; v5 §15 specifies
+ * `0 0 0 2px em` and this is that, as a border rather than a shadow, because
+ * React Native has no ring and a shadow would lift the card off the paper.
+ * `dashed` is meet prep's undated state, and it is the only dashed border in
+ * the app.
+ */
+function ModeCard({
+  mode,
+  active,
+  dashed,
+  detail,
+  onPress,
+}: {
+  mode: CoachMode
+  active: boolean
+  dashed: boolean
+  /** The right-hand label: "Active", "Set meet date", "6 wk out". */
+  detail: string | null
+  onPress: (() => void) | null
+}) {
+  const { t } = useLocale()
+  const [pressed, setPressed] = useState(false)
+  const behaviour = MODE_BEHAVIOUR[mode]
+
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityState={{ selected: active, disabled: onPress === null }}
+      disabled={onPress === null}
+      // Never a `style` callback. `eslint.config.js` fails the build on it and
+      // CLAUDE.md records why: it was silently dropped once and rendered every
+      // button in this app invisible for three days.
+      onPressIn={() => setPressed(true)}
+      onPressOut={() => setPressed(false)}
+      onPress={onPress ?? undefined}
+      style={{
+        borderRadius: radius.card,
+        padding: space.cardPad,
+        backgroundColor: dashed ? 'transparent' : palette.card,
+        borderWidth: active ? 2 : 1.5,
+        borderStyle: dashed ? 'dashed' : 'solid',
+        borderColor: active ? palette.accent : palette.ring,
+        opacity: pressed ? 0.7 : 1,
+      }}
+    >
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+        <Txt step="cta" style={{ flex: 1 }}>
+          {t(behaviour.titleKey)}
+        </Txt>
+        {detail !== null && <Chip>{detail}</Chip>}
+      </View>
+      <Txt step="label" ink="muted" style={{ marginTop: 4 }}>
+        {t(behaviour.bodyKey)}
+      </Txt>
+    </Pressable>
+  )
+}
+
 export default function Settings() {
   const router = useRouter()
   const { locale, setLocale, t } = useLocale()
   const { unit, setUnit } = useUnit()
-  const { volume, setVolume } = useCoach()
+  const { volume, setVolume, mode, setMode, speaks } = useCoach()
 
   return (
     <Screen>
@@ -120,10 +190,14 @@ export default function Settings() {
           nothing let a lifter change it. A gate nobody can reach is not a
           feature.
 
-          Volume, not mode. `COACH_MODES` is a lens over the same history and
-          belongs on the Coach tab beside what it changes (v5 screen 15); a
-          mode picker buried in Settings would be the one place a lifter never
-          looks for it. */}
+          **And the MODE selector, since 2026-08-22.** This comment used to
+          argue the opposite: that a mode belongs "on the Coach tab beside what
+          it changes" and that Settings is where a lifter would never look for
+          it. `docs/FRIENDS_PLAN.md` Part 3B retires the Coach tab, so half of
+          that argument no longer has a place to point at, and the other half
+          was already weak. A mode is a PREFERENCE. It changes how the ghosts
+          behave tomorrow, it is set once and left, and it sits beside the
+          volume dial which is the same kind of thing. */}
       <Kick style={{ marginBottom: 10 }}>{t('settings.coach')}</Kick>
       <Card bare style={{ marginBottom: space.gutter }}>
         <View style={{ padding: space.cardPad, gap: 10 }}>
@@ -145,6 +219,45 @@ export default function Settings() {
             {t('settings.coach.note')}
           </Txt>
         </View>
+
+        {/* ── Mode ────────────────────────────────────────────────────────
+            Below the dial and behind the same gate. A mode is only meaningful
+            while the coach is allowed to act on it, so under Quiet or Off it
+            is not a choice worth offering. */}
+        {speaks && (
+          <>
+            <Rule />
+            <View style={{ padding: space.cardPad, gap: 10 }}>
+              <Txt step="body">{t('mode.kicker')}</Txt>
+              {COACH_MODES.map((id) => {
+                /* No meet date is stored on native yet, so `isModeReady` is
+                   the whole gate: true for the two modes that need nothing,
+                   false for meet prep until a date exists. Meet prep renders
+                   dashed and reads "Set meet date", which is a labelled
+                   precondition rather than a dead control. Selecting it with
+                   no date would make `ghost-reason` REFUSE to seed, silently
+                   stopping ghosts a lifter relies on with no way back. */
+                const ready = isModeReady(id, null)
+                return (
+                  <ModeCard
+                    key={id}
+                    mode={id}
+                    active={mode === id}
+                    dashed={!ready}
+                    detail={
+                      !ready
+                        ? t('mode.set_date')
+                        : mode === id
+                          ? t('mode.active')
+                          : null
+                    }
+                    onPress={ready ? () => setMode(id) : null}
+                  />
+                )
+              })}
+            </View>
+          </>
+        )}
       </Card>
 
       {/* ── The two screens that came off the tab bar ────────────────────

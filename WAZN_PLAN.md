@@ -751,6 +751,83 @@ was nine commits stale on 2026-08-19 and said so nowhere; PRs #103 through #106 
 code and none of them touched this file. Three hooks now make that visible and expensive
 (see "How this block stays true", last in this section).
 
+#### DONE 2026-08-22: the Coach screen dissolves into Progress and Settings
+
+Step 4, and the four-tab plan's own words (`docs/FRIENDS_PLAN.md` Part 3B):
+"Progress absorbs History, Body and the Coach tab." This is the Coach half.
+`mobile/app/(tabs)/coach.tsx` is deleted. Its parts went where the plan sends
+them: the **mode selector to Settings**, beside the volume dial it belongs
+next to, and the **week review to the top of Progress** as
+`mobile/src/components/WeekReview.tsx`.
+
+**Why the tab had to go rather than merely be un-tabbed.** The repo's own
+doctrine is that AI arriving as a destination is the mistake, and the Coach tab
+was the last place that rule had not been applied. Its four sections are
+adherence, volume, plateaus and wins; every one of those is a PROGRESS question
+that the coach happens to phrase in a sentence. The figures and the reading of
+the figures were on two screens.
+
+The coach loses no surface area. It is still the brief on Train, the ghost on
+the board, the line on the rest canvas and the debrief on Finish. Removing its
+tab makes it a layer rather than a place.
+
+**Progress went from four `return (<Screen>...)` blocks to one.** That was
+survivable while all four drew the same three lines of chrome. It stopped being
+survivable the moment the review moved here: the review is two independent
+reads on its own cadence and owes `fetchProgress` nothing, so leaving it inside
+the branches would have hidden the coach's entire reading of the week behind a
+failed sessions query. That is the same §12 defect `WeekReview`'s two-cadence
+split exists to prevent, and it would have been reintroduced one level up.
+
+**`/code-review` found ten. Six fixed, and three of them were sentences that
+lied**, all pre-existing and all made visible by the merge:
+
+1. `progress.error.load` READ "Loading your progress" and renders in the
+   FAILED branch. A Progress read that died announced itself, permanently, as
+   one still in flight. The key was right; the sentence was a loading sentence.
+2. The loading branch borrowed `t('coach.loading')`. Harmless while Progress
+   had no coach on it, and not any more: `WeekReview` renders that exact string
+   one card up, so a cold open drew the same kicker twice in two stacked cards.
+   `progress.loading` is new.
+3. The day-one empty state used `progress.balance.empty`, the muscle-balance
+   chart's absence copy, standing in for the whole screen. LAUNCH.md's real
+   line was already in the catalogue as `progress.empty`.
+
+Also fixed: the review's two absences (nothing to say, coach silenced) were
+`Empty` cards, which draw a 64px ring and centred copy. That is right when the
+absence IS the screen and wrong when five cards of real content sit underneath
+it. Both are muted lines now. And silencing the coach used to make the section
+vanish without trace, which on a tab was self-explanatory and in a section is
+indistinguishable from a bug; it says so in one line instead.
+
+**What the deleted file knew, preserved here because deleting a screen must not
+delete why its gaps are gaps.** `coach.tsx` documented three deliberate
+omissions and only one of them found a new home in the code:
+
+- **Ask the coach is absent, not stubbed.** It needs a `coach-ask` Edge
+  Function, and `supabase/functions/` holds `coach-brief`, `coach-notes`,
+  `auth-alias` and `generate-routine`. A free-text box wired to nothing is the
+  exact defect this codebase keeps finding in its own screenshots.
+- **"Apply to week" and "Adjust" are not built.** On the web those scroll to
+  the routine builder and step a weekly-session target. Native has neither, and
+  `use-coach` stores no `weeklyTarget` (0030 adds the column). Two buttons that
+  move nothing is worse than a card that states the recommendation.
+- **Meet prep is drawn and not selectable**, because setting a date needs
+  `@react-native-community/datetimepicker` (Expo pins 9.1.0, not installed, and
+  a native module means prebuild plus pods). That reasoning survives in the
+  Settings comment beside the card.
+
+**Body did NOT fold in, against the plan, on the data.** The plan says body
+weight becomes one card beside the e1RM chart. `body_weights` holds **one row
+across all nine accounts and zero on Ameen's**, read 2026-08-22, so the card
+would be a permanent empty state on the screen whose whole job is evidence of
+getting stronger. Body stays reachable from Settings and the card arrives when
+there is something to draw. Measurements and protein the plan already says to
+cut rather than move.
+
+**Still to do in step 4: History folds into Progress**, keeping the circle
+beside Start as the fast door.
+
 #### DONE 2026-08-22: routines can be WRITTEN, and the Plan tab is no longer read-only
 
 Step 3 of the agreed order. `mobile/app/routine/[id].tsx` creates and edits; `/routine/new`
