@@ -1,8 +1,7 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useReducer, useRef, useState } from 'react'
 import { Pressable, View } from 'react-native'
 
 import {
-  QUOTA_VISIBLE_AT,
   palette,
   space,
   type CoachNotes as CoachNotesPayload,
@@ -18,6 +17,7 @@ import { Txt, Kick } from '@/design/Txt'
 import { useCoach } from '@/hooks/use-coach'
 import { useLocale } from '@/hooks/use-locale'
 import { useUnit } from '@/hooks/use-unit'
+import { IDLE, reduce, regenerateSpent, showQuota } from '@/state/week-review'
 import { fetchReviewBlock, fetchWeeklyReview } from '@/services/coach'
 import { supabaseConfigError } from '@/services/supabase'
 
@@ -62,10 +62,15 @@ export function WeekReview() {
   const [notes, setNotes] = useState<CoachNotesPayload | null>(null)
   /** The FIGURES, on their own read. See the note above. */
   const [block, setBlock] = useState<ReviewBlock | null>(null)
-  const [state, setState] = useState<'loading' | 'ready' | 'failed'>('loading')
-  const [message, setMessage] = useState<string | null>(null)
-  const [reload, setReload] = useState(0)
-  const [force, setForce] = useState(false)
+  /*
+   * One reducer rather than four `useState`s, and the move is what made any of
+   * this assertable. Importing this FILE into a test drags `react-native` and
+   * its Flow syntax into a node run, which vitest refuses; `state/week-review`
+   * imports nothing, so the rules with teeth live there and are covered by
+   * `week-review.test.ts`. The sticky-`force` rule in particular fails no
+   * build and changes no render when it breaks.
+   */
+  const [req, dispatch] = useReducer(reduce, IDLE)
 
   /**
    * `t` changes identity with the locale and the effect below fetches, so it
@@ -103,30 +108,31 @@ export function WeekReview() {
     let active = true
     void (async () => {
       try {
-        const result = await fetchWeeklyReview(unit, { force })
+        const result = await fetchWeeklyReview(unit, { force: req.force })
         if (!active) return
         setNotes(result)
-        setState('ready')
+        dispatch({ type: 'resolved' })
       } catch (error) {
         if (!active) return
-        setMessage(
-          error instanceof Error
-            ? error.message
-            : tRef.current('coach.notes.unavailable'),
-        )
-        setState('failed')
+        dispatch({
+          type: 'rejected',
+          message:
+            error instanceof Error
+              ? error.message
+              : tRef.current('coach.notes.unavailable'),
+        })
       }
     })()
     return () => {
       active = false
     }
-    // `force` is part of the key on purpose: Regenerate is a new request, not
-    // a re-render of the old one.
-  }, [reload, force, unit, speaks])
+    // `attempt` AND `force` are both in the key on purpose: Regenerate is a new
+    // request, not a re-render of the old one.
+  }, [req.attempt, req.force, unit, speaks])
 
   const review = notes?.review ?? null
   const left = notes?.regeneratesLeft ?? null
-  const spent = left !== null && left <= 0
+  const spent = regenerateSpent(left)
   const recommendation = review?.sections?.recommendation ?? null
 
   /*
@@ -158,7 +164,7 @@ export function WeekReview() {
           Headline and the one recommendation. Three states and no fourth,
           because a surface that renders nothing is indistinguishable from one
           still loading. */}
-      {state === 'loading' ? (
+      {req.phase === 'loading' ? (
         <Card>
           {/* A kicker, not a skeleton. A shimmer implies a layout is arriving;
               this is waiting on a sentence, and the layout it lands in is one
@@ -168,24 +174,18 @@ export function WeekReview() {
             {t('coach.loading.body')}
           </Txt>
         </Card>
-      ) : state === 'failed' ? (
+      ) : req.phase === 'failed' ? (
         <Card style={{ gap: 12 }}>
-          <Txt step="body">{message ?? t('coach.notes.unavailable')}</Txt>
+          <Txt step="body">{req.message ?? t('coach.notes.unavailable')}</Txt>
           <Btn
             kind="line"
             small
             label={t('coach.retry')}
-            onPress={() => {
-              setState('loading')
-              /* `setForce(false)` matters and is not tidiness. `force` is
-                 sticky: once Regenerate sets it, every later reload carries
-                 it, so a lifter who pressed Regenerate once and then hit Try
-                 again three times would spend four model calls recovering from
-                 one failure. Retry means "load it again" and is entitled to
-                 the cache; Regenerate is the only control allowed to spend. */
-              setForce(false)
-              setReload((n) => n + 1)
-            }}
+            /* `retry` CLEARS force. That is the rule with teeth and it is
+               asserted in `week-review.test.ts`: retry means "load it again"
+               and may serve from cache, while Regenerate is the only control
+               allowed to spend a model call. */
+            onPress={() => dispatch({ type: 'retry' })}
           />
         </Card>
       ) : review === null ? (
@@ -210,11 +210,7 @@ export function WeekReview() {
               accessibilityState={{ disabled: spent }}
               disabled={spent}
               hitSlop={Math.round((space.touch - 14) / 2)}
-              onPress={() => {
-                setState('loading')
-                setForce(true)
-                setReload((n) => n + 1)
-              }}
+              onPress={() => dispatch({ type: 'regenerate' })}
             >
               <Kick ink={spent ? 'muted' : 'accentSoft'}>{t('coach.regenerate')}</Kick>
             </Pressable>
@@ -262,9 +258,7 @@ export function WeekReview() {
       <Txt step="nano" ink="muted" style={{ textAlign: 'center' }}>
         {[
           t('coach.footer'),
-          left === null || left > QUOTA_VISIBLE_AT
-            ? null
-            : t('coach.footer.quota', { n: String(left) }),
+          showQuota(left) ? t('coach.footer.quota', { n: String(left) }) : null,
         ]
           .filter(Boolean)
           .join(' · ')}

@@ -1458,6 +1458,38 @@ reasoned invite (`docs/FRIENDS_PLAN.md` Part 6). The S1 gates were LIFTED on
 becomes the fourth tab. The committed weekly target needs `profiles.weekly_target`,
 which is in the unapplied 0030.
 
+#### The week review's PROSE cannot refresh while the model is down (2026-08-22)
+
+Observed on a simulator against the real account, right after 0030 landed. The
+Progress screen shows, in adjacent lines:
+
+- the figure **8 sessions this week**, computed by `weekly_review()` in SQL, and
+- the sentence **"You completed 10 sessions this week … trained in 9 of the last
+  8 weeks"**, which is cached model output.
+
+Both halves of 0030 worked. `weekly_review()` now answers `weeks_trained_of_8: 8`
+and excludes the four empty workouts. The sentence is a `coach_notes` row
+generated at 17:43 UTC, BEFORE 0030 was applied, and the only thing that
+rewrites it is a model call.
+
+**Regenerate cannot currently refresh it.** Pressing it fires
+`coach-notes?force=1`, the function boots, runs `weekly_review`, checks the
+`ai_generations` quota, and then asks the model, which does not answer. The 45s
+deadline fires and the card degrades to "The review took too long. Try again."
+That degradation is working exactly as designed, and the figures underneath
+survive it, which is the two-read separation doing its job.
+
+So the user-visible state is a screen whose figure and whose sentence disagree,
+with no way to reconcile them from inside the app. The model in use is
+`nvidia/nemotron-3-super-120b-a12b:free`.
+
+**This is not a reason to put the numbers back in the prose.** It is a reason
+the figures were split out of the model's state chain in the first place. Worth
+deciding: whether a cached review generated before a `weekly_review` change
+should be invalidated by prompt/schema version rather than only by
+`basis_workout_at`, which is the same cache-key weakness already logged for
+`coach-notes`.
+
 **Also open:** routine create/edit on Plan (still read-only); the Progress merge
 (History, Body and the Coach tab still have not folded in); `haptics.record()` is
 dead against 516 PR-flagged sets; no way to add a custom exercise (135 in the
