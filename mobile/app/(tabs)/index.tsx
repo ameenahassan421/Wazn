@@ -135,10 +135,14 @@ export default function LogHome() {
              orphaned screen is how the web app grew three of them. */
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel={`${t('coach.kicker')}. ${home.brief.line}`}
+            /* The label names the DESTINATION as well as the content. The
+               card is the coach's brief, so 'COACH' still reads correctly as
+               the visible kicker, but the announced control used to promise a
+               coach screen that no longer exists. */
+            accessibilityLabel={`${t('coach.kicker')}. ${home.brief.line}. ${t('nav.progress')}`}
             onPressIn={() => setBriefDown(true)}
             onPressOut={() => setBriefDown(false)}
-            onPress={() => router.push('/coach')}
+            onPress={() => router.navigate('/progress')}
             // Static, never `({ pressed }) => ...` — see `Btn.tsx`.
             style={{ opacity: briefDown ? 0.7 : 1 }}
           >

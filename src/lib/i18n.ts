@@ -335,7 +335,11 @@ export const messages: Record<Locale, Record<string, string>> = {
     'history.error.delete_set': 'Deleting the set',
 
     // ── Progress screen (Slice 4) ────────────────────────────────
-    'progress.error.load': 'Loading your progress',
+    'progress.loading': 'Reading your log',
+    /* Was 'Loading your progress', which is what a screen says while it is
+       WORKING. It renders in the failed branch, so a Progress read that died
+       announced itself as one still in flight, forever. */
+    'progress.error.load': 'Could not load your progress.',
     'progress.this_week': 'This week',
     'progress.sessions': 'Sessions',
     'progress.volume': 'Volume',
@@ -1413,7 +1417,8 @@ export const messages: Record<Locale, Record<string, string>> = {
     'history.error.delete_set': 'جارٍ حذف المجموعة',
 
     // ── Progress screen (Slice 4) ────────────────────────────────
-    'progress.error.load': 'جارٍ تحميل تقدمك',
+    'progress.loading': 'نقرأ سجلك',
+    'progress.error.load': 'تعذّر تحميل تقدمك.',
     'progress.this_week': 'هذا الأسبوع',
     'progress.sessions': 'جلسات',
     'progress.volume': 'الحجم',
