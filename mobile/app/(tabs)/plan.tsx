@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useState } from 'react'
 import { Pressable, View } from 'react-native'
-import { useRouter } from 'expo-router'
+import { useFocusEffect, useRouter } from 'expo-router'
 
 import { formatRelativeDay, formatWeight, type Unit } from '@wazn/domain'
 
@@ -29,6 +29,12 @@ import { supabaseConfigError } from '@/services/supabase'
  * They were not unused, either — `session_brief()` picks the due routine and
  * Home has been naming it on the Up Next card this whole time. A lifter could
  * be told what was up next and had nowhere to go and look at it.
+ *
+ * ── AND THEY CAN BE WRITTEN HERE NOW ────────────────────────────────────────
+ * Every one of the 386 routine rows in production came from the Hevy import.
+ * Nothing in either app had ever WRITTEN a routine, so an account that did not
+ * import from Hevy had a Plan tab that could only say "No routines yet" and a
+ * coach whose rotation had nothing to rotate. `routine/[id]` is the editor.
  *
  * ── YOU CAN START ONE NOW, AND THAT IS THE WHOLE POINT ──────────────────────
  * This section used to say the opposite, because `startWorkout()` took no
@@ -75,6 +81,7 @@ function RoutineCard({
   open,
   onToggle,
   onStart,
+  onEdit,
   busy,
 }: {
   routine: PlanRoutine
@@ -83,6 +90,7 @@ function RoutineCard({
   open: boolean
   onToggle: () => void
   onStart: () => void
+  onEdit: () => void
   /** A session is already running, so this card cannot start another. */
   busy: boolean
 }) {
@@ -165,17 +173,25 @@ function RoutineCard({
             The line replaces it rather than disabling it, because a greyed
             button invites a press and then explains nothing.
           */}
-          {busy ? (
-            <Txt step="caption" ink="muted">
-              {t('plan.busy')}
-            </Txt>
-          ) : (
-            <Btn
-              kind="hero"
-              label={t('plan.start', { name: routine.name })}
-              onPress={onStart}
-            />
-          )}
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+            {busy ? (
+              <Txt step="caption" ink="muted" style={{ flex: 1 }}>
+                {t('plan.busy')}
+              </Txt>
+            ) : (
+              <Btn
+                kind="hero"
+                label={t('plan.start', { name: routine.name })}
+                onPress={onStart}
+                style={{ flex: 1 }}
+              />
+            )}
+            {/* Edit stays reachable during a live session. It writes to the
+                routine, not to the board, so there is nothing for it to
+                clobber, and hiding it would make the control appear and
+                disappear for a reason a lifter cannot see. */}
+            <Btn kind="line" small label={t('plan.edit')} onPress={onEdit} />
+          </View>
         </View>
       ) : null}
     </Card>
@@ -199,22 +215,45 @@ export default function PlanScreen() {
   const [routines, setRoutines] = useState<PlanRoutine[] | null>(null)
   const [openId, setOpenId] = useState<string | null>(null)
 
-  useEffect(() => {
-    if (supabaseConfigError !== null) return
-    let live = true
-    void fetchRoutines()
-      .then((rows) => {
-        if (live) setRoutines(rows)
-      })
-      .catch(() => {
-        if (live) setError(t('plan.error'))
-      })
-    return () => {
-      live = false
-    }
-    // `t` is stable per locale; refetching on a language change is not wanted.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  /*
+   * On FOCUS, not on mount.
+   *
+   * The editor and the board are both routes pushed over this one, so this
+   * screen stays mounted while a routine is created, renamed, deleted, or run.
+   * A mount effect therefore showed a list that was correct exactly once, and
+   * saving a new routine returned the lifter to a tab that did not have it.
+   *
+   * The previous rows are kept while the refetch is in flight, so a focus does
+   * not blank the list.
+   */
+  useFocusEffect(
+    useCallback(() => {
+      if (supabaseConfigError !== null) return
+      let live = true
+      void fetchRoutines()
+        .then((rows) => {
+          if (!live) return
+          setRoutines(rows)
+          /*
+           * Cleared on success, and it was not until the review caught it.
+           * The render checks `error` BEFORE `routines`, so one failed fetch
+           * pinned the error card for the rest of the app session even as
+           * every later refetch succeeded behind it. On a mount effect that
+           * took a failed launch to reach; on a focus effect every tab switch
+           * is another chance to enter a state nothing can leave.
+           */
+          setError(null)
+        })
+        .catch(() => {
+          if (live) setError(t('plan.error'))
+        })
+      return () => {
+        live = false
+      }
+      // `t` is stable per locale; refetching on a language change is not wanted.
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []),
+  )
 
   return (
     <Screen>
@@ -235,6 +274,16 @@ export default function PlanScreen() {
             <Txt step="caption" ink="muted" style={{ textAlign: 'center' }}>
               {t('plan.empty.sub')}
             </Txt>
+            {/* `alignSelf` because `Btn` sets its own to `flex-start`, which
+                beats `Empty`'s `alignItems: center` and left-flushes the pill
+                under centred copy. Seen on a simulator; this is the first
+                caller ever to put a button in that slot. */}
+            <Btn
+              kind="hero"
+              label={t('plan.new')}
+              onPress={() => router.push('/routine/new')}
+              style={{ alignSelf: 'center' }}
+            />
           </Empty>
         ) : (
           <View style={{ gap: 12 }}>
@@ -254,8 +303,19 @@ export default function PlanScreen() {
                   void startWorkout(r.id)
                   router.push('/session/new')
                 }}
+                onEdit={() => router.push(`/routine/${r.id}`)}
               />
             ))}
+            {/* `line`, not `hero`. The ember is one-per-screen and it belongs
+                to Start inside the open card: writing a routine is the rare
+                act here and running one is the daily act. The empty state
+                inverts this, correctly, because there is nothing to run. */}
+            <Btn
+              kind="line"
+              full
+              label={t('plan.new')}
+              onPress={() => router.push('/routine/new')}
+            />
           </View>
         )}
       </View>

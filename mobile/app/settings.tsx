@@ -72,6 +72,17 @@ function DoorRow({ label, onPress }: { label: string; onPress: () => void }) {
       }}
     >
       <Txt step="body">{label}</Txt>
+      {/*
+        The chevron, and it pointed UP in Arabic until 2026-08-22.
+        `borderEndWidth` is logical: it is already the LEFT border on an RTL
+        build, so the square arrives with its top and left edges drawn and the
+        `scaleX: -1` that was here flipped it a second time. Two mirrors and a
+        clockwise rotation left the corner pointing at the ceiling, on both
+        rows of the More card, on a screen that had only ever been looked at
+        in English.
+        One flip, not two: the border stays logical and the ROTATION carries
+        the direction. Top+end rotated +45 points at the end edge either way.
+      */}
       <View
         style={{
           width: 8,
@@ -79,7 +90,7 @@ function DoorRow({ label, onPress }: { label: string; onPress: () => void }) {
           borderTopWidth: 2,
           borderEndWidth: 2,
           borderColor: palette.muted,
-          transform: [{ scaleX: I18nManager.isRTL ? -1 : 1 }, { rotate: '45deg' }],
+          transform: [{ rotate: I18nManager.isRTL ? '-45deg' : '45deg' }],
         }}
       />
     </Pressable>

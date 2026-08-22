@@ -9211,3 +9211,91 @@ flip back, look, and see nothing wrong either time.
 **Verified by reproducing it exactly:** toggled ar then en inside one session,
 cold launched, and the app came up LTR with English. Before the fix the same
 sequence left it mirrored.
+
+## 2026-08-22 — A routine stores structure, not numbers
+
+The native routine editor (`mobile/app/routine/[id].tsx`) offers a name, an
+ordered list of lifts, and a set count per lift. It offers no weight field and
+no rep field, and that is the finished design rather than a first pass.
+
+`startWorkout(routineId)` was built the day before this and it deliberately
+takes STRUCTURE from the routine and VALUES from the lifter's real history.
+`routinePlan` reflects that exactly: it selects `routine_exercise_id` off
+`routine_sets` and counts the rows. `weight_kg`, `reps` and `set_type` are
+written by the web app and read by nothing on the logging path.
+
+So a weight field would be a control over a value with no consumer, and worse
+than useless: a number typed into a form in March, rendered under "last time"
+in August, is the app inventing a history. The board opens blank for a lift
+with no history, which is `seedBoard`'s documented rule and the right one.
+
+**Consequence, accepted.** A routine authored on native has null `reps` on its
+`routine_sets` rows; one authored in the web editor has numbers. The two apps
+write the same table differently. Not reconciled, because the Vite PWA retires
+at phase A4 and teaching native to write a column it never reads would be
+adding the divergence back from the other side to satisfy a client that is
+being deleted.
+
+## 2026-08-22 — Routine children are rewritten insert-first, and the atomic version needs a migration
+
+`saveRoutine` replaces a routine's `routine_exercises` rows wholesale rather
+than diffing them. Diffing positions correctly is the kind of code that
+silently reorders somebody's workout six months later, and a routine is a
+handful of rows.
+
+The obvious order is delete-then-insert. `/code-review` caught that it is the
+one that loses data. `supabase-js` speaks PostgREST, one request per statement,
+so there is no transaction: a phone that drops signal between the DELETE and
+the INSERT leaves the routine with **zero** exercises. That is not merely
+wrong, it is silently wrong, because `routinePlan` returns null for an empty
+routine and `startWorkout` then seeds the board from the last SESSION instead.
+Start on that routine runs a different workout and says nothing.
+
+Reversed, the same failure costs nothing. The stale child ids are read up
+front, the replacements are inserted, and only then are the old rows deleted by
+id (by id and not by `routine_id`, because by that point the routine holds
+both sets of rows). A failure in between triggers a best-effort delete of what
+this save added and rethrows, so the routine is left as it was. If that cleanup
+also fails the routine lists its lifts twice, which is visible and fixed by
+saving again. A visible mess beats a silent deletion.
+
+**The real fix is one `save_routine(jsonb)` RPC doing all of it inside a
+transaction, and it is NOT in this change.** A new function is a migration, a
+migration is a change to the database every user depends on, and plan §2.6 puts
+that in Ameen's hands. It belongs with migration 0031, alongside the 0030 that
+is still proven-not-applied.
+
+## 2026-08-22 — `flex: 1` on a React Native `Text` is wrong in RTL
+
+Two screens put their header title on `<Txt step="cta" style={{ flex: 1 }}>`
+beside a Cancel. In English that lays out correctly, title at the start edge
+and Cancel at the end. Turned to Arabic on a simulator, the flexed Text
+swallows the row's free space **without** putting its own content on the start
+edge, so the title floats mid-left with two thirds of the row empty.
+
+Adding `justifyContent: 'space-between'` on top changed nothing, and that is
+the diagnostic: the flex had already consumed everything there was to
+distribute. Dropping the flex is what fixes it. `flexShrink: 1` with
+`numberOfLines={1}` restores the bound the flex was incidentally providing, so
+a longer translation still cannot push Cancel off the screen.
+
+`session/add.tsx` had shipped this way. It was found only because the routine
+editor copied the pattern and someone looked at the copy in Arabic.
+
+The sibling defect the same pass found: `settings.tsx`'s chevron combined a
+LOGICAL `borderEndWidth` (already the left border on an RTL build) with a
+`scaleX: -1`. Two mirrors and a clockwise rotation pointed it at the ceiling.
+One flip, carried by the rotation sign, not two.
+
+## 2026-08-22 — `check_routes.mjs` did not see template literals
+
+The checker existed because `experiments.typedRoutes` enforces nothing in CI.
+Its regex matched navigation targets in `'` and `"` only, so
+`router.push(`/routine/${r.id}`)` was skipped in full.
+
+That is the worst possible gap for this particular checker: a template literal
+is how you navigate to a DYNAMIC route, which is the case most likely to name a
+path that does not exist, and it was the one case nothing looked at. Backticks
+are in the quote class now and `${...}` collapses to a wildcard segment, which
+is what a `[param]` matches anyway. Proved by pointing the call at
+`/routinez/${r.id}` and watching the check fail before restoring it.
