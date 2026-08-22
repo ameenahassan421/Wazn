@@ -1275,6 +1275,28 @@ may kill the session. Steps 1 to 3 are DONE. Read this one, not the third.)**
 #115 the coach-cache diagnosis, #116 three tabs plus the History circle.
 Working tree clean, everything pushed, 1275 tests green.
 
+#### 0030 is WRITTEN and PROVEN LOCALLY, and NOT APPLIED (2026-08-21)
+
+Ameen approved applying it. The auto-mode classifier blocked `apply_migration`
+anyway, and `execute_sql` was NOT used as a workaround: it would be the same
+DDL through a different tool, which is working around the intent of the denial
+rather than around a tool limitation.
+
+**Production is still at 0029.** `supabase/migrations/0030_sessions_weeks_and_e1rm.sql`
+contains: `public.e1rm()` (behaviour-identical, no rep ceiling, adopted only in
+`weekly_review` so far), `profiles.weekly_target smallint` with a 1-14 check,
+the empty-workout exclusion in `weekly_review`'s `finished` CTE, and the
+whole-weeks bound on `weeks_trained_8w`.
+
+Proven with `npm run check:sql`: all 30 migrations execute from an empty
+database and all three suites pass, with the fixture now reporting
+`weeks_trained_of_8: 8`.
+
+**To apply it, Ameen runs it himself, or adjusts the permission and asks for a
+retry.** Afterwards it must be verified against `information_schema` and
+`has_function_privilege` rather than a success flag — 0027's `revoke` returned
+success and did nothing.
+
 #### A peer audit found three defects in the rest alarm within hours (2026-08-21)
 
 Two fixed, one deferred. The Android channel was referenced and never created,
