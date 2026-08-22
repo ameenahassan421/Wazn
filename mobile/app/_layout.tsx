@@ -19,6 +19,7 @@ import { palette } from '@wazn/domain'
 import { REQUIRED_FONTS } from '@/design/type'
 import { Txt } from '@/design/Txt'
 import { useAuth } from '@/hooks/use-auth'
+import { watchRest } from '@/services/rest-alarm'
 import { restoreWorkout } from '@/state/live-workout'
 import { CoachProvider } from '@/hooks/use-coach'
 import { LocaleProvider } from '@/hooks/use-locale'
@@ -131,6 +132,16 @@ export default function RootLayout() {
   useEffect(() => {
     void restoreWorkout()
   }, [])
+
+  /**
+   * Arm the rest alarm for the whole app session.
+   *
+   * Here rather than on the rest canvas, because the canvas can be navigated
+   * away from — backing out to Home mid-rest is a thing lifters do — and the
+   * alarm still has to fire. `watchRest` reads the store's current rest first,
+   * so this also re-arms a rest restored from the checkpoint above.
+   */
+  useEffect(() => watchRest(), [])
 
   /**
    * Nothing is shown until BOTH the faces are registered and the keychain has

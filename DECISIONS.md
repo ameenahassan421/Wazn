@@ -8888,11 +8888,26 @@ duration. What it could not do was TELL you. A lifter who pockets their phone
 between sets got nothing at zero, which is the one moment the app exists to
 mark.
 
-**The shape.** `expo-notifications` at the SDK-pinned `~57.0.11`, one service
-(`mobile/src/services/rest-alarm.ts`) exporting one function, called from the
-exactly three places that write `restEndsAt`: banking a set, `endRest`,
-`adjustRest`. There is no separate cancel export, because a cancel is
-`syncRestAlarm(null)` and two functions would let one of the three drift.
+**The shape, after CI rejected the first one.** `expo-notifications` at the
+SDK-pinned `~57.0.11`, one service (`mobile/src/services/rest-alarm.ts`), and
+it **watches** the store rather than being called by it.
+
+The first version put a `syncRestAlarm` call beside each of the three writes to
+`restEndsAt` — banking a set, `endRest`, `adjustRest`. The `mobile` CI job
+failed it in 52 seconds: `live-workout.ts` is state, vitest tests it headlessly,
+and importing a service that reaches `react-native` and `expo-notifications`
+dragged `react-native/index.js` and its Flow syntax into a node test run. **The
+local wall missed it because the mobile wall I was running was typecheck, lint
+and `bundle:ios` — and `bundle:ios` bundles for a phone, where those imports are
+exactly right.** `npx vitest run` in `mobile/` is part of that job and was not
+part of my habit.
+
+Inverting it is what the architecture already wanted. `watchRest` subscribes to
+the store from the root layout; the store stays portable and headless; and a
+fourth writer of `restEndsAt` cannot forget to sync, because a subscriber cannot
+be forgotten by code that does not know it exists. It is armed at the root
+rather than on the rest canvas, because backing out to Home mid-rest is a thing
+lifters do and the alarm still has to fire.
 
 Permission is asked **on the first rest**, not at launch. iOS gives an app one
 prompt, and spending it before a lifter has logged anything spends it on

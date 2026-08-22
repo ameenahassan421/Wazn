@@ -1278,8 +1278,12 @@ Working tree clean, everything pushed, 1275 tests green.
 #### The rest timer reaches a pocket (2026-08-21)
 
 **Step 2's last item, and the plan's own "capability that justifies stage 4A".**
-`expo-notifications` at the pinned `~57.0.11`, one service with one exported
-function called from the three places that write `restEndsAt`. Permission is
+`expo-notifications` at the pinned `~57.0.11`, one service that WATCHES the
+store's `restEndsAt` from the root layout. It called the three writers directly
+at first and CI killed it in 52 seconds: `live-workout.ts` is headless-tested
+state, and importing a native service put `react-native`'s Flow syntax into a
+node test run. `bundle:ios` could never have caught that, because it bundles for
+a phone where the import is correct. Permission is
 asked on the FIRST REST rather than at launch; a refusal degrades to the silent
 countdown that already worked, and nothing on the logging path can be blocked by
 it.

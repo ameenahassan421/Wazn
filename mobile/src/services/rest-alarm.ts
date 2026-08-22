@@ -1,6 +1,8 @@
 import { AppState, Platform } from 'react-native'
 import * as Notifications from 'expo-notifications'
 
+import { snapshot, subscribe } from '@/state/live-workout'
+
 /**
  * The rest timer, when the phone is in a pocket.
  *
@@ -11,13 +13,20 @@ import * as Notifications from 'expo-notifications'
  * between sets gets nothing at zero, which is the one moment the app exists to
  * mark. WAZN_PLAN calls this the capability that justifies stage 4A.
  *
- * ── ONE FUNCTION, THREE CALL SITES ──────────────────────────────────────────
- * `restEndsAt` is written in exactly three places — banking a set starts it,
- * `endRest` clears it, `adjustRest` moves it — so `syncRestAlarm` cancels
- * whatever is pending and schedules the new one, and each of the three calls
- * it with the value it just set. There is no separate "cancel" export because
- * a cancel is `syncRestAlarm(null)`, and two functions would let one of the
- * three sites drift.
+ * ── IT WATCHES THE STORE, IT IS NOT CALLED BY IT ────────────────────────────
+ * `restEndsAt` is written in three places — banking a set starts it, `endRest`
+ * clears it, `adjustRest` moves it — and the first version of this put a
+ * `syncRestAlarm` call beside each. CI rejected that in 52 seconds:
+ * `live-workout.ts` is state, vitest tests it headlessly, and importing this
+ * service dragged `react-native/index.js` and its Flow syntax into a node test
+ * run. The local wall missed it because `bundle:ios` bundles for a phone,
+ * where those imports are exactly right.
+ *
+ * So `watchRest` subscribes instead. The store stays portable and headless,
+ * I/O stays at the edge, and a fourth writer of `restEndsAt` cannot forget to
+ * sync, because a subscriber cannot be forgotten by code that does not know it
+ * exists. There is still no separate "cancel": a cancel is a `restEndsAt` of
+ * null, which is just another value to react to.
  *
  * ── IT NEVER FIRES WHILE YOU ARE LOOKING AT THE CANVAS ──────────────────────
  * The rest canvas is a full-screen countdown. A banner saying "rest is over"
@@ -135,4 +144,27 @@ export function syncRestAlarm(endsAt: number | null, secondsTotal = 0): void {
       // See the doc comment: logging a set outranks notifying about one.
     }
   })()
+}
+
+/**
+ * Start watching the live workout's rest, and return the unsubscribe.
+ *
+ * Called once from the root layout, so the alarm is armed for the whole app
+ * session rather than for as long as some screen happens to be mounted — the
+ * rest canvas can be navigated away from and the alarm still has to fire.
+ *
+ * `last` makes this idempotent: the store notifies on every state change,
+ * including every set banked and every field typed, and rescheduling an
+ * identical alarm on each of those would cancel and recreate the notification
+ * dozens of times a workout.
+ */
+export function watchRest(): () => void {
+  let last: number | null = snapshot().restEndsAt
+  syncRestAlarm(last, snapshot().restTotal)
+  return subscribe(() => {
+    const { restEndsAt, restTotal } = snapshot()
+    if (restEndsAt === last) return
+    last = restEndsAt
+    syncRestAlarm(restEndsAt, restTotal)
+  })
 }

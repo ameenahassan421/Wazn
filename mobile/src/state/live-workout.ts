@@ -20,7 +20,6 @@ import {
 } from '@wazn/domain'
 
 import { supabase } from '@/services/supabase'
-import { syncRestAlarm } from '@/services/rest-alarm'
 
 /**
  * The live workout, held outside React.
@@ -251,14 +250,31 @@ export async function restoreWorkout(): Promise<void> {
   await flushPending()
 }
 
-function subscribe(listener: () => void) {
+/**
+ * Exported for `rest-alarm.ts`, which WATCHES `restEndsAt` rather than being
+ * called when it changes.
+ *
+ * The alarm was wired the other way first — three `syncRestAlarm` calls, one
+ * beside each `set({ restEndsAt })` — and CI rejected it in 52 seconds. This
+ * module is state and it is tested headlessly by vitest, so importing a
+ * service that reaches `react-native` and `expo-notifications` put Flow syntax
+ * from `react-native/index.js` into a node test run. The green local wall
+ * missed it because `bundle:ios` bundles for a phone, where those imports are
+ * exactly right.
+ *
+ * Inverting it is what the architecture already wanted: the store stays
+ * portable and headless, I/O lives at the edges, and there is now no way for a
+ * fourth writer of `restEndsAt` to forget to sync — a subscriber cannot be
+ * forgotten by code that does not know it exists.
+ */
+export function subscribe(listener: () => void) {
   listeners.add(listener)
   return () => {
     listeners.delete(listener)
   }
 }
 
-function snapshot() {
+export function snapshot() {
   return state
 }
 
@@ -504,15 +520,11 @@ export function bankCurrentSet(weightKg: number | null, reps: number | null): vo
    */
   const rests = setRow.type !== 'warmup' && DEFAULT_REST_SECONDS > 0
 
-  const restEndsAt = rests ? Date.now() + DEFAULT_REST_SECONDS * 1000 : null
   set({
     board,
-    restEndsAt,
+    restEndsAt: rests ? Date.now() + DEFAULT_REST_SECONDS * 1000 : null,
     restTotal: rests ? DEFAULT_REST_SECONDS : 0,
   })
-  // The pocket case. See `rest-alarm.ts`: never throws, never awaited, so a
-  // notification framework having a bad day cannot reach the logging path.
-  syncRestAlarm(restEndsAt, rests ? DEFAULT_REST_SECONDS : 0)
   persistSet(exercise.exerciseId, setRow.setNumber, setRow.type, weightKg, reps)
 }
 
@@ -587,7 +599,6 @@ export function addExercise(
 /** Dismissed by a tap, or by the lifter deciding they are ready. */
 export function endRest(): void {
   set({ restEndsAt: null, restTotal: 0 })
-  syncRestAlarm(null)
 }
 
 /** Add or remove time without leaving the canvas. */
@@ -595,7 +606,6 @@ export function adjustRest(deltaSeconds: number): void {
   if (state.restEndsAt === null) return
   const next = Math.max(Date.now() + 1000, state.restEndsAt + deltaSeconds * 1000)
   set({ restEndsAt: next })
-  syncRestAlarm(next, state.restTotal)
 }
 
 /**
