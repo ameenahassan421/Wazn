@@ -1,0 +1,35 @@
+-- 0033: drop the function no migration ever wrote.
+--
+-- `public.workout_sets_pr_flags_trigger()` has been live in production and
+-- absent from this repo's schema for as long as 0009 has existed. 0032 found it
+-- while closing the anon surface and revoked it rather than dropping it,
+-- because destroying an object whose definition exists nowhere in version
+-- control is not a call to make inside a sweep. Ameen asked for it on
+-- 2026-08-22.
+--
+-- WHAT IT IS
+--
+-- An earlier version of the PR-flag trigger. 0009 later split that work into
+-- `workout_sets_pr_flags_insert()` and `workout_sets_pr_flags_rebuild()`, and
+-- 0009 was edited AFTER it had already been applied, so production kept the
+-- superseded function while the migration chain stopped creating it. Its full
+-- source is recorded in DECISIONS.md, which is the only place it now exists.
+--
+-- WHY IT IS SAFE
+--
+-- Nothing is bound to it. Measured on 2026-08-22 immediately before this ran:
+-- `pg_trigger` holds exactly two non-internal triggers on `workout_sets`,
+-- `workout_sets_pr_flags_ins` and `workout_sets_pr_flags_upd`, pointing at the
+-- two functions that DO exist. This one had zero.
+--
+-- NO CASCADE, DELIBERATELY
+--
+-- A plain `drop function` fails if anything depends on it. That is the point:
+-- the evidence above says nothing does, and a failure here would mean the
+-- evidence was wrong, which is worth finding out loudly rather than silently
+-- taking a dependent object down with it.
+--
+-- `if exists` because the from-empty chain never creates it, so `check:sql`
+-- would otherwise fail on a migration that is correct against production. Same
+-- reason 0032 loops over `to_regprocedure`.
+drop function if exists public.workout_sets_pr_flags_trigger();

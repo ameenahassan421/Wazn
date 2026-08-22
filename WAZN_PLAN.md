@@ -1589,6 +1589,48 @@ user-created**, no native create path, while `exercises.owner_id` exists — the
 model is there and the surface is not. A lifter whose movement is not in those
 135 cannot log it, which is a core-loop floor rather than a breadth gap.
 
+#### 0033: the orphan is gone (2026-08-22)
+
+`public.workout_sets_pr_flags_trigger()` dropped, without `cascade`, after 0032
+revoked it. Verified immediately after: the function is gone, both real triggers
+on `workout_sets` survive (`workout_sets_pr_flags_ins` and
+`workout_sets_pr_flags_upd`, pointing at `_insert` and `_rebuild`), and the 516
+PR-flagged sets are untouched.
+
+No `cascade` deliberately: a plain drop fails if anything depends on the target,
+and the evidence said nothing did. A failure would have meant the evidence was
+wrong, which is worth learning loudly. **Production is at 0033.**
+
+#### The coach cache mechanism ALREADY EXISTS and 0030 did not use it
+
+Worth writing down before anyone rebuilds it. `coach-notes/index.ts:217` keys
+the cache on THREE things, not one:
+
+```
+cached.basis_workout_at === basis &&
+cached.prompt_version === `${PROMPT_VERSION}:${unit}`
+```
+
+with `PROMPT_VERSION = 'coach-review@1'` at line 61, and a comment there
+explaining that bumping it "makes every cached row from the old shape a miss".
+
+So the stale "10 sessions ... 9 of the last 8 weeks" prose is not a missing
+mechanism. It is a mechanism nobody turned. 0030 changed what
+`weekly_review()` returns and left `PROMPT_VERSION` at `@1`, so every
+pre-0030 review still matches its own cache key.
+
+**The one-line bump is NOT safe on its own right now.** A version bump forces a
+cache miss, a miss forces a model call, and the model is currently timing out at
+the 45-second deadline. Today a lifter sees a stale-but-present review; after a
+bare bump they would see the failure card permanently. The bump has to land
+together with a stale-serving fallback on the miss path, so a dead model
+degrades to "here is the last one" rather than to nothing.
+
+That is a change to an Edge Function, which deploys to production on merge with
+no staging, and the standing rule is not to touch the coach cache without Ameen.
+Open for his decision, along with whether to stay on
+`nvidia/nemotron-3-super-120b-a12b:free` (`openrouter.ts:197`).
+
 #### "Open debugger to view warnings" was hiding a real defect (2026-08-22)
 
 That toast sat at the bottom of every Progress screenshot taken during the
