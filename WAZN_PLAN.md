@@ -1589,6 +1589,56 @@ user-created**, no native create path, while `exercises.owner_id` exists — the
 model is there and the surface is not. A lifter whose movement is not in those
 135 cannot log it, which is a core-loop floor rather than a breadth gap.
 
+#### S0 IS COMPLETE, and the device path is documented (2026-08-22)
+
+Both remaining items closed.
+
+**0037, a default is not a commitment.** F2 ranks on a COMMITTED target and the
+STEP UP trial scored accepted goals, but 0027's column is `not null default 3`,
+so "has not chosen" was not expressible. Five accounts carried 3 and no human
+picked it, so the board ranked five people against a number none of them set,
+and training twice a week deliberately read as failing.
+`weekly_target_set_at` is stamped by `upsert_user_preference`, the single
+writer, so a target cannot be set without being marked chosen. A timestamp
+rather than a boolean because S2's pact gate compares against a PRE-pact
+baseline and needs a date to split on. Existing rows stay null: nobody chose
+them, and backfilling `created_at` would manufacture the evidence the column
+exists to record honestly.
+
+**0038, the invite carries a reason.** `resolve_invite` returned a name and
+nothing else, so the landing screen could say "Ameen wants you on the board" and
+could not say what the board was. `invite_preview` returns the inviter's actual
+week, anon-callable on 0011's argument and gated on the same visibility. No
+adherence column: it is a capped sort key, one row has nothing to sort, and
+"2.00" means less than nothing to a stranger.
+
+The join screen also carried THREE hardcoded English strings outside the
+catalogue, two of which still said "Friends tab". Localised and corrected.
+
+##### Running it on a phone costs nothing, and `docs/run-on-device.md` says how
+
+Verified on this machine: a device build **succeeds unsigned** for
+`generic/platform=iOS`, so the code is device-ready and signing is the only
+remaining step.
+
+The $99 buys DISTRIBUTION (TestFlight, the App Store, handing a build to
+somebody else), not running your own app on your own device. Free provisioning
+does that with any Apple ID; the certificate lasts 7 days and rebuilding is one
+command.
+
+**Expo Go is not an option here and it is worth writing down.** `mobile/`
+depends on `expo-glass-effect`, `@expo/ui`, `expo-apple-authentication` and
+`expo-notifications`, none of which Expo Go ships on SDK 57, so it would crash
+on launch rather than degrade.
+
+The one step that cannot be scripted from a session: the project has **no
+`DEVELOPMENT_TEAM`**, and the value is specific to Ameen's Apple ID. He picks it
+once in Xcode.
+
+The rest alarm is a LOCAL notification, so it works on a free certificate. That
+matters because it is the capability the plan calls the justification for stage
+4A, and it is testable without paying anything.
+
 #### S0 SHIPPED: Crew is the fourth tab (2026-08-22)
 
 `Train · Plan · Progress · Crew`. Verified on a simulator: four labels fit at

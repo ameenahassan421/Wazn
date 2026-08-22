@@ -3,10 +3,12 @@ import { useLocalSearchParams, useRouter } from 'expo-router'
 
 import { Txt, Kick } from '@/design/Txt'
 import { Btn } from '@/components/ui/Btn'
+import { Card } from '@/components/ui/Surface'
 import { Screen } from '@/components/ui/Screen'
 import { useAuth } from '@/hooks/use-auth'
 import { useLocale } from '@/hooks/use-locale'
 import { supabase } from '@/services/supabase'
+import { fetchInvitePreview, type InvitePreview } from '@/services/crew'
 import { holdPendingInvite } from '@/services/pending-invite'
 
 /**
@@ -56,6 +58,18 @@ export default function Join() {
   const { loading, userId } = useAuth()
 
   const [inviter, setInviter] = useState<string | null>(null)
+  /*
+   * The inviter's actual week. F6: "An invite link opens on the inviter's
+   * actual week, so accepting is joining something visible rather than
+   * downloading an app on faith."
+   *
+   * A separate, anon-callable read (`invite_preview`, 0038) rather than more
+   * columns on `resolve_invite`, because that function is load-bearing for the
+   * follow flow and widening it would change what every existing caller gets.
+   * Null stays null: a link whose owner has since gone private resolves to
+   * nothing here and the screen simply does not show a week.
+   */
+  const [week, setWeek] = useState<InvitePreview | null>(null)
   const [checked, setChecked] = useState(false)
 
   /**
@@ -86,6 +100,18 @@ export default function Join() {
         if (live) setChecked(true)
       })
 
+    /*
+     * The week, on its own read and on its own failure path. It is the REASON
+     * on the invite and not the invite itself, so a preview that does not come
+     * back must not stop the name rendering or the button working: the screen
+     * degrades to what it showed before 0038 existed.
+     */
+    void fetchInvitePreview(code)
+      .then((preview) => {
+        if (live) setWeek(preview)
+      })
+      .catch(() => {})
+
     return () => {
       live = false
     }
@@ -100,7 +126,7 @@ export default function Join() {
       <Kick ink="accentSoft">{t('welcome.invited.heading')}</Kick>
 
       {inviter !== null ? (
-        <Txt step="fig">{inviter} wants you on the board.</Txt>
+        <Txt step="fig">{t('invite.wants_you', { name: inviter })}</Txt>
       ) : (
         // A code that does not resolve is not an error worth a red screen —
         // it is usually an old link. The door still opens.
@@ -112,14 +138,36 @@ export default function Join() {
         // renders as THAT INVITE HAS EXPIRED. The finding was wrong, a second
         // agent confirmed it, and it shipped — see WAZN_PLAN.md §7.0.
         <Txt step="title" style={{ textTransform: 'none' }}>
-          That invite has expired.
+          {t('invite.expired')}
         </Txt>
       )}
 
+      {/*
+        The reason, and it is the whole mechanism of an invite link.
+        A name alone asks a stranger to take the app on faith; a name plus
+        "6 sessions this week, 2.5 a week before that" shows them the thing
+        they are being asked to join. Rendered only when the preview resolved,
+        so an expired or newly-private link degrades to the name-less state
+        rather than to a row of zeros.
+      */}
+      {week !== null && (
+        <Card style={{ gap: 6 }}>
+          <Txt step="num" ltr>
+            {week.weeklyTarget === null
+              ? t('invite.week', { n: String(week.sessionsThisWeek) })
+              : t('invite.week_of', {
+                  n: String(week.sessionsThisWeek),
+                  goal: String(week.weeklyTarget),
+                })}
+          </Txt>
+          <Txt step="caption" ink="muted">
+            {t('crew.average', { avg: week.avgSessions4w.toFixed(1) })}
+          </Txt>
+        </Card>
+      )}
+
       <Txt step="body" ink="muted">
-        {signedIn
-          ? 'Open Friends to follow them back.'
-          : 'Make an account and they will be waiting on your Friends tab.'}
+        {signedIn ? t('invite.next.signed_in') : t('invite.next.signed_out')}
       </Txt>
 
       <Btn
