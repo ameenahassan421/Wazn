@@ -343,7 +343,7 @@ async function routinePlan(routineId: string): Promise<{
       ),
     supabase
       .from('exercises')
-      .select('id, name')
+      .select('id, name, equipment')
       .in(
         'id',
         rows.map((r) => r.exercise_id),
@@ -357,15 +357,20 @@ async function routinePlan(routineId: string): Promise<{
       (setCount.get(row.routine_exercise_id) ?? 0) + 1,
     )
   }
-  const nameOf = new Map(
-    ((catalogue ?? []) as { id: string; name: string }[]).map((e) => [e.id, e.name]),
-  )
+  const cat = (catalogue ?? []) as {
+    id: string
+    name: string
+    equipment: string | null
+  }[]
+  const nameOf = new Map(cat.map((e) => [e.id, e.name]))
+  const isBodyweight = new Map(cat.map((e) => [e.id, e.equipment === 'bodyweight']))
 
   return {
     name: (routine as { name: string }).name,
     plan: rows.map((r) => ({
       exerciseId: r.exercise_id,
       name: nameOf.get(r.exercise_id) ?? 'Exercise',
+      bodyweight: isBodyweight.get(r.exercise_id) === true,
       // `Math.max(1, …)` is `seedBoard`'s own floor, applied here too so a
       // routine exercise with no planned sets still gets a row to log into
       // rather than vanishing from the board.
@@ -556,9 +561,16 @@ export async function startWorkout(routineId?: string): Promise<void> {
   // Names come from the catalogue in one read rather than a join per row.
   const ids = [...new Set(previousRows.map((r) => r.exercise_id))]
   const { data: catalogue } = ids.length
-    ? await supabase.from('exercises').select('id, name').in('id', ids)
-    : { data: [] as { id: string; name: string }[] }
+    ? await supabase.from('exercises').select('id, name, equipment').in('id', ids)
+    : { data: [] as { id: string; name: string; equipment: string | null }[] }
   const nameOf = new Map((catalogue ?? []).map((e) => [e.id, e.name]))
+  /** `exercises.equipment`, which is the only honest source for this. */
+  const isBodyweight = new Map(
+    ((catalogue ?? []) as { id: string; equipment: string | null }[]).map((e) => [
+      e.id,
+      e.equipment === 'bodyweight',
+    ]),
+  )
 
   const previous = previousRows.map((r) => ({
     exerciseId: r.exercise_id,
@@ -572,6 +584,7 @@ export async function startWorkout(routineId?: string): Promise<void> {
     exerciseId: id,
     name: nameOf.get(id) ?? 'Exercise',
     sets: previousRows.filter((r) => r.exercise_id === id).length,
+    bodyweight: isBodyweight.get(id) === true,
   }))
 
   const targetKg = previousRows.reduce((total, r) => {
@@ -798,7 +811,7 @@ export function addExercise(
     previousKg: null,
     previousReps: null,
   }))
-  set({ board: [...state.board, { exerciseId, name, sets }] })
+  set({ board: [...state.board, { exerciseId, name, bodyweight, sets }] })
 }
 
 /** Dismissed by a tap, or by the lifter deciding they are ready. */

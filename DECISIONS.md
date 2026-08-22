@@ -9102,7 +9102,7 @@ Banked a set, and production now holds a workout named Upper Push with
 finishing it, the `due` ordering returns **Upper A** rather than Upper Push. The
 constant is gone.
 
-## 2026-08-22 — FOUND, NOT FIXED: a set with no history renders as a bodyweight exercise
+## 2026-08-22 — FIXED: a set with no history rendered as a bodyweight exercise
 
 `session/[id].tsx:380` computes `bodyweight = view.set.weightKg === null`, and
 hides the weight stepper entirely when true. A set seeded with no previous
@@ -9119,3 +9119,21 @@ which carries `'bodyweight'` for 42 of the 135 rows. Bodyweight is a property of
 the EXERCISE, not of a set's dialled value. That means carrying equipment onto
 `BoardExercise` and through seeding, which is a change to the logging path and
 gets its own piece of work rather than riding along with this one.
+
+**Fixed the same session.** `BoardExercise` now carries `bodyweight`, sourced
+from `exercises.equipment`, and `session/[id].tsx` reads it rather than
+inferring from the dialled value. `addExercise` already took the flag and
+encoded it lossily as `weightKg: bodyweight ? null : 0`; it now sets the field.
+
+**The test suite reverted half of the fix, correctly.** The first attempt also
+defaulted a no-history weight to 0, which failed `live-board.test.ts`'s "leaves
+a row with no history blank rather than inventing a load". That invariant is
+deliberate and the change was unnecessary: the board screen already renders a
+null as `dialled.weightKg ?? 0`, so the stepper has an origin once it is
+VISIBLE, and visibility was the entire bug. The record is untouched.
+
+**Verified on a device** by starting Core & Conditioning, whose first lift is
+Crunch (`equipment = 'bodyweight'`): the board renders REPS only and the commit
+bar reads "Log set 1 · 15 reps". The loaded-with-no-history case is covered by a
+new unit test rather than a screenshot, because this account has no routine
+containing a loaded lift it has never trained.
