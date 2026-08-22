@@ -1589,6 +1589,41 @@ user-created**, no native create path, while `exercises.owner_id` exists — the
 model is there and the surface is not. A lifter whose movement is not in those
 135 cannot log it, which is a core-loop floor rather than a breadth gap.
 
+#### THE BILLING FAILURE ALSO BLOCKS EDGE FUNCTION DEPLOYS (2026-08-22)
+
+This was filed as "CI is dark" and that framing was too small. GitHub Actions
+runs `deploy-functions.yml`, so while Actions are failing on billing, **merging
+an Edge Function change does not ship it**.
+
+Measured, not assumed. After #131 merged:
+
+|                                         |                      |
+| --------------------------------------- | -------------------- |
+| `deploy-functions.yml` run at 19:50:15Z | **failure**          |
+| last successful deploy                  | **2026-08-15**       |
+| deployed `PROMPT_VERSION`               | **`coach-review@1`** |
+| deployed code contains the fallback     | **no**               |
+| deployed code contains `refreshFailed`  | **no**               |
+
+So `main` carries `@2` plus the server fallback and production runs neither.
+That workflow's own header comment describes exactly this: "a fix for a broken
+routine generator sat merged on main while production kept serving the broken
+version, because merged and live were different things and nothing said so."
+The workflow was built to close that gap and is now the thing holding it open.
+
+**What is actually live right now:** the CLIENT fallback only, and only in a
+build made after #131. That is enough for the screen not to lose a review on a
+failed refresh, which is the part that was verified on a simulator. The version
+bump is not live, so the pre-0030 prose is still cached and Progress still shows
+a figure of 8 above a sentence saying 10.
+
+**Nothing here is worth hand-deploying around.** There is no Supabase CLI in the
+environment, and `deploy_edge_function` would mean hand-assembling the
+transitive module graph (seven direct `_shared` imports plus their own) and
+pushing it to production with no staging and no CI, to route around a billing
+problem. The current state is safe: the client degrades correctly and the server
+behaves exactly as it did yesterday. **Fixing the billing ships both.**
+
 #### The coach's sentences now survive a model outage (2026-08-22)
 
 Three findings, one fix, and the middle finding is the one worth keeping.
