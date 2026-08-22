@@ -9180,3 +9180,34 @@ board it warns about.
 FALSE COMMENT, written while explaining why one query beat six, in a file whose
 commit message said it had been verified on a device. Both statements were true
 and neither covered the claim.
+
+## 2026-08-22 — Trying Arabic and changing your mind left the app permanently mirrored
+
+`applyDirection` opened with `if (I18nManager.isRTL === rtl) return`, which
+looks like an obvious cheap short-circuit and is a bug, because the two values
+it compares are not the same thing. `isRTL` is the direction the CURRENT layout
+was built with. `forceRTL` writes the direction the NEXT one will be. Between a
+toggle and a reload they disagree ON PURPOSE, and that is exactly the window the
+guard misfired in.
+
+The sequence, seen on a simulator: switch to Arabic, so the native flag goes
+true while `isRTL` stays false because nothing has rebuilt yet. Switch back to
+English before any reload. `rtl` is false, `isRTL` is still false, the guard
+matches, and **`forceRTL(false)` is never called**. The flag is left true, and
+the next cold launch renders English strings in a mirrored layout — and stays
+that way, because every later English toggle hits the same guard.
+
+So a lifter who tries Arabic, decides against it, and switches back inside one
+session gets a permanently mirrored English app. Both calls are cheap and
+idempotent, so the fix is to always make them and let the last one win.
+
+**Found by accident, which is the part worth keeping.** Nobody was testing
+locale. The app was left in Arabic after verifying the rest-alarm translation,
+switched back, and eight screens later the layout was still mirrored. It only
+became visible because a whole evening of work happened between the toggle and
+the next cold launch. A tester switching languages deliberately would flip, look,
+flip back, look, and see nothing wrong either time.
+
+**Verified by reproducing it exactly:** toggled ar then en inside one session,
+cold launched, and the app came up LTR with English. Before the fix the same
+sequence left it mirrored.

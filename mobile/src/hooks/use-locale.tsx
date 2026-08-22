@@ -63,10 +63,30 @@ function deviceLanguage(): string {
  * `allowRTL` has to come first. `forceRTL(true)` is ignored while RTL is
  * disallowed, which is the default in a bundle built from an LTR project, and
  * the failure mode is a flag that reads as set and does nothing.
+ *
+ * ── AND THERE IS NO `isRTL` GUARD, WHICH IS THE WHOLE POINT ─────────────────
+ * This began `if (I18nManager.isRTL === rtl) return`, which looks like an
+ * obvious cheap short-circuit and is a bug, because the two values it compares
+ * are not the same thing. `isRTL` is the direction the CURRENT layout was
+ * built with. `forceRTL` writes the direction the NEXT one will be. Between a
+ * toggle and a reload they disagree on purpose, and that is exactly the window
+ * the guard misfired in.
+ *
+ * The sequence, seen on a simulator on 2026-08-22: switch to Arabic, so the
+ * native flag goes true while `isRTL` stays false because nothing has rebuilt
+ * yet. Switch back to English before any reload. `rtl` is false, `isRTL` is
+ * still false, the guard matches, and `forceRTL(false)` is NEVER CALLED. The
+ * native flag is left true. The next cold launch renders English strings in a
+ * mirrored layout, and stays that way, because every subsequent English toggle
+ * hits the same guard.
+ *
+ * A lifter who tries Arabic, decides against it and switches back inside the
+ * same session gets a permanently mirrored English app. Both calls are cheap
+ * and idempotent, so the fix is simply to always make them and let the last
+ * one win.
  */
 function applyDirection(locale: Locale) {
   const rtl = locale === 'ar'
-  if (I18nManager.isRTL === rtl) return
   I18nManager.allowRTL(rtl)
   I18nManager.forceRTL(rtl)
 }
