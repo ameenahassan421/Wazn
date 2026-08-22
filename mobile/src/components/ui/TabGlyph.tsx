@@ -16,7 +16,7 @@ import { palette } from '@wazn/domain'
  * "PROGRESS" wraps onto two lines. Seen on a simulator at 402pt, which is why
  * this list is a bounded set rather than a place to append to.
  */
-export const TABS = ['index', 'plan', 'history', 'progress'] as const
+export const TABS = ['index', 'plan', 'progress'] as const
 export type TabKey = (typeof TABS)[number]
 
 /**
@@ -32,7 +32,6 @@ export type TabKey = (typeof TABS)[number]
 export const TAB_KEY: Record<TabKey, string> = {
   index: 'nav.log',
   plan: 'nav.plan',
-  history: 'nav.history',
   progress: 'nav.progress',
 }
 
@@ -51,7 +50,8 @@ export const TAB_KEY: Record<TabKey, string> = {
  * spent on the rail alone, which is the one piece of chrome up here.
  */
 /*
- * The `body`, `coach` and `friends` marks were here until 2026-08-21 and went
+ * The `history`, `body`, `coach` and `friends` marks were here until
+ * 2026-08-21 and went
  * with their tabs. They are in `git log` if a screen earns the bar back —
  * `friends` is the likely one, as Crew at S1 — and keeping three unreachable
  * drawings against that day is how a file grows a museum. The union above
@@ -74,25 +74,6 @@ export function TabGlyph({ tab, on }: { tab: TabKey; on: boolean }) {
             borderColor: ink,
           }}
         />
-      )
-    // The same plate with a hub: a record of one that has been racked.
-    case 'history':
-      return (
-        <View
-          style={{
-            height: 14,
-            width: 14,
-            borderRadius: 7,
-            borderWidth: 2,
-            borderColor: ink,
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          <View
-            style={{ height: 4, width: 4, borderRadius: 2, backgroundColor: ink }}
-          />
-        </View>
       )
     /*
      * Three plates in a row with the first one loaded: the rotation, and which

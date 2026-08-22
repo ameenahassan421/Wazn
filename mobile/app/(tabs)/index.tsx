@@ -7,6 +7,7 @@ import {
   formatVolume,
   muscleLabel,
   palette,
+  space,
   type CheckIn,
 } from '@wazn/domain'
 
@@ -78,6 +79,7 @@ function weekday(locale: string): string {
 export default function LogHome() {
   const router = useRouter()
   const [briefDown, setBriefDown] = useState(false)
+  const [historyDown, setHistoryDown] = useState(false)
   const { t, locale } = useLocale()
   const { unit, ready: unitReady } = useUnit()
   const home = useHome()
@@ -219,12 +221,50 @@ export default function LogHome() {
           so it sits after the content instead. That is a real difference and
           the alternative is worse: a CTA absolutely positioned over a scroll
           view covers the last card on a small phone. */}
-      <View style={{ paddingTop: 14, paddingBottom: 12 }}>
-        <HeroBtn
-          label={t('today.start_workout')}
-          leading={<Plate size={20} color={palette.onInk} />}
-          onPress={() => router.push('/session/new')}
-        />
+      {/* The CTA, and the History circle beside it.
+          History came off the tab bar on 2026-08-21 (FRIENDS_PLAN Part 3B:
+          "keep the History circle beside Start as the fast door", which the
+          2026-08-13 audit called the one piece of navigation worth keeping as
+          furniture). Without this the screen is unreachable — native has no
+          `npm run shots` to notice. The circle is 58 to match the CTA's height
+          and it is the plate-with-a-hub, the same mark the tab carried. */}
+      <View
+        style={{
+          flexDirection: 'row',
+          gap: 10,
+          alignItems: 'center',
+          paddingTop: 14,
+          paddingBottom: 12,
+        }}
+      >
+        <View style={{ flex: 1 }}>
+          <HeroBtn
+            label={t('today.start_workout')}
+            leading={<Plate size={20} color={palette.onInk} />}
+            onPress={() => router.push('/session/new')}
+          />
+        </View>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={t('nav.history')}
+          onPressIn={() => setHistoryDown(true)}
+          onPressOut={() => setHistoryDown(false)}
+          onPress={() => router.push('/history')}
+          // Static, never `({ pressed }) => ...` — see `Btn.tsx`.
+          style={{
+            width: space.cta,
+            height: space.cta,
+            borderRadius: space.cta / 2,
+            borderWidth: 1,
+            borderColor: palette.ring,
+            backgroundColor: palette.card,
+            alignItems: 'center',
+            justifyContent: 'center',
+            opacity: historyDown ? 0.6 : 1,
+          }}
+        >
+          <Plate size={22} variant="hub" color={palette.ink} />
+        </Pressable>
       </View>
     </Screen>
   )

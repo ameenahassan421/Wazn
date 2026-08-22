@@ -1357,7 +1357,22 @@ sentence rendered as "OUT OF VOLUME, RECORDS AND THE COACH." Prose, shouted, in
 the typeface reserved for plate maths. It is the same defect as the offline
 queue line fixed on 2026-08-19, in the same file. `caption` now.
 
-#### Step 3 has started: four tabs, and Plan is the one that was missing (2026-08-21)
+#### Step 3 is DONE: three tabs (2026-08-21)
+
+The bar is `Train · Plan · Progress`. History came off it and kept the circle
+beside Start; Coach is behind the brief card; Body and Friends are Settings
+rows. Verified on a simulator — every door was pressed, not reasoned about.
+
+**Body did NOT fold into Progress, and that is a timing deviation, not a
+rejection.** Native's Body screen is a weigh-in field with no chart, measurements
+and protein were never built there, and `body_weights` holds one row. A Progress
+card on one row is a permanent empty state, which is the stub problem Part 3B
+itself objects to. It folds when there is a series worth drawing. DECISIONS.md
+has the reasoning.
+
+**The remaining shape:** Crew becomes the fourth tab at S1, per the plan.
+
+#### Step 3 started here: four tabs, and Plan is the one that was missing (2026-08-21)
 
 The bar is `Train · Plan · History · Progress`. `FRIENDS_PLAN` Part 3B's
 endpoint is `Train · Plan · Progress · Crew` with Crew gated on S1; History
