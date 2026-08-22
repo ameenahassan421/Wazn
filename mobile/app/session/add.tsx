@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { ActivityIndicator, Pressable, ScrollView, TextInput, View } from 'react-native'
-import { useRouter } from 'expo-router'
+import { useLocalSearchParams, useRouter } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { palette, radius, searchByName, space } from '@wazn/domain'
@@ -12,6 +12,7 @@ import { useLocale } from '@/hooks/use-locale'
 import { tick } from '@/services/haptics'
 import { fetchCatalogue, type CatalogueExercise } from '@/services/exercises'
 import { addExercise } from '@/state/live-workout'
+import { addDraftExercise } from '@/state/routine-draft'
 
 /**
  * Put a lift on the board.
@@ -35,6 +36,17 @@ import { addExercise } from '@/state/live-workout'
  */
 export default function AddExercise() {
   const router = useRouter()
+  /*
+   * Who asked. Absent means the live board, which is what this screen was
+   * built for; `routine` means the editor, which is a different destination
+   * for the same act of picking a lift.
+   *
+   * A param rather than a second copy of this screen. The catalogue read, the
+   * shared `searchByName`, the two distinct empty states and the offline
+   * argument are all identical for both callers, and the only thing that
+   * differs is one function call in `choose`.
+   */
+  const { to } = useLocalSearchParams<{ to?: string }>()
   const insets = useSafeAreaInsets()
   const { t } = useLocale()
 
@@ -63,10 +75,20 @@ export default function AddExercise() {
 
   function choose(exercise: CatalogueExercise) {
     tick()
-    // The equipment decides whether this lift has a weight dial at all. A
-    // null `weightKg` means "bodyweight" to the board, so guessing here would
-    // hide the dial on a barbell lift.
-    addExercise(exercise.id, exercise.name, exercise.equipment === 'bodyweight')
+    if (to === 'routine') {
+      /*
+       * No equipment flag. A routine stores WHICH lift and HOW MANY sets, and
+       * whether that lift is bodyweight is re-read from the catalogue when a
+       * session is started from it. Copying the flag into the routine would be
+       * a second place for it to be wrong.
+       */
+      addDraftExercise(exercise.id, exercise.name)
+    } else {
+      // The equipment decides whether this lift has a weight dial at all. A
+      // null `weightKg` means "bodyweight" to the board, so guessing here would
+      // hide the dial on a barbell lift.
+      addExercise(exercise.id, exercise.name, exercise.equipment === 'bodyweight')
+    }
     router.back()
   }
 
@@ -74,16 +96,25 @@ export default function AddExercise() {
     <View
       style={{ flex: 1, backgroundColor: palette.paper, paddingTop: insets.top + 10 }}
     >
+      {/* `space-between`, and the title lost its `flex: 1`, on 2026-08-22.
+          In Arabic the flexed Text swallowed the row's free space without
+          putting its own content on the start edge, so this header rendered
+          with the title floating mid-left and two thirds of the row empty.
+          Shipped that way, and found only because the routine editor copied
+          the pattern and got looked at in Arabic. */}
       <View
         style={{
           flexDirection: 'row',
           alignItems: 'center',
+          justifyContent: 'space-between',
           gap: 12,
           paddingHorizontal: space.gutter,
           paddingBottom: 12,
         }}
       >
-        <Txt step="cta" style={{ flex: 1 }}>
+        {/* `flexShrink`, not `flex`: bounded without claiming the free space,
+            so a longer translation cannot push Cancel off the screen. */}
+        <Txt step="cta" numberOfLines={1} style={{ flexShrink: 1 }}>
           {t('log.add_exercise')}
         </Txt>
         <Pressable

@@ -94,7 +94,10 @@ export function Empty({
   line: string
   /** The one thing to do, when there is one. Not every empty state has one:
    *  Progress's answer is "log a workout", which is not a button that belongs
-   *  on Progress. */
+   *  on Progress.
+   *
+   *  A `Btn` here needs `style={{ alignSelf: 'center' }}`: it sets its own
+   *  `alignSelf` to `flex-start`, which beats the `alignItems` below. */
   children?: React.ReactNode
 }) {
   return (

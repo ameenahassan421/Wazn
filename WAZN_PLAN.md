@@ -751,6 +751,81 @@ was nine commits stale on 2026-08-19 and said so nowhere; PRs #103 through #106 
 code and none of them touched this file. Three hooks now make that visible and expensive
 (see "How this block stays true", last in this section).
 
+#### DONE 2026-08-22: routines can be WRITTEN, and the Plan tab is no longer read-only
+
+Step 3 of the agreed order. `mobile/app/routine/[id].tsx` creates and edits; `/routine/new`
+is the create path and `/routine/<id>` the edit path, both reached from the Plan tab (a
+`line` button under the list, the `hero` CTA inside the empty state, and an Edit beside Start
+in every expanded card).
+
+**Why this was the gap that mattered.** All 386 routine rows in production came from the Hevy
+import. Nothing in either app had ever written one, so an account that did not import from
+Hevy had a Plan tab that could only say "No routines yet", a coach whose rotation had nothing
+to rotate, and no way at all to reach the start-from-routine path that shipped the day before.
+
+**A name, an ordered list of lifts, and a set count. No weight field and no rep field**, and
+their absence is the design rather than a stage of it: `startWorkout(routineId)` takes
+STRUCTURE from the routine and VALUES from the lifter's real history, and `routinePlan`
+selects one column off `routine_sets` and counts the rows. A weight typed into a form months
+ago and rendered under "last time" would be the app inventing a history, so there is nothing
+for a weight field to feed.
+
+Three pieces, and the split is the same one every other service here makes:
+
+- `mobile/src/state/routine-draft.ts`, a module store on the `live-workout.ts` pattern. It
+  exists because the exercise PICKER is a separate route: `router.back()` carries no payload,
+  so the picker writes into the store exactly as it already does for the live board. One
+  `to=routine` param on `session/add.tsx` chooses the destination; there is no second picker.
+- `loadDraft` / `saveRoutine` / `deleteRoutine` in `mobile/src/services/routines.ts`, which
+  until today exported one function and was the proof the tab was read-only.
+- `draftChildRows` back in the draft module, so the one part worth pinning can be tested.
+  `services/routines.ts` imports the Supabase client, which imports `react-native`, which
+  vitest cannot parse; anything in that file is unreachable from a test.
+
+**`/code-review` found fifteen, ten were fixed, and two of them were data loss.** The rule
+Ameen set on 2026-08-22 has now paid for itself twice in two days.
+
+1. **A failed load left the previous routine's draft on screen, and Save wrote to it.** The
+   store outlives the screen by design. On a null or rejected `loadDraft` nothing re-seeded
+   it, so opening routine B offline after editing routine A rendered A's name, A's lifts and
+   A's id under B's heading, and Save rewrote A. Fixed with a `loadFailed` state that draws
+   the error and no form.
+2. **The edit path deleted every child row before inserting the replacements.** There is no
+   transaction in PostgREST, so a dropped signal in that window left the routine with zero
+   exercises, which `routinePlan` reads as "no plan" and silently replaces with the last
+   session. Now the stale ids are read first, the new rows go in, the old ones are deleted
+   last by id, and a failure in between removes what this save added and rethrows.
+
+The atomic version is one `save_routine(jsonb)` RPC. That is a migration, and a migration is
+a production change Ameen approves, so it is logged in DECISIONS.md rather than smuggled into
+a UI branch.
+
+**Two RTL defects, both found by turning the app to Arabic on a simulator, both older than
+this work.**
+
+- The picker's header put its title on a `flex: 1` Text. In Arabic that swallows the row's
+  free space without putting its content on the start edge, so the title floated mid-left
+  with two thirds of the row empty. Adding `justifyContent: space-between` changed nothing
+  (the flex had already consumed everything there was to distribute); dropping the flex is
+  what fixes it. `flexShrink: 1` and `numberOfLines={1}` keep the bound the flex used to give.
+- The Settings chevron pointed at the ceiling. `borderEndWidth` is logical and is already the
+  LEFT border on an RTL build, so the `scaleX: -1` beside it was a second mirror. One flip,
+  carried by the rotation, not two.
+
+Both had shipped. Neither is expensive; the point is that nothing except a screenshot in the
+other direction was ever going to find them.
+
+Also on the way through: `check_routes.mjs` only matched navigation targets in `'` or `"`
+quotes, so `router.push(`/routine/${r.id}`)` was skipped entirely. The one form that actually
+needs a param was the one form nothing checked. Backticks are in the class now and `${...}`resolves to a wildcard segment; proved by pointing it at`/routinez/` and watching it fail.
+
+**Not verified against a signed-in account.** The simulator has no session and this session
+cannot create one (entering credentials is out of bounds), so every screenshot above is the
+empty-data path plus a seeded in-memory draft. Layout, copy, RTL, the stepper bounds and the
+reorder are verified on a device; the save, edit and delete ROUND TRIPS are verified only by
+`draftChildRows`'s tests and by reading the SQL. Ameen signing in once on the simulator
+closes that gap and every future one.
+
 #### DONE 2026-08-21: the Coach tab's weekly review draws figures, not four paragraphs
 
 The review's four notes were four identical white boxes, each a numbered kicker, a sentence

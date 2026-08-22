@@ -73,8 +73,20 @@ function matches(target, route) {
   )
 }
 
+/**
+ * Backticks are in the quote class, and they were not until 2026-08-22.
+ *
+ * `router.push(`/routine/${r.id}`)` is the natural way to navigate to a
+ * dynamic route and this regex skipped it entirely — so the ONE form of
+ * navigation that actually needs a param, and the one most likely to name a
+ * route that does not exist, was the one form nothing checked. A checker that
+ * silently ignores a whole syntax reads exactly like a checker that passed.
+ *
+ * The interpolations themselves are replaced with a placeholder below, since
+ * a `[param]` segment matches any non-empty string anyway.
+ */
 const NAV_RE =
-  /(?:router\.(?:push|replace|navigate)|<Link[^>]*\shref=)\s*\(?\s*['"](\/[^'"]*)['"]/g
+  /(?:router\.(?:push|replace|navigate)|<Link[^>]*\shref=)\s*\(?\s*['"`](\/[^'"`]*)['"`]/g
 
 const problems = []
 const sources = [...walk(APP), ...walk(join(ROOT, 'src'))].filter((f) =>
@@ -84,8 +96,13 @@ const sources = [...walk(APP), ...walk(join(ROOT, 'src'))].filter((f) =>
 for (const file of sources) {
   const src = readFileSync(file, 'utf8')
   for (const [, target] of src.matchAll(NAV_RE)) {
-    // A query string or hash is not part of the route.
-    const path = target.split(/[?#]/)[0].replace(/\/$/, '') || '/'
+    // A query string or hash is not part of the route, and `${...}` in a
+    // template literal is whatever a `[param]` segment would have matched.
+    const path =
+      target
+        .split(/[?#]/)[0]
+        .replace(/\$\{[^}]*\}/g, 'x')
+        .replace(/\/$/, '') || '/'
     if (!routes.some((r) => matches(path, r))) {
       problems.push(
         `${relative(ROOT, file)} navigates to "${target}", which is not a route`,

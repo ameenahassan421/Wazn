@@ -257,6 +257,13 @@ export default function RootLayout() {
                       name="settings"
                       options={{ animation: 'slide_from_right' }}
                     />
+                    {/* The routine editor. Pushed, not a modal: it is a place
+                      you go and come back from, and the swipe-down a modal
+                      invites would discard a half-written routine by reflex. */}
+                    <Stack.Screen
+                      name="routine/[id]"
+                      options={{ animation: 'slide_from_right' }}
+                    />
                   </Stack.Protected>
 
                   {/* Signed out. `join/[code]` is deliberately OUTSIDE the guard:
