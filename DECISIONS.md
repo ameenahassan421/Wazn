@@ -8840,3 +8840,39 @@ nothing for the import case, so it fixes the smaller half.
 **The immediate remedy is a button, not a deploy.** Pressing REGENERATE on the
 Coach screen rebuilds the note against current data. Logging any real workout
 does the same for free.
+
+## 2026-08-21 — Step 3 finishes at three tabs, and Body's fold is a deletion that has nothing to delete
+
+**The bar is `Train · Plan · Progress`.** History came off it and kept the
+circle beside Start, which is what `FRIENDS_PLAN` Part 3B asked for by name and
+what the 2026-08-13 audit called the one piece of navigation worth keeping as
+furniture. Verified on a simulator: the circle opens History, and the bar
+correctly shows no active tab, because History is a route rather than a tab.
+
+**Body did not fold into Progress, and the plan's own reasoning is why.**
+Part 3B says Body folds in "mostly by deletion" — body weight becomes one more
+chart card, measurements and protein get cut. On native there is nothing to
+move and nothing to cut:
+
+- `mobile/app/(tabs)/body.tsx` is a weigh-in FIELD and a list of numbers. It has
+  no chart. Its own header comment says so.
+- Measurements and protein were never built on native at all. They exist in
+  `src/lib/body.ts` and migration 0027 and have no native surface.
+- `body_weights` holds **one** row.
+
+A Progress card built on one row renders an empty state permanently, which is
+the stub problem Part 3B objects to two paragraphs earlier when it argues Crew
+should not be a tab. So Body keeps its screen and its Settings door until there
+is a series worth drawing. **The deviation is the timing, not the destination.**
+
+**Four tab marks are now deleted** — history, body, coach, friends. Each was
+found by the `TabKey` union turning its `case` arm into a type error, which is
+the third time that union has caught a stale drawing this session.
+
+**Noted while verifying, not fixed:** the two 0-set workouts created by this
+session's Start testing sit at the top of History as sessions, with "0 sets" and
+a 0 lbs volume figure. They are the same rows that pin the coach's cache and
+inflate `sessions_this_week` to 7. There is a coherent claim underneath all
+three symptoms — **an empty workout is not a session and the app counts it as
+one** — but the fix spans `weekly_review()` and `session_brief()`, which is a
+migration, which is Ameen's call under §2.6.
