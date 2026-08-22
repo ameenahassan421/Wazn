@@ -1589,6 +1589,163 @@ user-created**, no native create path, while `exercises.owner_id` exists — the
 model is there and the surface is not. A lifter whose movement is not in those
 135 cannot log it, which is a core-loop floor rather than a breadth gap.
 
+#### S0 SHIPPED: Crew is the fourth tab (2026-08-22)
+
+`Train · Plan · Progress · Crew`. Verified on a simulator: four labels fit at
+402pt with no wrapping, which the seven-tab warning in `TabGlyph.tsx` was about
+rather than four.
+
+**The board works at n=1 and that is the whole point.** Ameen's real row reads
+**"You — 6 of 3"** with a full ember bar and "2.5 a week over the last four"
+under it. The target stepper sits below at 3, with the one sentence that makes
+F2's decision visible: "The board ranks on hitting your own number, not on how
+much you lift." A lifter cannot tell adherence from volume by looking, so the
+screen has to say it.
+
+What it replaced: a 24-line stub whose only string was hardcoded English
+("A leaderboard of one. Invite someone to chase.") outside the catalogue, so the
+one screen about other people was the one screen unreadable in Arabic.
+
+**The invite line is not an `Empty` card**, deliberately. The board above it is
+real and full; a 64px ring glyph announcing an absence would contradict the
+screen it sits under. F6: the invite is an addition to a working screen, never
+the price of entry to a blank one.
+
+##### The crew glyph was drawn twice
+
+The first was three discs in a ROW at different fills, and its comment claimed
+it was "distinct by fill rather than by shape". On a simulator it was
+indistinguishable from `plan`, which is also three discs in a row: PLAN read as
+a dot and two rings, CREW as a dot, a ring and a ring. **At 14px fill is not a
+distinction.** The eye reads the silhouette, and both silhouettes were one
+horizontal line of three circles.
+
+Same class as the side-on barbell that read as a capital `H`, and caught the
+same way, which is the only way these are ever caught: by looking at the bar
+instead of at the source. Redrawn as a triangle cluster, one disc above two,
+which is a different silhouette at any size and the better meaning: a crew is a
+group seen at once, and `plan` owns the row because a rotation IS a sequence.
+
+##### Still open in S0
+
+The reasoned invite. `join/[code]` exists as a route and `resolve_invite` is the
+one deliberately anon-callable function, but nothing generates a code yet, and
+F6 wants the link to open on the inviter's actual week rather than on a signup
+form.
+
+#### 0035: the weekly target already existed and 0030 added a second one
+
+Caught while wiring the Week Board, before any screen was built on it.
+
+`0027_body_and_coach.sql:206` created
+`user_preferences.weekly_target integer not null default 3`, and gave
+`upsert_user_preference` a branch for it, wired to `coach-context.tsx` on the
+web. Three migrations later 0030 added `profiles.weekly_target smallint` with a
+paragraph of justification and no check that the column already existed.
+
+Measured before the fix:
+
+|                                      |                   |
+| ------------------------------------ | ----------------- |
+| `user_preferences.weekly_target` set | **5 rows**, all 3 |
+| `profiles.weekly_target` set         | **0 rows**        |
+
+0034's `week_board()` read the empty one. The board would have reported "no
+target committed" for five people who have committed to three a week, and
+silently ranked everyone on their baseline instead. **This is the same failure
+shape as the e1rm grant: a confident paragraph written without checking the
+premise.**
+
+0035 points the function at `user_preferences` and drops the duplicate.
+`user_preferences` wins because it has the rows and the writer; the visibility
+argument for `profiles` is answered by `week_board()` being `security definer`
+and returning only the integer, never the preference row.
+
+**One semantic change worth deciding later.** 0027's column is
+`not null default 3`, so "has not committed" is not representable: everyone has
+3 from the moment a preferences row exists. The board therefore ranks a DEFAULT
+as though it were a commitment, and FRIENDS_PLAN F2 is explicit that ranking is
+on a _committed_ target. The fix is a chosen-flag or a null state on 0027's
+column, not a second column. Logged in DECISIONS.md, not smuggled into 0035.
+
+Verified after applying: the duplicate column is gone, the 5 real targets are
+intact, `anon` cannot execute `week_board()` and `authenticated` can, and 35
+migrations execute from empty with the privilege sweep passing.
+
+#### PARKED: the free model eats the entire client budget (2026-08-22)
+
+Not fixed, deliberately, and worth picking up when the coach matters again.
+Ameen confirmed the OpenRouter account HAS paid credit, so "no credit" is not
+the explanation and the investigation should not restart there.
+
+The arithmetic is the problem. `openrouter.ts` sets one `TIMEOUT_MS = 45_000`
+and applies it PER ATTEMPT, and `chat()` tries the free model then the paid one:
+
+|                                                     |             |
+| --------------------------------------------------- | ----------- |
+| server, free attempt                                | 45s         |
+| server, paid attempt                                | another 45s |
+| **server worst case**                               | **90s**     |
+| **client deadline** (`coach.ts` `MODEL_TIMEOUT_MS`) | **45s**     |
+
+So when the free model is rate-limited and hangs, the client has always given up
+before the paid attempt gets a turn, even with credit and a valid slug. Both
+`nvidia/nemotron-3-super-120b-a12b:free` and `moonshotai/kimi-k2.5` were
+confirmed present in OpenRouter's public model list on 2026-08-22, so neither
+slug is stale.
+
+The free attempt is an OPTIMISATION, and `openrouter.ts:296` already says so:
+"An optimisation that fails should cost latency, never the result." Letting it
+consume the whole budget is exactly that failure. The fix is a shorter leash on
+the free attempt (roughly 12s) and the remainder for the paid one, so both fit
+inside the client's 45s.
+
+Two things make this safe to leave parked. The figures on Progress come from
+SQL and never depended on the model, and #131 means a failed generation now
+serves the last review with a note instead of an error card. The symptom is
+stale sentences, not a broken screen.
+
+Also unexamined: `breakerIsOpen` may now be latched, which would make every
+attempt fail in microseconds rather than hanging. Check that before concluding
+anything from a fast failure.
+
+#### S0 begins: the board was ranked on the wrong thing (2026-08-22)
+
+`weekly_leaderboard()` ends with `order by 4 desc`, where column 4 is
+`volume_kg`. `docs/FRIENDS_PLAN.md` F2 names that as the thing to break from:
+
+> Volume is won by whoever trains longest and heaviest, which means it is won by
+> the same person every week.
+
+The STEP UP trial is the evidence. Its competition arm was the only durable one
+and it was scored on adherence to each participant's OWN baseline-derived goal.
+A volume leaderboard reproduces the arm that did not last.
+
+**0034 adds `week_board()`**, ranked on sessions against each person's own
+`weekly_target`, falling back to their own four-week baseline when no target is
+set. Applied and verified: `anon` false, `authenticated` true, no PUBLIC entry
+in `proacl`, and 34 migrations still execute from empty with the privilege
+sweep passing.
+
+It also carries 0030's rule that a workout with no sets is not a session, which
+`weekly_leaderboard()` does not. Without that, Crew and Progress would report
+different session counts for the same week.
+
+**The solo case is the only case that exists.** Measured before writing it:
+9 profiles, ONE follow row, and ZERO rows with `weekly_target` set. A board that
+needed a crew or a target would be blank for every account in production. Ameen's
+real row reads **6 sessions this week against a 2.5/week average**, which is
+exactly the comparison F6 asks the empty state to make.
+
+`adherence` is capped at 2.0 so one person doing eight against a target of two
+cannot lap a crew that all hit their own numbers. That cap is for RANKING only:
+the row renders the honest "6 vs 2.5" rather than the capped ratio.
+
+Still to build for S0: a way to set `weekly_target` (native has no consumer for
+the column at all), the Crew screen itself (currently a 24-line stub whose one
+string is hardcoded English rather than localized), the fourth tab, and the
+reasoned invite.
+
 #### THE BILLING FAILURE ALSO BLOCKS EDGE FUNCTION DEPLOYS (2026-08-22)
 
 This was filed as "CI is dark" and that framing was too small. GitHub Actions
