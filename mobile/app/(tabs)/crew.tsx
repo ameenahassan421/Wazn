@@ -1,9 +1,10 @@
 import { useCallback, useState } from 'react'
-import { Pressable, View } from 'react-native'
+import { Pressable, Share, View } from 'react-native'
 import { useFocusEffect } from 'expo-router'
 
 import { palette, radius, space } from '@wazn/domain'
 
+import { Btn } from '@/components/ui/Btn'
 import { Card, Rule } from '@/components/ui/Surface'
 import { Screen } from '@/components/ui/Screen'
 import { Header } from '@/components/ui/Header'
@@ -14,6 +15,8 @@ import {
   TARGET_MAX,
   TARGET_MIN,
   fetchBoard,
+  getOrCreateInviteCode,
+  inviteUrl,
   setWeeklyTarget,
   type BoardRow,
 } from '@/services/crew'
@@ -176,6 +179,8 @@ export default function CrewScreen() {
   )
   /** The last target write failed and the number on screen was put back. */
   const [targetError, setTargetError] = useState(false)
+  const [inviting, setInviting] = useState(false)
+  const [inviteError, setInviteError] = useState(false)
 
   /*
    * On focus, not on mount. Finishing a workout changes this week's count, and
@@ -280,13 +285,50 @@ export default function CrewScreen() {
               </Card>
             )}
 
+            {/* Not an `Empty` card. The board above is real and full, so a
+                64px ring glyph announcing an absence would contradict the
+                screen it sits under. F6: the invite is an addition to a
+                working screen, never the price of entry to a blank one. */}
             {rows.length === 1 && (
-              /* Not an `Empty` card. The board above is real and full, so a
-                 64px ring glyph announcing an absence would contradict the
-                 screen it sits under. F6: the invite is an addition to a
-                 working screen, never the price of entry to a blank one. */
               <Txt step="caption" ink="muted" style={{ marginTop: 2 }}>
                 {t('crew.alone')}
+              </Txt>
+            )}
+
+            {/*
+              The invite, and it is `line` rather than `hero`: the ember on this
+              screen belongs to a met target in the board above. Inviting is the
+              rarer act and it is not what the screen is for.
+
+              The share sheet carries the LINK, and the link opens on the
+              inviter's actual week (0038's `invite_preview`), which is F6's
+              "the invite carries a reason". A bare "join my app" asks for
+              trust; this shows the thing being joined.
+            */}
+            <Btn
+              kind="line"
+              full
+              label={inviting ? t('crew.invite.working') : t('crew.invite')}
+              disabled={inviting}
+              onPress={() => {
+                if (inviting) return
+                setInviting(true)
+                setInviteError(false)
+                void getOrCreateInviteCode()
+                  .then(async (code) => {
+                    const url = inviteUrl(code)
+                    /* `message` AND `url`: iOS reads `url` and Android reads
+                       `message`, and passing only one silently shares nothing
+                       on the other platform. */
+                    await Share.share({ message: t('crew.invite.body', { url }), url })
+                  })
+                  .catch(() => setInviteError(true))
+                  .finally(() => setInviting(false))
+              }}
+            />
+            {inviteError && (
+              <Txt step="caption" ink="muted">
+                {t('crew.invite.failed')}
               </Txt>
             )}
           </>
