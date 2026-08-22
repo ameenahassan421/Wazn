@@ -1,0 +1,41 @@
+-- 0031: the revoke 0030 thought it had already done.
+--
+-- 0030 shipped `public.e1rm` with `revoke execute ... from anon` and the
+-- function was still callable by a signed-out request. Caught only because the
+-- privilege was read back after applying to production on 2026-08-22:
+-- `apply_migration` had already answered `{"success": true}`.
+--
+--   proacl                              {=X/postgres,postgres=X,authenticated=X,service_role=X}
+--   has_function_privilege('anon', …)   true
+--
+-- TWO grants reach anon, and both have to go. Postgres grants EXECUTE on every
+-- new function to PUBLIC by default, which is the `=X/postgres` entry with an
+-- empty grantee. Supabase then grants anon, authenticated and service_role
+-- directly on top via `alter default privileges`.
+--
+-- ── THE REPO ALREADY KNEW THIS, AND ONE COMMENT UNLEARNED IT ────────────────
+-- This is not a fact nobody here had. `0007_progress_analytics.sql` states it
+-- in plain words and has since 2026:
+--
+--   "revoke from public first, since functions are created with execute
+--    granted to public by default."
+--
+-- and revokes `from public, anon` in a single statement. 0006, 0011, 0012 and
+-- 0021 all follow the same posture.
+--
+-- Then 0027 revoked three functions from `public` and forgot `anon`. 0028
+-- diagnosed the leftover anon grant correctly, but wrote down the wrong REASON
+-- for it: "Supabase does not grant EXECUTE through PUBLIC … and the first line
+-- is a no-op." That sentence contradicts 0007 and it is the one 0030 read.
+--
+-- So the failure is not that this was hard. It is that a correct rule stated in
+-- 0007 was overwritten by a confident wrong explanation in 0028, and nothing in
+-- the repo asserted the end state either way. `supabase/tests/coach_surfaces.sql`
+-- now does, including a check that catches a NEW function shipping open rather
+-- than only the six this one names.
+--
+-- Asserted after applying, not inferred from a success flag:
+--   proacl                                       {postgres=X,authenticated=X,service_role=X}
+--   has_function_privilege('anon', …)            false
+--   has_function_privilege('authenticated', …)   true
+revoke execute on function public.e1rm(numeric, integer) from public;

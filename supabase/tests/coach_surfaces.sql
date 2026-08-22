@@ -426,4 +426,129 @@ begin
 end
 $$;
 
+
+-- ── Privileges, asserted rather than assumed ─────────────────────────────────
+--
+-- CLAUDE.md: "A test that asserts behaviour will never catch a grant that reads
+-- correctly and does nothing. Assert the privilege." Nothing in this repo did,
+-- and on 2026-08-22 that cost a real defect: 0030 shipped `public.e1rm` with
+-- `revoke execute ... from anon` and left it anon-callable, because a new
+-- function also carries Postgres's own default grant to PUBLIC (the
+-- `=X/postgres` entry with an empty grantee) and anon resolves through it.
+--
+-- `0007_progress_analytics.sql:122` had the rule right and 0028 overwrote it
+-- with a wrong explanation. The lesson is not "write better comments", it is
+-- that no comment is load-bearing once the end state is asserted.
+--
+-- `scripts/pg_shim.sql` mirrors both grants (Postgres's PUBLIC default plus the
+-- platform's `alter default privileges ... to anon, authenticated`), so this
+-- runs against the same privilege model production has.
+
+-- ── 1. Named functions, in both directions ──────────────────────────────────
+do $$
+declare
+  fn text;
+  -- Signed-out callers have no business here. Each either writes, or reads one
+  -- person's history, or is arithmetic the API has no reason to expose.
+  --
+  -- `resolve_invite` is deliberately NOT in this list: an invite link is how
+  -- somebody arrives before they have an account, so anon EXECUTE is the point.
+  -- Migration 0011 grants it and 0028 records why.
+  denied constant text[] := array[
+    'public.e1rm(numeric,integer)',
+    'public.body_overview(integer)',
+    'public.strength_forecast()',
+    'public.upsert_user_preference(text,text)',
+    'public.social_feed(integer,timestamptz)',
+    'public.weekly_leaderboard()'
+  ];
+begin
+  foreach fn in array denied loop
+    if has_function_privilege('anon', fn::regprocedure, 'EXECUTE') then
+      raise exception 'anon can EXECUTE %, which is the 0030 defect', fn;
+    end if;
+    -- The opposite bug, and the one a panicked over-revoke produces: a function
+    -- locked so hard the app cannot call it either.
+    if not has_function_privilege('authenticated', fn::regprocedure, 'EXECUTE') then
+      raise exception 'authenticated CANNOT execute %, which breaks the app', fn;
+    end if;
+  end loop;
+end
+$$;
+
+-- ── 2. The check that would actually have caught 0030 ───────────────────────
+--
+-- The list above is a REGRESSION guard. It protects six functions somebody
+-- already thought about, and `e1rm` was not on any list the day it shipped
+-- open: a named-function assertion cannot catch the next new function, which is
+-- exactly the shape of every instance of this bug so far.
+--
+-- So this one inverts it. Every function in `public` that still carries the
+-- PUBLIC grant must be one we have already looked at and left alone. A new
+-- function lands here BY DEFAULT, so the default is now a failing test.
+--
+-- `coalesce(proacl, acldefault(...))` because a null `proacl` means "untouched
+-- defaults", which includes the PUBLIC grant; `aclexplode` on null returns no
+-- rows and would read as clean.
+do $$
+declare
+  leaked text;
+  -- Grandfathered, not endorsed. These nine predate the check and are all
+  -- `security invoker` behind RLS, so an anonymous call returns zero rows
+  -- rather than data. Three are trigger functions that are never reachable as
+  -- an RPC at all. Cleaning them up is a change to auth and therefore Ameen's
+  -- call under plan §2.6, not something to slip into a test commit.
+  known constant text[] := array[
+    'exercise_1rm_history(uuid)',
+    'exercise_bests(uuid)',
+    'exercise_records(uuid)',
+    'exercise_usage()',
+    'previous_session(uuid,uuid)',
+    'weekly_streak(text)',
+    'workout_sets_pr_flags_insert()',
+    'workout_sets_pr_flags_rebuild()',
+    'workout_sets_pr_flags_trigger()'
+  ];
+begin
+  select string_agg(x.fn, ', ' order by x.fn) into leaked
+  from (
+    select p.oid::regprocedure::text as fn
+    from pg_proc p
+    join pg_namespace n on n.oid = p.pronamespace
+    where n.nspname = 'public'
+      and p.prokind = 'f'
+      -- Extension-owned functions are excluded, and finding out why is half the
+      -- value of this check. `scripts/pg_shim.sql` installs pgcrypto into
+      -- `public`, so the first run flagged all 35 of its functions plus
+      -- `gen_random_uuid`. Revoking those would break `gen_random_uuid()`, which
+      -- is the DEFAULT on nearly every primary key in this schema.
+      --
+      -- It also means local and production differ here: Supabase puts pgcrypto
+      -- in the `extensions` schema, so production never had them in `public` at
+      -- all. `deptype = 'e'` is the portable way to say "this belongs to an
+      -- extension, not to us" and is correct under both layouts.
+      and not exists (
+        select 1 from pg_depend d
+        where d.classid = 'pg_proc'::regclass
+          and d.objid = p.oid
+          and d.deptype = 'e'
+      )
+      and exists (
+        select 1
+        from aclexplode(coalesce(p.proacl, acldefault('f', p.proowner))) a
+        where a.grantee = 0 and a.privilege_type = 'EXECUTE'
+      )
+  ) x
+  where x.fn <> all (known);
+
+  if leaked is not null then
+    raise exception
+      'new function(s) still carry the PUBLIC execute grant: %. This is how 0030 shipped e1rm open. Add `revoke execute on function ... from public, anon;` to the migration, then grant back what the app needs.',
+      leaked;
+  end if;
+
+  raise notice 'privileges: all assertions passed';
+end
+$$;
+
 rollback;

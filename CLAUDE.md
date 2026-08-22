@@ -203,16 +203,40 @@ away. Both died on the first execution.
 
 **Executed locally is still not applied.** "Applies cleanly from empty" and
 "applies cleanly to production" are different claims; the PR should say which
-one it has. Production is at **0028** as of 2026-08-15.
+one it has. Production is at **0031** as of 2026-08-22.
 
 **And applied is still not verified.** `apply_migration` answers
 `{"success": true}` for DDL that did nothing useful. 0027's
-`revoke all … from public` executed, succeeded, and had no effect — Supabase
-grants EXECUTE to `anon` DIRECTLY via `alter default privileges`, so revoking
-from PUBLIC leaves it callable by a signed-out request. Read
-`information_schema` / `has_function_privilege` afterwards, and run
-`get_advisors` — Supabase's own linter found that one in under a minute and the
-repo's SQL suite, which tested only that the functions worked, did not.
+`revoke all … from public` executed, succeeded, and left the function callable
+by a signed-out request. Read `information_schema` / `has_function_privilege`
+afterwards, and run `get_advisors`: Supabase's own linter found that one in
+under a minute and the repo's SQL suite, which tested only that the functions
+worked, did not.
+
+**This paragraph blamed the wrong half, and a sibling comment doing the same
+caused a second defect on 2026-08-22.** TWO grants reach `anon`. Postgres itself
+grants EXECUTE on every new function to PUBLIC (the `=X/postgres` entry with an
+empty grantee in `proacl`), and Supabase grants anon, authenticated and
+service_role DIRECTLY on top via `alter default privileges`. 0027 removed the
+first and forgot the second.
+
+**The repo already knew this and one comment unlearned it.**
+`0007_progress_analytics.sql:122` says it outright, and has since 2026: "revoke
+from public first, since functions are created with execute granted to public by
+default." 0006, 0011, 0012 and 0021 all revoke from both. Then 0028 fixed 0027's
+missing anon revoke correctly, wrote down "Supabase does not grant EXECUTE
+through PUBLIC … and the first line is a no-op", and 0030 read that sentence and
+shipped `public.e1rm` anon-callable. 0031 is the missing line.
+
+**Revoke from BOTH, and assert the end state rather than the statements.**
+`supabase/tests/coach_surfaces.sql` now carries two checks: six named functions
+asserted anon-denied and authenticated-allowed, and, more importantly, a sweep
+that fails when ANY non-extension function in `public` still carries the PUBLIC
+grant and is not on a written grandfathered list. The named list is a regression
+guard and could never have caught `e1rm`, because a new function is on no list
+the day it ships. The sweep was verified by deleting 0031 AND removing `e1rm`
+from the named list, and it still failed on exactly that function.
+
 **A test that asserts behaviour will never catch a grant that reads correctly
 and does nothing. Assert the privilege.**
 
