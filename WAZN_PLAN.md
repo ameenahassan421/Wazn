@@ -1266,8 +1266,46 @@ retention that cannot exist until the app is shared.
 
 #### Next action
 
-**RESUME HERE (2026-08-21, third update — handoff to the implementation
-session, written before compacting).**
+**RESUME HERE (2026-08-21, FOURTH update — written before a disk-cleanup that
+may kill the session. Steps 1 to 3 are DONE. Read this one, not the third.)**
+
+**Where the code is:** `main` at the merge of PR #116. The native bar is
+`Train · Plan · Progress`. Six PRs landed on 2026-08-21: #111 coach figures,
+#112 warm-up set type, #113 auth screen, #114 four tabs plus the new Plan tab,
+#115 the coach-cache diagnosis, #116 three tabs plus the History circle.
+Working tree clean, everything pushed, 1275 tests green.
+
+**Steps 1 to 3 of the order below are complete.** The next thing to build is
+**step 4: S0 of the social plan — the solo Week Board and the reasoned invite**
+(`docs/FRIENDS_PLAN.md` Part 6). Then step 5, `LAUNCH.md` and invites.
+
+**FIVE THINGS ARE WAITING ON AMEEN, NOT ON CODE. Do not silently re-derive
+these; they are decided-pending, not undiscovered.**
+
+1. **An empty workout is not a session, and the app counts it as one.** Three
+   symptoms, one cause: 0-set workouts pin `coach-notes`' cache, inflate
+   `sessions_this_week` to 7, and sit at the top of History showing "0 sets".
+   Fix spans `weekly_review()` and `session_brief()` — a migration, so §2.6.
+2. **"9 of 8 weeks."** `weekly_review()` counts
+   `distinct date_trunc('week', ...)` over a ROLLING 56-day window against a
+   hardcoded denominator of 8; a window starting mid-week touches nine calendar
+   weeks. Bound the window to whole weeks. Migration, so §2.6.
+3. **The routine rotation is inert.** `workouts.routine_id` is null on all 166
+   finished workouts, so `session_brief()`'s due CTE ties everything at null and
+   "Upper Push is due" is a permanent constant. The fix is seeding a board FROM
+   a routine, which also makes routines startable from the new Plan tab. It is a
+   change to the LOGGING PATH — plan it, do not bolt it on.
+4. **The poisoned 95-rep row** is still in production (unchanged from the third
+   update): fix in Hevy, or approve `reps = null`.
+5. **Disk space.** The background rest timer needs `expo-notifications`, which
+   needs prebuild + Pods + Xcode: roughly 5-6 GB. The machine was at 2.5 GB and
+   FALLING on 2026-08-21. `mobile/ios` does not exist; CLAUDE.md has the two
+   commands and the locale gotcha for rebuilding it.
+
+**Also parked, asked for by Ameen:** video form analysis (Stage 8; DECISIONS.md
+has the reasoning and the cheaper first step).
+
+**Superseded handoff (third update, kept for its still-accurate spec summary):****
 
 **Ameen approved a direction change on 2026-08-21 and the spec for it is
 `docs/FRIENDS_PLAN.md`. Read it in full before building anything social, IA, or
