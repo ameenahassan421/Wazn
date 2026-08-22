@@ -32,6 +32,9 @@ export const messages: Record<Locale, Record<string, string>> = {
     // Tab navigation, left to right
     'nav.log': 'Log',
     'nav.plan': 'Plan',
+    'rest.alarm.title': 'Rest is up',
+    'rest.alarm.body': '{n}s done. Next set.',
+    'rest.alarm.body.plain': 'Next set.',
     'plan.kicker': 'Your routines',
     'plan.due': 'Up next',
     'plan.exercises': '{n} exercises',
@@ -1106,6 +1109,9 @@ export const messages: Record<Locale, Record<string, string>> = {
     // Tab navigation
     'nav.log': 'التمارين',
     'nav.plan': 'الخطة',
+    'rest.alarm.title': 'انتهت الراحة',
+    'rest.alarm.body': 'مرّت {n} ثانية. المجموعة التالية.',
+    'rest.alarm.body.plain': 'المجموعة التالية.',
     'plan.kicker': 'روتيناتك',
     'plan.due': 'التالي',
     'plan.exercises': '{n} تمارين',

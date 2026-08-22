@@ -1275,6 +1275,14 @@ may kill the session. Steps 1 to 3 are DONE. Read this one, not the third.)**
 #115 the coach-cache diagnosis, #116 three tabs plus the History circle.
 Working tree clean, everything pushed, 1275 tests green.
 
+#### A peer audit found three defects in the rest alarm within hours (2026-08-21)
+
+Two fixed, one deferred. The Android channel was referenced and never created,
+so the alarm would not have presented on Android at all; the notification copy
+was hardcoded English on an app with full Arabic; and `haptics.record()` is dead
+code against 516 PR-flagged sets. **The calibration is the point: "verified on a
+device" meant verified on ONE platform's device.** Full entry in DECISIONS.md.
+
 #### The rest timer reaches a pocket (2026-08-21)
 
 **Step 2's last item, and the plan's own "capability that justifies stage 4A".**

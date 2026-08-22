@@ -9004,3 +9004,52 @@ rare in a plan document. The pact one especially: if pact-holders do not beat
 their own pre-pact baseline, the feature is decoration, and the response is a
 stake or a deletion rather than iterating the copy. Worth measuring even with
 nothing waiting on it.
+
+## 2026-08-21 — A peer audit found three defects in the rest alarm, hours after it shipped
+
+**Who found them:** a parallel session (`wazn-66`) running a capability eval
+against Hevy, Strong and Fitbod at Ameen's request, which he asked it to have
+this session verify. All three are in `rest-alarm.ts`, written four hours
+earlier and reported here as "verified on a device".
+
+**1. The Android channel was never created.** `scheduleNotificationAsync` passed
+`channelId: 'rest'` on Android, and `grep -rn setNotificationChannel mobile/`
+returned nothing. On Android 8+ a notification posted to a channel that does not
+exist is not presented, and it does not throw — so `syncRestAlarm`'s deliberate
+bare `catch` would have hidden a failure that never even produced an error.
+Fixed with `setNotificationChannelAsync('rest', …)` at module load.
+
+**The honest calibration, which matters more than the fix.** The code defect is
+certain. The non-presentation is **inferred** from documented Android behaviour,
+not observed: there is no Android device or emulator in this environment. "It
+was verified on a device" meant verified on ONE platform's device, and the
+file's own comment claimed a cross-platform behaviour it had never seen.
+
+**2. The notification copy was hardcoded English.** `title: 'Rest is up'` with no
+i18n import in the file at all. Every other string a lifter can read goes
+through the catalogue. This one is arguably the most important to translate,
+because it is the only string the app says while nobody is looking at the
+screen. Now `rest.alarm.*` in both locales. It could not use a hook —
+`RootLayout` renders `LocaleProvider`, so it sits outside it — hence a
+null-rendering `RestAlarm` component inside the provider tree, keyed on `[t]` so
+switching language mid-rest changes what the phone says.
+
+**3. `record()` in `haptics.ts` is dead.** Documented as "the only celebratory
+haptic in the app" and imported nowhere; every call site pulls only `tick`,
+`restEnded` or `banked`. Production has **516 PR-flagged sets**, so this is a
+real corpus of silent moments rather than a theoretical gap. NOT fixed here: it
+needs a decision about where a PR is detected live on native, which is its own
+piece of work.
+
+**And one place this session was wrong, recorded because the correction came
+from the peer.** I claimed supersets were "unported UI over unused data" on the
+strength of `routine_exercises.superset_group` being 0 rows. The peer measured
+`workout_sets.superset_group` at **335**, which I confirmed. I had generalised
+from one table to the schema. Supersets and RPE (387 sets) are comparable
+stranded-data problems, not different priorities: 722 sets carry attributes the
+native app cannot render.
+
+**The finding worth keeping from all of it:** three of the peer's seven defects
+were in one file written in the previous four hours and verified on exactly one
+platform. The defect rate tracked recency and platform coverage, not the age or
+quality of the codebase.
