@@ -22,7 +22,7 @@ import { useAuth } from '@/hooks/use-auth'
 import { watchRest } from '@/services/rest-alarm'
 import { restoreWorkout } from '@/state/live-workout'
 import { CoachProvider } from '@/hooks/use-coach'
-import { LocaleProvider } from '@/hooks/use-locale'
+import { LocaleProvider, useLocale } from '@/hooks/use-locale'
 import { UnitProvider } from '@/hooks/use-unit'
 import { supabaseConfigError } from '@/services/supabase'
 
@@ -108,6 +108,26 @@ if (__DEV__) {
  */
 export const AUTH_ENABLED = true
 
+/**
+ * Arms the rest alarm, and exists as a component ONLY so it can read the
+ * locale.
+ *
+ * The effect was in `RootLayout` until the notification copy was translated.
+ * `RootLayout` RENDERS `LocaleProvider`, so it sits outside it and `useLocale`
+ * is unreachable there — a hook cannot see a provider its own component
+ * returns. This renders nothing and lives inside the provider tree instead.
+ *
+ * `[t]` rather than `[]`: switching the app to Arabic mid-rest should change
+ * what the phone says when it buzzes, and re-subscribing is cheap. `watchRest`
+ * reads the store's current rest on entry, so the re-subscribe re-arms rather
+ * than dropping the pending alarm.
+ */
+function RestAlarm() {
+  const { t } = useLocale()
+  useEffect(() => watchRest(t), [t])
+  return null
+}
+
 export default function RootLayout() {
   const [ready, error] = useFonts(FACES)
   const { loading, userId } = useAuth()
@@ -132,16 +152,6 @@ export default function RootLayout() {
   useEffect(() => {
     void restoreWorkout()
   }, [])
-
-  /**
-   * Arm the rest alarm for the whole app session.
-   *
-   * Here rather than on the rest canvas, because the canvas can be navigated
-   * away from — backing out to Home mid-rest is a thing lifters do — and the
-   * alarm still has to fire. `watchRest` reads the store's current rest first,
-   * so this also re-arms a rest restored from the checkpoint above.
-   */
-  useEffect(() => watchRest(), [])
 
   /**
    * Nothing is shown until BOTH the faces are registered and the keychain has
@@ -196,6 +206,8 @@ export default function RootLayout() {
             ones that never render a weight, and the unit provider has no
             opinion about language. */}
         <LocaleProvider>
+          {/* Renders nothing. Here purely because it needs the locale. */}
+          <RestAlarm />
           <UnitProvider>
             {/* Inside the unit provider because the coach reasons in weights
                 and the dial has no opinion about language or units. */}

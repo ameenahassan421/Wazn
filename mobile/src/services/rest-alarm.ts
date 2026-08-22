@@ -3,6 +3,11 @@ import * as Notifications from 'expo-notifications'
 
 import { snapshot, subscribe } from '@/state/live-workout'
 
+/** Just the translate function, passed in rather than imported: this module is
+ *  not a component and cannot call `useLocale`, and the ROOT LAYOUT is rendered
+ *  outside `LocaleProvider`, so there is no hook to reach from here either. */
+type Translate = (key: string, params?: Record<string, string>) => string
+
 /**
  * The rest timer, when the phone is in a pocket.
  *
@@ -45,6 +50,34 @@ import { snapshot, subscribe } from '@/state/live-workout'
  * denied permission degrades to the silent countdown that already worked.
  */
 
+/**
+ * The Android channel, created before anything is scheduled against it.
+ *
+ * `scheduleNotificationAsync` below passes `channelId: 'rest'` on Android, and
+ * on Android 8+ a notification posted to a channel that was never created is
+ * **not presented**. It does not throw either, so the alarm would have failed
+ * silently on every Android phone — and `syncRestAlarm`'s deliberate bare
+ * `catch` would have swallowed even the error that did not happen.
+ *
+ * Found by a peer session auditing capability on 2026-08-21, hours after this
+ * file shipped. It could not have been caught here: verification ran on an iOS
+ * simulator, where the `channelId` is stripped, and there is no Android device
+ * or emulator in this environment. Worth stating plainly rather than filing as
+ * a typo — "verified on a device" meant verified on ONE platform's device, and
+ * the file's own comment claimed a cross-platform behaviour it had never seen.
+ *
+ * `HIGH` importance, because this is a timer the lifter deliberately set and
+ * the whole feature is that it reaches a pocket.
+ */
+if (Platform.OS === 'android') {
+  void Notifications.setNotificationChannelAsync('rest', {
+    name: 'Rest timer',
+    importance: Notifications.AndroidImportance.HIGH,
+    sound: 'default',
+    vibrationPattern: [0, 250, 250, 250],
+  })
+}
+
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
     shouldShowBanner: AppState.currentState !== 'active',
@@ -77,7 +110,11 @@ async function ensurePermission(): Promise<boolean> {
  * interfere with logging a set. Failures are swallowed deliberately — the
  * countdown on screen is the source of truth and it keeps working.
  */
-export function syncRestAlarm(endsAt: number | null, secondsTotal = 0): void {
+export function syncRestAlarm(
+  endsAt: number | null,
+  secondsTotal = 0,
+  t: Translate = (k) => k,
+): void {
   void (async () => {
     try {
       /*
@@ -129,8 +166,19 @@ export function syncRestAlarm(endsAt: number | null, secondsTotal = 0): void {
 
       await Notifications.scheduleNotificationAsync({
         content: {
-          title: 'Rest is up',
-          body: secondsTotal > 0 ? `${secondsTotal}s done. Next set.` : 'Next set.',
+          /*
+           * Translated, and it was hardcoded English until a peer session
+           * caught it hours after this shipped. Every other string a lifter
+           * can read goes through the catalogue; this one bypassed it, so an
+           * Arabic phone would have buzzed in English. The notification is
+           * arguably the MOST important string to localise, because it is the
+           * only one the app says while nobody is looking at it.
+           */
+          title: t('rest.alarm.title'),
+          body:
+            secondsTotal > 0
+              ? t('rest.alarm.body', { n: String(secondsTotal) })
+              : t('rest.alarm.body.plain'),
           sound: true,
           interruptionLevel: 'timeSensitive',
         },
@@ -158,13 +206,13 @@ export function syncRestAlarm(endsAt: number | null, secondsTotal = 0): void {
  * identical alarm on each of those would cancel and recreate the notification
  * dozens of times a workout.
  */
-export function watchRest(): () => void {
+export function watchRest(t: Translate): () => void {
   let last: number | null = snapshot().restEndsAt
-  syncRestAlarm(last, snapshot().restTotal)
+  syncRestAlarm(last, snapshot().restTotal, t)
   return subscribe(() => {
     const { restEndsAt, restTotal } = snapshot()
     if (restEndsAt === last) return
     last = restEndsAt
-    syncRestAlarm(restEndsAt, restTotal)
+    syncRestAlarm(restEndsAt, restTotal, t)
   })
 }
