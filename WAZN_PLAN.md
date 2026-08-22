@@ -1266,6 +1266,56 @@ retention that cannot exist until the app is shared.
 
 #### Next action
 
+**RESUME HERE (2026-08-22, FIFTH update. Read this one; the fourth is below and
+its "next action" is two steps stale.)**
+
+**Where the code is:** `main` at PR #123. Twelve PRs landed across 2026-08-21
+and 22: #111 coach figures, #112 warm-up set type, #113 auth voice, #114 four
+tabs plus the Plan tab, #115 coach-cache diagnosis, #116 three tabs plus the
+History circle, #117 the rest timer, #118 the rest timer's three audit defects,
+#119 migration 0030 plus the Train rename, #120 **start-from-routine**, #121
+bodyweight from equipment, #122 the first code review's three findings, #123 the
+RTL guard. Tree clean, 1276 tests green.
+
+**Steps 1 to 3 of the order are done and step 2's keystone landed.** The bar is
+`Train · Plan · Progress`, a workout can be started from a routine, and
+`workouts.routine_id` is being written, so the rotation advances instead of
+naming Upper Push forever.
+
+**TWO THINGS ARE BLOCKED ON AMEEN AND BLOCK EVERYTHING ELSE.**
+
+1. **GitHub Actions is failing on BILLING.** Every job dies in 2 seconds with
+   "recent account payments have failed or your spending limit needs to be
+   increased". Nothing since #120 has had CI; #121, #122 and #123 were merged on
+   the local wall with his explicit approval. **Do not keep merging blind
+   indefinitely** — CI caught an architectural error on 2026-08-21 that the
+   local wall missed.
+2. **Migration 0030 is proven and NOT applied.** The classifier blocked
+   `apply_migration` even with approval, and `execute_sql` was deliberately not
+   used as a workaround. Production is at 0029, so the empty-workout session
+   counting and "9 of 8 weeks" are both still live.
+
+**`/code-review` IS NOW MANDATORY BEFORE EVERY PR.** Ameen's rule, 2026-08-22.
+Its first run found three defects in code written the hour before, all of which
+had passed a green wall and a device screenshot. Do not skip it; the softer
+version of this rule was skipped eight times in one session.
+
+**Next to build: step 4, S0 of the social plan** — the solo Week Board and the
+reasoned invite (`docs/FRIENDS_PLAN.md` Part 6). The S1 gates were LIFTED on
+2026-08-21, so crews, the board, the pact and duels are all buildable and Crew
+becomes the fourth tab. The committed weekly target needs `profiles.weekly_target`,
+which is in the unapplied 0030.
+
+**Also open:** routine create/edit on Plan (still read-only); the Progress merge
+(History, Body and the Coach tab still have not folded in); `haptics.record()` is
+dead against 516 PR-flagged sets; no way to add a custom exercise (135 in the
+catalogue, 0 user-created, `exercises.owner_id` exists); `setsToTrim` and
+`loadFactor` are called nowhere in native and nothing supplies sleep or HRV; the
+poisoned 95-rep row; and Playwright's browsers were deleted by the Mac cleanup
+routine, so `npm run test:smoke` cannot launch until they are reinstalled.
+
+**Superseded (fourth update, 2026-08-21):**
+
 **RESUME HERE (2026-08-21, FOURTH update — written before a disk-cleanup that
 may kill the session. Steps 1 to 3 are DONE. Read this one, not the third.)**
 
