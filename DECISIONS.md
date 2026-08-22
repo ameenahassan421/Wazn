@@ -9502,3 +9502,44 @@ Everyone carries 3 whether they chose it or not, and the board ranks that
 default as a commitment. FRIENDS_PLAN F2 ranks on a _committed_ target, and a
 default nobody typed is not one. The answer is a chosen-flag or a null state on
 0027's column. It is a product decision and it belongs to Ameen.
+
+## 2026-08-22: dark mode is built, and the palette is not invented
+
+**Decision: ship a light/dark choice, and source every dark value from
+`legacyPalette` and the `onInk*` set rather than picking new colours.**
+
+Ameen: "choosing between dark mode and light mode is just standard." My first
+answer recited the history instead of answering the question: v5 removed the
+theme toggle, CLAUDE.md pins the app paper-first, and 0025's `theme` column was
+later dropped. All true, and none of it a reason not to have the feature. He
+reaffirmed and that settles it.
+
+**Why the values are borrowed rather than chosen.** `legacyPalette` was a
+dark-first system that shipped, with its contrast ratios reasoned and asserted,
+before the paper redesign replaced it. The `onInk*` set is a second dark
+vocabulary already in use by the rest canvas. Inventing a third would mean
+re-deriving judgement this repo has made twice, and the failure mode of getting
+it wrong is invisible until somebody cannot read a caption.
+
+**The shape was specified in advance and is being followed.** `tokens.ts`, above
+`legacyPalette`: "when it grows a second theme this becomes a record per ground,
+not a second flat object." Hence `palettes.light` / `palettes.dark`.
+
+**`ink` keeps both of its jobs.** It is the text colour and the ground of the Up
+Next card and the rest canvas. That looked like the thing dark mode would break,
+since a dark card cannot be the emphasis on a dark theme. It does not break: the
+card's job is INVERSION, not darkness. On paper it is dark, on iron it is light.
+`ink` and `onInk` swap wholesale, all four surface call sites stay correct, and
+no new token is needed.
+
+**Measured before the values were fixed, not after.** On the iron ground and its
+card: ink 15.74/14.76, body 12.75/11.96, muted 6.28/5.89, accent 4.99/4.68,
+accentSoft 9.87/9.26. `muted` is 3.39:1 on paper, which remains the open item
+awaiting Ameen's ruling, and 6.28:1 on iron. The dark theme is the more readable
+of the two. `tokens.test.ts` asserts all of it plus key parity, so the two
+grounds cannot drift.
+
+**Deliberately not in this step:** the conversion of 119 `palette.` references
+across 28 files, the provider, the re-added `theme` column, and the Settings
+control. Step 1 is additive and changes no pixels, which makes it reviewable on
+the colour reasoning alone.

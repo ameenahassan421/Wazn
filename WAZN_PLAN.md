@@ -1589,6 +1589,65 @@ user-created**, no native create path, while `exercises.owner_id` exists — the
 model is there and the surface is not. A lifter whose movement is not in those
 135 cannot log it, which is a core-loop floor rather than a breadth gap.
 
+#### DARK MODE IS IN PROGRESS: step 1 landed, nothing consumes it yet (2026-08-22)
+
+**Ameen asked for it directly** ("choosing between dark mode and light mode is
+just standard"), after a first answer from me that recited the history: v5
+removed the theme toggle, CLAUDE.md pins the app paper-first, and 0025's `theme`
+column was later dropped. That history is accurate and it was not a reason to
+refuse. It is being built.
+
+**PR #135 is open and is additive: zero pixels change.** `palettes.light` /
+`palettes.dark` in `src/lib/tokens.ts` plus contrast assertions in
+`tokens.test.ts`. Nothing reads `palettes.dark` yet.
+
+Three things the next session must NOT re-derive:
+
+1. **`tokens.ts` already specified the architecture.** The note above
+   `legacyPalette` says a second theme "becomes a record per ground, not a
+   second flat object". `palettes` is that record.
+2. **Nothing in the dark palette is invented.** `legacyPalette` WAS a
+   dark-first system, contrast-reasoned and shipped before the paper redesign,
+   and the `onInk*` set is a second existing dark vocabulary. Every dark value
+   comes from one of those.
+3. **`ink` doing two jobs does not break.** It is both the text colour and the
+   ground of the Up Next card and the rest canvas, which looked like the thing
+   dark mode would break. It does not, because that card's job is INVERSION,
+   not darkness: on paper it is dark, on iron it is light. `ink` and `onInk`
+   swap wholesale and all four surface call sites stay correct
+   (`Surface.tsx` tone="ink", `Btn.tsx` kind="ink", `Header.tsx`'s avatar,
+   `RestCanvas.tsx`).
+
+Measured on the iron ground and its card: ink 15.74/14.76, body 12.75/11.96,
+muted 6.28/5.89, accent 4.99/4.68, accentSoft 9.87/9.26. **`muted` is 3.39:1 on
+paper and 6.28:1 here**, so the dark theme is the MORE readable of the two and
+does not inherit the open paper-`muted` item below.
+
+##### What step 2 is
+
+- Convert **119 `palette.` references across 28 files** from a static import to
+  a reactive hook. Module-level maps (`Btn.tsx`'s `KINDS`, `Surface.tsx`'s
+  `TONES`) have to move inside components.
+- `mobile/src/hooks/use-theme.tsx`: provider plus `useTheme()`, defaulting to
+  RN's `useColorScheme()`, persisted.
+- A migration to **re-add `user_preferences.theme`**. 0025 added it and
+  something later dropped it: production reports the column absent while
+  `upsert_user_preference` STILL carries a `theme` branch that updates it, so
+  that branch throws if it is ever called. Re-adding the column revives it.
+- Settings: a three-way System / Light / Dark control.
+- Verify on a simulator in both schemes.
+
+##### Two other accessibility gaps, measured and NOT fixed
+
+- **Zero `allowFontScaling` or `maxFontSizeMultiplier` anywhere.** RN defaults
+  `allowFontScaling` to true, so Dynamic Type does scale, but the fixed heights
+  this app uses (34px steppers, 46px board keys, `space.tabBar`) will clip at
+  the larger accessibility sizes.
+- **Zero `AccessibilityInfo` or reduce-motion handling**, and 20
+  `accessibilityLabel`s against 28 `Pressable`s.
+
+Neither is dark mode's problem and both are real. They belong to the same pass.
+
 #### S0 IS COMPLETE, and the device path is documented (2026-08-22)
 
 Both remaining items closed.
