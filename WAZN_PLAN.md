@@ -1589,6 +1589,43 @@ user-created**, no native create path, while `exercises.owner_id` exists — the
 model is there and the surface is not. A lifter whose movement is not in those
 135 cannot log it, which is a core-loop floor rather than a breadth gap.
 
+#### S0 begins: the board was ranked on the wrong thing (2026-08-22)
+
+`weekly_leaderboard()` ends with `order by 4 desc`, where column 4 is
+`volume_kg`. `docs/FRIENDS_PLAN.md` F2 names that as the thing to break from:
+
+> Volume is won by whoever trains longest and heaviest, which means it is won by
+> the same person every week.
+
+The STEP UP trial is the evidence. Its competition arm was the only durable one
+and it was scored on adherence to each participant's OWN baseline-derived goal.
+A volume leaderboard reproduces the arm that did not last.
+
+**0034 adds `week_board()`**, ranked on sessions against each person's own
+`weekly_target`, falling back to their own four-week baseline when no target is
+set. Applied and verified: `anon` false, `authenticated` true, no PUBLIC entry
+in `proacl`, and 34 migrations still execute from empty with the privilege
+sweep passing.
+
+It also carries 0030's rule that a workout with no sets is not a session, which
+`weekly_leaderboard()` does not. Without that, Crew and Progress would report
+different session counts for the same week.
+
+**The solo case is the only case that exists.** Measured before writing it:
+9 profiles, ONE follow row, and ZERO rows with `weekly_target` set. A board that
+needed a crew or a target would be blank for every account in production. Ameen's
+real row reads **6 sessions this week against a 2.5/week average**, which is
+exactly the comparison F6 asks the empty state to make.
+
+`adherence` is capped at 2.0 so one person doing eight against a target of two
+cannot lap a crew that all hit their own numbers. That cap is for RANKING only:
+the row renders the honest "6 vs 2.5" rather than the capped ratio.
+
+Still to build for S0: a way to set `weekly_target` (native has no consumer for
+the column at all), the Crew screen itself (currently a 24-line stub whose one
+string is hardcoded English rather than localized), the fourth tab, and the
+reasoned invite.
+
 #### THE BILLING FAILURE ALSO BLOCKS EDGE FUNCTION DEPLOYS (2026-08-22)
 
 This was filed as "CI is dark" and that framing was too small. GitHub Actions
