@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { View } from 'react-native'
+import Svg, { Line as SvgLine } from 'react-native-svg'
 
 import {
   formatEstimate,
@@ -159,15 +160,30 @@ function Frequency({ weeks }: { weeks: WeekBucket[] }) {
         })}
         {/* The average, as the dashed reference the caption has always
             promised. The first version of this chart printed "dashed line is
-            the average" under bars with no line on them — copy inherited from
+            the average" under bars with no line on them, copy inherited from
             the web screen, which draws one. A caption that describes a mark
             that is not there is the same defect as a comment describing code
-            that does not run. `borderStyle: 'dashed'` on a zero-height View is
-            the whole implementation; no SVG needed.
+            that does not run.
+
+            ── AND THE SECOND VERSION WAS THE SAME DEFECT AGAIN ──────────────
+            This was a zero-height View with `borderStyle: 'dashed'`, and the
+            comment here asserted that was "the whole implementation; no SVG
+            needed". iOS disagrees. React Native logs
+            `Unsupported dashed / dotted border style` and falls back to SOLID
+            whenever it cannot draw the dashes, which for a one-sided border on
+            a zero-height box is always. So the caption promised a dashed line
+            and the screen drew a solid one: a third pass at the same class of
+            bug the two comments above are congratulating themselves for
+            fixing. Caught 2026-08-22 by reading the LogBox warning behind
+            "Open debugger to view warnings" instead of ignoring it.
+
+            `Spark.tsx` had the working pattern the whole time, one directory
+            over: an SVG `Line` with `strokeDasharray="3 4"`, which is honoured
+            on both platforms. Same dash rhythm here so the two charts agree.
 
             Drawn AFTER the bars, so it sits over them. Behind them it was
             legible only in the gaps between weeks, which is exactly where a
-            reader is not looking — the comparison the line exists for is
+            reader is not looking: the comparison the line exists for is
             bar-against-line, and it has to cross the bars to make it. */}
         {avg > 0 && (
           <View
@@ -176,15 +192,25 @@ function Frequency({ weeks }: { weeks: WeekBucket[] }) {
               start: 0,
               end: 0,
               bottom: (avg / peak) * H,
-              borderTopWidth: 1,
-              // `muted`, not a ring token. The rings are 6% and 12% ink, which
-              // vanish against white at 1px — drawn once and invisible. A
-              // reference line carries the same weight as the labels that
-              // explain it.
-              borderTopColor: palette.muted,
-              borderStyle: 'dashed',
+              height: 1,
             }}
-          />
+          >
+            <Svg width="100%" height={1}>
+              <SvgLine
+                x1="0"
+                y1="0.5"
+                x2="100%"
+                y2="0.5"
+                // `muted`, not a ring token. The rings are 6% and 12% ink,
+                // which vanish against white at 1px, drawn once and invisible.
+                // A reference line carries the same weight as the labels that
+                // explain it.
+                stroke={palette.muted}
+                strokeWidth={1}
+                strokeDasharray="3 4"
+              />
+            </Svg>
+          </View>
         )}
       </View>
       <Txt step="meta" ink="muted">

@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { I18nManager, Pressable, View } from 'react-native'
+import { I18nManager, Pressable, StyleSheet, View } from 'react-native'
+import Svg, { Rect } from 'react-native-svg'
 import { useRouter } from 'expo-router'
 
 import type { CoachMode, Locale, Unit } from '@wazn/domain'
@@ -148,12 +149,45 @@ function ModeCard({
         borderRadius: radius.card,
         padding: space.cardPad,
         backgroundColor: dashed ? 'transparent' : palette.card,
-        borderWidth: active ? 2 : 1.5,
-        borderStyle: dashed ? 'dashed' : 'solid',
+        /*
+         * No border at all when dashed, because React Native cannot draw one.
+         *
+         * This was `borderStyle: dashed ? 'dashed' : 'solid'`, and iOS logs
+         * `Unsupported dashed / dotted border style` and silently falls back
+         * to SOLID for any dashed border on a rounded box. So the one visual
+         * cue distinguishing "meet prep needs a date" from an ordinary
+         * selectable mode did not exist: it rendered as a plain solid card
+         * with a transparent fill.
+         *
+         * The dashes are drawn below as an SVG `Rect`, which honours
+         * `strokeDasharray` the way `Spark.tsx` has all along.
+         */
+        borderWidth: dashed ? 0 : active ? 2 : 1.5,
         borderColor: active ? palette.accent : palette.ring,
         opacity: pressed ? 0.7 : 1,
       }}
     >
+      {/* The dashed edge, drawn rather than declared. `rx` matches
+          `radius.card` so it traces the same corner the solid variant has, and
+          the 1.5 inset keeps a 1.5-wide stroke inside its own box instead of
+          clipping half of it against the edge. */}
+      {dashed && (
+        <View style={StyleSheet.absoluteFill} pointerEvents="none">
+          <Svg width="100%" height="100%">
+            <Rect
+              x={0.75}
+              y={0.75}
+              width="100%"
+              height="100%"
+              rx={radius.card}
+              fill="none"
+              stroke={active ? palette.accent : palette.ring}
+              strokeWidth={1.5}
+              strokeDasharray="5 4"
+            />
+          </Svg>
+        </View>
+      )}
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
         <Txt step="cta" style={{ flex: 1 }}>
           {t(behaviour.titleKey)}
