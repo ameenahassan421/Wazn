@@ -132,7 +132,34 @@ export async function getOrCreateInviteCode(): Promise<string> {
   const code = Array.from(bytes, (b) => alphabet[b % alphabet.length]).join('')
 
   const { error } = await supabase.from('invites').insert({ user_id: userId, code })
-  if (error !== null) throw error
+
+  /*
+   * 23505 means somebody else won the race, so read theirs.
+   *
+   * This is a read-then-write with no lock: two calls that interleave both find
+   * no row and both insert. 0039 adds a unique index on `user_id` so the second
+   * one fails instead of quietly giving this person a second live invite link,
+   * and this branch is the other half of that fix. Without it the constraint
+   * turns a silent duplicate into a visible error, which is better and still
+   * not right.
+   *
+   * Reachable without anybody being unlucky: the web and the phone both call
+   * this, and a slow first request followed by a retry calls it twice. The
+   * button's `disabled` flag is React state, which is asynchronous and cannot
+   * serialise a network call.
+   */
+  if (error !== null) {
+    if (error.code !== '23505') throw error
+    const { data: won } = await supabase
+      .from('invites')
+      .select('code')
+      .eq('user_id', userId)
+      .limit(1)
+      .maybeSingle()
+    const winner = (won as { code: string } | null)?.code
+    if (winner === undefined) throw error
+    return winner
+  }
   return code
 }
 
