@@ -60,11 +60,26 @@ import { supabaseConfigError } from '@/services/supabase'
  * was the wrong one.
  */
 
-/** "5 × 60 kg", or "5 reps" when the plan carries no weight. */
+/**
+ * "5 × 60 kg", or "5" when the plan carries no weight, or **empty** when it
+ * prescribes nothing at all.
+ *
+ * That last case is the one this had wrong. A routine written in this app
+ * stores a set COUNT and no numbers (see `routine-draft.ts`), so every set was
+ * rendering as an em rule and a two-lift routine read
+ * `—   —   —   —` under one lift and `—   —   —` under the other. Honest, and
+ * it looks like a rendering failure. The caller shows the count instead when
+ * this comes back empty, which says the same thing in words the lifter asked
+ * for.
+ *
+ * Empty rather than null so the check at the call site is one comparison, and
+ * a plan where SOME sets carry numbers still renders those.
+ */
 function setLine(
   sets: { reps: number | null; weight_kg: number | null }[],
   unit: Unit,
 ): string {
+  if (sets.every((s) => s.reps === null && s.weight_kg === null)) return ''
   return sets
     .map((s) => {
       const reps = s.reps === null ? '—' : String(s.reps)
@@ -146,20 +161,33 @@ function RoutineCard({
       {open ? (
         <View style={{ gap: 14 }}>
           <View style={{ gap: 10 }}>
-            {routine.exercises.map((e) => (
-              <View key={e.id} style={{ gap: 2 }}>
-                <Txt step="title">{e.name ?? '—'}</Txt>
-                {e.sets.length === 0 ? (
-                  <Txt step="caption" ink="muted">
-                    —
-                  </Txt>
-                ) : (
-                  <Txt step="caption" ink="muted" ltr>
-                    {setLine(e.sets, unit)}
-                  </Txt>
-                )}
-              </View>
-            ))}
+            {routine.exercises.map((e) => {
+              const planned = setLine(e.sets, unit)
+              return (
+                <View key={e.id} style={{ gap: 2 }}>
+                  <Txt step="title">{e.name ?? '—'}</Txt>
+                  {e.sets.length === 0 ? (
+                    <Txt step="caption" ink="muted">
+                      —
+                    </Txt>
+                  ) : planned === '' ? (
+                    /* Nothing prescribed, which is what every routine written
+                       in this app looks like. The count is the whole plan, so
+                       the count is what it says. NOT `ltr`: this is a
+                       sentence, and Arabic reads it right to left. */
+                    <Txt step="caption" ink="muted">
+                      {e.sets.length === 1
+                        ? t('plan.sets_one')
+                        : t('plan.sets', { n: String(e.sets.length) })}
+                    </Txt>
+                  ) : (
+                    <Txt step="caption" ink="muted" ltr>
+                      {planned}
+                    </Txt>
+                  )}
+                </View>
+              )
+            })}
           </View>
           {/*
             No Start while a session is running, and this was found by pressing
