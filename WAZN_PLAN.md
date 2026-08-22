@@ -1589,6 +1589,68 @@ user-created**, no native create path, while `exercises.owner_id` exists — the
 model is there and the surface is not. A lifter whose movement is not in those
 135 cannot log it, which is a core-loop floor rather than a breadth gap.
 
+#### 0032: the anon sweep, and an orphan function nobody wrote (2026-08-22)
+
+Ameen asked for the wider revoke that 0031 deliberately deferred. Applied and
+verified. **Production is at 0032.**
+
+End state across the 29 non-extension functions in `public`:
+
+|                                |                                                 |
+| ------------------------------ | ----------------------------------------------- |
+| carry the PUBLIC execute grant | **0**                                           |
+| anon can execute               | **1**, `resolve_invite`, deliberate             |
+| authenticated cannot execute   | **1**, `handle_new_user`, deliberate since 0006 |
+
+The 0031 test's grandfathered allowlist is now **empty**, so the rule it encodes
+is simply: no `public` function may ship carrying the PUBLIC grant. Proven
+non-vacuous by removing 0032 and watching the sweep name all eight offenders
+the from-empty chain creates.
+
+**Supabase's linter did not and could not have caught any of this.** The advisor
+output is byte-identical before and after: it flags only `SECURITY DEFINER`
+functions, and all seventeen closed here are `SECURITY INVOKER`. That is the
+argument for the 0031 assertion existing at all. It checks something no external
+tool checks.
+
+**Verified functionally, not just in the catalog.** Train and Progress both
+render on a simulator against the real account after the revoke, which exercises
+`session_brief`, `weekly_review`, `workout_totals`, `strength_summary` and the
+`exercise_*` family as `authenticated`.
+
+##### The orphan
+
+`workout_sets_pr_flags_trigger()` is live in production, was anon-executable,
+and is created by **no migration in this repo**. Reading it back explains it: it
+is an earlier version of the PR-flag trigger that 0009 later split into
+`_insert` and `_rebuild`. 0009 was edited AFTER it had been applied, so
+production kept the superseded function and the chain never creates it. Its
+source is in DECISIONS.md.
+
+Nothing references it. `pg_trigger` shows exactly two triggers on `workout_sets`,
+bound to `_insert` and `_rebuild`.
+
+0032 revokes it rather than dropping it: revoking closes the surface, which is
+what was asked for, without destroying an object whose definition exists nowhere
+in version control. **Dropping it is the right follow-up and it is Ameen's
+call.**
+
+This is the third instance of the same class in three days: a migration file
+edited after being applied, leaving production holding something the schema does
+not describe. "Executed locally is still not applied" has a mirror image, and it
+is "applied is not necessarily still in the file".
+
+##### Still outstanding
+
+**Leaked-password protection is still disabled and cannot be flipped from a
+session.** It is Supabase Auth service config, not database config, so no SQL
+sets it. The connected MCP server's capabilities are
+`account, database, debugging, development, functions, branching` with no auth
+surface, and this session has no `SUPABASE_ACCESS_TOKEN` for the Management API
+(`env | grep -ci supabase` returns 0). Either the dashboard toggle, or an
+addition to `scripts/supabase_admin.ts`, which already does Management API
+config and would be run with Ameen's own token.
+
 #### 0031: the revoke 0030 thought it had done (2026-08-22)
 
 `public.e1rm` shipped in 0030 with `revoke execute ... from anon` and was still

@@ -493,22 +493,19 @@ $$;
 do $$
 declare
   leaked text;
-  -- Grandfathered, not endorsed. These nine predate the check and are all
-  -- `security invoker` behind RLS, so an anonymous call returns zero rows
-  -- rather than data. Three are trigger functions that are never reachable as
-  -- an RPC at all. Cleaning them up is a change to auth and therefore Ameen's
-  -- call under plan §2.6, not something to slip into a test commit.
-  known constant text[] := array[
-    'exercise_1rm_history(uuid)',
-    'exercise_bests(uuid)',
-    'exercise_records(uuid)',
-    'exercise_usage()',
-    'previous_session(uuid,uuid)',
-    'weekly_streak(text)',
-    'workout_sets_pr_flags_insert()',
-    'workout_sets_pr_flags_rebuild()',
-    'workout_sets_pr_flags_trigger()'
-  ];
+  -- EMPTY, and that is the end state worth defending.
+  --
+  -- 0031 grandfathered nine functions here rather than revoking them, because
+  -- changing a grant is a change to auth and plan section 2.6 makes that an
+  -- ask. Ameen asked on 2026-08-22 and 0032 closed all nine, so the list has
+  -- nothing left to hold.
+  --
+  -- Keeping the array rather than deleting the mechanism: the next function
+  -- that legitimately needs anon (a second `resolve_invite`, some pre-account
+  -- entry point) goes here WITH a comment saying why, which is a smaller and
+  -- more honest change than weakening the query. An empty allowlist means the
+  -- check now reads: no `public` function may ship with the PUBLIC grant.
+  known constant text[] := array[]::text[];
 begin
   select string_agg(x.fn, ', ' order by x.fn) into leaked
   from (
