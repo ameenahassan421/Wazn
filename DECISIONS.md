@@ -9479,3 +9479,26 @@ not database config, so no SQL sets it. The connected MCP server exposes
 surface, and this session has no `SUPABASE_ACCESS_TOKEN` for the Management API.
 Either the dashboard toggle or an addition to `scripts/supabase_admin.ts`, which
 already does Management API config and would run with Ameen's own token.
+
+## 2026-08-22: one weekly target, and it is the one with rows in it
+
+**Decision: `week_board()` reads `user_preferences.weekly_target` (0027).
+`profiles.weekly_target` (0030) is dropped as a duplicate.**
+
+0030 added a second `weekly_target`, in a different table, three migrations
+after 0027 had already created one and wired `upsert_user_preference` to it.
+0034 then read the empty copy. Five users have a target of 3 in
+`user_preferences`; `profiles` held zero.
+
+`user_preferences` survives because it has the data and the writer. The argument
+that made 0030 choose `profiles` was visibility, since crew members must see
+each other's adherence, and that is answered without a second column:
+`week_board()` is `security definer` and returns the target integer only, never
+the preference row.
+
+**Open, and deliberately not decided in the migration.** 0027's column is
+`not null default 3`, so "has not committed to a number" cannot be expressed.
+Everyone carries 3 whether they chose it or not, and the board ranks that
+default as a commitment. FRIENDS_PLAN F2 ranks on a _committed_ target, and a
+default nobody typed is not one. The answer is a chosen-flag or a null state on
+0027's column. It is a product decision and it belongs to Ameen.
