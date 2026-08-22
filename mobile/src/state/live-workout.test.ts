@@ -432,6 +432,7 @@ describe('selectBoardView', () => {
       board,
       targetKg,
       readiness: 'normal',
+      routineId: null,
       userId: null,
       pending: [],
       sealed: false,

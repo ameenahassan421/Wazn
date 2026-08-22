@@ -133,6 +133,21 @@ export interface LiveState {
    *  without asking the network who is signed in. */
   userId: string | null
   /**
+   * The routine this session came from, or null when it was started from Home.
+   *
+   * Held in state rather than passed to the insert, for the same reason
+   * `userId` is: `ensureWorkoutRow` is a RETRY, and a retry that has to be
+   * handed its arguments again is a retry that can lose them.
+   *
+   * This column is why the whole feature exists. Measured on 2026-08-21:
+   * `workouts.routine_id` was null on all 166 finished workouts in production,
+   * because nothing in either app had ever written it. `session_brief()`'s
+   * `due` CTE joins finished workouts on it, so every routine tied at null and
+   * the order collapsed to `position` — "Upper Push is due" was a constant,
+   * printed as a Home headline, naming a routine the account had never run.
+   */
+  routineId: string | null
+  /**
    * Sets banked on the board that no insert has confirmed, each carrying the
    * id it will be inserted under.
    *
@@ -178,6 +193,7 @@ const EMPTY: LiveState = {
   targetKg: null,
   readiness: 'normal',
   userId: null,
+  routineId: null,
   pending: [],
   sealed: false,
   restEndsAt: null,
@@ -283,14 +299,165 @@ export function useLiveWorkout(): LiveState {
 }
 
 /**
- * Start a session seeded from the lifter's last one.
+ * The board a routine asks for: its exercises, in order, with their set counts.
  *
- * Seeding from the previous session rather than from a routine is the same
- * deliberate simplification `useHome` documents: routine metadata arrives in
- * P2. It is also the honest default, because it is the only plan the app can
- * derive from data it actually has.
+ * ── STRUCTURE FROM THE ROUTINE, VALUES FROM HISTORY ─────────────────────────
+ * `seedBoard` takes `previous` and uses it for BOTH the dialled numbers and the
+ * "last time" ghost line, which means whatever is passed there is being
+ * asserted as something the lifter actually did. So the routine's own planned
+ * weights are deliberately NOT passed: a routine imported from Hevy months ago
+ * carries the weight it was written with, and rendering that under "last time"
+ * would be the app inventing a history. The routine decides WHICH lifts and HOW
+ * MANY sets; the lifter's real sets decide the numbers.
+ *
+ * An exercise with no history therefore opens blank, which is `seedBoard`'s
+ * documented rule and the right one: "a suggested number the lifter did not
+ * choose is the one kind of wrong this app cannot afford, because they will
+ * load the bar with it."
  */
-export async function startWorkout(): Promise<void> {
+async function routinePlan(routineId: string): Promise<{
+  name: string
+  plan: { exerciseId: string; name: string; sets: number }[]
+  exerciseIds: string[]
+} | null> {
+  const [{ data: routine }, { data: rx }] = await Promise.all([
+    supabase.from('routines').select('name').eq('id', routineId).maybeSingle(),
+    supabase
+      .from('routine_exercises')
+      .select('id, exercise_id, position')
+      .eq('routine_id', routineId)
+      .order('position'),
+  ])
+  if (!routine) return null
+
+  const rows = (rx ?? []) as { id: string; exercise_id: string; position: number }[]
+  if (rows.length === 0) return null
+
+  const [{ data: planned }, { data: catalogue }] = await Promise.all([
+    supabase
+      .from('routine_sets')
+      .select('routine_exercise_id')
+      .in(
+        'routine_exercise_id',
+        rows.map((r) => r.id),
+      ),
+    supabase
+      .from('exercises')
+      .select('id, name')
+      .in(
+        'id',
+        rows.map((r) => r.exercise_id),
+      ),
+  ])
+
+  const setCount = new Map<string, number>()
+  for (const row of (planned ?? []) as { routine_exercise_id: string }[]) {
+    setCount.set(
+      row.routine_exercise_id,
+      (setCount.get(row.routine_exercise_id) ?? 0) + 1,
+    )
+  }
+  const nameOf = new Map(
+    ((catalogue ?? []) as { id: string; name: string }[]).map((e) => [e.id, e.name]),
+  )
+
+  return {
+    name: (routine as { name: string }).name,
+    plan: rows.map((r) => ({
+      exerciseId: r.exercise_id,
+      name: nameOf.get(r.exercise_id) ?? 'Exercise',
+      // `Math.max(1, …)` is `seedBoard`'s own floor, applied here too so a
+      // routine exercise with no planned sets still gets a row to log into
+      // rather than vanishing from the board.
+      sets: Math.max(1, setCount.get(r.id) ?? 0),
+    })),
+    exerciseIds: rows.map((r) => r.exercise_id),
+  }
+}
+
+/**
+ * The lifter's most recent real sets for a given list of lifts.
+ *
+ * ONE query rather than `previous_session` per exercise: that RPC answers for a
+ * single lift, and a six-exercise routine would be six round trips on the tap
+ * that opens the board. The rows come back newest-first and the newest WORKOUT
+ * per exercise wins, so a lift trained twice in a week seeds from the later
+ * session and not from a blend of both.
+ */
+async function previousFor(exerciseIds: string[]): Promise<
+  {
+    exerciseId: string
+    setNumber: number
+    weightKg: number | null
+    reps: number | null
+    type: BoardExercise['sets'][number]['type']
+  }[]
+> {
+  if (exerciseIds.length === 0) return []
+  const { data } = await supabase
+    .from('workout_sets')
+    .select(
+      'exercise_id, set_number, weight_kg, reps, set_type, workout_id, workouts!inner(started_at, ended_at)',
+    )
+    .in('exercise_id', exerciseIds)
+    .not('workouts.ended_at', 'is', null)
+    .order('workout_id')
+    .limit(600)
+
+  type Row = {
+    exercise_id: string
+    set_number: number
+    weight_kg: number | null
+    reps: number | null
+    set_type: string
+    workout_id: string
+    workouts: { started_at: string } | { started_at: string }[]
+  }
+  const startedAt = (r: Row): string => {
+    const w = Array.isArray(r.workouts) ? r.workouts[0] : r.workouts
+    return w?.started_at ?? ''
+  }
+
+  // Newest workout per exercise, then that workout's rows only.
+  const newest = new Map<string, { at: string; workoutId: string }>()
+  for (const r of (data ?? []) as Row[]) {
+    const at = startedAt(r)
+    const held = newest.get(r.exercise_id)
+    if (held === undefined || at > held.at) {
+      newest.set(r.exercise_id, { at, workoutId: r.workout_id })
+    }
+  }
+
+  return ((data ?? []) as Row[])
+    .filter((r) => newest.get(r.exercise_id)?.workoutId === r.workout_id)
+    .map((r) => ({
+      exerciseId: r.exercise_id,
+      setNumber: r.set_number,
+      weightKg: r.weight_kg,
+      reps: r.reps,
+      type: r.set_type as BoardExercise['sets'][number]['type'],
+    }))
+}
+
+/**
+ * Start a session, from a routine when given one and from the last session
+ * otherwise.
+ *
+ * ── WHY THE ROUTINE PATH EXISTS ─────────────────────────────────────────────
+ * Until 2026-08-21 this took no argument at all, and the comment here said
+ * seeding from the previous session was "the only plan the app can derive from
+ * data it actually has". That stopped being true once the Plan tab shipped: 386
+ * rows of routines were sitting there, and Home was naming one of them as due
+ * on every launch.
+ *
+ * It also had a consequence nobody had looked for. Nothing wrote
+ * `workouts.routine_id`, so `session_brief()`'s rotation — which joins finished
+ * workouts on that column — tied every routine at null and fell through to
+ * `position`. The due routine was a CONSTANT. This function is what fills the
+ * column, so the rotation starts working from the first routine-started
+ * session onward.
+ */
+export async function startWorkout(routineId?: string): Promise<void> {
   if (state.status === 'active') return
 
   const startedAt = Date.now()
@@ -304,7 +471,13 @@ export async function startWorkout(): Promise<void> {
    * workout row's own insert becomes just another retryable write.
    */
   const workoutId = Crypto.randomUUID()
-  set({ ...EMPTY, status: 'active', startedAt, workoutId })
+  set({
+    ...EMPTY,
+    status: 'active',
+    startedAt,
+    workoutId,
+    routineId: routineId ?? null,
+  })
 
   const { data: auth } = await supabase.auth.getUser()
   const userId = auth.user?.id
@@ -406,9 +579,40 @@ export async function startWorkout(): Promise<void> {
     return total + (r.weight_kg ?? 0) * (r.reps ?? 0)
   }, 0)
 
+  /*
+   * The routine, when there is one, REPLACES the plan and the name and leaves
+   * everything above it alone.
+   *
+   * Readiness, the check-in and `daysRested` are all still computed from the
+   * last session, because they are facts about the lifter's week rather than
+   * about which workout they picked. Only the board's shape and the session's
+   * name come from the routine.
+   *
+   * A routine that cannot be read falls through to the last-session board
+   * rather than opening empty. Starting the wrong-but-plausible workout is
+   * recoverable in two taps; "No exercises yet" on a tap that promised a named
+   * routine is the dead end this app already shipped once.
+   */
+  let name = (last?.name as string | null) ?? ''
+  let board = seedBoard(plan, previous)
+  if (routineId !== undefined) {
+    const fromRoutine = await routinePlan(routineId)
+    if (fromRoutine !== null) {
+      name = fromRoutine.name
+      board = seedBoard(fromRoutine.plan, await previousFor(fromRoutine.exerciseIds))
+    }
+  }
+
   set({
-    name: (last?.name as string | null) ?? '',
-    board: seedBoard(plan, previous),
+    name,
+    board,
+    /*
+     * The momentum target stays the LAST SESSION's volume even on a routine
+     * start, and that is deliberate. The target answers "beat what you did",
+     * which is a fact about history; a routine's planned volume would answer
+     * "do what was written down months ago", which is not the same question and
+     * is not what the bar on the board measures.
+     */
     targetKg: targetKg > 0 ? targetKg : null,
   })
 
@@ -426,13 +630,14 @@ export async function startWorkout(): Promise<void> {
  * is how an idempotent write turns into a stuck queue.
  */
 async function ensureWorkoutRow(): Promise<boolean> {
-  const { workoutId, userId, name, startedAt } = state
+  const { workoutId, userId, name, startedAt, routineId } = state
   if (workoutId === null || userId === null) return false
   const { error } = await supabase.from('workouts').insert({
     id: workoutId,
     user_id: userId,
     name: name === '' ? null : name,
     started_at: new Date(startedAt).toISOString(),
+    routine_id: routineId,
   })
   return error === null || error.code === '23505'
 }
