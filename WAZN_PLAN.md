@@ -1391,18 +1391,26 @@ The fix is to seed a board FROM a routine so the column fills going forward,
 which is a change to the logging path and therefore the next piece of work
 rather than an end-of-session patch. Full numbers in DECISIONS.md.
 
-#### OPEN: the weekly review's figures and its own sentence disagree (2026-08-21)
+#### DIAGNOSED: the weekly review's cache key cannot see an import (2026-08-21)
 
 On the Coach screen, the live figure reads "7 sessions this week · 3.5/wk
 average" and the sentence directly beneath it reads "You trained once this week,
 below your average of 1.9 sessions." SQL confirms **7** is correct.
 
-The obvious explanation is wrong: the note is not stale. `coach_notes.generated_at`
-is 2026-08-21 20:05 and its `basis_workout_at` equals the newest finished
-workout, so it was written after the import, on current data. That makes this a
-grounding question rather than a freshness one, and grounding is the doctrine
-the whole coach rests on. Not diagnosed yet. Do not ship a fix for it without
-reading what the Edge Function actually sends.
+It is not a grounding failure and it is not a stale row. `coach-notes`
+keys its cache on the newest finished workout's `started_at`, and TWO things
+break that: a 0-set workout advances it (the basis is an empty session eighteen
+hours newer than the last real one), and a backfill import cannot advance it at
+all, because every imported row is older and `workouts` has no `created_at`. So
+the note was regenerated just before the import, pinned by an empty workout, and
+`basis_now` equals `cached_basis` today — it will be served until a new workout
+is logged.
+
+**Not fixed here.** The correct key is a fingerprint of `weekly_review()`'s
+block, which needs a column on `coach_notes` — production DDL, §2.6, Ameen's
+call — and the function deploys on merge with no staging. The immediate remedy
+is the REGENERATE button, or logging any real workout. Full chain in
+DECISIONS.md.
 
 #### The auth screen speaks in the app's own voice now (2026-08-21)
 

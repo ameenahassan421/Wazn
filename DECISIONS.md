@@ -8783,3 +8783,60 @@ on at the end of a long session. It is the next piece of work, not a footnote.
 cannot support: he has run Push four times, the record just does not connect
 them. The card now says when a routine was last run when it knows, and says
 nothing when it does not.
+
+## 2026-08-21 — DIAGNOSED, NOT FIXED: the weekly review's cache key cannot see an import
+
+**The symptom, on a simulator:** the Coach screen shows a live figure reading
+"7 sessions this week · 3.5/wk average" with the coach's own sentence directly
+beneath it reading "You trained once this week, below your average of 1.9
+sessions. Your longest gap in the last 28 days was 27 days." SQL confirms the
+figure. The sentence is a description of the database as it stood BEFORE
+2026-08-21's Hevy import.
+
+**The first explanation was wrong, and worth recording because it was
+convincing.** "The note is stale" — except `coach_notes.generated_at` is
+2026-08-21 20:05 UTC, which is after the import, and `basis_workout_at` equals
+the newest finished workout exactly. By every field on the row, the note is
+current. A second wrong turn: the first query read `coach_notes` without
+filtering by user, and the newest row happened to belong to the main account
+anyway. It could easily not have.
+
+**What is actually happening.** `coach-notes/index.ts:186` sets the cache key:
+
+    basis = newest finished workout's `started_at`
+
+and serves the cached note when `cached.basis_workout_at === basis`. Two things
+follow, and the account has both:
+
+1. **An empty workout advances the key.** `workouts` with zero sets count — the
+   query filters on `ended_at is not null` and nothing else. Measured: the
+   basis is `2026-08-21 20:03:39.534+00`, a 0-set workout, while the newest
+   workout that actually contains sets is `2026-08-21 01:40+00`, eighteen hours
+   older. The cache is pinned to a session that never happened.
+
+2. **A backfill cannot advance it.** Every workout the import added has a
+   `started_at` in the past, so `max(started_at)` does not move. `workouts` has
+   no `created_at` column, so there is nothing on the row that records the
+   insert.
+
+Together: the note was regenerated at 20:05 against the pre-import corpus,
+pinned by an empty workout created at 20:03, and the import that followed can
+never invalidate it. `basis_now` and `cached_basis` are equal right now. **That
+note will be served until a new workout is logged**, and the only escape is the
+REGENERATE button, which spends one of one weekly quota.
+
+**The right fix, and why it is not in this commit.** The note is a phrasing of
+`weekly_review()`'s block, so it is fresh exactly when that block is unchanged —
+the key should be a fingerprint of the block, not a timestamp near it. That
+wants a column on `coach_notes` to store it, which is production DDL, which
+plan §2.6 makes an ask rather than a do. It also deploys the moment it merges
+(`deploy-functions.yml`), with no staging in front of it. Both reasons say this
+is Ameen's call, made awake, not a change made at the end of a long session.
+
+**A partial mitigation exists and is also not applied:** filtering 0-set
+workouts out of the basis query stops empty sessions pinning the cache. It does
+nothing for the import case, so it fixes the smaller half.
+
+**The immediate remedy is a button, not a deploy.** Pressing REGENERATE on the
+Coach screen rebuilds the note against current data. Logging any real workout
+does the same for free.
