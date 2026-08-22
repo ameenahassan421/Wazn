@@ -1589,6 +1589,49 @@ user-created**, no native create path, while `exercises.owner_id` exists — the
 model is there and the surface is not. A lifter whose movement is not in those
 135 cannot log it, which is a core-loop floor rather than a breadth gap.
 
+#### "Open debugger to view warnings" was hiding a real defect (2026-08-22)
+
+That toast sat at the bottom of every Progress screenshot taken during the
+Coach-tab merge and was ignored three times. Read, it says:
+
+```
+WARN  Unsupported dashed / dotted border style
+```
+
+**React Native cannot draw a dashed border in either place this app asked for
+one, and silently falls back to SOLID.** Two affordances therefore did not
+exist:
+
+1. **Progress, the frequency chart's average line.** `progress.tsx` drew it as a
+   zero-height View with `borderStyle: 'dashed'`, and its comment asserted that
+   was "the whole implementation; no SVG needed". The caption underneath reads
+   "dashed line is the average". It rendered solid.
+
+   The comments immediately above that line congratulate the file for fixing
+   this exact class twice already: a caption promising a dashed line nobody had
+   drawn, and copy naming a control the screen did not have. **This was the
+   third pass at the same bug**, shipped by the fix for the second one.
+
+2. **Settings, the meet-prep mode card.** `ModeCard`'s `dashed` prop is the
+   only signal distinguishing "this mode needs a meet date" from an ordinary
+   selectable one. On a rounded box iOS refuses it outright, so meet prep
+   rendered as a plain solid card.
+
+`Spark.tsx` has had the working pattern the entire time, one directory over: an
+SVG `Line` with `strokeDasharray="3 4"`. Both sites now use SVG (`Line` on the
+chart, a `Rect` with `rx` for the card).
+
+**Verified by the warning count, not by eye.** Navigating to Progress produced
+two `Unsupported dashed` warnings before and zero after; visiting Settings as
+well still gives zero, and the LogBox toast is gone from the screen. The
+meet-prep card is visibly dashed on a simulator for the first time.
+
+**The lesson is about the toast, not the border.** A persistent dev-only warning
+banner trains you to stop seeing it, and this one had been on screen in every
+screenshot for a full day of work. `npx expo start` with `CI=1` prints forwarded
+`console.warn` output as plain text, which is how to read it without the
+debugger UI.
+
 #### 0032: the anon sweep, and an orphan function nobody wrote (2026-08-22)
 
 Ameen asked for the wider revoke that 0031 deliberately deferred. Applied and
