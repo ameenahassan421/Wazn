@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react'
 import { Pressable, View } from 'react-native'
+import { useRouter } from 'expo-router'
 
 import { formatRelativeDay, formatWeight, type Unit } from '@wazn/domain'
 
+import { Btn } from '@/components/ui/Btn'
 import { Card } from '@/components/ui/Surface'
 import { Empty, Screen } from '@/components/ui/Screen'
 import { Header } from '@/components/ui/Header'
@@ -11,6 +13,7 @@ import { useLocale } from '@/hooks/use-locale'
 import { useUnit } from '@/hooks/use-unit'
 import { tick } from '@/services/haptics'
 import { fetchRoutines, type PlanRoutine } from '@/services/routines'
+import { startWorkout, useLiveWorkout } from '@/state/live-workout'
 import { supabaseConfigError } from '@/services/supabase'
 
 /**
@@ -27,18 +30,21 @@ import { supabaseConfigError } from '@/services/supabase'
  * Home has been naming it on the Up Next card this whole time. A lifter could
  * be told what was up next and had nowhere to go and look at it.
  *
- * ── WHAT IT DOES NOT DO YET, SAID OUT LOUD ──────────────────────────────────
- * **You cannot start a routine from here, and nothing here pretends you can.**
- * `startWorkout()` takes no argument: it seeds the board from the last logged
- * session, not from a routine's planned sets. Wiring a tap to it would start
- * the wrong workout with an air of authority. Seeding a board FROM a routine
- * is a real change to the logging path, which is the one path in this app that
- * does not get changed at the end of a long session.
+ * ── YOU CAN START ONE NOW, AND THAT IS THE WHOLE POINT ──────────────────────
+ * This section used to say the opposite, because `startWorkout()` took no
+ * argument and could only seed from the last logged session. It takes an
+ * optional routine id now, so the card's Start opens a board shaped by THAT
+ * routine and writes `workouts.routine_id`.
  *
- * So the cards expand instead of navigating: tapping one shows the planned
- * sets underneath it. That is a whole interaction rather than a stub, and it
- * is the question a lifter actually opens this screen with — "what is in
- * Upper Push again".
+ * That column is why it mattered. It was null on all 166 finished workouts in
+ * production, and `session_brief()`'s rotation joins on it, so the due routine
+ * was a constant and Home was naming a routine the account had never run.
+ * Starting one from here is what fills it.
+ *
+ * **Start lives inside the EXPANDED card, not on the collapsed one.** Tapping a
+ * routine to read it is the common act and starting one is the rare, committing
+ * act; a Start button on every collapsed row would put an irreversible action
+ * under the tap that means "what is in Upper Push again".
  *
  * ── ORDER IS THE ROTATION, NOT `position` ───────────────────────────────────
  * `rotationOrder` comes from the shared domain, so the list reads in the same
@@ -68,12 +74,17 @@ function RoutineCard({
   unit,
   open,
   onToggle,
+  onStart,
+  busy,
 }: {
   routine: PlanRoutine
   due: boolean
   unit: Unit
   open: boolean
   onToggle: () => void
+  onStart: () => void
+  /** A session is already running, so this card cannot start another. */
+  busy: boolean
 }) {
   const { t, locale } = useLocale()
   const [pressed, setPressed] = useState(false)
@@ -125,21 +136,46 @@ function RoutineCard({
       </Pressable>
 
       {open ? (
-        <View style={{ gap: 10 }}>
-          {routine.exercises.map((e) => (
-            <View key={e.id} style={{ gap: 2 }}>
-              <Txt step="title">{e.name ?? '—'}</Txt>
-              {e.sets.length === 0 ? (
-                <Txt step="caption" ink="muted">
-                  —
-                </Txt>
-              ) : (
-                <Txt step="caption" ink="muted" ltr>
-                  {setLine(e.sets, unit)}
-                </Txt>
-              )}
-            </View>
-          ))}
+        <View style={{ gap: 14 }}>
+          <View style={{ gap: 10 }}>
+            {routine.exercises.map((e) => (
+              <View key={e.id} style={{ gap: 2 }}>
+                <Txt step="title">{e.name ?? '—'}</Txt>
+                {e.sets.length === 0 ? (
+                  <Txt step="caption" ink="muted">
+                    —
+                  </Txt>
+                ) : (
+                  <Txt step="caption" ink="muted" ltr>
+                    {setLine(e.sets, unit)}
+                  </Txt>
+                )}
+              </View>
+            ))}
+          </View>
+          {/*
+            No Start while a session is running, and this was found by pressing
+            it. `startWorkout` returns early when `status === 'active'` — which
+            is correct, it must not clobber a session in progress — but the
+            screen navigated anyway, so tapping "Start Upper Push" opened a
+            board headed "Aug 20-26 Day A: Lower" with five Squat sets already
+            on it. A button that performs a DIFFERENT action from the one on its
+            label is worse than a button that is absent.
+
+            The line replaces it rather than disabling it, because a greyed
+            button invites a press and then explains nothing.
+          */}
+          {busy ? (
+            <Txt step="caption" ink="muted">
+              {t('plan.busy')}
+            </Txt>
+          ) : (
+            <Btn
+              kind="hero"
+              label={t('plan.start', { name: routine.name })}
+              onPress={onStart}
+            />
+          )}
         </View>
       ) : null}
     </Card>
@@ -149,6 +185,8 @@ function RoutineCard({
 export default function PlanScreen() {
   const { t } = useLocale()
   const { unit } = useUnit()
+  const router = useRouter()
+  const live = useLiveWorkout()
   /*
    * Seeded from the config error during render rather than in an effect.
    * `eslint-plugin-react-hooks` v7 forbids the synchronous `setState` in an
@@ -211,6 +249,11 @@ export default function PlanScreen() {
                 unit={unit}
                 open={openId === r.id}
                 onToggle={() => setOpenId(openId === r.id ? null : r.id)}
+                busy={live.status === 'active'}
+                onStart={() => {
+                  void startWorkout(r.id)
+                  router.push('/session/new')
+                }}
               />
             ))}
           </View>

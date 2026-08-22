@@ -9053,3 +9053,69 @@ native app cannot render.
 were in one file written in the previous four hours and verified on exactly one
 platform. The defect rate tracked recency and platform coverage, not the age or
 quality of the codebase.
+
+## 2026-08-22 — Start a workout from a routine, and the rotation stops being a constant
+
+**Who asked:** Ameen, "yes to all", against the dependency order where this was
+named the keystone.
+
+**Why it was the keystone.** It fixes four things with one change. The Plan tab
+stops being a read-only list. `workouts.routine_id` starts being written, on a
+column that was null for all 166 finished workouts in production. The coach's
+"Upper Push is due" stops being a constant, because `session_brief()`'s `due`
+CTE joins finished workouts on that column and had every routine tied at null.
+And the Week Board's committed target gets something real to measure, since
+adherence is "did you do the sessions you planned".
+
+**Structure from the routine, values from history.** `seedBoard` uses `previous`
+for BOTH the dialled numbers and the "last time" ghost line, so whatever is
+passed there is being asserted as something the lifter actually did. The
+routine's own planned weights are therefore NOT passed: a routine imported from
+Hevy months ago carries the weight it was written with, and rendering that under
+"last time" would be the app inventing a history. The routine decides which
+lifts and how many sets; the lifter's real sets decide the numbers.
+
+**One query, not one per lift.** `previous_session()` answers for a single
+exercise, so a six-exercise routine would be six round trips on the tap that
+opens the board. `previousFor` takes them together and picks the newest WORKOUT
+per exercise, so a lift trained twice in a week seeds from the later session
+rather than a blend.
+
+**A routine that cannot be read falls through to the last-session board** rather
+than opening empty. Starting a plausible-but-wrong workout is recoverable in two
+taps; "No exercises yet" under a tap that promised a named routine is the dead
+end this app already shipped once.
+
+**A defect found by pressing the button I had just built.** `startWorkout`
+returns early when a session is already active — correct, it must not clobber
+one in progress — but the Plan screen navigated anyway. Tapping "Start Upper
+Push" opened a board headed "Aug 20-26 Day A: Lower" with five Squat sets on it.
+A button that performs a DIFFERENT action from its label is worse than an absent
+one, so Start is replaced by a line while a session runs, rather than disabled:
+a greyed button invites a press and then explains nothing.
+
+**Verified end to end, on a device and in the database.** Started Upper Push
+from Plan; the board opened titled "Upper Push", exercise 1 of 6, Bench Press
+"set 1 of 4" with "last time 90×5 · 110×4 · 140×2 · 130×4" from real history.
+Banked a set, and production now holds a workout named Upper Push with
+`routine_id` linked — the first routine-linked row in the app's history. After
+finishing it, the `due` ordering returns **Upper A** rather than Upper Push. The
+constant is gone.
+
+## 2026-08-22 — FOUND, NOT FIXED: a set with no history renders as a bodyweight exercise
+
+`session/[id].tsx:380` computes `bodyweight = view.set.weightKg === null`, and
+hides the weight stepper entirely when true. A set seeded with no previous
+history has a null weight, so **any lift the lifter has never done offers no way
+to enter a weight at all**. Seen on a simulator: Squat set 6 of 6, where the
+previous session had five sets, rendered with a REPS control and nothing else.
+
+Pre-existing, and not a regression — "Add exercise" on a new lift hits it the
+same way. But start-from-routine makes it far more reachable, because a routine
+containing an unfamiliar lift produces exactly this state for every set of it.
+
+**The fix has a source of truth already in the schema:** `exercises.equipment`,
+which carries `'bodyweight'` for 42 of the 135 rows. Bodyweight is a property of
+the EXERCISE, not of a set's dialled value. That means carrying equipment onto
+`BoardExercise` and through seeding, which is a change to the logging path and
+gets its own piece of work rather than riding along with this one.

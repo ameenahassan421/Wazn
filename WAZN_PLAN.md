@@ -1275,6 +1275,27 @@ may kill the session. Steps 1 to 3 are DONE. Read this one, not the third.)**
 #115 the coach-cache diagnosis, #116 three tabs plus the History circle.
 Working tree clean, everything pushed, 1275 tests green.
 
+#### THE KEYSTONE LANDED: a workout can start from a routine (2026-08-22)
+
+`startWorkout(routineId?)`. The Plan tab's expanded card starts that routine,
+the board is shaped by it, and `workouts.routine_id` is written for the first
+time in the app's history.
+
+**The rotation is no longer a constant.** Verified against production: after
+finishing a routine-started session, the `due` ordering returns **Upper A**
+rather than the permanent Upper Push. Structure comes from the routine and
+values from real history, because `seedBoard`'s `previous` doubles as the "last
+time" line and a routine's imported weights would be a fabricated history.
+
+Start is hidden while a session runs — found by pressing it: `startWorkout`
+correctly refuses to clobber an active session, and the screen navigated anyway,
+so the button opened a different workout than its label named.
+
+**Still open, found the same hour:** `bodyweight = weightKg === null` at
+`session/[id].tsx:380` means any lift with no history offers no weight control.
+`exercises.equipment` already carries `'bodyweight'` for 42 rows and is the
+correct source. DECISIONS.md has it.
+
 #### Train, and two more strings that were typed rather than looked up (2026-08-21)
 
 The first tab is `nav.train` on native now. **Native only:** `nav.log` still
