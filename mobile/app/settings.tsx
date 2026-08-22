@@ -1,8 +1,9 @@
-import { View } from 'react-native'
+import { useState } from 'react'
+import { I18nManager, Pressable, View } from 'react-native'
 import { useRouter } from 'expo-router'
 
 import type { Locale, Unit } from '@wazn/domain'
-import { COACH_VOLUMES, space } from '@wazn/domain'
+import { COACH_VOLUMES, palette, space } from '@wazn/domain'
 
 import { Txt, Kick } from '@/design/Txt'
 import { Btn, ChipBtn, ChipRow } from '@/components/ui/Btn'
@@ -40,6 +41,50 @@ const LOCALES: readonly { key: Locale; labelKey: string }[] = [
   { key: 'en', labelKey: 'settings.language.en' },
   { key: 'ar', labelKey: 'settings.language.ar' },
 ]
+
+/**
+ * A settings row that goes somewhere.
+ *
+ * The chevron is a rotated square rather than an icon-set glyph, for the same
+ * reason the tab marks are: this app draws its own chrome from a plate, a bar
+ * and a disc, and one imported arrow would be the only foreign shape in it.
+ * `scaleX` against `I18nManager` rather than a second rotation constant,
+ * because a chevron is the one mark here that MUST point the other way in
+ * Arabic.
+ */
+function DoorRow({ label, onPress }: { label: string; onPress: () => void }) {
+  const [down, setDown] = useState(false)
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      onPressIn={() => setDown(true)}
+      onPressOut={() => setDown(false)}
+      onPress={onPress}
+      // Static, never `({ pressed }) => ...` — see `Btn.tsx`.
+      style={{
+        padding: space.cardPad,
+        minHeight: space.touch,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        opacity: down ? 0.6 : 1,
+      }}
+    >
+      <Txt step="body">{label}</Txt>
+      <View
+        style={{
+          width: 8,
+          height: 8,
+          borderTopWidth: 2,
+          borderEndWidth: 2,
+          borderColor: palette.muted,
+          transform: [{ scaleX: I18nManager.isRTL ? -1 : 1 }, { rotate: '45deg' }],
+        }}
+      />
+    </Pressable>
+  )
+}
 
 export default function Settings() {
   const router = useRouter()
@@ -89,6 +134,21 @@ export default function Settings() {
             {t('settings.coach.note')}
           </Txt>
         </View>
+      </Card>
+
+      {/* ── The two screens that came off the tab bar ────────────────────
+          Body and Friends lost their tabs on 2026-08-21 when the bar went from
+          six to four (`docs/FRIENDS_PLAN.md` Part 3B: Body held two rows in
+          production and a sixth of the navigation). Off the bar with no door is
+          not "dissolved", it is deleted-without-deleting, and native has no
+          harness that would have caught it — `npm run shots` checks the WEB
+          app's doors. So they get one here until Progress absorbs the body
+          chart and Crew earns the bar back at S1. */}
+      <Kick style={{ marginBottom: 10 }}>{t('settings.more')}</Kick>
+      <Card bare style={{ marginBottom: 20 }}>
+        <DoorRow label={t('nav.body')} onPress={() => router.push('/body')} />
+        <Rule />
+        <DoorRow label={t('nav.friends')} onPress={() => router.push('/friends')} />
       </Card>
 
       <Kick style={{ marginBottom: 10 }}>PREFERENCES</Kick>
