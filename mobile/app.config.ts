@@ -1,4 +1,5 @@
 import type { ExpoConfig } from 'expo/config'
+import { withEntitlementsPlist } from 'expo/config-plugins'
 
 /**
  * Wazn, as a native app.
@@ -40,6 +41,53 @@ import type { ExpoConfig } from 'expo/config'
 const PAPER = '#f7f3ec'
 const BUNDLE_ID = 'app.wazn.client'
 
+/**
+ * Build for a FREE Apple developer account.
+ *
+ * ── WHY THIS FLAG HAS TO EXIST ──────────────────────────────────────────────
+ * A personal team cannot create a provisioning profile for an app that
+ * declares Push Notifications, Associated Domains, or Sign In with Apple.
+ * Apple's own words, from a failed repair on 2026-08-22:
+ *
+ *   Cannot create a iOS App Development provisioning profile for
+ *   "app.wazn.client". Personal development teams, including "Ameen Hassan",
+ *   do not support the Push Notifications, Associated Domains, and Sign In
+ *   with Apple capabilities.
+ *
+ * These are not degraded features on a free account, they are a hard STOP:
+ * the build cannot be signed at all, so `docs/run-on-device.md` was wrong to
+ * describe them as things that "do not work". Nothing installs.
+ *
+ * Wazn declares all three, and `mobile/ios/Wazn/Wazn.entitlements` is
+ * GENERATED, so hand-deleting them is undone by the next prebuild. Hence a
+ * config flag rather than a note telling somebody to edit a generated file.
+ *
+ * ── WHAT IT COSTS, AND WHAT IT DOES NOT ─────────────────────────────────────
+ * Off: universal links (`https://www.trywazn.app/join/...` opening the app),
+ * Sign in with Apple, and server push. **The `wazn://` custom scheme still
+ * handles deep links**, so an invite is testable by pasting `wazn://join/CODE`.
+ *
+ * **The rest alarm still works**, which is the point. It is a LOCAL
+ * notification, and local notifications need no `aps-environment` entitlement:
+ * dropping the `expo-notifications` PLUGIN removes the entitlement it injects
+ * while autolinking still compiles the module. That matters because the alarm
+ * is what WAZN_PLAN calls the justification for stage 4A, and it stays
+ * testable on a free account.
+ *
+ * ── OFF BY DEFAULT, AND THAT IS LOAD-BEARING ────────────────────────────────
+ * EAS and every real build read this file with the variable unset and get the
+ * full capability set. A flag that defaulted the other way would ship an App
+ * Store build with no universal links and no Apple sign-in, which is the kind
+ * of thing nobody notices until a review rejection.
+ *
+ *   WAZN_FREE_PROVISIONING=1 npx expo prebuild --platform ios --clean
+ */
+const FREE_PROVISIONING = process.env.WAZN_FREE_PROVISIONING === '1'
+
+/** One entry of `plugins`. Named because a conditional spread of a tuple
+ *  widens to `(string | object)[]` and stops matching Expo's own type. */
+type Plugin = NonNullable<ExpoConfig['plugins']>[number]
+
 const config: ExpoConfig = {
   name: 'Wazn',
   slug: 'wazn',
@@ -70,7 +118,10 @@ const config: ExpoConfig = {
       UIBackgroundModes: ['audio'],
       ITSAppUsesNonExemptEncryption: false,
     },
-    associatedDomains: ['applinks:www.trywazn.app'],
+    /* Omitted on a free team: Associated Domains is one of the three
+       capabilities a personal team cannot provision. The Android intent
+       filter below is unaffected. */
+    ...(FREE_PROVISIONING ? {} : { associatedDomains: ['applinks:www.trywazn.app'] }),
   },
 
   android: {
@@ -118,8 +169,12 @@ const config: ExpoConfig = {
     'expo-secure-store',
     'expo-localization',
     /** Mandatory in the iOS build the moment Google sign-in exists there —
-     *  App Store rule, and one of the four ways in that CLAUDE.md fixes. */
-    'expo-apple-authentication',
+     *  App Store rule, and one of the four ways in that CLAUDE.md fixes.
+     *
+     *  Dropped under `WAZN_FREE_PROVISIONING`: it injects
+     *  `com.apple.developer.applesignin`, which a personal team cannot
+     *  provision, and its presence blocks signing entirely. */
+    ...(FREE_PROVISIONING ? [] : (['expo-apple-authentication'] as Plugin[])),
     /** The rest alarm — `services/rest-alarm.ts` is the only caller.
      *
      *  Registered as a plugin rather than left to autolinking for ONE reason:
@@ -133,7 +188,23 @@ const config: ExpoConfig = {
      *  it would be a third copy of the palette with nothing checking it. The
      *  tint defaults to the system accent, which is worth more than an
      *  unguarded literal. */
-    ['expo-notifications', { icon: './assets/images/android-icon-monochrome.png' }],
+    /*
+     *  Dropped under `WAZN_FREE_PROVISIONING`, and ONLY the plugin is dropped.
+     *
+     *  `withNotificationsIOS.js:12` sets `aps-environment`, which a personal
+     *  team cannot provision. Autolinking still compiles the native module, and
+     *  LOCAL notifications need no entitlement, so the rest alarm keeps working
+     *  on a free build. What is lost is the Android monochrome icon config,
+     *  which is irrelevant to a local iOS build.
+     */
+    ...(FREE_PROVISIONING
+      ? []
+      : ([
+          [
+            'expo-notifications',
+            { icon: './assets/images/android-icon-monochrome.png' },
+          ],
+        ] as Plugin[])),
     [
       'expo-splash-screen',
       {
@@ -175,4 +246,35 @@ const config: ExpoConfig = {
   },
 }
 
-export default config
+/**
+ * Strip the three capabilities a personal team cannot provision.
+ *
+ * ── WHY REMOVING THE PLUGIN ENTRIES WAS NOT ENOUGH ──────────────────────────
+ * Taking `expo-apple-authentication` and `expo-notifications` out of `plugins`
+ * removes `associatedDomains` and looks like it should remove the rest. It does
+ * not: **Expo AUTOLINKS config plugins from installed packages**, so both keep
+ * applying from `node_modules` whether or not they are listed.
+ *
+ * Verified rather than assumed, on 2026-08-22. With the flag set AND the
+ * generated `Wazn.entitlements` moved out of the way, `expo config --type
+ * introspect` still emitted `aps-environment` and
+ * `com.apple.developer.applesignin`. The first hypothesis, that introspect was
+ * merely echoing the existing native file, was tested and rejected.
+ *
+ * So the removal has to happen AFTER the autolinked plugins run, which is what
+ * a `withEntitlementsPlist` mod does: mods compose in order and this one is
+ * appended last.
+ *
+ * It deletes rather than blanks. `withNotificationsIOS.js:11` sets
+ * `aps-environment` only `if (!config.modResults['aps-environment'])`, so an
+ * empty string would satisfy it and still ship a key the profile cannot carry.
+ */
+const stripFreeProvisioningBlockers = (c: ExpoConfig): ExpoConfig =>
+  withEntitlementsPlist(c, (mod) => {
+    delete mod.modResults['aps-environment']
+    delete mod.modResults['com.apple.developer.applesignin']
+    delete mod.modResults['com.apple.developer.associated-domains']
+    return mod
+  })
+
+export default FREE_PROVISIONING ? stripFreeProvisioningBlockers(config) : config

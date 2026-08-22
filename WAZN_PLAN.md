@@ -1589,6 +1589,50 @@ user-created**, no native create path, while `exercises.owner_id` exists — the
 model is there and the surface is not. A lifter whose movement is not in those
 135 cannot log it, which is a core-loop floor rather than a breadth gap.
 
+#### The free-provisioning flag, and a doc that was wrong (2026-08-22)
+
+Ameen hit this signing straight away, and the error is the useful part:
+
+> Cannot create a iOS App Development provisioning profile for
+> "app.wazn.client". Personal development teams do not support the **Push
+> Notifications, Associated Domains, and Sign In with Apple** capabilities.
+
+`docs/run-on-device.md` had listed those three as things that "do not work" on a
+free certificate. **That was wrong in the way that matters:** they do not
+degrade, they make the build unsignable. Nothing installs.
+
+`WAZN_FREE_PROVISIONING=1` in `mobile/app.config.ts` drops all three. **Off by
+default**, so EAS and every real build keep the full capability set: a flag
+defaulting the other way would ship an App Store build with no universal links
+and no Apple sign-in, which nobody notices until a review rejection.
+
+##### Removing the plugin entries was NOT sufficient, and the first hypothesis was wrong
+
+Taking `expo-apple-authentication` and `expo-notifications` out of `plugins`
+removed `associatedDomains` and left `aps-environment` and
+`com.apple.developer.applesignin` in place. **Expo autolinks config plugins from
+installed packages**, so both kept applying from `node_modules`.
+
+The first explanation was that `expo config --type introspect` was merely
+echoing the already-generated `Wazn.entitlements`. That was TESTED by moving the
+file aside and re-running: the keys were still emitted, so the hypothesis was
+rejected rather than assumed away.
+
+The fix is a `withEntitlementsPlist` mod appended after the autolinked plugins
+run, deleting the keys. It DELETES rather than blanks, because
+`withNotificationsIOS.js:11` sets `aps-environment` only when the key is absent,
+so an empty string would satisfy it and still ship an unprovisionable key.
+
+**Exit proof:** `expo config --type introspect` reports `entitlements: {}` with
+the flag and all three keys without it.
+
+##### What a free build still does
+
+The rest alarm works, which is the point: local notifications need no
+`aps-environment`, and autolinking still compiles the module. Deep links work
+through the `wazn://` scheme, so an invite is testable as `wazn://join/CODE`
+without Associated Domains.
+
 #### DARK MODE IS IN PROGRESS: step 1 landed, nothing consumes it yet (2026-08-22)
 
 **Ameen asked for it directly** ("choosing between dark mode and light mode is
