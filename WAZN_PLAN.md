@@ -1089,19 +1089,19 @@ in the first is banked. Work in the second is rented.
 
 #### Database, read 2026-08-19
 
-|                         |                                                                               |
-| ----------------------- | ----------------------------------------------------------------------------- |
-| Accounts / profiles     | 8 / 8, one is a robot, one is the simulator                                   |
-| Workouts                | 152, of which 2 are unfinished                                                |
-| Workout sets            | 3198                                                                          |
-| Routines                | 18                                                                            |
-| Exercises               | 134 (0 custom)                                                                |
-| AI generations          | 83                                                                            |
-| `client_errors`         | 0                                                                             |
-| `user_preferences` rows | 4                                                                             |
-| Body tables             | `body_weights` 0, `body_measurements` 0, `protein_days` 1, `daily_checkins` 1 |
-| Last workout, any user  | 2026-08-17                                                                    |
-| Migrations applied      | **0001 through 0028**                                                         |
+|                         |                                                                                 |
+| ----------------------- | ------------------------------------------------------------------------------- |
+| Accounts / profiles     | 8 / 8, one is a robot, one is the simulator                                     |
+| Workouts                | 152, of which 2 are unfinished                                                  |
+| Workout sets            | 3198                                                                            |
+| Routines                | 18                                                                              |
+| Exercises               | 134 (0 custom)                                                                  |
+| AI generations          | 83                                                                              |
+| `client_errors`         | 0                                                                               |
+| `user_preferences` rows | 4                                                                               |
+| Body tables             | `body_weights` 0, `body_measurements` 0, `protein_days` 1, `daily_checkins` 1   |
+| Last workout, any user  | 2026-08-17                                                                      |
+| Migrations applied      | **0001 through 0031** (0030 and 0031 applied 2026-08-22, verified in `pg_proc`) |
 
 **THE APP HAS STILL NEVER BEEN SHARED.** The 8 accounts are Ameen, people he already knows,
 one test robot and `simulator@trywazn.app`. **No reading of these numbers is a retention
@@ -1442,10 +1442,18 @@ naming Upper Push forever.
    the local wall with his explicit approval. **Do not keep merging blind
    indefinitely** — CI caught an architectural error on 2026-08-21 that the
    local wall missed.
-2. **Migration 0030 is proven and NOT applied.** The classifier blocked
-   `apply_migration` even with approval, and `execute_sql` was deliberately not
-   used as a workaround. Production is at 0029, so the empty-workout session
-   counting and "9 of 8 weeks" are both still live.
+2. **Migrations 0030 and 0031 are APPLIED. Production is at 0031**
+   (2026-08-22). Ameen added `mcp__supabase__apply_migration` to
+   `.claude/settings.local.json`, which cleared the classifier block. Verified
+   against `pg_proc` / `information_schema` rather than a success flag: `e1rm`
+   exists as `immutable strict`, `profiles.weekly_target` carries its 1-14
+   check, and `weekly_review()` now answers `weeks_trained_of_8: 8` against 165
+   finished-with-sets workouts of 169 finished.
+
+   **0030 shipped one defect and 0031 fixes it.** Its `revoke execute on
+function public.e1rm from anon` left the function anon-callable, because a
+   new function also carries Postgres's own default grant to PUBLIC. See
+   `#### 0031` below.
 
 **`/code-review` IS NOW MANDATORY BEFORE EVERY PR.** Ameen's rule, 2026-08-22.
 Its first run found three defects in code written the hour before, all of which
@@ -1456,7 +1464,7 @@ version of this rule was skipped eight times in one session.
 reasoned invite (`docs/FRIENDS_PLAN.md` Part 6). The S1 gates were LIFTED on
 2026-08-21, so crews, the board, the pact and duels are all buildable and Crew
 becomes the fourth tab. The committed weekly target needs `profiles.weekly_target`,
-which is in the unapplied 0030.
+which is now live in production.
 
 #### The week review's PROSE cannot refresh while the model is down (2026-08-22)
 
@@ -1492,6 +1500,10 @@ should be invalidated by prompt/schema version rather than only by
 
 **Also open:** routine create/edit on Plan (still read-only); the Progress merge
 (History, Body and the Coach tab still have not folded in); `haptics.record()` is
+**Also open:** the Progress merge SHIPPED in #127 (the Coach tab is gone, its
+review is `mobile/src/components/WeekReview.tsx` at the top of Progress, the
+mode selector is in Settings); routine create/edit SHIPPED in #124 (`mobile/app/routine/[id].tsx`
+plus the draft store, merged as a4bba05); `haptics.record()` is
 dead against 516 PR-flagged sets; no way to add a custom exercise (135 in the
 catalogue, 0 user-created, `exercises.owner_id` exists); `setsToTrim` and
 `loadFactor` are called nowhere in native and nothing supplies sleep or HRV; the
@@ -1577,14 +1589,63 @@ user-created**, no native create path, while `exercises.owner_id` exists — the
 model is there and the surface is not. A lifter whose movement is not in those
 135 cannot log it, which is a core-loop floor rather than a breadth gap.
 
-#### 0030 is WRITTEN and PROVEN LOCALLY, and NOT APPLIED (2026-08-21)
+#### 0031: the revoke 0030 thought it had done (2026-08-22)
+
+`public.e1rm` shipped in 0030 with `revoke execute ... from anon` and was still
+anon-callable. Measured right after applying:
+`proacl = {=X/postgres,postgres=X,authenticated=X,service_role=X}` and
+`has_function_privilege('anon', ...) = true`.
+
+**TWO grants reach anon, and the repo already had this right.** Postgres grants
+EXECUTE on every new function to PUBLIC (the `=X` entry with an empty grantee).
+Supabase grants anon, authenticated and service_role directly on top via
+`alter default privileges`. `0007_progress_analytics.sql:122` states it in plain
+words: "revoke from public first, since functions are created with execute
+granted to public by default", and 0006, 0011, 0012 and 0021 all revoke from
+both.
+
+0027 revoked from public and forgot anon. 0028 fixed that correctly but recorded
+the wrong reason, calling 0027 a no-op and asserting "Supabase does not grant
+EXECUTE through PUBLIC". 0030 read that and skipped PUBLIC. **A correct rule
+stated at migration 0007 was overwritten by a confident wrong explanation at
+0028, and nothing asserted the end state either way.**
+
+0031 is one line: `revoke execute on function public.e1rm(numeric, integer) from
+public`. Verified after: `anon` false, `authenticated` true, `service_role` true.
+
+**The durable fix is the assertion, and the first version of it was too weak.**
+`supabase/tests/coach_surfaces.sql` now has two checks. The first names six
+functions and asserts anon-denied plus authenticated-allowed. That is a
+regression guard only, and it could not have caught `e1rm`, because a brand new
+function is on no list the day it ships, which is the shape of every instance of
+this bug so far. The second inverts it: any non-extension function in `public`
+still carrying the PUBLIC grant fails unless it is on a written grandfathered
+list of nine. Proven by deleting 0031 AND striking `e1rm` from the named list;
+the sweep still failed on exactly `e1rm(numeric,integer)`.
+
+Extension-owned functions are excluded via `pg_depend.deptype = 'e'`, and that
+exclusion is load-bearing: `scripts/pg_shim.sql` installs pgcrypto into `public`
+while Supabase keeps it in `extensions`, so the first run flagged 35 pgcrypto
+functions plus `gen_random_uuid` (revoking which would break the DEFAULT on
+nearly every primary key in the schema).
+
+A wider sweep is NOT done and is deliberately left to Ameen: 17 other functions
+in `public` are anon-executable. All are `security invoker` behind RLS, so an
+anonymous call returns zero rows rather than data. `resolve_invite` is the one
+`security definer` among them and that is intentional (0011, 0028: an invite
+link is how somebody arrives before they have an account). Supabase's linter
+also reports **leaked-password protection is disabled**, which is an auth
+setting and Ameen's to flip.
+
+#### 0030 was WRITTEN and PROVEN LOCALLY, then APPLIED 2026-08-22 (written 2026-08-21)
 
 Ameen approved applying it. The auto-mode classifier blocked `apply_migration`
 anyway, and `execute_sql` was NOT used as a workaround: it would be the same
 DDL through a different tool, which is working around the intent of the denial
 rather than around a tool limitation.
 
-**Production is still at 0029.** `supabase/migrations/0030_sessions_weeks_and_e1rm.sql`
+**Applied 2026-08-22; see 0031 above for the defect it shipped.**
+`supabase/migrations/0030_sessions_weeks_and_e1rm.sql`
 contains: `public.e1rm()` (behaviour-identical, no rep ceiling, adopted only in
 `weekly_review` so far), `profiles.weekly_target smallint` with a 1-14 check,
 the empty-workout exclusion in `weekly_review`'s `finished` CTE, and the

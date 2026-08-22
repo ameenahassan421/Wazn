@@ -1,3 +1,23 @@
+-- ── CORRECTION, 2026-08-22 ──────────────────────────────────────────────────
+-- The comment below is right about what to DO and wrong about why, and the why
+-- is what got read two migrations later.
+--
+-- It says "Supabase does not grant EXECUTE through PUBLIC" and calls 0027's
+-- `revoke ... from public` a no-op. Both halves are false. Postgres itself
+-- grants EXECUTE on every new function to PUBLIC (`=X/postgres` in proacl), and
+-- `0007_progress_analytics.sql:122` already said so: "revoke from public first,
+-- since functions are created with execute granted to public by default."
+--
+-- 0027's actual mistake was the opposite of the one recorded here: it revoked
+-- from public and forgot anon. This migration fixed that half correctly, then
+-- generalised it into a rule that drops the other half.
+--
+-- 0030 followed this comment, revoked `public.e1rm` from anon only, and shipped
+-- it anon-callable. See 0031, and the privilege assertions now in
+-- `supabase/tests/coach_surfaces.sql`.
+--
+-- Revoke from BOTH. 0007 had it right.
+
 -- 0028 — the revoke 0027 meant to do and did not.
 --
 -- 0027 ends each of its three functions with:
