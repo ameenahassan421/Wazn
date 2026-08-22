@@ -18,6 +18,7 @@ import {
 import { Card } from '@/components/ui/Surface'
 import { Empty, Screen } from '@/components/ui/Screen'
 import { Header } from '@/components/ui/Header'
+import { WeekReview } from '@/components/WeekReview'
 import { Plate } from '@/components/ui/Plate'
 import { Spark } from '@/components/ui/Spark'
 import { Txt, Kick } from '@/design/Txt'
@@ -370,97 +371,112 @@ export default function ProgressScreen() {
   const thisWeekSessions = weeks.at(-1)?.sessions ?? 0
   const thisWeekVolume = volume.at(-1)?.volumeKg ?? 0
 
-  if (state === 'loading') {
-    return (
-      <Screen>
-        <Header />
-        <Kick style={{ marginBottom: 14 }}>{t('nav.progress')}</Kick>
-        <Card>
-          <Kick>{t('coach.loading')}</Kick>
-        </Card>
-      </Screen>
-    )
-  }
-
-  if (state === 'failed') {
-    return (
-      <Screen>
-        <Header />
-        <Kick style={{ marginBottom: 14 }}>{t('nav.progress')}</Kick>
-        <Empty line={t('progress.error.load')} />
-      </Screen>
-    )
-  }
-
-  if (sessions.length === 0) {
-    return (
-      <Screen>
-        <Header />
-        <Kick style={{ marginBottom: 14 }}>{t('nav.progress')}</Kick>
-        <Empty line={t('progress.balance.empty')} />
-      </Screen>
-    )
-  }
-
+  /*
+   * ONE shell, four bodies, and the review is outside all of them.
+   *
+   * This screen had four separate `return (<Screen>...)` blocks, each
+   * repeating the header and the kicker. That was survivable while they all
+   * showed the same three lines of chrome. It stopped being survivable when
+   * the week review moved here: the review is its own two reads on its own
+   * cadence and owes `fetchProgress` nothing, so hanging it inside the
+   * branches would have hidden the coach's entire reading of the week behind
+   * a failed sessions query, which is the exact defect §12 exists to prevent
+   * and the exact one this component was extracted to fix.
+   */
   return (
     <Screen>
       <Header />
       <Kick style={{ marginBottom: 14 }}>{t('nav.progress')}</Kick>
 
-      <View style={{ gap: 12 }}>
-        {/* ── This week ────────────────────────────────────────────────
+      {/* The week in review, first. `docs/FRIENDS_PLAN.md` Part 3B: its four
+          sections are adherence, volume, plateaus and wins, and every one of
+          those is a Progress question the coach happens to phrase in a
+          sentence. It renders nothing at all when the coach is silenced. */}
+      <WeekReview />
+
+      {/*
+        Three strings, and all three were wrong before the merge put a second
+        loading card directly above them.
+
+        `progress.loading` is NEW. This branch said `t('coach.loading')`, which
+        was harmless while Progress had no coach on it and is not any more:
+        `WeekReview` renders that exact string one card up, so a cold open drew
+        the same kicker twice in two stacked cards and read as a bug.
+
+        `progress.error.load` used to READ 'Loading your progress'. It renders
+        in the FAILED branch, so a read that died announced itself as one still
+        in flight, permanently. The key was right and the sentence was a
+        loading sentence.
+
+        `progress.empty` replaces `progress.balance.empty`, which is the
+        muscle-balance chart's absence copy standing in for the whole screen's
+        day-one state. The real one is specified in LAUNCH.md and already in
+        the catalogue.
+      */}
+      {state === 'loading' ? (
+        <Card>
+          <Kick>{t('progress.loading')}</Kick>
+        </Card>
+      ) : state === 'failed' ? (
+        <Empty line={t('progress.error.load')} />
+      ) : sessions.length === 0 ? (
+        <Empty line={t('progress.empty')} />
+      ) : (
+        <View style={{ gap: 12 }}>
+          {/* ── This week ────────────────────────────────────────────────
             Three figures, the screen's answer to "how am I doing" before
             any chart is read. */}
-        <Card style={{ gap: 12 }}>
-          <Kick>{t('progress.this_week')}</Kick>
-          <View style={{ flexDirection: 'row', gap: 12 }}>
-            <Figure value={String(thisWeekSessions)} label={t('progress.sessions')} />
-            <Figure
-              value={formatVolume(thisWeekVolume, unit)}
-              label={`${t('progress.volume')} · ${unit}`}
-            />
-            <Figure
-              value={String(data?.streakWeeks ?? 0)}
-              label={`${t('progress.streak')} · ${t('progress.wk')}`}
-            />
-          </View>
-        </Card>
+          <Card style={{ gap: 12 }}>
+            <Kick>{t('progress.this_week')}</Kick>
+            <View style={{ flexDirection: 'row', gap: 12 }}>
+              <Figure value={String(thisWeekSessions)} label={t('progress.sessions')} />
+              <Figure
+                value={formatVolume(thisWeekVolume, unit)}
+                label={`${t('progress.volume')} · ${unit}`}
+              />
+              <Figure
+                value={String(data?.streakWeeks ?? 0)}
+                label={`${t('progress.streak')} · ${t('progress.wk')}`}
+              />
+            </View>
+          </Card>
 
-        <Frequency weeks={weeks} />
+          <Frequency weeks={weeks} />
 
-        {/* ── Volume trend ─────────────────────────────────────────────
+          {/* ── Volume trend ─────────────────────────────────────────────
             `Spark` is the app's one line chart and it is already tested;
             `sparkGeometry` places the points in the shared domain. */}
-        <Card
-          style={{ gap: 10 }}
-          onLayout={(e) =>
-            setChartWidth(e.nativeEvent.layout.width - space.cardPad * 2)
-          }
-        >
-          <Kick>
-            {t('progress.volume.heading', {
-              span: `${VOLUME_WEEKS} ${t('progress.wk')}`,
-            })}
-          </Kick>
-          {chartWidth > 0 && (
-            <Spark
-              values={volume.map((w) => w.volumeKg)}
-              width={chartWidth}
-              label={(value) => `${formatVolume(value, unit)} ${unit}`}
-              range={(low, high) => `${low} – ${high}`}
-              emptyLine={t('progress.frequency.empty_caption')}
-            />
-          )}
-        </Card>
+          <Card
+            style={{ gap: 10 }}
+            onLayout={(e) =>
+              setChartWidth(e.nativeEvent.layout.width - space.cardPad * 2)
+            }
+          >
+            <Kick>
+              {t('progress.volume.heading', {
+                span: `${VOLUME_WEEKS} ${t('progress.wk')}`,
+              })}
+            </Kick>
+            {chartWidth > 0 && (
+              <Spark
+                values={volume.map((w) => w.volumeKg)}
+                width={chartWidth}
+                label={(value) => `${formatVolume(value, unit)} ${unit}`}
+                range={(low, high) => `${low} – ${high}`}
+                emptyLine={t('progress.frequency.empty_caption')}
+              />
+            )}
+          </Card>
 
-        <Records entries={records} unit={unit} />
+          <Records entries={records} unit={unit} />
 
-        <StrengthList rows={data?.strength ?? []} unit={unit} />
+          <StrengthList rows={data?.strength ?? []} unit={unit} />
 
-        <Txt step="caption" ink="muted" style={{ marginTop: 4 }}>
-          {t('progress.empty_notice')}
-        </Txt>
-      </View>
+          <Txt step="caption" ink="muted" style={{ marginTop: 4 }}>
+            {t('progress.empty_notice')}
+          </Txt>
+        </View>
+      )}
     </Screen>
   )
 }
