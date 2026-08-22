@@ -174,6 +174,8 @@ export default function CrewScreen() {
   const [error, setError] = useState<string | null>(
     supabaseConfigError === null ? null : t('crew.error'),
   )
+  /** The last target write failed and the number on screen was put back. */
+  const [targetError, setTargetError] = useState(false)
 
   /*
    * On focus, not on mount. Finishing a workout changes this week's count, and
@@ -206,20 +208,38 @@ export default function CrewScreen() {
   /*
    * Written through, then reflected locally, rather than refetching the board.
    * The target is the only thing on this screen the lifter can change, and a
-   * round trip per tap on a stepper would make it lag behind the thumb. A
-   * failed write leaves the number where the lifter put it and says nothing:
-   * `upsert_user_preference` is one statement against their own row, and the
-   * next focus reconciles it either way.
+   * round trip per tap on a stepper would make it lag behind the thumb.
+   *
+   * ── A FAILED WRITE PUTS THE NUMBER BACK, AND SAYS SO ──────────────────────
+   * This was `.catch(() => {})`. The optimistic number stayed on screen, the
+   * server kept the old one, and the next focus quietly replaced it: the lifter
+   * sets 5, sees 5, comes back to the tab later and it is 3 again with nothing
+   * to explain why. A control that appears to work and does not is the failure
+   * mode this repo has hit most often, and it is the reason
+   * `silent-failure-hunter` exists.
+   *
+   * So the revert happens immediately, next to the action that caused it, and
+   * carries a line. Reverting without saying anything would be the same defect
+   * with faster timing.
    */
   function changeTarget(next: number) {
     if (me === null) return
+    const previous = me.weeklyTarget
     const clamped = Math.min(TARGET_MAX, Math.max(TARGET_MIN, next))
     setRows((current) =>
       current === null
         ? current
         : current.map((r) => (r.isMe ? { ...r, weeklyTarget: clamped } : r)),
     )
-    void setWeeklyTarget(clamped).catch(() => {})
+    setTargetError(false)
+    void setWeeklyTarget(clamped).catch(() => {
+      setRows((current) =>
+        current === null
+          ? current
+          : current.map((r) => (r.isMe ? { ...r, weeklyTarget: previous } : r)),
+      )
+      setTargetError(true)
+    })
   }
 
   return (
@@ -255,7 +275,7 @@ export default function CrewScreen() {
                     the ranking happens. F2's decision is invisible otherwise:
                     a lifter cannot tell adherence from volume by looking. */}
                 <Txt step="caption" ink="muted">
-                  {t('crew.target.note')}
+                  {targetError ? t('crew.target.failed') : t('crew.target.note')}
                 </Txt>
               </Card>
             )}

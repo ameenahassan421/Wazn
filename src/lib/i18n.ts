@@ -41,6 +41,7 @@ export const messages: Record<Locale, Record<string, string>> = {
     'crew.target': 'Sessions a week',
     'crew.target.note':
       'The board ranks on hitting your own number, not on how much you lift.',
+    'crew.target.failed': 'That did not save, so the number went back. Try again.',
     'crew.alone': 'Just you for now. Invite someone and you both show up here.',
     'crew.error': 'Could not load the board.',
     'nav.train': 'Train',
@@ -1161,6 +1162,7 @@ export const messages: Record<Locale, Record<string, string>> = {
     'crew.average': '{avg} أسبوعياً خلال الأسابيع الأربعة الماضية',
     'crew.target': 'حصص في الأسبوع',
     'crew.target.note': 'الترتيب على تحقيق رقمك أنت، لا على مقدار ما ترفعه.',
+    'crew.target.failed': 'لم يُحفظ التغيير، فعاد الرقم كما كان. حاول مرة أخرى.',
     'crew.alone': 'أنت وحدك الآن. ادعُ شخصاً وستظهران هنا معاً.',
     'crew.error': 'تعذّر تحميل اللوحة.',
     'nav.train': 'التمرين',
