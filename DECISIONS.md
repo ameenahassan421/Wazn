@@ -8972,3 +8972,35 @@ on Train — which is also when F0's "one line of crew state on Home" arrives, a
 the two are the same piece of work rather than two. If S0 ships without the card
 appearing on Train, this deviation has quietly become a permanent divergence and
 should be re-argued rather than inherited.
+
+## 2026-08-21 — Ameen lifted the S1 gates. They are review checkpoints now, not preconditions
+
+**Who asked:** Ameen, 2026-08-21: "lift S1. no need for gates actually unless it
+is for my review."
+
+`FRIENDS_PLAN` Part 6 made every social phase wait on evidence from the phase
+before it, and S1 additionally waited on "at least two accounts training weekly"
+— which the app cannot produce, because it has not been shared with anyone. The
+gates were therefore blocking work on a condition only Ameen could satisfy.
+
+**What changes.** Crews, the Week Board with real members, the Pact and duels
+are all buildable now. The Crew tab stops waiting for S1, which also retires
+yesterday's deviation entry about the Friends card: the answer is no longer a
+card on Train, it is the fourth tab.
+
+And the committed weekly target moves **server-side immediately**. It was a live
+question yesterday — device-local for a solo board, server-side when a crew
+needs to read it — and lifting the gates settles it, because there is no longer
+a solo-only phase to optimise for.
+
+**What does not change: every design decision the evidence produced.** Ranking
+is on adherence to a self-set target and never on output. Duels are scored the
+same way. Contact is arranged in advance. Those came from STEP UP and from the
+comparison literature, not from the sequencing, and lifting a schedule does not
+touch them.
+
+**What is worth keeping from the gates anyway.** They were falsifiable, which is
+rare in a plan document. The pact one especially: if pact-holders do not beat
+their own pre-pact baseline, the feature is decoration, and the response is a
+stake or a deletion rather than iterating the copy. Worth measuring even with
+nothing waiting on it.

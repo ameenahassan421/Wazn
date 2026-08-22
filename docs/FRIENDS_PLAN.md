@@ -731,8 +731,26 @@ product reasoning rather than policy.
 
 ## Part 6. Sequencing and gates
 
-Nothing here is buildable before its evidence exists, and the plan's own rule is
-that social amplifies a habit rather than creating one.
+> **AMEEN LIFTED THE GATES ON 2026-08-21.** They are no longer build
+> preconditions. S1 does not have to wait for two accounts training weekly, and
+> the Crew tab does not have to wait for S1. **The table below now reads as
+> Ameen's review checkpoints and as the order the work depends on itself, not as
+> permission to start.**
+>
+> What that changes, and what it does not. It changes the schedule: crews, the
+> board, the pact and duels can all be built now, and the committed weekly
+> target moves server-side immediately because crew members have to see each
+> other's adherence. It does not change any DESIGN decision the evidence
+> produced — ranking is still on adherence and never on output, duels are still
+> scored on adherence, contact is still consent-in-advance. Those came from the
+> trial, not from the sequencing.
+>
+> The one thing worth keeping from the old gates: they were falsifiable. If the
+> pact ships and pact-holders do not beat their own pre-pact baseline, the
+> feature is decoration, and the answer is a stake or a deletion rather than
+> better copy. That is worth measuring even when nothing is waiting on it.
+
+The original sequencing, kept because the dependency order is still real:
 
 | Phase  | Contains                                        | Entry condition                       | Gate                                                                                                                                                                                                                          |
 | ------ | ----------------------------------------------- | ------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
