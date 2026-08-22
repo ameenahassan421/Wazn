@@ -9397,3 +9397,85 @@ plan §2.6 makes that an ask.
 
 Supabase's linter separately reports leaked-password protection disabled. That
 is an auth setting, not a migration, and it is Ameen's to flip.
+
+## 2026-08-22: the anon sweep, and an orphan function nobody wrote
+
+**Decision: revoke EXECUTE from `public, anon` on every `public` function except
+`resolve_invite`, grant it back to `authenticated, service_role`, and empty the
+grandfathered allowlist in `coach_surfaces.sql`.**
+
+Ameen asked for the wider revoke that 0031 deferred as an auth change. Applied
+as 0032 and verified against `pg_proc`, not a success flag. Across the 29
+non-extension functions in `public`: zero carry the PUBLIC grant, one is
+anon-executable (`resolve_invite`, deliberate, an invite link is how somebody
+arrives before they have an account), one is not authenticated-executable
+(`handle_new_user`, locked to service_role by 0006).
+
+Verified functionally too: Train and Progress both render on a simulator against
+the real account afterwards, exercising `session_brief`, `weekly_review`,
+`workout_totals`, `strength_summary` and the `exercise_*` family.
+
+**Supabase's linter output is unchanged before and after.** It flags only
+`SECURITY DEFINER` functions and all seventeen closed here are
+`SECURITY INVOKER`. No external tool was ever going to report this, which is the
+whole argument for the assertion added in 0031.
+
+**A grep is not a caller list.** The first draft of 0032 was written off
+`grep -rhoE "\.rpc\(\s*'[a-z_]+'"`, which MISSED `exercise_1rm_history`
+because both its call sites split the call across lines. Revoking on that basis
+would have broken the Progress chart and the exercise detail chart. Every
+function in 0032 was checked against its actual callers before its grant moved.
+
+### The orphan
+
+`workout_sets_pr_flags_trigger()` is live in production, was anon-executable,
+and is created by **no migration in this repo**. It is an earlier version of the
+PR-flag trigger that 0009 later split into `_insert` and `_rebuild`; 0009 was
+edited after it had been applied, so production kept the superseded function and
+the chain never creates it. Nothing references it: `pg_trigger` shows exactly
+two triggers on `workout_sets`, bound to `_insert` and `_rebuild`.
+
+0032 revokes it rather than dropping it. Revoking closes the surface without
+destroying an object whose definition exists nowhere in version control.
+**Dropping it is the right follow-up and it is Ameen's call.** Its source, read
+back from production on 2026-08-22, so the decision can be made from this file
+rather than from a live database:
+
+```sql
+CREATE OR REPLACE FUNCTION public.workout_sets_pr_flags_trigger()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SET search_path TO ''
+AS $function$
+begin
+  if pg_trigger_depth() > 1 then
+    return null;
+  end if;
+  perform public.recompute_pr_flags(
+    case when tg_op = 'DELETE' then old.exercise_id else new.exercise_id end
+  );
+  -- An exercise can be changed out from under a set only by the importer;
+  -- when it is, both sides need rebuilding.
+  if tg_op = 'UPDATE' and old.exercise_id is distinct from new.exercise_id then
+    perform public.recompute_pr_flags(old.exercise_id);
+  end if;
+  return null;
+end;
+$function$
+```
+
+`to_regprocedure` is what lets one migration be correct against both an empty
+database and production: it returns null rather than raising for a name that is
+not there, and 0032 logs which one it skipped instead of passing silently.
+
+**"Executed locally is still not applied" has a mirror image**, and this is the
+third instance in three days: applied is not necessarily still in the file.
+
+### Still outstanding
+
+Leaked-password protection stays disabled. It is Supabase Auth service config,
+not database config, so no SQL sets it. The connected MCP server exposes
+`account, database, debugging, development, functions, branching` and no auth
+surface, and this session has no `SUPABASE_ACCESS_TOKEN` for the Management API.
+Either the dashboard toggle or an addition to `scripts/supabase_admin.ts`, which
+already does Management API config and would run with Ameen's own token.
