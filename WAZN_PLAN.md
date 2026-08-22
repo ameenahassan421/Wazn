@@ -1291,10 +1291,12 @@ Start is hidden while a session runs — found by pressing it: `startWorkout`
 correctly refuses to clobber an active session, and the screen navigated anyway,
 so the button opened a different workout than its label named.
 
-**Still open, found the same hour:** `bodyweight = weightKg === null` at
-`session/[id].tsx:380` means any lift with no history offers no weight control.
-`exercises.equipment` already carries `'bodyweight'` for 42 rows and is the
-correct source. DECISIONS.md has it.
+**And the bodyweight defect found the same hour is FIXED.** `BoardExercise`
+carries `bodyweight`, sourced from `exercises.equipment`, and the screen reads
+it instead of inferring from `weightKg === null`. An attempt to also default a
+no-history weight to 0 was reverted by this repo's own test suite — "leaves a
+row with no history blank rather than inventing a load" — and the revert was
+right: the screen already renders null as 0, so visibility was the whole bug.
 
 #### Train, and two more strings that were typed rather than looked up (2026-08-21)
 

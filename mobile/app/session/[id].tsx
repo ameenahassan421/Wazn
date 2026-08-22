@@ -377,7 +377,22 @@ export default function LiveWorkout() {
   }
 
   const weightStep = unit === 'kg' ? 2.5 : 5
-  const bodyweight = view.set !== null && view.set.weightKg === null
+  /*
+   * From the EXERCISE, not from the dialled value.
+   *
+   * This was `view.set.weightKg === null`, and those are different questions:
+   * a null weight means either "this is a pull-up" or "there is no history to
+   * pre-dial". `seedBoard` produces the second for every set of a lift the
+   * lifter has never done, so the weight stepper vanished and the lift could
+   * not be given a weight at all. Seen on a simulator as Squat set 6 of 6.
+   *
+   * The `??` keeps the old rule for a checkpoint written before `bodyweight`
+   * existed on the board. Those restore without the field, and falling back to
+   * the previous behaviour is better than treating every restored exercise as
+   * loaded.
+   */
+  const bodyweight =
+    view.exercise?.bodyweight ?? (view.set !== null && view.set.weightKg === null)
   const warmup = view.set?.type === 'warmup'
   const shown = toDisplayWeight(dialled.weightKg ?? 0, unit)
   const load = bodyweight ? null : platesFor(shown, unit)

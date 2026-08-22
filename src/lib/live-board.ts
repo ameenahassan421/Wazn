@@ -34,6 +34,25 @@ export interface BoardSet {
 export interface BoardExercise {
   exerciseId: string
   name: string
+  /**
+   * Whether this lift is done with no external load, from
+   * `exercises.equipment`.
+   *
+   * ── WHY IT IS ON THE EXERCISE AND NOT DERIVED FROM THE WEIGHT ───────────
+   * The board used to answer this with `set.weightKg === null`, and the two
+   * are not the same question. A null weight means EITHER "this is a pull-up"
+   * OR "the lifter has never done this lift, so there is nothing to pre-dial".
+   * `seedBoard` produces the second case for every set of any exercise with no
+   * history — so the screen hid the weight stepper, and a lift you had never
+   * done could not be given a weight at all. Observed on a simulator: Squat
+   * set 6 of 6, where the previous session had five sets, rendered with a REPS
+   * control and nothing else.
+   *
+   * `addExercise` already knew the difference and encoded it the same lossy
+   * way, as `weightKg: bodyweight ? null : 0`. Carrying the fact means the
+   * value no longer has to double as a flag.
+   */
+  bodyweight: boolean
   sets: BoardSet[]
 }
 
@@ -112,7 +131,7 @@ export function momentumPct(bankedKg: number, targetKg: number | null): number |
  * load the bar with it.
  */
 export function seedBoard(
-  plan: { exerciseId: string; name: string; sets: number }[],
+  plan: { exerciseId: string; name: string; sets: number; bodyweight?: boolean }[],
   previous: {
     exerciseId: string
     setNumber: number
@@ -124,6 +143,7 @@ export function seedBoard(
   return plan.map((entry) => ({
     exerciseId: entry.exerciseId,
     name: entry.name,
+    bodyweight: entry.bodyweight === true,
     sets: Array.from({ length: Math.max(1, entry.sets) }, (_, i) => {
       const setNumber = i + 1
       const match = previous.find(
@@ -145,6 +165,16 @@ export function seedBoard(
         // Pre-dialled to what they did last time. This is the repeat-set
         // path GATE U2 measures: if the previous values are already in the
         // zones, banking the same set again is one tap and nothing else.
+        /*
+         * STILL null with no history, and an attempt to make it 0 was reverted
+         * by this file's own test suite — "leaves a row with no history blank
+         * rather than inventing a load", which is a deliberate invariant and a
+         * good one. Nothing needed changing here anyway: the board screen
+         * already renders a null as `dialled.weightKg ?? 0`, so the stepper has
+         * an origin to step from once it is VISIBLE. Visibility was the actual
+         * bug, and it is fixed by `bodyweight` above rather than by touching
+         * the record.
+         */
         weightKg: match?.weightKg ?? null,
         reps: match?.reps ?? null,
         done: false,

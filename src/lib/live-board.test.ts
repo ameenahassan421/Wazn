@@ -44,6 +44,30 @@ describe('seedBoard', () => {
     const seeded = seedBoard([{ exerciseId: 'x', name: 'X', sets: 0 }], [])
     expect(seeded[0].sets).toHaveLength(1)
   })
+
+  /*
+   * The board carries whether a lift is bodyweight, because the SCREEN used to
+   * infer it from `weightKg === null` and that is a different question. A null
+   * weight means either "pull-up" or "no history to pre-dial", and the second
+   * is what the test above deliberately produces — so every set of a lift the
+   * lifter had never done rendered with no weight control at all, and could not
+   * be given one. Seen on a simulator as Squat set 6 of 6.
+   */
+  it('carries bodyweight from the plan, and defaults it to false', () => {
+    const [pullUp, squat] = seedBoard(
+      [
+        { exerciseId: 'p', name: 'Pull-up', sets: 1, bodyweight: true },
+        { exerciseId: 's', name: 'Squat', sets: 1 },
+      ],
+      [],
+    )
+    expect(pullUp.bodyweight).toBe(true)
+    // Absent, not false, in the plan — the default has to be the loaded case,
+    // because that is the one where hiding the stepper loses the workout.
+    expect(squat.bodyweight).toBe(false)
+    // And a no-history row is still blank, which is the invariant above.
+    expect(squat.sets[0].weightKg).toBeNull()
+  })
 })
 
 describe('currentPosition', () => {
