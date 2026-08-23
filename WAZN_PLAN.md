@@ -1667,7 +1667,26 @@ muted 6.28/5.89, accent 4.99/4.68, accentSoft 9.87/9.26. **`muted` is 3.39:1 on
 paper and 6.28:1 here**, so the dark theme is the MORE readable of the two and
 does not inherit the open paper-`muted` item below.
 
-##### What step 2 is
+##### Step 2 IS UNDERWAY: the provider exists, nothing consumes it
+
+`mobile/src/hooks/use-theme.tsx` is written and typechecks. It follows
+`use-unit`'s three-writer ranking exactly (lifter tap beats server row beats
+AsyncStorage cache, enforced with refs because the network is not orderable).
+
+Two decisions in it worth not re-litigating:
+
+- **The CHOICE is stored, not the resolved scheme.** Persisting the scheme
+  would turn "follow the system" into whatever the system happened to be at the
+  moment of the write, and the setting would silently stop following anything.
+- **No `ready` flag, unlike `use-unit`.** That one gates rendering because a
+  figure flipping 225 to 102 after paint is a lie about a weight. A ground
+  resolving light-to-dark on the second frame is only a flash, and holding
+  every launch on a disk read to avoid it is the worse trade.
+- `useColorScheme()` can return `'unspecified'` as well as null, so the scheme
+  is derived by matching `=== 'dark'` rather than with `?? 'light'`, which
+  compiles and would leak a third value that has no palette.
+
+##### What step 2 still needs
 
 - Convert **119 `palette.` references across 28 files** from a static import to
   a reactive hook. Module-level maps (`Btn.tsx`'s `KINDS`, `Surface.tsx`'s
