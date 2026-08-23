@@ -188,6 +188,46 @@ request** — the spec says so, and without it `tools/list` returns nothing whil
 call it; that takes a restart. So "the tools are not there" after an `mcp add`
 is expected, not a fault.
 
+## A working tool can be aimed at the wrong tree (2026-08-23)
+
+**There are TWO clones of this repo on the Mac, and Xcode's MCP bridge has the
+one nobody works in open.**
+
+```
+/Users/ameenhassan/Wazn            claude/v1-floor-and-store-readiness   <- the work
+/Users/ameenhassan/Developer/Wazn  main, clean, six commits behind       <- what Xcode has
+```
+
+Different inodes, not a symlink. So `BuildProject` builds, cleanly and
+confidently, a tree with no account deletion, no supersets, no RPE and no
+`sim_tap.sh`. **A tool that is broken tells you. A tool aimed at the wrong thing
+agrees with you.** `XcodeListWindows` returns `workspacePath`: read it before
+believing any answer the bridge gives.
+
+The same question applies to anything else holding a path. Metro was serving the
+right clone here, but only `lsof -a -p <pid> -d cwd -Fn` proved it, and the
+answer could have gone either way.
+
+**And two static checks failed open in the same session**, which is the section
+above arriving through two more doors.
+
+- **`nm`/`strings` over the installed `.app` binary found no `ExpoKeepAwake`.**
+  It also found no `ExpoHaptics`, in an app whose haptics work. Expo modules are
+  not strings in the main binary, so the search could never have succeeded.
+  **The control run is what caught it: search for something you KNOW is there,
+  and if that comes back empty too, the technique is wrong, not the answer.**
+- **`curl http://localhost:8081/index.bundle` returned 5.2 KB** of
+  `UnableToResolveError` JSON, because expo-router's entry is not `index`.
+  Grepping that for `useKeepAwake` reported zero, which reads exactly like "the
+  edit is not in the bundle". **Check the SIZE before grepping a fetched
+  artefact.** The real one is `/.expo/.virtual-metro-entry.bundle?platform=ios`
+  and it is 13.8 MB.
+
+Grepping a served bundle is, otherwise, the cheap way to prove a running app has
+your change rather than a cached one, and it is stronger than a screenshot when
+the package was previously unused: zero call sites means zero presence in the
+dependency graph, so one match is proof.
+
 ## A screenshot cannot press a button (2026-08-23)
 
 **`scripts/sim_tap.sh` taps the booted simulator.** It exists because two

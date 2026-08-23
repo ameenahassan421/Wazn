@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Pressable, ScrollView, View } from 'react-native'
+import { useKeepAwake } from 'expo-keep-awake'
 import { useRouter } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import Svg, { Line, Path, Rect } from 'react-native-svg'
@@ -206,6 +207,22 @@ function Stepper({
 }
 
 export default function LiveWorkout() {
+  /**
+   * The screen stays on for as long as this board is mounted.
+   *
+   * The default lock is 30 seconds on a new iPhone and this app's one sentence
+   * is "log a set in under thirty seconds, one hand" — so the lifter racks the
+   * bar, rests, and comes back to Face ID with chalk on their hands. Every
+   * competitor holds the screen awake here; the dependency has been installed
+   * and called zero times since the native app existed.
+   *
+   * Scoped to the board rather than the app, and to the whole session rather
+   * than just the rest timer: it releases on unmount, so Finish and every
+   * other route lock normally, and a mid-set edit is as much a reason to stay
+   * lit as the countdown is.
+   */
+  useKeepAwake()
+
   const palette = usePalette()
   const router = useRouter()
   const insets = useSafeAreaInsets()

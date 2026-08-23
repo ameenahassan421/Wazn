@@ -1418,6 +1418,98 @@ retention that cannot exist until the app is shared.
 
 #### Next action
 
+**RESUME HERE (2026-08-23, EIGHTH update. Read THIS one, then stop. The seventh
+is below; it is accurate except for two items this session closed or corrected,
+both named below.)**
+
+**THE XCODE MCP BRIDGE IS OPEN ON THE WRONG CHECKOUT. There are TWO clones of
+this repo on the Mac and Xcode has the one nobody is working in.**
+
+```
+/Users/ameenhassan/Wazn            branch claude/v1-floor-and-store-readiness @ d453394   <- the work
+/Users/ameenhassan/Developer/Wazn  branch main @ c0c15d4, clean                            <- what Xcode has open
+```
+
+Different inodes, not a symlink. `XcodeListWindows` returns
+`workspacePath: /Users/ameenhassan/Developer/Wazn/mobile/ios/Wazn.xcworkspace`,
+and that tree is **six commits behind**: it has no account deletion, no
+supersets, no RPE, no `sim_tap.sh`, and none of this session's work. So
+`BuildProject` would have compiled, cleanly and confidently, code nobody is
+working on, and the seventh block sends the next session straight at it as the
+one call that replaces a five-minute `xcodebuild`.
+
+The bridge itself is fine. All 21 tools bound this session and were checked, as
+the seventh block asked. **It is aimed at the wrong tree, which is a worse
+failure than being broken, because it answers.** Ameen opening
+`/Users/ameenhassan/Wazn/mobile/ios/Wazn.xcworkspace` in Xcode fixes it in one
+action; until then, read `workspacePath` from `XcodeListWindows` before
+believing any answer the bridge gives, and use `xcodebuild` in
+`/Users/ameenhassan/Wazn/mobile` instead. Not done from a session because
+opening a window on his screen is his call, not Claude's.
+
+**Which clone is stale, and whether `Developer/Wazn` should exist at all, is
+Ameen's to decide.** It is on `main` with a clean tree, so nothing is at risk
+in it and nothing was touched.
+
+**DONE: `expo-keep-awake` is called.** One hook on the live board
+(`mobile/app/session/[id].tsx`), which is the whole session including rest,
+because `RestCanvas` renders only from there (grepped: two references, both in
+that file). It releases on unmount, so Finish and every other route lock
+normally. The seventh block called this the highest UX-per-line item in the repo
+and it was a two-line change, as it said.
+
+**How far the verification actually goes, since "installed and called zero
+times" means the native module had never run in this app:**
+
+- The board cold-launched against Metro serving `/Users/ameenhassan/Wazn/mobile`
+  (`lsof` on the Metro pid's cwd, because Metro could just as easily have been
+  serving the other clone) and rendered with no redbox, so `useKeepAwake()`
+  executed and the module resolved.
+- The bundle Metro actually serves, 13.8 MB from
+  `/.expo/.virtual-metro-entry.bundle`, contains `useKeepAwake` six times and
+  `ExpoKeepAwake` twenty-one. The package had ZERO call sites before, so its
+  presence in the dependency graph is proof the running app has this change
+  rather than a cached bundle.
+- **What is NOT proven: that the screen stays lit.** A simulator never
+  auto-locks, so no screenshot can show it. That needs Ameen's phone, and it is the one claim not to make.
+
+**Two static checks failed open on the way, and both would have been reported as
+absence**, see the new CLAUDE.md section. `nm`/`strings` over the installed
+binary found no `ExpoKeepAwake`, and a control run found no `ExpoHaptics`
+either, in an app whose haptics demonstrably work. `curl` of
+`/index.bundle` returned 5.2 KB of `UnableToResolveError` JSON, and a grep over
+THAT reported zero keep-awake references.
+
+**CORRECTED: the seventh block's last outstanding item was already done.** It
+says to fix a stale header comment at `mobile/app/session/[id].tsx:72` claiming
+the ghost is not wired. That comment was rewritten in `3791d9c`
+(`git log -S`), two commits BEFORE the handoff was written. It reads correctly
+today. Nothing to do; the instruction was the stale thing.
+
+**CORRECTED: the simulator has a signed-in account with real data.** §7.0 says
+twice that it does not, and that every native screenshot is therefore the
+empty-data path. The board rendered "Wazn Roundtrip Check", exercise 1 of 2, set
+2 of 4, with `last time 90x5 . 105x3`, previous-session history, which comes
+off an authenticated RPC. **The round-trip gap §7.0 calls open on routine save,
+edit and delete can now actually be closed by tapping.** Ameen should confirm
+which account it is before anything is written through it.
+
+**WHAT IS LEFT OF v1**, unchanged from the seventh block's table except that
+nothing there was started this session:
+
+| Item                                         | State                                                                              |
+| -------------------------------------------- | ---------------------------------------------------------------------------------- |
+| History folds into Progress                  | NOT STARTED.                                                                       |
+| A first run that reaches a logged set        | NOT STARTED.                                                                       |
+| Hevy import on native, **or delete the CTA** | NOT STARTED. `sign-in.tsx:427` documents the promise and the absence in a comment. |
+| Body card on Progress                        | NOT STARTED.                                                                       |
+| Apple sign-in                                | NOT STARTED.                                                                       |
+
+**ALSO OWED, unchanged:** `/code-review` on this branch before any PR;
+`public/privacy.html:110` still claims "Wazn has no passwords"; `mobile/` has 3
+test files for 55 source files. **The Android app has still never been run** and
+is still the largest unknown on the board.
+
 **RESUME HERE (2026-08-23, SEVENTH update. Read THIS one, then stop. The sixth
 is below and is accurate about what it covers, but its "where the code is" says
 24 uncommitted files and zero commits; there are now five commits and a clean
