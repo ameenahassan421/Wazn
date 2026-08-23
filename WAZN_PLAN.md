@@ -1443,17 +1443,40 @@ need an explicit decision:
 1. Custom exercises on native. **DONE 2026-08-23.**
 2. Hevy import on native, or delete the CTA promising it. **NOT DONE.**
 3. A first run that reaches a logged set. **NOT DONE.**
-4. Readiness wired to the weight; `ghost-reason` to the board. **HALF DONE** -
-   the dial now seeds from `verdict.weightKg` (`session/[id].tsx`); the ghost's
-   SENTENCE is still not wired to the board, which that file's own comment at
-   line 72 already flagged.
-5. Supersets and RPE on native. **NOT DONE.** No migration needed:
-   `workout_sets` already has `rpe` and `superset_group` (0001, as table
-   columns, which a "add column" grep misses).
+4. Readiness wired to the weight; `ghost-reason` to the board. **DONE.** The
+   dial seeds from `verdict.weightKg` and the ghost's sentence renders above
+   the logged rows AND feeds the rest canvas (`coachLine`). This item read
+   HALF DONE because the file's own header comment still listed the sentence
+   as "not wired here yet" long after it was — a stale comment being read as
+   state, which is the same failure mode as a stale 7.0. The comment is fixed.
+5. Supersets and RPE on native. **DONE 2026-08-23.** No migration needed:
+   `workout_sets` already had `rpe` and `superset_group` (0001, as table
+   columns, which an "add column" grep misses).
+   - `BoardSet.rpe` and `BoardExercise.supersetGroup` in `src/lib/live-board.ts`,
+     with `currentPosition` alternating inside a group (A B A B), `toggleSuperset`
+     pairing a lift with the NEXT one on the board, and `restsAfterBank` holding
+     the rest rule. 15 new tests there, 8 in the native store.
+   - **The rest rule's first version was wrong and its own test caught it.**
+     "Is the next set in the same group" answers NO REST after the round closes
+     too, because the next set is the group's own first lift again. The right
+     question is whether anybody in the group is still BEHIND the set just
+     banked, with an exhausted member exempt so an uneven pair still rests.
+   - RPE is 6 to 10, optional, no default, and tapping the chosen chip clears
+     it. Never seeded from last session: weight and reps are a prescription
+     worth repeating, RPE is a reading of a set that has not happened.
+   - **Two defects a simulator found and the green wall did not**: a restored
+     checkpoint from the previous build has `rpe: undefined`, which is not
+     null, so the row list rendered the literal `RPE UNDEFINED`; and the
+     superset control started as a `ghost` Btn, which is chrome-less by design
+     and read as a section heading rather than a control. Both fixed, both
+     re-screenshotted.
 6. Crash reporting and `expo-updates`. **DONE 2026-08-23.**
 
 Plus, added since: **History folds into Progress** (the last named item of the
-four-tab restructure, cut three times by Claude and put back by Ameen), the
+four-tab restructure, cut three times by Claude and put back by Ameen; the BAR
+is already four tabs — `TABS` in `TabGlyph.tsx` is `index, plan, progress,
+crew` — but History is still its own screen behind the circle beside Start on
+Train, which is the half that is left), the
 **Body card** (Ameen overrode the data argument; `body_weights` has 1 row across
 9 accounts so it WILL render empty until there is data), and **Apple sign-in**,
 which becomes mandatory in the same release as Google under Guideline 4.8.

@@ -24,6 +24,21 @@ export interface BoardSet {
   /** What the lifter has dialled in. Null on a bodyweight lift. */
   weightKg: number | null
   reps: number | null
+  /**
+   * How hard the set felt, 6 to 10, or null for "not said".
+   *
+   * ── WHY IT IS OPTIONAL AND STAYS OPTIONAL ─────────────────────────────
+   * `workout_sets.rpe` has existed since 0001 and no client has ever written
+   * it, so every row in production is null. A required field would make the
+   * commonest logging path slower for a number most lifters do not track,
+   * which is exactly the trade this app refuses. Null is a real answer.
+   *
+   * NOT seeded from the previous session, unlike weight, reps and type. Those
+   * are a prescription and RPE is a reading: last week's 8 says nothing about
+   * how today's set went, and pre-filling one would put a number the lifter
+   * did not choose into their own record of effort.
+   */
+  rpe: number | null
   /** True once banked. A committed row is never edited from the board. */
   done: boolean
   /** The same row from the previous session, for the ghost and the LAST line. */
@@ -53,6 +68,23 @@ export interface BoardExercise {
    * value no longer has to double as a flag.
    */
   bodyweight: boolean
+  /**
+   * Which superset this lift is part of during THIS session, or null.
+   *
+   * On the exercise rather than on each set, mirroring
+   * `workout_sets.superset_group`, which is where it lands: a superset is a
+   * property of the sets in the database so the same two lifts can be paired
+   * one week and not the next, and the Hevy history backfills straight in.
+   * The board holds one value per lift because a lifter cannot pair set 2 of
+   * the bench and set 4 of the row; they pair the LIFTS, for the session.
+   *
+   * `supersets.ts` in this same directory owns the equivalent arithmetic over
+   * database rows. It is not reused here because the shapes genuinely differ
+   * — that module answers questions about a finished workout, this one about
+   * the board in front of somebody — but the semantics are deliberately the
+   * same, down to a group of one dissolving rather than lingering.
+   */
+  supersetGroup: number | null
   sets: BoardSet[]
 }
 
@@ -70,6 +102,49 @@ export interface BoardPosition {
  * time a set is inserted or removed mid-session.
  */
 export function currentPosition(exercises: BoardExercise[]): BoardPosition | null {
+  const straight = firstUndone(exercises)
+  if (straight === null) return null
+
+  /* `?? null`, and it is load-bearing: a checkpoint written before supersets
+     existed restores this field as `undefined`, and `undefined === null` is
+     false, so without it every restored workout would take the alternating
+     branch and silently reorder itself. */
+  const group = exercises[straight.exerciseIndex].supersetGroup ?? null
+  if (group === null) return straight
+
+  /*
+   * ── A SUPERSET ALTERNATES, AND THAT IS THE ONLY THING IT DOES ────────────
+   * Whoever in the group has banked the fewest sets goes next; ties break by
+   * board order. So A B A B falls out with no cursor to keep, and a lifter who
+   * banks two of A before remembering B is not stranded — B simply has the
+   * fewest and comes up next, which is `nextInGroup`'s rule in `supersets.ts`
+   * applied to the board.
+   *
+   * A member with nothing left to log is not a candidate. Without that check a
+   * finished 2-set lift paired with a 4-set one keeps winning the tie on count
+   * and `setIndex` comes back -1, which indexes nothing and freezes the board.
+   */
+  let best = straight.exerciseIndex
+  let fewest = Number.POSITIVE_INFINITY
+  for (let ei = 0; ei < exercises.length; ei += 1) {
+    const exercise = exercises[ei]
+    if (exercise.supersetGroup !== group) continue
+    const setIndex = exercise.sets.findIndex((s) => !s.done)
+    if (setIndex === -1) continue
+    const done = exercise.sets.filter((s) => s.done).length
+    if (done < fewest) {
+      fewest = done
+      best = ei
+    }
+  }
+  return {
+    exerciseIndex: best,
+    setIndex: exercises[best].sets.findIndex((s) => !s.done),
+  }
+}
+
+/** The first unbanked set in plain board order, ignoring supersets. */
+function firstUndone(exercises: BoardExercise[]): BoardPosition | null {
   for (let ei = 0; ei < exercises.length; ei += 1) {
     const sets = exercises[ei].sets
     for (let si = 0; si < sets.length; si += 1) {
@@ -77,6 +152,104 @@ export function currentPosition(exercises: BoardExercise[]): BoardPosition | nul
     }
   }
   return null
+}
+
+/** Lowest unused group id on the board, so the badges read SS 1, SS 2. */
+export function nextBoardGroup(exercises: BoardExercise[]): number {
+  const used = new Set(
+    exercises
+      .map((e) => e.supersetGroup)
+      .filter((g): g is number => typeof g === 'number'),
+  )
+  let id = 1
+  while (used.has(id)) id += 1
+  return id
+}
+
+/**
+ * Pair the lift at `exerciseIndex` with the one after it, or break it out of
+ * the pairing it is in. Returns a NEW board, or the same one when there is
+ * nothing to pair with.
+ *
+ * One control, two directions, because the lifter's question is binary: is
+ * this lift supersetted or not. Joining the NEXT lift rather than offering a
+ * picker is the whole interaction — a superset is two adjacent things on the
+ * board, and anything else is a rewrite of the running order dressed as a
+ * pairing.
+ *
+ * Leaving dissolves a group of one, the same rule `ungroupIds` encodes: a lone
+ * exercise still wearing an SS badge is a group whose other half the lifter
+ * cannot see.
+ */
+export function toggleSuperset(
+  exercises: BoardExercise[],
+  exerciseIndex: number,
+): BoardExercise[] {
+  const self = exercises[exerciseIndex]
+  if (self === undefined) return exercises
+
+  const group = self.supersetGroup ?? null
+  if (group !== null) {
+    const others = exercises.filter(
+      (e, i) => i !== exerciseIndex && e.supersetGroup === group,
+    )
+    const dissolve = others.length <= 1
+    return exercises.map((e, i) =>
+      i === exerciseIndex || (dissolve && e.supersetGroup === group)
+        ? { ...e, supersetGroup: null }
+        : e,
+    )
+  }
+
+  const next = exercises[exerciseIndex + 1]
+  if (next === undefined) return exercises
+  const id = next.supersetGroup ?? nextBoardGroup(exercises)
+  return exercises.map((e, i) =>
+    i === exerciseIndex || i === exerciseIndex + 1 ? { ...e, supersetGroup: id } : e,
+  )
+}
+
+/**
+ * Whether a rest starts after the set at `position` was banked. Takes the
+ * board AFTER the bank.
+ *
+ * A superset rests once per ROUND and not between its exercises, which is the
+ * entire reason to run one: the lifter walks to the other bench, and sits down
+ * only when the pair has both been through.
+ *
+ * ── "IS THE NEXT SET IN THE SAME GROUP" IS THE WRONG QUESTION ──────────────
+ * That was the first rule here and its own test caught it. Bank A1, next up is
+ * B1, same group, no rest — correct. Bank B1 and the next set is A2, also the
+ * same group, so it answered no rest again, and the round that had just
+ * finished never got one.
+ *
+ * The right question is whether anybody in the group is still BEHIND the lift
+ * just banked. A member with nothing left to log is exempt, which is what
+ * makes an uneven pair work: a one-set lift supersetted with a three-set one
+ * stops holding up the rest after its single set, rather than suppressing
+ * every rest for the remainder of the group.
+ *
+ * A warm-up starts nothing either. Nobody rests two minutes after an empty
+ * bar, and `commitOutcome` encodes the same rule for the web app.
+ */
+export function restsAfterBank(
+  exercises: BoardExercise[],
+  position: BoardPosition,
+): boolean {
+  const banked = exercises[position.exerciseIndex]
+  if (banked === undefined) return false
+  if (banked.sets[position.setIndex]?.type === 'warmup') return false
+
+  const group = banked.supersetGroup ?? null
+  if (group === null) return true
+
+  const bankedCount = banked.sets.filter((s) => s.done).length
+  return exercises.every(
+    (e) =>
+      (e.supersetGroup ?? null) !== group ||
+      e.sets.every((s) => s.done) ||
+      e.sets.filter((s) => s.done).length >= bankedCount,
+  )
 }
 
 /**
@@ -131,7 +304,15 @@ export function momentumPct(bankedKg: number, targetKg: number | null): number |
  * load the bar with it.
  */
 export function seedBoard(
-  plan: { exerciseId: string; name: string; sets: number; bodyweight?: boolean }[],
+  plan: {
+    exerciseId: string
+    name: string
+    sets: number
+    bodyweight?: boolean
+    /** Carried from the previous session, so a pairing repeats at zero taps
+     *  for the same reason the set TYPE does. Omitted means not supersetted. */
+    supersetGroup?: number | null
+  }[],
   previous: {
     exerciseId: string
     setNumber: number
@@ -144,6 +325,7 @@ export function seedBoard(
     exerciseId: entry.exerciseId,
     name: entry.name,
     bodyweight: entry.bodyweight === true,
+    supersetGroup: entry.supersetGroup ?? null,
     sets: Array.from({ length: Math.max(1, entry.sets) }, (_, i) => {
       const setNumber = i + 1
       const match = previous.find(
@@ -177,6 +359,9 @@ export function seedBoard(
          */
         weightKg: match?.weightKg ?? null,
         reps: match?.reps ?? null,
+        // Never carried. See `BoardSet.rpe`: a prescription repeats, a reading
+        // does not.
+        rpe: null,
         done: false,
         previousKg: match?.weightKg ?? null,
         previousReps: match?.reps ?? null,
@@ -198,6 +383,7 @@ export function bankSet(
   position: BoardPosition,
   weightKg: number | null,
   reps: number | null,
+  rpe: number | null = null,
 ): BoardExercise[] {
   const target = exercises[position.exerciseIndex]?.sets[position.setIndex]
   if (target === undefined || target.done) return exercises
@@ -207,7 +393,7 @@ export function bankSet(
     return {
       ...exercise,
       sets: exercise.sets.map((set, si) =>
-        si === position.setIndex ? { ...set, weightKg, reps, done: true } : set,
+        si === position.setIndex ? { ...set, weightKg, reps, rpe, done: true } : set,
       ),
     }
   })

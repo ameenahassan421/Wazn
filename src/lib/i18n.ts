@@ -522,6 +522,18 @@ export const messages: Record<Locale, Record<string, string>> = {
     'workout.log_warmup': 'Log warm-up · {weight} × {reps}',
     'workout.log_warmup_reps': 'Log warm-up · {reps} reps',
     'workout.warmup_note': 'Out of volume, records and the coach.',
+    /* RPE is optional and stays optional. `workout_sets.rpe` has existed since
+       0001 and every row in production is null, so a required control would
+       slow the commonest path down for a number most lifters never track. The
+       chips are 6 to 10 because RPE below 6 is not a working set anybody
+       records, and "Off" has to be reachable in one tap or it is a trap. */
+    'workout.rpe': 'How hard · RPE',
+    'workout.rpe.off': 'Off',
+    'workout.superset': 'Superset',
+    'workout.superset.badge': 'SS {n}',
+    'workout.superset.with': 'Superset with {name}',
+    'workout.superset.break': 'Break up the superset',
+    'workout.superset.paired': 'Paired with {name} · no rest between them',
     'log.finish_confirm': 'Finish?',
     'log.finish_hint_empty': 'Nothing logged yet. Finishing throws this one away.',
     'log.finish_hint': 'Finish saves it. Discard deletes it and its sets.',
@@ -1667,6 +1679,13 @@ export const messages: Record<Locale, Record<string, string>> = {
     'workout.log_warmup': 'سجّل الإحماء · {weight} × {reps}',
     'workout.log_warmup_reps': 'سجّل الإحماء · {reps} تكرار',
     'workout.warmup_note': 'خارج الحجم والأرقام القياسية والمدرّب.',
+    'workout.rpe': 'الصعوبة · RPE',
+    'workout.rpe.off': 'بلا',
+    'workout.superset': 'مجموعة مركّبة',
+    'workout.superset.badge': 'م {n}',
+    'workout.superset.with': 'اربطه مع {name}',
+    'workout.superset.break': 'فُكّ المجموعة المركّبة',
+    'workout.superset.paired': 'مرتبط مع {name} · بلا راحة بينهما',
     'log.finish_confirm': 'إنهاء؟',
     'log.finish_hint_empty': 'لم تُسجَّل أي مجموعة بعد. الإنهاء يلغي هذا التمرين.',
     'log.finish_hint': 'الإنهاء يحفظه. التجاهل يحذفه ومجموعاته.',

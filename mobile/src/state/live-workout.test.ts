@@ -22,6 +22,7 @@ import {
   selectBoardView,
   setCurrentSetType,
   startWorkout,
+  toggleCurrentSuperset,
   useLiveWorkout,
 } from './live-workout'
 
@@ -57,6 +58,7 @@ const fake = vi.hoisted(() => {
       weight_kg: number | null
       reps: number | null
       set_type: string
+      superset_group?: number | null
     }[],
     catalogue: [] as { id: string; name: string }[],
     /** Make every `workout_sets` insert fail, to stand in for a basement. */
@@ -558,5 +560,82 @@ describe('durability', () => {
 
     expect(liveState().status).toBe('finished')
     expect(liveState().pending).toHaveLength(1)
+  })
+})
+
+/**
+ * RPE and supersets, which are two columns `workout_sets` has carried since
+ * migration 0001 and no client has ever written to.
+ *
+ * The assertions are about the ROW, not the board: `live-board.test.ts` owns
+ * the alternation and the rest rule, and the only thing that can go wrong here
+ * is the wire between the two — a value dialled on a screen that never reaches
+ * Postgres is the same defect as `set_type` being hardcoded to `'normal'`
+ * until 2026-08-19, and it was invisible for the same reason.
+ */
+describe('RPE', () => {
+  it('reaches the row when the lifter says how hard it was', async () => {
+    bankCurrentSet(100, 5, 8)
+    await flushPending()
+    expect(lastSetRow().rpe).toBe(8)
+  })
+
+  it('is an explicit null when they do not, never undefined', async () => {
+    // PostgREST rejects an undefined, and the column's honest value is null.
+    bankCurrentSet(100, 5)
+    await flushPending()
+    expect(lastSetRow().rpe).toBeNull()
+    expect('rpe' in lastSetRow()).toBe(true)
+  })
+})
+
+describe('supersets', () => {
+  it('pairs the current lift with the next one on the board', () => {
+    toggleCurrentSuperset()
+    expect(liveState().board.map((e) => e.supersetGroup)).toEqual([1, 1])
+  })
+
+  it('sends the group with every set logged inside it', async () => {
+    toggleCurrentSuperset()
+    bankCurrentSet(100, 5)
+    await flushPending()
+    expect(lastSetRow().superset_group).toBe(1)
+  })
+
+  it('leaves sets logged BEFORE the pairing ungrouped, which is what happened', async () => {
+    bankCurrentSet(100, 5)
+    await flushPending()
+    expect(lastSetRow().superset_group).toBeNull()
+    toggleCurrentSuperset()
+    bankCurrentSet(100, 5)
+    await flushPending()
+    expect(lastSetRow().superset_group).toBe(1)
+  })
+
+  it('does not rest between the two lifts, and does after the round', () => {
+    toggleCurrentSuperset()
+    // Squat set 1. Bench is next and it is the same group: walk, do not sit.
+    bankCurrentSet(100, 5)
+    expect(liveState().restEndsAt).toBeNull()
+
+    // Bench set 1 closes the round, and the rest arrives.
+    bankCurrentSet(60, 8)
+    expect(liveState().restEndsAt).not.toBeNull()
+  })
+
+  it("repeats last session's pairing at zero taps", async () => {
+    resetWorkout()
+    fake.config.previous = fake.config.previous.map((r) => ({
+      ...r,
+      superset_group: 1,
+    }))
+    await startWorkout()
+    expect(liveState().board.map((e) => e.supersetGroup)).toEqual([1, 1])
+  })
+
+  it('breaks the pair up, leaving nobody wearing a badge alone', () => {
+    toggleCurrentSuperset()
+    toggleCurrentSuperset()
+    expect(liveState().board.map((e) => e.supersetGroup)).toEqual([null, null])
   })
 })
