@@ -340,3 +340,116 @@ export async function deleteRoutine(routineId: string): Promise<void> {
   const { error } = await supabase.from('routines').delete().eq('id', routineId)
   if (error !== null) throw error
 }
+
+/* ── AI ROUTINE GENERATION ──────────────────────────────────────────────────
+ *
+ * The `generate-routine` Edge Function has been deployed and reachable since
+ * stage 2c and NOTHING in `mobile/` had ever called it. `src/lib/ai.ts` was
+ * its only caller, and that file imports the browser Supabase client, so it
+ * cannot cross `portable.ts`. The result was a feature that was built, paid
+ * for, and invisible to the app being published.
+ *
+ * It also closes the cold-start hole. All 18 production routines came from the
+ * Hevy import and only 4 have ever been run, so an account that did not import
+ * opens Plan to "No routines yet" with nothing that can fill it.
+ *
+ * TWO CALLS, AND THE SPLIT IS THE DOCTRINE
+ *
+ * `generateRoutinePreview` spends the quota and writes NOTHING.
+ * `saveGeneratedRoutines` writes, costs no model call, and only runs when the
+ * lifter presses Save. That is CLAUDE.md's rule verbatim: "no model output is
+ * written to the database without the user pressing something." Charging on
+ * save would also make rejecting a plan the expensive choice, which is
+ * backwards for a preview whose whole point is that you can refuse it.
+ */
+
+/** A generated plan that has NOT been written. Mirrors `src/lib/ai.ts`. */
+export interface RoutinePreview {
+  preview: {
+    name: string
+    exercises: { id: string; name: string; sets: number; reps: number }[]
+  }[]
+  model: string
+  droppedExercises: string[]
+  generationsLeft?: number
+}
+
+export interface SavedRoutines {
+  routines: { id: string; name: string }[]
+  saved: true
+}
+
+/** Ids are the contract with the Edge Function; labels are translated in the UI. */
+export const ROUTINE_GOALS = [
+  'strength',
+  'muscle',
+  'general fitness',
+  'endurance',
+] as const
+export type RoutineGoal = (typeof ROUTINE_GOALS)[number]
+
+export const ROUTINE_EQUIPMENT = [
+  'barbell',
+  'dumbbell',
+  'machine',
+  'cable',
+  'bodyweight',
+] as const
+export type RoutineEquipment = (typeof ROUTINE_EQUIPMENT)[number]
+
+/**
+ * Ask for a plan. Spends a generation. Writes nothing.
+ *
+ * Errors are thrown with a bare code rather than a sentence: this module has no
+ * locale and the screen does. `quota` is separated from the rest because "you
+ * have used this week's generations" is a limit the lifter can act on, and
+ * rendering it as a generic failure reads as a fault in the app.
+ */
+export async function generateRoutinePreview(request: {
+  goal: RoutineGoal
+  days: number
+  equipment: RoutineEquipment[]
+}): Promise<RoutinePreview> {
+  const { data, error } = await supabase.functions.invoke<RoutinePreview>(
+    'generate-routine',
+    { body: request },
+  )
+  if (error !== null) {
+    const body = (error as { context?: { status?: number } }).context
+    throw new Error(body?.status === 429 ? 'quota' : 'failed')
+  }
+  if (data?.preview === undefined || data.preview.length === 0) {
+    throw new Error('empty')
+  }
+  return data
+}
+
+/**
+ * Keep a previewed plan. No model call, no quota.
+ *
+ * Only the fields the function needs are sent. Passing the preview back
+ * verbatim would let a tampered client widen what gets written, and the
+ * function re-reads every exercise id against the catalogue anyway.
+ */
+export async function saveGeneratedRoutines(
+  plan: RoutinePreview['preview'],
+): Promise<SavedRoutines> {
+  const { data, error } = await supabase.functions.invoke<SavedRoutines>(
+    'generate-routine',
+    {
+      body: {
+        save: plan.map((day) => ({
+          name: day.name,
+          exercises: day.exercises.map((e) => ({
+            id: e.id,
+            sets: e.sets,
+            reps: e.reps,
+          })),
+        })),
+      },
+    },
+  )
+  if (error !== null) throw new Error('failed')
+  if (data === null) throw new Error('failed')
+  return data
+}

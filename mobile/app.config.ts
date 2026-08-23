@@ -185,6 +185,21 @@ const config: ExpoConfig = {
     'expo-router',
     'expo-secure-store',
     'expo-localization',
+    /** Crash reporting. Added 2026-08-23, and until then this app had NONE.
+     *
+     *  The web app writes failures to `client_errors` and wraps the tree in an
+     *  error boundary; the native app had neither, and `report-error` was not
+     *  even exported through `portable.ts`. A crash on a stranger's phone was
+     *  invisible forever, which is the wrong state to publish in.
+     *
+     *  No `dsn` key here. The DSN is a build-time value read from the
+     *  environment in `extra` below, so a fork or a local build without one
+     *  degrades to "reporting is off" rather than to somebody else's project.
+     *
+     *  Kept OUT of the `FREE_PROVISIONING` branch on purpose: it injects no
+     *  entitlement, so a personal-team build reports crashes exactly like a
+     *  provisioned one. */
+    '@sentry/react-native/expo',
     /** Mandatory in the iOS build the moment Google sign-in exists there —
      *  App Store rule, and one of the four ways in that CLAUDE.md fixes.
      *
@@ -277,7 +292,50 @@ const config: ExpoConfig = {
      */
     supabaseUrl: process.env.EXPO_PUBLIC_SUPABASE_URL ?? '',
     supabaseAnonKey: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? '',
+    /**
+     * Sentry's DSN. Public by design (it is an ingest endpoint, not a
+     * credential), so it belongs here beside the anon key rather than in a
+     * secret store. Empty means reporting is OFF, which is the correct state
+     * for a local build and for anyone who forks this repo.
+     */
+    sentryDsn: process.env.EXPO_PUBLIC_SENTRY_DSN ?? '',
+    /**
+     * Google's OAuth client id. Empty means the social path is not configured,
+     * and the sign-in screen hides the button entirely rather than showing one
+     * that explains itself.
+     *
+     * Until 2026-08-23 that button was the hero CTA on the first screen and
+     * its handler only set an error reading "Google sign-in arrives with the
+     * App Store build". In an App Store build that sentence is false about
+     * itself, and the largest control a reviewer taps doing nothing is
+     * Guideline 2.1's definition of an incomplete app.
+     *
+     * When this is set, Apple sign-in MUST ship in the same release: offering
+     * any third-party social login on iOS makes Sign in with Apple mandatory
+     * (Guideline 4.8).
+     */
+    googleClientId: process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID ?? '',
   },
+
+  /**
+   * Over-the-air updates.
+   *
+   * Without this, every fix is a new build and a new store review: days for a
+   * typo. With it, a JavaScript-only change reaches phones in minutes, which
+   * for a solo developer publishing a first app is the difference between a
+   * bad week and a bad afternoon.
+   *
+   * `appVersion` policy, deliberately. The runtime version is tied to
+   * `version` above, so an update can only land on a build whose native layer
+   * it actually matches. The looser `sdkVersion` policy would happily push
+   * JavaScript that calls a native module the installed binary does not have,
+   * and that crashes on launch with no way back.
+   *
+   * `updates.url` is NOT written here: `eas init` generates the project id and
+   * fills it in. Adding a guessed URL would point the app at a project that
+   * does not exist.
+   */
+  runtimeVersion: { policy: 'appVersion' },
 }
 
 /**

@@ -68,6 +68,34 @@ export const messages: Record<Locale, Record<string, string>> = {
     'plan.sets': '{n} sets',
     'plan.sets_one': '1 set',
     'plan.bodyweight': 'bodyweight',
+    // AI routine generation on native, wired 2026-08-23. The Edge Function had
+    // been deployed since stage 2c with `src/lib/ai.ts` as its only caller, so
+    // the app being published could not reach it. It also fills the cold-start
+    // hole: every production routine came from the Hevy import, so an account
+    // without one opened Plan to an empty list and nothing that could fill it.
+    'plan.generate': 'Generate a plan',
+    'generate.heading': 'Generate a plan',
+    'generate.sub':
+      'A starting point you can edit. Nothing is saved until you keep it.',
+    'generate.goal': 'Goal',
+    'generate.days': 'Days a week',
+    'generate.equipment': 'Equipment you have',
+    'generate.action': 'Generate',
+    'generate.working': 'Thinking\u2026',
+    'generate.preview': 'Your plan',
+    'generate.save': 'Keep this plan',
+    'generate.saving': 'Saving\u2026',
+    'generate.again': 'Try a different one',
+    'generate.failed': 'Could not generate a plan. Try again.',
+    'generate.quota': 'No generations left this week.',
+    'generate.empty': 'Nothing came back. Try again.',
+    'generate.dropped': 'Some lifts were not in the catalogue and were left out.',
+    'generate.equipment.none': 'Pick at least one.',
+    'generate.sets': '{sets} \u00d7 {reps}',
+    'goal.strength': 'Strength',
+    'goal.muscle': 'Muscle',
+    'goal.general fitness': 'General',
+    'goal.endurance': 'Endurance',
     'plan.empty': 'No routines yet.',
     'plan.empty.sub':
       'A routine is a workout you plan once and repeat. Build one here, or import yours from Hevy.',
@@ -160,6 +188,26 @@ export const messages: Record<Locale, Record<string, string>> = {
     'settings.friends': 'Friends',
     'settings.signout': 'Sign out',
     'settings.signout.confirm': 'Sign out?',
+    // Account deletion. Both stores require it: Apple rejects without an
+    // in-app path, Play requires that path plus a web URL. The body names what
+    // goes, in the order a lifter would miss it, because "your data" is a
+    // phrase people agree to without reading.
+    //
+    // `settings.delete.word` is the word the user must TYPE, and it is
+    // localised on purpose — asking an Arabic reader to type Latin "DELETE" is
+    // a worse gate, not a stricter one. The client compares the input against
+    // this key and then sends the fixed `DELETE` sentinel to the Edge
+    // Function, so the server contract never depends on the locale.
+    'settings.delete': 'Delete account',
+    'settings.delete.heading': 'Delete your account?',
+    'settings.delete.body':
+      'This erases your workouts, routines, records, body log and crew for good. It cannot be undone.',
+    'settings.delete.prompt': 'Type DELETE to confirm.',
+    'settings.delete.word': 'DELETE',
+    'settings.delete.action': 'Delete for good',
+    'settings.delete.cancel': 'Keep my account',
+    'settings.delete.working': 'Deleting…',
+    'settings.delete.error': 'Could not delete the account. Try again.',
     'theme.to_dark': 'Dark theme',
     'theme.to_paper': 'Paper theme',
     // Suspense loading fallback
@@ -255,8 +303,11 @@ export const messages: Record<Locale, Record<string, string>> = {
     'auth.code.path.short': 'Email me a code instead',
     'auth.hevy.cta': 'Coming from Hevy?',
     'auth.hevy.cta.sub': 'Bring your whole history · every set, every PR',
-    'auth.footer.note':
-      '6-digit codes, never magic links · Apple sign-in arrives with the App Store build',
+    // Was "... \u00b7 Apple sign-in arrives with the App Store build". That is a
+    // sentence that becomes false about itself the moment it IS the App Store
+    // build, and it sat one line under the dead Google button that had exactly
+    // the same problem. Both were seen on a simulator. What is left stays true.
+    'auth.footer.note': '6-digit codes, never magic links',
     'auth.code.head': 'Check your email.',
     'auth.code.otw': 'A 6-digit code is on its way to {address}.',
     'auth.code.verify.short': 'Verify',
@@ -872,6 +923,17 @@ export const messages: Record<Locale, Record<string, string>> = {
     'exercise.catalogue_empty':
       'No lifts loaded. The catalogue is only readable by a signed-in account.',
     'exercise.none': 'No lift by that name.',
+    // Custom exercises, added 2026-08-23. Until then a lifter whose movement
+    // was not among the 135 global rows could not log their workout at all.
+    // The name is not asked for twice: whatever was typed into the search IS
+    // the name, because the search is where they discovered it was missing.
+    'exercise.create': 'Create \u201c{name}\u201d',
+    'exercise.create.heading': 'New exercise',
+    'exercise.create.muscle': 'Muscle group',
+    'exercise.create.equipment': 'Equipment',
+    'exercise.create.action': 'Create and add',
+    'exercise.create.failed': 'Could not create that exercise. Try again.',
+    'exercise.create.short': 'Give the exercise a name.',
     'exercise.failed': 'Could not load the catalogue. Check your connection.',
     'exercise.new.title': 'New exercise',
     'exercise.new.back': 'Back',
@@ -1203,6 +1265,29 @@ export const messages: Record<Locale, Record<string, string>> = {
     'plan.sets': '{n} مجموعات',
     'plan.sets_one': 'مجموعة واحدة',
     'plan.bodyweight': 'وزن الجسم',
+    // Machine drafted, like the rest of this table.
+    'plan.generate': 'أنشئ خطة',
+    'generate.heading': 'أنشئ خطة',
+    'generate.sub': 'نقطة بداية يمكنك تعديلها. لا يُحفظ شيء حتى تحتفظ بها.',
+    'generate.goal': 'الهدف',
+    'generate.days': 'أيام في الأسبوع',
+    'generate.equipment': 'المعدات المتاحة',
+    'generate.action': 'أنشئ',
+    'generate.working': 'جارٍ التفكير\u2026',
+    'generate.preview': 'خطتك',
+    'generate.save': 'احتفظ بهذه الخطة',
+    'generate.saving': 'جارٍ الحفظ\u2026',
+    'generate.again': 'جرّب خطة أخرى',
+    'generate.failed': 'تعذّر إنشاء خطة. حاول مرة أخرى.',
+    'generate.quota': 'لا توجد محاولات متبقية هذا الأسبوع.',
+    'generate.empty': 'لم يعد أي شيء. حاول مرة أخرى.',
+    'generate.dropped': 'بعض التمارين غير موجودة في الفهرس وتم استبعادها.',
+    'generate.equipment.none': 'اختر واحدة على الأقل.',
+    'generate.sets': '{sets} \u00d7 {reps}',
+    'goal.strength': 'القوة',
+    'goal.muscle': 'العضلات',
+    'goal.general fitness': 'لياقة عامة',
+    'goal.endurance': 'التحمل',
     'plan.empty': 'لا توجد روتينات بعد.',
     'plan.empty.sub':
       'الروتين تمرين تخطّطه مرة وتكرّره. أنشئ واحداً هنا، أو استورد روتيناتك من Hevy.',
@@ -1288,6 +1373,20 @@ export const messages: Record<Locale, Record<string, string>> = {
     'settings.friends': 'الأصدقاء',
     'settings.signout': 'تسجيل الخروج',
     'settings.signout.confirm': 'تسجيل الخروج؟',
+    // Machine drafted, like the rest of this table. `settings.delete.word` is
+    // the typed confirmation and is Arabic here by design: the client checks
+    // the input against this key, and the fixed `DELETE` sentinel the server
+    // wants is added by the client, not typed by the user.
+    'settings.delete': 'حذف الحساب',
+    'settings.delete.heading': 'حذف حسابك؟',
+    'settings.delete.body':
+      'سيمحو هذا تمارينك وبرامجك وأرقامك القياسية وسجل جسمك ومجموعتك نهائياً. لا يمكن التراجع عن هذا.',
+    'settings.delete.prompt': 'اكتب حذف للتأكيد.',
+    'settings.delete.word': 'حذف',
+    'settings.delete.action': 'احذف نهائياً',
+    'settings.delete.cancel': 'الاحتفاظ بحسابي',
+    'settings.delete.working': 'جارٍ الحذف…',
+    'settings.delete.error': 'تعذّر حذف الحساب. حاول مرة أخرى.',
     'theme.to_dark': 'المظهر الداكن',
     'theme.to_paper': 'المظهر الفاتح',
     // Suspense loading fallback
@@ -1374,8 +1473,7 @@ export const messages: Record<Locale, Record<string, string>> = {
     'auth.code.path.short': 'أرسل لي رمزاً بدلاً من ذلك',
     'auth.hevy.cta': 'قادم من Hevy؟',
     'auth.hevy.cta.sub': 'أحضر سجلّك كاملاً · كل مجموعة، كل رقم قياسي',
-    'auth.footer.note':
-      'رموز من 6 أرقام، لا روابط سحرية أبداً · تسجيل الدخول عبر Apple يصل مع نسخة App Store',
+    'auth.footer.note': 'رموز من 6 أرقام، لا روابط سحرية أبداً',
     'auth.code.head': 'تحقّق من بريدك.',
     'auth.code.otw': 'رمز من 6 أرقام في طريقه إلى {address}.',
     'auth.code.verify.short': 'تحقّق',
@@ -1936,6 +2034,14 @@ export const messages: Record<Locale, Record<string, string>> = {
     'exercise.catalogue_empty':
       'لم تُحمّل أي تمارين. القائمة متاحة للحسابات المسجّلة فقط.',
     'exercise.none': 'لا يوجد تمرين بهذا الاسم.',
+    // Machine drafted, like the rest of this table.
+    'exercise.create': 'إنشاء \u201c{name}\u201d',
+    'exercise.create.heading': 'تمرين جديد',
+    'exercise.create.muscle': 'المجموعة العضلية',
+    'exercise.create.equipment': 'المعدات',
+    'exercise.create.action': 'أنشئ وأضف',
+    'exercise.create.failed': 'تعذّر إنشاء التمرين. حاول مرة أخرى.',
+    'exercise.create.short': 'أعطِ التمرين اسماً.',
     'exercise.failed': 'تعذّر تحميل القائمة. تحقّق من الاتصال.',
     'exercise.new.title': 'تمرين جديد',
     'exercise.new.back': 'رجوع',

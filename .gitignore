@@ -45,3 +45,10 @@ deno.lock
 # `npm run bundle:ios` in mobile/ writes the Metro bundle here. It is a build
 # artifact and it is 4.6 MB.
 mobile/.expo-export*
+
+# Local design-sync tooling output (not part of the repo). Without these,
+# `npm run lint` and `npm run format:check` fail on 470+ generated files.
+.ds-sync/
+ds-bundle/
+.design-sync/
+/index.d.ts

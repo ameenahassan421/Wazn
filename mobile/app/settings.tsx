@@ -422,6 +422,28 @@ export default function Settings() {
           }}
         />
       ) : null}
+
+      {/* Account deletion, and it sits BELOW sign-out on purpose: the ordering
+          runs least destructive to most, so the irreversible one is the last
+          thing a thumb reaches rather than something it passes on the way.
+
+          `ghost` rather than `line`. Both stores require this door to exist and
+          to be findable; neither requires it to compete with the controls above
+          it, and a full-weight button for an action almost nobody wants would
+          be the loudest thing on the screen. The gravity lives on the screen it
+          opens, where there is room to state what is lost.
+
+          Gated on AUTH_ENABLED with sign-out for the same reason: with auth off
+          there is no account to delete. */}
+      {AUTH_ENABLED ? (
+        <Btn
+          kind="ghost"
+          full
+          label={t('settings.delete')}
+          style={{ marginTop: 6 }}
+          onPress={() => router.push('/delete-account')}
+        />
+      ) : null}
     </Screen>
   )
 }

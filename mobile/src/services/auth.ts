@@ -149,3 +149,30 @@ export async function signUpWithPassword(
 export async function signOut(): Promise<void> {
   await supabase.auth.signOut()
 }
+
+/**
+ * Delete the account and everything in it. Irreversible.
+ *
+ * Both stores require this path: Apple rejects a submission without in-app
+ * deletion (5.1.1(v)), Play requires the in-app path plus a web URL. The work
+ * happens in the `delete-account` Edge Function, because removing a user needs
+ * the service-role key and that key is never allowed near a client.
+ *
+ * `confirm: 'DELETE'` is a FIXED sentinel and deliberately not the localised
+ * word the user typed. The screen checks the typed input against
+ * `settings.delete.word`, which is Arabic on an Arabic build; if that string
+ * were forwarded, the server contract would change with the device language
+ * and an Arabic user could never delete their account.
+ *
+ * The local session is cleared only after the server confirms. Signing out
+ * first would leave a caller with no token to authorise the deletion, which is
+ * the obvious ordering and the wrong one.
+ */
+export async function deleteAccount(): Promise<void> {
+  const { error } = await supabase.functions.invoke('delete-account', {
+    method: 'POST',
+    body: { confirm: 'DELETE' },
+  })
+  if (error) throw new Error(error.message)
+  await supabase.auth.signOut()
+}

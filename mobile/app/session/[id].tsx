@@ -311,10 +311,31 @@ export default function LiveWorkout() {
      * eight taps on the `+`. "The stepper KEEPS them" is the gate; this is
      * where it is kept.
      */
+    /*
+     * ── AND THE COACH GETS TO MOVE THE NUMBER, SINCE 2026-08-23 ─────────────
+     * `verdict` already factors today's check-in: `readiness` is seeded in
+     * `startWorkout` from `daily_checkins` and passed into `verdictFor` above.
+     * Until now it reached only the CHIP. The board said "raise to 62.5" in
+     * words and dialled 60, so the app asked how you felt, worked out what to
+     * do about it, told you, and then made you press `+` yourself.
+     *
+     * That is the whole differentiator, one wire short. Fitbod cannot ask how
+     * you feel because automation is what it sells; Hevy publicly chose not to
+     * coach. The claim only holds if the answer moves the bar.
+     *
+     * It is NOT model output, so nothing here breaks the rule that a model
+     * never writes without a press: `verdictFor` is deterministic TypeScript
+     * over the lifter's own sets, and the number is a proposal in an editable
+     * field that banks nothing until they commit it.
+     *
+     * `null` falls through, which is the common case: `verdict.weightKg` is
+     * null whenever the ghost has no opinion (`cause: 'none'`, a first-ever
+     * lift, the coach dialled off), and the previous behaviour stands.
+     */
     setDialled({
       key,
-      weightKg: seedWeight(view.set, dialled.weightKg),
-      reps: view.set?.reps ?? dialled.reps,
+      weightKg: verdict?.weightKg ?? seedWeight(view.set, dialled.weightKg),
+      reps: verdict?.reps ?? view.set?.reps ?? dialled.reps,
     })
   }
 

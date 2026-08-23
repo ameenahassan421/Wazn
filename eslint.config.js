@@ -20,6 +20,14 @@ export default tseslint.config(
       'coverage',
       'test-results',
       'playwright-report',
+      // Local design-sync tooling output. Gitignored, but ESLint's flat config
+      // does not read .gitignore the way Prettier 3 does, so a developer who
+      // has run design-sync gets `lint` failures on vendored React and on
+      // generated entry files they must not edit.
+      '.design-sync',
+      '.ds-sync',
+      'ds-bundle',
+      'index.d.ts',
     ],
   },
   {

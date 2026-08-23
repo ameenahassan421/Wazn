@@ -66,3 +66,108 @@ export async function fetchCatalogue(): Promise<CatalogueExercise[]> {
   // "most used first, alphabetical within that" without a second comparator.
   return rows.sort((a, b) => b.setCount - a.setCount)
 }
+
+/**
+ * The muscle groups a custom lift can belong to.
+ *
+ * Hard-coded here rather than imported from `scripts/muscle_groups.ts`, which
+ * is a build-time tool that reaches for `../src/lib/types` and never crosses
+ * `portable.ts`. These are the values `exercises.muscle_group` already holds in
+ * production; adding one means a catalogue that sorts a lift into a group the
+ * Progress balance chart does not draw.
+ */
+export const CUSTOM_MUSCLE_GROUPS = [
+  'chest',
+  'back',
+  'legs',
+  'shoulders',
+  'arms',
+  'core',
+  'cardio',
+  'other',
+] as const
+export type CustomMuscleGroup = (typeof CUSTOM_MUSCLE_GROUPS)[number]
+
+/**
+ * The equipment a custom lift uses.
+ *
+ * `bodyweight` is not cosmetic and is the reason this field is asked for at
+ * all: `choose()` in `session/add.tsx` reads it to decide whether the board
+ * shows a weight dial. Get it wrong and a barbell lift has no way to record a
+ * weight, which is the exact failure this whole screen exists to fix.
+ */
+export const CUSTOM_EQUIPMENT = [
+  'barbell',
+  'dumbbell',
+  'machine',
+  'cable',
+  'bodyweight',
+  'other',
+] as const
+export type CustomEquipment = (typeof CUSTOM_EQUIPMENT)[number]
+
+/**
+ * Create a lift that is not in the catalogue.
+ *
+ * ── WHY THIS IS THE CHEAPEST POINT ON THE ROADMAP ───────────────────────────
+ * Until this shipped, a lifter whose movement was not among the 135 global
+ * rows could not log their workout at all. Not "had fewer options": could not
+ * use the app. `owner_id`, `is_custom` and an `exercises_insert_own` RLS policy
+ * have been in the schema since migration 0014 with nothing on any platform
+ * calling them, and `mobile/` mentioned `owner_id` zero times.
+ *
+ * No migration was needed. This is one insert against a policy that already
+ * existed.
+ *
+ * ── WHAT IS NOT ASKED FOR, AND WHY ──────────────────────────────────────────
+ * Name, muscle group, equipment. Nothing else. The lifter wanted to log a set
+ * thirty seconds ago, and every extra field is paid at exactly the moment the
+ * app is most in the way. Rest seconds default per-lift elsewhere, instructions
+ * are for the SEO pages, and an image would need an upload path.
+ */
+export async function createCustomExercise(input: {
+  name: string
+  muscleGroup: CustomMuscleGroup
+  equipment: CustomEquipment
+}): Promise<CatalogueExercise> {
+  const name = input.name.trim().replace(/\s+/g, ' ')
+  if (name.length < 2) throw new Error('short-name')
+  if (name.length > 80) throw new Error('long-name')
+
+  // The owner comes from the session, never from a caller. RLS enforces this
+  // too (`exercises_insert_own`), so a wrong id here fails rather than writing
+  // somebody else's row, but sending the right one keeps the error honest.
+  const { data: user } = await supabase.auth.getUser()
+  const ownerId = user.user?.id
+  if (ownerId === undefined) throw new Error('signed-out')
+
+  const { data, error } = await supabase
+    .from('exercises')
+    .insert({
+      name,
+      muscle_group: input.muscleGroup,
+      equipment: input.equipment,
+      is_custom: true,
+      owner_id: ownerId,
+    })
+    .select('id, name, muscle_group, equipment')
+    .single()
+
+  if (error !== null) throw new Error(error.message)
+
+  const row = data as {
+    id: string
+    name: string
+    muscle_group: string | null
+    equipment: string | null
+  }
+  return {
+    id: row.id,
+    name: row.name,
+    muscleGroup: row.muscle_group ?? '',
+    equipment: row.equipment ?? '',
+    // Brand new, so nothing has ever been logged against it. Stated rather
+    // than left undefined: the picker sorts on this field.
+    setCount: 0,
+  }
+}

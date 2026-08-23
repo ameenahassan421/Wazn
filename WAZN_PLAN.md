@@ -1418,7 +1418,109 @@ retention that cannot exist until the app is shared.
 
 #### Next action
 
-**RESUME HERE (2026-08-22, FIFTH update. Read this one; the fourth is below and
+**RESUME HERE (2026-08-23, SIXTH update. Read THIS one. The fifth is below and
+its "where the code is" says PR #123 and production 0031; both are stale.)**
+
+**Where the code is:** `main` at `c0c15d4` (PR #135), with **24 uncommitted
+files** committed to the branch named below. Production database is at **0040**.
+CI green. Wall green: lint, format, typecheck, coverage, tokens, 1,281 root
+tests, 46 mobile tests, `bundle:ios`, `bundle:android`, `check:routes` (14
+routes), plus a real `xcodebuild` and four device screenshots.
+
+**THE DIRECTION CHANGED, TWICE, AND THE SECOND ONE STANDS.** Ameen first said
+"publish first so people use it"; he then reversed it after argument:
+**complete the app, publish, then iterate on feedback.** The reasoning that won:
+he gets ONE first impression per person and has roughly nine people, so testers
+are not a renewable resource, and feedback from an incomplete app reports gaps
+already known. Do not re-argue shipping early. Do not scope work down to "the
+minimum that unblocks a launch" - he called that out explicitly and it was a
+leftover reflex from the reversed decision.
+
+**"Complete" is defined as v1, six items, because "all planned features" is
+eight stages and Stage 4B (publishing) sits in the middle of them.** Additions
+need an explicit decision:
+
+1. Custom exercises on native. **DONE 2026-08-23.**
+2. Hevy import on native, or delete the CTA promising it. **NOT DONE.**
+3. A first run that reaches a logged set. **NOT DONE.**
+4. Readiness wired to the weight; `ghost-reason` to the board. **HALF DONE** -
+   the dial now seeds from `verdict.weightKg` (`session/[id].tsx`); the ghost's
+   SENTENCE is still not wired to the board, which that file's own comment at
+   line 72 already flagged.
+5. Supersets and RPE on native. **NOT DONE.** No migration needed:
+   `workout_sets` already has `rpe` and `superset_group` (0001, as table
+   columns, which a "add column" grep misses).
+6. Crash reporting and `expo-updates`. **DONE 2026-08-23.**
+
+Plus, added since: **History folds into Progress** (the last named item of the
+four-tab restructure, cut three times by Claude and put back by Ameen), the
+**Body card** (Ameen overrode the data argument; `body_weights` has 1 row across
+9 accounts so it WILL render empty until there is data), and **Apple sign-in**,
+which becomes mandatory in the same release as Google under Guideline 4.8.
+
+**WHAT SHIPPED THIS SESSION, all uncommitted until the branch below:**
+
+- **Account deletion**, the one blocker in front of BOTH stores.
+  `supabase/functions/delete-account/index.ts` (one `auth.admin.deleteUser`;
+  all nineteen user tables cascade from `auth.users`, verified against
+  `pg_constraint`, so no migration), `mobile/app/delete-account.tsx` (a screen,
+  not an `Alert`, because `Alert.prompt` is iOS-only and the typed
+  confirmation has to exist on Android), and `public/delete-account.html` at
+  `/delete-account` for the web URL Play requires.
+- **Crash reporting.** `mobile/src/services/crash.ts`, Sentry, init at MODULE
+  SCOPE not in an effect. Off without a DSN.
+- **`mobile/eas.json`**, which did not exist, so there was no build pipeline.
+- **`generate-routine` wired to native** - it was deployed since stage 2c with
+  `src/lib/ai.ts` as its only caller, so the shipping app could not reach it.
+  `mobile/app/routine/generate.tsx` plus two service functions.
+- **`docs/ANDROID_RELEASE.md`**, a full Play plan.
+
+**THREE DEFECTS THE GREEN WALL COULD NOT SEE, all found by a simulator:**
+
+1. The Sentry plugin broke `xcodebuild` (exit 65, "An organization ID or slug
+   is required"). Fixed with `SENTRY_DISABLE_AUTO_UPLOAD=true` in every
+   `eas.json` profile. See CLAUDE.md, "A green wall cannot see a native build
+   phase".
+2. `supabase.ts` promised "missing config is reported, not thrown" and threw at
+   module scope. Fixed; the app renders its sentence now.
+3. The sign-in hero CTA said "Google sign-in arrives with the App Store build",
+   a sentence that is false about itself in an App Store build, and the footer
+   said the same of Apple. Guideline 2.1. Google is now gated on
+   `EXPO_PUBLIC_GOOGLE_CLIENT_ID`; footer trimmed.
+
+**HOW TO RUN IT ON A SIMULATOR** (this is not in `docs/run-on-device.md` and
+every one of these is load-bearing):
+
+```bash
+cd mobile
+export LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8      # or pod install dies on encoding
+export SENTRY_DISABLE_AUTO_UPLOAD=true          # or xcodebuild exits 65
+export EXPO_PUBLIC_SUPABASE_URL=https://ttasiwxeqerhsztxjxip.supabase.co
+export EXPO_PUBLIC_SUPABASE_ANON_KEY=<anon key from Supabase>
+WAZN_FREE_PROVISIONING=1 npx expo prebuild --platform ios
+xcodebuild -workspace ios/Wazn.xcworkspace -scheme Wazn -configuration Debug \
+  -destination 'platform=iOS Simulator,id=F398C5F3-AAB7-4DC0-B02F-1CEC06B6FC32' \
+  -derivedDataPath ios/build build
+xcrun simctl install F398C5F3-AAB7-4DC0-B02F-1CEC06B6FC32 \
+  ios/build/Build/Products/Debug-iphonesimulator/Wazn.app
+npx expo start --port 8081 --clear &                 # Debug needs Metro for JS
+xcrun simctl launch F398C5F3-AAB7-4DC0-B02F-1CEC06B6FC32 app.wazn.client
+xcrun simctl io F398C5F3-AAB7-4DC0-B02F-1CEC06B6FC32 screenshot shot.png
+```
+
+**`Constants.expoConfig.extra` is baked in at PREBUILD time on a bare native
+app.** It does not come from Metro, so setting `EXPO_PUBLIC_*` for `expo start`
+alone changes nothing; the prebuild has to see them.
+
+**Bundle id is `app.wazn.client`, not `com.ameenhassan.wazn`.**
+
+**Blocked on Ameen, and the first one has a 30-day clock:** apply for a D-U-N-S
+number for Rooted Wellness & Recovery LLC (free, ten minutes, and it is what
+lets the Play account register as an ORGANIZATION, which is exempt from the
+12-testers-for-14-days rule that gates production for personal accounts); then
+the $25 Play account, the $99 Apple account, and a Google OAuth client.
+
+**RESUME (2026-08-22, FIFTH update. Read this one; the fourth is below and
 its "next action" is two steps stale.)**
 
 **Where the code is:** `main` at PR #123. Twelve PRs landed across 2026-08-21

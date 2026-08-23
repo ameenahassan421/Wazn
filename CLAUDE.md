@@ -111,6 +111,95 @@ The `expo` plugin is installed for `mobile/` work: `api.expo.dev` is 403 from
 this org's egress proxy, so its offline skills are the way to answer SDK and
 build questions without the network.
 
+## A green wall cannot see a native build phase (2026-08-23)
+
+**Adding Sentry passed every gate in the repo and broke the iOS build.** Lint,
+typecheck, 1,281 web tests, 46 mobile tests, `bundle:ios` and `bundle:android`
+were all green. `xcodebuild` then failed with:
+
+```
+error: An organization ID or slug is required (provide with --org)
+** BUILD FAILED **
+```
+
+`@sentry/react-native`'s config plugin injects TWO Xcode build phases, one for
+source maps and one for debug symbols, and both shell out to `sentry-cli`,
+which needs an org, a project and an auth token. None of the green checks run
+an Xcode build phase. `expo export` produces a JS bundle and stops well short
+of them, which is the same lesson as "`npm run typecheck` in mobile is not a
+build", one rung deeper: **`bundle:ios` is not a build either.**
+
+**Removing the plugin from `plugins` would NOT have helped**, and the reason is
+already written down two sections below: `@sentry/react-native` ships an
+`app.plugin.js`, so Expo autolinks it from `node_modules` whether or not it is
+listed. The same trap as `expo-apple-authentication` and `expo-notifications`.
+
+The lever is an environment variable, `SENTRY_DISABLE_AUTO_UPLOAD=true`, and it
+is set in every profile in `mobile/eas.json`. Uploading source maps is a
+release nicety that needs credentials; reporting crashes needs only the DSN, so
+turning the upload off costs nothing that matters until there is a Sentry org
+to upload to. A local build needs it too:
+
+```bash
+cd mobile
+LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8 SENTRY_DISABLE_AUTO_UPLOAD=true xcodebuild \
+  -workspace ios/Wazn.xcworkspace -scheme Wazn -configuration Debug \
+  -destination 'platform=iOS Simulator,id=<udid>' \
+  -derivedDataPath ios/build build
+```
+
+**Run a real `xcodebuild` after ANY change to `app.config.ts`'s `plugins`.**
+A config plugin edits the native project, and nothing in `npm run` can see it.
+
+## A workflow that stops is usually interrupted, not stuck (2026-08-23)
+
+**A `Workflow` run died and looked exactly like a hang for forty minutes.** Two
+runs the same afternoon: the first finished all 17 agents; the second returned
+4 of 19 and then nothing. The output file sat at 0 bytes, two processes were
+still alive in `ps`, and the obvious reading was a deadlock.
+
+It was not. Every one of the four agents that never came back ends its
+transcript with `[Request interrupted by user]`, **all four stamped at the same
+second**. A session-level interrupt (Ameen sending a message mid-turn, or
+Ctrl+C) kills the in-process subagents. The completed run has zero of those
+markers, which is the whole diagnosis in one grep:
+
+```bash
+grep -c "Request interrupted" <transcriptDir>/agent-*.jsonl
+```
+
+Two things follow, and the second is the one that matters.
+
+**`parallel()` is a barrier, and an interrupted agent never resolves.** Not to
+a value, not to `null`, not to a rejection. So the barrier waits on a promise
+that can no longer settle, and the run hangs until something kills it. The four
+agents that HAD returned were already in the journal and were thrown away with
+everything else, because the script never reached its `return`.
+
+**So do not put a bare `parallel()` in front of anything expensive.** Race every
+agent against a deadline so a dead one degrades to `null` instead of stopping
+the run:
+
+```js
+const withDeadline = (p, ms = 600_000) =>
+  Promise.race([p, new Promise((r) => setTimeout(() => r(null), ms))])
+
+const results = (
+  await parallel(ITEMS.map((it) => () => withDeadline(agent(it.prompt, opts))))
+).filter(Boolean)
+```
+
+`pipeline()` is the better default anyway, for the reason the tool's own docs
+give: one stuck item stops its own chain rather than the whole phase.
+
+**And read `journal.jsonl`'s mtime, not the process list, to tell working from
+dead.** A live PID proved nothing here; the journal had not been written in
+forty minutes and that was the real signal. `ps` says a process exists. It does
+not say it is doing anything, which is the same lesson as the `npm ci` that
+exited 0 having installed two packages of 599, and the `playwright install`
+that reached 100% and then sat at 0% CPU forever. **Three silent failures in
+one session, all of which looked alive.** Check the artefact, never the flag.
+
 ## Skills first (Ameen, 2026-08-04)
 
 Before starting any task, search the session's available skills and load the

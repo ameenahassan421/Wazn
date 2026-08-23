@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Delete your account — Wazn</title>
+    <meta
+      name="description"
+      content="How to delete your Wazn account and everything in it."
+    />
+    <style>
+      /* Standalone, for the same reason `privacy.html` is: no build step, no
+         font download, no script. Google Play requires this page to be
+         reachable by someone who does NOT have the app installed and may not
+         have an account at all, so it must not depend on the app's bundle,
+         its router, or a session. Colours are hard-coded v2 tokens to match
+         its sibling. */
+      :root {
+        color-scheme: dark;
+        --ink: #0c0b0a;
+        --chalk: #ecebe8;
+        --muted: #8a8a92;
+        --accent: #e8491d;
+        --line: #26262a;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--ink);
+        color: var(--chalk);
+        font-family:
+          ui-sans-serif,
+          system-ui,
+          -apple-system,
+          'Segoe UI',
+          Roboto,
+          sans-serif;
+        font-size: 16px;
+        line-height: 1.6;
+      }
+      main {
+        max-width: 46rem;
+        margin-inline: auto;
+        padding: 3rem 1.25rem 5rem;
+      }
+      h1 {
+        font-size: 1.75rem;
+        line-height: 1.2;
+        margin: 0 0 0.25rem;
+      }
+      h2 {
+        font-size: 1.05rem;
+        margin: 2.25rem 0 0.5rem;
+      }
+      p,
+      li {
+        color: var(--chalk);
+      }
+      .muted {
+        color: var(--muted);
+        font-size: 0.9rem;
+      }
+      a {
+        color: var(--accent);
+      }
+      hr {
+        border: 0;
+        border-top: 1px solid var(--line);
+        margin: 2rem 0;
+      }
+      ol,
+      ul {
+        padding-inline-start: 1.25rem;
+      }
+      li {
+        margin-bottom: 0.4rem;
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        font-size: 0.95rem;
+      }
+      th,
+      td {
+        text-align: start;
+        padding: 0.5rem 0.75rem 0.5rem 0;
+        border-bottom: 1px solid var(--line);
+        vertical-align: top;
+      }
+      th {
+        color: var(--muted);
+        font-weight: 500;
+        white-space: nowrap;
+      }
+      code {
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 0.9em;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Delete your account</h1>
+      <p class="muted">Wazn — last updated 23 August 2026</p>
+
+      <p>
+        You can delete your Wazn account from inside the app, at any time, without
+        asking anyone. This page explains how, and exactly what is removed.
+      </p>
+
+      <h2>From the app</h2>
+      <ol>
+        <li>Open <strong>Settings</strong> (the avatar in the header).</li>
+        <li>Scroll to the bottom and tap <strong>Delete account</strong>.</li>
+        <li>
+          Type <code>DELETE</code> to confirm, then tap
+          <strong>Delete for good</strong>.
+        </li>
+      </ol>
+      <p>
+        The account and everything listed below are removed immediately. There is no
+        waiting period and no recovery window, because there is nothing left to recover
+        from.
+      </p>
+
+      <h2>If you cannot open the app</h2>
+      <p>
+        Email
+        <a href="mailto:ameenahassan421@gmail.com?subject=Delete%20my%20Wazn%20account"
+          >ameenahassan421@gmail.com</a
+        >
+        from the address you signed up with, asking for your account to be deleted. You
+        will get confirmation once it is done.
+      </p>
+
+      <hr />
+
+      <h2>What is deleted</h2>
+      <p>Everything below is erased permanently, not hidden or archived.</p>
+      <table>
+        <tr>
+          <th>Your account</th>
+          <td>
+            Sign-in address, username, password if you set one, and any linked Google or
+            Apple identity.
+          </td>
+        </tr>
+        <tr>
+          <th>Your training</th>
+          <td>
+            Every workout, every set, your routines, your personal records and any
+            exercise you created yourself.
+          </td>
+        </tr>
+        <tr>
+          <th>Your body log</th>
+          <td>Body weight, measurements, protein days and daily check-ins.</td>
+        </tr>
+        <tr>
+          <th>Your coach history</th>
+          <td>
+            Briefings, debriefs, weekly reviews and the record of which ones you were
+            shown.
+          </td>
+        </tr>
+        <tr>
+          <th>Your crew</th>
+          <td>
+            Who you follow, who follows you, your invites and anything you liked. You
+            disappear from other people's boards.
+          </td>
+        </tr>
+        <tr>
+          <th>Your settings</th>
+          <td>Units, language, theme, weekly target and coach preferences.</td>
+        </tr>
+      </table>
+
+      <h2>What is not deleted, and why</h2>
+      <ul>
+        <li>
+          <strong>The shared exercise catalogue.</strong> The built-in movements are not
+          yours and are not removed. Any exercise <em>you</em> created is.
+        </li>
+        <li>
+          <strong>Ordinary server logs.</strong> Our host keeps short-lived operational
+          logs (request times, error traces) that may contain an account identifier for
+          a few days before rotating out. They are not used to rebuild an account and
+          are not readable as your training.
+        </li>
+      </ul>
+
+      <p class="muted">
+        See also the <a href="/privacy">privacy policy</a> for what Wazn stores while
+        your account is open.
+      </p>
+    </main>
+  </body>
+</html>

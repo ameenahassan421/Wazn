@@ -3,14 +3,22 @@ import { ActivityIndicator, Pressable, ScrollView, TextInput, View } from 'react
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
-import { radius, searchByName, space } from '@wazn/domain'
+import { equipmentLabel, muscleLabel, radius, searchByName, space } from '@wazn/domain'
 
 import { Card, Rule } from '@/components/ui/Surface'
 import { Txt } from '@/design/Txt'
 import { TYPE } from '@/design/type'
 import { useLocale } from '@/hooks/use-locale'
 import { tick } from '@/services/haptics'
-import { fetchCatalogue, type CatalogueExercise } from '@/services/exercises'
+import {
+  CUSTOM_EQUIPMENT,
+  CUSTOM_MUSCLE_GROUPS,
+  createCustomExercise,
+  fetchCatalogue,
+  type CatalogueExercise,
+  type CustomEquipment,
+  type CustomMuscleGroup,
+} from '@/services/exercises'
 import { addExercise } from '@/state/live-workout'
 import { addDraftExercise } from '@/state/routine-draft'
 import { usePalette } from '@/hooks/use-theme'
@@ -50,11 +58,21 @@ export default function AddExercise() {
    */
   const { to } = useLocalSearchParams<{ to?: string }>()
   const insets = useSafeAreaInsets()
-  const { t } = useLocale()
+  const { t, locale } = useLocale()
 
   const [all, setAll] = useState<CatalogueExercise[] | null>(null)
   const [failed, setFailed] = useState(false)
   const [query, setQuery] = useState('')
+
+  /* The create flow. `creating` gates the form rather than a route, because
+     the lifter is mid-workout and a second screen is a second thing to come
+     back from. The name is never re-asked: whatever is in the search box IS
+     the name, since the search is where they found out it was missing. */
+  const [creating, setCreating] = useState(false)
+  const [muscle, setMuscle] = useState<CustomMuscleGroup>('chest')
+  const [equipment, setEquipment] = useState<CustomEquipment>('barbell')
+  const [saving, setSaving] = useState(false)
+  const [createError, setCreateError] = useState<string | null>(null)
 
   useEffect(() => {
     let live = true
@@ -92,6 +110,33 @@ export default function AddExercise() {
       addExercise(exercise.id, exercise.name, exercise.equipment === 'bodyweight')
     }
     router.back()
+  }
+
+  const typed = query.trim().replace(/\s+/g, ' ')
+  /* An exact name match means the lift already exists and the create row would
+     be offering a duplicate. Case-insensitive, because "incline bench" and
+     "Incline Bench" are the same lift to everyone except a database. */
+  const exact = (all ?? []).some((e) => e.name.toLowerCase() === typed.toLowerCase())
+  const canOffer = typed.length >= 2 && !exact && !failed && all !== null
+
+  function submitCreate() {
+    if (saving) return
+    if (typed.length < 2) {
+      setCreateError(t('exercise.create.short'))
+      return
+    }
+    setSaving(true)
+    setCreateError(null)
+    createCustomExercise({ name: typed, muscleGroup: muscle, equipment })
+      .then((created) => {
+        // Straight onto the board. The lifter opened this screen to log a set,
+        // not to manage a catalogue, so creating and choosing are one action.
+        choose(created)
+      })
+      .catch(() => {
+        setSaving(false)
+        setCreateError(t('exercise.create.failed'))
+      })
   }
 
   return (
@@ -219,6 +264,110 @@ export default function AddExercise() {
                 </Pressable>
               </View>
             ))}
+          </Card>
+        )}
+        {canOffer && (
+          <Card style={{ marginTop: 8 }}>
+            {!creating ? (
+              <Pressable
+                accessibilityRole="button"
+                onPress={() => {
+                  tick()
+                  setCreating(true)
+                }}
+                style={{ minHeight: space.touch, justifyContent: 'center' }}
+              >
+                <Txt step="label">{t('exercise.create', { name: typed })}</Txt>
+              </Pressable>
+            ) : (
+              <View style={{ gap: 14 }}>
+                <Txt step="label">{t('exercise.create', { name: typed })}</Txt>
+
+                <View style={{ gap: 8 }}>
+                  <Txt step="kick" ink="muted">
+                    {t('exercise.create.muscle')}
+                  </Txt>
+                  <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                    {CUSTOM_MUSCLE_GROUPS.map((g) => (
+                      <Pressable
+                        key={g}
+                        accessibilityRole="button"
+                        accessibilityState={{ selected: muscle === g }}
+                        onPress={() => setMuscle(g)}
+                        style={{
+                          minHeight: 40,
+                          justifyContent: 'center',
+                          paddingHorizontal: 14,
+                          borderRadius: radius.pill,
+                          borderWidth: 1,
+                          borderColor: muscle === g ? palette.ink : palette.ring,
+                          backgroundColor: muscle === g ? palette.ink : 'transparent',
+                        }}
+                      >
+                        <Txt step="meta" ink={muscle === g ? 'onInk' : 'muted'}>
+                          {muscleLabel(locale, g)}
+                        </Txt>
+                      </Pressable>
+                    ))}
+                  </View>
+                </View>
+
+                <View style={{ gap: 8 }}>
+                  <Txt step="kick" ink="muted">
+                    {t('exercise.create.equipment')}
+                  </Txt>
+                  <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                    {CUSTOM_EQUIPMENT.map((e) => (
+                      <Pressable
+                        key={e}
+                        accessibilityRole="button"
+                        accessibilityState={{ selected: equipment === e }}
+                        onPress={() => setEquipment(e)}
+                        style={{
+                          minHeight: 40,
+                          justifyContent: 'center',
+                          paddingHorizontal: 14,
+                          borderRadius: radius.pill,
+                          borderWidth: 1,
+                          borderColor: equipment === e ? palette.ink : palette.ring,
+                          backgroundColor:
+                            equipment === e ? palette.ink : 'transparent',
+                        }}
+                      >
+                        <Txt step="meta" ink={equipment === e ? 'onInk' : 'muted'}>
+                          {equipmentLabel(locale, e)}
+                        </Txt>
+                      </Pressable>
+                    ))}
+                  </View>
+                </View>
+
+                {createError !== null && (
+                  <Txt step="meta" ink="muted">
+                    {createError}
+                  </Txt>
+                )}
+
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityState={{ disabled: saving }}
+                  disabled={saving}
+                  onPress={submitCreate}
+                  style={{
+                    height: space.touch,
+                    borderRadius: radius.pill,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    backgroundColor: palette.ink,
+                    opacity: saving ? 0.45 : 1,
+                  }}
+                >
+                  <Txt step="label" ink="onInk">
+                    {t('exercise.create.action')}
+                  </Txt>
+                </Pressable>
+              </View>
+            )}
           </Card>
         )}
       </ScrollView>
