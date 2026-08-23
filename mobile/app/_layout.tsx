@@ -14,8 +14,6 @@ import { Sora_600SemiBold } from '@expo-google-fonts/sora/600SemiBold'
 import { Sora_700Bold } from '@expo-google-fonts/sora/700Bold'
 import { Sora_800ExtraBold } from '@expo-google-fonts/sora/800ExtraBold'
 
-import { palette } from '@wazn/domain'
-
 import { REQUIRED_FONTS } from '@/design/type'
 import { Txt } from '@/design/Txt'
 import { useAuth } from '@/hooks/use-auth'
@@ -25,6 +23,7 @@ import { CoachProvider } from '@/hooks/use-coach'
 import { LocaleProvider, useLocale } from '@/hooks/use-locale'
 import { UnitProvider } from '@/hooks/use-unit'
 import { supabaseConfigError } from '@/services/supabase'
+import { ThemeProvider, useTheme, usePalette } from '@/hooks/use-theme'
 
 /**
  * The root.
@@ -176,6 +175,26 @@ export default function RootLayout() {
 
   if (held) return null
 
+  return (
+    <ThemeProvider>
+      <Ground userId={userId} />
+    </ThemeProvider>
+  )
+}
+
+/**
+ * Everything the root draws, one component below the theme provider.
+ *
+ * The split exists because a component cannot consume a context it is itself
+ * providing, and every colour below this line, including the ground painted
+ * three separate times and the status bar glyphs, has to follow the live
+ * scheme. `userId` comes down as a prop rather than from a second `useAuth()`
+ * so the two halves cannot disagree about who is signed in for a frame.
+ */
+function Ground({ userId }: { userId: string | null }) {
+  const palette = usePalette()
+  const { scheme } = useTheme()
+
   /**
    * A build with no Supabase configuration says so, rather than showing a
    * sign-in screen where every attempt fails for a reason the user cannot
@@ -281,19 +300,24 @@ export default function RootLayout() {
           </UnitProvider>
         </LocaleProvider>
       </SafeAreaProvider>
-      {/* `dark`, not `light`, and this was wrong from the day the ground turned
-          to paper. `style` sets the colour of the system glyphs, and `light`
-          means near-white — which on `#f7f3ec` is about 1.05:1, so the clock,
-          the battery and the signal bars were effectively invisible on all ten
+      {/* `style` names the colour of the SYSTEM GLYPHS, not of the bar, so it
+          reads inverted: `dark` glyphs on the paper ground, `light` glyphs on
+          iron. It was hardcoded `light` from the day the ground turned to
+          paper, which put near-white glyphs on `#f7f3ec` at about 1.05:1 and
+          made the clock, the battery and the signal bars invisible on all ten
           screens. It survived every screenshot taken during the prototype
           port, because a status bar is the one part of a screenshot nobody
           looks at.
 
+          Which is exactly why it is derived here and not hardcoded a second
+          time: a dark theme with `dark` glyphs is the identical defect with
+          the grounds swapped, and it would survive the same screenshots.
+
           It is set once, here, and governs every route: no `Stack.Screen`
           overrides `statusBarStyle`. The one surface that genuinely wants
-          light glyphs is the rest canvas, and that is an ink overlay drawn on
-          top rather than a screen ground — it sets its own. */}
-      <StatusBar style="dark" />
+          light glyphs regardless is the rest canvas, and that is an ink
+          overlay drawn on top rather than a screen ground: it sets its own. */}
+      <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
     </GestureHandlerRootView>
   )
 }

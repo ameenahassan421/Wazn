@@ -1633,17 +1633,17 @@ The rest alarm works, which is the point: local notifications need no
 through the `wazn://` scheme, so an invite is testable as `wazn://join/CODE`
 without Associated Domains.
 
-#### DARK MODE IS IN PROGRESS: step 1 landed, nothing consumes it yet (2026-08-22)
+#### DARK MODE IS BUILT AND WIRED (2026-08-23)
 
 **Ameen asked for it directly** ("choosing between dark mode and light mode is
 just standard"), after a first answer from me that recited the history: v5
 removed the theme toggle, CLAUDE.md pins the app paper-first, and 0025's `theme`
-column was later dropped. That history is accurate and it was not a reason to
-refuse. It is being built.
+column was later dropped. That history is accurate about v5, **wrong about the
+column** (see step 3 below), and it was not a reason to refuse either way.
 
-**PR #135 is open and is additive: zero pixels change.** `palettes.light` /
-`palettes.dark` in `src/lib/tokens.ts` plus contrast assertions in
-`tokens.test.ts`. Nothing reads `palettes.dark` yet.
+**PR #135 carries all three steps.** Step 1 was additive with zero pixels
+changed: `palettes.light` / `palettes.dark` in `src/lib/tokens.ts` plus contrast
+assertions in `tokens.test.ts`. Steps 2 and 3 make the app read them.
 
 Three things the next session must NOT re-derive:
 
@@ -1667,13 +1667,38 @@ muted 6.28/5.89, accent 4.99/4.68, accentSoft 9.87/9.26. **`muted` is 3.39:1 on
 paper and 6.28:1 here**, so the dark theme is the MORE readable of the two and
 does not inherit the open paper-`muted` item below.
 
-##### Step 2 IS UNDERWAY: the provider exists, nothing consumes it
+##### Step 2 IS DONE: 119 references converted, the provider is mounted
 
-`mobile/src/hooks/use-theme.tsx` is written and typechecks. It follows
-`use-unit`'s three-writer ranking exactly (lifter tap beats server row beats
-AsyncStorage cache, enforced with refs because the network is not orderable).
+`mobile/src/hooks/use-theme.tsx` follows `use-unit`'s three-writer ranking
+exactly (lifter tap beats server row beats AsyncStorage cache, enforced with
+refs because the network is not orderable). It is mounted in
+`app/_layout.tsx`, and every colour in the native app now comes from
+`usePalette()`.
 
-Two decisions in it worth not re-litigating:
+Four things in the conversion worth not re-deriving:
+
+1. **`Txt`'s `INK` map was an identity map and is gone.** All nine entries were
+   `role: palette.role`, so the lookup is now `p[ink]` and `InkRole` is what
+   keeps it safe: `Palette` is a union of both grounds, so a role naming a key
+   either ground lacks is a type error. `Btn`'s `KINDS` and `Surface`'s `TONES`
+   became functions of the palette instead, because they carry structure
+   (`ring`, `lift`, `glow`) alongside the colours.
+2. **Two default parameters could not read a hook and had to move into the
+   body.** `Plate`'s `color = palette.accent` and `Wordmark`'s
+   `color = palette.ink` are evaluated before the body runs. Both are now
+   optional props resolved with `??` inside.
+3. **The status bar is derived in two places and hardcoded in neither.**
+   `style` names the colour of the system GLYPHS, so it reads inverted: `dark`
+   glyphs on paper, `light` on iron. The root had `light` hardcoded once
+   already and put near-white glyphs on `#f7f3ec` at 1.05:1 for weeks. The rest
+   canvas is the opposite of whatever the root sets, because its ground is
+   `palette.ink` and `ink` swaps with the theme.
+4. **The local const is called `palette`.** `const palette = usePalette()`
+   rather than a rename at 119 sites: the call sites read identically to the
+   import they replace, and re-adding the import is a duplicate-identifier
+   error rather than a silent shadow.
+
+Two decisions in the provider worth not re-litigating:
 
 - **The CHOICE is stored, not the resolved scheme.** Persisting the scheme
   would turn "follow the system" into whatever the system happened to be at the
@@ -1686,19 +1711,61 @@ Two decisions in it worth not re-litigating:
   is derived by matching `=== 'dark'` rather than with `?? 'light'`, which
   compiles and would leak a third value that has no palette.
 
-##### What step 2 still needs
+##### Step 3: 0040, and the column was never dropped because it was never there
 
-- Convert **119 `palette.` references across 28 files** from a static import to
-  a reactive hook. Module-level maps (`Btn.tsx`'s `KINDS`, `Surface.tsx`'s
-  `TONES`) have to move inside components.
-- `mobile/src/hooks/use-theme.tsx`: provider plus `useTheme()`, defaulting to
-  RN's `useColorScheme()`, persisted.
-- A migration to **re-add `user_preferences.theme`**. 0025 added it and
-  something later dropped it: production reports the column absent while
-  `upsert_user_preference` STILL carries a `theme` branch that updates it, so
-  that branch throws if it is ever called. Re-adding the column revives it.
-- Settings: a three-way System / Light / Dark control.
-- Verify on a simulator in both schemes.
+The line above said "0025 added it and something later dropped it". That was
+wrong and the correction matters, because it changes what the migration has to
+be. Measured against production 2026-08-23:
+`information_schema.columns` returns twelve columns for
+`public.user_preferences` and `theme` is not among them, and **nothing in
+`supabase/migrations/` drops it**. 0025 was written and never applied.
+
+Two live consequences, both silent until now:
+
+1. `upsert_user_preference('theme', …)` threw. plpgsql resolves column
+   references on first EXECUTION, so 0027 and 0037 both shipped an
+   `elsif p_column = 'theme'` branch that compiles fine and raises
+   `column theme of relation user_preferences does not exist` the moment
+   anybody takes it.
+2. The web app's theme toggle has therefore never synced across devices. It is
+   localStorage-first and discards the error, which is why nobody noticed. 0025
+   predicted this and got the mechanism wrong: it said the RPC "quietly no-ops
+   the unknown column", and an unknown column raises rather than no-opping. The
+   observable result was the same, which is why the wrong explanation survived.
+
+**0040 therefore does not re-add 0025's column, it adds a different one.** The
+native app stores the CHOICE, so the vocabulary is `system | light | dark` and
+0025's `check (theme in ('paper', 'dark'))` cannot express the default. The
+file is written to land in the same place from an empty replay (where 0025 HAS
+run, so the old column and old constraint both exist) and against production
+(where neither does), the same way 0032 was.
+
+`paper` maps to `system`, not to `light`: it was 0025's DEFAULT, so a row
+holding it is indistinguishable from a row nobody touched, and pinning those
+accounts to light forever means they never see the dark theme their phone is
+already asking for. `dark` survives, because under 0025 it could only be a
+deliberate act.
+
+**Applied to production 2026-08-23 and verified**, not by the success flag:
+`information_schema` reports the column present, `NOT NULL`, defaulting to
+`'system'`, with
+`CHECK (theme = ANY (ARRAY['system','light','dark']))`, and all five rows at
+`system`.
+
+The dying web app keeps saying `paper`. It translates at the boundary
+(`fromColumn` / `toColumn` in `src/lib/theme-context.tsx`) rather than widening
+the column to four values, because the schema outlives that client.
+
+`supabase/tests/body_and_coach.sql` now asserts `system` and `light` go in and
+`paper` is refused. **Verified by deleting 0040 and re-running `check:sql`**:
+the suite fails on the `system` assertion against 0025's constraint. The
+existing `theme`/`dark` assertion passed either way, which is why it could not
+have caught this.
+
+##### What is left
+
+- Verify on a simulator in both schemes, including the rest canvas (the one
+  surface that inverts) and the status bar in each.
 
 ##### Two other accessibility gaps, measured and NOT fixed
 

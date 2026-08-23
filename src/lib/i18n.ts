@@ -152,6 +152,10 @@ export const messages: Record<Locale, Record<string, string>> = {
     'settings.theme': 'Theme',
     'settings.theme.paper': 'Paper',
     'settings.theme.dark': 'Dark',
+    // Native's three. `paper` above is the dying web app's word for the same
+    // ground; native says `light`, which is what the column stores.
+    'settings.theme.system': 'System',
+    'settings.theme.light': 'Light',
     'settings.import': 'Import from Hevy',
     'settings.friends': 'Friends',
     'settings.signout': 'Sign out',
@@ -1274,6 +1278,12 @@ export const messages: Record<Locale, Record<string, string>> = {
     'settings.theme': 'المظهر',
     'settings.theme.paper': 'فاتح',
     'settings.theme.dark': 'داكن',
+    // NEEDS AMEEN'S EYE. 'النظام' is the literal "the system" and reads
+    // correctly, but iOS ships 'تلقائي' ("automatic") in its own Appearance
+    // pane and a lifter who knows that phrasing will look for it. Machine
+    // drafted, like the rest of this table.
+    'settings.theme.system': 'النظام',
+    'settings.theme.light': 'فاتح',
     'settings.import': 'استيراد من Hevy',
     'settings.friends': 'الأصدقاء',
     'settings.signout': 'تسجيل الخروج',

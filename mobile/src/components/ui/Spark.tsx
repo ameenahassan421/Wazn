@@ -1,9 +1,10 @@
 import { View } from 'react-native'
 import Svg, { Circle, Line, Polyline } from 'react-native-svg'
 
-import { palette, sparkGeometry } from '@wazn/domain'
+import { sparkGeometry } from '@wazn/domain'
 
 import { Txt } from '@/design/Txt'
+import { usePalette } from '@/hooks/use-theme'
 
 /**
  * A small line chart: a series, a baseline, and the last reading.
@@ -46,6 +47,7 @@ export function Spark({
   /** Shown instead of the line when there is not enough to draw a trend. */
   emptyLine: string
 }) {
+  const palette = usePalette()
   const geometry = sparkGeometry(values, { width, height })
 
   if (geometry === null || geometry.flat) {

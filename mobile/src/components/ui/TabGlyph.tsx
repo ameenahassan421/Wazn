@@ -1,6 +1,6 @@
 import { View } from 'react-native'
 
-import { palette } from '@wazn/domain'
+import { usePalette } from '@/hooks/use-theme'
 
 /**
  * The four tabs.
@@ -72,6 +72,7 @@ export const TAB_KEY: Record<TabKey, string> = {
  * restored from `git log`.
  */
 export function TabGlyph({ tab, on }: { tab: TabKey; on: boolean }) {
+  const palette = usePalette()
   const ink = on ? palette.accentSoft : palette.muted
 
   switch (tab) {

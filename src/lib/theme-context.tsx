@@ -57,6 +57,34 @@ function writeStoredTheme(theme: Theme) {
   }
 }
 
+/**
+ * `user_preferences.theme` and this file speak different vocabularies, so the
+ * translation happens here rather than in the schema.
+ *
+ * 0040 gave the column three values: `system`, `light`, `dark`. That is the
+ * native app's, and it is the right one, because native stores the CHOICE and
+ * has to be able to say "follow the OS". This app has two themes and no system
+ * option, and its own word for the light one is `paper`. Widening the column
+ * to four values so a retiring client could keep its spelling would put the
+ * dying app's vocabulary in the database that outlives it.
+ *
+ * `system` has no answer here. A browser could read `prefers-color-scheme`,
+ * but this app's default is a designed look rather than an OS follow (see
+ * DEFAULT_THEME), and inventing a mapping would make the web disagree with
+ * the phone about what the same stored value means. It returns null and
+ * localStorage stays authoritative, which is what this provider already does
+ * for every other unreadable answer.
+ */
+function fromColumn(value: string | undefined): Theme | null {
+  if (value === 'light') return 'paper'
+  if (value === 'dark') return 'dark'
+  return null
+}
+
+function toColumn(theme: Theme): 'light' | 'dark' {
+  return theme === 'paper' ? 'light' : 'dark'
+}
+
 function applyTheme(theme: Theme) {
   document.documentElement.setAttribute('data-theme', theme)
   document
@@ -67,8 +95,14 @@ function applyTheme(theme: Theme) {
 /**
  * Same shape as LocaleProvider on purpose: localStorage is the optimistic
  * cache so the flip is instant, the server row is the cross-device memory,
- * and a missing `theme` column (0025 not applied yet) fails silently with
- * localStorage staying authoritative.
+ * and an unreadable server answer fails silently with localStorage staying
+ * authoritative.
+ *
+ * That last clause used to say "a missing `theme` column (0025 not applied
+ * yet)", and it was describing a condition that held in production for the
+ * whole life of this file: 0025 was written and never applied, so every write
+ * from here raised `column theme does not exist` and was discarded. 0040 adds
+ * the column, so this sync starts working for the first time.
  *
  * The default is not a system-preference read: the product default is the
  * designed look, and the other one is a choice. Which of the two is the
@@ -93,8 +127,8 @@ export function ThemeProvider({
       try {
         const { data, error } = await supabase.rpc('get_user_preferences')
         if (!active || error || !data) return
-        const serverTheme = (data as { theme?: string }).theme
-        if (serverTheme === 'paper' || serverTheme === 'dark') {
+        const serverTheme = fromColumn((data as { theme?: string }).theme)
+        if (serverTheme !== null) {
           setThemeState(serverTheme)
           writeStoredTheme(serverTheme)
         }
@@ -123,7 +157,7 @@ export function ThemeProvider({
         void Promise.resolve(
           supabase.rpc('upsert_user_preference', {
             p_column: 'theme',
-            p_value: next,
+            p_value: toColumn(next),
           }),
         ).catch(() => {})
       }

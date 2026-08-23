@@ -8,7 +8,9 @@ import Animated, {
 } from 'react-native-reanimated'
 import Svg, { Circle } from 'react-native-svg'
 
-import { motion, palette } from '@wazn/domain'
+import { motion } from '@wazn/domain'
+
+import { usePalette } from '@/hooks/use-theme'
 
 const AnimatedCircle = Animated.createAnimatedComponent(Circle)
 
@@ -50,6 +52,7 @@ export function Ring({
   onInk?: boolean
   children?: React.ReactNode
 }) {
+  const palette = usePalette()
   const r = (size - stroke * 2) / 2
   const circumference = 2 * Math.PI * r
   const clamped = Math.max(0, Math.min(1, progress))

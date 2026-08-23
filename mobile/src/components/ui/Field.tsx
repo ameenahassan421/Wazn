@@ -1,10 +1,11 @@
 import { forwardRef, useRef } from 'react'
 import { Pressable, TextInput, View, type TextInputProps } from 'react-native'
 
-import { palette, radius, space } from '@wazn/domain'
+import { radius, space } from '@wazn/domain'
 
 import { Txt } from '@/design/Txt'
 import { TYPE } from '@/design/type'
+import { usePalette } from '@/hooks/use-theme'
 
 /**
  * A text field.
@@ -39,6 +40,7 @@ export const Field = forwardRef<
     hideLabel?: boolean
   }
 >(function Field({ label, hideLabel, style, ...rest }, ref) {
+  const palette = usePalette()
   return (
     <View style={{ gap: hideLabel === true ? 0 : 7 }}>
       {hideLabel === true ? null : <Txt step="kick">{label.toUpperCase()}</Txt>}
@@ -92,6 +94,7 @@ export function CodeInput({
   onChange: (next: string) => void
   autoFocus?: boolean
 }) {
+  const palette = usePalette()
   const input = useRef<TextInput>(null)
   const cells = [0, 1, 2, 3, 4, 5]
 

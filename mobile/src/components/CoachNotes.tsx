@@ -1,7 +1,6 @@
 import { View } from 'react-native'
 
 import {
-  palette,
   radius,
   space,
   formatEstimate,
@@ -15,6 +14,7 @@ import { Card, Rule } from '@/components/ui/Surface'
 import { Plate } from '@/components/ui/Plate'
 import { Txt, Kick } from '@/design/Txt'
 import { useLocale } from '@/hooks/use-locale'
+import { usePalette } from '@/hooks/use-theme'
 
 /**
  * The week's findings, as figures rather than as paragraphs.
@@ -160,6 +160,7 @@ function Figure({
  * does not carry.
  */
 function WeekDots({ trained, of }: { trained: number; of: number }) {
+  const palette = usePalette()
   return (
     <View style={{ flexDirection: 'row', gap: 6, alignItems: 'center' }}>
       {Array.from({ length: of }, (_, i) => (
@@ -207,6 +208,7 @@ function Bands({
   bands: ReviewBlock['bands']
   range: [number, number]
 }) {
+  const palette = usePalette()
   const { t, locale } = useLocale()
   const [low, high] = range
   const { shown, hidden, ceiling } = reviewBandScale(bands, range, BANDS_SHOWN)
@@ -301,6 +303,7 @@ export function CoachNotes({
   lines: Record<string, string | null>
   unit: Unit
 }) {
+  const palette = usePalette()
   const { t } = useLocale()
   const a = block?.adherence ?? null
   const plateau = block?.plateaus?.[0] ?? null

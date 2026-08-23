@@ -2,7 +2,6 @@ import { useEffect, useReducer, useRef, useState } from 'react'
 import { Pressable, View } from 'react-native'
 
 import {
-  palette,
   space,
   type CoachNotes as CoachNotesPayload,
   type ReviewBlock,
@@ -20,6 +19,7 @@ import { useUnit } from '@/hooks/use-unit'
 import { IDLE, reduce, regenerateSpent, showQuota } from '@/state/week-review'
 import { fetchReviewBlock, fetchWeeklyReview } from '@/services/coach'
 import { supabaseConfigError } from '@/services/supabase'
+import { usePalette } from '@/hooks/use-theme'
 
 /**
  * The week in review: the coach's reading, and the figures under it.
@@ -55,6 +55,7 @@ import { supabaseConfigError } from '@/services/supabase'
  * behaviour.
  */
 export function WeekReview() {
+  const palette = usePalette()
   const { t } = useLocale()
   const { unit } = useUnit()
   const { speaks } = useCoach()

@@ -2,12 +2,13 @@ import { Pressable, View } from 'react-native'
 import { Tabs } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
-import { palette, space } from '@wazn/domain'
+import { space } from '@wazn/domain'
 
 import { Txt } from '@/design/Txt'
 import { TABS, TAB_KEY, TabGlyph, type TabKey } from '@/components/ui/TabGlyph'
 import { useLocale } from '@/hooks/use-locale'
 import { tick } from '@/services/haptics'
+import { usePalette } from '@/hooks/use-theme'
 
 /**
  * The six-tab bar.
@@ -42,6 +43,7 @@ type TabBarProps = Parameters<
 >[0]
 
 function WaznTabBar({ state, navigation }: TabBarProps) {
+  const palette = usePalette()
   const insets = useSafeAreaInsets()
   const { t } = useLocale()
 
@@ -117,6 +119,7 @@ function WaznTabBar({ state, navigation }: TabBarProps) {
 }
 
 export default function TabsLayout() {
+  const palette = usePalette()
   const { t } = useLocale()
 
   return (

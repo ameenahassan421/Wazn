@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Alert, Pressable, View } from 'react-native'
 import { useLocalSearchParams, useRouter } from 'expo-router'
 
-import { palette, radius, space } from '@wazn/domain'
+import { radius, space } from '@wazn/domain'
 
 import { Btn } from '@/components/ui/Btn'
 import { Card, Rule } from '@/components/ui/Surface'
@@ -12,6 +12,7 @@ import { Txt, Kick } from '@/design/Txt'
 import { useLocale } from '@/hooks/use-locale'
 import { tick } from '@/services/haptics'
 import { deleteRoutine, loadDraft, saveRoutine } from '@/services/routines'
+import { usePalette } from '@/hooks/use-theme'
 import {
   MAX_SETS,
   MIN_SETS,
@@ -63,6 +64,7 @@ function Steps({
   label: string
   onChange: (next: number) => void
 }) {
+  const palette = usePalette()
   const base = {
     width: 34,
     height: 34,

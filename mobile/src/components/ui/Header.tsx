@@ -1,10 +1,11 @@
 import { Pressable, View } from 'react-native'
 import { useRouter } from 'expo-router'
 
-import { palette, radius } from '@wazn/domain'
+import { radius } from '@wazn/domain'
 
 import { Txt } from '@/design/Txt'
 import { Wordmark } from '@/components/ui/Wordmark'
+import { usePalette } from '@/hooks/use-theme'
 
 /**
  * The wordmark and the avatar. 56px tall, and on every signed-in screen.
@@ -27,6 +28,7 @@ export function Header({
    *  dash, not a guess, and never the previous account's initial. */
   name?: string | null
 }) {
+  const palette = usePalette()
   const router = useRouter()
   const initial = name != null && name.length > 0 ? name[0].toUpperCase() : '—'
 

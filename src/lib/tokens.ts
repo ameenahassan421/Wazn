@@ -334,6 +334,18 @@ export const palettes = {
 export type Scheme = 'light' | 'dark'
 export type ThemeChoice = Scheme | 'system'
 
+/**
+ * One ground's colours — what `usePalette()` hands back.
+ *
+ * A union of the two literal-typed objects rather than `typeof palette`, so
+ * that a value only present on one ground cannot be read as if it were on
+ * both: adding a key to `light` alone makes every `Palette` read of it a type
+ * error, which is the cheapest possible enforcement of "both grounds are
+ * complete". `tokens.test.ts` asserts the key sets match as well, because a
+ * key present in both with the wrong VALUE is not a type error.
+ */
+export type Palette = (typeof palettes)[Scheme]
+
 /* ── Type ──────────────────────────────────────────────────────────────────
    Sora for display and every figure, Hanken Grotesk for prose, IBM Plex Mono
    for the machine voice. The prototype renders 25 distinct sizes; these are

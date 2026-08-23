@@ -1,8 +1,9 @@
 import { View } from 'react-native'
 
-import { palette, radius } from '@wazn/domain'
+import { radius } from '@wazn/domain'
 
 import { Txt } from '@/design/Txt'
+import { usePalette } from '@/hooks/use-theme'
 
 /**
  * The data chip — the app's single most load-bearing piece of grammar.
@@ -31,6 +32,7 @@ import { Txt } from '@/design/Txt'
  */
 
 export function Chip({ children }: { children: string }) {
+  const palette = usePalette()
   return (
     <View
       style={{

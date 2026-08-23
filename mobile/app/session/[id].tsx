@@ -8,7 +8,6 @@ import {
   describeBarMath,
   ghostChip,
   fromDisplayWeight,
-  palette,
   platesFor,
   seedWeight,
   verdictFor,
@@ -27,6 +26,7 @@ import { useCoach } from '@/hooks/use-coach'
 import { useLocale } from '@/hooks/use-locale'
 import { useUnit } from '@/hooks/use-unit'
 import { banked as hapticBanked, tick } from '@/services/haptics'
+import { usePalette } from '@/hooks/use-theme'
 import {
   adjustRest,
   bankCurrentSet,
@@ -75,6 +75,7 @@ import {
 
 /** The prototype's back chevron, at its own weight. */
 function BackChevron() {
+  const palette = usePalette()
   return (
     <Svg width={16} height={16} viewBox="0 0 24 24">
       <Path
@@ -95,6 +96,7 @@ function BackChevron() {
  * the two lines on the card is the one about the bar.
  */
 function Barbell() {
+  const palette = usePalette()
   return (
     <Svg width={110} height={44} viewBox="0 0 120 52">
       <Line
@@ -135,6 +137,7 @@ function Stepper({
   onDown: () => void
   onUp: () => void
 }) {
+  const palette = usePalette()
   const key = {
     width: 46,
     height: 46,
@@ -189,6 +192,7 @@ function Stepper({
 }
 
 export default function LiveWorkout() {
+  const palette = usePalette()
   const router = useRouter()
   const insets = useSafeAreaInsets()
   const { t } = useLocale()

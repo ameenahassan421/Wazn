@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Pressable, View } from 'react-native'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 
-import { toDisplayWeight, type CalendarDay } from '@wazn/domain'
+import { space, toDisplayWeight, type CalendarDay, type Palette } from '@wazn/domain'
 
 import { Txt, Kick } from '@/design/Txt'
 import { Card } from '@/components/ui/Surface'
@@ -12,7 +12,7 @@ import { Header } from '@/components/ui/Header'
 import { useHistory, type HistorySession } from '@/hooks/use-history'
 import { useLocale } from '@/hooks/use-locale'
 import { useUnit } from '@/hooks/use-unit'
-import { palette, space } from '@wazn/domain'
+import { usePalette } from '@/hooks/use-theme'
 
 /**
  * Screen 12, History. Coach's find, the ten-week grid, session rows.
@@ -62,8 +62,12 @@ const GAP = 4
  * WHITE card is a 5% step — the empty half of the grid effectively vanished,
  * and a heatmap whose zero state is invisible is a row of floating dots. The
  * ring tint is the quietest thing in the system that is still a thing.
+ *
+ * Takes the ground rather than reading a module-level import, because the
+ * ground moves and this is a plain function: it cannot call a hook, and a
+ * captured light palette would leave the grid drawing paper colours on iron.
  */
-function cellColour(day: CalendarDay): string {
+function cellColour(day: CalendarDay, palette: Palette): string {
   return day.volumeKg > 0 ? palette.accent : palette.ring
 }
 
@@ -98,6 +102,7 @@ function SessionRow({
   unit: 'lbs' | 'kg'
   t: (key: string, params?: Record<string, string>) => string
 }) {
+  const palette = usePalette()
   // ISO `YYYY-MM-DD`, which is what the reference renders (`{s.d}` off a
   // date-keyed row). A first pass used a localised "Jul 20" and reading the
   // reference beside it showed 2026-07-20. Sliced off a LOCAL date rather than
@@ -155,6 +160,7 @@ function SessionRow({
 }
 
 export default function HistoryScreen() {
+  const palette = usePalette()
   const { t } = useLocale()
   const { unit, ready } = useUnit()
   const { loading, error, sessions, calendar, total, find } = useHistory()
@@ -271,7 +277,7 @@ export default function HistoryScreen() {
                     style={{
                       height: CELL_H,
                       borderRadius: 3,
-                      backgroundColor: cellColour(day),
+                      backgroundColor: cellColour(day, palette),
                     }}
                   />
                 ))}

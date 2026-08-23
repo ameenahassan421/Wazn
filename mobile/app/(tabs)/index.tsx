@@ -2,14 +2,7 @@ import { useState } from 'react'
 import { Pressable, View } from 'react-native'
 import { useRouter } from 'expo-router'
 
-import {
-  CHECK_INS,
-  formatVolume,
-  muscleLabel,
-  palette,
-  space,
-  type CheckIn,
-} from '@wazn/domain'
+import { CHECK_INS, formatVolume, muscleLabel, space, type CheckIn } from '@wazn/domain'
 
 import { Txt, Kick } from '@/design/Txt'
 import { Card } from '@/components/ui/Surface'
@@ -20,6 +13,7 @@ import { Screen } from '@/components/ui/Screen'
 import { useLocale } from '@/hooks/use-locale'
 import { useUnit } from '@/hooks/use-unit'
 import { useHome } from '@/hooks/use-home'
+import { usePalette } from '@/hooks/use-theme'
 
 /**
  * Home, against `docs/design/prototype/source.html` — the screen labelled
@@ -77,6 +71,7 @@ function weekday(locale: string): string {
 }
 
 export default function LogHome() {
+  const palette = usePalette()
   const router = useRouter()
   const [briefDown, setBriefDown] = useState(false)
   const [historyDown, setHistoryDown] = useState(false)

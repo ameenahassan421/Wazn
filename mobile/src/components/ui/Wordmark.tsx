@@ -1,8 +1,7 @@
 import { View } from 'react-native'
 
-import { palette } from '@wazn/domain'
-
 import { Txt } from '@/design/Txt'
+import { usePalette } from '@/hooks/use-theme'
 import { Plate } from './Plate'
 
 /**
@@ -53,11 +52,15 @@ const X_HEIGHT = 0.538
 export function Wordmark({
   size = 26,
   /** The two Latin halves. The plate is always ember. */
-  color = palette.ink,
+  color,
 }: {
   size?: number
   color?: string
 }) {
+  const palette = usePalette()
+  /* Body, not a default parameter: a default parameter cannot read a hook.
+     Same change as `Plate`'s. */
+  const ink = color ?? palette.ink
   const half = { fontSize: size, lineHeight: size, letterSpacing: size * -0.05 }
   return (
     <View
@@ -66,13 +69,13 @@ export function Wordmark({
       // `ltr`: `wazn` is a name, and an Arabic layout must not reverse it.
       style={{ flexDirection: 'row', alignItems: 'baseline', direction: 'ltr' }}
     >
-      <Txt step="mark" style={[half, { color }]}>
+      <Txt step="mark" style={[half, { color: ink }]}>
         w
       </Txt>
       <View style={{ marginHorizontal: 1 }}>
         <Plate size={size * X_HEIGHT} variant="mark" />
       </View>
-      <Txt step="mark" style={[half, { color }]}>
+      <Txt step="mark" style={[half, { color: ink }]}>
         zn
       </Txt>
     </View>

@@ -3,13 +3,12 @@ import { I18nManager, Pressable, StyleSheet, View } from 'react-native'
 import Svg, { Rect } from 'react-native-svg'
 import { useRouter } from 'expo-router'
 
-import type { CoachMode, Locale, Unit } from '@wazn/domain'
+import type { CoachMode, Locale, ThemeChoice, Unit } from '@wazn/domain'
 import {
   COACH_MODES,
   COACH_VOLUMES,
   MODE_BEHAVIOUR,
   isModeReady,
-  palette,
   radius,
   space,
 } from '@wazn/domain'
@@ -23,6 +22,7 @@ import { Screen } from '@/components/ui/Screen'
 import { useLocale } from '@/hooks/use-locale'
 import { useUnit } from '@/hooks/use-unit'
 import { signOut } from '@/services/auth'
+import { usePalette, useTheme } from '@/hooks/use-theme'
 import { AUTH_ENABLED } from './_layout'
 
 /**
@@ -53,6 +53,23 @@ const LOCALES: readonly { key: Locale; labelKey: string }[] = [
 ]
 
 /**
+ * System first, and it is the default.
+ *
+ * Three options rather than a two-state switch, because "follow my phone" is
+ * a different answer from "light" and collapsing it loses the only one that
+ * changes with the time of day. A binary toggle has to pick a side the moment
+ * it is drawn, which silently opts the lifter out of their own OS setting.
+ *
+ * Order is System, Light, Dark and not alphabetical: it reads as the default
+ * followed by the two overrides, which is the shape of the decision.
+ */
+const THEMES: readonly { key: ThemeChoice; labelKey: string }[] = [
+  { key: 'system', labelKey: 'settings.theme.system' },
+  { key: 'light', labelKey: 'settings.theme.light' },
+  { key: 'dark', labelKey: 'settings.theme.dark' },
+]
+
+/**
  * A settings row that goes somewhere.
  *
  * The chevron is a rotated square rather than an icon-set glyph, for the same
@@ -63,6 +80,7 @@ const LOCALES: readonly { key: Locale; labelKey: string }[] = [
  * Arabic.
  */
 function DoorRow({ label, onPress }: { label: string; onPress: () => void }) {
+  const palette = usePalette()
   const [down, setDown] = useState(false)
   return (
     <Pressable
@@ -130,6 +148,7 @@ function ModeCard({
   detail: string | null
   onPress: (() => void) | null
 }) {
+  const palette = usePalette()
   const { t } = useLocale()
   const [pressed, setPressed] = useState(false)
   const behaviour = MODE_BEHAVIOUR[mode]
@@ -205,6 +224,7 @@ export default function Settings() {
   const router = useRouter()
   const { locale, setLocale, t } = useLocale()
   const { unit, setUnit } = useUnit()
+  const { choice, setChoice } = useTheme()
   const { volume, setVolume, mode, setMode, speaks } = useCoach()
 
   return (
@@ -348,6 +368,24 @@ export default function Settings() {
                 label={t(l.labelKey)}
                 selected={locale === l.key}
                 onPress={() => setLocale(l.key)}
+              />
+            ))}
+          </ChipRow>
+        </View>
+        <Rule />
+        {/* The ground. Applies on the tap with no reload, unlike the language
+            row above it: a palette is read at render and `I18nManager` is not.
+            Stored as the CHOICE, so picking System keeps following the phone
+            rather than freezing whatever the phone said at that moment. */}
+        <View style={{ padding: space.cardPad, gap: 10 }}>
+          <Txt step="body">{t('settings.theme')}</Txt>
+          <ChipRow>
+            {THEMES.map((th) => (
+              <ChipBtn
+                key={th.key}
+                label={t(th.labelKey)}
+                selected={choice === th.key}
+                onPress={() => setChoice(th.key)}
               />
             ))}
           </ChipRow>
