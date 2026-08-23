@@ -1422,34 +1422,53 @@ retention that cannot exist until the app is shared.
 is below; it is accurate except for two items this session closed or corrected,
 both named below.)**
 
-**THE XCODE MCP BRIDGE IS OPEN ON THE WRONG CHECKOUT. There are TWO clones of
-this repo on the Mac and Xcode has the one nobody is working in.**
+**FIXED: there were TWO clones of this repo and Xcode was building the wrong
+one.** `/Users/ameenhassan/Developer/Wazn` was on `main` at `c0c15d4`, six
+commits behind, different inode, not a symlink, and it was the workspace
+`XcodeListWindows` reported. `BuildProject` would have compiled a tree with no
+account deletion, no supersets, no RPE and no `sim_tap.sh`, and reported it
+green.
 
-```
-/Users/ameenhassan/Wazn            branch claude/v1-floor-and-store-readiness @ d453394   <- the work
-/Users/ameenhassan/Developer/Wazn  branch main @ c0c15d4, clean                            <- what Xcode has open
-```
+Consolidated into `/Users/ameenhassan/Wazn`, in this order, each step verified
+before the next:
 
-Different inodes, not a symlink. `XcodeListWindows` returns
-`workspacePath: /Users/ameenhassan/Developer/Wazn/mobile/ios/Wazn.xcworkspace`,
-and that tree is **six commits behind**: it has no account deletion, no
-supersets, no RPE, no `sim_tap.sh`, and none of this session's work. So
-`BuildProject` would have compiled, cleanly and confidently, code nobody is
-working on, and the seventh block sends the next session straight at it as the
-one call that replaces a five-minute `xcodebuild`.
+1. **`claude/e1-core-extraction` existed only on that disk.** Four commits
+   (`2a46dc1`, `8195fc8`, `33e655d`, `a133ed6`, the calculation-engine
+   extraction and the injected Supabase client), on no remote and absent from
+   the working clone. Fetched local-to-local, no network.
+2. **`.env.local` and `mobile/.env.local` existed only there too.** Copied.
+   Byte-identical (sha256), both gitignored (`check-ignore`), and the values
+   match what Metro was already running with (`ps eww`), so nothing was
+   repointed. **`.env.local` carries `SUPABASE_ACCESS_TOKEN` and
+   `SUPABASE_PROJECT_REF`**, which is the answer to the open thread about
+   headless sessions having no Supabase credentials: they were in the other
+   clone the whole time.
+3. **An abandoned detached worktree** (`.claude/worktrees/sweet-lumiere-e10ddd`)
+   held a 268-file uncommitted diff, a reformat and version churn of the
+   vendored `impeccable` skill rather than project work. Saved to
+   `/Users/ameenhassan/Developer/Wazn-worktree-uncommitted.patch` (8.5 MB) and
+   verified by reverse-apply.
+4. Every branch tip in the old clone confirmed present in the working clone.
+5. **Both unpushed branches pushed to origin and confirmed with `ls-remote`
+   against the local sha** before anything was removed.
+6. The old clone moved to `~/.Trash/Wazn-old-clone-20260823`. **Reversible on
+   purpose**, and `rm -rf` was refused by the permission classifier anyway.
+   Emptying the Trash reclaims 5.7 GB, which the disk-pressure history says is
+   worth doing.
 
-The bridge itself is fine. All 21 tools bound this session and were checked, as
-the seventh block asked. **It is aimed at the wrong tree, which is a worse
-failure than being broken, because it answers.** Ameen opening
-`/Users/ameenhassan/Wazn/mobile/ios/Wazn.xcworkspace` in Xcode fixes it in one
-action; until then, read `workspacePath` from `XcodeListWindows` before
-believing any answer the bridge gives, and use `xcodebuild` in
-`/Users/ameenhassan/Wazn/mobile` instead. Not done from a session because
-opening a window on his screen is his call, not Claude's.
+**Two things are still Ameen's:** empty the Trash to get the 5.7 GB, and
+**close the stale Xcode window.** `XcodeListWindows` still lists `windowtab1`
+for the deleted workspace beside `windowtab2` for the real one, because an Xcode
+window outlives the directory under it. **Read `workspacePath` and pass the
+matching `tabIdentifier`; the tab list is not a list of things that exist.**
 
-**Which clone is stale, and whether `Developer/Wazn` should exist at all, is
-Ameen's to decide.** It is on `main` with a clean tree, so nothing is at risk
-in it and nothing was touched.
+**Not migrated, deliberately:** three permission allows in the old clone's
+`.claude/settings.local.json`, one of which is `mcp__supabase__apply_migration`.
+Section 2.8 and the "that token is production DDL access" note make
+auto-granting a session the ability to apply a production migration Ameen's
+decision, not a consolidation side effect. The other two are `Bash(claude-or:*)`
+and `Bash(gh pr merge:*)`. Its `hooks` block needed no migration: it is the
+impeccable design hook, already wired in the checked-in `.claude/settings.json`.
 
 **DONE: `expo-keep-awake` is called.** One hook on the live board
 (`mobile/app/session/[id].tsx`), which is the whole session including rest,

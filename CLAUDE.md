@@ -190,23 +190,33 @@ is expected, not a fault.
 
 ## A working tool can be aimed at the wrong tree (2026-08-23)
 
-**There are TWO clones of this repo on the Mac, and Xcode's MCP bridge has the
-one nobody works in open.**
+**There WERE two clones of this repo on the Mac, and Xcode's MCP bridge had the
+one nobody works in open.** Consolidated 2026-08-23; kept here because the trap
+is general and the wreckage is still visible in the tool output.
 
 ```
-/Users/ameenhassan/Wazn            claude/v1-floor-and-store-readiness   <- the work
-/Users/ameenhassan/Developer/Wazn  main, clean, six commits behind       <- what Xcode has
+/Users/ameenhassan/Wazn            the work, and now the only clone
+/Users/ameenhassan/Developer/Wazn  main, six commits behind        <- what Xcode had
 ```
 
-Different inodes, not a symlink. So `BuildProject` builds, cleanly and
+Different inodes, not a symlink. So `BuildProject` would have built, cleanly and
 confidently, a tree with no account deletion, no supersets, no RPE and no
 `sim_tap.sh`. **A tool that is broken tells you. A tool aimed at the wrong thing
-agrees with you.** `XcodeListWindows` returns `workspacePath`: read it before
-believing any answer the bridge gives.
+agrees with you.**
+
+**`XcodeListWindows` returns `workspacePath`. Read it before believing any
+answer the bridge gives**, and pass the matching `tabIdentifier`. It still lists
+a `windowtab1` for the workspace that was deleted, because a stale Xcode window
+outlives the directory under it, so the tab list is not a list of things that
+exist.
 
 The same question applies to anything else holding a path. Metro was serving the
 right clone here, but only `lsof -a -p <pid> -d cwd -Fn` proved it, and the
-answer could have gone either way.
+answer could have gone either way. The credentials were the sharper version:
+`.env.local` and `mobile/.env.local` existed ONLY in the clone nobody works in,
+so `~/Wazn` had no Supabase configuration at all and the running app worked
+anyway, on vars exported into the shell that started Metro. `ps eww -p <pid>`
+is how you find that out.
 
 **And two static checks failed open in the same session**, which is the section
 above arriving through two more doors.
