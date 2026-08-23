@@ -1,8 +1,7 @@
 import { Text, type TextProps, type TextStyle } from 'react-native'
 
-import { palette } from '@wazn/domain'
-
 import { TYPE, type TypeStepName } from './type'
+import { usePalette } from '@/hooks/use-theme'
 
 /**
  * Every piece of text in the native app.
@@ -28,6 +27,24 @@ import { TYPE, type TypeStepName } from './type'
  * family; mixing them is how you get near-black on near-black, which is
  * exactly the failure that made every button in this app invisible on
  * 2026-08-20 and shipped past four green checks.
+ *
+ * ── THE ROLE NAME IS THE PALETTE KEY ────────────────────────────────────────
+ * A `Record<InkRole, string>` sat below this union mapping each role to its
+ * colour, and every one of its nine entries was `role: palette.role`. An
+ * identity map earns nothing and costs a second place to forget a role, so
+ * the lookup is now `p[ink]` and this union is what keeps it safe: `Palette`
+ * is a union of BOTH grounds, so only a key that exists on both can be read
+ * from it, and a role naming a key either ground lacks is a type error.
+ *
+ * The contrast notes that lived on that map's entries, kept because they are
+ * the reason two of these roles exist at all:
+ *   `muted`      3.39:1 on paper, below AA for small text, and the
+ *                prototype's own value. `tokens.test.ts` pins it, see
+ *                WAZN_PLAN 7.0. On iron it is 6.28:1, so the dark ground is
+ *                the more readable of the two.
+ *   `accent`     3.51:1 on paper: chrome and large text only.
+ *   `accentSoft` 6.77:1, what small ember text should take, though the
+ *                prototype itself does not.
  */
 export type InkRole =
   | 'ink'
@@ -39,23 +56,6 @@ export type InkRole =
   | 'onInkBody'
   | 'onInkMuted'
   | 'onInkFaint'
-
-const INK: Record<InkRole, string> = {
-  ink: palette.ink,
-  body: palette.body,
-  /** 3.39:1 on paper — below AA for small text, and the prototype's own value.
-   *  `tokens.test.ts` pins it so a change is loud. See WAZN_PLAN 7.0. */
-  muted: palette.muted,
-  /** 3.51:1 on paper: chrome and large text. Small ember text should take
-   *  `accentSoft` (6.77:1) — though the prototype itself does not. */
-  accent: palette.accent,
-  accentSoft: palette.accentSoft,
-  /** The inverted family: for text ON `ink`, and for text on an ember fill. */
-  onInk: palette.onInk,
-  onInkBody: palette.onInkBody,
-  onInkMuted: palette.onInkMuted,
-  onInkFaint: palette.onInkFaint,
-}
 
 export type TxtProps = Omit<TextProps, 'style'> & {
   step: TypeStepName
@@ -70,12 +70,13 @@ export type TxtProps = Omit<TextProps, 'style'> & {
 }
 
 export function Txt({ step, ink = 'ink', style, ltr, ...rest }: TxtProps) {
+  const palette = usePalette()
   return (
     <Text
       {...rest}
       style={[
         TYPE[step],
-        { color: INK[ink] },
+        { color: palette[ink] },
         ltr === true ? { writingDirection: 'ltr' } : null,
         style ?? null,
       ]}

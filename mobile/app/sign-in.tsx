@@ -9,7 +9,7 @@ import {
 import type { TextInput } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
-import { maskEmail, palette, space } from '@wazn/domain'
+import { maskEmail, space } from '@wazn/domain'
 
 import { Txt, Kick, type InkRole } from '@/design/Txt'
 import { Wordmark } from '@/components/ui/Wordmark'
@@ -17,6 +17,7 @@ import { Btn } from '@/components/ui/Btn'
 import { CodeInput, Field } from '@/components/ui/Field'
 import { Card } from '@/components/ui/Surface'
 import { useLocale } from '@/hooks/use-locale'
+import { usePalette } from '@/hooks/use-theme'
 import {
   requestCode,
   signInWithPassword,
@@ -134,6 +135,7 @@ function Dot({ step = 'label' }: { step?: 'label' | 'meta' }) {
 /** v5's Google mark: an ink disc with an ember G, sized to sit in a 56px
  *  hero without touching its cap height (`Onboarding.html:27`). */
 function GoogleDisc() {
+  const palette = usePalette()
   return (
     <View
       style={{
@@ -153,6 +155,7 @@ function GoogleDisc() {
 }
 
 export default function SignIn() {
+  const palette = usePalette()
   const insets = useSafeAreaInsets()
   const { t } = useLocale()
   const passwordRef = useRef<TextInput>(null)

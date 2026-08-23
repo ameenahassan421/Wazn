@@ -1589,6 +1589,215 @@ user-created**, no native create path, while `exercises.owner_id` exists — the
 model is there and the surface is not. A lifter whose movement is not in those
 135 cannot log it, which is a core-loop floor rather than a breadth gap.
 
+#### The free-provisioning flag, and a doc that was wrong (2026-08-22)
+
+Ameen hit this signing straight away, and the error is the useful part:
+
+> Cannot create a iOS App Development provisioning profile for
+> "app.wazn.client". Personal development teams do not support the **Push
+> Notifications, Associated Domains, and Sign In with Apple** capabilities.
+
+`docs/run-on-device.md` had listed those three as things that "do not work" on a
+free certificate. **That was wrong in the way that matters:** they do not
+degrade, they make the build unsignable. Nothing installs.
+
+`WAZN_FREE_PROVISIONING=1` in `mobile/app.config.ts` drops all three. **Off by
+default**, so EAS and every real build keep the full capability set: a flag
+defaulting the other way would ship an App Store build with no universal links
+and no Apple sign-in, which nobody notices until a review rejection.
+
+##### Removing the plugin entries was NOT sufficient, and the first hypothesis was wrong
+
+Taking `expo-apple-authentication` and `expo-notifications` out of `plugins`
+removed `associatedDomains` and left `aps-environment` and
+`com.apple.developer.applesignin` in place. **Expo autolinks config plugins from
+installed packages**, so both kept applying from `node_modules`.
+
+The first explanation was that `expo config --type introspect` was merely
+echoing the already-generated `Wazn.entitlements`. That was TESTED by moving the
+file aside and re-running: the keys were still emitted, so the hypothesis was
+rejected rather than assumed away.
+
+The fix is a `withEntitlementsPlist` mod appended after the autolinked plugins
+run, deleting the keys. It DELETES rather than blanks, because
+`withNotificationsIOS.js:11` sets `aps-environment` only when the key is absent,
+so an empty string would satisfy it and still ship an unprovisionable key.
+
+**Exit proof:** `expo config --type introspect` reports `entitlements: {}` with
+the flag and all three keys without it.
+
+##### What a free build still does
+
+The rest alarm works, which is the point: local notifications need no
+`aps-environment`, and autolinking still compiles the module. Deep links work
+through the `wazn://` scheme, so an invite is testable as `wazn://join/CODE`
+without Associated Domains.
+
+#### DARK MODE IS BUILT AND WIRED (2026-08-23)
+
+**Ameen asked for it directly** ("choosing between dark mode and light mode is
+just standard"), after a first answer from me that recited the history: v5
+removed the theme toggle, CLAUDE.md pins the app paper-first, and 0025's `theme`
+column was later dropped. That history is accurate about v5, **wrong about the
+column** (see step 3 below), and it was not a reason to refuse either way.
+
+**PR #135 carries all three steps.** Step 1 was additive with zero pixels
+changed: `palettes.light` / `palettes.dark` in `src/lib/tokens.ts` plus contrast
+assertions in `tokens.test.ts`. Steps 2 and 3 make the app read them.
+
+Three things the next session must NOT re-derive:
+
+1. **`tokens.ts` already specified the architecture.** The note above
+   `legacyPalette` says a second theme "becomes a record per ground, not a
+   second flat object". `palettes` is that record.
+2. **Nothing in the dark palette is invented.** `legacyPalette` WAS a
+   dark-first system, contrast-reasoned and shipped before the paper redesign,
+   and the `onInk*` set is a second existing dark vocabulary. Every dark value
+   comes from one of those.
+3. **`ink` doing two jobs does not break.** It is both the text colour and the
+   ground of the Up Next card and the rest canvas, which looked like the thing
+   dark mode would break. It does not, because that card's job is INVERSION,
+   not darkness: on paper it is dark, on iron it is light. `ink` and `onInk`
+   swap wholesale and all four surface call sites stay correct
+   (`Surface.tsx` tone="ink", `Btn.tsx` kind="ink", `Header.tsx`'s avatar,
+   `RestCanvas.tsx`).
+
+Measured on the iron ground and its card: ink 15.74/14.76, body 12.75/11.96,
+muted 6.28/5.89, accent 4.99/4.68, accentSoft 9.87/9.26. **`muted` is 3.39:1 on
+paper and 6.28:1 here**, so the dark theme is the MORE readable of the two and
+does not inherit the open paper-`muted` item below.
+
+##### Step 2 IS DONE: 119 references converted, the provider is mounted
+
+`mobile/src/hooks/use-theme.tsx` follows `use-unit`'s three-writer ranking
+exactly (lifter tap beats server row beats AsyncStorage cache, enforced with
+refs because the network is not orderable). It is mounted in
+`app/_layout.tsx`, and every colour in the native app now comes from
+`usePalette()`.
+
+Four things in the conversion worth not re-deriving:
+
+1. **`Txt`'s `INK` map was an identity map and is gone.** All nine entries were
+   `role: palette.role`, so the lookup is now `p[ink]` and `InkRole` is what
+   keeps it safe: `Palette` is a union of both grounds, so a role naming a key
+   either ground lacks is a type error. `Btn`'s `KINDS` and `Surface`'s `TONES`
+   became functions of the palette instead, because they carry structure
+   (`ring`, `lift`, `glow`) alongside the colours.
+2. **Two default parameters could not read a hook and had to move into the
+   body.** `Plate`'s `color = palette.accent` and `Wordmark`'s
+   `color = palette.ink` are evaluated before the body runs. Both are now
+   optional props resolved with `??` inside.
+3. **The status bar is derived in two places and hardcoded in neither.**
+   `style` names the colour of the system GLYPHS, so it reads inverted: `dark`
+   glyphs on paper, `light` on iron. The root had `light` hardcoded once
+   already and put near-white glyphs on `#f7f3ec` at 1.05:1 for weeks. The rest
+   canvas is the opposite of whatever the root sets, because its ground is
+   `palette.ink` and `ink` swaps with the theme.
+4. **The local const is called `palette`.** `const palette = usePalette()`
+   rather than a rename at 119 sites: the call sites read identically to the
+   import they replace, and re-adding the import is a duplicate-identifier
+   error rather than a silent shadow.
+
+Two decisions in the provider worth not re-litigating:
+
+- **The CHOICE is stored, not the resolved scheme.** Persisting the scheme
+  would turn "follow the system" into whatever the system happened to be at the
+  moment of the write, and the setting would silently stop following anything.
+- **No `ready` flag, unlike `use-unit`.** That one gates rendering because a
+  figure flipping 225 to 102 after paint is a lie about a weight. A ground
+  resolving light-to-dark on the second frame is only a flash, and holding
+  every launch on a disk read to avoid it is the worse trade.
+- `useColorScheme()` can return `'unspecified'` as well as null, so the scheme
+  is derived by matching `=== 'dark'` rather than with `?? 'light'`, which
+  compiles and would leak a third value that has no palette.
+
+##### Step 3: 0040, and the column was never dropped because it was never there
+
+The line above said "0025 added it and something later dropped it". That was
+wrong and the correction matters, because it changes what the migration has to
+be. Measured against production 2026-08-23:
+`information_schema.columns` returns twelve columns for
+`public.user_preferences` and `theme` is not among them, and **nothing in
+`supabase/migrations/` drops it**. 0025 was written and never applied.
+
+Two live consequences, both silent until now:
+
+1. `upsert_user_preference('theme', …)` threw. plpgsql resolves column
+   references on first EXECUTION, so 0027 and 0037 both shipped an
+   `elsif p_column = 'theme'` branch that compiles fine and raises
+   `column theme of relation user_preferences does not exist` the moment
+   anybody takes it.
+2. The web app's theme toggle has therefore never synced across devices. It is
+   localStorage-first and discards the error, which is why nobody noticed. 0025
+   predicted this and got the mechanism wrong: it said the RPC "quietly no-ops
+   the unknown column", and an unknown column raises rather than no-opping. The
+   observable result was the same, which is why the wrong explanation survived.
+
+**0040 therefore does not re-add 0025's column, it adds a different one.** The
+native app stores the CHOICE, so the vocabulary is `system | light | dark` and
+0025's `check (theme in ('paper', 'dark'))` cannot express the default. The
+file is written to land in the same place from an empty replay (where 0025 HAS
+run, so the old column and old constraint both exist) and against production
+(where neither does), the same way 0032 was.
+
+`paper` maps to `system`, not to `light`: it was 0025's DEFAULT, so a row
+holding it is indistinguishable from a row nobody touched, and pinning those
+accounts to light forever means they never see the dark theme their phone is
+already asking for. `dark` survives, because under 0025 it could only be a
+deliberate act.
+
+**Applied to production 2026-08-23 and verified**, not by the success flag:
+`information_schema` reports the column present, `NOT NULL`, defaulting to
+`'system'`, with
+`CHECK (theme = ANY (ARRAY['system','light','dark']))`, and all five rows at
+`system`.
+
+The dying web app keeps saying `paper`. It translates at the boundary
+(`fromColumn` / `toColumn` in `src/lib/theme-context.tsx`) rather than widening
+the column to four values, because the schema outlives that client.
+
+`supabase/tests/body_and_coach.sql` now asserts `system` and `light` go in and
+`paper` is refused. **Verified by deleting 0040 and re-running `check:sql`**:
+the suite fails on the `system` assertion against 0025's constraint. The
+existing `theme`/`dark` assertion passed either way, which is why it could not
+have caught this.
+
+##### Step 4: the config key that would have made all of it do nothing
+
+`mobile/app.config.ts` carried `userInterfaceStyle: 'light'`, and on iOS that
+is not a preference. It writes `UIUserInterfaceStyle` into Info.plist, and the
+OS then reports light to the app whatever the phone is set to, so
+`useColorScheme()` returns `'light'` forever and the DEFAULT setting, System,
+follows nothing. Explicit Dark still worked, which is what makes it the bad
+kind: the path most likely to get tried by hand is the one path unaffected.
+
+No check in this repo could see it. It is a string in a config file, and tsc,
+eslint, `bundle:ios` and 1281 vitest tests are all happy with it.
+**`check_tokens.ts` asserts it now**, along with a second ground literal
+(`IRON`) for the dark splash, and both new assertions were proved by
+deliberate mismatch rather than assumed.
+
+Verified in the generated project: `ios/Wazn/Info.plist` says `Automatic`, and
+`SplashScreenBackground.colorset` carries a `luminosity/dark` appearance at
+`#0f0d0a` beside the light `#f7f3ec`. **A prebuild is required for this to
+reach a device**, since it is Info.plist rather than JavaScript.
+
+##### What is left
+
+- Verify on a simulator in both schemes, including the rest canvas (the one
+  surface that inverts) and the status bar in each.
+
+##### Two other accessibility gaps, measured and NOT fixed
+
+- **Zero `allowFontScaling` or `maxFontSizeMultiplier` anywhere.** RN defaults
+  `allowFontScaling` to true, so Dynamic Type does scale, but the fixed heights
+  this app uses (34px steppers, 46px board keys, `space.tabBar`) will clip at
+  the larger accessibility sizes.
+- **Zero `AccessibilityInfo` or reduce-motion handling**, and 20
+  `accessibilityLabel`s against 28 `Pressable`s.
+
+Neither is dark mode's problem and both are real. They belong to the same pass.
+
 #### S0 IS COMPLETE, and the device path is documented (2026-08-22)
 
 Both remaining items closed.

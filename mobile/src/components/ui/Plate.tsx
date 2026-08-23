@@ -1,6 +1,6 @@
 import Svg, { Circle, Path } from 'react-native-svg'
 
-import { palette } from '@wazn/domain'
+import { usePalette } from '@/hooks/use-theme'
 
 /**
  * The plate — a weight plate seen face-on, with a counter for the sleeve.
@@ -45,25 +45,34 @@ const MARK_BAR = 'M93 4 a7 7 0 0 1 7 7 v78 a7 7 0 0 1 -14 0 v-78 a7 7 0 0 1 7 -7
 export function Plate({
   size = 20,
   variant = 'plain',
-  /** The plate's own colour. The hub is always `accent` — see below. */
-  color = palette.accent,
+  /** The plate's own colour. The hub is always `accent`, see below. */
+  color,
 }: {
   size?: number
   variant?: PlateVariant
   color?: string
 }) {
+  const palette = usePalette()
+  /*
+   * `color = palette.accent` was a DEFAULT PARAMETER, and a default parameter
+   * cannot read a hook: it is evaluated before the body runs. So the default
+   * moved into the body. `??` and not `||`, because the empty string is not a
+   * colour anybody means but it is falsy, and silently substituting ember for
+   * it would hide the mistake.
+   */
+  const fill = color ?? palette.accent
   if (variant === 'mark') {
     return (
       <Svg width={size} height={size} viewBox="0 0 100 100">
-        <Path fill={color} fillRule="evenodd" d={MARK_DISC} />
-        <Path fill={color} d={MARK_BAR} />
+        <Path fill={fill} fillRule="evenodd" d={MARK_DISC} />
+        <Path fill={fill} d={MARK_BAR} />
       </Svg>
     )
   }
   return (
     <Svg width={size} height={size} viewBox="0 0 96 96">
       <Path
-        fill={color}
+        fill={fill}
         fillRule="evenodd"
         d={variant === 'full' ? `${DISC} ${COLLARS}` : DISC}
       />

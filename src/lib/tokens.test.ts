@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import {
+  palettes,
   fontFamily,
   legacyFontFamily,
   legacyPalette,
@@ -331,5 +332,55 @@ describe('the contrast maths itself', () => {
   it('refuses a colour it cannot parse rather than guessing', () => {
     expect(() => luminance('#fff')).toThrow(/six-digit/)
     expect(() => luminance('rgba(0,0,0,0.5)')).toThrow(/six-digit/)
+  })
+})
+
+/**
+ * The dark ground.
+ *
+ * Same method as the paper assertions above and the same reason: a contrast
+ * figure written in a comment goes stale, and a palette is exactly the kind of
+ * thing somebody adjusts by eye. Every number here was measured before the
+ * values were chosen, not after.
+ *
+ * `muted` is the interesting one. It is 3.39:1 on paper, which is the open
+ * item in WAZN_PLAN 7.0, and 6.28:1 here. The dark theme is the more readable
+ * of the two, so shipping it does not inherit the paper problem.
+ */
+describe('contrast on the iron ground', () => {
+  const d = palettes.dark
+
+  it('body text clears AA on the ground and on a card', () => {
+    expect(ratio(d.ink, d.paper)).toBeGreaterThanOrEqual(7)
+    expect(ratio(d.ink, d.card)).toBeGreaterThanOrEqual(7)
+    expect(ratio(d.body, d.paper)).toBeGreaterThanOrEqual(4.5)
+    expect(ratio(d.body, d.card)).toBeGreaterThanOrEqual(4.5)
+  })
+
+  it('muted clears AA here, which it does not on paper', () => {
+    expect(ratio(d.muted, d.paper)).toBeGreaterThanOrEqual(4.5)
+    expect(ratio(d.muted, d.card)).toBeGreaterThanOrEqual(4.5)
+    // The comparison that makes the point, so a future edit cannot quietly
+    // make the dark theme as hard to read as the light one.
+    expect(ratio(d.muted, d.paper)).toBeGreaterThan(ratio(palette.muted, palette.paper))
+  })
+
+  it('accentSoft is the tier for small ember text, not accent', () => {
+    expect(ratio(d.accentSoft, d.paper)).toBeGreaterThanOrEqual(4.5)
+    // `accent` is chrome and large text only, exactly as on paper.
+    expect(ratio(d.accent, d.paper)).toBeGreaterThanOrEqual(3)
+  })
+
+  it('the inverted card is readable, because it inverts rather than darkens', () => {
+    // `ink` is the ground of the Up Next card and `onInk` is its text. On this
+    // theme that card is LIGHT, which is the whole reason one value can keep
+    // doing both jobs.
+    expect(ratio(d.onInk, d.ink)).toBeGreaterThanOrEqual(7)
+  })
+
+  it('covers every key the light palette has', () => {
+    expect(Object.keys(palettes.dark).sort()).toEqual(
+      Object.keys(palettes.light).sort(),
+    )
   })
 })

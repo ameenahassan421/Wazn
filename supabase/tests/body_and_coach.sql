@@ -155,6 +155,38 @@ begin
   if v_prefs.theme <> 'dark' then
     raise exception 'FAIL: theme is %, expected dark', v_prefs.theme;
   end if;
+
+  -- 0040's vocabulary, asserted at both ends.
+  --
+  -- `system` is the half that matters and the half a two-value constraint
+  -- silently forbids: the native app stores the CHOICE, and a schema that
+  -- cannot say "follow the OS" turns that setting into whatever the phone
+  -- happened to be at the moment of the write. 0025's `check (theme in
+  -- ('paper', 'dark'))` would pass every assertion above this line and fail
+  -- this one, which is the point.
+  select * into v_prefs from public.upsert_user_preference('theme', 'system');
+  if v_prefs.theme <> 'system' then
+    raise exception 'FAIL: theme is %, expected system', v_prefs.theme;
+  end if;
+  select * into v_prefs from public.upsert_user_preference('theme', 'light');
+  if v_prefs.theme <> 'light' then
+    raise exception 'FAIL: theme is %, expected light', v_prefs.theme;
+  end if;
+
+  -- And the retired value is refused rather than stored. Without this the
+  -- constraint could be dropped entirely and every assertion above would still
+  -- pass: they only ever prove that a GOOD value goes in.
+  begin
+    perform public.upsert_user_preference('theme', 'paper');
+    raise exception 'FAIL: theme accepted paper, which 0040 retired';
+  exception
+    when check_violation then null;
+  end;
+
+  -- Left on a value the rest of this suite does not care about, but put back
+  -- deliberately rather than by accident: a later assertion reading this row
+  -- should see the default it would see in a fresh account.
+  select * into v_prefs from public.upsert_user_preference('theme', 'system');
   select * into v_prefs from public.upsert_user_preference('weight_unit', 'lbs');
   if v_prefs.weight_unit <> 'lbs' then
     raise exception 'FAIL: weight_unit is %, expected lbs', v_prefs.weight_unit;

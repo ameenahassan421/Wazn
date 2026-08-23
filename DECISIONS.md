@@ -9502,3 +9502,125 @@ Everyone carries 3 whether they chose it or not, and the board ranks that
 default as a commitment. FRIENDS_PLAN F2 ranks on a _committed_ target, and a
 default nobody typed is not one. The answer is a chosen-flag or a null state on
 0027's column. It is a product decision and it belongs to Ameen.
+
+## 2026-08-22: dark mode is built, and the palette is not invented
+
+**Decision: ship a light/dark choice, and source every dark value from
+`legacyPalette` and the `onInk*` set rather than picking new colours.**
+
+Ameen: "choosing between dark mode and light mode is just standard." My first
+answer recited the history instead of answering the question: v5 removed the
+theme toggle, CLAUDE.md pins the app paper-first, and 0025's `theme` column was
+later dropped. All true, and none of it a reason not to have the feature. He
+reaffirmed and that settles it.
+
+**Why the values are borrowed rather than chosen.** `legacyPalette` was a
+dark-first system that shipped, with its contrast ratios reasoned and asserted,
+before the paper redesign replaced it. The `onInk*` set is a second dark
+vocabulary already in use by the rest canvas. Inventing a third would mean
+re-deriving judgement this repo has made twice, and the failure mode of getting
+it wrong is invisible until somebody cannot read a caption.
+
+**The shape was specified in advance and is being followed.** `tokens.ts`, above
+`legacyPalette`: "when it grows a second theme this becomes a record per ground,
+not a second flat object." Hence `palettes.light` / `palettes.dark`.
+
+**`ink` keeps both of its jobs.** It is the text colour and the ground of the Up
+Next card and the rest canvas. That looked like the thing dark mode would break,
+since a dark card cannot be the emphasis on a dark theme. It does not break: the
+card's job is INVERSION, not darkness. On paper it is dark, on iron it is light.
+`ink` and `onInk` swap wholesale, all four surface call sites stay correct, and
+no new token is needed.
+
+**Measured before the values were fixed, not after.** On the iron ground and its
+card: ink 15.74/14.76, body 12.75/11.96, muted 6.28/5.89, accent 4.99/4.68,
+accentSoft 9.87/9.26. `muted` is 3.39:1 on paper, which remains the open item
+awaiting Ameen's ruling, and 6.28:1 on iron. The dark theme is the more readable
+of the two. `tokens.test.ts` asserts all of it plus key parity, so the two
+grounds cannot drift.
+
+**Deliberately not in this step:** the conversion of 119 `palette.` references
+across 28 files, the provider, the re-added `theme` column, and the Settings
+control. Step 1 is additive and changes no pixels, which makes it reviewable on
+the colour reasoning alone.
+
+## 2026-08-23: `userInterfaceStyle` was pinning the theme, and nothing could see it
+
+`mobile/app.config.ts` carried `userInterfaceStyle: 'light'`, with a comment
+from 2026-08-20 arguing it: "the system has one ground and it is paper; a
+lifter whose phone is in dark mode should not get a half-translated app."
+Correct when written, and fatal to the feature Ameen asked for two days later.
+
+On iOS that key is not a preference. It writes `UIUserInterfaceStyle` into
+Info.plist, and the OS then reports light to the app **whatever the phone is
+set to**. So `useColorScheme()` returns `'light'` forever and the theme
+setting's DEFAULT, System, follows nothing. Explicit Dark still works, because
+that path never consults the OS, which is what makes it a bad failure: the
+path most likely to get tested by hand is the one path unaffected.
+
+Nothing in the pipeline could have caught it. It is a string in a config file,
+and tsc, eslint, `bundle:ios` and 1281 vitest tests are all happy with it.
+
+**So `check_tokens.ts` now asserts it**, alongside a second ground literal
+(`IRON`, `palettes.dark.paper`) for the dark splash. Both new assertions were
+proved by deliberate mismatch rather than assumed: changing IRON by one digit
+and setting the style back to `light` each produce exactly one failure.
+
+That file already carries this lesson once. Its `PAPER` comment says the check
+"had never opened this file" for the whole period it claimed to, and that was
+found while changing the ground. This is the same shape of bug found the same
+way, which is the argument for the assertion rather than a comment.
+
+Verified in the generated project after `expo prebuild`: Info.plist says
+`Automatic`, and `SplashScreenBackground.colorset` carries a `luminosity/dark`
+appearance at `#0f0d0a` beside the light `#f7f3ec`.
+
+## 2026-08-23: 0025 was never applied, so 0040 is not a re-add
+
+WAZN_PLAN said the `theme` column "was later dropped". `information_schema`
+says otherwise: twelve columns on `user_preferences`, no `theme`, and no
+migration in the tree drops it. 0025 was written on 2026-08-12 and never ran.
+
+Two silent consequences, both live until today. `upsert_user_preference` has
+carried an `elsif p_column = 'theme'` branch since 0027, and plpgsql resolves
+column references on first EXECUTION rather than at `create or replace`, so
+that branch raised every time it was taken. The web app's theme toggle
+therefore never synced across devices; it is localStorage-first and discards
+the error. 0025 predicted the symptom and named the wrong mechanism ("the RPC
+quietly no-ops the unknown column"), and an unknown column raises rather than
+no-opping. The observable result was identical, which is how the wrong
+explanation survived four migrations.
+
+**0040 adds a different column, not 0025's.** Native stores the CHOICE, so the
+vocabulary is `system | light | dark`, and 0025's `check (theme in ('paper',
+'dark'))` cannot express the default. Storing the RESOLVED scheme instead
+would freeze "follow my phone" into whatever the phone was at the moment of
+the write.
+
+`paper` maps to `system` and not to `light`. It was 0025's default, so a row
+holding it is indistinguishable from one nobody touched, and pinning those
+accounts to light forever means they never see the theme their phone is
+already asking for. `dark` survives, because under 0025 it could only be
+deliberate.
+
+**The dying web app keeps saying `paper`** and translates at the boundary
+(`fromColumn` / `toColumn` in `src/lib/theme-context.tsx`) rather than the
+column widening to four values. The schema outlives that client.
+
+One asymmetry, accepted: the web can overwrite a `system` choice with
+`light`/`dark`, and can never write `system` back, because it has no such
+option. That is a newer explicit choice on another device, which is what the
+server row is for, and it only happens on a deliberate toggle: the read path
+calls `setThemeState`, not `setTheme`.
+
+Written to land identically from an empty replay (where 0025 HAS run and the
+old column and constraint exist) and against production (where neither does),
+the same way 0032 was. Applied 2026-08-23 and verified against
+`information_schema`: NOT NULL, default `'system'`, three-value check, five
+rows at `system`.
+
+`supabase/tests/body_and_coach.sql` now asserts `system` and `light` go in and
+`paper` is refused, **proved by deleting 0040 and re-running `check:sql`**,
+which fails on the `system` assertion. The pre-existing `theme`/`dark`
+assertion passed either way, which is exactly why it never caught this: it
+only ever proved that a GOOD value goes in.

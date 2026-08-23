@@ -1,9 +1,10 @@
 import { ScrollView, View, type ViewStyle } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
-import { palette, radius, space } from '@wazn/domain'
+import { radius, space } from '@wazn/domain'
 
 import { Txt } from '@/design/Txt'
+import { usePalette } from '@/hooks/use-theme'
 import { Card } from './Surface'
 
 /**
@@ -31,6 +32,7 @@ export function Screen({
   scroll?: boolean
   style?: ViewStyle
 }) {
+  const palette = usePalette()
   /*
    * `gutter` and `onTouchStart` were props here until 2026-08-21 and neither
    * could change anything. `gutter` had one call site and it passed the
@@ -100,6 +102,7 @@ export function Empty({
    *  `alignSelf` to `flex-start`, which beats the `alignItems` below. */
   children?: React.ReactNode
 }) {
+  const palette = usePalette()
   return (
     <Card style={{ alignItems: 'center', gap: 16, paddingVertical: 28 }}>
       <View

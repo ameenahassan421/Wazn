@@ -1,6 +1,8 @@
 import { View, type ViewProps, type ViewStyle } from 'react-native'
 
-import { elevation, palette, radius, space } from '@wazn/domain'
+import { elevation, radius, space, type Palette } from '@wazn/domain'
+
+import { usePalette } from '@/hooks/use-theme'
 
 /**
  * A card, and the four grounds one can have.
@@ -26,11 +28,20 @@ export type CardTone =
   /** Ember wash. Earned only: the PR card. Never a container for prose. */
   | 'wash'
 
-const TONES: Record<CardTone, { bg: string; ring?: string; lift?: boolean }> = {
-  card: { bg: palette.card, ring: palette.ring, lift: true },
-  ink: { bg: palette.ink },
-  wash: { bg: palette.accentWash },
-}
+/**
+ * A function of the ground rather than a module-level constant, because the
+ * ground now moves. Three small objects per `Card` render is not a cost worth
+ * an early return or a memo; keeping the `Record<CardTone, …>` is, because it
+ * is what makes a new tone with no entry a type error rather than an
+ * `undefined` background at runtime.
+ */
+const tones = (
+  p: Palette,
+): Record<CardTone, { bg: string; ring?: string; lift?: boolean }> => ({
+  card: { bg: p.card, ring: p.ring, lift: true },
+  ink: { bg: p.ink },
+  wash: { bg: p.accentWash },
+})
 
 /*
  * An `onInk` tone was here for the rest canvas's coach card, and the canvas
@@ -48,7 +59,8 @@ export type CardProps = ViewProps & {
 }
 
 export function Card({ tone = 'card', small, bare, style, ...rest }: CardProps) {
-  const t = TONES[tone]
+  const palette = usePalette()
+  const t = tones(palette)[tone]
   return (
     <View
       {...rest}
@@ -82,6 +94,7 @@ export function Card({ tone = 'card', small, bare, style, ...rest }: CardProps) 
  * for the list idiom where a leading tile sits above the rule, not beside it.
  */
 export function Rule({ inset = 0, onInk }: { inset?: number; onInk?: boolean }) {
+  const palette = usePalette()
   return (
     <View
       style={{

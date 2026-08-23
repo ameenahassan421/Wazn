@@ -203,7 +203,14 @@ away. Both died on the first execution.
 
 **Executed locally is still not applied.** "Applies cleanly from empty" and
 "applies cleanly to production" are different claims; the PR should say which
-one it has. Production is at **0031** as of 2026-08-22.
+one it has. Production is at **0040** as of 2026-08-23.
+
+**And a migration file in this directory is not evidence it ran.** 0025 added
+`user_preferences.theme` on 2026-08-12 and was never applied; the column was
+absent from production until 0040 on 2026-08-23, and no migration ever dropped
+it. Two sessions read the file, concluded the column existed and had been
+dropped, and wrote that into WAZN_PLAN. `information_schema` is the answer to
+"does this exist", not `ls supabase/migrations/`.
 
 **And applied is still not verified.** `apply_migration` answers
 `{"success": true}` for DDL that did nothing useful. 0027's
@@ -251,13 +258,29 @@ and does nothing. Assert the privilege.**
   "dark-first… no shadows" until Ameen's prototype replaced v5 Momentum. The
   ground is `#f7f3ec`, cards are white with a hairline ring AND a 1px lift, the
   display face is **Sora**, every control is a pill, and the CTA carries an
-  ember glow. The ONE dark surface is the rest canvas, which inverts to `ink`
-  and back. Nothing else is coloured, no gradients, no emoji, no decorative
+  ember glow. Nothing else is coloured, no gradients, no emoji, no decorative
   illustration. Numbers render large and tabular. Touch targets ≥ 48px.
   **`src/lib/tokens.ts` holds both systems**: `palette`/`type` are current and
   native reads them, `legacy*` exist only for the dying PWA's `index.css` and
   go at phase A4. The mark is the **plate used as the letter `a`** —
   `mobile/src/components/ui/Plate.tsx`, four variants, one job each.
+- **Paper-first is not paper-only, since 2026-08-23.** This rule said "the ONE
+  dark surface is the rest canvas" and native now has a full dark theme (Ameen:
+  "choosing between dark mode and light mode is just standard"). Nothing about
+  the paragraph above changes: paper is the default ground and the whole system
+  is still one accent, no gradients, no shadows beyond the card lift.
+  **Never write a colour literal, and never import `palette` in `mobile/`.**
+  `usePalette()` from `@/hooks/use-theme` is the only door; the static
+  `palette` export is `palettes.light` and reading it pins a surface to one
+  ground. That failure is completely silent in the light theme, which is the
+  theme every screenshot is taken in.
+  **`ink` and `onInk` SWAP between grounds and every call site stays correct**,
+  because the inverted card's job is inversion rather than darkness: dark on
+  paper, light on iron. So does the status bar, whose `style` names the colour
+  of the system GLYPHS and therefore reads backwards. Both places that set it
+  derive it (`app/_layout.tsx` from the scheme, `RestCanvas.tsx` from its
+  opposite). A hardcoded `light` there already shipped once and rendered the
+  clock and battery at 1.05:1 for weeks.
 - **The reference is `~/Downloads/Wazn Prototype.html`, and its extracted
   source is in `docs/design/prototype/`.** `docs/design/v5-momentum/` is
   history. Read the source, not a screenshot: the bundle unpacks with a dozen

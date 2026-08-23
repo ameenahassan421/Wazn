@@ -4,7 +4,6 @@ import Svg, { Line as SvgLine } from 'react-native-svg'
 
 import {
   formatEstimate,
-  palette,
   radius,
   recentRecords,
   sessionsPerWeek,
@@ -27,6 +26,7 @@ import { useLocale } from '@/hooks/use-locale'
 import { useUnit } from '@/hooks/use-unit'
 import { fetchProgress, type ProgressData, type StrengthRow } from '@/services/progress'
 import { supabaseConfigError } from '@/services/supabase'
+import { usePalette } from '@/hooks/use-theme'
 
 /**
  * Screen 13 — Progress. "Am I training enough" and "am I getting stronger".
@@ -115,6 +115,7 @@ function Figure({ value, label }: { value: string; label: string }) {
  * than skipped, because a gap is the entire point of this chart.
  */
 function Frequency({ weeks }: { weeks: WeekBucket[] }) {
+  const palette = usePalette()
   const { t } = useLocale()
   const total = weeks.reduce((sum, w) => sum + w.sessions, 0)
   const peak = Math.max(1, ...weeks.map((w) => w.sessions))

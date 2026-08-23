@@ -3,12 +3,13 @@ import { Pressable, View } from 'react-native'
 import { StatusBar } from 'expo-status-bar'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
-import { palette, radius, space } from '@wazn/domain'
+import { radius, space } from '@wazn/domain'
 
 import { Ring } from '@/components/ui/Ring'
 import { Plate } from '@/components/ui/Plate'
 import { Txt } from '@/design/Txt'
 import { restEnded, tick } from '@/services/haptics'
+import { usePalette, useTheme } from '@/hooks/use-theme'
 
 /**
  * Rest, against `docs/design/prototype/source.html` — the screen labelled
@@ -71,6 +72,7 @@ function QuietAction({
   filled?: boolean
   onPress: () => void
 }) {
+  const palette = usePalette()
   return (
     <Pressable
       accessibilityRole="button"
@@ -115,6 +117,7 @@ export function RestCanvas({
   onSkip: () => void
   onAdjust: (deltaSeconds: number) => void
 }) {
+  const { palette, scheme } = useTheme()
   const insets = useSafeAreaInsets()
   const [now, setNow] = useState(() => Date.now())
 
@@ -156,16 +159,21 @@ export function RestCanvas({
         backgroundColor: palette.ink,
       }}
     >
-      {/* The one surface in the app that wants light system glyphs, and it
-          asks for them itself. The root sets `dark` for the paper ground; this
-          is an ink overlay drawn over the whole window, so the clock and the
-          battery would otherwise be near-black on `#16130e`. Unmounting the
-          canvas restores the root's `dark` on its own: `expo-status-bar` wraps
-          React Native's `StatusBar` (see its own source, and its docstring —
-          "the props of each StatusBar component will be merged in the order
-          that they were mounted"), so the last one mounted wins and popping it
-          falls back to the one below. Nothing here has to restore anything. */}
-      <StatusBar style="light" />
+      {/* The one surface in the app that INVERTS the root's glyphs, and it
+          asks for them itself. This is a `palette.ink` overlay drawn over the
+          whole window, and `ink` swaps with the ground: near-black over paper,
+          near-white over iron. So it is always the opposite of whatever the
+          root just set, and hardcoding `light` here would put white glyphs on
+          a `#ece7dc` canvas in the dark theme, which is the same 1.05:1 defect
+          the root's own hardcoded `light` caused on paper.
+
+          Unmounting the canvas restores the root's choice on its own:
+          `expo-status-bar` wraps React Native's `StatusBar` (see its own
+          source, and its docstring: "the props of each StatusBar component
+          will be merged in the order that they were mounted"), so the last one
+          mounted wins and popping it falls back to the one below. Nothing here
+          has to restore anything. */}
+      <StatusBar style={scheme === 'dark' ? 'dark' : 'light'} />
 
       {/* The background dismisses. It is a sibling UNDER the content rather
           than a wrapper around it, so pressing ±30s does not also go early —

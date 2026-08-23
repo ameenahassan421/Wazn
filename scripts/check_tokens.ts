@@ -31,6 +31,7 @@ import {
   legacyPalette,
   legacyType,
   palette,
+  palettes,
   radius,
   space,
   type,
@@ -129,16 +130,39 @@ for (const [name, step] of Object.entries(legacyType)) {
    ever opened app.config.ts. Found on 2026-08-20 while changing the ground
    from iron to paper, which is exactly when a stale third copy bites. */
 const appConfig = readFileSync(APP_CONFIG, 'utf8')
-const groundLiteral = /^const PAPER = '(#[0-9a-f]{6})'$/m.exec(appConfig)
-if (groundLiteral === null) {
+
+/* TWO grounds since 2026-08-23. The dark splash is the same class of copy as
+   the light one and would rot the same way, so it is checked the same way
+   rather than trusted because it is new. */
+for (const [name, expected] of [
+  ['PAPER', palette.paper],
+  ['IRON', palettes.dark.paper],
+] as const) {
+  const literal = new RegExp(`^const ${name} = '(#[0-9a-f]{6})'$`, 'm').exec(appConfig)
+  if (literal === null) {
+    problems.push(
+      `mobile/app.config.ts: could not find \`const ${name} = '#rrggbb'\`. It is a ` +
+        'splash and window background, and EAS reads that file without a bundler, ' +
+        'so it cannot import tokens.ts. Keep the literal, and keep it findable.',
+    )
+  } else if (literal[1] !== expected) {
+    problems.push(
+      `mobile/app.config.ts: ${name} is ${literal[1]}, tokens.ts says ${expected}`,
+    )
+  }
+}
+
+/* `userInterfaceStyle: 'light'` in that file is not a preference, it is
+   `UIUserInterfaceStyle` in Info.plist, and the OS then reports light to the
+   app whatever the phone is set to. `useColorScheme()` returns 'light'
+   forever and the theme setting's DEFAULT, System, silently follows nothing.
+   It shipped that way and no check could see it, because it is a string in a
+   config file that tsc, eslint and `expo export` are all happy with. */
+if (!/^\s*userInterfaceStyle: 'automatic',$/m.test(appConfig)) {
   problems.push(
-    "mobile/app.config.ts: could not find `const PAPER = '#rrggbb'`. It is the " +
-      'splash and window background, and EAS reads that file without a bundler, ' +
-      'so it cannot import tokens.ts. Keep the literal, and keep it findable.',
-  )
-} else if (groundLiteral[1] !== palette.paper) {
-  problems.push(
-    `mobile/app.config.ts: PAPER is ${groundLiteral[1]} — tokens.ts says ${palette.paper}`,
+    "mobile/app.config.ts: userInterfaceStyle must be 'automatic'. Anything else " +
+      "pins Info.plist's UIUserInterfaceStyle, so useColorScheme() stops " +
+      'reporting the phone and the System theme option follows nothing.',
   )
 }
 
@@ -168,7 +192,8 @@ if (problems.length) {
 console.log(
   `check:tokens ok — ${Object.keys(legacyPalette).length} legacy colours checked ` +
     `against index.css with ${Object.keys(legacyType).length} legacy type steps, ` +
-    `and mobile/app.config.ts against palette.paper. The current system ` +
+    `and mobile/app.config.ts against both grounds plus its userInterfaceStyle. ` +
+    `The current system ` +
     `(${Object.keys(palette).length} colours, ${Object.keys(type).length} type steps) ` +
     'is read straight from tokens.ts by native — no generated copy.',
 )

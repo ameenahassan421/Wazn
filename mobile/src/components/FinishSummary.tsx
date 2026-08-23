@@ -1,7 +1,7 @@
 import { ScrollView, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
-import { palette, space, toDisplayWeight, type SetType, type Unit } from '@wazn/domain'
+import { space, toDisplayWeight, type SetType, type Unit } from '@wazn/domain'
 
 import { Btn } from '@/components/ui/Btn'
 import { Plate } from '@/components/ui/Plate'
@@ -9,6 +9,7 @@ import { Card } from '@/components/ui/Surface'
 import { Txt, Kick } from '@/design/Txt'
 import { useCoachLine } from '@/hooks/use-coach-line'
 import { useLocale } from '@/hooks/use-locale'
+import { usePalette } from '@/hooks/use-theme'
 
 /**
  * Finish, against `docs/design/prototype/source.html` — the screen labelled
@@ -88,6 +89,7 @@ export function FinishSummary({
   sealed: boolean
   onDone: () => void
 }) {
+  const palette = usePalette()
   const insets = useSafeAreaInsets()
   const { t, locale } = useLocale()
 

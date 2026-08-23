@@ -7,13 +7,7 @@ import {
   View,
 } from 'react-native'
 
-import {
-  fromDisplayWeight,
-  palette,
-  radius,
-  space,
-  toDisplayWeight,
-} from '@wazn/domain'
+import { fromDisplayWeight, radius, space, toDisplayWeight } from '@wazn/domain'
 
 import { Btn } from '@/components/ui/Btn'
 import { Card } from '@/components/ui/Surface'
@@ -25,6 +19,7 @@ import { TYPE } from '@/design/type'
 import { useBody } from '@/hooks/use-body'
 import { useLocale } from '@/hooks/use-locale'
 import { useUnit } from '@/hooks/use-unit'
+import { usePalette } from '@/hooks/use-theme'
 
 /**
  * Body — weigh-ins.
@@ -51,6 +46,7 @@ import { useUnit } from '@/hooks/use-unit'
  * implied by an empty space.
  */
 export default function BodyScreen() {
+  const palette = usePalette()
   const { t } = useLocale()
   const { unit, ready } = useUnit()
   const { width } = useWindowDimensions()

@@ -1,4 +1,5 @@
 import type { ExpoConfig } from 'expo/config'
+import { withEntitlementsPlist } from 'expo/config-plugins'
 
 /**
  * Wazn, as a native app.
@@ -38,7 +39,60 @@ import type { ExpoConfig } from 'expo/config'
  *  deliberate mismatch rather than assumed to work. Keep the literal on one
  *  line and keep the name `PAPER` — the regex looks for both. */
 const PAPER = '#f7f3ec'
+
+/** The iron ground, `palettes.dark.paper`. Same duplication and the same
+ *  reason as PAPER above, so it is asserted the same way: keep the literal on
+ *  one line and keep the name `IRON`, because `check_tokens.ts` looks for
+ *  both. Added 2026-08-23 with the dark theme. */
+const IRON = '#0f0d0a'
 const BUNDLE_ID = 'app.wazn.client'
+
+/**
+ * Build for a FREE Apple developer account.
+ *
+ * ── WHY THIS FLAG HAS TO EXIST ──────────────────────────────────────────────
+ * A personal team cannot create a provisioning profile for an app that
+ * declares Push Notifications, Associated Domains, or Sign In with Apple.
+ * Apple's own words, from a failed repair on 2026-08-22:
+ *
+ *   Cannot create a iOS App Development provisioning profile for
+ *   "app.wazn.client". Personal development teams, including "Ameen Hassan",
+ *   do not support the Push Notifications, Associated Domains, and Sign In
+ *   with Apple capabilities.
+ *
+ * These are not degraded features on a free account, they are a hard STOP:
+ * the build cannot be signed at all, so `docs/run-on-device.md` was wrong to
+ * describe them as things that "do not work". Nothing installs.
+ *
+ * Wazn declares all three, and `mobile/ios/Wazn/Wazn.entitlements` is
+ * GENERATED, so hand-deleting them is undone by the next prebuild. Hence a
+ * config flag rather than a note telling somebody to edit a generated file.
+ *
+ * ── WHAT IT COSTS, AND WHAT IT DOES NOT ─────────────────────────────────────
+ * Off: universal links (`https://www.trywazn.app/join/...` opening the app),
+ * Sign in with Apple, and server push. **The `wazn://` custom scheme still
+ * handles deep links**, so an invite is testable by pasting `wazn://join/CODE`.
+ *
+ * **The rest alarm still works**, which is the point. It is a LOCAL
+ * notification, and local notifications need no `aps-environment` entitlement:
+ * dropping the `expo-notifications` PLUGIN removes the entitlement it injects
+ * while autolinking still compiles the module. That matters because the alarm
+ * is what WAZN_PLAN calls the justification for stage 4A, and it stays
+ * testable on a free account.
+ *
+ * ── OFF BY DEFAULT, AND THAT IS LOAD-BEARING ────────────────────────────────
+ * EAS and every real build read this file with the variable unset and get the
+ * full capability set. A flag that defaulted the other way would ship an App
+ * Store build with no universal links and no Apple sign-in, which is the kind
+ * of thing nobody notices until a review rejection.
+ *
+ *   WAZN_FREE_PROVISIONING=1 npx expo prebuild --platform ios --clean
+ */
+const FREE_PROVISIONING = process.env.WAZN_FREE_PROVISIONING === '1'
+
+/** One entry of `plugins`. Named because a conditional spread of a tuple
+ *  widens to `(string | object)[]` and stops matching Expo's own type. */
+type Plugin = NonNullable<ExpoConfig['plugins']>[number]
 
 const config: ExpoConfig = {
   name: 'Wazn',
@@ -48,13 +102,24 @@ const config: ExpoConfig = {
   orientation: 'portrait',
   icon: './assets/images/icon.png',
   /**
-   * Light, not `automatic`. The system has one ground and it is paper; a
-   * lifter whose phone is in dark mode should not get a half-translated app.
-   * (This said `dark` and `#0f0d0a` until 2026-08-20, when the prototype
-   * replaced v5 — the ONE dark surface left is the rest canvas, which the app
-   * paints itself.)
+   * `automatic`, and this is LOAD-BEARING rather than a preference.
+   *
+   * On iOS this writes `UIUserInterfaceStyle` into Info.plist, and `light`
+   * there does not mean "default to light", it means the OS reports light to
+   * the app no matter what the phone is set to. So `useColorScheme()` would
+   * return `'light'` forever and the theme setting's DEFAULT, System, would
+   * silently never follow anything. Explicit Dark would still have worked,
+   * which is what makes it a bad failure: the one path most likely to get
+   * tested is the one path unaffected.
+   *
+   * It said `light` with a comment arguing "the system has one ground and it
+   * is paper" (2026-08-20), and before that `dark` with `#0f0d0a`. Both were
+   * true when written. Ameen asked for the choice on 2026-08-22.
+   *
+   * Changing this needs a prebuild to reach a device: it is Info.plist, not
+   * JavaScript, so a JS reload will not pick it up.
    */
-  userInterfaceStyle: 'light',
+  userInterfaceStyle: 'automatic',
   backgroundColor: PAPER,
   /** Fonts ship inside the bundle as TTFs from `@expo-google-fonts/*`, so the
    *  app looks like itself with no network at all — the same reasoning that
@@ -70,7 +135,10 @@ const config: ExpoConfig = {
       UIBackgroundModes: ['audio'],
       ITSAppUsesNonExemptEncryption: false,
     },
-    associatedDomains: ['applinks:www.trywazn.app'],
+    /* Omitted on a free team: Associated Domains is one of the three
+       capabilities a personal team cannot provision. The Android intent
+       filter below is unaffected. */
+    ...(FREE_PROVISIONING ? {} : { associatedDomains: ['applinks:www.trywazn.app'] }),
   },
 
   android: {
@@ -118,8 +186,12 @@ const config: ExpoConfig = {
     'expo-secure-store',
     'expo-localization',
     /** Mandatory in the iOS build the moment Google sign-in exists there —
-     *  App Store rule, and one of the four ways in that CLAUDE.md fixes. */
-    'expo-apple-authentication',
+     *  App Store rule, and one of the four ways in that CLAUDE.md fixes.
+     *
+     *  Dropped under `WAZN_FREE_PROVISIONING`: it injects
+     *  `com.apple.developer.applesignin`, which a personal team cannot
+     *  provision, and its presence blocks signing entirely. */
+    ...(FREE_PROVISIONING ? [] : (['expo-apple-authentication'] as Plugin[])),
     /** The rest alarm — `services/rest-alarm.ts` is the only caller.
      *
      *  Registered as a plugin rather than left to autolinking for ONE reason:
@@ -133,13 +205,46 @@ const config: ExpoConfig = {
      *  it would be a third copy of the palette with nothing checking it. The
      *  tint defaults to the system accent, which is worth more than an
      *  unguarded literal. */
-    ['expo-notifications', { icon: './assets/images/android-icon-monochrome.png' }],
+    /*
+     *  Dropped under `WAZN_FREE_PROVISIONING`, and ONLY the plugin is dropped.
+     *
+     *  `withNotificationsIOS.js:12` sets `aps-environment`, which a personal
+     *  team cannot provision. Autolinking still compiles the native module, and
+     *  LOCAL notifications need no entitlement, so the rest alarm keeps working
+     *  on a free build. What is lost is the Android monochrome icon config,
+     *  which is irrelevant to a local iOS build.
+     */
+    ...(FREE_PROVISIONING
+      ? []
+      : ([
+          [
+            'expo-notifications',
+            { icon: './assets/images/android-icon-monochrome.png' },
+          ],
+        ] as Plugin[])),
     [
       'expo-splash-screen',
       {
         backgroundColor: PAPER,
         image: './assets/images/splash-icon.png',
         imageWidth: 96,
+        /* The splash is native and paints before any JavaScript runs, so it
+           cannot read the stored choice. Without this branch a dark-theme
+           launch flashes the paper ground and then drops to iron on the first
+           frame, which is the one moment of the app a lifter sees every single
+           time they open it. `dark` follows the OS rather than the stored
+           choice, so somebody who picked Light on a dark phone still gets one
+           flash: the alternative is a native module reading AsyncStorage
+           before the splash, which is a great deal of machinery for one frame.
+
+           Same image, because the mark is ember on both grounds, and no
+           `imageWidth` here: `getIosSplashConfig` reads that from the ROOT
+           only (`root.imageWidth ?? 100`) and applies it to both themes, so a
+           second copy would be a dead key that reads like a live one. */
+        dark: {
+          backgroundColor: IRON,
+          image: './assets/images/splash-icon.png',
+        },
       },
     ],
     [
@@ -175,4 +280,35 @@ const config: ExpoConfig = {
   },
 }
 
-export default config
+/**
+ * Strip the three capabilities a personal team cannot provision.
+ *
+ * ── WHY REMOVING THE PLUGIN ENTRIES WAS NOT ENOUGH ──────────────────────────
+ * Taking `expo-apple-authentication` and `expo-notifications` out of `plugins`
+ * removes `associatedDomains` and looks like it should remove the rest. It does
+ * not: **Expo AUTOLINKS config plugins from installed packages**, so both keep
+ * applying from `node_modules` whether or not they are listed.
+ *
+ * Verified rather than assumed, on 2026-08-22. With the flag set AND the
+ * generated `Wazn.entitlements` moved out of the way, `expo config --type
+ * introspect` still emitted `aps-environment` and
+ * `com.apple.developer.applesignin`. The first hypothesis, that introspect was
+ * merely echoing the existing native file, was tested and rejected.
+ *
+ * So the removal has to happen AFTER the autolinked plugins run, which is what
+ * a `withEntitlementsPlist` mod does: mods compose in order and this one is
+ * appended last.
+ *
+ * It deletes rather than blanks. `withNotificationsIOS.js:11` sets
+ * `aps-environment` only `if (!config.modResults['aps-environment'])`, so an
+ * empty string would satisfy it and still ship a key the profile cannot carry.
+ */
+const stripFreeProvisioningBlockers = (c: ExpoConfig): ExpoConfig =>
+  withEntitlementsPlist(c, (mod) => {
+    delete mod.modResults['aps-environment']
+    delete mod.modResults['com.apple.developer.applesignin']
+    delete mod.modResults['com.apple.developer.associated-domains']
+    return mod
+  })
+
+export default FREE_PROVISIONING ? stripFreeProvisioningBlockers(config) : config

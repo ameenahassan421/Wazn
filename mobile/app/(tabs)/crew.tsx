@@ -2,7 +2,7 @@ import { useCallback, useState } from 'react'
 import { Pressable, Share, View } from 'react-native'
 import { useFocusEffect } from 'expo-router'
 
-import { palette, radius, space } from '@wazn/domain'
+import { radius, space } from '@wazn/domain'
 
 import { Btn } from '@/components/ui/Btn'
 import { Card, Rule } from '@/components/ui/Surface'
@@ -21,6 +21,7 @@ import {
   type BoardRow,
 } from '@/services/crew'
 import { supabaseConfigError } from '@/services/supabase'
+import { usePalette } from '@/hooks/use-theme'
 
 /**
  * Screen — Crew. The Week Board.
@@ -57,6 +58,7 @@ function fill(row: BoardRow): number {
 }
 
 function BoardRowView({ row, first }: { row: BoardRow; first: boolean }) {
+  const palette = usePalette()
   const { t } = useLocale()
   const goal = row.weeklyTarget
   const name = row.isMe
@@ -123,6 +125,7 @@ function TargetStepper({
   value: number
   onChange: (n: number) => void
 }) {
+  const palette = usePalette()
   const key = {
     width: 34,
     height: 34,

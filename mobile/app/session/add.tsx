@@ -3,7 +3,7 @@ import { ActivityIndicator, Pressable, ScrollView, TextInput, View } from 'react
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
-import { palette, radius, searchByName, space } from '@wazn/domain'
+import { radius, searchByName, space } from '@wazn/domain'
 
 import { Card, Rule } from '@/components/ui/Surface'
 import { Txt } from '@/design/Txt'
@@ -13,6 +13,7 @@ import { tick } from '@/services/haptics'
 import { fetchCatalogue, type CatalogueExercise } from '@/services/exercises'
 import { addExercise } from '@/state/live-workout'
 import { addDraftExercise } from '@/state/routine-draft'
+import { usePalette } from '@/hooks/use-theme'
 
 /**
  * Put a lift on the board.
@@ -35,6 +36,7 @@ import { addDraftExercise } from '@/state/routine-draft'
  * this app is used.
  */
 export default function AddExercise() {
+  const palette = usePalette()
   const router = useRouter()
   /*
    * Who asked. Absent means the live board, which is what this screen was

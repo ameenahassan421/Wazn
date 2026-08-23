@@ -1,9 +1,10 @@
 import { useState, type ReactNode } from 'react'
 import { Pressable, View, type ViewStyle } from 'react-native'
 
-import { elevation, palette, radius, space } from '@wazn/domain'
+import { elevation, radius, space, type Palette } from '@wazn/domain'
 
 import { Txt } from '@/design/Txt'
+import { usePalette } from '@/hooks/use-theme'
 import { tick } from '@/services/haptics'
 
 /**
@@ -46,15 +47,25 @@ export type BtnKind =
   /** A way out — "skip rest". No box at all. */
   | 'ghost'
 
-const KINDS: Record<
+/**
+ * A function of the ground, for the same reason as `Surface`'s `tones`.
+ *
+ * Note what does NOT move: `ink` is a ROLE name, not a colour, and `Txt`
+ * resolves it against whichever ground is live. So the four kinds keep one
+ * description across both themes and only the two fills and the ring are
+ * looked up here.
+ */
+const kinds = (
+  p: Palette,
+): Record<
   BtnKind,
   { bg: string; ink: Parameters<typeof Txt>[0]['ink']; ring?: string; glow?: boolean }
-> = {
-  hero: { bg: palette.accent, ink: 'onInk', glow: true },
-  ink: { bg: palette.ink, ink: 'onInk' },
-  line: { bg: palette.card, ink: 'ink', ring: palette.ringStrong },
+> => ({
+  hero: { bg: p.accent, ink: 'onInk', glow: true },
+  ink: { bg: p.ink, ink: 'onInk' },
+  line: { bg: p.card, ink: 'ink', ring: p.ringStrong },
   ghost: { bg: 'transparent', ink: 'muted' },
-}
+})
 
 /*
  * There was an `onInk` kind here, documented as "the only kind for the rest
@@ -91,7 +102,8 @@ export function Btn({
   leading?: ReactNode
   style?: ViewStyle
 }) {
-  const k = KINDS[kind]
+  const palette = usePalette()
+  const k = kinds(palette)[kind]
   const height = small === true ? 40 : 52
   const [pressed, setPressed] = useState(false)
 
@@ -178,6 +190,7 @@ export function ChipBtn({
   selected?: boolean
   onPress: () => void
 }) {
+  const palette = usePalette()
   const [pressed, setPressed] = useState(false)
   return (
     <Pressable
