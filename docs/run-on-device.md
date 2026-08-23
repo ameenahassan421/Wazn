@@ -68,6 +68,11 @@ plugins have run.
    cd ios && LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8 pod install && cd ..
    ```
 
+   **This step is also what turns the theme setting on.** `userInterfaceStyle`
+   lives in Info.plist, not in JavaScript, so a JS reload cannot pick it up. A
+   build made before 2026-08-23 reports light to the app no matter what the
+   phone is set to, and the System theme option follows nothing.
+
 3. **Pick the team on the target.** Open the workspace:
 
    ```bash

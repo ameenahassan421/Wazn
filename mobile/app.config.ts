@@ -39,6 +39,12 @@ import { withEntitlementsPlist } from 'expo/config-plugins'
  *  deliberate mismatch rather than assumed to work. Keep the literal on one
  *  line and keep the name `PAPER` — the regex looks for both. */
 const PAPER = '#f7f3ec'
+
+/** The iron ground, `palettes.dark.paper`. Same duplication and the same
+ *  reason as PAPER above, so it is asserted the same way: keep the literal on
+ *  one line and keep the name `IRON`, because `check_tokens.ts` looks for
+ *  both. Added 2026-08-23 with the dark theme. */
+const IRON = '#0f0d0a'
 const BUNDLE_ID = 'app.wazn.client'
 
 /**
@@ -96,13 +102,24 @@ const config: ExpoConfig = {
   orientation: 'portrait',
   icon: './assets/images/icon.png',
   /**
-   * Light, not `automatic`. The system has one ground and it is paper; a
-   * lifter whose phone is in dark mode should not get a half-translated app.
-   * (This said `dark` and `#0f0d0a` until 2026-08-20, when the prototype
-   * replaced v5 — the ONE dark surface left is the rest canvas, which the app
-   * paints itself.)
+   * `automatic`, and this is LOAD-BEARING rather than a preference.
+   *
+   * On iOS this writes `UIUserInterfaceStyle` into Info.plist, and `light`
+   * there does not mean "default to light", it means the OS reports light to
+   * the app no matter what the phone is set to. So `useColorScheme()` would
+   * return `'light'` forever and the theme setting's DEFAULT, System, would
+   * silently never follow anything. Explicit Dark would still have worked,
+   * which is what makes it a bad failure: the one path most likely to get
+   * tested is the one path unaffected.
+   *
+   * It said `light` with a comment arguing "the system has one ground and it
+   * is paper" (2026-08-20), and before that `dark` with `#0f0d0a`. Both were
+   * true when written. Ameen asked for the choice on 2026-08-22.
+   *
+   * Changing this needs a prebuild to reach a device: it is Info.plist, not
+   * JavaScript, so a JS reload will not pick it up.
    */
-  userInterfaceStyle: 'light',
+  userInterfaceStyle: 'automatic',
   backgroundColor: PAPER,
   /** Fonts ship inside the bundle as TTFs from `@expo-google-fonts/*`, so the
    *  app looks like itself with no network at all — the same reasoning that
@@ -211,6 +228,23 @@ const config: ExpoConfig = {
         backgroundColor: PAPER,
         image: './assets/images/splash-icon.png',
         imageWidth: 96,
+        /* The splash is native and paints before any JavaScript runs, so it
+           cannot read the stored choice. Without this branch a dark-theme
+           launch flashes the paper ground and then drops to iron on the first
+           frame, which is the one moment of the app a lifter sees every single
+           time they open it. `dark` follows the OS rather than the stored
+           choice, so somebody who picked Light on a dark phone still gets one
+           flash: the alternative is a native module reading AsyncStorage
+           before the splash, which is a great deal of machinery for one frame.
+
+           Same image, because the mark is ember on both grounds, and no
+           `imageWidth` here: `getIosSplashConfig` reads that from the ROOT
+           only (`root.imageWidth ?? 100`) and applies it to both themes, so a
+           second copy would be a dead key that reads like a live one. */
+        dark: {
+          backgroundColor: IRON,
+          image: './assets/images/splash-icon.png',
+        },
       },
     ],
     [

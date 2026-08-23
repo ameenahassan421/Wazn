@@ -1762,6 +1762,26 @@ the suite fails on the `system` assertion against 0025's constraint. The
 existing `theme`/`dark` assertion passed either way, which is why it could not
 have caught this.
 
+##### Step 4: the config key that would have made all of it do nothing
+
+`mobile/app.config.ts` carried `userInterfaceStyle: 'light'`, and on iOS that
+is not a preference. It writes `UIUserInterfaceStyle` into Info.plist, and the
+OS then reports light to the app whatever the phone is set to, so
+`useColorScheme()` returns `'light'` forever and the DEFAULT setting, System,
+follows nothing. Explicit Dark still worked, which is what makes it the bad
+kind: the path most likely to get tried by hand is the one path unaffected.
+
+No check in this repo could see it. It is a string in a config file, and tsc,
+eslint, `bundle:ios` and 1281 vitest tests are all happy with it.
+**`check_tokens.ts` asserts it now**, along with a second ground literal
+(`IRON`) for the dark splash, and both new assertions were proved by
+deliberate mismatch rather than assumed.
+
+Verified in the generated project: `ios/Wazn/Info.plist` says `Automatic`, and
+`SplashScreenBackground.colorset` carries a `luminosity/dark` appearance at
+`#0f0d0a` beside the light `#f7f3ec`. **A prebuild is required for this to
+reach a device**, since it is Info.plist rather than JavaScript.
+
 ##### What is left
 
 - Verify on a simulator in both schemes, including the rest canvas (the one

@@ -188,8 +188,13 @@ export default function RootLayout() {
  * The split exists because a component cannot consume a context it is itself
  * providing, and every colour below this line, including the ground painted
  * three separate times and the status bar glyphs, has to follow the live
- * scheme. `userId` comes down as a prop rather than from a second `useAuth()`
- * so the two halves cannot disagree about who is signed in for a frame.
+ * scheme.
+ *
+ * `userId` comes down as a prop only because the parent already has it, NOT
+ * as a rule about auth: `ThemeProvider` and `UnitProvider` both call
+ * `useAuth()` themselves, which is the established shape here and means the
+ * keychain is read more than once per launch. Worth collapsing one day; it is
+ * pre-existing and not dark mode's to change.
  */
 function Ground({ userId }: { userId: string | null }) {
   const palette = usePalette()
