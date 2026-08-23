@@ -1418,6 +1418,170 @@ retention that cannot exist until the app is shared.
 
 #### Next action
 
+**RESUME HERE (2026-08-23, SEVENTH update. Read THIS one, then stop. The sixth
+is below and is accurate about what it covers, but its "where the code is" says
+24 uncommitted files and zero commits; there are now five commits and a clean
+tree.)**
+
+**WHY THIS SESSION EXISTS AT ALL: the Xcode MCP bridge was registered mid-session
+and MCP tools bind at STARTUP.** The previous session added the server to
+`.mcp.json`, confirmed the bridge answers and enumerates 21 tools, and then could
+not call a single one of them, because the tool list was fixed when that session
+began. Nothing was broken and nothing is pending on it. The handoff is the
+mechanism, not a symptom. **You should have `BuildProject`, `GetBuildLog`,
+`RenderPreview`, `DocumentationSearch` and 17 others available now — check, and
+if you do not, say so rather than working around it.**
+
+**Where the code is:** branch **`claude/v1-floor-and-store-readiness` at
+`d18cc26`**, five commits ahead of `origin/main`, working tree clean, **nothing
+pushed, no PR open**. Production database is at **0040**. `main` is unchanged at
+`c0c15d4`.
+
+**Nothing is half-finished.** Every change is committed, the wall was green at
+the last full run (lint, format, typecheck, tokens, 1,296 root tests, mobile
+lint/typecheck/54 tests, `bundle:ios`, `check:routes`), and the superset and RPE
+work was additionally verified by TAPPING it on a simulator. There is no
+in-flight edit to recover and no failing check to chase. Pick the next item off
+the v1 table below and start clean.
+
+**The five commits, oldest first:**
+
+1. `788ed43` — account deletion (the one blocker in front of BOTH stores), crash
+   reporting, `eas.json`, `generate-routine` wired to native, custom exercises,
+   `docs/ANDROID_RELEASE.md`. Details in the SIXTH block below; it is still
+   correct.
+2. `3791d9c` — **supersets and RPE on the board**, v1 item 5. The board
+   alternates A/B/A/B, rests once per ROUND, and repeats last session's pairing
+   at zero taps. RPE is 6-10, optional, and deliberately never seeded from
+   history: a prescription repeats, a reading does not. Domain lives in
+   `src/lib/live-board.ts` (`toggleSuperset`, `restsAfterBank`, `nextBoardGroup`,
+   a superset-aware `currentPosition`), 23 new tests.
+3. `4128a0b` — `.mcp.json` gains the Xcode MCP bridge.
+4. `b4ee9b8` — **`scripts/sim_tap.sh`**, which taps the simulator. See CLAUDE.md,
+   "A screenshot cannot press a button".
+5. `d18cc26` — formatting fix; `claude mcp add` writes `.mcp.json` without a
+   trailing newline and broke `npm run format:check`.
+
+**THE ANDROID APP HAS NEVER BEEN RUN. NOT ONCE.** This is the largest unknown on
+the board and it was found on 2026-08-23 by inventorying the machine rather than
+by any check:
+
+- no `adb`, no Android SDK, no emulator, no Java runtime, no Android Studio
+- **`mobile/android/` has never been generated** (it is gitignored, like `ios/`,
+  but unlike `ios/` it has never existed)
+- `npm run bundle:android` produces a JS bundle and STOPS. It is exactly the
+  "`bundle:ios` is not a build" lesson one rung further out, except nothing has
+  ever closed it on this platform. A config plugin writes native Android code
+  too, and no one has ever compiled it.
+
+Ameen is publishing both stores simultaneously, so this must close before
+launch. **Do not install Android Studio to fix it** — the SDK plus an emulator
+image is 12-16 GB and the machine has **14 GB free**, with four documented
+rounds of disk pressure already. `eas build --platform android --profile
+preview` needs no local toolchain and emits an APK; that profile is already in
+`eas.json` and was written to be sideloadable for this reason.
+
+**`expo-keep-awake` IS INSTALLED AND CALLED ZERO TIMES.** Verified with a quoted
+grep over `mobile/src` and `mobile/app` (exit 1, no matches). The phone locks
+during rest, so the lifter comes back to Face ID with chalk on their hands, in
+an app whose one sentence is "log a set in under thirty seconds, one hand".
+**This is the highest UX-per-line item in the repo and it is a two-line change
+on the session route.** Ameen was offered it and chose to hand off first; it is
+not declined, just not started.
+
+**THE XCODE MCP BRIDGE WORKS. 21 TOOLS.** `.mcp.json` carries it, project-scoped
+so every machine gets it. `BuildProject` and `GetBuildLog` are the ones that
+matter: CLAUDE.md's "a green wall cannot see a native build phase" documents
+Sentry passing lint, tsc, 1,281 tests and both bundles and then failing
+`xcodebuild` at exit 65, and that check is now one call instead of a five-minute
+shell command with three load-bearing environment variables. Also useful:
+`RenderPreview` (a component without a build-install-launch cycle),
+`DocumentationSearch` (Apple docs semantically, which matters because
+`api.expo.dev` is 403 from this org's proxy), `XcodeListNavigatorIssues`.
+
+**It needs Xcode running with the workspace open, and
+`IDEAllowUnauthenticatedAgents = 1`** in `com.apple.dt.Xcode` (Xcode > Settings
+
+> Intelligence > "Allow external agents to use Xcode tools"). Both were already
+> true. **MCP tools bind at session start**, so a session that registers the
+> server cannot call it until the next one.
+
+**TWO WAYS THIS SESSION PROVED SOMETHING ABSENT THAT WAS PRESENT**, both worth
+more than the feature work:
+
+1. A grep for `mcp|externalAgent|IDEIntelligence` over Xcode's preferences found
+   nothing, and that was reported as "the toggle is off". The key is named
+   `IDEAllowUnauthenticatedAgents` and had been set all along. **A search whose
+   answer is "does this exist" fails open, exactly like the `head` truncation in
+   CLAUDE.md.**
+2. `printf '...' | xcrun mcpbridge` returned zero bytes twice and was reported as
+   "the bridge answers nothing". **Stdin closed at the end of the printf, so the
+   server shut down before replying.** Holding it open with a trailing `sleep`
+   got an answer immediately, and `tools/list` then needed the
+   `notifications/initialized` message the MCP spec requires between initialize
+   and the first request.
+
+Ameen restarted Xcode for nothing on the strength of the first one. **Probe a
+stdio server with stdin held open, and never let a silent tool stand as
+evidence of absence.**
+
+**WHAT IS LEFT OF v1** (the definition is in the SIXTH block below and has not
+changed; items 1, 5 and 6 are now done):
+
+| Item                                         | State                                                                                                                                         |
+| -------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| History folds into Progress                  | NOT STARTED. Last named piece of the four-tab restructure, cut three times by Claude and put back by Ameen.                                   |
+| A first run that reaches a logged set        | NOT STARTED. Day one is still a dead end for a new account.                                                                                   |
+| Hevy import on native, **or delete the CTA** | NOT STARTED. `sign-in.tsx` promises an import that does not exist. One or the other; doing neither is the only wrong answer.                  |
+| Body card on Progress                        | NOT STARTED. Ameen overrode the empty-data argument. `body_weights` has 1 row across 9 accounts, so it WILL render empty until there is data. |
+| Apple sign-in                                | NOT STARTED. Mandatory in the same release as Google under Guideline 4.8.                                                                     |
+
+**Item 4 of the six is DONE and the sixth block calls it HALF DONE.** The ghost's
+sentence IS wired to the board — `session/[id].tsx` renders `ghostChip(verdict)`
+in the exercise card and passes the same `chipText` to `RestCanvas`. What is
+still stale is that file's own header comment at line 72, which claims
+"`ghost-reason` is not wired here yet". Fix the comment, not the code.
+
+**ALSO OWED, and the first is a hard rule Ameen made after it was skipped eight
+times in a row:**
+
+- **`/code-review` on this branch before any PR.** It touches auth, account
+  deletion and the logging hot path.
+- `public/privacy.html:110` still claims "Wazn has no passwords", false since
+  the 2026-08-07 auth decisions.
+- `mobile/` has 3 test files for 55 source files. The app being deleted has 84.
+
+**POST-v1 UX, ranked, all cross-platform. Do NOT start these before the five
+above** — they are recorded so they are not re-derived:
+
+1. Rest timer on the lock screen (iOS Live Activity / Dynamic Island, Android
+   foreground-service notification). `rest-alarm.ts` is half the plumbing.
+2. Apple Health / Health Connect write.
+3. Dynamic Type and VoiceOver pass. Cheap here because the type ramp is a
+   component (`<Txt step>`) rather than classes.
+
+**HOW AMEEN TESTS ON HIS OWN PHONE** (he asked; neither has been run yet):
+
+```bash
+# Android. Free, no developer account, no local toolchain, emits an APK.
+cd ~/Wazn/mobile && npm i -g eas-cli && eas login
+eas build --platform android --profile preview
+
+# iOS. Free provisioning, HIS OWN phone only, expires after 7 days, needs a cable.
+cd ~/Wazn/mobile
+LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8 SENTRY_DISABLE_AUTO_UPLOAD=true \
+WAZN_FREE_PROVISIONING=1 npx expo run:ios --device
+```
+
+**EAS cannot be run from a session**: `api.expo.dev` is 403 from this org's
+egress proxy. Ameen runs it in Terminal and pastes the output.
+
+**Blocked on Ameen, unchanged, and the first still has a 30-day clock:** the
+D-U-N-S number for Rooted Wellness & Recovery LLC (free, ten minutes, and it is
+what lets the Play account register as an ORGANIZATION, which is exempt from the
+12-testers-for-14-days rule), then the $25 Play account, the $99 Apple account,
+and a Google OAuth client.
+
 **RESUME HERE (2026-08-23, SIXTH update. Read THIS one. The fifth is below and
 its "where the code is" says PR #123 and production 0031; both are stale.)**
 

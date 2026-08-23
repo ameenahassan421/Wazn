@@ -151,6 +151,43 @@ LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8 SENTRY_DISABLE_AUTO_UPLOAD=true xcodebuild \
 **Run a real `xcodebuild` after ANY change to `app.config.ts`'s `plugins`.**
 A config plugin edits the native project, and nothing in `npm run` can see it.
 
+## A silent tool is not a negative answer (2026-08-23)
+
+**Twice in one session a check that returned nothing was reported as proof the
+thing did not exist, and both were wrong.** This is the same failure the
+`head`-truncation note above describes, arriving through two new doors.
+
+**A grep decided a setting was off.** `defaults read com.apple.dt.Xcode | grep
+-i "mcp|externalAgent|IDEIntelligence"` found nothing, and that became "the
+external-agent toggle has never been turned on". The key is
+`IDEAllowUnauthenticatedAgents` and it was already `1`. Ameen restarted Xcode on
+the strength of it. **When a search's answer decides whether something EXISTS,
+the pattern failing to match and the thing being absent are indistinguishable —
+so widen the pattern or dump the whole set before concluding.**
+
+**And a stdio MCP server returned zero bytes because stdin closed.**
+`printf '...' | xcrun mcpbridge` sends its lines and immediately EOFs; the
+server shuts down before it can reply. Twice this was read as "the bridge
+answers nothing". Hold stdin open and it answers instantly:
+
+```bash
+{ printf '%s\n' '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"p","version":"1"}}}'
+  sleep 2
+  printf '%s\n' '{"jsonrpc":"2.0","method":"notifications/initialized"}'
+  sleep 1
+  printf '%s\n' '{"jsonrpc":"2.0","id":2,"method":"tools/list"}'
+  sleep 5
+} | xcrun mcpbridge
+```
+
+**`notifications/initialized` is required between `initialize` and the first
+request** — the spec says so, and without it `tools/list` returns nothing while
+`initialize` succeeds, which looks exactly like a server with no tools.
+
+**MCP tools bind at session start.** A session that registers a server cannot
+call it; that takes a restart. So "the tools are not there" after an `mcp add`
+is expected, not a fault.
+
 ## A screenshot cannot press a button (2026-08-23)
 
 **`scripts/sim_tap.sh` taps the booted simulator.** It exists because two
