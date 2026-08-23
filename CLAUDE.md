@@ -151,6 +151,39 @@ LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8 SENTRY_DISABLE_AUTO_UPLOAD=true xcodebuild \
 **Run a real `xcodebuild` after ANY change to `app.config.ts`'s `plugins`.**
 A config plugin edits the native project, and nothing in `npm run` can see it.
 
+## A screenshot cannot press a button (2026-08-23)
+
+**`scripts/sim_tap.sh` taps the booted simulator.** It exists because two
+defects in `3791d9c` were invisible to lint, tsc, 1,296 tests and both bundles
+and were caught by LOOKING at a screenshot — and the next class down, a control
+that renders correctly and does nothing when pressed, needs a tap.
+
+`xcrun simctl` has no tap verb, and neither does Xcode's MCP bridge. Three
+things that do not work, so nobody re-derives them:
+
+- **`osascript ... click at {x, y}` fails with -25204**, even with accessibility
+  granted. Keystrokes work (that is how `Cmd+D` and reload are sent); clicks do
+  not. `brew install cliclick` is the answer.
+- **The Simulator does not expose the app's accessibility tree to macOS.**
+  `every UI element whose description contains "Superset"` finds nothing; only
+  the Simulator's own chrome (Home, Volume, Sleep/Wake) is enumerable. Tapping
+  is by coordinate, and the script converts device points to screen points from
+  the live window rather than a hardcoded origin.
+- **`idb` is not installed** and is far heavier than this.
+
+Two traps. **Activate the Simulator BEFORE reading its window geometry**, or
+the read fails with "Invalid index" and the arithmetic produces a NEGATIVE
+screen coordinate rather than an error — the script now says "could not
+determine" instead, per the rule two sections up. And **if React Native's
+element inspector is on, every tap INSPECTS instead of pressing**, which is
+indistinguishable from a dead control. `Cmd+D` then tap "Toggle Element
+Inspector" at device point `200 419`.
+
+**Reaching a screen you cannot navigate to:** `xcrun simctl openurl <udid>
+"wazn://session/new"` prompts with "Open in Wazn?" when the app is already
+running, and there is no way to dismiss that prompt without a tap. Terminate
+the app first and the same URL cold-launches straight into the route.
+
 ## A workflow that stops is usually interrupted, not stuck (2026-08-23)
 
 **A `Workflow` run died and looked exactly like a hang for forty minutes.** Two
