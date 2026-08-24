@@ -1500,6 +1500,51 @@ blocks an EAS build from here is smaller and more ordinary: `eas` is not
 installed, and a build spends Ameen's queue and credits, so it is his to
 authorise rather than something a session should start.
 
+**DONE 2026-08-24: History folds into Progress. The four-tab restructure is
+finished.** `docs/FRIENDS_PLAN.md` Part 3B, the last named piece: "what did I
+do" and "am I getting stronger" are the same question at two zoom levels.
+
+`mobile/app/(tabs)/history.tsx` is gone. Its contents moved to
+`mobile/src/components/HistorySection.tsx` by `git mv`, so the file's history
+follows it, and Progress renders it below the strength list.
+
+**It is a component rather than inlined JSX for one reason.** `useHistory` is
+its own read on its own cadence, so putting it inside Progress's `data !== null`
+branch would hide the ten-week grid and every session row behind a failed
+`fetchProgress`. That is the §12 defect the Coach merge fixed one level down,
+and inlining would have reintroduced it one level up. Same argument as
+`WeekReview`.
+
+**Its three absences stopped being full screens.** As a tab, loading, error and
+empty each returned a `<Screen>` with an `Empty` card: a 64px ring around
+centred copy, correct when the absence IS the screen and wrong when five cards
+of real content sit above it. Loading renders nothing; error and empty are muted
+lines under a section head.
+
+**The fast door survives**, which the 2026-08-13 audit called the one piece of
+navigation worth keeping as furniture. The circle beside Start on Train now goes
+to `/progress`. `check:routes` caught the first attempt, which pushed
+`/(tabs)/progress`: expo-router strips the group, so that resolved to nothing.
+13 routes now, down from 14.
+
+**Verified on a device.** Cold-launched Progress, scrolled to the bottom, and
+the session list draws real rows: names, ISO dates, set counts, minutes, PR
+chips and volume. That also showed something no test would: a row WITH a PR chip
+wrapped its meta line and left "min" alone underneath, because the chip takes
+width out of the `flex: 1` name column. `numberOfLines={1}` now.
+
+**Two things seen on the way, neither mine, both worth someone's attention:**
+
+1. **`WeekReview` contradicts itself on screen.** The figure reads "6 sessions
+   this week" while the sentence under it reads "You completed 7 sessions this
+   week", on the same card. The figure is live and the note is generated, so a
+   stale cached note is the likely cause, and there is already a branch called
+   `claude/coach-cache-diagnosis` about the coach's cache key. Not investigated
+   here.
+2. The Simulator had shut down between screenshots, and `simctl openurl`
+   answered `Unable to lookup in current state: Shutdown` rather than booting
+   it. `xcrun simctl boot <udid>` first.
+
 **FIVE MORE REVIEW FINDINGS CLOSED. One remains, and it needs a copy decision.**
 
 1. **Crash reporting could not catch the crashes it was written for.**

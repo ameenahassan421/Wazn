@@ -248,7 +248,9 @@ export default function LogHome() {
           accessibilityLabel={t('nav.history')}
           onPressIn={() => setHistoryDown(true)}
           onPressOut={() => setHistoryDown(false)}
-          onPress={() => router.push('/history')}
+          // History folded into Progress (FRIENDS_PLAN Part 3B), so the
+          // circle is still the fast door and Progress is what is behind it.
+          onPress={() => router.push('/progress')}
           // Static, never `({ pressed }) => ...` — see `Btn.tsx`.
           style={{
             width: space.cta,

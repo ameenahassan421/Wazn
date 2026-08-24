@@ -19,6 +19,7 @@ import { Card } from '@/components/ui/Surface'
 import { Empty, Screen } from '@/components/ui/Screen'
 import { Header } from '@/components/ui/Header'
 import { WeekReview } from '@/components/WeekReview'
+import { HistorySection } from '@/components/HistorySection'
 import { Plate } from '@/components/ui/Plate'
 import { Spark } from '@/components/ui/Spark'
 import { Txt, Kick } from '@/design/Txt'
@@ -500,6 +501,22 @@ export default function ProgressScreen() {
           <StrengthList rows={data?.strength ?? []} unit={unit} />
         </View>
       )}
+
+      {/* History, folded in. `docs/FRIENDS_PLAN.md` Part 3B: "what did I do"
+          and "am I getting stronger" are the same question at two zoom levels,
+          so the retrospective belongs in one place.
+
+          OUTSIDE the branch above on purpose, and this is the whole reason it
+          is a component rather than inlined JSX. `useHistory` is its own read
+          on its own cadence; putting it inside would hide the ten-week grid
+          and every session row behind a failed `fetchProgress`, which is the
+          §12 defect the Coach merge fixed one level down and would have
+          reintroduced one level up.
+
+          The fast door survives: the circle beside Start on Train comes
+          straight here, which the audit called the one piece of navigation
+          worth keeping as furniture. */}
+      <HistorySection />
     </Screen>
   )
 }

@@ -7,8 +7,6 @@ import { space, toDisplayWeight, type CalendarDay, type Palette } from '@wazn/do
 import { Txt, Kick } from '@/design/Txt'
 import { Card } from '@/components/ui/Surface'
 import { Chip } from '@/components/ui/Chip'
-import { Empty, Screen } from '@/components/ui/Screen'
-import { Header } from '@/components/ui/Header'
 import { useHistory, type HistorySession } from '@/hooks/use-history'
 import { useLocale } from '@/hooks/use-locale'
 import { useUnit } from '@/hooks/use-unit'
@@ -142,7 +140,12 @@ function SessionRow({
         <Txt step="strong" numberOfLines={1}>
           {session.name}
         </Txt>
-        <Txt step="meta" ink="muted" ltr style={{ marginTop: 3 }}>
+        {/* One line. The name column is `flex: 1` and a PR chip takes width
+            out of it, so on a 402pt phone a row WITH a chip wrapped its meta
+            and left "min" alone on a second line while rows without one fit.
+            Seen on a simulator after the fold; the ellipsis is honest and a
+            ragged row height is not. */}
+        <Txt step="meta" ink="muted" ltr numberOfLines={1} style={{ marginTop: 3 }}>
           {meta}
         </Txt>
       </View>
@@ -159,7 +162,7 @@ function SessionRow({
   )
 }
 
-export default function HistoryScreen() {
+export function HistorySection() {
   const palette = usePalette()
   const { t } = useLocale()
   const { unit, ready } = useUnit()
@@ -177,27 +180,37 @@ export default function HistoryScreen() {
     void AsyncStorage.setItem(DISMISS_KEY, '1').catch(() => {})
   }
 
-  // A figure that corrects itself one frame after paint is worse than a frame
-  // of ground, which is the same rule `Screen` states for the unit preference.
-  if (!ready || loading || dismissed === null) return <Screen />
+  // ── THREE ABSENCES THAT USED TO BE THE WHOLE SCREEN ──────────────────────
+  // As a tab, each of these returned a `<Screen>` and an `Empty` card: a 64px
+  // ring around centred copy, which is right when the absence IS the screen.
+  // Inside Progress it is wrong, because five cards of real content sit above
+  // it, and it is the same defect the Coach merge fixed in `WeekReview`.
+  //
+  // More importantly this section owns its OWN cadence. `useHistory` is a
+  // separate read from `fetchProgress`, so folding these into Progress's
+  // branches would hide the charts behind a failed sessions query, which is
+  // the §12 defect that merge exists to prevent, one level up.
+  if (!ready || loading || dismissed === null) return null
 
   if (error !== null) {
     return (
-      <Screen>
-        <Header />
-        <Kick style={{ marginBottom: 14 }}>{t('nav.history')}</Kick>
-        <Empty line={error} />
-      </Screen>
+      <View style={{ marginTop: space.gutter }}>
+        <SectionHead title={t('nav.history')} />
+        <Txt step="caption" ink="muted">
+          {error}
+        </Txt>
+      </View>
     )
   }
 
   if (sessions.length === 0) {
     return (
-      <Screen>
-        <Header />
-        <Kick style={{ marginBottom: 14 }}>{t('nav.history')}</Kick>
-        <Empty line={t('history.empty')} />
-      </Screen>
+      <View style={{ marginTop: space.gutter }}>
+        <SectionHead title={t('nav.history')} />
+        <Txt step="caption" ink="muted">
+          {t('history.empty')}
+        </Txt>
+      </View>
     )
   }
 
@@ -212,9 +225,7 @@ export default function HistoryScreen() {
         })
 
   return (
-    <Screen>
-      <Header />
-
+    <View style={{ marginTop: space.gutter }}>
       {find !== null && weekdayName !== null && !dismissed ? (
         <Card style={{ marginBottom: space.gutter, gap: 8 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
@@ -293,6 +304,6 @@ export default function HistoryScreen() {
           <SessionRow key={s.workoutId} session={s} unit={unit} t={t} />
         ))}
       </View>
-    </Screen>
+    </View>
   )
 }
