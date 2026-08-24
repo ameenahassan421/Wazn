@@ -171,11 +171,20 @@ export function WeekReview() {
    * contradicting itself, which is exactly how this was found (a "6 sessions
    * this week" figure above a sentence saying seven).
    *
-   * Suppressed when `showingOld` already has the floor. Two muted footnotes
-   * under one card is worse than the more urgent one alone, and a failed
-   * refresh is the more urgent.
+   * NOT suppressed when `showingOld` is also true, which is how this was first
+   * written and which made the whole line dead. Enumerate the server paths that
+   * can set `previousWeek`: the fresh path cannot (the week is part of
+   * freshness now), the missing-schema path is unreachable in production, and
+   * the quota path needs 500 regenerations in seven days. What is left is a
+   * failed generation — which sets `refreshFailed`, which sets `showingOld`,
+   * which the suppression then negated. So the one realistic case, a Monday
+   * model outage, rendered last week's sentences beside this week's figures
+   * with no label at all: exactly the defect being fixed.
+   *
+   * Two muted lines in that case, and they say different things. One is what
+   * you are reading, the other is why it has not been replaced.
    */
-  const fromLastWeek = notes?.previousWeek === true && !showingOld
+  const fromLastWeek = notes?.previousWeek === true
 
   /*
    * Silenced, and it SAYS so, in one muted line.
@@ -278,16 +287,19 @@ export function WeekReview() {
             </>
           )}
 
-          {/* The failure, demoted to a footnote under the thing it failed to
-              replace. `caption`, not `body`, and no card of its own: the news
-              is that the sentences above are older than the figures below,
-              which is worth one line and not a takeover. */}
+          {/* WHICH week you are reading, when it is not this one. Above the
+              refresh footnote because it describes the content and the footnote
+              describes the machinery. */}
           {fromLastWeek && (
             <Txt step="caption" ink="muted">
               {t('coach.previous_week')}
             </Txt>
           )}
 
+          {/* The failure, demoted to a footnote under the thing it failed to
+              replace. `caption`, not `body`, and no card of its own: the news
+              is that the sentences above are older than the figures below,
+              which is worth one line and not a takeover. */}
           {showingOld && (
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
               <Txt step="caption" ink="muted" style={{ flex: 1 }}>

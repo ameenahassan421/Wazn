@@ -194,11 +194,26 @@ Deno.serve(async (request) => {
     // the briefing card.
     const unit = parseUnit(url.searchParams.get('unit'))
 
-    // Monday-start, UTC, matching Postgres `date_trunc('week', …)`, which is
-    // what `weekly_review()` computes every figure in this card with. In
-    // `_shared/` rather than inline so vitest can test the arithmetic; see the
-    // note in that file about the week-boundary bug that had CI red for a day.
-    const thisWeek = weekStartUtc(new Date())
+    /*
+     * ONE instant, read once, used for both the week we are generating FOR and
+     * the timestamp we stamp on the result.
+     *
+     * Taking them separately is a bug with a week-long blast radius: stamping
+     * `generated_at` after the model returns means a request that starts at
+     * Sunday 23:59:40 and finishes at Monday 00:00:20 writes a MONDAY timestamp
+     * onto a review computed from Sunday's figures. Every read for the rest of
+     * that week then finds `weekStartUtc(generated_at) === thisWeek`, calls it
+     * fresh, and serves the old week's sentences beside the new week's numbers
+     * until a workout moves `basis_workout_at`. Precisely the defect this
+     * change exists to remove, reintroduced by a forty-second model call.
+     *
+     * Monday-start UTC because Postgres `date_trunc('week', …)` is, and
+     * `weekly_review()` computes every figure in this card with it.
+     */
+    const requestAt = new Date()
+    // Never null for a live `Date`; the fallback exists so the type is honest
+    // rather than asserted.
+    const thisWeek = weekStartUtc(requestAt) ?? ''
 
     const { data: latest } = await caller.asUser
       .from('workouts')
@@ -222,6 +237,22 @@ Deno.serve(async (request) => {
       !!cachedPayload &&
       !Array.isArray(cachedPayload) &&
       typeof cachedPayload === 'object'
+
+    /*
+     * Derived HERE, beside `cachedIsReview`, and not next to the freshness
+     * check 40 lines down where it was first written. `serveCached` closes over
+     * it, and every call site happens to sit after that later declaration, so
+     * the closure worked by accident of ordering: one early return added
+     * between the cache read and it turns every `serveCached` into
+     * `ReferenceError: Cannot access 'cachedWeek' before initialization`, which
+     * the outer catch renders as a blanket 500 on the card.
+     *
+     * `null` when the stored timestamp is unreadable, which `weekStartUtc`
+     * returns rather than throwing, and which the comparisons below treat as
+     * "not this week", so a corrupt row regenerates instead of 500ing.
+     */
+    const cachedWeek =
+      cached?.generated_at != null ? weekStartUtc(cached.generated_at as string) : null
 
     /*
      * `refreshFailed` is a SEPARATE flag from `stale`, and conflating them was
@@ -280,8 +311,6 @@ Deno.serve(async (request) => {
      * the correct price for a product called a weekly review. When the quota
      * is gone the branch below still serves the old one rather than an error.
      */
-    const cachedWeek =
-      cached?.generated_at != null ? weekStartUtc(cached.generated_at as string) : null
     const fresh =
       cached &&
       cached.basis_workout_at === basis &&
@@ -290,6 +319,51 @@ Deno.serve(async (request) => {
 
     if (fresh && !force) {
       return serveCached(false, await quotaRemaining(caller, 'coach_notes'))
+    }
+
+    /*
+     * ── A WEEK MISS THAT CANNOT SUCCEED MUST NOT RETRY ON EVERY MOUNT ──────
+     * Adding the week to the key created a miss that, unlike every miss before
+     * it, does NOT resolve itself when generation fails. A workout-driven miss
+     * ends the moment the model answers or the lifter trains again; a week miss
+     * lasts until Sunday. So during a Monday-morning provider outage every
+     * mount of `WeekReview` re-ran `weekly_review()`, re-read the catalogue and
+     * made another 45-second model call — and Progress remounts it on every tab
+     * visit, for every user, on the same morning. Before this change that state
+     * cost zero model calls.
+     *
+     * `ai_generations` already records failures (`ok: false`; `quotaRemaining`
+     * counts only the successes), so the memo needs no new column and no
+     * migration: one failed attempt in the last hour and a week-only miss means
+     * serve what we have and stop asking.
+     *
+     * Narrow on purpose. It applies only when the week is the ONLY thing that
+     * differs, so a new workout or a contract bump still forces a real attempt,
+     * and `force` (the lifter pressing Regenerate) always bypasses it.
+     */
+    const weekOnlyMiss =
+      !fresh &&
+      !!cached &&
+      cached.basis_workout_at === basis &&
+      cached.prompt_version === `${PROMPT_VERSION}:${unit}`
+
+    if (weekOnlyMiss && !force && cachedIsReview) {
+      const { count: recentFailures } = await caller.asService
+        .from('ai_generations')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', caller.userId)
+        .eq('feature', 'coach_notes')
+        .eq('ok', false)
+        .gte('created_at', new Date(requestAt.getTime() - 60 * 60 * 1000).toISOString())
+      if ((recentFailures ?? 0) > 0) {
+        let left = 0
+        try {
+          left = await quotaRemaining(caller, 'coach_notes')
+        } catch {
+          // The review matters; the number beside it does not.
+        }
+        return serveCached(false, left, true)
+      }
     }
 
     const { data: raw, error: blockError } = await caller.asUser.rpc('weekly_review')
@@ -340,6 +414,21 @@ Deno.serve(async (request) => {
     // `insights` is the state the Coach tab has always rendered as "Log 3
     // workouts and the coach will have something to say."
     if (!hasTrainingData(block)) {
+      /*
+       * Serve what they had rather than nothing, and this branch became
+       * reachable for EXISTING users the moment the week joined the cache key.
+       * Before, a lifter whose last workout was 95 days ago matched on
+       * `basis_workout_at` forever and kept their review. Now the Monday
+       * rollover makes them a miss, `total_sets_90d` is 0, and returning
+       * `review: null` here would delete the review off their screen on the
+       * first Monday of a break, replacing it with "Log 3 workouts and the
+       * coach will have something to say". Every other fallback in this
+       * function serves the cache; this one was written when it could only ever
+       * be reached by an account that had never trained.
+       */
+      if (cachedIsReview) {
+        return serveCached(false, await quotaRemaining(caller, 'coach_notes'))
+      }
       return json({
         review: null,
         insights: [],
@@ -530,7 +619,9 @@ Deno.serve(async (request) => {
       throw error
     }
 
-    const generatedAt = new Date().toISOString()
+    // The instant the block was computed FOR, not the instant the model
+    // finished. See the note beside `requestAt`.
+    const generatedAt = requestAt.toISOString()
 
     // Service role: `coach_notes` has no client-writable policy, so the only
     // text that can appear under the "AI-generated" label is text that came
