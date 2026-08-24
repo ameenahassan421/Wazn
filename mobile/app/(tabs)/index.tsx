@@ -245,10 +245,16 @@ export default function LogHome() {
         </View>
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel={t('nav.history')}
+          /* Names the DESTINATION as well as the content, which is the fix
+             this file already made for the coach card 110 lines up. The label
+             said "History" while the control opened Progress, so VoiceOver
+             promised a screen that no longer exists. */
+          accessibilityLabel={`${t('nav.history')}. ${t('nav.progress')}`}
           onPressIn={() => setHistoryDown(true)}
           onPressOut={() => setHistoryDown(false)}
-          onPress={() => router.push('/history')}
+          // History folded into Progress (FRIENDS_PLAN Part 3B), so the
+          // circle is still the fast door and Progress is what is behind it.
+          onPress={() => router.push('/progress')}
           // Static, never `({ pressed }) => ...` — see `Btn.tsx`.
           style={{
             width: space.cta,

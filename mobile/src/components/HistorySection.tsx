@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Pressable, View } from 'react-native'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 
@@ -7,8 +7,8 @@ import { space, toDisplayWeight, type CalendarDay, type Palette } from '@wazn/do
 import { Txt, Kick } from '@/design/Txt'
 import { Card } from '@/components/ui/Surface'
 import { Chip } from '@/components/ui/Chip'
-import { Empty, Screen } from '@/components/ui/Screen'
-import { Header } from '@/components/ui/Header'
+import { useFocusEffect } from 'expo-router'
+
 import { useHistory, type HistorySession } from '@/hooks/use-history'
 import { useLocale } from '@/hooks/use-locale'
 import { useUnit } from '@/hooks/use-unit'
@@ -142,12 +142,19 @@ function SessionRow({
         <Txt step="strong" numberOfLines={1}>
           {session.name}
         </Txt>
-        <Txt step="meta" ink="muted" ltr style={{ marginTop: 3 }}>
+        {/* One line. The name column is `flex: 1` and a PR chip takes width
+            out of it, so on a 402pt phone a row WITH a chip wrapped its meta
+            and left "min" alone on a second line while rows without one fit.
+            Seen on a simulator after the fold; the ellipsis is honest and a
+            ragged row height is not. */}
+        <Txt step="meta" ink="muted" ltr numberOfLines={1} style={{ marginTop: 3 }}>
           {meta}
         </Txt>
       </View>
       {session.records > 0 ? (
-        <Chip>{`${session.records} PR${session.records > 1 ? 'S' : ''}`}</Chip>
+        <Chip>{`${session.records} ${t(
+          session.records === 1 ? 'history.pr' : 'history.prs',
+        )}`}</Chip>
       ) : null}
       <Txt step="num" ltr>
         {Math.round(toDisplayWeight(session.volumeKg, unit)).toLocaleString()}
@@ -159,12 +166,22 @@ function SessionRow({
   )
 }
 
-export default function HistoryScreen() {
+export function HistorySection({ quiet = false }: { quiet?: boolean }) {
   const palette = usePalette()
   const { t } = useLocale()
   const { unit, ready } = useUnit()
-  const { loading, error, sessions, calendar, total, find } = useHistory()
+  const { loading, error, sessions, calendar, total, find, reload } = useHistory()
   const [dismissed, setDismissed] = useState<boolean | null>(null)
+
+  /* `useHistory` exposed `reload` and this component threw it away, so the
+     section was a first-focus-only read on a tab the lifter returns to. Same
+     argument as the `useFocusEffect` in `progress.tsx` beside it: a workout
+     finished after Progress first mounted was missing from every row here. */
+  useFocusEffect(
+    useCallback(() => {
+      reload()
+    }, [reload]),
+  )
 
   useEffect(() => {
     void AsyncStorage.getItem(DISMISS_KEY)
@@ -177,27 +194,42 @@ export default function HistoryScreen() {
     void AsyncStorage.setItem(DISMISS_KEY, '1').catch(() => {})
   }
 
-  // A figure that corrects itself one frame after paint is worse than a frame
-  // of ground, which is the same rule `Screen` states for the unit preference.
-  if (!ready || loading || dismissed === null) return <Screen />
+  // ── THREE ABSENCES THAT USED TO BE THE WHOLE SCREEN ──────────────────────
+  // As a tab, each of these returned a `<Screen>` and an `Empty` card: a 64px
+  // ring around centred copy, which is right when the absence IS the screen.
+  // Inside Progress it is wrong, because five cards of real content sit above
+  // it, and it is the same defect the Coach merge fixed in `WeekReview`.
+  //
+  // More importantly this section owns its OWN cadence. `useHistory` is a
+  // separate read from `fetchProgress`, so folding these into Progress's
+  // branches would hide the charts behind a failed sessions query, which is
+  // the §12 defect that merge exists to prevent, one level up.
+  if (!ready || loading || dismissed === null) return null
 
+  // `quiet` when Progress is already drawing its own failure or day-one card.
+  // Two sentences answering the same question, in two registers, one in a 64px
+  // ring and one as loose text under it, is worse than one.
   if (error !== null) {
+    if (quiet) return null
     return (
-      <Screen>
-        <Header />
-        <Kick style={{ marginBottom: 14 }}>{t('nav.history')}</Kick>
-        <Empty line={error} />
-      </Screen>
+      <View style={{ marginTop: space.gutter }}>
+        <SectionHead title={t('nav.history')} />
+        <Txt step="caption" ink="muted">
+          {error}
+        </Txt>
+      </View>
     )
   }
 
   if (sessions.length === 0) {
+    if (quiet) return null
     return (
-      <Screen>
-        <Header />
-        <Kick style={{ marginBottom: 14 }}>{t('nav.history')}</Kick>
-        <Empty line={t('history.empty')} />
-      </Screen>
+      <View style={{ marginTop: space.gutter }}>
+        <SectionHead title={t('nav.history')} />
+        <Txt step="caption" ink="muted">
+          {t('history.empty')}
+        </Txt>
+      </View>
     )
   }
 
@@ -212,8 +244,13 @@ export default function HistoryScreen() {
         })
 
   return (
-    <Screen>
-      <Header />
+    <View style={{ marginTop: space.gutter }}>
+      {/* Named on the healthy path too. The error and empty branches carried a
+          head and this one did not, so an account WITH data got an unlabelled
+          block of rows appended to Progress while an empty account got it
+          titled. On the old screen the route the lifter pressed supplied the
+          name; inside Progress nothing does. */}
+      <Kick style={{ marginBottom: 12 }}>{t('nav.history')}</Kick>
 
       {find !== null && weekdayName !== null && !dismissed ? (
         <Card style={{ marginBottom: space.gutter, gap: 8 }}>
@@ -293,6 +330,6 @@ export default function HistoryScreen() {
           <SessionRow key={s.workoutId} session={s} unit={unit} t={t} />
         ))}
       </View>
-    </Screen>
+    </View>
   )
 }

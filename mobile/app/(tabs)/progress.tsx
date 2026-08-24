@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useState } from 'react'
 import { View } from 'react-native'
 import Svg, { Line as SvgLine } from 'react-native-svg'
 
@@ -19,6 +19,7 @@ import { Card } from '@/components/ui/Surface'
 import { Empty, Screen } from '@/components/ui/Screen'
 import { Header } from '@/components/ui/Header'
 import { WeekReview } from '@/components/WeekReview'
+import { HistorySection } from '@/components/HistorySection'
 import { Plate } from '@/components/ui/Plate'
 import { Spark } from '@/components/ui/Spark'
 import { Txt, Kick } from '@/design/Txt'
@@ -26,6 +27,7 @@ import { useLocale } from '@/hooks/use-locale'
 import { useUnit } from '@/hooks/use-unit'
 import { fetchProgress, type ProgressData, type StrengthRow } from '@/services/progress'
 import { supabaseConfigError } from '@/services/supabase'
+import { useFocusEffect } from 'expo-router'
 import { usePalette } from '@/hooks/use-theme'
 
 /**
@@ -370,22 +372,36 @@ export default function ProgressScreen() {
    *  box is the screen minus two gutters and two card pads. */
   const [chartWidth, setChartWidth] = useState(0)
 
-  useEffect(() => {
-    if (supabaseConfigError !== null) return
-    let active = true
-    void fetchProgress()
-      .then((next) => {
-        if (!active) return
-        setData(next)
-        setState('ready')
-      })
-      .catch(() => {
-        if (active) setState('failed')
-      })
-    return () => {
-      active = false
-    }
-  }, [])
+  /*
+   * On focus, not on mount, which is the posture `crew.tsx` states and `plan.tsx`
+   * shares: "the board is a tab the lifter returns to rather than a screen they
+   * open once". Progress was the one returned-to tab still fetching once, and
+   * folding History in is what made that a defect rather than a preference. A
+   * lifter who opened Progress, trained, and came back through the History
+   * circle saw the session they had just finished missing from the list, the
+   * ten-week grid and the total.
+   *
+   * `data` is only replaced on success, so the previous read stays on screen
+   * while the new one is in flight and coming back never blanks the screen.
+   */
+  useFocusEffect(
+    useCallback(() => {
+      if (supabaseConfigError !== null) return
+      let active = true
+      void fetchProgress()
+        .then((next) => {
+          if (!active) return
+          setData(next)
+          setState('ready')
+        })
+        .catch(() => {
+          if (active) setState('failed')
+        })
+      return () => {
+        active = false
+      }
+    }, []),
+  )
 
   const sessions = data?.sessions ?? []
   const weeks = sessionsPerWeek(sessions, FREQUENCY_WEEKS)
@@ -500,6 +516,22 @@ export default function ProgressScreen() {
           <StrengthList rows={data?.strength ?? []} unit={unit} />
         </View>
       )}
+
+      {/* History, folded in. `docs/FRIENDS_PLAN.md` Part 3B: "what did I do"
+          and "am I getting stronger" are the same question at two zoom levels,
+          so the retrospective belongs in one place.
+
+          OUTSIDE the branch above on purpose, and this is the whole reason it
+          is a component rather than inlined JSX. `useHistory` is its own read
+          on its own cadence; putting it inside would hide the ten-week grid
+          and every session row behind a failed `fetchProgress`, which is the
+          §12 defect the Coach merge fixed one level down and would have
+          reintroduced one level up.
+
+          The fast door survives: the circle beside Start on Train comes
+          straight here, which the audit called the one piece of navigation
+          worth keeping as furniture. */}
+      <HistorySection quiet={state === 'failed' || sessions.length === 0} />
     </Screen>
   )
 }
