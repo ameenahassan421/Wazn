@@ -1500,6 +1500,79 @@ blocks an EAS build from here is smaller and more ordinary: `eas` is not
 installed, and a build spends Ameen's queue and credits, so it is his to
 authorise rather than something a session should start.
 
+**DONE 2026-08-24: the weekly review stopped describing a different week from
+the figures beside it.** Found by looking at a screenshot after the History
+fold: the card read "6 sessions this week" as a figure, with a sentence under it
+saying "You completed 7 sessions this week".
+
+**The cause, read live from production rather than reasoned about.** The review
+is model-written and cached in `coach_notes`, and freshness was
+`(last finished workout, prompt version, unit)`. **Nothing about the week.** The
+stored row was generated `2026-08-23 21:52` (a Sunday), the ISO week it
+describes held eight sessions, and the current week held none. So a Sunday
+review was served unchanged on Monday beside figures `weekly_review()` had
+already rolled over.
+
+It is the same failure the function's own `@1 to @2` note records, through a
+different door: there the CONTRACT changed under the cache, here the WEEK does.
+Same cure, make the thing that moved part of the key. A miss on the first open
+of a new week costs one model call, which is the right price for a product
+called a weekly review, and the quota is 500 per 7 days so it is not a
+meaningful cost.
+
+**A third flag, not a reuse of the two that exist.** The file already warns that
+conflating `stale` (older contract, renders " · in the previous format") with
+`refreshFailed` (generation died) was a real defect caught in review. A review
+that is correctly formatted and simply about last week needs its own sentence,
+so `previousWeek` is separate, and `WeekReview` renders one muted line,
+suppressed when `refreshFailed` already has the floor.
+
+**The week arithmetic has a test, which is the part that matters.** Date maths
+in an Edge Function, in a repo with no Deno test harness, hours after a
+week-boundary bug held CI red for a day. `weekStartUtc` is NEW in
+`supabase/functions/_shared/week.ts` (this line said "moved", which was false and
+would have sent someone hunting for an original to diff). Vitest reaches it
+because it is plain TypeScript with no Deno APIs, the rule
+`has-training-data.ts` states, not because it has no imports.
+
+**`/code-review` then found thirteen findings in that fix, and the first one was
+that it did not work.** Worth recording because the fix looked complete and
+passed every gate:
+
+1. **The label could essentially never render.** Enumerating the server paths
+   that set `previousWeek`: the fresh path cannot by construction, the
+   missing-schema path is dead in production, and the quota path needs 500
+   regenerations in seven days. The only realistic one is a failed generation,
+   which also sets `refreshFailed`, which the suppression `&& !showingOld` then
+   negated. A Monday model outage rendered last week's sentences beside this
+   week's figures with no label at all, which is the defect being fixed.
+2. **A week miss does not resolve itself.** Every miss before this one ended
+   when the model answered or the lifter trained; a week miss lasts until
+   Sunday, so a provider outage meant a fresh `weekly_review()` and a 45-second
+   model call on EVERY mount, for every user, all morning. Memoized against the
+   failures `ai_generations` already records, so no migration.
+3. **A generation straddling Sunday midnight reintroduced the bug for a week**,
+   because `generated_at` was stamped after the model returned while the week
+   was read before it. One instant now feeds both.
+4. **`weekStartUtc` threw `RangeError` on an unreadable timestamp**, on the path
+   that serves a cached review, turning a graceful degrade into a 500. Returns
+   `null` now, per CLAUDE.md's "could not determine" rule.
+5. **`serveCached` closed over a `const` declared 46 lines below it**, working
+   only by accident of call ordering. One early return added between would have
+   made every call a `ReferenceError` and a blanket 500.
+6. **A returning lifter would have lost their review.** The `hasTrainingData`
+   gate only became reachable for existing accounts once the week joined the
+   key: 95 days without training, Monday rollover, `total_sets_90d` is 0, and
+   the branch answered `review: null`. It serves the cache now, like every other
+   fallback in the file.
+7. The web PWA never rendered the flag and, on the quota path, printed " · in
+   the previous format" for a review whose format is fine.
+8. The month-boundary test crossed no month: `2026-03-02` is itself a Monday, so
+   the assertion was an identity a broken implementation would pass.
+
+Wall: root typecheck, 1,303 tests, format, coverage floor, both lints, mobile
+typecheck, `bundle:ios`, `deno check` on the function.
+
 **DONE 2026-08-24: History folds into Progress. The four-tab restructure is
 finished.** `docs/FRIENDS_PLAN.md` Part 3B, the last named piece: "what did I
 do" and "am I getting stronger" are the same question at two zoom levels.

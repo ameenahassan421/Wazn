@@ -164,6 +164,29 @@ export function WeekReview() {
     (req.phase === 'failed' && review !== null) || notes?.refreshFailed === true
 
   /*
+   * A review from an EARLIER week, which the server now refuses to call fresh.
+   * It only reaches the screen on the fallback paths: no regenerate left, or a
+   * model outage. Saying so is the whole point — the figures beside it are
+   * live, so an unlabelled sentence from last week reads as the card
+   * contradicting itself, which is exactly how this was found (a "6 sessions
+   * this week" figure above a sentence saying seven).
+   *
+   * NOT suppressed when `showingOld` is also true, which is how this was first
+   * written and which made the whole line dead. Enumerate the server paths that
+   * can set `previousWeek`: the fresh path cannot (the week is part of
+   * freshness now), the missing-schema path is unreachable in production, and
+   * the quota path needs 500 regenerations in seven days. What is left is a
+   * failed generation — which sets `refreshFailed`, which sets `showingOld`,
+   * which the suppression then negated. So the one realistic case, a Monday
+   * model outage, rendered last week's sentences beside this week's figures
+   * with no label at all: exactly the defect being fixed.
+   *
+   * Two muted lines in that case, and they say different things. One is what
+   * you are reading, the other is why it has not been replaced.
+   */
+  const fromLastWeek = notes?.previousWeek === true
+
+  /*
    * Silenced, and it SAYS so, in one muted line.
    *
    * This returned null, on the reasoning that there is a whole screen
@@ -262,6 +285,15 @@ export function WeekReview() {
                   below, and it renders only when the function sent one. */}
               {recommendation.chip !== undefined && <Chip>{recommendation.chip}</Chip>}
             </>
+          )}
+
+          {/* WHICH week you are reading, when it is not this one. Above the
+              refresh footnote because it describes the content and the footnote
+              describes the machinery. */}
+          {fromLastWeek && (
+            <Txt step="caption" ink="muted">
+              {t('coach.previous_week')}
+            </Txt>
           )}
 
           {/* The failure, demoted to a footnote under the thing it failed to

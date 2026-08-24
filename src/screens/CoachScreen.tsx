@@ -345,6 +345,14 @@ function NotesCard({
               Said plainly here rather than dressed as an error: the numbers in
               it were true when it was written, and it refreshes on its own. */}
           {notes?.stale ? t('coach.stale') : ''}
+          {/* WHICH week, when it is not this one. The server can send `stale`
+              and `previousWeek` together — a correctly formatted review that is
+              simply about last week — and printing only "in the previous
+              format" for that state says the wrong thing about a review whose
+              format is fine. Native says the same sentence in
+              `WeekReview.tsx`; this screen is retired at A4 and is live until
+              then. */}
+          {notes?.previousWeek ? ` ${t('coach.previous_week')}` : ''}
         </p>
       )}
     </section>
