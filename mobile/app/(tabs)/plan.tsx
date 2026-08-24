@@ -312,6 +312,22 @@ export default function PlanScreen() {
               onPress={() => router.push('/routine/new')}
               style={{ alignSelf: 'center' }}
             />
+            {/* The door to `/routine/generate`, which shipped with none and
+                was therefore reachable by nothing: 305 lines of screen and 22
+                strings per locale that no user could get to, and `plan.generate`
+                sitting in both catalogues used zero times.
+
+                It belongs HERE most of all. The generate screen exists for
+                exactly this state, an account that did not import from Hevy
+                opening Plan to "No routines yet" with nothing that can fill
+                it. `line` rather than a second `hero`, because the ember is
+                one per screen. */}
+            <Btn
+              kind="line"
+              label={t('plan.generate')}
+              onPress={() => router.push('/routine/generate')}
+              style={{ alignSelf: 'center' }}
+            />
           </Empty>
         ) : (
           <View style={{ gap: 12 }}>
@@ -343,6 +359,12 @@ export default function PlanScreen() {
               full
               label={t('plan.new')}
               onPress={() => router.push('/routine/new')}
+            />
+            <Btn
+              kind="line"
+              full
+              label={t('plan.generate')}
+              onPress={() => router.push('/routine/generate')}
             />
           </View>
         )}

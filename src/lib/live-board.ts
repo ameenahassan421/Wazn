@@ -131,7 +131,7 @@ export function currentPosition(exercises: BoardExercise[]): BoardPosition | nul
     if (exercise.supersetGroup !== group) continue
     const setIndex = exercise.sets.findIndex((s) => !s.done)
     if (setIndex === -1) continue
-    const done = exercise.sets.filter((s) => s.done).length
+    const done = workingDone(exercise)
     if (done < fewest) {
       fewest = done
       best = ei
@@ -232,6 +232,27 @@ export function toggleSuperset(
  * A warm-up starts nothing either. Nobody rests two minutes after an empty
  * bar, and `commitOutcome` encodes the same rule for the web app.
  */
+/**
+ * Completed WORKING sets. The alternation and the rest rule both count rounds,
+ * and a warm-up is not a round.
+ *
+ * Both used to count `s.done` flat, which this file's own prose already said
+ * was wrong two rules further down: "a warm-up starts nothing". Pair a bench
+ * carrying two warm-ups with a row carrying none, and after the warm-ups plus
+ * one working set the bench reads three to the row's zero. `currentPosition`
+ * then picks the row and keeps picking it for every set it has, so the lifter
+ * runs one lift straight through while the other idles, which is precisely the
+ * walking back and forth the feature exists to produce. `restsAfterBank`
+ * compounds it by firing a rest on the first row set, because three is already
+ * greater than one.
+ *
+ * Every superset test in the suite used boards with no warm-ups, so nothing
+ * caught it.
+ */
+function workingDone(exercise: BoardExercise): number {
+  return exercise.sets.filter((s) => s.done && s.type !== 'warmup').length
+}
+
 export function restsAfterBank(
   exercises: BoardExercise[],
   position: BoardPosition,
@@ -243,12 +264,12 @@ export function restsAfterBank(
   const group = banked.supersetGroup ?? null
   if (group === null) return true
 
-  const bankedCount = banked.sets.filter((s) => s.done).length
+  const bankedCount = workingDone(banked)
   return exercises.every(
     (e) =>
       (e.supersetGroup ?? null) !== group ||
       e.sets.every((s) => s.done) ||
-      e.sets.filter((s) => s.done).length >= bankedCount,
+      workingDone(e) >= bankedCount,
   )
 }
 

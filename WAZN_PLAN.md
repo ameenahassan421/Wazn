@@ -1500,6 +1500,52 @@ blocks an EAS build from here is smaller and more ordinary: `eas` is not
 installed, and a build spends Ameen's queue and credits, so it is his to
 authorise rather than something a session should start.
 
+**FOUR MORE REVIEW FINDINGS CLOSED, three of them in the logging hot path.**
+
+1. **`/routine/generate` has a door.** It shipped reachable by nothing: 305
+   lines and 22 strings per locale, with `plan.generate` sitting in both
+   catalogues used zero times. Added to the Plan tab twice, as a `line` in the
+   list footer and in the empty state, where it matters most, since the generate
+   screen exists for exactly the cold start an account without a Hevy import
+   lands in. `check:routes` passes but could never have caught this: it checks
+   that links resolve, not that screens are reachable.
+2. **Warm-ups were counted as completed rounds.** `currentPosition` and
+   `restsAfterBank` both counted `s.done` flat, while this same file says "a
+   warm-up starts nothing" two rules further down. Pair a bench carrying two
+   warm-ups with a row carrying none and the bench reads three to the row's
+   zero, so the row wins the tie for every set it has and the lifter never
+   walks back, which is the entire feature. Rest then fires on the wrong beat.
+   One `workingDone` helper, three call sites. **Every superset test in the
+   suite used boards with no warm-ups**, so three new tests do, and all three
+   were confirmed to fail against the old counting before being kept.
+3. **A dialled RPE banked onto a warm-up.** The chips hide when the set is a
+   warm-up, but `dialled` is keyed on `exerciseIndex-setIndex` and not on the
+   set type, so dialling 8 and then tapping Warm-up left 8 in state. Guarded in
+   `bankCurrentSet`, the write boundary, rather than on the screen, so no
+   future caller can reintroduce it.
+4. **Starting from a routine dropped every superset.** `routine_exercises.superset_group`
+   has existed since 0004:56 and `routinePlan` never selected it, so Plan then
+   Start, the main way into a workout, lost pairings the board advertises as
+   "repeats last session's pairing at zero taps". The routine-unreadable
+   fallback omitted it too, while the identical construction on the main path
+   derives it, so whether a lifter kept their pairings depended on whether a
+   routine read happened to fail. Both fixed, and the field is now DECLARED on
+   the return type, which is the trap the file's own comment already documents
+   one field over.
+
+Wall: root typecheck, 1,300 tests, format, both lints, mobile typecheck, mobile
+live-workout tests, `bundle:ios`. **Not verified by a tap.** The door resolves
+and typechecks; nobody has pressed it on a device, and "renders correctly and
+does nothing" is the exact class `sim_tap.sh` exists for.
+
+**Six review findings remain open**, none of them store blockers:
+`initCrashReporting()` below the imports it should catch and no `Sentry.wrap()`;
+`generate.tsx` keying Cards by a day name the prompt deliberately duplicates;
+the 400 and 502 messages from `generate-routine` collapsing into a generic
+retry; `set -e` in `sim_tap.sh` killing it before its own "could not determine"
+branch; three dead i18n keys, one a duplicate; and the superset button naming
+one lift while joining whatever group that lift already belongs to.
+
 **THE NATIVE BUILD PASSES ON THIS BRANCH.** `xcodebuild` against
 `ios/Wazn.xcworkspace`, Debug, iPhone 17 simulator, with
 `SENTRY_DISABLE_AUTO_UPLOAD=true`: `** BUILD SUCCEEDED **`, zero `error:` lines,

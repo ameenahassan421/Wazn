@@ -338,6 +338,10 @@ async function routinePlan(routineId: string): Promise<{
      * drawing a weight stepper.
      */
     bodyweight: boolean
+    /* Declared for the same reason, and it is the same defect one field over:
+       the routine path dropped pairings entirely because nothing here named
+       them. */
+    supersetGroup: number | null
   }[]
   exerciseIds: string[]
 } | null> {
@@ -345,13 +349,18 @@ async function routinePlan(routineId: string): Promise<{
     supabase.from('routines').select('name').eq('id', routineId).maybeSingle(),
     supabase
       .from('routine_exercises')
-      .select('id, exercise_id, position')
+      .select('id, exercise_id, position, superset_group')
       .eq('routine_id', routineId)
       .order('position'),
   ])
   if (!routine) return null
 
-  const rows = (rx ?? []) as { id: string; exercise_id: string; position: number }[]
+  const rows = (rx ?? []) as {
+    id: string
+    exercise_id: string
+    position: number
+    superset_group: number | null
+  }[]
   if (rows.length === 0) return null
 
   const [{ data: planned }, { data: catalogue }] = await Promise.all([
@@ -396,6 +405,15 @@ async function routinePlan(routineId: string): Promise<{
       // routine exercise with no planned sets still gets a row to log into
       // rather than vanishing from the board.
       sets: Math.max(1, setCount.get(r.id) ?? 0),
+      /*
+       * `routine_exercises.superset_group` has existed since 0004:56 and this
+       * query never selected it, so Plan then Start, the app's main way into a
+       * workout, silently dropped every pairing the routine described. The
+       * last-session path 300 lines below carries pairings forward and the
+       * board advertises "repeats last session's pairing at zero taps"; the
+       * routine path was the one that did not.
+       */
+      supersetGroup: r.superset_group ?? null,
     })),
     exerciseIds: rows.map((r) => r.exercise_id),
   }
@@ -695,6 +713,13 @@ export async function startWorkout(routineId?: string): Promise<void> {
             name: lateName.get(id) ?? 'Exercise',
             sets: previousRows.filter((r) => r.exercise_id === id).length,
             bodyweight: lateBw.get(id) === true,
+            /* The identical construction on the main last-session path derives
+               this and this branch did not, so whether a lifter kept their
+               pairings depended on whether a routine read happened to fail. */
+            supersetGroup:
+              previousRows.find(
+                (r) => r.exercise_id === id && r.superset_group !== null,
+              )?.superset_group ?? null,
           })),
           previous,
         )
@@ -818,7 +843,23 @@ export function bankCurrentSet(
 
   const exercise = state.board[position.exerciseIndex]
   const setRow = exercise.sets[position.setIndex]
-  const board = bankSet(state.board, position, weightKg, reps, rpe)
+  /*
+   * A warm-up never carries an effort rating, and the guard is HERE rather
+   * than on the screen because this is the write boundary. The chips render
+   * only when the set is not a warm-up, but `dialled` is keyed on
+   * `exerciseIndex-setIndex` and not on the set TYPE, so dialling RPE 8 and
+   * then tapping Warm-up hides the row while leaving 8 in state. The board
+   * then stored an effort rating on a set the ghost deliberately filters out
+   * of `working`, which is orphan data contradicting the shipped rule that
+   * warm-ups sit outside volume, records and the coach.
+   */
+  const board = bankSet(
+    state.board,
+    position,
+    weightKg,
+    reps,
+    setRow.type === 'warmup' ? null : rpe,
+  )
   if (board === state.board) return
 
   /**

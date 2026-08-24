@@ -445,3 +445,66 @@ describe('RPE on the board', () => {
     expect(squat.sets.every((s) => s.rpe === null)).toBe(true)
   })
 })
+
+describe('warm-ups inside a superset', () => {
+  /**
+   * A bench carrying warm-ups, paired with a row that has none. This is the
+   * shape every other superset test in this file omits, and it is the shape a
+   * real lifter has: you warm up the press, you do not warm up the row you are
+   * pairing it with.
+   */
+  function warmed(): BoardExercise[] {
+    const b = toggleSuperset(
+      seedBoard(
+        [
+          { exerciseId: 'a', name: 'Bench Press', sets: 4 },
+          { exerciseId: 'b', name: 'Barbell Row', sets: 3 },
+        ],
+        [],
+      ),
+      0,
+    )
+    // Bench's first two are warm-ups.
+    b[0].sets[0].type = 'warmup'
+    b[0].sets[1].type = 'warmup'
+    return b
+  }
+
+  it('alternates on working sets, not on every completed row', () => {
+    let b = warmed()
+    b = bankSet(b, { exerciseIndex: 0, setIndex: 0 }, 20, 10) // warm-up
+    b = bankSet(b, { exerciseIndex: 0, setIndex: 1 }, 40, 8) // warm-up
+
+    // Still the bench: a warm-up starts nothing, so the round has not begun.
+    expect(currentPosition(b)?.exerciseIndex).toBe(0)
+
+    b = bankSet(b, { exerciseIndex: 0, setIndex: 2 }, 100, 5) // first WORKING set
+
+    // Now it is the row's turn. Counting `done` flat made the bench read 3 to
+    // the row's 0, so the row won the tie for all three of its sets and the
+    // lifter never walked back.
+    expect(currentPosition(b)?.exerciseIndex).toBe(1)
+  })
+
+  it('does not rest until both members have banked the same working set', () => {
+    let b = warmed()
+    b = bankSet(b, { exerciseIndex: 0, setIndex: 0 }, 20, 10)
+    b = bankSet(b, { exerciseIndex: 0, setIndex: 1 }, 40, 8)
+    b = bankSet(b, { exerciseIndex: 0, setIndex: 2 }, 100, 5)
+
+    // Round 1 closes on the row's first working set.
+    b = bankSet(b, { exerciseIndex: 1, setIndex: 0 }, 80, 8)
+    expect(restsAfterBank(b, { exerciseIndex: 1, setIndex: 0 })).toBe(true)
+
+    // Round 2 does NOT close on the row's second: the bench still owes one.
+    // Flat counting made the bench read 3, which cleared every comparison.
+    b = bankSet(b, { exerciseIndex: 1, setIndex: 1 }, 80, 8)
+    expect(restsAfterBank(b, { exerciseIndex: 1, setIndex: 1 })).toBe(false)
+  })
+
+  it('never rests on the warm-up itself', () => {
+    let b = warmed()
+    b = bankSet(b, { exerciseIndex: 0, setIndex: 0 }, 20, 10)
+    expect(restsAfterBank(b, { exerciseIndex: 0, setIndex: 0 })).toBe(false)
+  })
+})
