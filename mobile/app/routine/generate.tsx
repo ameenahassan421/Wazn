@@ -75,6 +75,8 @@ export default function GenerateRoutineScreen() {
   function messageFor(code: string): string {
     if (code === 'quota') return t('generate.quota')
     if (code === 'empty') return t('generate.empty')
+    if (code === 'thin') return t('generate.thin')
+    if (code === 'toolong') return t('generate.toolong')
     return t('generate.failed')
   }
 
@@ -229,12 +231,20 @@ export default function GenerateRoutineScreen() {
             {t('generate.preview')}
           </Txt>
 
-          {preview.preview.map((day) => (
-            <Card key={day.name} style={{ gap: 10 }}>
+          {preview.preview.map((day, dayIndex) => (
+            /* Keyed by INDEX, not by name. `generate-routine`'s system prompt
+               says "6 days = push/pull/legs run twice", so a six-day plan comes
+               back as Push, Pull, Legs, Push, Pull, Legs and the name collided
+               three times. React logged a duplicate-key warning and could bind
+               the wrong Card to the wrong day on any re-render. The list is
+               never reordered, so the index is a stable identity here. */
+            <Card key={dayIndex} style={{ gap: 10 }}>
               <Txt step="label">{day.name}</Txt>
               <View style={{ gap: 8 }}>
                 {day.exercises.map((e, i) => (
-                  <View key={`${day.name}-${e.id}`}>
+                  /* Same defect one level down: a model that lists a lift
+                     twice in one day collided on `e.id`. */
+                  <View key={`${dayIndex}-${i}`}>
                     {i > 0 && <Rule />}
                     <View
                       style={{

@@ -415,8 +415,29 @@ export async function generateRoutinePreview(request: {
     { body: request },
   )
   if (error !== null) {
-    const body = (error as { context?: { status?: number } }).context
-    throw new Error(body?.status === 429 ? 'quota' : 'failed')
+    /*
+     * Only 429 was mapped, so the two errors that name the control the lifter
+     * should change both arrived as "Could not generate a plan. Try again."
+     * `generate-routine` answers 400 when the chosen equipment has too few
+     * exercises and 502 when the model ran past its budget, and both of those
+     * are answerable: add a kind of equipment, or ask for fewer days. Collapsed
+     * into the generic retry they became an infinite loop with no hint that
+     * the chips were the cause.
+     *
+     * Mapped to catalogue KEYS rather than relaying the server's sentence,
+     * which is English only. An Arabic build would otherwise show English
+     * relayed from an Edge Function.
+     */
+    const status = (error as { context?: { status?: number } }).context?.status
+    const code =
+      status === 429
+        ? 'quota'
+        : status === 400
+          ? 'thin'
+          : status === 502
+            ? 'toolong'
+            : 'failed'
+    throw new Error(code)
   }
   if (data?.preview === undefined || data.preview.length === 0) {
     throw new Error('empty')

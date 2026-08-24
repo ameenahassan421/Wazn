@@ -1500,6 +1500,47 @@ blocks an EAS build from here is smaller and more ordinary: `eas` is not
 installed, and a build spends Ameen's queue and credits, so it is his to
 authorise rather than something a session should start.
 
+**FIVE MORE REVIEW FINDINGS CLOSED. One remains, and it needs a copy decision.**
+
+1. **Crash reporting could not catch the crashes it was written for.**
+   `initCrashReporting()` sat in `_layout.tsx`'s module body, below its own
+   imports, under a comment claiming "this runs as the bundle evaluates" and
+   naming a bad font registration, a keychain read that throws and a missing
+   native module. Imports are hoisted, so six font faces, `services/supabase`,
+   `services/rest-alarm`, `state/live-workout` and `hooks/use-auth` had all
+   finished evaluating first. The `createClient('', '')` throw that the same
+   release fixed would have been reported by nothing. Now
+   `@/services/crash-boot`, a module with one side effect, imported on line one:
+   import order is evaluation order.
+2. **A six-day plan collided its React keys three times.** `generate-routine`'s
+   prompt says "6 days = push/pull/legs run twice", and the preview keyed Cards
+   by `day.name`. Keyed by index now, and the inner list too, where a lift the
+   model lists twice in one day collided on `e.id`.
+3. **The two answerable generation errors were unreachable.** Only 429 was
+   mapped, so 400 ("not enough exercises for that equipment") and 502 ("too long
+   to finish") both surfaced as the generic retry, with no hint that the chips
+   were the cause. Mapped to catalogue KEYS rather than relaying the server's
+   sentence, which is English only. **The two new Arabic strings are mine and
+   want a native read**: `generate.thin` and `generate.toolong`.
+4. **`sim_tap.sh`'s "could not determine" branch was dead code.** `set -e` plus
+   a bare assignment from a command substitution took the script down the moment
+   `osascript` failed, which is exactly the case the message exists to report.
+   Proven both ways in a shell before and after: without the guard the message
+   never prints and the script exits 1. Its header now also says **run it with
+   `zsh`** — `bash scripts/sim_tap.sh` dies on a zsh-only substitution and taps
+   nothing while looking like it worked, which cost time this session.
+5. **Two dead i18n keys removed** from both locales: `workout.rpe.off`, which
+   the code comment beside it says can never render, and
+   `exercise.create.heading`, a word-for-word duplicate of `exercise.new.title`.
+   The third, `plan.generate`, is live now that the door exists.
+
+**STILL OPEN, and deliberately:** the superset button says "Superset with
+<next lift>" while `toggleSuperset` joins whatever group that lift already
+belongs to, so pressing it can silently produce a group of three. Trios are
+supported by design, so the code is right and the LABEL is wrong. Fixing it
+means new copy in both locales naming a join rather than a pair, and copy is
+Ameen's.
+
 **THE FIRST SET OF A NEW LIFT COST FORTY TAPS, AND IT WAS NEVER ONLY A DAY-ONE
 PROBLEM.** Chasing the friction left over from the item below turned up the
 real defect, in the one path the app exists for.

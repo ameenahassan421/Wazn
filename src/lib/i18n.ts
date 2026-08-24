@@ -88,6 +88,13 @@ export const messages: Record<Locale, Record<string, string>> = {
     'generate.again': 'Try a different one',
     'generate.failed': 'Could not generate a plan. Try again.',
     'generate.quota': 'No generations left this week.',
+    // The server already writes the sentence that names the control to change;
+    // these are its two cases, in the catalogue so an Arabic build does not get
+    // English relayed from an Edge Function.
+    'generate.thin':
+      'There are not enough exercises for that equipment. Try adding another kind.',
+    'generate.toolong':
+      'That plan was too long to finish. Try fewer days, or fewer kinds of equipment.',
     'generate.empty': 'Nothing came back. Try again.',
     'generate.dropped': 'Some lifts were not in the catalogue and were left out.',
     'generate.equipment.none': 'Pick at least one.',
@@ -528,7 +535,6 @@ export const messages: Record<Locale, Record<string, string>> = {
        chips are 6 to 10 because RPE below 6 is not a working set anybody
        records, and "Off" has to be reachable in one tap or it is a trap. */
     'workout.rpe': 'How hard · RPE',
-    'workout.rpe.off': 'Off',
     'workout.superset': 'Superset',
     'workout.superset.badge': 'SS {n}',
     'workout.superset.with': 'Superset with {name}',
@@ -940,7 +946,6 @@ export const messages: Record<Locale, Record<string, string>> = {
     // The name is not asked for twice: whatever was typed into the search IS
     // the name, because the search is where they discovered it was missing.
     'exercise.create': 'Create \u201c{name}\u201d',
-    'exercise.create.heading': 'New exercise',
     'exercise.create.muscle': 'Muscle group',
     'exercise.create.equipment': 'Equipment',
     'exercise.create.action': 'Create and add',
@@ -1292,6 +1297,10 @@ export const messages: Record<Locale, Record<string, string>> = {
     'generate.again': 'جرّب خطة أخرى',
     'generate.failed': 'تعذّر إنشاء خطة. حاول مرة أخرى.',
     'generate.quota': 'لا توجد محاولات متبقية هذا الأسبوع.',
+    'generate.thin':
+      '\u0644\u0627 \u062a\u0648\u062c\u062f \u062a\u0645\u0627\u0631\u064a\u0646 \u0643\u0627\u0641\u064a\u0629 \u0644\u0647\u0630\u0647 \u0627\u0644\u0645\u0639\u062f\u0627\u062a. \u062c\u0631\u0651\u0628 \u0625\u0636\u0627\u0641\u0629 \u0646\u0648\u0639 \u0622\u062e\u0631.',
+    'generate.toolong':
+      '\u0627\u0644\u062e\u0637\u0629 \u0623\u0637\u0648\u0644 \u0645\u0646 \u0623\u0646 \u062a\u0643\u062a\u0645\u0644. \u062c\u0631\u0651\u0628 \u0623\u064a\u0627\u0645\u064b\u0627 \u0623\u0642\u0644 \u0623\u0648 \u0645\u0639\u062f\u0627\u062a \u0623\u0642\u0644.',
     'generate.empty': 'لم يعد أي شيء. حاول مرة أخرى.',
     'generate.dropped': 'بعض التمارين غير موجودة في الفهرس وتم استبعادها.',
     'generate.equipment.none': 'اختر واحدة على الأقل.',
@@ -1680,7 +1689,6 @@ export const messages: Record<Locale, Record<string, string>> = {
     'workout.log_warmup_reps': 'سجّل الإحماء · {reps} تكرار',
     'workout.warmup_note': 'خارج الحجم والأرقام القياسية والمدرّب.',
     'workout.rpe': 'الصعوبة · RPE',
-    'workout.rpe.off': 'بلا',
     'workout.superset': 'مجموعة مركّبة',
     'workout.superset.badge': 'م {n}',
     'workout.superset.with': 'اربطه مع {name}',
@@ -2055,7 +2063,6 @@ export const messages: Record<Locale, Record<string, string>> = {
     'exercise.none': 'لا يوجد تمرين بهذا الاسم.',
     // Machine drafted, like the rest of this table.
     'exercise.create': 'إنشاء \u201c{name}\u201d',
-    'exercise.create.heading': 'تمرين جديد',
     'exercise.create.muscle': 'المجموعة العضلية',
     'exercise.create.equipment': 'المعدات',
     'exercise.create.action': 'أنشئ وأضف',

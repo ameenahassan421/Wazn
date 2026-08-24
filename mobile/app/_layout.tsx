@@ -1,3 +1,7 @@
+// FIRST, and the comment in the file says why. Import order is evaluation
+// order, so anything below this line is already covered when it throws.
+import '@/services/crash-boot'
+
 import { useEffect } from 'react'
 import { View } from 'react-native'
 import { Stack } from 'expo-router'
@@ -20,7 +24,7 @@ import { useAuth } from '@/hooks/use-auth'
 import { watchRest } from '@/services/rest-alarm'
 import { restoreWorkout } from '@/state/live-workout'
 import { CoachProvider } from '@/hooks/use-coach'
-import { identifyForCrashes, initCrashReporting } from '@/services/crash'
+import { identifyForCrashes } from '@/services/crash'
 import { LocaleProvider, useLocale } from '@/hooks/use-locale'
 import { UnitProvider } from '@/hooks/use-unit'
 import { supabaseConfigError } from '@/services/supabase'
@@ -58,8 +62,13 @@ void SplashScreen.preventAutoHideAsync()
  * would miss every one of them. This runs as the bundle evaluates.
  *
  * No-ops without a DSN, so a local build is unaffected.
+ *
+ * MOVED to `@/services/crash-boot`, imported on the first line of this file.
+ * This call sat HERE, in the module body, below every import — and imports are
+ * hoisted, so the fonts, the Supabase client and the auth hook had all already
+ * evaluated. The comment above was describing an intention rather than what
+ * the code did.
  */
-initCrashReporting()
 
 const FACES = {
   Sora_600SemiBold,

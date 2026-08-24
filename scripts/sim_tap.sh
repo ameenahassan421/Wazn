@@ -37,8 +37,13 @@
 # pressing, which looks exactly like a dead control. Cmd+D, then tap "Toggle
 # Element Inspector" (device point 200 419 on a 402x874 screen).
 #
-# Usage:  scripts/sim_tap.sh <x> <y>          # device points
-#         DW=440 DH=956 scripts/sim_tap.sh …  # a different device size
+# Usage:  zsh scripts/sim_tap.sh <x> <y>      # device points
+#         DW=440 DH=956 zsh scripts/sim_tap.sh …
+#
+# RUN IT WITH zsh. The shebang is right and `bash scripts/sim_tap.sh` is not:
+# the window parsing below uses zsh's `${${(s:,:)WIN}[1]}`, which bash rejects
+# with "bad substitution" — after which the script taps NOTHING while still
+# printing enough to look like it worked.
 #
 set -e
 export PATH=/opt/homebrew/bin:$PATH
@@ -55,7 +60,13 @@ fi
 osascript -e 'tell application "Simulator" to activate' > /dev/null 2>&1
 sleep 0.6
 
-WIN=$(osascript -e 'tell application "System Events" to tell process "Simulator" to get {position, size} of window 1' 2>/dev/null)
+# `|| WIN=""` is load-bearing, and without it the branch below was DEAD CODE.
+# `set -e` is on, and a bare assignment from a command substitution takes the
+# script down the moment osascript exits non-zero, which is exactly the case
+# this is here to report: Simulator not open, accessibility not granted. The
+# caller then saw a bare non-zero exit and no message, which is the ambiguous
+# silence the message was written to prevent.
+WIN=$(osascript -e 'tell application "System Events" to tell process "Simulator" to get {position, size} of window 1' 2>/dev/null) || WIN=""
 # "could not determine", never a plausible-looking number. CLAUDE.md's rule
 # about `|| echo "no"`: a failed read here would otherwise tap a negative
 # coordinate, which is silent and looks like the app ignoring the press.
