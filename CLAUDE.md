@@ -411,6 +411,17 @@ in its entirety. But a parser is not a server: 0021 shipped a
 Postgres rejects, and an `order by` on a column its own subquery had aliased
 away. Both died on the first execution.
 
+**A SQL suite can fail on a WEEKDAY, and this one did.** `coach_surfaces.sql`
+asserted `weeks_trained_of_8 = 8` flat. `weeks_trained_8w` counts buckets from
+`date_trunc('week', now()) - 7 weeks`, eight buckets including the current
+partial one, and the fixture's newest session is two days old, so on a **Monday
+or Tuesday** that session sits in the previous week, the current bucket is
+empty, and eight is not reachable. Unsatisfiable, not flaky. CI was green on
+Sunday 2026-08-23 and red on Monday 2026-08-24 with nothing in between touching
+SQL, which reads exactly like "the branch broke it" and was not. **Before
+blaming a branch for a red suite, check whether `main` would fail too, and check
+the date.**
+
 **Executed locally is still not applied.** "Applies cleanly from empty" and
 "applies cleanly to production" are different claims; the PR should say which
 one it has. Production is at **0040** as of 2026-08-23.
