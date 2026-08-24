@@ -1500,6 +1500,45 @@ blocks an EAS build from here is smaller and more ordinary: `eas` is not
 installed, and a build spends Ameen's queue and credits, so it is his to
 authorise rather than something a session should start.
 
+**THE FIRST SET OF A NEW LIFT COST FORTY TAPS, AND IT WAS NEVER ONLY A DAY-ONE
+PROBLEM.** Chasing the friction left over from the item below turned up the
+real defect, in the one path the app exists for.
+
+`seedWeight` returns null whenever the set has no previous weight. That is not
+just a new account: it is **every first set of every exercise the lifter has
+never done**, so an established user adding a lift mid-workout hits it too. The
+weight then starts at 0, `weightStep` is 2.5kg, and the board has **zero text
+inputs**, so 0 to 100kg was forty presses of `+`. 225lb was forty-five. In an
+app whose one sentence is "log a set in under thirty seconds, one hand".
+
+**Fixed with press-and-hold to repeat**, 350ms before it engages and 80ms per
+step after, so 100kg is about three seconds of holding.
+
+The single tap deliberately still runs through `onPress` rather than
+`onPressIn`. Firing on press-in would read a scroll that happens to start on
+the key as an increment, and that card lives inside a ScrollView. `onPressIn`
+only arms the repeat; past the delay the interval takes over and `onPress` is
+suppressed on release, or a hold would land one extra step. The timers are
+cleared on unmount, or leaving the board mid-hold keeps stepping a `dialled`
+nobody is looking at.
+
+**Verified by tapping, and only that far.** Cold-launched the board, tapped the
+reps `+` once: 3 to 4, and the commit bar followed to "Log set 2 · 105 × 4". So
+the tap path is not regressed. **The HOLD itself is not verified** —
+`sim_tap.sh` issues a click, not a press-and-hold, and extending it to
+`cliclick dd`/`du` is the way to close that.
+
+**The proper fix is a keypad**, and this is not it. Hevy lets you tap the number
+and type it. Forty taps became one hold, which is the ceiling this removes; it
+does not make entering 102.5kg pleasant. That is a change to the board's input
+model and belongs to Ameen, not to a session tidying a review finding.
+
+**And `scripts/sim_tap.sh` is zsh-only.** Run under `bash` it dies on
+`${${(s:,:)WIN}[1]// /}` with "bad substitution" and taps nothing. The shebang
+says `#!/bin/zsh` and is right; invoking it with `bash scripts/sim_tap.sh` is
+what fails. Related to the open review finding that `set -e` prevents its own
+"could not determine" branch from ever running.
+
 **"DAY ONE IS A DEAD END" IS NOT TRUE, AND HAS NOT BEEN FOR A WHILE.** The v1
 table below carries "A first run that reaches a logged set: NOT STARTED. Day one
 is still a dead end for a new account", and `session/[id].tsx` carried the same

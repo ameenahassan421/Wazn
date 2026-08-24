@@ -138,6 +138,57 @@ function Barbell() {
   )
 }
 
+/**
+ * Press and hold to repeat, because the first set of a new lift cost 40 taps.
+ *
+ * `seedWeight` returns null whenever the set has no previous weight, which is
+ * every first set of every exercise the lifter has never done — day one for a
+ * new account, and any new lift for everyone else. `weightStep` is 2.5kg, the
+ * board has no text input, so 0 to 100kg was forty presses of `+`. In an app
+ * whose one sentence is "log a set in under thirty seconds, one hand".
+ *
+ * The single tap still runs through `onPress`, deliberately. Firing on
+ * `onPressIn` would read a scroll that happens to start on the key as an
+ * increment, and this card lives inside a ScrollView.
+ *
+ * So `onPressIn` only arms the repeat. Under `DELAY` nothing fires and the tap
+ * behaves exactly as before; past it the interval takes over and `onPress` is
+ * suppressed on release, or a hold would land one extra step.
+ */
+const HOLD_DELAY = 350
+const HOLD_INTERVAL = 80
+
+function useHold(action: () => void) {
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const repeater = useRef<ReturnType<typeof setInterval> | null>(null)
+  const repeated = useRef(false)
+
+  const stop = () => {
+    if (timer.current !== null) clearTimeout(timer.current)
+    if (repeater.current !== null) clearInterval(repeater.current)
+    timer.current = null
+    repeater.current = null
+  }
+
+  // Timers outlive the screen otherwise: leave the board mid-hold and the
+  // interval keeps stepping a `dialled` nobody is looking at.
+  useEffect(() => stop, [])
+
+  return {
+    onPressIn: () => {
+      repeated.current = false
+      timer.current = setTimeout(() => {
+        repeated.current = true
+        repeater.current = setInterval(action, HOLD_INTERVAL)
+      }, HOLD_DELAY)
+    },
+    onPressOut: stop,
+    onPress: () => {
+      if (!repeated.current) action()
+    },
+  }
+}
+
 /** One half of the stepper row. 46px keys, 48px targets. */
 function Stepper({
   label,
@@ -153,6 +204,8 @@ function Stepper({
   onUp: () => void
 }) {
   const palette = usePalette()
+  const down = useHold(onDown)
+  const up = useHold(onUp)
   const key = {
     width: 46,
     height: 46,
@@ -178,7 +231,7 @@ function Stepper({
           accessibilityRole="button"
           accessibilityLabel="−"
           hitSlop={1}
-          onPress={onDown}
+          {...down}
           style={key}
         >
           <Txt step="glyph">−</Txt>
@@ -196,7 +249,7 @@ function Stepper({
           accessibilityRole="button"
           accessibilityLabel="+"
           hitSlop={1}
-          onPress={onUp}
+          {...up}
           style={key}
         >
           <Txt step="glyph">+</Txt>
