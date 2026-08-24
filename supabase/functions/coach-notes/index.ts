@@ -38,6 +38,7 @@ import {
 } from '../_shared/context.ts'
 import { chat, ModelError } from '../_shared/openrouter.ts'
 import { hasTrainingData } from '../_shared/has-training-data.ts'
+import { weekStartUtc } from '../_shared/week.ts'
 import { parseJsonObject } from '../_shared/parse-json-object.ts'
 import { exerciseCatalog } from '../_shared/catalog.ts'
 import { parseUnit, toDisplayBlock } from '../_shared/display-units.ts'
@@ -193,6 +194,12 @@ Deno.serve(async (request) => {
     // the briefing card.
     const unit = parseUnit(url.searchParams.get('unit'))
 
+    // Monday-start, UTC, matching Postgres `date_trunc('week', …)`, which is
+    // what `weekly_review()` computes every figure in this card with. In
+    // `_shared/` rather than inline so vitest can test the arithmetic; see the
+    // note in that file about the week-boundary bug that had CI red for a day.
+    const thisWeek = weekStartUtc(new Date())
+
     const { data: latest } = await caller.asUser
       .from('workouts')
       .select('started_at')
@@ -233,6 +240,15 @@ Deno.serve(async (request) => {
       refreshFailed = false,
     ) =>
       json({
+        /*
+         * A THIRD flag, not a reuse of the two above, for the reason the
+         * comment on `refreshFailed` gives: `stale` means the row is from an
+         * older contract and renders as " · in the previous format", which is
+         * the wrong sentence entirely for a review that is correctly formatted
+         * and simply about last week. This is only ever true on the fallback
+         * paths, where a regeneration was wanted and could not happen.
+         */
+        previousWeek: cachedIsReview && cachedWeek !== null && cachedWeek !== thisWeek,
         review: cachedIsReview ? (cachedPayload as WeeklyReview) : null,
         insights: cachedIsReview ? null : (cachedPayload ?? []),
         generatedAt: cached?.generated_at,
@@ -246,10 +262,31 @@ Deno.serve(async (request) => {
         regeneratesLeft,
       })
 
+    /*
+     * ── THE WEEK IS PART OF FRESHNESS, AND IT WAS NOT ────────────────────
+     * This was `(last finished workout, prompt version, unit)`. Nothing about
+     * the week, so a review written on Sunday describing that week's eight
+     * sessions was served unchanged on Monday, beside figures `weekly_review()`
+     * had already rolled into the new week. Read live from production
+     * 2026-08-24: the stored note was generated 2026-08-23, the week it
+     * describes held eight sessions, and the current week held none.
+     *
+     * It is the same failure the `@1 to @2` note above records, arriving
+     * through a different door: there the CONTRACT changed under the cache,
+     * here the WEEK does. The cure is the same, make the thing that moved part
+     * of the key.
+     *
+     * A miss on the first open of a new week costs one model call, which is
+     * the correct price for a product called a weekly review. When the quota
+     * is gone the branch below still serves the old one rather than an error.
+     */
+    const cachedWeek =
+      cached?.generated_at != null ? weekStartUtc(cached.generated_at as string) : null
     const fresh =
       cached &&
       cached.basis_workout_at === basis &&
-      cached.prompt_version === `${PROMPT_VERSION}:${unit}`
+      cached.prompt_version === `${PROMPT_VERSION}:${unit}` &&
+      cachedWeek === thisWeek
 
     if (fresh && !force) {
       return serveCached(false, await quotaRemaining(caller, 'coach_notes'))

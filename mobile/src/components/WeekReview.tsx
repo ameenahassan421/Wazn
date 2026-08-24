@@ -164,6 +164,20 @@ export function WeekReview() {
     (req.phase === 'failed' && review !== null) || notes?.refreshFailed === true
 
   /*
+   * A review from an EARLIER week, which the server now refuses to call fresh.
+   * It only reaches the screen on the fallback paths: no regenerate left, or a
+   * model outage. Saying so is the whole point — the figures beside it are
+   * live, so an unlabelled sentence from last week reads as the card
+   * contradicting itself, which is exactly how this was found (a "6 sessions
+   * this week" figure above a sentence saying seven).
+   *
+   * Suppressed when `showingOld` already has the floor. Two muted footnotes
+   * under one card is worse than the more urgent one alone, and a failed
+   * refresh is the more urgent.
+   */
+  const fromLastWeek = notes?.previousWeek === true && !showingOld
+
+  /*
    * Silenced, and it SAYS so, in one muted line.
    *
    * This returned null, on the reasoning that there is a whole screen
@@ -268,6 +282,12 @@ export function WeekReview() {
               replace. `caption`, not `body`, and no card of its own: the news
               is that the sentences above are older than the figures below,
               which is worth one line and not a takeover. */}
+          {fromLastWeek && (
+            <Txt step="caption" ink="muted">
+              {t('coach.previous_week')}
+            </Txt>
+          )}
+
           {showingOld && (
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
               <Txt step="caption" ink="muted" style={{ flex: 1 }}>

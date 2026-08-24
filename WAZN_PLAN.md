@@ -1500,6 +1500,43 @@ blocks an EAS build from here is smaller and more ordinary: `eas` is not
 installed, and a build spends Ameen's queue and credits, so it is his to
 authorise rather than something a session should start.
 
+**DONE 2026-08-24: the weekly review stopped describing a different week from
+the figures beside it.** Found by looking at a screenshot after the History
+fold: the card read "6 sessions this week" as a figure, with a sentence under it
+saying "You completed 7 sessions this week".
+
+**The cause, read live from production rather than reasoned about.** The review
+is model-written and cached in `coach_notes`, and freshness was
+`(last finished workout, prompt version, unit)`. **Nothing about the week.** The
+stored row was generated `2026-08-23 21:52` (a Sunday), the ISO week it
+describes held eight sessions, and the current week held none. So a Sunday
+review was served unchanged on Monday beside figures `weekly_review()` had
+already rolled over.
+
+It is the same failure the function's own `@1 to @2` note records, through a
+different door: there the CONTRACT changed under the cache, here the WEEK does.
+Same cure, make the thing that moved part of the key. A miss on the first open
+of a new week costs one model call, which is the right price for a product
+called a weekly review, and the quota is 500 per 7 days so it is not a
+meaningful cost.
+
+**A third flag, not a reuse of the two that exist.** The file already warns that
+conflating `stale` (older contract, renders " · in the previous format") with
+`refreshFailed` (generation died) was a real defect caught in review. A review
+that is correctly formatted and simply about last week needs its own sentence,
+so `previousWeek` is separate, and `WeekReview` renders one muted line,
+suppressed when `refreshFailed` already has the floor.
+
+**The week arithmetic now has a test, which is the part that matters.** Four
+lines of date maths in an Edge Function, in a repo with no Deno test harness,
+two hours after a week-boundary bug held CI red for a day. `weekStartUtc` moved
+to `supabase/functions/_shared/week.ts`, which has no imports, so vitest reads it
+directly: `src/lib/week-boundary.test.ts` pins Monday-start, the Sunday-to-Monday
+split using the exact production timestamp, and the month and year boundaries.
+
+Wall: root typecheck, 1,303 tests, format, coverage floor, both lints, mobile
+typecheck, `bundle:ios`, `deno check` on the function.
+
 **DONE 2026-08-24: History folds into Progress. The four-tab restructure is
 finished.** `docs/FRIENDS_PLAN.md` Part 3B, the last named piece: "what did I
 do" and "am I getting stronger" are the same question at two zoom levels.

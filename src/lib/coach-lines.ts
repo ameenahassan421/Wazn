@@ -241,6 +241,13 @@ export interface CoachNotes {
    * the model is not, so the two need different words.
    */
   refreshFailed?: boolean
+  /**
+   * The served review was written in an EARLIER week than the one its figures
+   * describe. Distinct from `stale` (older contract) and `refreshFailed`
+   * (generation died), because the sentence a reader needs is different in each
+   * case, and `coach-notes/index.ts` says why at the flag's other end.
+   */
+  previousWeek?: boolean
   degraded?: boolean
   regeneratesLeft?: number
 }

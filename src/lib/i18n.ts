@@ -611,6 +611,7 @@ export const messages: Record<Locale, Record<string, string>> = {
     'coach.resets_weekly': ' · resets weekly',
     'coach.stale': ' · in the previous format',
     'coach.refresh_failed': 'Showing your last review. A new one could not be written.',
+    'coach.previous_week': 'This review is from last week.',
     'coach.build': 'Build me a routine',
     'coach.generate': 'Generate routine',
     'coach.building': 'Building…',
@@ -1762,6 +1763,8 @@ export const messages: Record<Locale, Record<string, string>> = {
     'coach.resets_weekly': ' · يُعاد أسبوعياً',
     'coach.stale': ' · بالصيغة السابقة',
     'coach.refresh_failed': 'نعرض آخر مراجعة لديك. تعذّر كتابة مراجعة جديدة.',
+    'coach.previous_week':
+      '\u0647\u0630\u0647 \u0627\u0644\u0645\u0631\u0627\u062c\u0639\u0629 \u0645\u0646 \u0627\u0644\u0623\u0633\u0628\u0648\u0639 \u0627\u0644\u0645\u0627\u0636\u064a.',
     'coach.build': 'ابنِ لي روتيناً',
     'coach.generate': 'إنشاء روتين',
     'coach.building': 'جارٍ الإنشاء…',
