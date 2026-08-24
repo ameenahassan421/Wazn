@@ -1500,6 +1500,37 @@ blocks an EAS build from here is smaller and more ordinary: `eas` is not
 installed, and a build spends Ameen's queue and credits, so it is his to
 authorise rather than something a session should start.
 
+**"DAY ONE IS A DEAD END" IS NOT TRUE, AND HAS NOT BEEN FOR A WHILE.** The v1
+table below carries "A first run that reaches a logged set: NOT STARTED. Day one
+is still a dead end for a new account", and `session/[id].tsx` carried the same
+sentence in a comment sitting directly above the button that resolves it. Both
+were written when they were true and neither was revisited.
+
+What is actually there, checked rather than recited:
+
+- The empty board renders `log.empty` and an **Add exercise** button into
+  `/session/add`, which shipped with a catalogue search AND a create path for a
+  lift that is not in it.
+- The picker is not empty for a new account. `exercises` holds **135 rows, all
+  with `owner_id is null`**, and `exercises_select_visible` grants every
+  authenticated user those plus their own. Read from production 2026-08-23.
+- Start is unconditional on Train, so nothing gates reaching the board.
+- Production has logged sets through 2026-08-22, and all four accounts that
+  have a first workout have sets in it.
+
+**What is left is friction, not a wall.** With no history `seedWeight` returns
+null and the commit button is disabled until reps reach 1, so a brand-new lifter
+taps `+` before they can bank anything, and a set can be banked with a null
+weight. That is worth fixing and it is a different, smaller job than the one the
+table describes.
+
+**Not walked end to end.** Confirming this properly needs a throwaway account
+signing up on a device, which a session cannot do. The claim above is from the
+code, the schema, the RLS policies and the production rows; it is not from
+somebody creating an account and logging a set. **Ameen doing that once settles
+it**, and it is the same thirty seconds that closes the routine round-trip gap
+7.0 has been carrying since 2026-08-22.
+
 **FOUR MORE REVIEW FINDINGS CLOSED, three of them in the logging hot path.**
 
 1. **`/routine/generate` has a door.** It shipped reachable by nothing: 305

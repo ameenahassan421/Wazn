@@ -660,9 +660,21 @@ export default function LiveWorkout() {
             first workout of a new account — and the prototype has no empty
             state for this screen, because its demo always has a bench press.
             An empty white card is not a design, it is a hole, so this says
-            what is true and `WAZN_PLAN.md` records the real gap: native has no
-            way to ADD an exercise, which makes this a dead end rather than an
-            empty state. That is day one for every new user. */}
+            what is true and offers the one thing that resolves it.
+
+            THIS COMMENT USED TO SAY "native has no way to ADD an exercise,
+            which makes this a dead end rather than an empty state", directly
+            above the button that adds an exercise. `session/add.tsx` shipped,
+            with a search over the catalogue AND a create path for a lift that
+            is not in it. The picker is not empty for a new account either:
+            `exercises` holds 135 rows with `owner_id is null`, and
+            `exercises_select_visible` grants every authenticated user those
+            plus their own (read from production 2026-08-23).
+
+            The sentence outlived the gap it described, and WAZN_PLAN's v1
+            table still carries it as "day one is a dead end", which is the
+            exact way this repo keeps convincing itself work is outstanding
+            after it shipped. */}
         {live.board.length === 0 ? (
           <Card style={{ paddingVertical: 20, paddingHorizontal: 18, gap: 14 }}>
             <Txt step="title">{t('log.empty')}</Txt>
