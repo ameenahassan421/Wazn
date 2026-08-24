@@ -1,6 +1,7 @@
 import { classifyIdentifier } from '@wazn/domain'
 
 import { supabase } from './supabase'
+import { resetWorkout } from '@/state/live-workout'
 
 /**
  * The ways in, on native.
@@ -146,8 +147,26 @@ export async function signUpWithPassword(
   if (error) throw new Error(error.message)
 }
 
+/**
+ * Leave the account, and take the local board with you.
+ *
+ * `resetWorkout()` is not housekeeping. The live-workout checkpoint lives in
+ * AsyncStorage under one fixed key, `restoreWorkout()` parses it with no
+ * ownership check, and `_layout.tsx` calls that on every mount. So without
+ * this line, signing out and signing in as somebody else on the same phone
+ * restores the FIRST account's board, and `flushPending()` then inserts those
+ * sets under the second account's `user_id`.
+ *
+ * It clears memory and storage together, because `set()` checkpoints on every
+ * mutation and `EMPTY` is idle, which is the branch that removes the key.
+ *
+ * Yes, this discards a workout that was in progress. That is the correct
+ * reading of "sign out": the sets cannot be synced without a session, and the
+ * alternative is handing them to whoever signs in next.
+ */
 export async function signOut(): Promise<void> {
   await supabase.auth.signOut()
+  resetWorkout()
 }
 
 /**
@@ -174,5 +193,9 @@ export async function deleteAccount(): Promise<void> {
     body: { confirm: 'DELETE' },
   })
   if (error) throw new Error(error.message)
-  await supabase.auth.signOut()
+  // Through `signOut()` rather than `supabase.auth.signOut()`, so the local
+  // board is cleared here too. `public/delete-account.html` promises erasure
+  // "permanently, not hidden or archived", and a checkpoint left in
+  // AsyncStorage after the account is gone makes that sentence false.
+  await signOut()
 }

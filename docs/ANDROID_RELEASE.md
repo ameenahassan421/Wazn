@@ -103,6 +103,27 @@ at `mobile/eas.json`:
 }
 ```
 
+**The `env` block on every profile is load-bearing, and it was empty for a
+while.** `app.config.ts` reads `EXPO_PUBLIC_SUPABASE_URL`,
+`EXPO_PUBLIC_SUPABASE_ANON_KEY` and `EXPO_PUBLIC_SENTRY_DSN` at BUILD time, and
+an EAS build runs on a worker that has never seen your `.env.local`. A profile
+that does not pass them bakes empty strings, `supabaseConfigError` goes
+non-null, and the store build renders the config-error sentence with crash
+reporting off. It builds, it uploads, it passes review, and it cannot sign
+anybody in.
+
+The two Supabase values are in `eas.json` in the clear on purpose: the anon key
+is publishable, protected by RLS, and already readable inside every shipped
+binary and in the web bundle at www.trywazn.app. Committing it exposes nothing
+that is not already public. If you would rather keep them out of git,
+`eas env:create` holds the same values server-side and the `env` entries come
+out.
+
+**`EXPO_PUBLIC_SENTRY_DSN` is deliberately absent**, because there is no Sentry
+org yet. Empty means reporting is off, which is the correct state until there
+is somewhere to report to. Add it to all three profiles the day the org exists,
+or the store build ships blind to its own crashes.
+
 Three things in that file are decisions, not boilerplate:
 
 - **`"buildType": "app-bundle"` on production.** Play requires an AAB for new

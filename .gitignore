@@ -52,3 +52,7 @@ mobile/.expo-export*
 ds-bundle/
 .design-sync/
 /index.d.ts
+
+# Play upload credential. The path in mobile/eas.json points here, and this
+# file has upload rights to the store listing.
+secrets/

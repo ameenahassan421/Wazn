@@ -526,6 +526,23 @@ describe('durability', () => {
     expect(sent.slice(-2)).toEqual([1, 2])
   })
 
+  // `signOut()` in `services/auth.ts` calls `resetWorkout()` and relies on
+  // exactly this: that clearing the board clears the DISK too. Without it,
+  // signing out and signing in as somebody else on the same phone restores the
+  // first account's board, and `flushPending()` files those sets under the
+  // second account. The test above stages a process death AROUND this
+  // behaviour and its comment asserts it in prose; nothing asserted it.
+  it('clears the checkpoint from storage, not just from memory', async () => {
+    bankCurrentSet(100, 5)
+    await flushPending()
+    expect(await AsyncStorage.getItem(CHECKPOINT_KEY)).not.toBeNull()
+
+    resetWorkout()
+
+    expect(liveState().status).toBe('idle')
+    expect(await AsyncStorage.getItem(CHECKPOINT_KEY)).toBeNull()
+  })
+
   it('comes back after the app is killed, board and queue intact', async () => {
     fake.config.failSets = true
     bankCurrentSet(100, 5)
