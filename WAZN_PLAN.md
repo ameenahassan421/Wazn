@@ -1470,6 +1470,73 @@ decision, not a consolidation side effect. The other two are `Bash(claude-or:*)`
 and `Bash(gh pr merge:*)`. Its `hooks` block needed no migration: it is the
 impeccable design hook, already wired in the checked-in `.claude/settings.json`.
 
+**THE NATIVE BUILD PASSES ON THIS BRANCH.** `xcodebuild` against
+`ios/Wazn.xcworkspace`, Debug, iPhone 17 simulator, with
+`SENTRY_DISABLE_AUTO_UPLOAD=true`: `** BUILD SUCCEEDED **`, zero `error:` lines,
+app rebuilt 2026-08-23 21:14. This is the first real build on the branch that
+carries the crash-reporting work, which is the exact change that failed
+`xcodebuild` at exit 65 once before while every `npm run` stayed green.
+
+**`/code-review` RAN ON THIS BRANCH AT HIGH EFFORT AND RETURNED FIFTEEN
+FINDINGS**, over 31 files and ~3.8k insertions. Two are fixed below. **The other
+thirteen are open and three of them block a store release.** Full text is in the
+session transcript; the ranked summary:
+
+**Blocks a store release:**
+
+1. **No EAS profile passes `EXPO_PUBLIC_SUPABASE_URL`, `_ANON_KEY` or
+   `_SENTRY_DSN`.** Verified: all three profiles in `mobile/eas.json` declare an
+   `env` block containing only `SENTRY_DISABLE_AUTO_UPLOAD`, and
+   `app.config.ts:293` reads those vars at build time on the EAS worker where
+   they are unset. `eas build --profile production` therefore bakes empty
+   strings, `supabaseConfigError` is non-null, and the store build renders the
+   config-error sentence and reports no crashes. On the branch whose purpose is
+   store readiness.
+2. **`deleteAccount()` never clears the local live-workout checkpoint.**
+   `wazn.live-workout` survives sign-out in AsyncStorage and `restoreWorkout()`
+   does no user-id check, so the next account signed in on that phone restores
+   the deleted account's board and flushes its queued sets under a new
+   `user_id`. `public/delete-account.html` promises erasure "permanently, not
+   hidden or archived".
+3. **`eas.json`'s `serviceAccountKeyPath` resolves outside the repo** and
+   contradicts `docs/ANDROID_RELEASE.md`, which says the opposite path and says
+   it must be gitignored. `secrets/` is NOT in any `.gitignore`, so following
+   the doc commits a Play upload credential.
+
+**Real defects, not release blockers:** `/routine/generate` has no door (305
+lines and 22 strings per locale, reachable by nothing); `initCrashReporting()`
+sits below the imports it is meant to catch, and there is no `Sentry.wrap()`;
+warm-up sets are counted as completed rounds by `currentPosition` and
+`restsAfterBank`, desynchronising superset alternation; a dialled RPE banks onto
+a warm-up because `dialled` is keyed without the set type; `routinePlan` never
+reads `superset_group`, so Plan then Start drops pairings the board advertises;
+`generate.tsx` keys Cards by day name while the prompt deliberately produces
+duplicates; the 400 and 502 messages from `generate-routine` collapse into a
+generic retry; `set -e` in `sim_tap.sh` kills it before its own
+"could not determine" branch; three new i18n keys are dead, one a duplicate.
+
+**FIXED, both verified:**
+
+1. **Three of the eight custom-exercise muscle chips could not create
+   anything.** `0001_init.sql:17` constrains `exercises.muscle_group` to eleven
+   values and no migration has ever widened it; the chip row offered `legs`,
+   `arms` and `other`. Postgres raised 23514, the create threw, and the lifter
+   got "Could not create that exercise. Try again." for as long as they kept
+   tapping, with Legs and Arms being two of the three. The same three had no
+   `muscle.*` key and rendered as raw lowercase English on an Arabic build, and
+   the comment above the list asserted they were "the values
+   `exercises.muscle_group` already holds in production". The list is now
+   exactly the constraint's eleven, every one of which already has both locales,
+   and the row already wraps.
+2. **`t()` expanded `$&`, `` $` `` and `$'` inside parameter values.** They were
+   all ours until a custom exercise name became one, so a lift named
+   `Row $& Press` rendered "Create Row {name} Press". One character of fix
+   (a replacer function) and a test that discriminates: proved the string form
+   emits `Create "Row {name} Press"` and the function form does not.
+
+Wall after both: root typecheck, 1,297 tests in 88 files, `format:check`, root
+lint, mobile typecheck, mobile lint and `bundle:ios` all green.
+
 **DONE: `expo-keep-awake` is called.** One hook on the live board
 (`mobile/app/session/[id].tsx`), which is the whole session including rest,
 because `RestCanvas` renders only from there (grepped: two references, both in

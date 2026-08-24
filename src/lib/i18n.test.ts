@@ -219,3 +219,17 @@ describe('copy doctrine — never guilt (v3 D3, GATE V3 · 5)', () => {
     }
   })
 })
+
+describe('parameter substitution is literal', () => {
+  // A parameter value used to be interpolated as a String.replace REPLACEMENT
+  // string, which honours `$&`, `` $` `` and `$'`. That was harmless while
+  // every value was ours and stopped being harmless the moment a custom
+  // exercise name, typed by the lifter, became one.
+  it('does not expand dollar patterns in a user-supplied name', () => {
+    for (const name of ['Row $& Press', "Curl $' Fly", 'Squat $` Hold', 'Press $1']) {
+      const out = t('en', 'exercise.create', { name })
+      expect(out).toContain(name)
+      expect(out).not.toContain('{name}')
+    }
+  })
+})

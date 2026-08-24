@@ -2373,7 +2373,11 @@ export function t(
   let msg = messages[locale]?.[key] ?? messages.en[key] ?? key
   if (params) {
     for (const [name, value] of Object.entries(params)) {
-      msg = msg.replace(new RegExp(`\\{${name}\\}`, 'g'), value)
+      // The replacement is a FUNCTION, not a string, because a string
+      // replacement honours `$&`, `` $` `` and `$'`. Every parameter used to be
+      // ours; a custom exercise name is the user's, so a lift called
+      // `Row $& Press` rendered its own placeholder back into the sentence.
+      msg = msg.replace(new RegExp(`\\{${name}\\}`, 'g'), () => value)
     }
   }
   return msg

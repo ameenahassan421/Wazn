@@ -72,19 +72,38 @@ export async function fetchCatalogue(): Promise<CatalogueExercise[]> {
  *
  * Hard-coded here rather than imported from `scripts/muscle_groups.ts`, which
  * is a build-time tool that reaches for `../src/lib/types` and never crosses
- * `portable.ts`. These are the values `exercises.muscle_group` already holds in
- * production; adding one means a catalogue that sorts a lift into a group the
- * Progress balance chart does not draw.
+ * `portable.ts`.
+ *
+ * ── THIS LIST IS THE CHECK CONSTRAINT, AND FOR A WHILE IT WAS NOT ───────────
+ * The comment here used to say "these are the values `exercises.muscle_group`
+ * already holds in production", and offered `legs`, `arms` and `other`.
+ * `0001_init.sql:17` constrains the column to eleven values and no migration
+ * has ever widened it, so three of the eight chips could not create anything:
+ * Postgres raised 23514, `createCustomExercise` threw, and the lifter got
+ * "Could not create that exercise. Try again." for as long as they kept
+ * tapping. The two most reachable buckets on the row, Legs and Arms, were two
+ * of the three.
+ *
+ * They were also the three with no `muscle.*` key, so they rendered as raw
+ * lowercase English on an Arabic build. That was the visible half of a defect
+ * whose real half was invisible until the insert failed.
+ *
+ * Every value below has a `muscle.*` entry in both locales already, because
+ * this list is now exactly the constraint. **Adding one means a migration
+ * first.** A value the column rejects is not a chip, it is a dead end.
  */
 export const CUSTOM_MUSCLE_GROUPS = [
   'chest',
   'back',
-  'legs',
   'shoulders',
-  'arms',
+  'biceps',
+  'triceps',
+  'quads',
+  'hamstrings',
+  'glutes',
+  'calves',
   'core',
   'cardio',
-  'other',
 ] as const
 export type CustomMuscleGroup = (typeof CUSTOM_MUSCLE_GROUPS)[number]
 
