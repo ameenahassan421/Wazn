@@ -11,17 +11,21 @@ import { tick } from '@/services/haptics'
 import { usePalette } from '@/hooks/use-theme'
 
 /**
- * The six-tab bar.
+ * The four-tab bar: Train, Plan, Progress, Crew.
+ *
+ * It said "six" until 2026-08-24, through the Coach tab dissolving into Progress
+ * and Settings, Body moving behind Settings, and History folding into Progress.
+ * `TABS` in `TabGlyph.tsx` is the list; this comment is not.
  *
  * ── WHY A CUSTOM BAR AND NOT `tabBarIcon` ───────────────────────────────────
  * The live rail. v5 puts a 2px ember segment ON the bar's top edge for the
  * current tab, running 20%–80% of the column. React Navigation's built-in bar
  * has no slot for that — an indicator drawn inside the icon area shifts the
- * glyphs by two pixels on every navigation, which at six tabs is a visible
+ * glyphs by two pixels on every navigation, which at four tabs is a visible
  * twitch. Owning the bar is cheaper than fighting it, and this is the app's
  * own chrome anyway.
  *
- * ── SIX TARGETS ─────────────────────────────────────────────────────────────
+ * ── FOUR TARGETS ────────────────────────────────────────────────────────────
  * 65px each on a 390px screen, above the 48px floor. Height is 58 and the
  * labels are mono 9 — the meta voice, because a tab label is a stamped name
  * for a place rather than a spoken word.

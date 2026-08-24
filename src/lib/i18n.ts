@@ -371,6 +371,11 @@ export const messages: Record<Locale, Record<string, string>> = {
     'history.weeks': 'Last 10 weeks',
     'history.total': '{n} total',
     'history.sessions': 'Sessions',
+    // The PR chip on a session row was the last hardcoded English in
+    // `HistorySection`, rendering "3 PRS" in Latin capitals beside translated
+    // section heads on an Arabic build.
+    'history.pr': 'PR',
+    'history.prs': 'PRS',
     'history.find.kicker': "Coach's find",
     'history.find.dismiss': 'Dismiss',
     'history.find.line':
@@ -1546,6 +1551,9 @@ export const messages: Record<Locale, Record<string, string>> = {
     'history.weeks': 'آخر ١٠ أسابيع',
     'history.total': '{n} إجمالاً',
     'history.sessions': 'الجلسات',
+    'history.pr': '\u0631\u0642\u0645 \u0642\u064a\u0627\u0633\u064a',
+    'history.prs':
+      '\u0623\u0631\u0642\u0627\u0645 \u0642\u064a\u0627\u0633\u064a\u0629',
     'history.find.kicker': 'ملاحظة المدرب',
     'history.find.dismiss': 'إخفاء',
     'history.find.line': '{day} هو يومك. تتركّز جلساتك فيه أكثر من أي يوم آخر.',

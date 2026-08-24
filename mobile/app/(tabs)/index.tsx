@@ -245,7 +245,11 @@ export default function LogHome() {
         </View>
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel={t('nav.history')}
+          /* Names the DESTINATION as well as the content, which is the fix
+             this file already made for the coach card 110 lines up. The label
+             said "History" while the control opened Progress, so VoiceOver
+             promised a screen that no longer exists. */
+          accessibilityLabel={`${t('nav.history')}. ${t('nav.progress')}`}
           onPressIn={() => setHistoryDown(true)}
           onPressOut={() => setHistoryDown(false)}
           // History folded into Progress (FRIENDS_PLAN Part 3B), so the

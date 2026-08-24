@@ -667,13 +667,17 @@ npm run bundle:android
 
 - `src/screens/` — Log (home), History, Progress, **Body**, Coach, Friends,
   Settings. No router: one `View` union in `App.tsx` and one `useState`.
-- **There IS a tab bar again — six tabs, and this line said the opposite until
-  2026-08-14.** The audit retired the five-tab bar on 2026-08-13 (S2, "five
-  equal tabs for five unequal jobs"); design v3.0 brings back
-  `Log · History · Progress · Body · Coach · Friends`, and Ameen confirmed the
-  handoff wins. **The doors were kept.** Progress is still behind the Last PR
-  card, Coach behind the coach brief, Settings behind the header avatar,
-  Friends also from inside Settings, History also as the circle beside Start.
+- **The native tab bar has FOUR tabs: `Train · Plan · Progress · Crew`.** This
+  line said six until 2026-08-24, naming
+  `Log · History · Progress · Body · Coach · Friends`, and every one of those
+  six words was out of date: Coach dissolved into Progress and Settings on
+  2026-08-22, Body moved behind Settings, Log is called Train, Friends is called
+  Crew, and History folded into Progress on 2026-08-24, which finished
+  `docs/FRIENDS_PLAN.md` Part 3B. **`TABS` in
+  `mobile/src/components/ui/TabGlyph.tsx` is the list. This paragraph is not.**
+  **The doors were kept**, which is what makes the merges survivable: Settings
+  behind the header avatar, Body and Crew from inside Settings, and History
+  still as the circle beside Start, which now lands on Progress.
   A new screen still needs a door — `npm run shots` prints
   `no door to <screen>` when a route cannot be walked, and both harnesses
   press the CARDS rather than the bar on purpose: the bar either renders or it

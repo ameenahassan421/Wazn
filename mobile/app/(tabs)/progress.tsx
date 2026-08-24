@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useState } from 'react'
 import { View } from 'react-native'
 import Svg, { Line as SvgLine } from 'react-native-svg'
 
@@ -27,6 +27,7 @@ import { useLocale } from '@/hooks/use-locale'
 import { useUnit } from '@/hooks/use-unit'
 import { fetchProgress, type ProgressData, type StrengthRow } from '@/services/progress'
 import { supabaseConfigError } from '@/services/supabase'
+import { useFocusEffect } from 'expo-router'
 import { usePalette } from '@/hooks/use-theme'
 
 /**
@@ -371,22 +372,36 @@ export default function ProgressScreen() {
    *  box is the screen minus two gutters and two card pads. */
   const [chartWidth, setChartWidth] = useState(0)
 
-  useEffect(() => {
-    if (supabaseConfigError !== null) return
-    let active = true
-    void fetchProgress()
-      .then((next) => {
-        if (!active) return
-        setData(next)
-        setState('ready')
-      })
-      .catch(() => {
-        if (active) setState('failed')
-      })
-    return () => {
-      active = false
-    }
-  }, [])
+  /*
+   * On focus, not on mount, which is the posture `crew.tsx` states and `plan.tsx`
+   * shares: "the board is a tab the lifter returns to rather than a screen they
+   * open once". Progress was the one returned-to tab still fetching once, and
+   * folding History in is what made that a defect rather than a preference. A
+   * lifter who opened Progress, trained, and came back through the History
+   * circle saw the session they had just finished missing from the list, the
+   * ten-week grid and the total.
+   *
+   * `data` is only replaced on success, so the previous read stays on screen
+   * while the new one is in flight and coming back never blanks the screen.
+   */
+  useFocusEffect(
+    useCallback(() => {
+      if (supabaseConfigError !== null) return
+      let active = true
+      void fetchProgress()
+        .then((next) => {
+          if (!active) return
+          setData(next)
+          setState('ready')
+        })
+        .catch(() => {
+          if (active) setState('failed')
+        })
+      return () => {
+        active = false
+      }
+    }, []),
+  )
 
   const sessions = data?.sessions ?? []
   const weeks = sessionsPerWeek(sessions, FREQUENCY_WEEKS)
@@ -516,7 +531,7 @@ export default function ProgressScreen() {
           The fast door survives: the circle beside Start on Train comes
           straight here, which the audit called the one piece of navigation
           worth keeping as furniture. */}
-      <HistorySection />
+      <HistorySection quiet={state === 'failed' || sessions.length === 0} />
     </Screen>
   )
 }
