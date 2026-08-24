@@ -1470,6 +1470,36 @@ decision, not a consolidation side effect. The other two are `Bash(claude-or:*)`
 and `Bash(gh pr merge:*)`. Its `hooks` block needed no migration: it is the
 impeccable design hook, already wired in the checked-in `.claude/settings.json`.
 
+**`mobile/android/` HAS NOW BEEN GENERATED, FOR THE FIRST TIME.**
+`npx expo prebuild --platform android` exited 0 and the config plugins wrote
+the project. That does not close the Android unknown, it climbs the first rung
+of it: prebuild GENERATES, it does not compile. A local compile is still out of
+reach and should stay that way, `java -version` reports "Unable to locate a Java
+Runtime" and there is no SDK.
+
+What the first generation shows, which nothing has ever looked at:
+
+- `applicationId 'app.wazn.client'`, matching the iOS bundle id.
+  `versionCode 1`, `versionName 0.1.0`. Both schemes present, `wazn` and the
+  `https` one for `/join`.
+- **The manifest requests `SYSTEM_ALERT_WINDOW`, `READ_EXTERNAL_STORAGE` and
+  `WRITE_EXTERNAL_STORAGE`.** None of them is anything this app does. Draw over
+  other apps is a high-friction permission that Play reviews, and the storage
+  pair is restricted on modern Android. They come from a dependency's manifest
+  merging in, so the fix is a `remove` entry in the manifest via the config
+  plugin. **Find out which dependency before submitting anything**, because a
+  permission you cannot explain is a policy question at review time.
+- `android/` is gitignored (`mobile/.gitignore:43`), so none of it is committed
+  and `git status` stayed clean.
+
+**AND `api.expo.dev` IS REACHABLE FROM A SESSION. It returns HTTP 200.** This
+plan and CLAUDE.md both say it is 403 from the org's egress proxy and that "EAS
+cannot be run from a session", and that claim is what has kept the Android build
+parked. It is wrong now, whatever it was when it was written. What actually
+blocks an EAS build from here is smaller and more ordinary: `eas` is not
+installed, and a build spends Ameen's queue and credits, so it is his to
+authorise rather than something a session should start.
+
 **THE NATIVE BUILD PASSES ON THIS BRANCH.** `xcodebuild` against
 `ios/Wazn.xcworkspace`, Debug, iPhone 17 simulator, with
 `SENTRY_DISABLE_AUTO_UPLOAD=true`: `** BUILD SUCCEEDED **`, zero `error:` lines,

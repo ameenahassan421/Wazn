@@ -641,8 +641,8 @@ npm run bundle:android
   xcrun simctl install <udid> ios/build/Build/Products/Debug-iphonesimulator/Wazn.app
   ```
 
-- **`api.expo.dev` and `reactnative.directory` are 403 from this org's egress
-  proxy**, so `npx expo install` cannot resolve versions and EAS cannot run from
+- **`api.expo.dev` answered HTTP 200 on 2026-08-23, having been 403 before**,
+  so re-test rather than reciting either answer; `reactnative.directory` is 403**, so `npx expo install` cannot resolve versions and EAS cannot run from
   a session. Read `node_modules/expo/bundledNativeModules.json` instead — it is
   the same version map, offline.
 
