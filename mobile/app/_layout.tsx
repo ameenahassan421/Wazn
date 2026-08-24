@@ -1,3 +1,7 @@
+// FIRST, and the comment in the file says why. Import order is evaluation
+// order, so anything below this line is already covered when it throws.
+import '@/services/crash-boot'
+
 import { useEffect } from 'react'
 import { View } from 'react-native'
 import { Stack } from 'expo-router'
@@ -20,6 +24,7 @@ import { useAuth } from '@/hooks/use-auth'
 import { watchRest } from '@/services/rest-alarm'
 import { restoreWorkout } from '@/state/live-workout'
 import { CoachProvider } from '@/hooks/use-coach'
+import { identifyForCrashes } from '@/services/crash'
 import { LocaleProvider, useLocale } from '@/hooks/use-locale'
 import { UnitProvider } from '@/hooks/use-unit'
 import { supabaseConfigError } from '@/services/supabase'
@@ -47,6 +52,23 @@ import { ThemeProvider, useTheme, usePalette } from '@/hooks/use-theme'
  */
 
 void SplashScreen.preventAutoHideAsync()
+
+/**
+ * Module scope, not an effect, and that placement is the whole point.
+ *
+ * The crashes worth catching in a first release happen before the tree
+ * renders: a bad font registration, a keychain read that throws, a native
+ * module missing from the binary. An effect runs after the first commit and
+ * would miss every one of them. This runs as the bundle evaluates.
+ *
+ * No-ops without a DSN, so a local build is unaffected.
+ *
+ * MOVED to `@/services/crash-boot`, imported on the first line of this file.
+ * This call sat HERE, in the module body, below every import — and imports are
+ * hoisted, so the fonts, the Supabase client and the auth hook had all already
+ * evaluated. The comment above was describing an intention rather than what
+ * the code did.
+ */
 
 const FACES = {
   Sora_600SemiBold,
@@ -151,6 +173,17 @@ export default function RootLayout() {
   useEffect(() => {
     void restoreWorkout()
   }, [])
+
+  /**
+   * Attach the account to crash reports, and clear it on sign-out.
+   *
+   * Only the id, which is already a random UUID. "Did this hit one person or
+   * everyone" is the first question of any triage and the only one this
+   * answers; no email, no username, no training data.
+   */
+  useEffect(() => {
+    identifyForCrashes(userId)
+  }, [userId])
 
   /**
    * Nothing is shown until BOTH the faces are registered and the keychain has
@@ -286,6 +319,16 @@ function Ground({ userId }: { userId: string | null }) {
                       invites would discard a half-written routine by reflex. */}
                     <Stack.Screen
                       name="routine/[id]"
+                      options={{ animation: 'slide_from_right' }}
+                    />
+                    {/* Account deletion. Pushed like Settings rather than
+                      presented as a modal: a modal invites a swipe-down
+                      dismissal, and a screen whose whole job is to slow the
+                      user down should not offer an accidental exit that also
+                      reads as a decision. Inside the guard — there is no
+                      account to delete without a session. */}
+                    <Stack.Screen
+                      name="delete-account"
                       options={{ animation: 'slide_from_right' }}
                     />
                   </Stack.Protected>

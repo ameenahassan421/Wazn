@@ -7,6 +7,7 @@ import {
   View,
 } from 'react-native'
 import type { TextInput } from 'react-native'
+import Constants from 'expo-constants'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { maskEmail, space } from '@wazn/domain'
@@ -154,6 +155,16 @@ function GoogleDisc() {
   )
 }
 
+/**
+ * Is a Google OAuth client configured for this build?
+ *
+ * `app.config.ts` reads `EXPO_PUBLIC_GOOGLE_CLIENT_ID` into `extra`. Empty
+ * means the social path is not set up, and the screen shows the ways in that
+ * actually work: email + password, the 6-digit code, and a username as an
+ * alias for either.
+ */
+const GOOGLE_ENABLED = String(Constants.expoConfig?.extra?.googleClientId ?? '') !== ''
+
 export default function SignIn() {
   const palette = usePalette()
   const insets = useSafeAreaInsets()
@@ -265,20 +276,46 @@ export default function SignIn() {
               </Txt>
             </View>
 
-            <Btn
-              kind="hero"
-              full
-              style={{ height: 56 }}
-              leading={<GoogleDisc />}
-              label={t('auth.google')}
-              onPress={() => setError(t('auth.google.pending'))}
-            />
+            {/*
+              Rendered ONLY when an OAuth client actually exists.
 
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-              <View style={{ flex: 1, height: 1, backgroundColor: palette.ring }} />
-              <Kick>{t('auth.or')}</Kick>
-              <View style={{ flex: 1, height: 1, backgroundColor: palette.ring }} />
-            </View>
+              Until 2026-08-23 this was the hero CTA on the first screen and its
+              handler did one thing: set an error reading "Google sign-in
+              arrives with the App Store build. Use your email for now." In an
+              App Store build that sentence is false about itself, and the
+              largest, ember-glowing control a reviewer taps doing nothing but
+              explaining itself is Guideline 2.1, incomplete app. Verified on a
+              simulator, where it is unmissably the first thing on the screen.
+
+              Gated on config rather than deleted, on the same pattern as the
+              Sentry DSN: the day `EXPO_PUBLIC_GOOGLE_CLIENT_ID` is set the
+              button returns, and until then there is nothing dead to ship.
+
+              WHEN IT RETURNS, APPLE SIGN-IN SHIPS IN THE SAME RELEASE.
+              Guideline 4.8 makes Sign in with Apple mandatory the moment any
+              third-party social login is offered on iOS. `expo-apple-
+              authentication` is installed and its plugin already injects the
+              entitlement; what is missing is a button and a `signInWithIdToken`
+              call, not the plumbing.
+            */}
+            {GOOGLE_ENABLED && (
+              <>
+                <Btn
+                  kind="hero"
+                  full
+                  style={{ height: 56 }}
+                  leading={<GoogleDisc />}
+                  label={t('auth.google')}
+                  onPress={() => setError(t('auth.google.pending'))}
+                />
+
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                  <View style={{ flex: 1, height: 1, backgroundColor: palette.ring }} />
+                  <Kick>{t('auth.or')}</Kick>
+                  <View style={{ flex: 1, height: 1, backgroundColor: palette.ring }} />
+                </View>
+              </>
+            )}
 
             <View style={{ gap: 10 }}>
               <Field

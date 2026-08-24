@@ -15,8 +15,10 @@ import {
   estimatedOneRepMax,
   localDay,
   markSetType,
+  restsAfterBank,
   seedBoard,
   sessionVolume,
+  toggleSuperset,
 } from '@wazn/domain'
 
 import { supabase } from '@/services/supabase'
@@ -92,6 +94,11 @@ export interface PendingSet {
   setType: BoardExercise['sets'][number]['type']
   weightKg: number | null
   reps: number | null
+  /** 6 to 10, or null for "not said", which is what every row in production
+   *  currently is: the column has existed since 0001 and no client wrote it. */
+  rpe: number | null
+  /** The pairing this set was logged inside, or null. */
+  supersetGroup: number | null
 }
 
 /** Where the checkpoint lives. One key: the state is one document, and a
@@ -331,6 +338,10 @@ async function routinePlan(routineId: string): Promise<{
      * drawing a weight stepper.
      */
     bodyweight: boolean
+    /* Declared for the same reason, and it is the same defect one field over:
+       the routine path dropped pairings entirely because nothing here named
+       them. */
+    supersetGroup: number | null
   }[]
   exerciseIds: string[]
 } | null> {
@@ -338,13 +349,18 @@ async function routinePlan(routineId: string): Promise<{
     supabase.from('routines').select('name').eq('id', routineId).maybeSingle(),
     supabase
       .from('routine_exercises')
-      .select('id, exercise_id, position')
+      .select('id, exercise_id, position, superset_group')
       .eq('routine_id', routineId)
       .order('position'),
   ])
   if (!routine) return null
 
-  const rows = (rx ?? []) as { id: string; exercise_id: string; position: number }[]
+  const rows = (rx ?? []) as {
+    id: string
+    exercise_id: string
+    position: number
+    superset_group: number | null
+  }[]
   if (rows.length === 0) return null
 
   const [{ data: planned }, { data: catalogue }] = await Promise.all([
@@ -389,6 +405,15 @@ async function routinePlan(routineId: string): Promise<{
       // routine exercise with no planned sets still gets a row to log into
       // rather than vanishing from the board.
       sets: Math.max(1, setCount.get(r.id) ?? 0),
+      /*
+       * `routine_exercises.superset_group` has existed since 0004:56 and this
+       * query never selected it, so Plan then Start, the app's main way into a
+       * workout, silently dropped every pairing the routine described. The
+       * last-session path 300 lines below carries pairings forward and the
+       * board advertises "repeats last session's pairing at zero taps"; the
+       * routine path was the one that did not.
+       */
+      supersetGroup: r.superset_group ?? null,
     })),
     exerciseIds: rows.map((r) => r.exercise_id),
   }
@@ -522,7 +547,7 @@ export async function startWorkout(routineId?: string): Promise<void> {
     supabase
       .from('workouts')
       .select(
-        'id, name, started_at, workout_sets(exercise_id, set_number, weight_kg, reps, set_type)',
+        'id, name, started_at, workout_sets(exercise_id, set_number, weight_kg, reps, set_type, superset_group)',
       )
       .eq('user_id', userId)
       .not('ended_at', 'is', null)
@@ -576,6 +601,7 @@ export async function startWorkout(routineId?: string): Promise<void> {
     weight_kg: number | null
     reps: number | null
     set_type: string
+    superset_group: number | null
   }[]
 
   /*
@@ -613,6 +639,20 @@ export async function startWorkout(routineId?: string): Promise<void> {
     name: nameOf.get(id) ?? 'Exercise',
     sets: previousRows.filter((r) => r.exercise_id === id).length,
     bodyweight: isBodyweight.get(id) === true,
+    /*
+     * Last session's pairing, repeated at zero taps — the same argument that
+     * carries the set TYPE through `seedBoard`. A lifter who supersetted their
+     * rows with their presses last Tuesday is doing it again today, and making
+     * them re-pair every week is the kind of tax that gets an app deleted.
+     *
+     * `find`, not a reduce over all rows: `superset_group` is written from the
+     * exercise's board value, so every row of one lift in one session carries
+     * the same id by construction. A Hevy import can violate that in theory;
+     * taking the first is still a pairing the lifter actually had.
+     */
+    supersetGroup:
+      previousRows.find((r) => r.exercise_id === id && r.superset_group !== null)
+        ?.superset_group ?? null,
   }))
 
   const targetKg = previousRows.reduce((total, r) => {
@@ -673,6 +713,13 @@ export async function startWorkout(routineId?: string): Promise<void> {
             name: lateName.get(id) ?? 'Exercise',
             sets: previousRows.filter((r) => r.exercise_id === id).length,
             bodyweight: lateBw.get(id) === true,
+            /* The identical construction on the main last-session path derives
+               this and this branch did not, so whether a lifter kept their
+               pairings depended on whether a routine read happened to fail. */
+            supersetGroup:
+              previousRows.find(
+                (r) => r.exercise_id === id && r.superset_group !== null,
+              )?.superset_group ?? null,
           })),
           previous,
         )
@@ -763,6 +810,12 @@ async function run(): Promise<void> {
         weight_kg: row.weightKg,
         reps: row.reps,
         set_type: row.setType,
+        // Both columns have been in `workout_sets` since 0001 and neither
+        // client has ever written one. `?? null` rather than omitted, so a set
+        // queued by an older build and restored by this one sends an explicit
+        // null instead of `undefined`, which PostgREST rejects.
+        rpe: row.rpe ?? null,
+        superset_group: row.supersetGroup ?? null,
       })
       // Same rule as the workout row. Anything that is not a duplicate is a
       // real failure, and the queue keeps its place IN ORDER — a set that
@@ -780,13 +833,33 @@ async function run(): Promise<void> {
  * off this function returning, not off the insert. Nothing on the logging path
  * waits for a network.
  */
-export function bankCurrentSet(weightKg: number | null, reps: number | null): void {
+export function bankCurrentSet(
+  weightKg: number | null,
+  reps: number | null,
+  rpe: number | null = null,
+): void {
   const position = currentPosition(state.board)
   if (position === null) return
 
   const exercise = state.board[position.exerciseIndex]
   const setRow = exercise.sets[position.setIndex]
-  const board = bankSet(state.board, position, weightKg, reps)
+  /*
+   * A warm-up never carries an effort rating, and the guard is HERE rather
+   * than on the screen because this is the write boundary. The chips render
+   * only when the set is not a warm-up, but `dialled` is keyed on
+   * `exerciseIndex-setIndex` and not on the set TYPE, so dialling RPE 8 and
+   * then tapping Warm-up hides the row while leaving 8 in state. The board
+   * then stored an effort rating on a set the ghost deliberately filters out
+   * of `working`, which is orphan data contradicting the shipped rule that
+   * warm-ups sit outside volume, records and the coach.
+   */
+  const board = bankSet(
+    state.board,
+    position,
+    weightKg,
+    reps,
+    setRow.type === 'warmup' ? null : rpe,
+  )
   if (board === state.board) return
 
   /**
@@ -797,17 +870,45 @@ export function bankCurrentSet(weightKg: number | null, reps: number | null): vo
    * yet. Until they are, the app default is the honest answer, and it comes
    * from `@wazn/domain` so the two apps cannot drift to different minutes.
    *
-   * A warm-up starts nothing. Nobody rests two minutes after an empty bar,
-   * and `commitOutcome` encodes the same rule for the web app.
+   * WHETHER to rest is `restsAfterBank`'s question, not this file's: it holds
+   * both the warm-up rule and the superset rule, and it reads the board AFTER
+   * the bank, which is why it is called with `board` rather than `state.board`.
+   * A superset that rested between its two lifts would not be a superset.
    */
-  const rests = setRow.type !== 'warmup' && DEFAULT_REST_SECONDS > 0
+  const rests = restsAfterBank(board, position) && DEFAULT_REST_SECONDS > 0
 
   set({
     board,
     restEndsAt: rests ? Date.now() + DEFAULT_REST_SECONDS * 1000 : null,
     restTotal: rests ? DEFAULT_REST_SECONDS : 0,
   })
-  persistSet(exercise.exerciseId, setRow.setNumber, setRow.type, weightKg, reps)
+  persistSet(
+    exercise.exerciseId,
+    setRow.setNumber,
+    setRow.type,
+    weightKg,
+    reps,
+    rpe,
+    exercise.supersetGroup ?? null,
+  )
+}
+
+/**
+ * Pair the lift in front of the lifter with the next one on the board, or
+ * break it out of the pair it is in.
+ *
+ * Group state lives on the EXERCISE and reaches the row at bank time, so this
+ * changes nothing already in Postgres — the same contract `setCurrentSetType`
+ * holds. Re-pairing mid-session is therefore honest rather than lossy: the
+ * three sets logged before the pairing keep their null group, which is what
+ * actually happened.
+ */
+export function toggleCurrentSuperset(): void {
+  const position = currentPosition(state.board)
+  if (position === null) return
+  const board = toggleSuperset(state.board, position.exerciseIndex)
+  if (board === state.board) return
+  set({ board })
 }
 
 /**
@@ -871,11 +972,17 @@ export function addExercise(
     type: 'normal' as const,
     weightKg: bodyweight ? null : 0,
     reps: null,
+    rpe: null,
     done: false,
     previousKg: null,
     previousReps: null,
   }))
-  set({ board: [...state.board, { exerciseId, name, bodyweight, sets }] })
+  set({
+    board: [
+      ...state.board,
+      { exerciseId, name, bodyweight, supersetGroup: null, sets },
+    ],
+  })
 }
 
 /** Dismissed by a tap, or by the lifter deciding they are ready. */
@@ -909,11 +1016,22 @@ function persistSet(
   setType: BoardExercise['sets'][number]['type'],
   weightKg: number | null,
   reps: number | null,
+  rpe: number | null,
+  supersetGroup: number | null,
 ): void {
   set({
     pending: [
       ...state.pending,
-      { id: Crypto.randomUUID(), exerciseId, setNumber, setType, weightKg, reps },
+      {
+        id: Crypto.randomUUID(),
+        exerciseId,
+        setNumber,
+        setType,
+        weightKg,
+        reps,
+        rpe,
+        supersetGroup,
+      },
     ],
   })
   void flushPending()

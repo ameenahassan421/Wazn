@@ -1,0 +1,50 @@
+{
+  "cli": {
+    "version": ">= 12.0.0",
+    "appVersionSource": "remote"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "android": {
+        "buildType": "apk"
+      },
+      "env": {
+        "SENTRY_DISABLE_AUTO_UPLOAD": "true",
+        "EXPO_PUBLIC_SUPABASE_URL": "https://ttasiwxeqerhsztxjxip.supabase.co",
+        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR0YXNpd3hlcWVyaHN6dHhqeGlwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU1NDUwNjYsImV4cCI6MjEwMTEyMTA2Nn0.GJyNUnZz1w7WLBNmtwe1DkXXLvKmnwSpt_Bgl3E8Dq4"
+      }
+    },
+    "preview": {
+      "distribution": "internal",
+      "android": {
+        "buildType": "apk"
+      },
+      "env": {
+        "SENTRY_DISABLE_AUTO_UPLOAD": "true",
+        "EXPO_PUBLIC_SUPABASE_URL": "https://ttasiwxeqerhsztxjxip.supabase.co",
+        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR0YXNpd3hlcWVyaHN6dHhqeGlwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU1NDUwNjYsImV4cCI6MjEwMTEyMTA2Nn0.GJyNUnZz1w7WLBNmtwe1DkXXLvKmnwSpt_Bgl3E8Dq4"
+      }
+    },
+    "production": {
+      "autoIncrement": true,
+      "android": {
+        "buildType": "app-bundle"
+      },
+      "env": {
+        "SENTRY_DISABLE_AUTO_UPLOAD": "true",
+        "EXPO_PUBLIC_SUPABASE_URL": "https://ttasiwxeqerhsztxjxip.supabase.co",
+        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR0YXNpd3hlcWVyaHN6dHhqeGlwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU1NDUwNjYsImV4cCI6MjEwMTEyMTA2Nn0.GJyNUnZz1w7WLBNmtwe1DkXXLvKmnwSpt_Bgl3E8Dq4"
+      }
+    }
+  },
+  "submit": {
+    "production": {
+      "android": {
+        "serviceAccountKeyPath": "../secrets/play-service-account.json",
+        "track": "internal"
+      }
+    }
+  }
+}

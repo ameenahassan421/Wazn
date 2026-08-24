@@ -107,9 +107,219 @@ Arabic rendered its numbers backwards, while `revoke all ... from public` did
 nothing, and while every one of the eleven v5 P0 findings sat unnoticed. Run a
 review on anything a user will see.
 
-The `expo` plugin is installed for `mobile/` work: `api.expo.dev` is 403 from
-this org's egress proxy, so its offline skills are the way to answer SDK and
-build questions without the network.
+The `expo` plugin is installed for `mobile/` work. Its offline skills answer SDK
+and build questions without the network, which matters whenever the egress proxy
+is in the way. **It is not always in the way: `api.expo.dev` answered 403 when
+that was written and answers 200 now, so check before assuming either.**
+
+## A green wall cannot see a native build phase (2026-08-23)
+
+**Adding Sentry passed every gate in the repo and broke the iOS build.** Lint,
+typecheck, 1,281 web tests, 46 mobile tests, `bundle:ios` and `bundle:android`
+were all green. `xcodebuild` then failed with:
+
+```
+error: An organization ID or slug is required (provide with --org)
+** BUILD FAILED **
+```
+
+`@sentry/react-native`'s config plugin injects TWO Xcode build phases, one for
+source maps and one for debug symbols, and both shell out to `sentry-cli`,
+which needs an org, a project and an auth token. None of the green checks run
+an Xcode build phase. `expo export` produces a JS bundle and stops well short
+of them, which is the same lesson as "`npm run typecheck` in mobile is not a
+build", one rung deeper: **`bundle:ios` is not a build either.**
+
+**Removing the plugin from `plugins` would NOT have helped**, and the reason is
+already written down two sections below: `@sentry/react-native` ships an
+`app.plugin.js`, so Expo autolinks it from `node_modules` whether or not it is
+listed. The same trap as `expo-apple-authentication` and `expo-notifications`.
+
+The lever is an environment variable, `SENTRY_DISABLE_AUTO_UPLOAD=true`, and it
+is set in every profile in `mobile/eas.json`. Uploading source maps is a
+release nicety that needs credentials; reporting crashes needs only the DSN, so
+turning the upload off costs nothing that matters until there is a Sentry org
+to upload to. A local build needs it too:
+
+```bash
+cd mobile
+LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8 SENTRY_DISABLE_AUTO_UPLOAD=true xcodebuild \
+  -workspace ios/Wazn.xcworkspace -scheme Wazn -configuration Debug \
+  -destination 'platform=iOS Simulator,id=<udid>' \
+  -derivedDataPath ios/build build
+```
+
+**Run a real `xcodebuild` after ANY change to `app.config.ts`'s `plugins`.**
+A config plugin edits the native project, and nothing in `npm run` can see it.
+
+## A silent tool is not a negative answer (2026-08-23)
+
+**Twice in one session a check that returned nothing was reported as proof the
+thing did not exist, and both were wrong.** This is the same failure the
+`head`-truncation note above describes, arriving through two new doors.
+
+**A grep decided a setting was off.** `defaults read com.apple.dt.Xcode | grep
+-i "mcp|externalAgent|IDEIntelligence"` found nothing, and that became "the
+external-agent toggle has never been turned on". The key is
+`IDEAllowUnauthenticatedAgents` and it was already `1`. Ameen restarted Xcode on
+the strength of it. **When a search's answer decides whether something EXISTS,
+the pattern failing to match and the thing being absent are indistinguishable —
+so widen the pattern or dump the whole set before concluding.**
+
+**And a stdio MCP server returned zero bytes because stdin closed.**
+`printf '...' | xcrun mcpbridge` sends its lines and immediately EOFs; the
+server shuts down before it can reply. Twice this was read as "the bridge
+answers nothing". Hold stdin open and it answers instantly:
+
+```bash
+{ printf '%s\n' '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"p","version":"1"}}}'
+  sleep 2
+  printf '%s\n' '{"jsonrpc":"2.0","method":"notifications/initialized"}'
+  sleep 1
+  printf '%s\n' '{"jsonrpc":"2.0","id":2,"method":"tools/list"}'
+  sleep 5
+} | xcrun mcpbridge
+```
+
+**`notifications/initialized` is required between `initialize` and the first
+request** — the spec says so, and without it `tools/list` returns nothing while
+`initialize` succeeds, which looks exactly like a server with no tools.
+
+**MCP tools bind at session start.** A session that registers a server cannot
+call it; that takes a restart. So "the tools are not there" after an `mcp add`
+is expected, not a fault.
+
+## A working tool can be aimed at the wrong tree (2026-08-23)
+
+**There WERE two clones of this repo on the Mac, and Xcode's MCP bridge had the
+one nobody works in open.** Consolidated 2026-08-23; kept here because the trap
+is general and the wreckage is still visible in the tool output.
+
+```
+/Users/ameenhassan/Wazn            the work, and now the only clone
+/Users/ameenhassan/Developer/Wazn  main, six commits behind        <- what Xcode had
+```
+
+Different inodes, not a symlink. So `BuildProject` would have built, cleanly and
+confidently, a tree with no account deletion, no supersets, no RPE and no
+`sim_tap.sh`. **A tool that is broken tells you. A tool aimed at the wrong thing
+agrees with you.**
+
+**`XcodeListWindows` returns `workspacePath`. Read it before believing any
+answer the bridge gives**, and pass the matching `tabIdentifier`. It still lists
+a `windowtab1` for the workspace that was deleted, because a stale Xcode window
+outlives the directory under it, so the tab list is not a list of things that
+exist.
+
+The same question applies to anything else holding a path. Metro was serving the
+right clone here, but only `lsof -a -p <pid> -d cwd -Fn` proved it, and the
+answer could have gone either way. The credentials were the sharper version:
+`.env.local` and `mobile/.env.local` existed ONLY in the clone nobody works in,
+so `~/Wazn` had no Supabase configuration at all and the running app worked
+anyway, on vars exported into the shell that started Metro. `ps eww -p <pid>`
+is how you find that out.
+
+**And two static checks failed open in the same session**, which is the section
+above arriving through two more doors.
+
+- **`nm`/`strings` over the installed `.app` binary found no `ExpoKeepAwake`.**
+  It also found no `ExpoHaptics`, in an app whose haptics work. Expo modules are
+  not strings in the main binary, so the search could never have succeeded.
+  **The control run is what caught it: search for something you KNOW is there,
+  and if that comes back empty too, the technique is wrong, not the answer.**
+- **`curl http://localhost:8081/index.bundle` returned 5.2 KB** of
+  `UnableToResolveError` JSON, because expo-router's entry is not `index`.
+  Grepping that for `useKeepAwake` reported zero, which reads exactly like "the
+  edit is not in the bundle". **Check the SIZE before grepping a fetched
+  artefact.** The real one is `/.expo/.virtual-metro-entry.bundle?platform=ios`
+  and it is 13.8 MB.
+
+Grepping a served bundle is, otherwise, the cheap way to prove a running app has
+your change rather than a cached one, and it is stronger than a screenshot when
+the package was previously unused: zero call sites means zero presence in the
+dependency graph, so one match is proof.
+
+## A screenshot cannot press a button (2026-08-23)
+
+**`scripts/sim_tap.sh` taps the booted simulator.** It exists because two
+defects in `3791d9c` were invisible to lint, tsc, 1,296 tests and both bundles
+and were caught by LOOKING at a screenshot — and the next class down, a control
+that renders correctly and does nothing when pressed, needs a tap.
+
+`xcrun simctl` has no tap verb, and neither does Xcode's MCP bridge. Three
+things that do not work, so nobody re-derives them:
+
+- **`osascript ... click at {x, y}` fails with -25204**, even with accessibility
+  granted. Keystrokes work (that is how `Cmd+D` and reload are sent); clicks do
+  not. `brew install cliclick` is the answer.
+- **The Simulator does not expose the app's accessibility tree to macOS.**
+  `every UI element whose description contains "Superset"` finds nothing; only
+  the Simulator's own chrome (Home, Volume, Sleep/Wake) is enumerable. Tapping
+  is by coordinate, and the script converts device points to screen points from
+  the live window rather than a hardcoded origin.
+- **`idb` is not installed** and is far heavier than this.
+
+Two traps. **Activate the Simulator BEFORE reading its window geometry**, or
+the read fails with "Invalid index" and the arithmetic produces a NEGATIVE
+screen coordinate rather than an error — the script now says "could not
+determine" instead, per the rule two sections up. And **if React Native's
+element inspector is on, every tap INSPECTS instead of pressing**, which is
+indistinguishable from a dead control. `Cmd+D` then tap "Toggle Element
+Inspector" at device point `200 419`.
+
+**Reaching a screen you cannot navigate to:** `xcrun simctl openurl <udid>
+"wazn://session/new"` prompts with "Open in Wazn?" when the app is already
+running, and there is no way to dismiss that prompt without a tap. Terminate
+the app first and the same URL cold-launches straight into the route.
+
+## A workflow that stops is usually interrupted, not stuck (2026-08-23)
+
+**A `Workflow` run died and looked exactly like a hang for forty minutes.** Two
+runs the same afternoon: the first finished all 17 agents; the second returned
+4 of 19 and then nothing. The output file sat at 0 bytes, two processes were
+still alive in `ps`, and the obvious reading was a deadlock.
+
+It was not. Every one of the four agents that never came back ends its
+transcript with `[Request interrupted by user]`, **all four stamped at the same
+second**. A session-level interrupt (Ameen sending a message mid-turn, or
+Ctrl+C) kills the in-process subagents. The completed run has zero of those
+markers, which is the whole diagnosis in one grep:
+
+```bash
+grep -c "Request interrupted" <transcriptDir>/agent-*.jsonl
+```
+
+Two things follow, and the second is the one that matters.
+
+**`parallel()` is a barrier, and an interrupted agent never resolves.** Not to
+a value, not to `null`, not to a rejection. So the barrier waits on a promise
+that can no longer settle, and the run hangs until something kills it. The four
+agents that HAD returned were already in the journal and were thrown away with
+everything else, because the script never reached its `return`.
+
+**So do not put a bare `parallel()` in front of anything expensive.** Race every
+agent against a deadline so a dead one degrades to `null` instead of stopping
+the run:
+
+```js
+const withDeadline = (p, ms = 600_000) =>
+  Promise.race([p, new Promise((r) => setTimeout(() => r(null), ms))])
+
+const results = (
+  await parallel(ITEMS.map((it) => () => withDeadline(agent(it.prompt, opts))))
+).filter(Boolean)
+```
+
+`pipeline()` is the better default anyway, for the reason the tool's own docs
+give: one stuck item stops its own chain rather than the whole phase.
+
+**And read `journal.jsonl`'s mtime, not the process list, to tell working from
+dead.** A live PID proved nothing here; the journal had not been written in
+forty minutes and that was the real signal. `ps` says a process exists. It does
+not say it is doing anything, which is the same lesson as the `npm ci` that
+exited 0 having installed two packages of 599, and the `playwright install`
+that reached 100% and then sat at 0% CPU forever. **Three silent failures in
+one session, all of which looked alive.** Check the artefact, never the flag.
 
 ## Skills first (Ameen, 2026-08-04)
 
@@ -200,6 +410,17 @@ in its entirety. But a parser is not a server: 0021 shipped a
 `default (select auth.uid())` that parses perfectly and that every real
 Postgres rejects, and an `order by` on a column its own subquery had aliased
 away. Both died on the first execution.
+
+**A SQL suite can fail on a WEEKDAY, and this one did.** `coach_surfaces.sql`
+asserted `weeks_trained_of_8 = 8` flat. `weeks_trained_8w` counts buckets from
+`date_trunc('week', now()) - 7 weeks`, eight buckets including the current
+partial one, and the fixture's newest session is two days old, so on a **Monday
+or Tuesday** that session sits in the previous week, the current bucket is
+empty, and eight is not reachable. Unsatisfiable, not flaky. CI was green on
+Sunday 2026-08-23 and red on Monday 2026-08-24 with nothing in between touching
+SQL, which reads exactly like "the branch broke it" and was not. **Before
+blaming a branch for a red suite, check whether `main` would fail too, and check
+the date.**
 
 **Executed locally is still not applied.** "Applies cleanly from empty" and
 "applies cleanly to production" are different claims; the PR should say which
@@ -432,9 +653,14 @@ npm run bundle:android
   xcrun simctl install <udid> ios/build/Build/Products/Debug-iphonesimulator/Wazn.app
   ```
 
-- **`api.expo.dev` and `reactnative.directory` are 403 from this org's egress
-  proxy**, so `npx expo install` cannot resolve versions and EAS cannot run from
-  a session. Read `node_modules/expo/bundledNativeModules.json` instead — it is
+- **`api.expo.dev` answered HTTP 200 on 2026-08-23, having been 403 before.**
+  Two sections of this file and the plan both said EAS "cannot be run from a
+  session" on the strength of the old answer, and that claim is what parked the
+  Android build for days. **Re-test it; do not recite either answer.** What
+  really stops an EAS build from here is that `eas` is not installed and a build
+  spends Ameen's credits, which makes it his to start rather than a session's.
+  `reactnative.directory` was not re-tested. When the network is genuinely
+  unavailable, read `node_modules/expo/bundledNativeModules.json` instead — it is
   the same version map, offline.
 
 ## Architecture

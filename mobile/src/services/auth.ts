@@ -1,6 +1,7 @@
 import { classifyIdentifier } from '@wazn/domain'
 
 import { supabase } from './supabase'
+import { resetWorkout } from '@/state/live-workout'
 
 /**
  * The ways in, on native.
@@ -146,6 +147,55 @@ export async function signUpWithPassword(
   if (error) throw new Error(error.message)
 }
 
+/**
+ * Leave the account, and take the local board with you.
+ *
+ * `resetWorkout()` is not housekeeping. The live-workout checkpoint lives in
+ * AsyncStorage under one fixed key, `restoreWorkout()` parses it with no
+ * ownership check, and `_layout.tsx` calls that on every mount. So without
+ * this line, signing out and signing in as somebody else on the same phone
+ * restores the FIRST account's board, and `flushPending()` then inserts those
+ * sets under the second account's `user_id`.
+ *
+ * It clears memory and storage together, because `set()` checkpoints on every
+ * mutation and `EMPTY` is idle, which is the branch that removes the key.
+ *
+ * Yes, this discards a workout that was in progress. That is the correct
+ * reading of "sign out": the sets cannot be synced without a session, and the
+ * alternative is handing them to whoever signs in next.
+ */
 export async function signOut(): Promise<void> {
   await supabase.auth.signOut()
+  resetWorkout()
+}
+
+/**
+ * Delete the account and everything in it. Irreversible.
+ *
+ * Both stores require this path: Apple rejects a submission without in-app
+ * deletion (5.1.1(v)), Play requires the in-app path plus a web URL. The work
+ * happens in the `delete-account` Edge Function, because removing a user needs
+ * the service-role key and that key is never allowed near a client.
+ *
+ * `confirm: 'DELETE'` is a FIXED sentinel and deliberately not the localised
+ * word the user typed. The screen checks the typed input against
+ * `settings.delete.word`, which is Arabic on an Arabic build; if that string
+ * were forwarded, the server contract would change with the device language
+ * and an Arabic user could never delete their account.
+ *
+ * The local session is cleared only after the server confirms. Signing out
+ * first would leave a caller with no token to authorise the deletion, which is
+ * the obvious ordering and the wrong one.
+ */
+export async function deleteAccount(): Promise<void> {
+  const { error } = await supabase.functions.invoke('delete-account', {
+    method: 'POST',
+    body: { confirm: 'DELETE' },
+  })
+  if (error) throw new Error(error.message)
+  // Through `signOut()` rather than `supabase.auth.signOut()`, so the local
+  // board is cleared here too. `public/delete-account.html` promises erasure
+  // "permanently, not hidden or archived", and a checkpoint left in
+  // AsyncStorage after the account is gone makes that sentence false.
+  await signOut()
 }

@@ -322,8 +322,33 @@ begin
   if (review #>> '{adherence,avg_sessions_per_week_8w}')::numeric <> 1.0 then
     raise exception 'adherence.avg: expected 1.0, got %', review -> 'adherence';
   end if;
-  if (review #>> '{adherence,weeks_trained_of_8}')::int <> 8 then
-    raise exception 'adherence.weeks_trained_of_8: expected 8, got %', review -> 'adherence';
+  -- ── EIGHT ONLY WHEN THE NEWEST SESSION IS IN THIS WEEK'S BUCKET ──────────
+  -- This asserted a flat 8 and therefore failed every Monday and Tuesday, on
+  -- main as much as on any branch: CI was green on Sunday 2026-08-23 and red on
+  -- Monday 2026-08-24 with nothing between them touching SQL.
+  --
+  -- It is unsatisfiable on those days rather than flaky. `weeks_trained_8w`
+  -- counts distinct buckets from `date_trunc('week', now()) - 7 weeks`, which
+  -- is eight buckets INCLUDING the current partial one. The newest fixture
+  -- session is two days old, so on a Monday or Tuesday it lands in the previous
+  -- week and the current bucket holds nothing, leaving seven reachable. The
+  -- oldest session, at -51 days, drops out of the window on exactly those days
+  -- for the same reason.
+  --
+  -- So the expectation is derived from the fixture's own newest session rather
+  -- than from the function under test: same week as `now()` means the current
+  -- bucket is covered and all eight are reachable. `days_since_last = 2` is
+  -- asserted above and is what makes this weekday-dependent; pinning the
+  -- fixture to week boundaries instead would break that assertion and three
+  -- others around it.
+  if (review #>> '{adherence,weeks_trained_of_8}')::int <> (
+       case
+         when date_trunc('week', now() - interval '2 days')
+              = date_trunc('week', now()) then 8
+         else 7
+       end
+     ) then
+    raise exception 'adherence.weeks_trained_of_8: got %', review -> 'adherence';
   end if;
   if (review #>> '{adherence,sessions_last_28}')::int <> 4 then
     raise exception 'adherence.sessions_last_28: expected 4, got %', review -> 'adherence';

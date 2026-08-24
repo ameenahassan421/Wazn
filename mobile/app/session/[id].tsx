@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Pressable, ScrollView, View } from 'react-native'
+import { useKeepAwake } from 'expo-keep-awake'
 import { useRouter } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import Svg, { Line, Path, Rect } from 'react-native-svg'
@@ -36,6 +37,7 @@ import {
   selectBoardView,
   setCurrentSetType,
   startWorkout,
+  toggleCurrentSuperset,
   useLiveWorkout,
 } from '@/state/live-workout'
 
@@ -67,11 +69,24 @@ import {
  * relocated: the Finish screen's stat tiles are the obvious new home.
  *
  * ── WHAT IS NOT DRAWN, FOR WANT OF DATA ─────────────────────────────────────
- * The exercise thumbnail (no image pipeline on native), the equipment word
- * (`deriveEquipment` needs a muscle group the board does not carry), and the
- * coach's sentence (`ghost-reason` is not wired here yet). Each is a hole in
- * the layout rather than a placeholder, for the reason Home gives.
+ * The exercise thumbnail (no image pipeline on native) and the equipment word
+ * (`deriveEquipment` needs a muscle group the board does not carry). Each is a
+ * hole in the layout rather than a placeholder, for the reason Home gives.
+ *
+ * This list used to name the coach's sentence too, and had gone stale: the
+ * ghost was wired to this board on 2026-08-23 and renders above the logged
+ * rows. A comment that describes a hole somebody has already filled is how
+ * WAZN_PLAN 7.0 ends up claiming work is outstanding after it shipped.
  */
+
+/**
+ * The RPE scale as a lifter actually uses it.
+ *
+ * Six to ten, not one to ten. RPE below 6 describes a set nobody logs an
+ * effort rating for, and every extra chip is width this row does not have on a
+ * 375pt phone.
+ */
+const RPE_CHOICES = [6, 7, 8, 9, 10] as const
 
 /** The prototype's back chevron, at its own weight. */
 function BackChevron() {
@@ -123,6 +138,57 @@ function Barbell() {
   )
 }
 
+/**
+ * Press and hold to repeat, because the first set of a new lift cost 40 taps.
+ *
+ * `seedWeight` returns null whenever the set has no previous weight, which is
+ * every first set of every exercise the lifter has never done — day one for a
+ * new account, and any new lift for everyone else. `weightStep` is 2.5kg, the
+ * board has no text input, so 0 to 100kg was forty presses of `+`. In an app
+ * whose one sentence is "log a set in under thirty seconds, one hand".
+ *
+ * The single tap still runs through `onPress`, deliberately. Firing on
+ * `onPressIn` would read a scroll that happens to start on the key as an
+ * increment, and this card lives inside a ScrollView.
+ *
+ * So `onPressIn` only arms the repeat. Under `DELAY` nothing fires and the tap
+ * behaves exactly as before; past it the interval takes over and `onPress` is
+ * suppressed on release, or a hold would land one extra step.
+ */
+const HOLD_DELAY = 350
+const HOLD_INTERVAL = 80
+
+function useHold(action: () => void) {
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const repeater = useRef<ReturnType<typeof setInterval> | null>(null)
+  const repeated = useRef(false)
+
+  const stop = () => {
+    if (timer.current !== null) clearTimeout(timer.current)
+    if (repeater.current !== null) clearInterval(repeater.current)
+    timer.current = null
+    repeater.current = null
+  }
+
+  // Timers outlive the screen otherwise: leave the board mid-hold and the
+  // interval keeps stepping a `dialled` nobody is looking at.
+  useEffect(() => stop, [])
+
+  return {
+    onPressIn: () => {
+      repeated.current = false
+      timer.current = setTimeout(() => {
+        repeated.current = true
+        repeater.current = setInterval(action, HOLD_INTERVAL)
+      }, HOLD_DELAY)
+    },
+    onPressOut: stop,
+    onPress: () => {
+      if (!repeated.current) action()
+    },
+  }
+}
+
 /** One half of the stepper row. 46px keys, 48px targets. */
 function Stepper({
   label,
@@ -138,6 +204,8 @@ function Stepper({
   onUp: () => void
 }) {
   const palette = usePalette()
+  const down = useHold(onDown)
+  const up = useHold(onUp)
   const key = {
     width: 46,
     height: 46,
@@ -163,7 +231,7 @@ function Stepper({
           accessibilityRole="button"
           accessibilityLabel="−"
           hitSlop={1}
-          onPress={onDown}
+          {...down}
           style={key}
         >
           <Txt step="glyph">−</Txt>
@@ -181,7 +249,7 @@ function Stepper({
           accessibilityRole="button"
           accessibilityLabel="+"
           hitSlop={1}
-          onPress={onUp}
+          {...up}
           style={key}
         >
           <Txt step="glyph">+</Txt>
@@ -192,6 +260,22 @@ function Stepper({
 }
 
 export default function LiveWorkout() {
+  /**
+   * The screen stays on for as long as this board is mounted.
+   *
+   * The default lock is 30 seconds on a new iPhone and this app's one sentence
+   * is "log a set in under thirty seconds, one hand" — so the lifter racks the
+   * bar, rests, and comes back to Face ID with chalk on their hands. Every
+   * competitor holds the screen awake here; the dependency has been installed
+   * and called zero times since the native app existed.
+   *
+   * Scoped to the board rather than the app, and to the whole session rather
+   * than just the rest timer: it releases on unmount, so Finish and every
+   * other route lock normally, and a mid-set edit is as much a reason to stay
+   * lit as the countdown is.
+   */
+  useKeepAwake()
+
   const palette = usePalette()
   const router = useRouter()
   const insets = useSafeAreaInsets()
@@ -297,7 +381,14 @@ export default function LiveWorkout() {
     key: string
     weightKg: number | null
     reps: number | null
-  }>({ key, weightKg: view.set?.weightKg ?? null, reps: view.set?.reps ?? null })
+    /** Cleared on every move, never carried. See `BoardSet.rpe`. */
+    rpe: number | null
+  }>({
+    key,
+    weightKg: view.set?.weightKg ?? null,
+    reps: view.set?.reps ?? null,
+    rpe: null,
+  })
 
   if (dialled.key !== key) {
     /*
@@ -311,10 +402,40 @@ export default function LiveWorkout() {
      * eight taps on the `+`. "The stepper KEEPS them" is the gate; this is
      * where it is kept.
      */
+    /*
+     * ── AND THE COACH GETS TO MOVE THE NUMBER, SINCE 2026-08-23 ─────────────
+     * `verdict` already factors today's check-in: `readiness` is seeded in
+     * `startWorkout` from `daily_checkins` and passed into `verdictFor` above.
+     * Until now it reached only the CHIP. The board said "raise to 62.5" in
+     * words and dialled 60, so the app asked how you felt, worked out what to
+     * do about it, told you, and then made you press `+` yourself.
+     *
+     * That is the whole differentiator, one wire short. Fitbod cannot ask how
+     * you feel because automation is what it sells; Hevy publicly chose not to
+     * coach. The claim only holds if the answer moves the bar.
+     *
+     * It is NOT model output, so nothing here breaks the rule that a model
+     * never writes without a press: `verdictFor` is deterministic TypeScript
+     * over the lifter's own sets, and the number is a proposal in an editable
+     * field that banks nothing until they commit it.
+     *
+     * `null` falls through, which is the common case: `verdict.weightKg` is
+     * null whenever the ghost has no opinion (`cause: 'none'`, a first-ever
+     * lift, the coach dialled off), and the previous behaviour stands.
+     */
     setDialled({
       key,
-      weightKg: seedWeight(view.set, dialled.weightKg),
-      reps: view.set?.reps ?? dialled.reps,
+      weightKg: verdict?.weightKg ?? seedWeight(view.set, dialled.weightKg),
+      reps: verdict?.reps ?? view.set?.reps ?? dialled.reps,
+      /*
+       * Null on every move, and deliberately unlike the two above it. Weight
+       * and reps are a PRESCRIPTION worth carrying: repeating them is the
+       * one-tap path GATE U2 measures. RPE is a READING of a set that has not
+       * happened yet, and carrying the last one forward would put a number the
+       * lifter did not choose into their own record of effort — the same error
+       * as seeding a starting weight they never picked.
+       */
+      rpe: null,
     })
   }
 
@@ -453,7 +574,7 @@ export default function LiveWorkout() {
     // The haptic and the board move together, before anything is asked of the
     // network. `bankCurrentSet` is synchronous for exactly this reason.
     hapticBanked()
-    bankCurrentSet(dialled.weightKg, dialled.reps)
+    bankCurrentSet(dialled.weightKg, dialled.reps, dialled.rpe)
   }
 
   /**
@@ -472,6 +593,32 @@ export default function LiveWorkout() {
     (n, e) => n + e.sets.filter((row) => row.done).length,
     0,
   )
+  /**
+   * The superset the lifter is inside, and who else is in it.
+   *
+   * ── PAIRED WITH THE NEXT LIFT, NOT WITH ONE PICKED FROM A LIST ───────────
+   * A superset is two adjacent things on the board. Offering a picker would be
+   * a rewrite of the running order dressed up as a pairing, and it would cost
+   * a modal on the one screen this app refuses to put modals on.
+   *
+   * So the control is binary and reads as a sentence: "Superset with Barbell
+   * Row", or "Break up the superset". `toggleSuperset` in the shared domain
+   * holds the rule that a group of one dissolves rather than lingering.
+   */
+  const groupId = view.exercise?.supersetGroup ?? null
+  const partnerNames = live.board
+    .filter(
+      (e) =>
+        groupId !== null &&
+        e.supersetGroup === groupId &&
+        e.exerciseId !== view.exercise?.exerciseId,
+    )
+    .map((e) => e.name)
+  const pairWith =
+    view.position === null || groupId !== null
+      ? null
+      : (live.board[view.position.exerciseIndex + 1] ?? null)
+
   const previous = (view.exercise?.sets ?? [])
     .filter((s) => s.previousReps !== null)
     .map((s) =>
@@ -566,9 +713,21 @@ export default function LiveWorkout() {
             first workout of a new account — and the prototype has no empty
             state for this screen, because its demo always has a bench press.
             An empty white card is not a design, it is a hole, so this says
-            what is true and `WAZN_PLAN.md` records the real gap: native has no
-            way to ADD an exercise, which makes this a dead end rather than an
-            empty state. That is day one for every new user. */}
+            what is true and offers the one thing that resolves it.
+
+            THIS COMMENT USED TO SAY "native has no way to ADD an exercise,
+            which makes this a dead end rather than an empty state", directly
+            above the button that adds an exercise. `session/add.tsx` shipped,
+            with a search over the catalogue AND a create path for a lift that
+            is not in it. The picker is not empty for a new account either:
+            `exercises` holds 135 rows with `owner_id is null`, and
+            `exercises_select_visible` grants every authenticated user those
+            plus their own (read from production 2026-08-23).
+
+            The sentence outlived the gap it described, and WAZN_PLAN's v1
+            table still carries it as "day one is a dead end", which is the
+            exact way this repo keeps convincing itself work is outstanding
+            after it shipped. */}
         {live.board.length === 0 ? (
           <Card style={{ paddingVertical: 20, paddingHorizontal: 18, gap: 14 }}>
             <Txt step="title">{t('log.empty')}</Txt>
@@ -581,15 +740,45 @@ export default function LiveWorkout() {
           </Card>
         ) : (
           <Card style={{ paddingVertical: 14, paddingHorizontal: 18 }}>
-            <Txt step="title" numberOfLines={1}>
-              {view.exercise?.name ?? ''}
-            </Txt>
+            {/* `flexShrink` on the name and no `flex` on the row's children:
+                a flexed Text in Arabic swallows the free space without putting
+                its content on the start edge, which has shipped twice. */}
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+              <Txt step="title" numberOfLines={1} style={{ flexShrink: 1 }}>
+                {view.exercise?.name ?? ''}
+              </Txt>
+              {groupId !== null && (
+                <View
+                  style={{
+                    paddingHorizontal: 9,
+                    paddingVertical: 3,
+                    borderRadius: radius.pill,
+                    borderWidth: 1,
+                    borderColor: palette.ringStrong,
+                  }}
+                >
+                  <Txt step="nano" ink="muted">
+                    {t('workout.superset.badge', { n: String(groupId) })}
+                  </Txt>
+                </View>
+              )}
+            </View>
             <Txt step="meta" ink="muted" ltr style={{ marginTop: 3 }}>
               {t('workout.set_of', {
                 n: String(view.set?.setNumber ?? 0),
                 total: String(view.exercise?.sets.length ?? 0),
               })}
             </Txt>
+
+            {/* Said out loud rather than left to the badge. "No rest between
+                them" is the whole behavioural consequence of the pairing, and
+                a lifter who does not expect the rest canvas to be skipped will
+                read its absence as a bug. */}
+            {partnerNames.length > 0 && (
+              <Txt step="caption" ink="muted" style={{ marginTop: 8 }}>
+                {t('workout.superset.paired', { name: partnerNames.join(' · ') })}
+              </Txt>
+            )}
 
             {previous !== '' && (
               <Txt step="meta" ink="muted" ltr style={{ marginTop: 12 }}>
@@ -649,6 +838,24 @@ export default function LiveWorkout() {
                     {s.type === 'warmup' && (
                       <Txt step="nano" ink="muted">
                         {t('workout.warmup')}
+                      </Txt>
+                    )}
+                    {/* The only place a banked RPE can be READ. The board has
+                        no update path for a committed row, so if this list did
+                        not show it the number would go into Postgres and
+                        disappear from the lifter's session entirely.
+
+                        `typeof === 'number'`, NOT `!== null`. A workout that
+                        was in progress when this shipped restores from a
+                        checkpoint written before the field existed, so `rpe`
+                        comes back UNDEFINED — which is not null, so the row
+                        rendered the literal string "RPE UNDEFINED". Seen on a
+                        simulator within a minute of the feature working, and
+                        invisible to every check in the repo because no test
+                        restores a checkpoint from the previous build. */}
+                    {typeof s.rpe === 'number' && (
+                      <Txt step="nano" ink="muted" ltr>
+                        {`RPE ${s.rpe}`}
                       </Txt>
                     )}
                   </View>
@@ -719,6 +926,77 @@ export default function LiveWorkout() {
               </Txt>
             )}
           </View>
+        )}
+
+        {/* ── How hard it felt ────────────────────────────────────────────
+            `workout_sets.rpe` has had a column since migration 0001 and no
+            client has ever written to it, so every row in production is null.
+            This is the control that changes that.
+
+            OPTIONAL, and the design has to say so without a word: there is no
+            default, no pre-selection and no "none" chip. Nothing is chosen
+            until something is tapped, and tapping the chosen one again clears
+            it. A required RPE would tax the commonest path in the app for a
+            number most lifters do not track, which is the trade this screen
+            exists to refuse.
+
+            Under the dials with the warm-up chip, because it qualifies the two
+            numbers above it, and BEFORE the plate maths, because plate maths
+            is read while loading the bar and this is answered after the set.
+
+            Six to ten. Below six is not a working set anybody records, and a
+            wider range would wrap the row onto a second line on a 375pt
+            phone. */}
+        {live.board.length > 0 && view.set !== null && !warmup && (
+          <View style={{ gap: 8 }}>
+            <Txt step="nano" ink="muted">
+              {t('workout.rpe')}
+            </Txt>
+            <View style={{ flexDirection: 'row', gap: 8 }}>
+              {RPE_CHOICES.map((value) => (
+                <ChipBtn
+                  key={value}
+                  label={String(value)}
+                  selected={dialled.rpe === value}
+                  // Tapping the chosen one clears it. There is no "none" chip
+                  // because "not said" is the state you START in, and a chip
+                  // for it would suggest the field had to be answered.
+                  onPress={() =>
+                    setDialled((d) => ({ ...d, rpe: d.rpe === value ? null : value }))
+                  }
+                />
+              ))}
+            </View>
+          </View>
+        )}
+
+        {/* ── Superset ────────────────────────────────────────────────────
+            A `ghost` button and not a chip: this is an ACTION on the running
+            order, not a state of the set in front of you, and this system
+            keeps those apart — the warm-up and RPE chips fill with ink when
+            selected, and ember stays with the one thing you press to commit.
+
+            `line` and not `ghost`, which is where it started and which a
+            simulator killed in one screenshot: a ghost button is chrome-less
+            by design, so "Superset with Bench Press (Barbell)" sat alone on
+            the page in bold and read as a SECTION HEADING. A control nobody
+            can tell is a control is worse than no control, and under load
+            nobody experiments.
+
+            It sits with the add-exercise button because both change the board
+            rather than the set, and below the commit cluster's reach so a
+            thumb going for the hero cannot catch it. */}
+        {(pairWith !== null || groupId !== null) && (
+          <Btn
+            kind="line"
+            small
+            label={
+              groupId !== null
+                ? t('workout.superset.break')
+                : t('workout.superset.with', { name: pairWith?.name ?? '' })
+            }
+            onPress={toggleCurrentSuperset}
+          />
         )}
 
         {/* ── What to hang on the bar ─────────────────────────────────────

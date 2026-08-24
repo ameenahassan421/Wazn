@@ -1418,7 +1418,661 @@ retention that cannot exist until the app is shared.
 
 #### Next action
 
-**RESUME HERE (2026-08-22, FIFTH update. Read this one; the fourth is below and
+**RESUME HERE (2026-08-23, EIGHTH update. Read THIS one, then stop. The seventh
+is below; it is accurate except for two items this session closed or corrected,
+both named below.)**
+
+**FIXED: there were TWO clones of this repo and Xcode was building the wrong
+one.** `/Users/ameenhassan/Developer/Wazn` was on `main` at `c0c15d4`, six
+commits behind, different inode, not a symlink, and it was the workspace
+`XcodeListWindows` reported. `BuildProject` would have compiled a tree with no
+account deletion, no supersets, no RPE and no `sim_tap.sh`, and reported it
+green.
+
+Consolidated into `/Users/ameenhassan/Wazn`, in this order, each step verified
+before the next:
+
+1. **`claude/e1-core-extraction` existed only on that disk.** Four commits
+   (`2a46dc1`, `8195fc8`, `33e655d`, `a133ed6`, the calculation-engine
+   extraction and the injected Supabase client), on no remote and absent from
+   the working clone. Fetched local-to-local, no network.
+2. **`.env.local` and `mobile/.env.local` existed only there too.** Copied.
+   Byte-identical (sha256), both gitignored (`check-ignore`), and the values
+   match what Metro was already running with (`ps eww`), so nothing was
+   repointed. **`.env.local` carries `SUPABASE_ACCESS_TOKEN` and
+   `SUPABASE_PROJECT_REF`**, which is the answer to the open thread about
+   headless sessions having no Supabase credentials: they were in the other
+   clone the whole time.
+3. **An abandoned detached worktree** (`.claude/worktrees/sweet-lumiere-e10ddd`)
+   held a 268-file uncommitted diff, a reformat and version churn of the
+   vendored `impeccable` skill rather than project work. Saved to
+   `/Users/ameenhassan/Developer/Wazn-worktree-uncommitted.patch` (8.5 MB) and
+   verified by reverse-apply.
+4. Every branch tip in the old clone confirmed present in the working clone.
+5. **Both unpushed branches pushed to origin and confirmed with `ls-remote`
+   against the local sha** before anything was removed.
+6. The old clone moved to `~/.Trash/Wazn-old-clone-20260823`. **Reversible on
+   purpose**, and `rm -rf` was refused by the permission classifier anyway.
+   Emptying the Trash reclaims 5.7 GB, which the disk-pressure history says is
+   worth doing.
+
+**Two things are still Ameen's:** empty the Trash to get the 5.7 GB, and
+**close the stale Xcode window.** `XcodeListWindows` still lists `windowtab1`
+for the deleted workspace beside `windowtab2` for the real one, because an Xcode
+window outlives the directory under it. **Read `workspacePath` and pass the
+matching `tabIdentifier`; the tab list is not a list of things that exist.**
+
+**Not migrated, deliberately:** three permission allows in the old clone's
+`.claude/settings.local.json`, one of which is `mcp__supabase__apply_migration`.
+Section 2.8 and the "that token is production DDL access" note make
+auto-granting a session the ability to apply a production migration Ameen's
+decision, not a consolidation side effect. The other two are `Bash(claude-or:*)`
+and `Bash(gh pr merge:*)`. Its `hooks` block needed no migration: it is the
+impeccable design hook, already wired in the checked-in `.claude/settings.json`.
+
+**`mobile/android/` HAS NOW BEEN GENERATED, FOR THE FIRST TIME.**
+`npx expo prebuild --platform android` exited 0 and the config plugins wrote
+the project. That does not close the Android unknown, it climbs the first rung
+of it: prebuild GENERATES, it does not compile. A local compile is still out of
+reach and should stay that way, `java -version` reports "Unable to locate a Java
+Runtime" and there is no SDK.
+
+What the first generation shows, which nothing has ever looked at:
+
+- `applicationId 'app.wazn.client'`, matching the iOS bundle id.
+  `versionCode 1`, `versionName 0.1.0`. Both schemes present, `wazn` and the
+  `https` one for `/join`.
+- **The manifest requests `SYSTEM_ALERT_WINDOW`, `READ_EXTERNAL_STORAGE` and
+  `WRITE_EXTERNAL_STORAGE`.** None of them is anything this app does. Draw over
+  other apps is a high-friction permission that Play reviews, and the storage
+  pair is restricted on modern Android. They come from a dependency's manifest
+  merging in, so the fix is a `remove` entry in the manifest via the config
+  plugin. **Find out which dependency before submitting anything**, because a
+  permission you cannot explain is a policy question at review time.
+- `android/` is gitignored (`mobile/.gitignore:43`), so none of it is committed
+  and `git status` stayed clean.
+
+**AND `api.expo.dev` IS REACHABLE FROM A SESSION. It returns HTTP 200.** This
+plan and CLAUDE.md both say it is 403 from the org's egress proxy and that "EAS
+cannot be run from a session", and that claim is what has kept the Android build
+parked. It is wrong now, whatever it was when it was written. What actually
+blocks an EAS build from here is smaller and more ordinary: `eas` is not
+installed, and a build spends Ameen's queue and credits, so it is his to
+authorise rather than something a session should start.
+
+**FIVE MORE REVIEW FINDINGS CLOSED. One remains, and it needs a copy decision.**
+
+1. **Crash reporting could not catch the crashes it was written for.**
+   `initCrashReporting()` sat in `_layout.tsx`'s module body, below its own
+   imports, under a comment claiming "this runs as the bundle evaluates" and
+   naming a bad font registration, a keychain read that throws and a missing
+   native module. Imports are hoisted, so six font faces, `services/supabase`,
+   `services/rest-alarm`, `state/live-workout` and `hooks/use-auth` had all
+   finished evaluating first. The `createClient('', '')` throw that the same
+   release fixed would have been reported by nothing. Now
+   `@/services/crash-boot`, a module with one side effect, imported on line one:
+   import order is evaluation order.
+2. **A six-day plan collided its React keys three times.** `generate-routine`'s
+   prompt says "6 days = push/pull/legs run twice", and the preview keyed Cards
+   by `day.name`. Keyed by index now, and the inner list too, where a lift the
+   model lists twice in one day collided on `e.id`.
+3. **The two answerable generation errors were unreachable.** Only 429 was
+   mapped, so 400 ("not enough exercises for that equipment") and 502 ("too long
+   to finish") both surfaced as the generic retry, with no hint that the chips
+   were the cause. Mapped to catalogue KEYS rather than relaying the server's
+   sentence, which is English only. **The two new Arabic strings are mine and
+   want a native read**: `generate.thin` and `generate.toolong`.
+4. **`sim_tap.sh`'s "could not determine" branch was dead code.** `set -e` plus
+   a bare assignment from a command substitution took the script down the moment
+   `osascript` failed, which is exactly the case the message exists to report.
+   Proven both ways in a shell before and after: without the guard the message
+   never prints and the script exits 1. Its header now also says **run it with
+   `zsh`** — `bash scripts/sim_tap.sh` dies on a zsh-only substitution and taps
+   nothing while looking like it worked, which cost time this session.
+5. **Two dead i18n keys removed** from both locales: `workout.rpe.off`, which
+   the code comment beside it says can never render, and
+   `exercise.create.heading`, a word-for-word duplicate of `exercise.new.title`.
+   The third, `plan.generate`, is live now that the door exists.
+
+**STILL OPEN, and deliberately:** the superset button says "Superset with
+<next lift>" while `toggleSuperset` joins whatever group that lift already
+belongs to, so pressing it can silently produce a group of three. Trios are
+supported by design, so the code is right and the LABEL is wrong. Fixing it
+means new copy in both locales naming a join rather than a pair, and copy is
+Ameen's.
+
+**THE FIRST SET OF A NEW LIFT COST FORTY TAPS, AND IT WAS NEVER ONLY A DAY-ONE
+PROBLEM.** Chasing the friction left over from the item below turned up the
+real defect, in the one path the app exists for.
+
+`seedWeight` returns null whenever the set has no previous weight. That is not
+just a new account: it is **every first set of every exercise the lifter has
+never done**, so an established user adding a lift mid-workout hits it too. The
+weight then starts at 0, `weightStep` is 2.5kg, and the board has **zero text
+inputs**, so 0 to 100kg was forty presses of `+`. 225lb was forty-five. In an
+app whose one sentence is "log a set in under thirty seconds, one hand".
+
+**Fixed with press-and-hold to repeat**, 350ms before it engages and 80ms per
+step after, so 100kg is about three seconds of holding.
+
+The single tap deliberately still runs through `onPress` rather than
+`onPressIn`. Firing on press-in would read a scroll that happens to start on
+the key as an increment, and that card lives inside a ScrollView. `onPressIn`
+only arms the repeat; past the delay the interval takes over and `onPress` is
+suppressed on release, or a hold would land one extra step. The timers are
+cleared on unmount, or leaving the board mid-hold keeps stepping a `dialled`
+nobody is looking at.
+
+**Verified by tapping, and only that far.** Cold-launched the board, tapped the
+reps `+` once: 3 to 4, and the commit bar followed to "Log set 2 · 105 × 4". So
+the tap path is not regressed. **The HOLD itself is not verified** —
+`sim_tap.sh` issues a click, not a press-and-hold, and extending it to
+`cliclick dd`/`du` is the way to close that.
+
+**The proper fix is a keypad**, and this is not it. Hevy lets you tap the number
+and type it. Forty taps became one hold, which is the ceiling this removes; it
+does not make entering 102.5kg pleasant. That is a change to the board's input
+model and belongs to Ameen, not to a session tidying a review finding.
+
+**And `scripts/sim_tap.sh` is zsh-only.** Run under `bash` it dies on
+`${${(s:,:)WIN}[1]// /}` with "bad substitution" and taps nothing. The shebang
+says `#!/bin/zsh` and is right; invoking it with `bash scripts/sim_tap.sh` is
+what fails. Related to the open review finding that `set -e` prevents its own
+"could not determine" branch from ever running.
+
+**"DAY ONE IS A DEAD END" IS NOT TRUE, AND HAS NOT BEEN FOR A WHILE.** The v1
+table below carries "A first run that reaches a logged set: NOT STARTED. Day one
+is still a dead end for a new account", and `session/[id].tsx` carried the same
+sentence in a comment sitting directly above the button that resolves it. Both
+were written when they were true and neither was revisited.
+
+What is actually there, checked rather than recited:
+
+- The empty board renders `log.empty` and an **Add exercise** button into
+  `/session/add`, which shipped with a catalogue search AND a create path for a
+  lift that is not in it.
+- The picker is not empty for a new account. `exercises` holds **135 rows, all
+  with `owner_id is null`**, and `exercises_select_visible` grants every
+  authenticated user those plus their own. Read from production 2026-08-23.
+- Start is unconditional on Train, so nothing gates reaching the board.
+- Production has logged sets through 2026-08-22, and all four accounts that
+  have a first workout have sets in it.
+
+**What is left is friction, not a wall.** With no history `seedWeight` returns
+null and the commit button is disabled until reps reach 1, so a brand-new lifter
+taps `+` before they can bank anything, and a set can be banked with a null
+weight. That is worth fixing and it is a different, smaller job than the one the
+table describes.
+
+**Not walked end to end.** Confirming this properly needs a throwaway account
+signing up on a device, which a session cannot do. The claim above is from the
+code, the schema, the RLS policies and the production rows; it is not from
+somebody creating an account and logging a set. **Ameen doing that once settles
+it**, and it is the same thirty seconds that closes the routine round-trip gap
+7.0 has been carrying since 2026-08-22.
+
+**FOUR MORE REVIEW FINDINGS CLOSED, three of them in the logging hot path.**
+
+1. **`/routine/generate` has a door.** It shipped reachable by nothing: 305
+   lines and 22 strings per locale, with `plan.generate` sitting in both
+   catalogues used zero times. Added to the Plan tab twice, as a `line` in the
+   list footer and in the empty state, where it matters most, since the generate
+   screen exists for exactly the cold start an account without a Hevy import
+   lands in. `check:routes` passes but could never have caught this: it checks
+   that links resolve, not that screens are reachable.
+2. **Warm-ups were counted as completed rounds.** `currentPosition` and
+   `restsAfterBank` both counted `s.done` flat, while this same file says "a
+   warm-up starts nothing" two rules further down. Pair a bench carrying two
+   warm-ups with a row carrying none and the bench reads three to the row's
+   zero, so the row wins the tie for every set it has and the lifter never
+   walks back, which is the entire feature. Rest then fires on the wrong beat.
+   One `workingDone` helper, three call sites. **Every superset test in the
+   suite used boards with no warm-ups**, so three new tests do, and all three
+   were confirmed to fail against the old counting before being kept.
+3. **A dialled RPE banked onto a warm-up.** The chips hide when the set is a
+   warm-up, but `dialled` is keyed on `exerciseIndex-setIndex` and not on the
+   set type, so dialling 8 and then tapping Warm-up left 8 in state. Guarded in
+   `bankCurrentSet`, the write boundary, rather than on the screen, so no
+   future caller can reintroduce it.
+4. **Starting from a routine dropped every superset.** `routine_exercises.superset_group`
+   has existed since 0004:56 and `routinePlan` never selected it, so Plan then
+   Start, the main way into a workout, lost pairings the board advertises as
+   "repeats last session's pairing at zero taps". The routine-unreadable
+   fallback omitted it too, while the identical construction on the main path
+   derives it, so whether a lifter kept their pairings depended on whether a
+   routine read happened to fail. Both fixed, and the field is now DECLARED on
+   the return type, which is the trap the file's own comment already documents
+   one field over.
+
+Wall: root typecheck, 1,300 tests, format, both lints, mobile typecheck, mobile
+live-workout tests, `bundle:ios`. **Not verified by a tap.** The door resolves
+and typechecks; nobody has pressed it on a device, and "renders correctly and
+does nothing" is the exact class `sim_tap.sh` exists for.
+
+**Six review findings remain open**, none of them store blockers:
+`initCrashReporting()` below the imports it should catch and no `Sentry.wrap()`;
+`generate.tsx` keying Cards by a day name the prompt deliberately duplicates;
+the 400 and 502 messages from `generate-routine` collapsing into a generic
+retry; `set -e` in `sim_tap.sh` killing it before its own "could not determine"
+branch; three dead i18n keys, one a duplicate; and the superset button naming
+one lift while joining whatever group that lift already belongs to.
+
+**THE NATIVE BUILD PASSES ON THIS BRANCH.** `xcodebuild` against
+`ios/Wazn.xcworkspace`, Debug, iPhone 17 simulator, with
+`SENTRY_DISABLE_AUTO_UPLOAD=true`: `** BUILD SUCCEEDED **`, zero `error:` lines,
+app rebuilt 2026-08-23 21:14. This is the first real build on the branch that
+carries the crash-reporting work, which is the exact change that failed
+`xcodebuild` at exit 65 once before while every `npm run` stayed green.
+
+**`/code-review` RAN ON THIS BRANCH AT HIGH EFFORT AND RETURNED FIFTEEN
+FINDINGS**, over 31 files and ~3.8k insertions. Two are fixed below. **The other
+thirteen are open and three of them block a store release.** Full text is in the
+session transcript; the ranked summary:
+
+**Blocks a store release:**
+
+1. **No EAS profile passes `EXPO_PUBLIC_SUPABASE_URL`, `_ANON_KEY` or
+   `_SENTRY_DSN`.** Verified: all three profiles in `mobile/eas.json` declare an
+   `env` block containing only `SENTRY_DISABLE_AUTO_UPLOAD`, and
+   `app.config.ts:293` reads those vars at build time on the EAS worker where
+   they are unset. `eas build --profile production` therefore bakes empty
+   strings, `supabaseConfigError` is non-null, and the store build renders the
+   config-error sentence and reports no crashes. On the branch whose purpose is
+   store readiness.
+2. **`deleteAccount()` never clears the local live-workout checkpoint.**
+   `wazn.live-workout` survives sign-out in AsyncStorage and `restoreWorkout()`
+   does no user-id check, so the next account signed in on that phone restores
+   the deleted account's board and flushes its queued sets under a new
+   `user_id`. `public/delete-account.html` promises erasure "permanently, not
+   hidden or archived".
+3. **`eas.json`'s `serviceAccountKeyPath` resolves outside the repo** and
+   contradicts `docs/ANDROID_RELEASE.md`, which says the opposite path and says
+   it must be gitignored. `secrets/` is NOT in any `.gitignore`, so following
+   the doc commits a Play upload credential.
+
+**Real defects, not release blockers:** `/routine/generate` has no door (305
+lines and 22 strings per locale, reachable by nothing); `initCrashReporting()`
+sits below the imports it is meant to catch, and there is no `Sentry.wrap()`;
+warm-up sets are counted as completed rounds by `currentPosition` and
+`restsAfterBank`, desynchronising superset alternation; a dialled RPE banks onto
+a warm-up because `dialled` is keyed without the set type; `routinePlan` never
+reads `superset_group`, so Plan then Start drops pairings the board advertises;
+`generate.tsx` keys Cards by day name while the prompt deliberately produces
+duplicates; the 400 and 502 messages from `generate-routine` collapse into a
+generic retry; `set -e` in `sim_tap.sh` kills it before its own
+"could not determine" branch; three new i18n keys are dead, one a duplicate.
+
+**FIXED, both verified:**
+
+1. **Three of the eight custom-exercise muscle chips could not create
+   anything.** `0001_init.sql:17` constrains `exercises.muscle_group` to eleven
+   values and no migration has ever widened it; the chip row offered `legs`,
+   `arms` and `other`. Postgres raised 23514, the create threw, and the lifter
+   got "Could not create that exercise. Try again." for as long as they kept
+   tapping, with Legs and Arms being two of the three. The same three had no
+   `muscle.*` key and rendered as raw lowercase English on an Arabic build, and
+   the comment above the list asserted they were "the values
+   `exercises.muscle_group` already holds in production". The list is now
+   exactly the constraint's eleven, every one of which already has both locales,
+   and the row already wraps.
+2. **`t()` expanded `$&`, `` $` `` and `$'` inside parameter values.** They were
+   all ours until a custom exercise name became one, so a lift named
+   `Row $& Press` rendered "Create Row {name} Press". One character of fix
+   (a replacer function) and a test that discriminates: proved the string form
+   emits `Create "Row {name} Press"` and the function form does not.
+
+Wall after both: root typecheck, 1,297 tests in 88 files, `format:check`, root
+lint, mobile typecheck, mobile lint and `bundle:ios` all green.
+
+**DONE: `expo-keep-awake` is called.** One hook on the live board
+(`mobile/app/session/[id].tsx`), which is the whole session including rest,
+because `RestCanvas` renders only from there (grepped: two references, both in
+that file). It releases on unmount, so Finish and every other route lock
+normally. The seventh block called this the highest UX-per-line item in the repo
+and it was a two-line change, as it said.
+
+**How far the verification actually goes, since "installed and called zero
+times" means the native module had never run in this app:**
+
+- The board cold-launched against Metro serving `/Users/ameenhassan/Wazn/mobile`
+  (`lsof` on the Metro pid's cwd, because Metro could just as easily have been
+  serving the other clone) and rendered with no redbox, so `useKeepAwake()`
+  executed and the module resolved.
+- The bundle Metro actually serves, 13.8 MB from
+  `/.expo/.virtual-metro-entry.bundle`, contains `useKeepAwake` six times and
+  `ExpoKeepAwake` twenty-one. The package had ZERO call sites before, so its
+  presence in the dependency graph is proof the running app has this change
+  rather than a cached bundle.
+- **What is NOT proven: that the screen stays lit.** A simulator never
+  auto-locks, so no screenshot can show it. That needs Ameen's phone, and it is the one claim not to make.
+
+**Two static checks failed open on the way, and both would have been reported as
+absence**, see the new CLAUDE.md section. `nm`/`strings` over the installed
+binary found no `ExpoKeepAwake`, and a control run found no `ExpoHaptics`
+either, in an app whose haptics demonstrably work. `curl` of
+`/index.bundle` returned 5.2 KB of `UnableToResolveError` JSON, and a grep over
+THAT reported zero keep-awake references.
+
+**CORRECTED: the seventh block's last outstanding item was already done.** It
+says to fix a stale header comment at `mobile/app/session/[id].tsx:72` claiming
+the ghost is not wired. That comment was rewritten in `3791d9c`
+(`git log -S`), two commits BEFORE the handoff was written. It reads correctly
+today. Nothing to do; the instruction was the stale thing.
+
+**CORRECTED: the simulator has a signed-in account with real data.** §7.0 says
+twice that it does not, and that every native screenshot is therefore the
+empty-data path. The board rendered "Wazn Roundtrip Check", exercise 1 of 2, set
+2 of 4, with `last time 90x5 . 105x3`, previous-session history, which comes
+off an authenticated RPC. **The round-trip gap §7.0 calls open on routine save,
+edit and delete can now actually be closed by tapping.** Ameen should confirm
+which account it is before anything is written through it.
+
+**WHAT IS LEFT OF v1**, unchanged from the seventh block's table except that
+nothing there was started this session:
+
+| Item                                         | State                                                                              |
+| -------------------------------------------- | ---------------------------------------------------------------------------------- |
+| History folds into Progress                  | NOT STARTED.                                                                       |
+| A first run that reaches a logged set        | NOT STARTED.                                                                       |
+| Hevy import on native, **or delete the CTA** | NOT STARTED. `sign-in.tsx:427` documents the promise and the absence in a comment. |
+| Body card on Progress                        | NOT STARTED.                                                                       |
+| Apple sign-in                                | NOT STARTED.                                                                       |
+
+**ALSO OWED, unchanged:** `/code-review` on this branch before any PR;
+`public/privacy.html:110` still claims "Wazn has no passwords"; `mobile/` has 3
+test files for 55 source files. **The Android app has still never been run** and
+is still the largest unknown on the board.
+
+**RESUME HERE (2026-08-23, SEVENTH update. Read THIS one, then stop. The sixth
+is below and is accurate about what it covers, but its "where the code is" says
+24 uncommitted files and zero commits; there are now five commits and a clean
+tree.)**
+
+**WHY THIS SESSION EXISTS AT ALL: the Xcode MCP bridge was registered mid-session
+and MCP tools bind at STARTUP.** The previous session added the server to
+`.mcp.json`, confirmed the bridge answers and enumerates 21 tools, and then could
+not call a single one of them, because the tool list was fixed when that session
+began. Nothing was broken and nothing is pending on it. The handoff is the
+mechanism, not a symptom. **You should have `BuildProject`, `GetBuildLog`,
+`RenderPreview`, `DocumentationSearch` and 17 others available now — check, and
+if you do not, say so rather than working around it.**
+
+**Where the code is:** branch **`claude/v1-floor-and-store-readiness` at
+`d18cc26`**, five commits ahead of `origin/main`, working tree clean, **nothing
+pushed, no PR open**. Production database is at **0040**. `main` is unchanged at
+`c0c15d4`.
+
+**Nothing is half-finished.** Every change is committed, the wall was green at
+the last full run (lint, format, typecheck, tokens, 1,296 root tests, mobile
+lint/typecheck/54 tests, `bundle:ios`, `check:routes`), and the superset and RPE
+work was additionally verified by TAPPING it on a simulator. There is no
+in-flight edit to recover and no failing check to chase. Pick the next item off
+the v1 table below and start clean.
+
+**The five commits, oldest first:**
+
+1. `788ed43` — account deletion (the one blocker in front of BOTH stores), crash
+   reporting, `eas.json`, `generate-routine` wired to native, custom exercises,
+   `docs/ANDROID_RELEASE.md`. Details in the SIXTH block below; it is still
+   correct.
+2. `3791d9c` — **supersets and RPE on the board**, v1 item 5. The board
+   alternates A/B/A/B, rests once per ROUND, and repeats last session's pairing
+   at zero taps. RPE is 6-10, optional, and deliberately never seeded from
+   history: a prescription repeats, a reading does not. Domain lives in
+   `src/lib/live-board.ts` (`toggleSuperset`, `restsAfterBank`, `nextBoardGroup`,
+   a superset-aware `currentPosition`), 23 new tests.
+3. `4128a0b` — `.mcp.json` gains the Xcode MCP bridge.
+4. `b4ee9b8` — **`scripts/sim_tap.sh`**, which taps the simulator. See CLAUDE.md,
+   "A screenshot cannot press a button".
+5. `d18cc26` — formatting fix; `claude mcp add` writes `.mcp.json` without a
+   trailing newline and broke `npm run format:check`.
+
+**THE ANDROID APP HAS NEVER BEEN RUN. NOT ONCE.** This is the largest unknown on
+the board and it was found on 2026-08-23 by inventorying the machine rather than
+by any check:
+
+- no `adb`, no Android SDK, no emulator, no Java runtime, no Android Studio
+- **`mobile/android/` has never been generated** (it is gitignored, like `ios/`,
+  but unlike `ios/` it has never existed)
+- `npm run bundle:android` produces a JS bundle and STOPS. It is exactly the
+  "`bundle:ios` is not a build" lesson one rung further out, except nothing has
+  ever closed it on this platform. A config plugin writes native Android code
+  too, and no one has ever compiled it.
+
+Ameen is publishing both stores simultaneously, so this must close before
+launch. **Do not install Android Studio to fix it** — the SDK plus an emulator
+image is 12-16 GB and the machine has **14 GB free**, with four documented
+rounds of disk pressure already. `eas build --platform android --profile
+preview` needs no local toolchain and emits an APK; that profile is already in
+`eas.json` and was written to be sideloadable for this reason.
+
+**`expo-keep-awake` IS INSTALLED AND CALLED ZERO TIMES.** Verified with a quoted
+grep over `mobile/src` and `mobile/app` (exit 1, no matches). The phone locks
+during rest, so the lifter comes back to Face ID with chalk on their hands, in
+an app whose one sentence is "log a set in under thirty seconds, one hand".
+**This is the highest UX-per-line item in the repo and it is a two-line change
+on the session route.** Ameen was offered it and chose to hand off first; it is
+not declined, just not started.
+
+**THE XCODE MCP BRIDGE WORKS. 21 TOOLS.** `.mcp.json` carries it, project-scoped
+so every machine gets it. `BuildProject` and `GetBuildLog` are the ones that
+matter: CLAUDE.md's "a green wall cannot see a native build phase" documents
+Sentry passing lint, tsc, 1,281 tests and both bundles and then failing
+`xcodebuild` at exit 65, and that check is now one call instead of a five-minute
+shell command with three load-bearing environment variables. Also useful:
+`RenderPreview` (a component without a build-install-launch cycle),
+`DocumentationSearch` (Apple docs semantically, which matters because
+`api.expo.dev` is 403 from this org's proxy), `XcodeListNavigatorIssues`.
+
+**It needs Xcode running with the workspace open, and
+`IDEAllowUnauthenticatedAgents = 1`** in `com.apple.dt.Xcode` (Xcode > Settings
+
+> Intelligence > "Allow external agents to use Xcode tools"). Both were already
+> true. **MCP tools bind at session start**, so a session that registers the
+> server cannot call it until the next one.
+
+**TWO WAYS THIS SESSION PROVED SOMETHING ABSENT THAT WAS PRESENT**, both worth
+more than the feature work:
+
+1. A grep for `mcp|externalAgent|IDEIntelligence` over Xcode's preferences found
+   nothing, and that was reported as "the toggle is off". The key is named
+   `IDEAllowUnauthenticatedAgents` and had been set all along. **A search whose
+   answer is "does this exist" fails open, exactly like the `head` truncation in
+   CLAUDE.md.**
+2. `printf '...' | xcrun mcpbridge` returned zero bytes twice and was reported as
+   "the bridge answers nothing". **Stdin closed at the end of the printf, so the
+   server shut down before replying.** Holding it open with a trailing `sleep`
+   got an answer immediately, and `tools/list` then needed the
+   `notifications/initialized` message the MCP spec requires between initialize
+   and the first request.
+
+Ameen restarted Xcode for nothing on the strength of the first one. **Probe a
+stdio server with stdin held open, and never let a silent tool stand as
+evidence of absence.**
+
+**WHAT IS LEFT OF v1** (the definition is in the SIXTH block below and has not
+changed; items 1, 5 and 6 are now done):
+
+| Item                                         | State                                                                                                                                         |
+| -------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| History folds into Progress                  | NOT STARTED. Last named piece of the four-tab restructure, cut three times by Claude and put back by Ameen.                                   |
+| A first run that reaches a logged set        | NOT STARTED. Day one is still a dead end for a new account.                                                                                   |
+| Hevy import on native, **or delete the CTA** | NOT STARTED. `sign-in.tsx` promises an import that does not exist. One or the other; doing neither is the only wrong answer.                  |
+| Body card on Progress                        | NOT STARTED. Ameen overrode the empty-data argument. `body_weights` has 1 row across 9 accounts, so it WILL render empty until there is data. |
+| Apple sign-in                                | NOT STARTED. Mandatory in the same release as Google under Guideline 4.8.                                                                     |
+
+**Item 4 of the six is DONE and the sixth block calls it HALF DONE.** The ghost's
+sentence IS wired to the board — `session/[id].tsx` renders `ghostChip(verdict)`
+in the exercise card and passes the same `chipText` to `RestCanvas`. What is
+still stale is that file's own header comment at line 72, which claims
+"`ghost-reason` is not wired here yet". Fix the comment, not the code.
+
+**ALSO OWED, and the first is a hard rule Ameen made after it was skipped eight
+times in a row:**
+
+- **`/code-review` on this branch before any PR.** It touches auth, account
+  deletion and the logging hot path.
+- `public/privacy.html:110` still claims "Wazn has no passwords", false since
+  the 2026-08-07 auth decisions.
+- `mobile/` has 3 test files for 55 source files. The app being deleted has 84.
+
+**POST-v1 UX, ranked, all cross-platform. Do NOT start these before the five
+above** — they are recorded so they are not re-derived:
+
+1. Rest timer on the lock screen (iOS Live Activity / Dynamic Island, Android
+   foreground-service notification). `rest-alarm.ts` is half the plumbing.
+2. Apple Health / Health Connect write.
+3. Dynamic Type and VoiceOver pass. Cheap here because the type ramp is a
+   component (`<Txt step>`) rather than classes.
+
+**HOW AMEEN TESTS ON HIS OWN PHONE** (he asked; neither has been run yet):
+
+```bash
+# Android. Free, no developer account, no local toolchain, emits an APK.
+cd ~/Wazn/mobile && npm i -g eas-cli && eas login
+eas build --platform android --profile preview
+
+# iOS. Free provisioning, HIS OWN phone only, expires after 7 days, needs a cable.
+cd ~/Wazn/mobile
+LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8 SENTRY_DISABLE_AUTO_UPLOAD=true \
+WAZN_FREE_PROVISIONING=1 npx expo run:ios --device
+```
+
+**EAS cannot be run from a session**: `api.expo.dev` is 403 from this org's
+egress proxy. Ameen runs it in Terminal and pastes the output.
+
+**Blocked on Ameen, unchanged, and the first still has a 30-day clock:** the
+D-U-N-S number for Rooted Wellness & Recovery LLC (free, ten minutes, and it is
+what lets the Play account register as an ORGANIZATION, which is exempt from the
+12-testers-for-14-days rule), then the $25 Play account, the $99 Apple account,
+and a Google OAuth client.
+
+**RESUME HERE (2026-08-23, SIXTH update. Read THIS one. The fifth is below and
+its "where the code is" says PR #123 and production 0031; both are stale.)**
+
+**Where the code is:** `main` at `c0c15d4` (PR #135), with **24 uncommitted
+files** committed to the branch named below. Production database is at **0040**.
+CI green. Wall green: lint, format, typecheck, coverage, tokens, 1,281 root
+tests, 46 mobile tests, `bundle:ios`, `bundle:android`, `check:routes` (14
+routes), plus a real `xcodebuild` and four device screenshots.
+
+**THE DIRECTION CHANGED, TWICE, AND THE SECOND ONE STANDS.** Ameen first said
+"publish first so people use it"; he then reversed it after argument:
+**complete the app, publish, then iterate on feedback.** The reasoning that won:
+he gets ONE first impression per person and has roughly nine people, so testers
+are not a renewable resource, and feedback from an incomplete app reports gaps
+already known. Do not re-argue shipping early. Do not scope work down to "the
+minimum that unblocks a launch" - he called that out explicitly and it was a
+leftover reflex from the reversed decision.
+
+**"Complete" is defined as v1, six items, because "all planned features" is
+eight stages and Stage 4B (publishing) sits in the middle of them.** Additions
+need an explicit decision:
+
+1. Custom exercises on native. **DONE 2026-08-23.**
+2. Hevy import on native, or delete the CTA promising it. **NOT DONE.**
+3. A first run that reaches a logged set. **NOT DONE.**
+4. Readiness wired to the weight; `ghost-reason` to the board. **DONE.** The
+   dial seeds from `verdict.weightKg` and the ghost's sentence renders above
+   the logged rows AND feeds the rest canvas (`coachLine`). This item read
+   HALF DONE because the file's own header comment still listed the sentence
+   as "not wired here yet" long after it was — a stale comment being read as
+   state, which is the same failure mode as a stale 7.0. The comment is fixed.
+5. Supersets and RPE on native. **DONE 2026-08-23.** No migration needed:
+   `workout_sets` already had `rpe` and `superset_group` (0001, as table
+   columns, which an "add column" grep misses).
+   - `BoardSet.rpe` and `BoardExercise.supersetGroup` in `src/lib/live-board.ts`,
+     with `currentPosition` alternating inside a group (A B A B), `toggleSuperset`
+     pairing a lift with the NEXT one on the board, and `restsAfterBank` holding
+     the rest rule. 15 new tests there, 8 in the native store.
+   - **The rest rule's first version was wrong and its own test caught it.**
+     "Is the next set in the same group" answers NO REST after the round closes
+     too, because the next set is the group's own first lift again. The right
+     question is whether anybody in the group is still BEHIND the set just
+     banked, with an exhausted member exempt so an uneven pair still rests.
+   - RPE is 6 to 10, optional, no default, and tapping the chosen chip clears
+     it. Never seeded from last session: weight and reps are a prescription
+     worth repeating, RPE is a reading of a set that has not happened.
+   - **Two defects a simulator found and the green wall did not**: a restored
+     checkpoint from the previous build has `rpe: undefined`, which is not
+     null, so the row list rendered the literal `RPE UNDEFINED`; and the
+     superset control started as a `ghost` Btn, which is chrome-less by design
+     and read as a section heading rather than a control. Both fixed, both
+     re-screenshotted.
+6. Crash reporting and `expo-updates`. **DONE 2026-08-23.**
+
+Plus, added since: **History folds into Progress** (the last named item of the
+four-tab restructure, cut three times by Claude and put back by Ameen; the BAR
+is already four tabs — `TABS` in `TabGlyph.tsx` is `index, plan, progress,
+crew` — but History is still its own screen behind the circle beside Start on
+Train, which is the half that is left), the
+**Body card** (Ameen overrode the data argument; `body_weights` has 1 row across
+9 accounts so it WILL render empty until there is data), and **Apple sign-in**,
+which becomes mandatory in the same release as Google under Guideline 4.8.
+
+**WHAT SHIPPED THIS SESSION, all uncommitted until the branch below:**
+
+- **Account deletion**, the one blocker in front of BOTH stores.
+  `supabase/functions/delete-account/index.ts` (one `auth.admin.deleteUser`;
+  all nineteen user tables cascade from `auth.users`, verified against
+  `pg_constraint`, so no migration), `mobile/app/delete-account.tsx` (a screen,
+  not an `Alert`, because `Alert.prompt` is iOS-only and the typed
+  confirmation has to exist on Android), and `public/delete-account.html` at
+  `/delete-account` for the web URL Play requires.
+- **Crash reporting.** `mobile/src/services/crash.ts`, Sentry, init at MODULE
+  SCOPE not in an effect. Off without a DSN.
+- **`mobile/eas.json`**, which did not exist, so there was no build pipeline.
+- **`generate-routine` wired to native** - it was deployed since stage 2c with
+  `src/lib/ai.ts` as its only caller, so the shipping app could not reach it.
+  `mobile/app/routine/generate.tsx` plus two service functions.
+- **`docs/ANDROID_RELEASE.md`**, a full Play plan.
+
+**THREE DEFECTS THE GREEN WALL COULD NOT SEE, all found by a simulator:**
+
+1. The Sentry plugin broke `xcodebuild` (exit 65, "An organization ID or slug
+   is required"). Fixed with `SENTRY_DISABLE_AUTO_UPLOAD=true` in every
+   `eas.json` profile. See CLAUDE.md, "A green wall cannot see a native build
+   phase".
+2. `supabase.ts` promised "missing config is reported, not thrown" and threw at
+   module scope. Fixed; the app renders its sentence now.
+3. The sign-in hero CTA said "Google sign-in arrives with the App Store build",
+   a sentence that is false about itself in an App Store build, and the footer
+   said the same of Apple. Guideline 2.1. Google is now gated on
+   `EXPO_PUBLIC_GOOGLE_CLIENT_ID`; footer trimmed.
+
+**HOW TO RUN IT ON A SIMULATOR** (this is not in `docs/run-on-device.md` and
+every one of these is load-bearing):
+
+```bash
+cd mobile
+export LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8      # or pod install dies on encoding
+export SENTRY_DISABLE_AUTO_UPLOAD=true          # or xcodebuild exits 65
+export EXPO_PUBLIC_SUPABASE_URL=https://ttasiwxeqerhsztxjxip.supabase.co
+export EXPO_PUBLIC_SUPABASE_ANON_KEY=<anon key from Supabase>
+WAZN_FREE_PROVISIONING=1 npx expo prebuild --platform ios
+xcodebuild -workspace ios/Wazn.xcworkspace -scheme Wazn -configuration Debug \
+  -destination 'platform=iOS Simulator,id=F398C5F3-AAB7-4DC0-B02F-1CEC06B6FC32' \
+  -derivedDataPath ios/build build
+xcrun simctl install F398C5F3-AAB7-4DC0-B02F-1CEC06B6FC32 \
+  ios/build/Build/Products/Debug-iphonesimulator/Wazn.app
+npx expo start --port 8081 --clear &                 # Debug needs Metro for JS
+xcrun simctl launch F398C5F3-AAB7-4DC0-B02F-1CEC06B6FC32 app.wazn.client
+xcrun simctl io F398C5F3-AAB7-4DC0-B02F-1CEC06B6FC32 screenshot shot.png
+```
+
+**`Constants.expoConfig.extra` is baked in at PREBUILD time on a bare native
+app.** It does not come from Metro, so setting `EXPO_PUBLIC_*` for `expo start`
+alone changes nothing; the prebuild has to see them.
+
+**Bundle id is `app.wazn.client`, not `com.ameenhassan.wazn`.**
+
+**Blocked on Ameen, and the first one has a 30-day clock:** apply for a D-U-N-S
+number for Rooted Wellness & Recovery LLC (free, ten minutes, and it is what
+lets the Play account register as an ORGANIZATION, which is exempt from the
+12-testers-for-14-days rule that gates production for personal accounts); then
+the $25 Play account, the $99 Apple account, and a Google OAuth client.
+
+**RESUME (2026-08-22, FIFTH update. Read this one; the fourth is below and
 its "next action" is two steps stale.)**
 
 **Where the code is:** `main` at PR #123. Twelve PRs landed across 2026-08-21

@@ -147,22 +147,48 @@ const nativeStore = {
   },
 }
 
-export const supabase: SupabaseClient = createClient(url, anonKey, {
-  auth: {
-    storage: Platform.OS === 'web' ? webStore : nativeStore,
-    autoRefreshToken: true,
-    persistSession: true,
-    /**
-     * False on native, true on web. `detectSessionInUrl` exists for the
-     * browser's OAuth redirect, where the tokens come back in the location
-     * hash. On a phone the redirect arrives through the `wazn://` scheme and
-     * is handled by `expo-auth-session`, and leaving this on makes the client
-     * try to parse a URL that is not there. On the web target it is the only
-     * way the redirect completes at all.
-     */
-    detectSessionInUrl: Platform.OS === 'web',
+/*
+ * ── AND THE CONSTRUCTOR HAS TO SURVIVE IT TOO (2026-08-23) ──────────────────
+ * The comment above says missing config is "reported, not thrown", and until
+ * today the code did not deliver that. `supabaseConfigError` was computed
+ * correctly and then this line called `createClient('', '')` 115 lines later,
+ * which throws `supabaseUrl is required` during module evaluation, before the
+ * error boundary exists. Exactly the white screen with a stack trace the
+ * comment promises to avoid.
+ *
+ * Found by launching the app on a simulator with no environment set. It is
+ * invisible to lint, tsc, 1,281 tests and both bundles, because none of them
+ * evaluate this module against an empty config.
+ *
+ * So the client is constructed against a syntactically valid address that
+ * resolves nowhere. Every request through it fails at the network layer rather
+ * than at import, which is what lets the app get far enough to render the
+ * sentence. The placeholder is deliberately not a real host: a typo'd project
+ * ref that happened to exist would be worse than one that cannot.
+ */
+const SAFE_URL = 'https://unconfigured.invalid'
+const SAFE_KEY = 'unconfigured'
+
+export const supabase: SupabaseClient = createClient(
+  supabaseConfigError === null ? url : SAFE_URL,
+  supabaseConfigError === null ? anonKey : SAFE_KEY,
+  {
+    auth: {
+      storage: Platform.OS === 'web' ? webStore : nativeStore,
+      autoRefreshToken: true,
+      persistSession: true,
+      /**
+       * False on native, true on web. `detectSessionInUrl` exists for the
+       * browser's OAuth redirect, where the tokens come back in the location
+       * hash. On a phone the redirect arrives through the `wazn://` scheme and
+       * is handled by `expo-auth-session`, and leaving this on makes the client
+       * try to parse a URL that is not there. On the web target it is the only
+       * way the redirect completes at all.
+       */
+      detectSessionInUrl: Platform.OS === 'web',
+    },
   },
-})
+)
 
 /**
  * Refresh only while the app is in front.
