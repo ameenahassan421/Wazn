@@ -107,9 +107,10 @@ Arabic rendered its numbers backwards, while `revoke all ... from public` did
 nothing, and while every one of the eleven v5 P0 findings sat unnoticed. Run a
 review on anything a user will see.
 
-The `expo` plugin is installed for `mobile/` work: `api.expo.dev` is 403 from
-this org's egress proxy, so its offline skills are the way to answer SDK and
-build questions without the network.
+The `expo` plugin is installed for `mobile/` work. Its offline skills answer SDK
+and build questions without the network, which matters whenever the egress proxy
+is in the way. **It is not always in the way: `api.expo.dev` answered 403 when
+that was written and answers 200 now, so check before assuming either.**
 
 ## A green wall cannot see a native build phase (2026-08-23)
 
@@ -641,9 +642,14 @@ npm run bundle:android
   xcrun simctl install <udid> ios/build/Build/Products/Debug-iphonesimulator/Wazn.app
   ```
 
-- **`api.expo.dev` answered HTTP 200 on 2026-08-23, having been 403 before**,
-  so re-test rather than reciting either answer; `reactnative.directory` is 403**, so `npx expo install` cannot resolve versions and EAS cannot run from
-  a session. Read `node_modules/expo/bundledNativeModules.json` instead — it is
+- **`api.expo.dev` answered HTTP 200 on 2026-08-23, having been 403 before.**
+  Two sections of this file and the plan both said EAS "cannot be run from a
+  session" on the strength of the old answer, and that claim is what parked the
+  Android build for days. **Re-test it; do not recite either answer.** What
+  really stops an EAS build from here is that `eas` is not installed and a build
+  spends Ameen's credits, which makes it his to start rather than a session's.
+  `reactnative.directory` was not re-tested. When the network is genuinely
+  unavailable, read `node_modules/expo/bundledNativeModules.json` instead — it is
   the same version map, offline.
 
 ## Architecture
