@@ -151,6 +151,33 @@ const config: ExpoConfig = {
     // `edgeToEdgeEnabled` is gone from the Android config in SDK 57 — edge to
     // edge is unconditional there, which is what this app wanted anyway.
     predictiveBackGestureEnabled: false,
+    /**
+     * SYSTEM_ALERT_WINDOW, out of the shipped manifest.
+     *
+     * "Draw over other apps" is a permission Play reviews and this app has no
+     * feature that needs it. It reached the manifest by accident of tooling:
+     * React Native declares it in `ReactAndroid/src/debug/AndroidManifest.xml`
+     * for the dev overlay, and prebuild writes it into `src/main`, which is the
+     * source set a RELEASE aab is built from. So a permission that exists for
+     * the redbox would have been on the store listing, asking to be explained.
+     *
+     * `blockedPermissions` is the supported knob and emits `tools:node="remove"`
+     * in the merged manifest, so it also removes the debug source set's copy.
+     * That is the trade: a dev client loses the floating dev overlay. The dev
+     * MENU is reached by shaking the device or `adb shell input keyevent 82`,
+     * and neither needs this.
+     *
+     * The two storage permissions stay. They come from `expo-file-system` and
+     * `expo-image`, they carry `android:maxSdkVersion="32"`, and so they are
+     * not requested at all on Android 13 and above. Removing them would break
+     * image caching on older devices to answer a question nobody is asking.
+     *
+     * **None of this has been COMPILED.** `mobile/android/` generates and has
+     * never been built: no JDK, no SDK, and the plan says not to install 12 to
+     * 16 GB of one. Verified by regenerating and reading the manifest, which is
+     * where the merger writes its result, and no further.
+     */
+    blockedPermissions: ['android.permission.SYSTEM_ALERT_WINDOW'],
     intentFilters: [
       {
         action: 'VIEW',

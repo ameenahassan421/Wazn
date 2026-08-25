@@ -1500,6 +1500,49 @@ blocks an EAS build from here is smaller and more ordinary: `eas` is not
 installed, and a build spends Ameen's queue and credits, so it is his to
 authorise rather than something a session should start.
 
+**2026-08-24: the Android manifest is fixed. The Android app has STILL never
+been compiled.** Those are two different sentences and only the first one is
+done.
+
+**`SYSTEM_ALERT_WINDOW` was going to ship.** Traced: React Native declares it in
+`ReactAndroid/src/debug/AndroidManifest.xml` for the dev overlay, and prebuild
+writes it into `android/app/src/main`, which is the source set a RELEASE aab is
+built from. So "draw over other apps", a permission Play reviews and this app
+has no feature for, would have been on the listing because of the redbox.
+`android.blockedPermissions` in `app.config.ts` now emits `tools:node="remove"`,
+verified by regenerating with `--clean` and reading the manifest back.
+
+The trade, stated because it is real: `tools:node="remove"` removes the debug
+source set's copy too, so an Android dev client loses the floating overlay. The
+dev MENU still opens on shake or `adb shell input keyevent 82`. Nobody is using
+an Android dev client, because Android has never been built.
+
+**The two storage permissions STAY, and my earlier note about them was
+alarmist.** `READ_EXTERNAL_STORAGE` and `WRITE_EXTERNAL_STORAGE` come from
+`expo-file-system` and `expo-image` and carry `android:maxSdkVersion="32"`, so
+they are not requested at all on Android 13 and above. Removing them would break
+image caching on older devices to answer a question nobody is asking.
+
+**`allowBackup="true"` was checked and is fine.** It puts app data in Google's
+cloud backup, which would matter if the auth session lived in AsyncStorage. It
+does not: `services/supabase.ts` keeps it in SecureStore, chunked. AsyncStorage
+holds the live-workout checkpoint and a dismiss flag.
+
+**What is still owed, and it is the whole point:** nothing here has been
+compiled. `expo prebuild` generates and stops; `bundle:android` emits JS and
+stops; `tools:node="remove"` is an INSTRUCTION to the manifest merger and the
+merger runs inside a Gradle build. So the removal is verified as written and
+unverified as merged, which is the same distinction as "executed locally is not
+applied".
+
+The blocker is unchanged in shape and smaller than this plan says: a compile
+needs a JDK (`java -version` reports no runtime) and an Android SDK. The 12 to
+16 GB figure recorded earlier is dominated by an EMULATOR IMAGE, which a build
+does not need. **`eas build --platform android --profile preview` still avoids
+the question entirely**, needs no local toolchain, and is now known to be
+reachable, `api.expo.dev` answering 200. It spends Ameen's credits, so it is his
+to start.
+
 **DONE 2026-08-24: the weekly review stopped describing a different week from
 the figures beside it.** Found by looking at a screenshot after the History
 fold: the card read "6 sessions this week" as a figure, with a sentence under it
