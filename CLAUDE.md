@@ -215,13 +215,31 @@ because there is no error to see.
   the rule: "an empty map does not mean 'no previous best' - it means 'not
   asked'". The code implements half of it, and the two sibling call sites
   destructure `error`. This one is the whole lesson in one file.
-- **`supabase/migrations/0026_own_rows_only.sql:145`, shipped, and it is a
-  privacy defect.** `weekly_leaderboard()` gates its `sessions` CTE on
-  `private.can_view` but builds `circle` without it, then `left join` plus
-  `coalesce(sum(...), 0)` **manufactures a zero for the rows it was forbidden to
-  measure**. A private profile is rendered on friends' leaderboards **by name**,
-  at 0 kg and 0 sessions, sorted last. Reproduced read-only against production:
-  three named rows at zero, one of them an account with 166 completed workouts.
+- **`weekly_leaderboard()`, shipped, and it is a privacy defect. WEB ONLY.** It
+  gates its `sessions` CTE on `private.can_view` but builds `circle` without it,
+  then `left join` plus `coalesce(sum(...), 0)` **manufactures a zero for the
+  rows it was forbidden to measure**. A private profile is rendered on the
+  leaderboard **by name**, at 0 kg, sorted last, under `security definer` so
+  RLS on `profiles` does not save it. 0011's own comment says what that breaks:
+  "A private profile is not findable at all, which is what 'private' has to mean
+  or the setting is decoration."
+
+  **The two definitions read from production say the whole thing in one clause:**
+
+  ```sql
+  week_board:          where f.follower_id = auth.uid() and private.can_view(f.following_id)
+  weekly_leaderboard:  where f.follower_id = auth.uid()
+  ```
+
+  `week_board` mentions `can_view` twice, `weekly_leaderboard` once. **0036 is
+  literally named `week_board_hides_private_profiles` and fixed exactly this, in
+  the sibling function, and nobody went back for the original.** Native calls
+  `week_board` (`mobile/src/services/crew.ts:63`) and is not affected; the live
+  exposure is `src/lib/social.ts:129` on the dying web app, which is also the
+  app Ameen's nine testers actually use. Two fixes are therefore available: add
+  the clause, or drop the function and point the web at `week_board`, which
+  removes the class rather than the instance.
+
 - **`mobile/src/state/live-workout.ts:534`, shipped, and it loses a workout.**
   `startWorkout` reads a failed `getUser()` as "signed out". `AuthRetryableFetchError`
   is returned, not thrown, so a dropped radio sets `userId` to null for the life
