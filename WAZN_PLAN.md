@@ -1500,6 +1500,153 @@ blocks an EAS build from here is smaller and more ordinary: `eas` is not
 installed, and a build spends Ameen's queue and credits, so it is his to
 authorise rather than something a session should start.
 
+**2026-08-26: THE ANDROID APP COMPILES. It has now been built, and the merged
+manifest has been read.** Third run of the CI job, green:
+`app/build/intermediates/merged_manifest/release/processReleaseMainManifest/AndroidManifest.xml`
+exists, the assertion passed, and a **33 MB arm64 release APK** is attached to
+the run as `wazn-android-release-apk-arm64`. That is the first Android binary
+this project has ever produced and it is sideloadable without a developer
+account.
+
+**`SYSTEM_ALERT_WINDOW` is gone from the MERGED manifest**, which upgrades the
+`blockedPermissions` fix from "verified as written" to verified as merged. That
+was the whole gap.
+
+**And the merged manifest holds ELEVEN permissions where the source manifest
+holds five.** Nobody had ever seen the other six, because reading
+`android/app/src/main/AndroidManifest.xml` — the only thing possible without a
+compile — shows less than half of what ships:
+
+```
+ACCESS_NETWORK_STATE   INTERNET              POST_NOTIFICATIONS
+READ_APP_BADGE         READ_EXTERNAL_STORAGE RECEIVE_BOOT_COMPLETED
+USE_BIOMETRIC          USE_FINGERPRINT       VIBRATE
+WAKE_LOCK              WRITE_EXTERNAL_STORAGE
+```
+
+All six new ones are explicable and none is alarming, but they are now KNOWN
+rather than assumed, which is what a Play listing requires:
+
+- `POST_NOTIFICATIONS`, `RECEIVE_BOOT_COMPLETED`, `READ_APP_BADGE` come from
+  `expo-notifications` and exist for the rest alarm; `RECEIVE_BOOT_COMPLETED` is
+  what lets a scheduled rest notification survive a reboot.
+- `USE_BIOMETRIC` and `USE_FINGERPRINT` come from `expo-secure-store`, which is
+  where the auth session lives. The app never prompts for biometrics; the module
+  declares them. `USE_FINGERPRINT` has been deprecated since API 28 and is
+  harmless.
+- `WAKE_LOCK` is `expo-keep-awake` and the notification scheduler.
+- `ACCESS_NETWORK_STATE` is `expo-image`.
+
+**The lesson is the one this repo keeps relearning.** The source manifest was
+the only artefact available without a compile, and it was showing five of
+eleven. A permission audit done by reading it would have been confidently,
+verifiably incomplete.
+
+**2026-08-24: the Android manifest is fixed. The Android app has STILL never
+been compiled.** Those are two different sentences and only the first one is
+done.
+
+**`SYSTEM_ALERT_WINDOW` was going to ship.** Traced: React Native declares it in
+`ReactAndroid/src/debug/AndroidManifest.xml` for the dev overlay, and prebuild
+writes it into `android/app/src/main`, which is the source set a RELEASE aab is
+built from. So "draw over other apps", a permission Play reviews and this app
+has no feature for, would have been on the listing because of the redbox.
+`android.blockedPermissions` in `app.config.ts` now emits `tools:node="remove"`,
+verified by regenerating with `--clean` and reading the manifest back.
+
+The trade, stated because it is real: `tools:node="remove"` removes the debug
+source set's copy too, so an Android dev client loses the floating overlay. The
+dev MENU still opens on shake or `adb shell input keyevent 82`. Nobody is using
+an Android dev client, because Android has never been built.
+
+**The two storage permissions STAY, and my earlier note about them was
+alarmist.** `READ_EXTERNAL_STORAGE` and `WRITE_EXTERNAL_STORAGE` come from
+`expo-file-system` and `expo-image` and carry `android:maxSdkVersion="32"`, so
+they are not requested at all on Android 13 and above. Removing them would break
+image caching on older devices to answer a question nobody is asking.
+
+**`allowBackup="true"` was checked and is fine.** It puts app data in Google's
+cloud backup, which would matter if the auth session lived in AsyncStorage. It
+does not: `services/supabase.ts` keeps it in SecureStore, chunked. AsyncStorage
+holds the live-workout checkpoint and a dismiss flag.
+
+**What is still owed, and it is the whole point:** nothing here has been
+compiled. `expo prebuild` generates and stops; `bundle:android` emits JS and
+stops; `tools:node="remove"` is an INSTRUCTION to the manifest merger and the
+merger runs inside a Gradle build. So the removal is verified as written and
+unverified as merged, which is the same distinction as "executed locally is not
+applied".
+
+**THE ANSWER WAS NOT A BIGGER LAPTOP. `.github/workflows/ci.yml` NOW COMPILES
+ANDROID.** A GitHub runner already has the JDK and the Android SDK, so the job
+costs no local disk, no EAS credits and no interactive login, and it runs on
+every PR instead of once. The machine has 11 GB free and four documented rounds
+of disk pressure; the plan's advice not to install Android Studio stands and is
+now moot.
+
+**The first run told us three things before it finished anything.** The runner
+has the SDK, `npm ci` works there, and `expo prebuild --platform android
+--clean` succeeds against today's config plugins. All three were genuinely
+unknown. Then it sat in Gradle for **over an hour**, which is not a hang:
+`gradle.properties` (generated, so this is what any Android build here does)
+carries `reactNativeArchitectures=armeabi-v7a,arm64-v8a,x86,x86_64` with
+`newArchEnabled=true`, so the C++ TurboModules, Fabric and Hermes are compiled
+from source once per ABI, four times, cold, on a two-core runner.
+
+**The second run then failed in 12 minutes, and the failure is the answer this
+job was built to get.** `OutOfMemoryError: Metaspace`, forty-eight times, from
+three directions at once: lint analysis of `GestureHandler.kt`,
+`BuildToolsApiClasspathEntrySnapshotTransform` on `expo`'s and
+`@expo/log-box`'s jars, and `:expo:compileReleaseKotlin`. "There are 46 more
+failures with identical causes."
+
+The cause was in a file this plan had already quoted an hour earlier without
+anyone reading the second half of the line:
+
+```
+org.gradle.jvmargs=-Xmx2048m -XX:MaxMetaspaceSize=512m
+```
+
+Expo's template default. 512 MB of metaspace does not hold the class metadata
+for about thirty Kotlin modules plus the Android lint analyser. **Metaspace is
+not heap**, so raising `-Xmx` alone would not have touched it, which matters
+because `-Xmx` is the knob everyone reaches for first.
+
+Overridden on the gradlew command line as `-Dorg.gradle.jvmargs="-Xmx4g
+-XX:MaxMetaspaceSize=1g"` rather than by editing `gradle.properties`, because
+that file is REGENERATED by the prebuild two steps earlier and any patch to it
+is silently discarded.
+
+**This is what the job is for.** Two runs, two real findings, neither reachable
+by any check that existed yesterday: nothing in `npm run` compiles Kotlin, so
+nothing could have told us the shipped Gradle memory settings cannot build this
+app.
+
+CI now passes `-PreactNativeArchitectures=arm64-v8a` and caches Gradle between
+runs. arm64-v8a is every modern Android phone, so the uploaded APK is still
+sideloadable, and the question the job asks is answered identically by one
+architecture. **It is a CI decision and not a shipping one**: a store build
+carries all four, `eas.json` is untouched, and EAS reads `gradle.properties`
+rather than that flag.
+
+The job does four things: `expo prebuild --platform android --clean`, so it is
+always the project today's config plugins produce; `./gradlew assembleRelease`,
+because release is the source set a store upload is built from and the one whose
+manifest merge nobody had ever seen; an assertion that `SYSTEM_ALERT_WINDOW` is
+absent from the MERGED manifest, which closes the "verified as written,
+unverified as merged" gap above; and it uploads the APK, which is the first
+Android binary this project has produced and is sideloadable onto a phone
+without a developer account.
+
+**A JDK 17 is also installed locally now** (`brew install openjdk@17`, at
+`/opt/homebrew/opt/openjdk@17`, no sudo). The Temurin CASK needs a sudo password
+a headless session cannot supply; the formula does not. A local compile would
+still need the Android SDK on top, which CI makes unnecessary.
+
+`eas build --platform android --profile preview` remains the path to a signed
+build on Ameen's account, and `api.expo.dev` now answers 200 so it is reachable.
+It spends his credits, so it stays his to start.
+
 **DONE 2026-08-24: the weekly review stopped describing a different week from
 the figures beside it.** Found by looking at a screenshot after the History
 fold: the card read "6 sessions this week" as a figure, with a sentence under it

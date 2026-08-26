@@ -342,3 +342,152 @@ jobs:
             echo "If the change also embodies a decision, append the reasoning to DECISIONS.md."
           } >&2
           exit 1
+
+  android:
+    # ── THE ANDROID APP HAS NEVER BEEN COMPILED. THIS COMPILES IT. ────────────
+    # `mobile/android/` is gitignored and had never been generated until
+    # 2026-08-24; `npm run bundle:android` emits a JS bundle and stops, which is
+    # the "`bundle:ios` is not a build" lesson one platform further out. Nothing
+    # in this repo has ever run the Android toolchain, so nothing has ever seen
+    # a config plugin's Android output, a manifest merge, or a Gradle failure.
+    #
+    # It runs HERE rather than on the laptop because a GitHub runner already has
+    # the JDK and the Android SDK. The machine this repo is developed on has 11
+    # GB free and four documented rounds of disk pressure, and the plan says not
+    # to install Android Studio for exactly that reason. A runner costs no local
+    # disk, no EAS credits and no interactive login.
+    #
+    # Its own job, not a step inside `mobile`, so a five-minute Gradle build
+    # never delays typecheck, lint and the bundle.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: mobile/package-lock.json
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - uses: android-actions/setup-android@v3
+
+      - uses: gradle/actions/setup-gradle@v4
+        # The first run of this job spent over an hour inside Gradle. Caching
+        # the dependency and build caches is what stops every later run paying
+        # that again; the `--no-daemon` flag below is why the cache has to come
+        # from the action rather than from a warm daemon.
+
+      - run: npm ci
+        working-directory: mobile
+
+      - name: Generate the native project
+        # `--clean` so this is always the project the config plugins produce
+        # today, never a stale checkout. SENTRY_DISABLE_AUTO_UPLOAD because
+        # `@sentry/react-native` injects two build phases that shell out to
+        # `sentry-cli`, which wants an org and a token that do not exist yet.
+        # That is what broke the iOS build on 2026-08-23.
+        run: npx expo prebuild --platform android --clean
+        working-directory: mobile
+        env:
+          SENTRY_DISABLE_AUTO_UPLOAD: 'true'
+          EXPO_PUBLIC_SUPABASE_URL: https://example.invalid
+          EXPO_PUBLIC_SUPABASE_ANON_KEY: ci-not-a-real-key
+
+      - name: Compile
+        # `assembleRelease`, not `assembleDebug`: the release source set is what
+        # a store upload is built from, and it is the one whose manifest merge
+        # nobody had ever seen.
+        #
+        # ── ONE ABI, AND THE FIRST RUN IS WHY ────────────────────────────────
+        # The first execution of this job sat in Gradle for over an hour without
+        # finishing. It was not hung. The generated `gradle.properties` carries
+        #
+        #   reactNativeArchitectures=armeabi-v7a,arm64-v8a,x86,x86_64
+        #   newArchEnabled=true
+        #
+        # so with the New Architecture on, Gradle compiles the C++ TurboModules,
+        # Fabric and Hermes from source ONCE PER ABI — four times, cold, on a
+        # two-core runner. That is the whole hour, and three quarters of it
+        # proves the same thing again.
+        #
+        # `arm64-v8a` is every modern Android phone, so the uploaded APK is
+        # still the one Ameen can sideload, and the question this job exists to
+        # answer ("does the Android project compile, and what does the manifest
+        # merger emit") is answered identically by one architecture.
+        #
+        # **This is a CI decision, not a shipping one.** A store build must
+        # carry all four; `eas.json`'s profiles are untouched and EAS reads
+        # `gradle.properties`, not this flag. If this job ever becomes the thing
+        # that produces a release artefact, drop the flag first.
+        #
+        # ── AND MORE METASPACE, WHICH IS WHAT ACTUALLY FAILED ────────────────
+        # The one-ABI run died in 12 minutes with `OutOfMemoryError: Metaspace`,
+        # forty-eight times, from three directions at once: lint analysis of
+        # `GestureHandler.kt`, `BuildToolsApiClasspathEntrySnapshotTransform` on
+        # `expo`'s and `@expo/log-box`'s jars, and `:expo:compileReleaseKotlin`.
+        # "There are 46 more failures with identical causes."
+        #
+        # The cause is in the generated `gradle.properties`:
+        #
+        #   org.gradle.jvmargs=-Xmx2048m -XX:MaxMetaspaceSize=512m
+        #
+        # That is Expo's template default, and 512 MB of metaspace does not hold
+        # the class metadata for ~30 Kotlin modules plus the Android lint
+        # analyser. Metaspace is not heap: raising `-Xmx` alone would not have
+        # touched it, which is worth knowing because `-Xmx` is the knob everyone
+        # reaches for.
+        #
+        # Overridden on the command line rather than by editing the file,
+        # because `gradle.properties` is REGENERATED by the prebuild two steps
+        # up. A patch there would be silently discarded on every run.
+        run: >-
+          ./gradlew assembleRelease --no-daemon
+          -PreactNativeArchitectures=arm64-v8a
+          -Dorg.gradle.jvmargs="-Xmx4g -XX:MaxMetaspaceSize=1g"
+        working-directory: mobile/android
+        env:
+          SENTRY_DISABLE_AUTO_UPLOAD: 'true'
+
+      - name: The merged manifest must not ask to draw over other apps
+        # ── THE ASSERTION THIS JOB EXISTS FOR ────────────────────────────────
+        # React Native declares SYSTEM_ALERT_WINDOW in its debug source set for
+        # the dev overlay, and prebuild writes it into `src/main`, which release
+        # builds from. `android.blockedPermissions` in `app.config.ts` answers
+        # that with `tools:node="remove"` — but that is an INSTRUCTION to the
+        # manifest merger, and the merger only runs inside a Gradle build. Until
+        # this job existed the removal was verified as written and unverified as
+        # merged, which is the same gap as "executed locally is not applied".
+        #
+        # Reads the MERGED output, not the source manifest. Fails loudly if the
+        # file moves rather than passing on a grep that found nothing, which is
+        # this repo's most repeated bug.
+        working-directory: mobile/android
+        run: |
+          merged=$(find app/build/intermediates -name AndroidManifest.xml -path '*merged*release*' | head -1)
+          if [ -z "$merged" ]; then
+            echo "COULD NOT DETERMINE: no merged release manifest found." >&2
+            find app/build/intermediates -name AndroidManifest.xml | sed 's/^/  /' >&2
+            exit 1
+          fi
+          echo "merged manifest: $merged"
+          grep -o 'android:name="android.permission.[A-Z_]*"' "$merged" | sort -u | sed 's/^/  /'
+          if grep -q 'SYSTEM_ALERT_WINDOW' "$merged"; then
+            echo "" >&2
+            echo "SYSTEM_ALERT_WINDOW survived the merge and would ship to Play." >&2
+            echo "See android.blockedPermissions in mobile/app.config.ts." >&2
+            exit 1
+          fi
+
+      - uses: actions/upload-artifact@v4
+        # The first Android binary this project has ever produced. Sideloadable,
+        # so it is also the fastest way for Ameen to see the app on a phone
+        # without an EAS build or a developer account.
+        with:
+          name: wazn-android-release-apk-arm64
+          path: mobile/android/app/build/outputs/apk/release/*.apk
+          if-no-files-found: error
