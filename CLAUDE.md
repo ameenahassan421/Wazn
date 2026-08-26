@@ -189,6 +189,93 @@ request** — the spec says so, and without it `tools/list` returns nothing whil
 call it; that takes a restart. So "the tools are not there" after an `mcp add`
 is expected, not a fault.
 
+## "Nothing" and "the read failed" must not be the same value (2026-08-26)
+
+**This is the bug this repo has, and it has it everywhere.** Two sessions hit it
+in four unrelated files in one day; a sweep then found **twelve confirmed
+instances, eight of them shipped**, after adversarially refuting ten more. Every
+section above about a silent tool, a truncated grep or `|| echo "no"` is an
+instance of it. One rule:
+
+> **A value that means "there is nothing" must be distinguishable from a value
+> that means "I could not find out". When they are the same value, a failure
+> becomes a confident negative answer, and the caller acts on it.**
+
+The shape is always the same. An empty array, a `null`, a `false`, a `0`, an
+empty `Map`, an empty grep. It reads as data. Nobody writes an error branch,
+because there is no error to see.
+
+**The receipts, because a rule with one example gets argued with.**
+
+- **`src/lib/summary.ts:83`, shipped.** `detectPrs` reads a missing entry in
+  `previousBests` as "previous best was 0 kg". The caller destructures only
+  `data` from `exercise_bests`, so a failed RPC yields an empty map and the
+  finish screen celebrates **a PR on every exercise in the session**, then puts
+  one on a shareable card. The comment directly above the call already states
+  the rule: "an empty map does not mean 'no previous best' - it means 'not
+  asked'". The code implements half of it, and the two sibling call sites
+  destructure `error`. This one is the whole lesson in one file.
+- **`supabase/migrations/0026_own_rows_only.sql:145`, shipped, and it is a
+  privacy defect.** `weekly_leaderboard()` gates its `sessions` CTE on
+  `private.can_view` but builds `circle` without it, then `left join` plus
+  `coalesce(sum(...), 0)` **manufactures a zero for the rows it was forbidden to
+  measure**. A private profile is rendered on friends' leaderboards **by name**,
+  at 0 kg and 0 sessions, sorted last. Reproduced read-only against production:
+  three named rows at zero, one of them an account with 166 completed workouts.
+- **`mobile/src/state/live-workout.ts:534`, shipped, and it loses a workout.**
+  `startWorkout` reads a failed `getUser()` as "signed out". `AuthRetryableFetchError`
+  is returned, not thrown, so a dropped radio sets `userId` to null for the life
+  of the session. `ensureWorkoutRow` then returns false forever, `finishWorkout`
+  updates a row that was never inserted (PostgREST matches zero rows and reports
+  no error), the session is marked `sealed`, and `resetWorkout` deletes the
+  checkpoint. **The lifter sees a finished workout and it exists nowhere.** In a
+  basement gym, which this repo's own comments call the normal case.
+- **`src/lib/hevy-import.ts:271`, shipped.** `existing: string[] = []` cannot
+  say "the log was not read", and the web caller drops `error`. A returning
+  lifter gets the byte-identical screen a first-time user gets: no duplicate
+  count, no cutoff control, and the red "sessions you already have will appear
+  twice" warning is nested inside a block that never renders.
+- **`mobile/src/hooks/use-home.ts:261` and `app/(tabs)/index.tsx:88`, shipped.**
+  A failed workouts read renders the brand-new-lifter home screen. `DAY_ONE` is
+  returned from the catch, and "day one" is decided by `target === null`.
+- **`mobile/app/session/[id].tsx:731`, shipped.** The board draws the day-one
+  empty card whenever `board.length === 0`, and a failed seed read produces an
+  empty board.
+- **`supabase/functions/generate-routine/index.ts:133`, shipped.** A failed
+  select builds an empty whitelist, which reads as "none of these exercises
+  exist".
+- Plus four latent ones, including `restoreWorkout`'s catch, which is scoped
+  over the storage READ as well as the parse, so a transient `AsyncStorage`
+  failure deletes a live workout on the grounds that it must be corrupt.
+
+**What to do, in order of how often it applies here.**
+
+1. **Destructure `error` from every Supabase call.** postgrest-js and auth-js
+   default to returning `{ data: null, error }` rather than throwing, so
+   `const { data }` is a decision to treat every failure as an empty result.
+   `(data ?? [])` is where the evidence is destroyed.
+2. **Give the absent case its own value.** `null` for "not asked" against `[]`
+   for "asked, nothing there". A three-state answer costs one line and is the
+   only thing that lets a renderer tell an empty state from an error state.
+3. **Scope a `catch` to the thing that can throw**, not to the whole block. A
+   `try` around a read and a parse cannot tell you which one failed, and the
+   recovery for the two is usually opposite.
+4. **In SQL, do not `coalesce` a value you were not allowed to compute.** A
+   `left join` plus `coalesce(…, 0)` turns "forbidden" and "zero" into the same
+   number, and the row then asserts a measurement.
+5. **When the failure branch cannot be avoided, make it say "could not
+   determine"** rather than the negative answer. That rule is already in this
+   file for shell scripts; it is the same rule.
+
+**And the Gradle version of it, because it looks nothing like the others.**
+`gradle.properties` ships `org.gradle.jvmargs=-Xmx2048m -XX:MaxMetaspaceSize=512m`.
+The Android build died with `OutOfMemoryError: Metaspace` forty-eight times, and
+the half of that line everyone reaches for is `-Xmx`, which was fine.
+**Metaspace is not heap.** Raising `-Xmx` would have changed nothing while
+looking exactly like a fix attempt. Override it on the `gradlew` command line:
+`expo prebuild` regenerates that file, so a patch to it is discarded **silently**
+on every run.
+
 ## A working tool can be aimed at the wrong tree (2026-08-23)
 
 **There WERE two clones of this repo on the Mac, and Xcode's MCP bridge had the
