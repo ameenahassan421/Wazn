@@ -1535,13 +1535,30 @@ merger runs inside a Gradle build. So the removal is verified as written and
 unverified as merged, which is the same distinction as "executed locally is not
 applied".
 
-The blocker is unchanged in shape and smaller than this plan says: a compile
-needs a JDK (`java -version` reports no runtime) and an Android SDK. The 12 to
-16 GB figure recorded earlier is dominated by an EMULATOR IMAGE, which a build
-does not need. **`eas build --platform android --profile preview` still avoids
-the question entirely**, needs no local toolchain, and is now known to be
-reachable, `api.expo.dev` answering 200. It spends Ameen's credits, so it is his
-to start.
+**THE ANSWER WAS NOT A BIGGER LAPTOP. `.github/workflows/ci.yml` NOW COMPILES
+ANDROID.** A GitHub runner already has the JDK and the Android SDK, so the job
+costs no local disk, no EAS credits and no interactive login, and it runs on
+every PR instead of once. The machine has 11 GB free and four documented rounds
+of disk pressure; the plan's advice not to install Android Studio stands and is
+now moot.
+
+The job does four things: `expo prebuild --platform android --clean`, so it is
+always the project today's config plugins produce; `./gradlew assembleRelease`,
+because release is the source set a store upload is built from and the one whose
+manifest merge nobody had ever seen; an assertion that `SYSTEM_ALERT_WINDOW` is
+absent from the MERGED manifest, which closes the "verified as written,
+unverified as merged" gap above; and it uploads the APK, which is the first
+Android binary this project has produced and is sideloadable onto a phone
+without a developer account.
+
+**A JDK 17 is also installed locally now** (`brew install openjdk@17`, at
+`/opt/homebrew/opt/openjdk@17`, no sudo). The Temurin CASK needs a sudo password
+a headless session cannot supply; the formula does not. A local compile would
+still need the Android SDK on top, which CI makes unnecessary.
+
+`eas build --platform android --profile preview` remains the path to a signed
+build on Ameen's account, and `api.expo.dev` now answers 200 so it is reachable.
+It spends his credits, so it stays his to start.
 
 **DONE 2026-08-24: the weekly review stopped describing a different week from
 the figures beside it.** Found by looking at a screenshot after the History
