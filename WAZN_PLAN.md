@@ -4435,6 +4435,31 @@ already in your log." The overlap guard did exactly its job on real data — a
 second import cannot silently double a history — which is also why nothing was
 written to production to prove it.
 
+**`/code-review high` found eight on the branch and all eight are fixed.**
+Three were reads that discarded their error, and the first is the worst thing
+this file could do: `exerciseIdsByName` returned an empty map on a failed
+select, `setRowsFor` then dropped every set, each workout was inserted, found
+empty, deleted and counted as a success — "156 of 156 · Your history is in"
+with nothing written. `planFor` swallowed two more: a failed catalogue read
+makes every seeded lift look unmatched and duplicates 131 exercises into the
+lifter's own picker permanently, and a failed workouts read disarms the
+re-import guard the function exists to arm.
+
+The other five: creating the custom exercises was guarded on `from === 0`,
+which cannot tell a fresh run from a resume that got zero workouts in, so
+retrying after a failure on the FIRST workout re-inserted them and hit
+`exercises_custom_owner_name_key` forever — it reads first and inserts only
+what is missing now, which has no state to get wrong. A workout whose sets all
+failed to resolve was deleted and reported as success. A 23505 from
+`workouts_user_started_at_key` stopped the run with a Postgres code instead of
+skipping the session the index exists to deduplicate — and a comment here
+claimed that index did not exist. `afterCutoff` did not trim `matched` /
+`unmatched`, so a cut-away half still created custom exercises for lifts
+nothing would reference. And in `use-body.ts`, the new keep-the-previous-read
+rule swallowed the refetch after a SUCCESSFUL weigh-in, so a saved weight
+showed the old number; the upsert is keyed on the day and it succeeded, so the
+row is written locally rather than reported as either stale or failed.
+
 **What is deliberately not built.** The sign-in screen's Hevy card stays
 copy-only. It renders BEFORE authentication and an import needs an account to
 write into, so the door is a row in Settings and the card is the promise. And

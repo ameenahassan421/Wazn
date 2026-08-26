@@ -385,6 +385,26 @@ describe('afterCutoff', () => {
   })
 })
 
+describe('afterCutoff — the name lists move with the workouts', () => {
+  it('drops exercises that only appear in the cut-away half', () => {
+    const csv = [
+      'title,start_time,exercise_title,set_index,set_type,weight_lbs,reps',
+      'Old,"1 Jan 2025, 10:00",Ancient Lift,0,normal,100,5',
+      'New,"1 Jun 2025, 10:00",Bench Press,0,normal,100,5',
+    ].join('\n')
+    const plan = analyse(csv, ['Bench Press'], 'UTC')
+    expect(plan.unmatched).toEqual(['Ancient Lift'])
+
+    // Keep only the June session. "Ancient Lift" is now referenced by nothing
+    // this plan will write, and creating it would leave a custom exercise in
+    // the picker forever for a session that never lands.
+    const cut = afterCutoff(plan, '2025-03-01T00:00:00.000Z')
+    expect(cut.workouts).toHaveLength(1)
+    expect(cut.unmatched).toEqual([])
+    expect(cut.matched).toEqual(['Bench Press'])
+  })
+})
+
 describe('setRowsFor', () => {
   const planned: PlannedWorkout = {
     name: 'Push',

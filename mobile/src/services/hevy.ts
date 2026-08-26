@@ -74,17 +74,30 @@ export async function pickHevyCsv(): Promise<PickedCsv | null> {
 /**
  * Turn the file into a plan, against what this account already has.
  *
- * Two reads before the parse, and the second one is the one that matters. The
- * log's existing `started_at` values are what let `analyse` tell a first
- * import from a second — without them a second import silently doubles the
- * lifter's entire history, because there is no unique constraint behind the
- * insert to catch it.
+ * Two reads before the parse, and the second one is what lets `analyse` tell a
+ * first import from a second.
+ *
+ * ── BOTH READS THROW RATHER THAN DEGRADE, AND THAT IS THE WHOLE POINT ───────
+ * These used to be `data ?? []`, which turns either failure into a confident
+ * wrong plan. A failed `exercises` read makes every seeded lift look
+ * UNMATCHED, so the importer creates 131 custom duplicates of the global
+ * catalogue in the lifter's own picker, permanently. A failed `workouts` read
+ * empties `overlapping` and `latestLogged`, which silently disarms the
+ * re-import guard this function exists to arm.
+ *
+ * `workouts_user_started_at_key` (0001, and its comment calls itself the
+ * "Import idempotency key") would catch the resulting duplicates as a 23505 —
+ * an earlier version of this comment claimed no such constraint existed. It is
+ * a backstop, not a plan: the lifter deserves the count on the preview, not an
+ * opaque stop halfway through the write.
  */
 export async function planFor(text: string): Promise<hevy.ImportPlan> {
   const [catalogue, logged] = await Promise.all([
     supabase.from('exercises').select('name'),
     supabase.from('workouts').select('started_at'),
   ])
+  if (catalogue.error !== null) throw new Error(catalogue.error.message)
+  if (logged.error !== null) throw new Error(logged.error.message)
 
   return hevy.analyse(
     text,
@@ -101,7 +114,15 @@ export async function planFor(text: string): Promise<hevy.ImportPlan> {
  * would otherwise fail again on every session that mentions it.
  */
 async function exerciseIdsByName(): Promise<Map<string, string>> {
-  const { data } = await supabase.from('exercises').select('id, name')
+  const { data, error } = await supabase.from('exercises').select('id, name')
+  /*
+   * THROWS. This was `data ?? []`, and an empty map is the worst possible
+   * failure this file can have: `setRowsFor` drops every set whose exercise it
+   * cannot resolve, so each workout would be inserted, found to have no rows,
+   * deleted again, and counted as a success. The screen reports
+   * "156 of 156 · Your history is in" with nothing whatsoever written.
+   */
+  if (error !== null) throw new Error(error.message)
   return new Map(
     ((data ?? []) as { id: string; name: string }[]).map((row) => [
       row.name.trim().toLowerCase(),
@@ -147,13 +168,34 @@ export async function runImport(
 ): Promise<ImportOutcome> {
   /*
    * The lifts Wazn has never heard of become this lifter's own exercises,
-   * created UP FRONT and only on a fresh run. On a resume they already exist,
-   * so they are read back instead — creating them twice would leave a second
-   * copy of every custom lift in the picker.
+   * created before any workout is written.
+   *
+   * ── IDEMPOTENT BY CONSTRUCTION, NOT BY `from === 0` ─────────────────────
+   * This was guarded on `from === 0`, meaning "a fresh run creates them and a
+   * resume reads them back". That guard cannot tell a fresh run from a resume
+   * that got zero workouts in — which is exactly what a failure on the FIRST
+   * workout, or a Stop pressed immediately, leaves behind. Retrying then
+   * re-inserted every custom lift and hit `exercises_custom_owner_name_key`
+   * (0014), so the resume failed, and failed identically on every attempt
+   * after that: the one path a lifter reaches by pressing "carry on" was the
+   * one path that could not work.
+   *
+   * Reading first and inserting only what is missing has no such state. It
+   * costs one extra round trip on a fresh run and it cannot wedge.
    */
-  if (from === 0 && plan.unmatched.length > 0) {
+  let ids: Map<string, string>
+  try {
+    ids = await exerciseIdsByName()
+  } catch (e) {
+    return { done: from, error: describeError(messages.createExercises, e) }
+  }
+
+  const missing = plan.unmatched.filter(
+    (name: string) => !ids.has(name.trim().toLowerCase()),
+  )
+  if (missing.length > 0) {
     const { error } = await supabase.from('exercises').insert(
-      plan.unmatched.map((name: string) => {
+      missing.map((name: string) => {
         const group = deriveMuscleGroup(name)
         return {
           name,
@@ -167,16 +209,20 @@ export async function runImport(
     if (error !== null) {
       return { done: from, error: describeError(messages.createExercises, error) }
     }
+    try {
+      ids = await exerciseIdsByName()
+    } catch (e) {
+      return { done: from, error: describeError(messages.createExercises, e) }
+    }
   }
 
-  const ids = await exerciseIdsByName()
   onProgress(from)
 
   for (let i = from; i < plan.workouts.length; i += 1) {
     if (shouldStop()) return { done: i, error: null }
 
-    const failure = await writeWorkout(plan.workouts[i], userId, ids, messages)
-    if (failure !== null) return { done: i, error: failure }
+    const result = await writeWorkout(plan.workouts[i], userId, ids, messages)
+    if (result !== null) return { done: i, error: result }
 
     onProgress(i + 1)
   }
@@ -185,7 +231,8 @@ export async function runImport(
 }
 
 /**
- * One workout and its sets. Null on success, a sentence on failure.
+ * One workout and its sets. Null when it landed or was already there, a
+ * sentence on failure.
  *
  * The id is generated here rather than read back from the insert, which is the
  * pattern `live-workout.ts` already uses: it saves a round trip, and it means
@@ -211,14 +258,39 @@ async function writeWorkout(
     ended_at: planned.endedAt,
   })
   if (workoutError !== null) {
+    /*
+     * 23505 is `workouts_user_started_at_key`, and 0001 names it the "Import
+     * idempotency key" in its own comment. One workout per (user, start time)
+     * means this exact session is already in the log, so the right answer is
+     * to move on rather than to stop the run with a Postgres code in it. The
+     * preview normally prevents this — it counts the overlap and defaults to
+     * skipping it — and a lifter who turns that off deliberately should get
+     * the remaining sessions, not a wall.
+     */
+    if (workoutError.code === '23505') return null
     return describeError(messages.createWorkout, workoutError)
   }
 
   const rows = hevy.setRowsFor(planned, workoutId, ids)
   if (rows.length === 0) {
-    // Nothing to put in it. A workout with no sets is not a workout — the same
-    // rule the board enforces when one is abandoned.
     await supabase.from('workouts').delete().eq('id', workoutId)
+    /*
+     * An EMPTY session is fine and a session whose sets all failed to resolve
+     * is not, and the two used to be one branch that returned success.
+     *
+     * `setRowsFor` drops a set whose exercise is not in the map. Every
+     * unmatched name is created before this loop runs, so a full drop means
+     * resolution broke — and reporting it as "written" deleted the session,
+     * counted it into `done`, and moved on. That is a lifter's workout
+     * disappearing inside a progress bar that says everything came across.
+     */
+    if (planned.sets.length > 0) {
+      return describeError(messages.saveSets, {
+        message: 'none of its exercises could be matched',
+      })
+    }
+    // A workout with no sets is not a workout — the same rule the board
+    // enforces when one is abandoned.
     return null
   }
 

@@ -461,15 +461,6 @@ export function analyse(
   }
 }
 
-/**
- * Drop everything on or before `cutoff` — the "only what is new" control.
- *
- * Separate from `analyse` because it is the user's decision, taken after they
- * have seen the counts, and because it must be reversible without re-reading
- * the file. It is also the only defence that survives a timezone difference:
- * exact-instant matching cannot tell a re-import from a shifted one, and a
- * date can.
- */
 /** One `workout_sets` row, as PostgREST wants it. */
 export interface SetRow {
   workout_id: string
@@ -524,13 +515,40 @@ export function setRowsFor(
   })
 }
 
+/**
+ * Drop everything on or before `cutoff` — the "only what is new" control.
+ *
+ * Separate from `analyse` because it is the user's decision, taken after they
+ * have seen the counts, and because it must be reversible without re-reading
+ * the file. It is also the only defence that survives a timezone difference:
+ * exact-instant matching cannot tell a re-import from a shifted one, and a
+ * date can.
+ */
 export function afterCutoff(plan: ImportPlan, cutoff: string | null): ImportPlan {
   if (!cutoff) return plan
   const workouts = plan.workouts.filter((w) => w.startedAt > cutoff)
   if (workouts.length === plan.workouts.length) return plan
+
+  /*
+   * The NAME lists are trimmed too, and they were not until 2026-08-26.
+   *
+   * `unmatched` is what the importer creates as the lifter's own exercises,
+   * up front, before any workout is written. Left at the full file's value it
+   * created a custom lift for every movement in the cut-away half — rows in
+   * the picker forever, for sessions this plan will never write. Same argument
+   * for `matched`: the preview counts the two together, and a count describing
+   * sessions that are not in the plan is the screen lying about itself.
+   */
+  const kept = new Set(
+    workouts.flatMap((w) => w.sets.map((set) => set.exerciseName.trim().toLowerCase())),
+  )
+  const stillIn = (name: string): boolean => kept.has(name.trim().toLowerCase())
+
   return {
     ...plan,
     workouts,
+    matched: plan.matched.filter(stillIn),
+    unmatched: plan.unmatched.filter(stillIn),
     setCount: workouts.reduce((n, w) => n + w.sets.length, 0),
     overlapping: 0,
     range:

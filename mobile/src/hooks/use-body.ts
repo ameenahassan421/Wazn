@@ -177,7 +177,27 @@ export function useBody(): BodyData {
       // and costs nothing — a weigh-in that silently failed to save is a gap
       // in the one series this screen exists to draw.
       if (failure) throw new Error(describeError('Saving your weigh-in', failure))
-      apply(await fetchWeights())
+
+      const result = await fetchWeights()
+      if (result.rows === null) {
+        /*
+         * THE WRITE LANDED AND ONLY THE READ BACK DID NOT.
+         *
+         * `apply` keeps the previous rows when a read fails, which is right
+         * for a focus refresh and wrong here: the screen would clear the input
+         * and go on showing the OLD weight, so a successful save looks like a
+         * save that did nothing. Throwing is no better — it reports a failure
+         * that did not happen.
+         *
+         * The upsert is keyed `(user_id, measured_on)` and it succeeded, so
+         * today's row IS this value. Writing what we know to be true is the
+         * only answer that is neither stale nor a lie.
+         */
+        const today = localDay()
+        setRows((prev) => [...prev.filter((r) => r.on !== today), { on: today, kg }])
+        return
+      }
+      apply(result)
     },
     [fetchWeights, apply],
   )
