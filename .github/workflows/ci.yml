@@ -376,6 +376,12 @@ jobs:
 
       - uses: android-actions/setup-android@v3
 
+      - uses: gradle/actions/setup-gradle@v4
+        # The first run of this job spent over an hour inside Gradle. Caching
+        # the dependency and build caches is what stops every later run paying
+        # that again; the `--no-daemon` flag below is why the cache has to come
+        # from the action rather than from a warm daemon.
+
       - run: npm ci
         working-directory: mobile
 
@@ -396,7 +402,29 @@ jobs:
         # `assembleRelease`, not `assembleDebug`: the release source set is what
         # a store upload is built from, and it is the one whose manifest merge
         # nobody had ever seen.
-        run: ./gradlew assembleRelease --no-daemon
+        #
+        # ── ONE ABI, AND THE FIRST RUN IS WHY ────────────────────────────────
+        # The first execution of this job sat in Gradle for over an hour without
+        # finishing. It was not hung. The generated `gradle.properties` carries
+        #
+        #   reactNativeArchitectures=armeabi-v7a,arm64-v8a,x86,x86_64
+        #   newArchEnabled=true
+        #
+        # so with the New Architecture on, Gradle compiles the C++ TurboModules,
+        # Fabric and Hermes from source ONCE PER ABI — four times, cold, on a
+        # two-core runner. That is the whole hour, and three quarters of it
+        # proves the same thing again.
+        #
+        # `arm64-v8a` is every modern Android phone, so the uploaded APK is
+        # still the one Ameen can sideload, and the question this job exists to
+        # answer ("does the Android project compile, and what does the manifest
+        # merger emit") is answered identically by one architecture.
+        #
+        # **This is a CI decision, not a shipping one.** A store build must
+        # carry all four; `eas.json`'s profiles are untouched and EAS reads
+        # `gradle.properties`, not this flag. If this job ever becomes the thing
+        # that produces a release artefact, drop the flag first.
+        run: ./gradlew assembleRelease --no-daemon -PreactNativeArchitectures=arm64-v8a
         working-directory: mobile/android
         env:
           SENTRY_DISABLE_AUTO_UPLOAD: 'true'
@@ -436,6 +464,6 @@ jobs:
         # so it is also the fastest way for Ameen to see the app on a phone
         # without an EAS build or a developer account.
         with:
-          name: wazn-android-release-apk
+          name: wazn-android-release-apk-arm64
           path: mobile/android/app/build/outputs/apk/release/*.apk
           if-no-files-found: error

@@ -1542,6 +1542,22 @@ every PR instead of once. The machine has 11 GB free and four documented rounds
 of disk pressure; the plan's advice not to install Android Studio stands and is
 now moot.
 
+**The first run told us three things before it finished anything.** The runner
+has the SDK, `npm ci` works there, and `expo prebuild --platform android
+--clean` succeeds against today's config plugins. All three were genuinely
+unknown. Then it sat in Gradle for **over an hour**, which is not a hang:
+`gradle.properties` (generated, so this is what any Android build here does)
+carries `reactNativeArchitectures=armeabi-v7a,arm64-v8a,x86,x86_64` with
+`newArchEnabled=true`, so the C++ TurboModules, Fabric and Hermes are compiled
+from source once per ABI, four times, cold, on a two-core runner.
+
+CI now passes `-PreactNativeArchitectures=arm64-v8a` and caches Gradle between
+runs. arm64-v8a is every modern Android phone, so the uploaded APK is still
+sideloadable, and the question the job asks is answered identically by one
+architecture. **It is a CI decision and not a shipping one**: a store build
+carries all four, `eas.json` is untouched, and EAS reads `gradle.properties`
+rather than that flag.
+
 The job does four things: `expo prebuild --platform android --clean`, so it is
 always the project today's config plugins produce; `./gradlew assembleRelease`,
 because release is the source set a store upload is built from and the one whose
