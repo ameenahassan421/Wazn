@@ -193,7 +193,16 @@ is expected, not a fault.
 
 **This is the bug this repo has, and it has it everywhere.** Two sessions hit it
 in four unrelated files in one day; a sweep then found **twelve confirmed
-instances, eight of them shipped**, after adversarially refuting ten more. Every
+instances, eight of them shipped**, after adversarially refuting ten more.
+
+Those numbers are a snapshot of 2026-08-26 and are meant to be re-derivable
+rather than quoted: six readers over `src/lib`, `mobile/src`, `mobile/app`,
+`supabase/functions`, `supabase/migrations` plus `supabase/tests`, and `scripts`
+plus `.github`, each hunting ONLY this shape, then one refuter per candidate
+instructed to default to "not real" when uncertain and to name the concrete path
+where a failed read becomes a confident wrong answer a user would act on. Ten
+did not survive that. **Re-run it rather than citing the twelve**, because the
+useful output is the list and the list will have changed. Every
 section above about a silent tool, a truncated grep or `|| echo "no"` is an
 instance of it. One rule:
 
@@ -207,14 +216,24 @@ because there is no error to see.
 
 **The receipts, because a rule with one example gets argued with.**
 
-- **`src/lib/summary.ts:83`, shipped.** `detectPrs` reads a missing entry in
-  `previousBests` as "previous best was 0 kg". The caller destructures only
-  `data` from `exercise_bests`, so a failed RPC yields an empty map and the
-  finish screen celebrates **a PR on every exercise in the session**, then puts
-  one on a shareable card. The comment directly above the call already states
-  the rule: "an empty map does not mean 'no previous best' - it means 'not
-  asked'". The code implements half of it, and the two sibling call sites
-  destructure `error`. This one is the whole lesson in one file.
+- **`src/lib/summary.ts:83`, shipped, and the author SAW it.** `detectPrs` reads
+  a missing entry in `previousBests` as "previous best was 0 kg". The caller is
+  **`src/screens/LogScreen.tsx:2113`**, two thousand lines into the largest file
+  in the repo, and it is the line that has to change:
+  `const { data: bestRows } = await supabase.rpc('exercise_bests', …)` with no
+  `error`, feeding `(bestRows ?? [])`. A failed RPC yields an empty map, and the
+  finish screen celebrates **a PR on every exercise in the session**, then
+  promotes one to a shareable card.
+
+  What makes this the best receipt in the list is that nobody was careless. The
+  comment above it states the rule exactly: "an empty map does not mean 'no
+  previous best' - it means 'not asked'." The line directly above the call is
+  `if (!deferred)`, which handles OFFLINE. **What it does not handle is a request
+  that goes out and fails**: a 500, an expired JWT, a timeout after the write
+  landed. The author saw the hazard, closed one cause of it, and left the other
+  open eight lines later. The two sibling `exercise_bests` call sites
+  (`LogScreen.tsx:964`, `BodyScreen.tsx:82`) both destructure `error`.
+
 - **`weekly_leaderboard()`, shipped, and it is a privacy defect. WEB ONLY.** It
   gates its `sessions` CTE on `private.can_view` but builds `circle` without it,
   then `left join` plus `coalesce(sum(...), 0)` **manufactures a zero for the
@@ -240,8 +259,15 @@ because there is no error to see.
   the clause, or drop the function and point the web at `week_board`, which
   removes the class rather than the instance.
 
-- **`mobile/src/state/live-workout.ts:534`, shipped, and it loses a workout.**
-  `startWorkout` reads a failed `getUser()` as "signed out". `AuthRetryableFetchError`
+  **If you are reading this after the PWA is retired at 4A, this receipt should
+  describe something that no longer exists.** If `weekly_leaderboard()` is still
+  in the database then, that is the finding, not the history.
+
+- **`mobile/src/state/live-workout.ts:532-534`, shipped, and it loses a
+  workout.** Cite **532**, `const { data: auth } = await supabase.auth.getUser()`,
+  which is where the evidence is destroyed; 534's `if (userId === undefined)
+return` is only the consequence and reads as a perfectly reasonable null check
+  on its own. `startWorkout` reads a failed `getUser()` as "signed out". `AuthRetryableFetchError`
   is returned, not thrown, so a dropped radio sets `userId` to null for the life
   of the session. `ensureWorkoutRow` then returns false forever, `finishWorkout`
   updates a row that was never inserted (PostgREST matches zero rows and reports
