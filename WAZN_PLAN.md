@@ -1500,6 +1500,48 @@ blocks an EAS build from here is smaller and more ordinary: `eas` is not
 installed, and a build spends Ameen's queue and credits, so it is his to
 authorise rather than something a session should start.
 
+**2026-08-26: THE ANDROID APP COMPILES. It has now been built, and the merged
+manifest has been read.** Third run of the CI job, green:
+`app/build/intermediates/merged_manifest/release/processReleaseMainManifest/AndroidManifest.xml`
+exists, the assertion passed, and a **33 MB arm64 release APK** is attached to
+the run as `wazn-android-release-apk-arm64`. That is the first Android binary
+this project has ever produced and it is sideloadable without a developer
+account.
+
+**`SYSTEM_ALERT_WINDOW` is gone from the MERGED manifest**, which upgrades the
+`blockedPermissions` fix from "verified as written" to verified as merged. That
+was the whole gap.
+
+**And the merged manifest holds ELEVEN permissions where the source manifest
+holds five.** Nobody had ever seen the other six, because reading
+`android/app/src/main/AndroidManifest.xml` — the only thing possible without a
+compile — shows less than half of what ships:
+
+```
+ACCESS_NETWORK_STATE   INTERNET              POST_NOTIFICATIONS
+READ_APP_BADGE         READ_EXTERNAL_STORAGE RECEIVE_BOOT_COMPLETED
+USE_BIOMETRIC          USE_FINGERPRINT       VIBRATE
+WAKE_LOCK              WRITE_EXTERNAL_STORAGE
+```
+
+All six new ones are explicable and none is alarming, but they are now KNOWN
+rather than assumed, which is what a Play listing requires:
+
+- `POST_NOTIFICATIONS`, `RECEIVE_BOOT_COMPLETED`, `READ_APP_BADGE` come from
+  `expo-notifications` and exist for the rest alarm; `RECEIVE_BOOT_COMPLETED` is
+  what lets a scheduled rest notification survive a reboot.
+- `USE_BIOMETRIC` and `USE_FINGERPRINT` come from `expo-secure-store`, which is
+  where the auth session lives. The app never prompts for biometrics; the module
+  declares them. `USE_FINGERPRINT` has been deprecated since API 28 and is
+  harmless.
+- `WAKE_LOCK` is `expo-keep-awake` and the notification scheduler.
+- `ACCESS_NETWORK_STATE` is `expo-image`.
+
+**The lesson is the one this repo keeps relearning.** The source manifest was
+the only artefact available without a compile, and it was showing five of
+eleven. A permission audit done by reading it would have been confidently,
+verifiably incomplete.
+
 **2026-08-24: the Android manifest is fixed. The Android app has STILL never
 been compiled.** Those are two different sentences and only the first one is
 done.
