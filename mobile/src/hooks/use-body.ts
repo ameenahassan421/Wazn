@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
+import { useFocusEffect } from 'expo-router'
 
 import {
   averageWeightKg,
@@ -30,10 +31,26 @@ import { supabase, supabaseConfigError } from '@/services/supabase'
  * payload carries only the date and the weight.
  */
 
+/**
+ * The chart's window, in days, and it exists because the label was a lie.
+ *
+ * `body.weight` reads "Weight · 12 wk" and this hook handed the chart every
+ * row ever written, so an account with two years of weigh-ins drew two years
+ * under a label promising twelve weeks. Windowed here rather than at each
+ * chart, because there are two of them now (the Body screen and the card on
+ * Progress) and a window that lives in a component is a window the second
+ * component forgets.
+ *
+ * `latestKg` is deliberately NOT windowed: "what do I weigh" is answered by
+ * the last reading whenever it was taken, and a lifter who stopped weighing in
+ * three months ago should still see their number rather than an em dash.
+ */
+const CHART_DAYS = 84
+
 export interface BodyData {
   loading: boolean
   error: string | null
-  /** Oldest first, for a chart that reads left to right. */
+  /** Oldest first, for a chart that reads left to right. Last 12 weeks. */
   series: { on: Date; kg: number }[]
   /** The most recent reading. Null before the first one. */
   latestKg: number | null
@@ -88,29 +105,65 @@ export function useBody(): BodyData {
     }
   }, [])
 
+  /* Has a read ever succeeded? A ref rather than state: nothing renders from
+     it, and it must be readable inside `apply` without adding a dependency
+     that would re-run the focus effect on every successful read. */
+  const loaded = useRef(false)
+
   const apply = useCallback((result: Awaited<ReturnType<typeof fetchWeights>>) => {
-    if (result.rows === null) setError(result.error)
-    else {
+    if (result.rows === null) {
+      /*
+       * A FAILED REFETCH KEEPS WHAT IS ON SCREEN.
+       *
+       * This used to publish the error unconditionally, and every consumer
+       * draws its failure branch before its data branch — so one flaky read on
+       * returning to Progress replaced a figure, an average, a chart and a
+       * door with a single grey line. `progress.tsx` states the same rule for
+       * the same reason one card up: "data is only replaced on success, so the
+       * previous read stays on screen while the new one is in flight".
+       *
+       * The FIRST read still fails loudly, because there is nothing behind it
+       * to keep. What this buys is staleness in exchange for never blanking,
+       * and the write path is unaffected: `logWeight` throws.
+       */
+      if (!loaded.current) setError(result.error)
+    } else {
+      loaded.current = true
       setError(null)
       setRows(result.rows)
     }
     setLoading(false)
   }, [])
 
-  useEffect(() => {
-    if (supabaseConfigError !== null) return
-    let live = true
-    void fetchWeights()
-      .then((result) => {
-        if (live) apply(result)
-      })
-      .catch(() => {
-        if (live) setLoading(false)
-      })
-    return () => {
-      live = false
-    }
-  }, [fetchWeights, apply])
+  /*
+   * ON FOCUS, NOT ON MOUNT, and in the hook rather than in each screen.
+   *
+   * Both consumers live under the tab navigator and both stay mounted: the
+   * Body screen, and the card on Progress whose own door leads to the screen
+   * that changes this number. A mount-only read showed the OLD weight
+   * immediately after logging the new one. `HistorySection` shipped exactly
+   * that defect and fixed it by calling a `reload` the hook exposed — done
+   * here instead, because a hook that exposes a refresh its callers must
+   * remember to wire up is a hook whose second caller forgets. It also keeps
+   * the count at one read per focus; wiring it from the component meant the
+   * mount effect and the focus effect both firing on the first render.
+   */
+  useFocusEffect(
+    useCallback(() => {
+      if (supabaseConfigError !== null) return
+      let live = true
+      void fetchWeights()
+        .then((result) => {
+          if (live) apply(result)
+        })
+        .catch(() => {
+          if (live) setLoading(false)
+        })
+      return () => {
+        live = false
+      }
+    }, [fetchWeights, apply]),
+  )
 
   const logWeight = useCallback(
     async (kg: number) => {
@@ -132,7 +185,7 @@ export function useBody(): BodyData {
   return {
     loading,
     error,
-    series: weightSeries(rows),
+    series: weightSeries(rows, { sinceDays: CHART_DAYS }),
     latestKg: latestWeightKg(rows),
     averageKg: averageWeightKg(rows),
     steady: weightSteady(rows),

@@ -54,11 +54,30 @@ function localDate(iso: string): Date {
  * not at all the next has a line with two close points and a gap, and that is
  * the truth about how they weighed themselves — inventing Wednesday's weight
  * to make the x-axis even would be the app drawing a measurement it never took.
+ *
+ * ── `sinceDays` EXISTS BECAUSE THE CHART'S OWN LABEL WAS A LIE ─────────────
+ * `body.weight` reads "Weight · 12 wk" and this function returned every row
+ * ever written, so an account with two years of weigh-ins drew two years under
+ * a label promising twelve weeks. Same class as the caption that described a
+ * dashed line nobody had drawn: the numbers were right and the chart lied.
+ *
+ * The window is opt-in and OFF by default, so `latestWeightKg`,
+ * `averageWeightKg` and `weightSteady` — which do their own, different
+ * cutoffs on top of this — are untouched. Only the two charts pass it.
  */
-export function weightSeries(weights: WeighIn[]): { on: Date; kg: number }[] {
+export function weightSeries(
+  weights: WeighIn[],
+  { sinceDays, now = new Date() }: { sinceDays?: number; now?: Date } = {},
+): { on: Date; kg: number }[] {
+  const cutoff = sinceDays === undefined ? null : now.getTime() - sinceDays * 86_400_000
   return weights
     .map((w) => ({ on: localDate(w.on), kg: num(w.kg) }))
-    .filter((w) => !Number.isNaN(w.on.getTime()) && w.kg > 0)
+    .filter(
+      (w) =>
+        !Number.isNaN(w.on.getTime()) &&
+        w.kg > 0 &&
+        (cutoff === null || w.on.getTime() >= cutoff),
+    )
     .sort((a, b) => a.on.getTime() - b.on.getTime())
 }
 
@@ -82,7 +101,22 @@ export function averageWeightKg(
 ): number | null {
   const cutoff = now.getTime() - days * 86_400_000
   const rows = weightSeries(weights).filter((w) => w.on.getTime() >= cutoff)
-  if (rows.length === 0) return null
+  /*
+   * TWO readings, not one, and the paragraph above is why.
+   *
+   * The mean of a single weigh-in IS that weigh-in, relabelled "28-day
+   * average" — which is exactly the claim resting on how salty dinner was
+   * that this function's own comment says it exists to prevent. It shipped
+   * anyway, in two places: the Body card drew "195 lbs" and "195 lbs · 28-day
+   * average" one line apart, and `crossSignal` read `!weightSteady` (which is
+   * false for one reading, because two are needed to prove anything held) as
+   * "weight MOVED" and told the lifter their weight had moved over four weeks
+   * on the strength of one number.
+   *
+   * Null is the honest answer to "what has your weight averaged" when there is
+   * one reading, and every caller already handles null as "not enough yet".
+   */
+  if (rows.length < 2) return null
   return Number((rows.reduce((a, b) => a + b.kg, 0) / rows.length).toFixed(1))
 }
 
@@ -102,14 +136,39 @@ export function weightSteady(
     now = new Date(),
   }: { days?: number; bandKg?: number; now?: Date } = {},
 ): boolean {
-  const cutoff = now.getTime() - days * 86_400_000
-  const rows = weightSeries(weights).filter((w) => w.on.getTime() >= cutoff)
+  const { rows, spanDays } = inWindow(weights, days, now)
   if (rows.length < 2) return false
-  const spanDays =
-    (rows[rows.length - 1].on.getTime() - rows[0].on.getTime()) / 86_400_000
   // Two weigh-ins a day apart do not prove four weeks of anything.
   if (spanDays < days * 0.5) return false
   return Math.abs(rows[rows.length - 1].kg - rows[0].kg) <= bandKg
+}
+
+/**
+ * The weigh-ins inside the trailing window, and the days they span.
+ *
+ * Not exported. It exists because `weightSteady` and `crossSignal` both have
+ * to separate two cases — weight held, and too few weigh-ins to tell — and
+ * only one of them could: `weightSteady` returns false for BOTH, so
+ * `crossSignal`'s `!steady` read the second as the first and announced that
+ * weight had moved.
+ *
+ * The wording above is deliberate and the first draft failed CI. `portable.
+ * test.ts` scans this file's raw source for import specifiers, and prose of
+ * the form `from "..."` inside a comment parses as one — the phrase it
+ * originally used named a package that does not exist.
+ */
+function inWindow(
+  weights: WeighIn[],
+  days: number,
+  now: Date,
+): { rows: { on: Date; kg: number }[]; spanDays: number } {
+  const cutoff = now.getTime() - days * 86_400_000
+  const rows = weightSeries(weights).filter((w) => w.on.getTime() >= cutoff)
+  const spanDays =
+    rows.length < 2
+      ? 0
+      : (rows[rows.length - 1].on.getTime() - rows[0].on.getTime()) / 86_400_000
+  return { rows, spanDays }
 }
 
 export type ProteinState = 'met' | 'under' | 'empty'
@@ -231,6 +290,18 @@ export function crossSignal(
   if (average === null || strengthGainKg === null) return null
   // Under one plate over four weeks is inside the estimate's own error.
   if (Math.abs(strengthGainKg) < 2.5) return null
+
+  /*
+   * THE WEIGH-INS HAVE TO SPAN THE WINDOW BEFORE ANY OF THESE CLAIMS HOLD.
+   *
+   * `weightSteady` is false for "weight moved" AND for "two readings a day
+   * apart cannot show whether it moved", and the branches below read the
+   * second as the first: Monday 88.5 and Tuesday 88.6 produced "your weight
+   * moved over four weeks and your lifts moved with it" from two consecutive
+   * mornings 0.1kg apart. Every sentence this function returns is a claim
+   * about a four-week span, so it says nothing until it has one.
+   */
+  if (inWindow(weights, days, now).spanDays < days * 0.5) return null
 
   const weeks = Math.round(days / 7)
   const steady = weightSteady(weights, { days, now })

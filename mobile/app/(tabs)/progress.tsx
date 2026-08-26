@@ -20,6 +20,7 @@ import { Empty, Screen } from '@/components/ui/Screen'
 import { Header } from '@/components/ui/Header'
 import { WeekReview } from '@/components/WeekReview'
 import { HistorySection } from '@/components/HistorySection'
+import { BodyCard } from '@/components/BodyCard'
 import { Plate } from '@/components/ui/Plate'
 import { Spark } from '@/components/ui/Spark'
 import { Txt, Kick } from '@/design/Txt'
@@ -516,6 +517,22 @@ export default function ProgressScreen() {
           <StrengthList rows={data?.strength ?? []} unit={unit} />
         </View>
       )}
+
+      {/* Body weight, as one card rather than a tab. The plan has always put
+          it "beside the e1RM chart", and it sits directly under the strength
+          list for that reason: the list says a lift went up, and this says
+          whether the lifter went up with it.
+
+          OUTSIDE the branch above, on the same argument as `HistorySection`
+          below — `useBody` is its own read on its own cadence, and hanging it
+          inside would hide every weigh-in behind a failed `fetchProgress`.
+
+          It was refused on 2026-08-22 because `body_weights` has one row
+          across nine accounts. Ameen overrode that on 2026-08-25, and the
+          override is right: the only door to the Body screen was a row in
+          Settings, so the app asked for weigh-ins nowhere and then read the
+          silence as disinterest. The card is that door in both its states. */}
+      <BodyCard quiet={state === 'failed' || sessions.length === 0} />
 
       {/* History, folded in. `docs/FRIENDS_PLAN.md` Part 3B: "what did I do"
           and "am I getting stronger" are the same question at two zoom levels,

@@ -4330,6 +4330,66 @@ Neither blocks the next screen; both get more expensive the longer they sit.
    action. It does not bite until those screens are built, which is item 3 of
    the order above.
 
+#### DONE 2026-08-26: the Body card on Progress, and three claims that were not true
+
+Appended at the BOTTOM of 7.0 on purpose: a parallel session is appending near
+the top of it the same night, and this file is a merge-conflict magnet.
+
+`mobile/src/components/BodyCard.tsx` puts body weight on Progress, where the
+plan has always said it goes ("one card beside the e1RM chart"). It renders
+under the strength list and above History, with its own read on its own
+cadence, outside the `fetchProgress` branch for the reason `WeekReview` and
+`HistorySection` are: hanging a weigh-in off the sessions query would hide it
+behind a failed read of something unrelated.
+
+**This was REFUSED on 2026-08-22 and Ameen overrode it on 2026-08-25.** The
+refusal was on the data: `body_weights` held one row across nine accounts, so
+the card would be a permanent empty state. The override is right, and for a
+reason the refusal missed: the only door to the Body screen in the entire app
+was a row in Settings, so the app asked for weigh-ins nowhere and then read the
+silence as disinterest. The card is that door in both of its states. The empty
+one got the care, because it is the state most accounts see.
+
+**Three things on the way that were false before this branch touched them.**
+
+1. **"Weight · 12 wk" drew every weigh-in ever written.** `weightSeries`
+   returned all rows and both charts labelled the result twelve weeks. It takes
+   an opt-in `sinceDays` now, passed once in `useBody` so the Body screen and
+   the card cannot disagree, and OFF by default so `latestWeightKg`,
+   `averageWeightKg` and `weightSteady` — which apply their own, different
+   cutoffs — are untouched.
+2. **A 28-day average from ONE weigh-in.** The card drew "195 lbs" and
+   "195 lbs · 28-day average" one line apart, which is the same number wearing
+   a label, and `averageWeightKg`'s own comment already said why that is wrong
+   ("a claim resting on how salty dinner was"). It returns null below two
+   readings now.
+3. **`crossSignal` announced that weight had MOVED on two consecutive
+   mornings.** `weightSteady` is false both for "weight moved" and for "too few
+   weigh-ins to tell", and the branch read the second as the first — so Monday
+   88.5 and Tuesday 88.6 produced "your weight moved over four weeks and your
+   lifts moved with it". Both now share one `inWindow` helper and the function
+   says nothing until the weigh-ins span half the window.
+
+**`/code-review` found five and all five are fixed**, two of which no screenshot
+would ever have shown: a failed focus refetch published its error and every
+consumer draws its failure branch first, so one flaky read on returning to
+Progress replaced the whole card with a grey line (a first read still fails
+loudly; later ones keep what is on screen, the rule `progress.tsx` already
+states one card up), and the refresh moved INTO `useBody` as a `useFocusEffect`
+rather than a `reload` each caller has to remember to wire — which also ended
+the two-reads-per-mount the component version caused.
+
+**Verified on the simulator, both states, and the door pressed.** The populated
+card, the empty card (forced with a temporary branch flip, reverted), and a tap
+on "Log weigh-in" that actually lands on `/body`. 1,307 web tests, 55 mobile
+tests, lint, both typechecks, `check:vercel`, `check:type`, `check:coverage`,
+the production build and `bundle:ios` are green.
+
+**Not verified: Arabic.** The card composes only pieces the Body screen already
+renders in RTL and uses no physical properties, but nobody has looked at it in
+the other direction, and this repo has shipped two RTL defects that nothing but
+a screenshot in Arabic would have found.
+
 ### 7.1 Log (chronological, newest last)
 
 > History, not state. Items here may be superseded, and several are. §7.0 wins.
