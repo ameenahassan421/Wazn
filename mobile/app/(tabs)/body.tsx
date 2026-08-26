@@ -143,8 +143,16 @@ export default function BodyScreen() {
 
         {/* The chart `body.empty` has been promising. Width is the screen
             minus both gutters and both card paddings — measured rather than
-            guessed, because an SVG wider than its card clips silently. */}
-        {series.length > 0 && (
+            guessed, because an SVG wider than its card clips silently.
+
+            `series` is the last twelve weeks, which is what the kicker has
+            always claimed and what this screen drew every row ever written
+            under until 2026-08-25. The window is also why the empty line is
+            chosen rather than fixed: "one reading so far" is true for a first
+            weigh-in and false for a lifter with fifty, none of them recent.
+            Drawn whenever there is a reading at all, so that lifter gets a
+            sentence rather than a card that quietly disappears. */}
+        {latestKg !== null && (
           <Card style={{ marginBottom: 12, gap: 10 }}>
             <Kick>{t('body.weight')}</Kick>
             <Spark
@@ -152,7 +160,9 @@ export default function BodyScreen() {
               width={width - space.gutter * 2 - space.cardPad * 2}
               label={(value) => String(value)}
               range={(low, high) => t('body.range', { low, high, unit })}
-              emptyLine={t('body.one_reading')}
+              emptyLine={
+                series.length === 0 ? t('body.none_recent') : t('body.one_reading')
+              }
             />
           </Card>
         )}

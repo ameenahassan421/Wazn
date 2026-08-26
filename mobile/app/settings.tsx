@@ -326,6 +326,12 @@ export default function Settings() {
       <Card bare style={{ marginBottom: 20 }}>
         <DoorRow label={t('nav.body')} onPress={() => router.push('/body')} />
         <Rule />
+        {/* The Hevy import's only door, and the reason it is HERE rather than
+            on the sign-in screen that advertises it: `sign-in.tsx` renders
+            before there is an account to write into, so the card there is a
+            promise and this is where it is kept. */}
+        <DoorRow label={t('import.hero.cta')} onPress={() => router.push('/import')} />
+        <Rule />
       </Card>
 
       {/* Was the literal 'PREFERENCES', which `Kick` uppercases anyway. Caught

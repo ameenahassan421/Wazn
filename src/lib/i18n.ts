@@ -479,6 +479,12 @@ export const messages: Record<Locale, Record<string, string>> = {
     'progress.anchor.verb.sit': 'sit',
     'progress.anchor.its': 'its',
     'progress.anchor.their': 'their',
+    // The Body card's empty state, which is the state most accounts see:
+    // `body_weights` holds one row across all nine of them. It says what is
+    // missing and why the card wants it, and the button beside it is the only
+    // door to the Body screen outside a row in Settings.
+    'progress.body.empty':
+      'No weigh-ins yet. A lift that moved at a steady bodyweight is the one that got stronger.',
     'progress.strength.title': 'Strength · est. 1RM',
     'progress.strength.empty':
       'Nothing trained in {range}. Widen the range to see older lifts.',
@@ -773,6 +779,10 @@ export const messages: Record<Locale, Record<string, string>> = {
     'body.today': 'Today',
     'body.range': 'Range {low} to {high} {unit}',
     'body.one_reading': 'One reading so far. A trend needs two.',
+    // The other reason a twelve-week chart cannot be drawn, and it is not the
+    // same reason: this lifter may have years of weigh-ins, none of them
+    // inside the window the kicker names.
+    'body.none_recent': 'No weigh-ins in the last 12 weeks.',
     'body.average': '{n} {unit} · 28-day average',
     'body.steady': 'Steady for four weeks',
     'body.invalid': 'Enter a weight between 20 and 500.',
@@ -1177,6 +1187,12 @@ export const messages: Record<Locale, Record<string, string>> = {
     'import.different_file': 'Choose a different file',
     'import.will_add': 'Will be added as your own exercises',
     'import.worth_knowing': 'Worth knowing',
+    // Three the native screen needed and the web one never had: it hardcoded
+    // "Stop" in English, has no resume-from-a-cutoff row, and reports progress
+    // as prose rather than as a count.
+    'import.stop': 'Stop',
+    'import.skip_overlap': 'Skip the {count} already in your log',
+    'import.progress': '{done} of {total}',
     // Install
     'install.headline': 'Add Wazn to your home screen',
     // Load helper
@@ -1651,6 +1667,8 @@ export const messages: Record<Locale, Record<string, string>> = {
     'progress.anchor.verb.sit': 'يقع',
     'progress.anchor.its': 'علامته',
     'progress.anchor.their': 'علامتها',
+    'progress.body.empty':
+      'لا توجد قياسات وزن بعد. التمرين الذي تقدّم مع ثبات وزن الجسم هو الذي زادت قوته فعلاً.',
     'progress.strength.title': 'القوة · تقدير 1RM',
     'progress.strength.empty': 'لم تتدرب في {range}. وسّع النطاق لرؤية تمارين أقدم.',
     'progress.strength.last': 'آخر:',
@@ -1909,6 +1927,7 @@ export const messages: Record<Locale, Record<string, string>> = {
     'body.today': 'اليوم',
     'body.range': 'المدى من {low} إلى {high} {unit}',
     'body.one_reading': 'قياس واحد حتى الآن. الاتجاه يحتاج اثنين.',
+    'body.none_recent': 'لا توجد قياسات وزن خلال آخر ١٢ أسبوعاً.',
     'body.average': '{n} {unit} · متوسط ٢٨ يوماً',
     'body.steady': 'ثابت منذ أربعة أسابيع',
     'body.invalid': 'أدخل وزناً بين ٢٠ و٥٠٠.',
@@ -2291,6 +2310,9 @@ export const messages: Record<Locale, Record<string, string>> = {
     'import.different_file': 'اختر ملفاً آخر',
     'import.will_add': 'ستُضاف كتمارين خاصة بك',
     'import.worth_knowing': 'جدير بالمعرفة',
+    'import.stop': 'أوقف',
+    'import.skip_overlap': 'تخطَّ {count} الموجودة في سجلّك',
+    'import.progress': '{done} من {total}',
     // Install
     'install.headline': 'أضِف وزن إلى شاشتك الرئيسية',
     // Load helper

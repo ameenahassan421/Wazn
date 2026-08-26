@@ -4477,6 +4477,143 @@ Neither blocks the next screen; both get more expensive the longer they sit.
    action. It does not bite until those screens are built, which is item 3 of
    the order above.
 
+#### DONE 2026-08-26: the Body card on Progress, and three claims that were not true
+
+Appended at the BOTTOM of 7.0 on purpose: a parallel session is appending near
+the top of it the same night, and this file is a merge-conflict magnet.
+
+`mobile/src/components/BodyCard.tsx` puts body weight on Progress, where the
+plan has always said it goes ("one card beside the e1RM chart"). It renders
+under the strength list and above History, with its own read on its own
+cadence, outside the `fetchProgress` branch for the reason `WeekReview` and
+`HistorySection` are: hanging a weigh-in off the sessions query would hide it
+behind a failed read of something unrelated.
+
+**This was REFUSED on 2026-08-22 and Ameen overrode it on 2026-08-25.** The
+refusal was on the data: `body_weights` held one row across nine accounts, so
+the card would be a permanent empty state. The override is right, and for a
+reason the refusal missed: the only door to the Body screen in the entire app
+was a row in Settings, so the app asked for weigh-ins nowhere and then read the
+silence as disinterest. The card is that door in both of its states. The empty
+one got the care, because it is the state most accounts see.
+
+**Three things on the way that were false before this branch touched them.**
+
+1. **"Weight · 12 wk" drew every weigh-in ever written.** `weightSeries`
+   returned all rows and both charts labelled the result twelve weeks. It takes
+   an opt-in `sinceDays` now, passed once in `useBody` so the Body screen and
+   the card cannot disagree, and OFF by default so `latestWeightKg`,
+   `averageWeightKg` and `weightSteady` — which apply their own, different
+   cutoffs — are untouched.
+2. **A 28-day average from ONE weigh-in.** The card drew "195 lbs" and
+   "195 lbs · 28-day average" one line apart, which is the same number wearing
+   a label, and `averageWeightKg`'s own comment already said why that is wrong
+   ("a claim resting on how salty dinner was"). It returns null below two
+   readings now.
+3. **`crossSignal` announced that weight had MOVED on two consecutive
+   mornings.** `weightSteady` is false both for "weight moved" and for "too few
+   weigh-ins to tell", and the branch read the second as the first — so Monday
+   88.5 and Tuesday 88.6 produced "your weight moved over four weeks and your
+   lifts moved with it". Both now share one `inWindow` helper and the function
+   says nothing until the weigh-ins span half the window.
+
+**`/code-review` found five and all five are fixed**, two of which no screenshot
+would ever have shown: a failed focus refetch published its error and every
+consumer draws its failure branch first, so one flaky read on returning to
+Progress replaced the whole card with a grey line (a first read still fails
+loudly; later ones keep what is on screen, the rule `progress.tsx` already
+states one card up), and the refresh moved INTO `useBody` as a `useFocusEffect`
+rather than a `reload` each caller has to remember to wire — which also ended
+the two-reads-per-mount the component version caused.
+
+**Verified on the simulator, both states, and the door pressed.** The populated
+card, the empty card (forced with a temporary branch flip, reverted), and a tap
+on "Log weigh-in" that actually lands on `/body`. 1,307 web tests, 55 mobile
+tests, lint, both typechecks, `check:vercel`, `check:type`, `check:coverage`,
+the production build and `bundle:ios` are green.
+
+**Not verified: Arabic.** The card composes only pieces the Body screen already
+renders in RTL and uses no physical properties, but nobody has looked at it in
+the other direction, and this repo has shipped two RTL defects that nothing but
+a screenshot in Arabic would have found.
+
+#### DONE 2026-08-26: the Hevy import lands on native, and the parser could not read a real export
+
+Finish-line item 2 read "Hevy import on native, or remove the Hevy CTA from
+`sign-in.tsx`". Built, not deleted, and the two assumptions behind "deleting is
+cheaper" were both wrong.
+
+**No new dependency.** The plan for this work assumed `expo-document-picker`
+plus a prebuild and pods. `expo-file-system` has shipped `File.pickFileAsync`
+since SDK 54 and is already in the graph as a dependency of `expo` itself, so
+the picker cost nothing native at all — no config plugin, no entitlement, no
+manifest change, and the simulator build that was already installed ran the new
+screen without being rebuilt. `expo-document-picker` was installed, found
+unnecessary, and removed in the same hour. `expo-file-system` is now a DIRECT
+dependency at the SDK-pinned `~57.0.3`, because a package this code imports
+should not float on whether `expo` keeps bundling it.
+
+**And the copy already existed.** Every string this screen needs was in
+`src/lib/i18n.ts` in both locales, including seven — `import.hero.*`,
+`import.running`, `import.complete`, `import.start_lifting`,
+`import.different_file`, `import.will_add`, `import.worth_knowing` — that no
+code had ever read. Three were added: `import.stop`, `import.skip_overlap`,
+`import.progress`.
+
+**THE PARSER COULD NOT READ THIS REPO'S OWN EXPORT.** `parseHevyDate` in
+`src/lib/hevy-import.ts` knew `"21 Oct 2025, 18:04"` and `"2025-10-21
+18:04:00"`. Hevy writes `"Jul 19, 2026, 7:01 PM"` for a US-locale account, and
+that is the format of `workouts_corrected.csv` — the file every row in
+production came from. Pointing the native importer at it reported **3,197 rows
+with "a date this app could not read"**, which was all of them.
+
+`scripts/import_hevy.ts:141` has always parsed that shape and its comment
+quotes the string. So there were two parsers for one format, they had diverged,
+and the one a USER could reach was the one that could not read the real file.
+The web import has the same defect and has had it since it was written; nothing
+found it because the seed ran through the script and nobody had ever put a
+genuine export through the UI. Fixed in the shared module, so both apps get it,
+with tests for the format and for 12 AM / 12 PM.
+
+**Verified against that export on a simulator, with zero writes.** After the
+fix the preview reads 131 exercises and "149 sessions are already in your log
+and will be skipped", then refuses to go further: "Every session in that file is
+already in your log." The overlap guard did exactly its job on real data — a
+second import cannot silently double a history — which is also why nothing was
+written to production to prove it.
+
+**`/code-review high` found eight on the branch and all eight are fixed.**
+Three were reads that discarded their error, and the first is the worst thing
+this file could do: `exerciseIdsByName` returned an empty map on a failed
+select, `setRowsFor` then dropped every set, each workout was inserted, found
+empty, deleted and counted as a success — "156 of 156 · Your history is in"
+with nothing written. `planFor` swallowed two more: a failed catalogue read
+makes every seeded lift look unmatched and duplicates 131 exercises into the
+lifter's own picker permanently, and a failed workouts read disarms the
+re-import guard the function exists to arm.
+
+The other five: creating the custom exercises was guarded on `from === 0`,
+which cannot tell a fresh run from a resume that got zero workouts in, so
+retrying after a failure on the FIRST workout re-inserted them and hit
+`exercises_custom_owner_name_key` forever — it reads first and inserts only
+what is missing now, which has no state to get wrong. A workout whose sets all
+failed to resolve was deleted and reported as success. A 23505 from
+`workouts_user_started_at_key` stopped the run with a Postgres code instead of
+skipping the session the index exists to deduplicate — and a comment here
+claimed that index did not exist. `afterCutoff` did not trim `matched` /
+`unmatched`, so a cut-away half still created custom exercises for lifts
+nothing would reference. And in `use-body.ts`, the new keep-the-previous-read
+rule swallowed the refetch after a SUCCESSFUL weigh-in, so a saved weight
+showed the old number; the upsert is keyed on the day and it succeeded, so the
+row is written locally rather than reported as either stale or failed.
+
+**What is deliberately not built.** The sign-in screen's Hevy card stays
+copy-only. It renders BEFORE authentication and an import needs an account to
+write into, so the door is a row in Settings and the card is the promise. And
+the cutoff chip LOCKS once a run has written anything: `from` is an index into
+the trimmed plan, so moving the cutoff mid-resume would shift every index under
+it. The web version leaves it live and has that defect.
+
 ### 7.1 Log (chronological, newest last)
 
 > History, not state. Items here may be superseded, and several are. §7.0 wins.

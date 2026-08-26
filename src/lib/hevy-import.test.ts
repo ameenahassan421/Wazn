@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest'
-import { LBS_TO_KG, afterCutoff, analyse, parseHevyDate } from './hevy-import'
+import {
+  LBS_TO_KG,
+  afterCutoff,
+  analyse,
+  parseHevyDate,
+  setRowsFor,
+} from './hevy-import'
+import type { PlannedWorkout } from './hevy-import'
 
 const HEADER =
   'title,start_time,end_time,exercise_title,superset_id,exercise_notes,set_index,set_type,weight_lbs,reps,distance_miles,duration_seconds,rpe'
@@ -41,6 +48,32 @@ describe('parseHevyDate', () => {
     expect(parseHevyDate('21 Oct 2025, 18:04', 'America/Chicago')).toBe(
       '2025-10-21T23:04:00.000Z',
     )
+  })
+
+  it('reads the MONTH-FIRST form a US-locale export writes', () => {
+    // The format of `workouts_corrected.csv`, this repo's own Hevy export and
+    // the source of every row in production — and the one form this parser did
+    // not know until 2026-08-26. Running the native importer against that file
+    // reported 3,197 rows with "a date this app could not read", which is all
+    // of them. `scripts/import_hevy.ts` has parsed it correctly since the seed.
+    expect(parseHevyDate('Jul 19, 2026, 7:01 PM', 'America/Chicago')).toBe(
+      '2026-07-20T00:01:00.000Z',
+    )
+  })
+
+  it('gets midnight and noon right, which is where a meridiem parser fails', () => {
+    // 12 AM is hour 0 and 12 PM is hour 12. A `+ 12` without the `% 12` makes
+    // noon into midnight of the next day, silently, on one row in twelve.
+    expect(parseHevyDate('Jul 19, 2026, 12:30 AM', 'UTC')).toBe(
+      '2026-07-19T00:30:00.000Z',
+    )
+    expect(parseHevyDate('Jul 19, 2026, 12:30 PM', 'UTC')).toBe(
+      '2026-07-19T12:30:00.000Z',
+    )
+  })
+
+  it('reads a month-first export with no meridiem as a 24-hour clock', () => {
+    expect(parseHevyDate('Jul 19, 2026, 19:01', 'UTC')).toBe('2026-07-19T19:01:00.000Z')
   })
 
   it('reads the ISO-ish variant some exports use', () => {
@@ -349,5 +382,87 @@ describe('afterCutoff', () => {
     expect(cut.workouts).toHaveLength(0)
     expect(cut.range).toBeNull()
     expect(cut.setCount).toBe(0)
+  })
+})
+
+describe('afterCutoff — the name lists move with the workouts', () => {
+  it('drops exercises that only appear in the cut-away half', () => {
+    const csv = [
+      'title,start_time,exercise_title,set_index,set_type,weight_lbs,reps',
+      'Old,"1 Jan 2025, 10:00",Ancient Lift,0,normal,100,5',
+      'New,"1 Jun 2025, 10:00",Bench Press,0,normal,100,5',
+    ].join('\n')
+    const plan = analyse(csv, ['Bench Press'], 'UTC')
+    expect(plan.unmatched).toEqual(['Ancient Lift'])
+
+    // Keep only the June session. "Ancient Lift" is now referenced by nothing
+    // this plan will write, and creating it would leave a custom exercise in
+    // the picker forever for a session that never lands.
+    const cut = afterCutoff(plan, '2025-03-01T00:00:00.000Z')
+    expect(cut.workouts).toHaveLength(1)
+    expect(cut.unmatched).toEqual([])
+    expect(cut.matched).toEqual(['Bench Press'])
+  })
+})
+
+describe('setRowsFor', () => {
+  const planned: PlannedWorkout = {
+    name: 'Push',
+    startedAt: '2026-08-01T10:00:00.000Z',
+    endedAt: '2026-08-01T11:00:00.000Z',
+    sets: [
+      {
+        setNumber: 1,
+        weightKg: 60,
+        reps: 5,
+        rpe: 8,
+        durationSeconds: null,
+        distanceMeters: null,
+        setType: 'normal',
+        supersetGroup: 2,
+        exerciseName: 'Bench Press (Barbell)',
+      },
+      {
+        setNumber: 2,
+        weightKg: 40,
+        reps: 10,
+        rpe: null,
+        durationSeconds: null,
+        distanceMeters: null,
+        setType: 'warmup',
+        supersetGroup: null,
+        exerciseName: 'Nothing In The Catalogue',
+      },
+    ],
+  }
+
+  it('carries every column the board reads, superset and RPE included', () => {
+    const rows = setRowsFor(planned, 'w-1', new Map([['bench press (barbell)', 'e-1']]))
+    expect(rows).toHaveLength(1)
+    expect(rows[0]).toEqual({
+      workout_id: 'w-1',
+      exercise_id: 'e-1',
+      set_number: 1,
+      weight_kg: 60,
+      reps: 5,
+      rpe: 8,
+      duration_seconds: null,
+      distance_meters: null,
+      set_type: 'normal',
+      superset_group: 2,
+    })
+  })
+
+  it('matches on a trimmed, lowercased name, the way `analyse` does', () => {
+    const rows = setRowsFor(planned, 'w-1', new Map([['bench press (barbell)', 'e-1']]))
+    expect(rows[0].exercise_id).toBe('e-1')
+  })
+
+  it('DROPS a set whose exercise is missing rather than defaulting it', () => {
+    // The unmatched names are created up front, so a miss here is a bug
+    // upstream. Filing those reps under whichever lift happened to be first
+    // would be worse than losing them, and losing them silently is why the
+    // caller counts rows before it writes.
+    expect(setRowsFor(planned, 'w-1', new Map())).toEqual([])
   })
 })

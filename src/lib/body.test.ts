@@ -31,6 +31,21 @@ describe('weightSeries', () => {
     expect(s.map((r) => r.kg)).toEqual([82.6, 82.1])
   })
 
+  it('windows to `sinceDays` when the caller asks, and to nothing when it does not', () => {
+    const rows = [
+      { on: ago(200), kg: 90 },
+      { on: ago(30), kg: 84 },
+      { on: ago(1), kg: 82 },
+    ]
+    // The default is every row ever written — `latestWeightKg` and the two
+    // averages depend on it.
+    expect(weightSeries(rows)).toHaveLength(3)
+    // 12 weeks is what the chart's label promises, so 200 days ago is out.
+    expect(weightSeries(rows, { sinceDays: 84, now: NOW }).map((r) => r.kg)).toEqual([
+      84, 82,
+    ])
+  })
+
   it('does not resample — a gap in the weigh-ins is the truth about them', () => {
     const s = weightSeries([
       { on: ago(20), kg: 83 },
@@ -66,6 +81,7 @@ describe('averageWeightKg — the chip says "avg" for a reason', () => {
       averageWeightKg(
         [
           { on: ago(200), kg: 95 },
+          { on: ago(2), kg: 82 },
           { on: ago(1), kg: 82 },
         ],
         28,
@@ -76,6 +92,26 @@ describe('averageWeightKg — the chip says "avg" for a reason', () => {
 
   it('is null with nothing in the window', () => {
     expect(averageWeightKg([{ on: ago(200), kg: 95 }], 28, NOW)).toBeNull()
+  })
+
+  it('is null on ONE reading — the mean of one is that one, wearing a label', () => {
+    expect(averageWeightKg([{ on: ago(1), kg: 88.5 }], 28, NOW)).toBeNull()
+    // And the claim built on top of it does not fire either: one weigh-in
+    // cannot show a weight that moved.
+    expect(crossSignal([{ on: ago(1), kg: 88.5 }], 5, { now: NOW })).toBeNull()
+  })
+
+  it('says nothing about four weeks from two consecutive mornings', () => {
+    // Two readings, so the average is real — and they span one day, so
+    // `weightSteady` is false for lack of evidence rather than for movement.
+    // Reading that as "weight moved" is how this shipped "your weight moved
+    // over four weeks" off a 0.1kg difference between Monday and Tuesday.
+    const twoMornings = [
+      { on: ago(2), kg: 88.5 },
+      { on: ago(1), kg: 88.6 },
+    ]
+    expect(averageWeightKg(twoMornings, 28, NOW)).not.toBeNull()
+    expect(crossSignal(twoMornings, 5, { now: NOW })).toBeNull()
   })
 })
 

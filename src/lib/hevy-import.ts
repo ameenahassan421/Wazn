@@ -168,11 +168,28 @@ function timezoneOffset(timestampMs: number, timeZone: string): number {
 }
 
 /**
- * Hevy writes wall-clock local time with no offset — `"21 Oct 2025, 18:04"`
- * and, on some exports, `"2025-10-21 18:04:00"`. Either way the instant is
- * only recoverable by asking what that wall clock meant in the user's zone,
- * and the answer changes across a DST boundary, so the offset is resolved
- * twice: once against the naive instant and again against the corrected one.
+ * Hevy writes wall-clock local time with no offset — `"21 Oct 2025, 18:04"`,
+ * `"Jul 19, 2026, 7:01 PM"`, and on some exports `"2025-10-21 18:04:00"`.
+ * Either way the instant is only recoverable by asking what that wall clock
+ * meant in the user's zone, and the answer changes across a DST boundary, so
+ * the offset is resolved twice: once against the naive instant and again
+ * against the corrected one.
+ *
+ * ── THE MONTH-FIRST FORM WAS MISSING, AND IT IS THE ONE PEOPLE HAVE ─────────
+ * This function knew the day-first and ISO forms and not `"Jul 19, 2026,
+ * 7:01 PM"`, which is what Hevy writes for a US-locale account — and is the
+ * format of `workouts_corrected.csv`, this repo's own export, the file every
+ * row in production came from.
+ *
+ * The seed script has always parsed it: `scripts/import_hevy.ts:141` matches
+ * exactly this shape and its comment quotes the string. So there were two
+ * parsers for one format, they had diverged, and the one users could reach
+ * was the one that could not read the real file. Nothing caught it because
+ * the seed ran through the script and the in-app importer had never been
+ * pointed at a genuine export.
+ *
+ * Found on 2026-08-26 by running the native import against that CSV on a
+ * simulator: 3,197 rows, every one of them "a date this app could not read".
  */
 export function parseHevyDate(
   value: string | undefined,
@@ -185,8 +202,24 @@ export function parseHevyDate(
 
   const text = raw.match(/^(\d{1,2})\s+([A-Za-z]{3,})\s+(\d{4}),?\s+(\d{1,2}):(\d{2})/)
   const iso = raw.match(/^(\d{4})-(\d{2})-(\d{2})[T ](\d{1,2}):(\d{2})/)
+  /* Month first, and the only form of the three that carries a meridiem. The
+     meridiem is optional so a 24-hour US-order export parses too. */
+  const monthFirst = raw.match(
+    /^([A-Za-z]{3,})\s+(\d{1,2}),\s*(\d{4}),?\s*(\d{1,2}):(\d{2})(?::\d{2})?\s*(AM|PM)?/i,
+  )
 
-  if (text) {
+  if (monthFirst) {
+    const monthIndex = MONTHS.indexOf(monthFirst[1].slice(0, 3).toLowerCase())
+    if (monthIndex === -1) return null
+    month = monthIndex
+    day = Number(monthFirst[2])
+    year = Number(monthFirst[3])
+    minute = Number(monthFirst[5])
+    const meridiem = monthFirst[6]?.toUpperCase()
+    hour = Number(monthFirst[4])
+    if (meridiem === 'AM') hour = hour % 12
+    if (meridiem === 'PM') hour = (hour % 12) + 12
+  } else if (text) {
     const monthIndex = MONTHS.indexOf(text[2].slice(0, 3).toLowerCase())
     if (monthIndex === -1) return null
     day = Number(text[1])
@@ -428,6 +461,60 @@ export function analyse(
   }
 }
 
+/** One `workout_sets` row, as PostgREST wants it. */
+export interface SetRow {
+  workout_id: string
+  exercise_id: string
+  set_number: number
+  weight_kg: number | null
+  reps: number | null
+  rpe: number | null
+  duration_seconds: number | null
+  distance_meters: number | null
+  set_type: SetType
+  superset_group: number | null
+}
+
+/**
+ * A planned workout's sets, as rows, against a name → id map.
+ *
+ * Here rather than in either app's writer because there are two writers now
+ * and they must agree: the web import has carried this mapping inline since it
+ * was written, and native needs the same one. It is also the only part of the
+ * write path a test can reach — everything around it is Supabase calls, and a
+ * module that imports the client cannot be loaded by vitest.
+ *
+ * **A set whose exercise is not in the map is DROPPED, not defaulted.** The
+ * unmatched names are created as custom exercises before any workout is
+ * written, so a miss here means something went wrong upstream, and inventing
+ * an exercise id at this point would file somebody's squats under whatever
+ * lift happened to be first.
+ */
+export function setRowsFor(
+  planned: PlannedWorkout,
+  workoutId: string,
+  exerciseIds: Map<string, string>,
+): SetRow[] {
+  return planned.sets.flatMap((set) => {
+    const exerciseId = exerciseIds.get(set.exerciseName.trim().toLowerCase())
+    if (exerciseId === undefined) return []
+    return [
+      {
+        workout_id: workoutId,
+        exercise_id: exerciseId,
+        set_number: set.setNumber,
+        weight_kg: set.weightKg,
+        reps: set.reps,
+        rpe: set.rpe,
+        duration_seconds: set.durationSeconds,
+        distance_meters: set.distanceMeters,
+        set_type: set.setType,
+        superset_group: set.supersetGroup,
+      },
+    ]
+  })
+}
+
 /**
  * Drop everything on or before `cutoff` — the "only what is new" control.
  *
@@ -441,9 +528,27 @@ export function afterCutoff(plan: ImportPlan, cutoff: string | null): ImportPlan
   if (!cutoff) return plan
   const workouts = plan.workouts.filter((w) => w.startedAt > cutoff)
   if (workouts.length === plan.workouts.length) return plan
+
+  /*
+   * The NAME lists are trimmed too, and they were not until 2026-08-26.
+   *
+   * `unmatched` is what the importer creates as the lifter's own exercises,
+   * up front, before any workout is written. Left at the full file's value it
+   * created a custom lift for every movement in the cut-away half — rows in
+   * the picker forever, for sessions this plan will never write. Same argument
+   * for `matched`: the preview counts the two together, and a count describing
+   * sessions that are not in the plan is the screen lying about itself.
+   */
+  const kept = new Set(
+    workouts.flatMap((w) => w.sets.map((set) => set.exerciseName.trim().toLowerCase())),
+  )
+  const stillIn = (name: string): boolean => kept.has(name.trim().toLowerCase())
+
   return {
     ...plan,
     workouts,
+    matched: plan.matched.filter(stillIn),
+    unmatched: plan.unmatched.filter(stillIn),
     setCount: workouts.reduce((n, w) => n + w.sets.length, 0),
     overlapping: 0,
     range:
