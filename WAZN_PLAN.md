@@ -4390,6 +4390,58 @@ renders in RTL and uses no physical properties, but nobody has looked at it in
 the other direction, and this repo has shipped two RTL defects that nothing but
 a screenshot in Arabic would have found.
 
+#### DONE 2026-08-26: the Hevy import lands on native, and the parser could not read a real export
+
+Finish-line item 2 read "Hevy import on native, or remove the Hevy CTA from
+`sign-in.tsx`". Built, not deleted, and the two assumptions behind "deleting is
+cheaper" were both wrong.
+
+**No new dependency.** The plan for this work assumed `expo-document-picker`
+plus a prebuild and pods. `expo-file-system` has shipped `File.pickFileAsync`
+since SDK 54 and is already in the graph as a dependency of `expo` itself, so
+the picker cost nothing native at all — no config plugin, no entitlement, no
+manifest change, and the simulator build that was already installed ran the new
+screen without being rebuilt. `expo-document-picker` was installed, found
+unnecessary, and removed in the same hour. `expo-file-system` is now a DIRECT
+dependency at the SDK-pinned `~57.0.3`, because a package this code imports
+should not float on whether `expo` keeps bundling it.
+
+**And the copy already existed.** Every string this screen needs was in
+`src/lib/i18n.ts` in both locales, including seven — `import.hero.*`,
+`import.running`, `import.complete`, `import.start_lifting`,
+`import.different_file`, `import.will_add`, `import.worth_knowing` — that no
+code had ever read. Three were added: `import.stop`, `import.skip_overlap`,
+`import.progress`.
+
+**THE PARSER COULD NOT READ THIS REPO'S OWN EXPORT.** `parseHevyDate` in
+`src/lib/hevy-import.ts` knew `"21 Oct 2025, 18:04"` and `"2025-10-21
+18:04:00"`. Hevy writes `"Jul 19, 2026, 7:01 PM"` for a US-locale account, and
+that is the format of `workouts_corrected.csv` — the file every row in
+production came from. Pointing the native importer at it reported **3,197 rows
+with "a date this app could not read"**, which was all of them.
+
+`scripts/import_hevy.ts:141` has always parsed that shape and its comment
+quotes the string. So there were two parsers for one format, they had diverged,
+and the one a USER could reach was the one that could not read the real file.
+The web import has the same defect and has had it since it was written; nothing
+found it because the seed ran through the script and nobody had ever put a
+genuine export through the UI. Fixed in the shared module, so both apps get it,
+with tests for the format and for 12 AM / 12 PM.
+
+**Verified against that export on a simulator, with zero writes.** After the
+fix the preview reads 131 exercises and "149 sessions are already in your log
+and will be skipped", then refuses to go further: "Every session in that file is
+already in your log." The overlap guard did exactly its job on real data — a
+second import cannot silently double a history — which is also why nothing was
+written to production to prove it.
+
+**What is deliberately not built.** The sign-in screen's Hevy card stays
+copy-only. It renders BEFORE authentication and an import needs an account to
+write into, so the door is a row in Settings and the card is the promise. And
+the cutoff chip LOCKS once a run has written anything: `from` is an index into
+the trimmed plan, so moving the cutoff mid-resume would shift every index under
+it. The web version leaves it live and has that defect.
+
 ### 7.1 Log (chronological, newest last)
 
 > History, not state. Items here may be superseded, and several are. §7.0 wins.

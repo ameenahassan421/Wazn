@@ -1187,6 +1187,12 @@ export const messages: Record<Locale, Record<string, string>> = {
     'import.different_file': 'Choose a different file',
     'import.will_add': 'Will be added as your own exercises',
     'import.worth_knowing': 'Worth knowing',
+    // Three the native screen needed and the web one never had: it hardcoded
+    // "Stop" in English, has no resume-from-a-cutoff row, and reports progress
+    // as prose rather than as a count.
+    'import.stop': 'Stop',
+    'import.skip_overlap': 'Skip the {count} already in your log',
+    'import.progress': '{done} of {total}',
     // Install
     'install.headline': 'Add Wazn to your home screen',
     // Load helper
@@ -2304,6 +2310,9 @@ export const messages: Record<Locale, Record<string, string>> = {
     'import.different_file': 'اختر ملفاً آخر',
     'import.will_add': 'ستُضاف كتمارين خاصة بك',
     'import.worth_knowing': 'جدير بالمعرفة',
+    'import.stop': 'أوقف',
+    'import.skip_overlap': 'تخطَّ {count} الموجودة في سجلّك',
+    'import.progress': '{done} من {total}',
     // Install
     'install.headline': 'أضِف وزن إلى شاشتك الرئيسية',
     // Load helper
