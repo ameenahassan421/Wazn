@@ -1,35 +1,11 @@
 import { useRef, useState } from 'react'
 import { describeError, supabase } from '../lib/supabase'
-import { afterCutoff, analyse } from '../lib/hevy-import'
+import { afterCutoff, analyse, setRowsFor } from '../lib/hevy-import'
 import type { ImportPlan, PlannedWorkout } from '../lib/hevy-import'
 import { formatCount, formatWorkoutDate } from '../lib/format'
 import type { Exercise } from '../lib/types'
 import { deriveEquipment, deriveMuscleGroup } from '../lib/exercise-guess'
 import { useLocale } from '../lib/locale-context'
-
-/**
- * "Bring your history from Hevy" — offense plan §9-F1.
- *
- * The strongest reason to stay with Hevy is three years of logged sets. Hevy
- * offers no competitor import, so this is asymmetric by construction, and the
- * hard part was already written and tested as a Node script.
- *
- * It is also the best onboarding this app can have. Design v2.2 put a
- * previous-session ghost on every row of the board; for a switcher that ghost
- * is empty until they have logged twice. With their history in, the retention
- * engine fires on day one instead of week three.
- *
- * ── The rule this screen is built around ───────────────────────────────────
- * Show what will happen before it happens. This is the one flow where a
- * surprise is unforgivable, because the input is somebody's training history:
- * nothing is written until the preview has been read and a button pressed,
- * and if the write stops partway it says exactly where it stopped and offers
- * to carry on from there. There is no silent half-write.
- *
- * Everything runs under the user's own session, so RLS is in the path for
- * every insert. The file never leaves the device — it is read by the browser,
- * parsed by the browser, and only rows the user confirmed are sent.
- */
 
 type Phase = 'idle' | 'reading' | 'preview' | 'writing' | 'done'
 
@@ -38,6 +14,10 @@ interface Progress {
   total: number
 }
 
+type Translate = (key: string, params?: Record<string, string>) => string
+
+const normalise = (name: string): string => name.trim().toLowerCase()
+
 export function HevyImport({
   userId,
   exercises,
@@ -45,9 +25,7 @@ export function HevyImport({
   onCancel,
 }: {
   userId: string
-  /** The catalogue as it stands, for matching. */
   exercises: Exercise[]
-  /** Called once something landed, so the caller can reload. */
   onImported: () => void
   onCancel: () => void
 }) {
@@ -58,14 +36,7 @@ export function HevyImport({
   const [error, setError] = useState<string | null>(null)
   const [progress, setProgress] = useState<Progress>({ done: 0, total: 0 })
   const inputRef = useRef<HTMLInputElement>(null)
-  /** Set by Stop; read between workouts, never mid-write. */
   const stopped = useRef(false)
-  /**
-   * Skip everything on or before this instant, or null to import all of it.
-   *
-   * Held here rather than folded into the plan so the file is read once and
-   * the decision stays reversible — the counts below recompute as it moves.
-   */
   const [cutoff, setCutoff] = useState<string | null>(null)
 
   async function onFile(file: File | undefined) {
@@ -73,32 +44,32 @@ export function HevyImport({
     setPhase('reading')
     setError(null)
     setFileName(file.name)
+
     try {
       const text = await file.text()
-      // What the log already holds. Without this the importer cannot tell a
-      // first import from a second, and a second silently doubles the user's
-      // entire history — there is no unique constraint behind `writeWorkout`
-      // to catch it. RLS scopes the read to the caller.
-      const { data: logged } = await supabase
+      const { data: logged, error: loggedError } = await supabase
         .from('workouts')
         .select('started_at')
         .order('started_at', { ascending: false })
+
+      // A failed history read must never be treated as an empty history. Doing
+      // so disables the overlap/re-import guard and can make a repeat import
+      // look like the user's first one.
+      if (loggedError) throw loggedError
+
       const existing = ((logged ?? []) as { started_at: string }[]).map(
-        (w) => w.started_at,
+        (workout) => workout.started_at,
       )
       const next = analyse(
         text,
-        exercises.map((e) => e.name),
+        exercises.map((exercise) => exercise.name),
         Intl.DateTimeFormat().resolvedOptions().timeZone,
         existing,
       )
+
       setPlan(next)
-      // Default ON whenever the file reaches into a period the log already
-      // covers. The safe choice is the one that does not need to be noticed:
-      // a user who wants the older sessions can turn it off and see the count
-      // change, and a user who does not read this screen at all cannot
-      // duplicate their history by pressing the obvious button.
       setCutoff(next.overlapping > 0 ? next.latestLogged : null)
+      setProgress({ done: 0, total: 0 })
       setPhase('preview')
     } catch {
       setError(t('import.error.read'))
@@ -106,29 +77,36 @@ export function HevyImport({
     }
   }
 
-  /**
-   * Write the plan, one workout at a time, starting from `from`.
-   *
-   * Workout-at-a-time rather than one big batch is deliberate: it is the unit
-   * a person recognises, so a failure can be reported as "142 of 156 came
-   * across" instead of as an unknown fraction of a transaction. A workout
-   * whose sets fail is deleted before reporting, so the boundary is always
-   * between whole workouts and resuming can never double-write one.
-   */
   async function run(startPlan: ImportPlan, from: number) {
     setPhase('writing')
     setError(null)
     stopped.current = false
 
-    // Unmatched lifts become custom exercises owned by this user. Created once,
-    // up front: a name that fails here would otherwise fail on every workout
-    // that mentions it.
-    const byName = new Map(exercises.map((e) => [e.name.trim().toLowerCase(), e.id]))
-    if (from === 0 && startPlan.unmatched.length > 0) {
+    const byName = new Map(exercises.map((exercise) => [normalise(exercise.name), exercise.id]))
+
+    // Read the user's visible catalogue before every run/resume. This makes a
+    // resume independent of how far the previous run got and prevents a retry
+    // from creating the same custom exercise twice.
+    const { data: storedExercises, error: exerciseReadError } = await supabase
+      .from('exercises')
+      .select('id, name')
+
+    if (exerciseReadError) {
+      setError(describeError(t('import.error.create_exercises'), exerciseReadError))
+      setPhase('preview')
+      return
+    }
+
+    for (const row of (storedExercises ?? []) as { id: string; name: string }[]) {
+      byName.set(normalise(row.name), row.id)
+    }
+
+    const missing = startPlan.unmatched.filter((name) => !byName.has(normalise(name)))
+    if (missing.length > 0) {
       const { data, error: createError } = await supabase
         .from('exercises')
         .insert(
-          startPlan.unmatched.map((name) => {
+          missing.map((name) => {
             const group = deriveMuscleGroup(name)
             return {
               name,
@@ -140,43 +118,38 @@ export function HevyImport({
           }),
         )
         .select('id, name')
+
       if (createError) {
         setError(describeError(t('import.error.create_exercises'), createError))
         setPhase('preview')
         return
       }
+
       for (const row of (data ?? []) as { id: string; name: string }[]) {
-        byName.set(row.name.trim().toLowerCase(), row.id)
-      }
-    } else if (from > 0) {
-      // Resuming: the custom exercises already exist, so read them back rather
-      // than creating a second copy of each.
-      const { data } = await supabase.from('exercises').select('id, name')
-      for (const row of (data ?? []) as { id: string; name: string }[]) {
-        byName.set(row.name.trim().toLowerCase(), row.id)
+        byName.set(normalise(row.name), row.id)
       }
     }
 
     setProgress({ done: from, total: startPlan.workouts.length })
 
-    for (let i = from; i < startPlan.workouts.length; i += 1) {
-      // Checked between workouts, which is the boundary the whole flow is
-      // built on: what has landed stays, and `run(plan, i)` picks up here.
+    for (let index = from; index < startPlan.workouts.length; index += 1) {
       if (stopped.current) {
-        setProgress({ done: i, total: startPlan.workouts.length })
+        setProgress({ done: index, total: startPlan.workouts.length })
         setPhase('preview')
-        if (i > from) onImported()
+        if (index > from) onImported()
         return
       }
-      const failure = await writeWorkout(startPlan.workouts[i], userId, byName, t)
+
+      const failure = await writeWorkout(startPlan.workouts[index], userId, byName, t)
       if (failure) {
         setError(failure)
-        setProgress({ done: i, total: startPlan.workouts.length })
+        setProgress({ done: index, total: startPlan.workouts.length })
         setPhase('preview')
-        if (i > from) onImported()
+        if (index > from) onImported()
         return
       }
-      setProgress({ done: i + 1, total: startPlan.workouts.length })
+
+      setProgress({ done: index + 1, total: startPlan.workouts.length })
     }
 
     setPhase('done')
@@ -185,20 +158,13 @@ export function HevyImport({
 
   const imported = progress.done
   const canResume = phase === 'preview' && imported > 0
-  /**
-   * The plan as the cutoff leaves it — what the preview describes and what
-   * `run` writes, so the number on screen and the number inserted cannot
-   * drift apart.
-   */
   const shown = plan ? afterCutoff(plan, cutoff) : null
 
   return (
     <section className="flex flex-col gap-4 py-2">
       <div>
         <p className="kicker">Coming from Hevy</p>
-        <h2 className="mt-1 text-fig font-medium tracking-tight">
-          Bring your history with you.
-        </h2>
+        <h2 className="mt-1 text-fig font-medium tracking-tight">Bring your history with you.</h2>
         <p className="mt-2 text-body text-muted">
           Every workout, every set, every personal record. Your first session in Wazn
           then opens with your own numbers on every row instead of a blank board.
@@ -235,7 +201,7 @@ export function HevyImport({
             type="file"
             accept=".csv,text/csv"
             className="hidden"
-            onChange={(e) => void onFile(e.target.files?.[0])}
+            onChange={(event) => void onFile(event.target.files?.[0])}
           />
           <button
             type="button"
@@ -245,11 +211,7 @@ export function HevyImport({
           >
             {phase === 'reading' ? t('import.reading') : t('import.choose')}
           </button>
-          <button
-            type="button"
-            onClick={onCancel}
-            className="btn-base btn-secondary h-12 w-full text-body"
-          >
+          <button type="button" onClick={onCancel} className="btn-base btn-secondary h-12 w-full text-body">
             Not now
           </button>
         </>
@@ -288,11 +250,6 @@ export function HevyImport({
             Nothing is lost if you stop — what has landed stays, and you can pick up
             where you left off.
           </p>
-          {/* The copy promised you could leave and there was nothing to leave
-              with: no control in this phase, and no header chevron either,
-              because the importer is a view of the Log screen. Stopping is
-              safe at a workout boundary, which is the same boundary the
-              resume path already restarts from. */}
           <button
             type="button"
             onClick={() => {
@@ -311,19 +268,12 @@ export function HevyImport({
             className="ring-edge border border-accent bg-surface px-3 py-3"
             style={{ borderRadius: 'var(--radius-md)' }}
           >
-            <p className="text-label font-medium text-accent-300">
-              Your history is in.
-            </p>
+            <p className="text-label font-medium text-accent-300">Your history is in.</p>
             <p className="tnum mt-1 text-meta text-muted">
-              {formatCount(plan.workouts.length)} workouts ·{' '}
-              {formatCount(plan.setCount)} sets
+              {formatCount(plan.workouts.length)} workouts · {formatCount(plan.setCount)} sets
             </p>
           </div>
-          <button
-            type="button"
-            onClick={onCancel}
-            className="btn-base btn-hero press h-[60px] w-full btn-text"
-          >
+          <button type="button" onClick={onCancel} className="btn-base btn-hero press h-[60px] w-full btn-text">
             Start lifting
           </button>
         </>
@@ -332,12 +282,6 @@ export function HevyImport({
   )
 }
 
-/**
- * What will happen, before it happens.
- *
- * Counts, the date range, which lifts matched and which will be created — and
- * every problem the file has, stated rather than swallowed.
- */
 function Preview({
   plan,
   fileName,
@@ -354,11 +298,8 @@ function Preview({
   fileName: string | null
   alreadyDone: number
   resuming: boolean
-  /** Active cutoff, or null when the whole file is being imported. */
   cutoff: string | null
-  /** Newest session already in the log — what the cutoff is offered against. */
   latestLogged: string | null
-  /** How many sessions the cutoff is currently holding back. */
   skipped: number
   onCutoff: (next: string | null) => void
   onConfirm: () => void
@@ -377,11 +318,7 @@ function Preview({
           <p className="text-body text-accent-300">{plan.fatal}</p>
           {fileName && <p className="mt-1 text-meta text-muted">{fileName}</p>}
         </div>
-        <button
-          type="button"
-          onClick={onCancel}
-          className="btn-base btn-secondary h-12 w-full text-body"
-        >
+        <button type="button" onClick={onCancel} className="btn-base btn-secondary h-12 w-full text-body">
           Choose a different file
         </button>
       </>
@@ -390,22 +327,14 @@ function Preview({
 
   return (
     <>
-      <div
-        className="ring-edge bg-surface px-3 py-3"
-        style={{ borderRadius: 'var(--radius-md)' }}
-      >
-        <p className="kicker">
-          {resuming ? t('import.found.resuming') : t('import.found')}
-        </p>
+      <div className="ring-edge bg-surface px-3 py-3" style={{ borderRadius: 'var(--radius-md)' }}>
+        <p className="kicker">{resuming ? t('import.found.resuming') : t('import.found')}</p>
         <div className="mt-2 flex items-stretch">
           <Figure value={formatCount(remaining)} label={t('import.workouts')} />
           <span aria-hidden="true" className="w-px shrink-0 bg-[var(--divider)]" />
           <Figure value={formatCount(plan.setCount)} label={t('import.sets')} />
           <span aria-hidden="true" className="w-px shrink-0 bg-[var(--divider)]" />
-          <Figure
-            value={formatCount(plan.matched.length + plan.unmatched.length)}
-            label={t('import.exercises')}
-          />
+          <Figure value={formatCount(plan.matched.length + plan.unmatched.length)} label={t('import.exercises')} />
         </div>
         {plan.range && (
           <p className="mt-2.5 text-meta text-muted">
@@ -414,21 +343,8 @@ function Preview({
         )}
       </div>
 
-      {/*
-        The second-import control.
-
-        It only renders for an account that already has history, because for a
-        switcher's first import there is nothing to collide with and a control
-        about a decision you do not have is noise. When it does render it is
-        ON, and the figures above have already been recomputed against it — so
-        the number on screen is the number that will be written, which is the
-        whole promise of this screen.
-      */}
       {latestLogged && (
-        <div
-          className="ring-edge bg-surface px-3 py-3"
-          style={{ borderRadius: 'var(--radius-md)' }}
-        >
+        <div className="ring-edge bg-surface px-3 py-3" style={{ borderRadius: 'var(--radius-md)' }}>
           <p className="kicker">Already in your log</p>
           <p className="mt-2 text-body text-muted">
             Your last logged workout was {formatWorkoutDate(latestLogged)}.
@@ -437,15 +353,15 @@ function Preview({
             type="button"
             role="switch"
             aria-checked={cutoff !== null}
+            aria-disabled={resuming}
+            disabled={resuming}
             onClick={() => onCutoff(cutoff === null ? latestLogged : null)}
-            className="btn-base btn-secondary press mt-2.5 flex h-12 w-full items-center gap-3 px-3 text-start text-body"
+            className="btn-base btn-secondary press mt-2.5 flex h-12 w-full items-center gap-3 px-3 text-start text-body disabled:cursor-not-allowed disabled:opacity-55"
           >
             <span
               aria-hidden="true"
               className={`grid h-5 w-5 shrink-0 place-items-center border ${
-                cutoff !== null
-                  ? 'border-accent bg-accent text-accent-ink'
-                  : 'border-line'
+                cutoff !== null ? 'border-accent bg-accent text-accent-ink' : 'border-line'
               }`}
               style={{ borderRadius: 'var(--radius-check)' }}
             >
@@ -453,69 +369,54 @@ function Preview({
             </span>
             <span className="flex-1">Only bring across what is newer</span>
           </button>
+          {resuming && (
+            <p className="mt-2 text-body text-muted">
+              This choice is locked while you resume so the remaining workout list cannot shift.
+            </p>
+          )}
           {cutoff !== null && skipped > 0 && (
             <p className="mt-2 text-body text-muted">
-              {formatCount(skipped)} older session{skipped === 1 ? '' : 's'} in this
-              file will be left out.
+              {formatCount(skipped)} older session{skipped === 1 ? '' : 's'} in this file will be left out.
             </p>
           )}
           {cutoff === null && (
             <p className="mt-2 text-body text-accent-300">
-              The whole file will be imported. Sessions you already have will appear
-              twice.
+              The whole file will be imported. Sessions you already have may be skipped by the duplicate guard.
             </p>
           )}
         </div>
       )}
 
       {plan.unmatched.length > 0 && (
-        <div
-          className="ring-edge bg-surface px-3 py-3"
-          style={{ borderRadius: 'var(--radius-md)' }}
-        >
+        <div className="ring-edge bg-surface px-3 py-3" style={{ borderRadius: 'var(--radius-md)' }}>
           <p className="kicker">Will be added as your own exercises</p>
           <p className="mt-1.5 text-body text-muted">
             {plan.unmatched.slice(0, 8).join(' · ')}
-            {plan.unmatched.length > 8 &&
-              ` · and ${formatCount(plan.unmatched.length - 8)} more`}
+            {plan.unmatched.length > 8 && ` · and ${formatCount(plan.unmatched.length - 8)} more`}
           </p>
           <p className="mt-2 text-body text-muted">
-            Nothing is dropped. Wazn has not seen these lifts before, so it makes them
-            yours — you can rename them later.
+            Nothing is dropped. Wazn has not seen these lifts before, so it makes them yours — you can rename them later.
           </p>
         </div>
       )}
 
       {plan.problems.length > 0 && (
-        <div
-          className="ring-edge bg-surface px-3 py-3"
-          style={{ borderRadius: 'var(--radius-md)' }}
-        >
+        <div className="ring-edge bg-surface px-3 py-3" style={{ borderRadius: 'var(--radius-md)' }}>
           <p className="kicker">Worth knowing</p>
           <ul className="mt-1.5 flex flex-col gap-1">
             {plan.problems.map((problem) => (
-              <li key={problem} className="text-body text-muted">
-                {problem}
-              </li>
+              <li key={problem} className="text-body text-muted">{problem}</li>
             ))}
           </ul>
         </div>
       )}
 
-      <button
-        type="button"
-        onClick={onConfirm}
-        className="btn-base btn-hero press h-[60px] w-full btn-text"
-      >
+      <button type="button" onClick={onConfirm} className="btn-base btn-hero press h-[60px] w-full btn-text">
         {resuming
           ? t('import.resume', { count: formatCount(remaining) })
           : t('import.start', { count: formatCount(remaining) })}
       </button>
-      <button
-        type="button"
-        onClick={onCancel}
-        className="btn-base btn-secondary h-12 w-full text-body"
-      >
+      <button type="button" onClick={onCancel} className="btn-base btn-secondary h-12 w-full text-body">
         Choose a different file
       </button>
     </>
@@ -531,18 +432,11 @@ function Figure({ value, label }: { value: string; label: string }) {
   )
 }
 
-/**
- * One workout and its sets. Returns null on success, or a message.
- *
- * The workout is deleted if its sets fail, so the import boundary is always
- * between whole workouts — which is what makes resuming safe: a half-written
- * session can never be counted as done and then skipped.
- */
 async function writeWorkout(
   planned: PlannedWorkout,
   userId: string,
   exerciseIds: Map<string, string>,
-  t: (key: string, params?: Record<string, string>) => string,
+  t: Translate,
 ): Promise<string | null> {
   const { data, error: workoutError } = await supabase
     .from('workouts')
@@ -555,40 +449,33 @@ async function writeWorkout(
     .select('id')
     .single()
 
-  if (workoutError || !data) {
+  if (workoutError) {
+    // workouts_user_started_at_key is the import idempotency key. A duplicate
+    // means this session already landed, so continuing is safer than turning a
+    // repeat import into a fatal error.
+    if ((workoutError as { code?: string }).code === '23505') return null
     return describeError(t('import.error.create_workout'), workoutError)
   }
-  const workoutId = (data as { id: string }).id
 
-  const rows = planned.sets.flatMap((set) => {
-    const exerciseId = exerciseIds.get(set.exerciseName.trim().toLowerCase())
-    if (!exerciseId) return []
-    return [
-      {
-        workout_id: workoutId,
-        exercise_id: exerciseId,
-        set_number: set.setNumber,
-        weight_kg: set.weightKg,
-        reps: set.reps,
-        rpe: set.rpe,
-        duration_seconds: set.durationSeconds,
-        distance_meters: set.distanceMeters,
-        set_type: set.setType,
-        superset_group: set.supersetGroup,
-      },
-    ]
-  })
+  if (!data) return t('import.error.create_workout')
+  const workoutId = (data as { id: string }).id
+  const rows = setRowsFor(planned, workoutId, exerciseIds)
+
+  // Never let unresolved exercise ids turn into a green progress bar. If even
+  // one planned set cannot be mapped, roll the whole workout back so the resume
+  // boundary remains between complete workouts.
+  if (rows.length !== planned.sets.length) {
+    await supabase.from('workouts').delete().eq('id', workoutId)
+    return t('import.error.save_sets')
+  }
 
   if (rows.length === 0) {
-    // Nothing to put in it. A workout with no sets is not a workout — the same
-    // rule the Log screen enforces when one is abandoned.
     await supabase.from('workouts').delete().eq('id', workoutId)
     return null
   }
 
   const { error: setsError } = await supabase.from('workout_sets').insert(rows)
   if (setsError) {
-    // Roll the workout back so the boundary stays between whole sessions.
     await supabase.from('workouts').delete().eq('id', workoutId)
     return describeError(t('import.error.save_sets'), setsError)
   }
