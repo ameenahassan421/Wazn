@@ -524,6 +524,35 @@ html[data-theme='paper'] {
   --brass-tint: rgba(176, 141, 62, 0.09);
 }
 
+/* The product is a phone app even when it runs in a wide browser. The phone
+   keeps the active theme's ground; the space beyond it uses the adjacent
+   raised tone, so the composition has two deliberate colours instead of a
+   transparent root leaking the browser's default white.
+
+   `#root` owns the frame rather than every screen. That keeps auth, loading,
+   errors, and signed-in routes on the same ground and prevents a white flash
+   between lazy screens. On a phone the frame fills the viewport, so this does
+   not spend any of the already-tight logging canvas on decoration. */
+html {
+  min-height: 100%;
+  background: var(--color-raised);
+}
+
+body {
+  min-height: 100dvh;
+  margin: 0;
+  background: var(--color-raised);
+  color: var(--color-text);
+  font-family: var(--font-sans);
+}
+
+#root {
+  min-height: 100dvh;
+  max-width: 430px;
+  margin-inline: auto;
+  background: var(--color-ink);
+}
+
 /* ─── Utilities ────────────────────────────────────────────────────────── */
 
 /* A hairline card edge. One ring, never stacked. */
